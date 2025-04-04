@@ -1,0 +1,119 @@
+"use client";
+import { useState } from "react";
+import Image from "next/image";
+import { XMarkIcon } from "@heroicons/react/24/outline";
+import { TitleSection } from "@/app/components/ui/title-section";
+
+export default function VideoNpi() {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <section className="bg-white py-24 px-6 lg:px-0">
+      <div className="container mx-auto max-w-6xl">
+        {/* Título e Descrição */}
+        <TitleSection
+          section="Nossa Missão e Serviços"
+          title="Nossa Missão e Serviços"
+          description="Desde 2007, a NPi se dedica a oferecer um serviço imparcial e de excelência, ajudando nossos clientes a realizarem o sonho de adquirir um imóvel."
+        />
+
+        <div className="grid lg:grid-cols-2 grid-cols-1 gap-12 items-center">
+          {/* Vídeo Thumbnail */}
+          <div
+            className="relative group cursor-pointer w-full max-w-2xl mx-auto"
+            onClick={() => setIsOpen(true)}
+          >
+            <Image
+              src="/assets/images/imoveis/02.jpg"
+              alt="Thumbnail do Vídeo"
+              width={800}
+              height={450}
+              className="rounded-lg shadow-lg transition-transform duration-300 group-hover:scale-105"
+            />
+            {/* Botão de Play */}
+            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 rounded-lg">
+              <div className="w-16 h-16 bg-white text-black flex items-center justify-center rounded-full shadow-lg transition-transform duration-300 group-hover:scale-110">
+                <svg
+                  className="w-8 h-8"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                >
+                  <path d="M8 5v14l11-7z" />
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          {/* Texto */}
+          <div>
+            <h1 className="text-xl uppercase font-semibold text-black">
+              Atendimento Personalizado
+            </h1>
+            <p className="text-black mt-4">
+              Nossa missão é entender as necessidades de cada cliente e oferecer
+              as melhores opções de imóveis, garantindo um processo de compra
+              fácil, ágil e seguro.
+            </p>
+
+            {/* Lista de Serviços */}
+            <div className="mt-6 space-y-6">
+              {[
+                {
+                  title: "Avaliação de Imóveis",
+                  description:
+                    "Equipe altamente capacitada para precificar o seu imóvel com uma metodologia completa.",
+                },
+                {
+                  title: "Assessoria Jurídica",
+                  description:
+                    "Consultoria especializada no mercado imobiliário para assessorar nossos clientes.",
+                },
+                {
+                  title: "Consultoria Patrimonial",
+                  description:
+                    "Analisamos a carteira imobiliária de nossos clientes para novas oportunidades de investimento.",
+                },
+              ].map((service, index) => (
+                <div key={index} className="bg-zinc-100 p-4 rounded-lg ">
+                  <h1 className="text-lg font-semibold text-black">
+                    {service.title}
+                  </h1>
+                  <p className="text-black mt-2">{service.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Modal de Vídeo */}
+      {isOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50">
+          <div className="relative bg-white rounded-lg overflow-hidden shadow-lg w-full max-w-4xl">
+            {/* Botão Fechar */}
+            <button
+              className="absolute top-4 right-4 text-gray-600 hover:text-gray-900"
+              onClick={() => setIsOpen(false)}
+            >
+              <XMarkIcon className="w-6 h-6" />
+            </button>
+
+            {/* Vídeo */}
+            <div className="w-full aspect-video">
+              <iframe
+                width="100%"
+                height="100%"
+                src="https://www.youtube.com/embed/paE-zyy_C8M?si=BjDUoJ4zSdTVrnqw"
+                title="Vídeo Institucional NPi"
+                frameBorder="0"
+                allowFullScreen
+                className="w-full h-full"
+              ></iframe>
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
