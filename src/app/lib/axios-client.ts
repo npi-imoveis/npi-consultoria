@@ -2,7 +2,7 @@ import axios from "axios";
 
 // Determinar a URL base com base no ambiente
 const BASE_URL = process.env.NODE_ENV === 'production' 
-  ? "https://npi-imoveis.vercel.app/api/" 
+  ? "https://npi-consultoria.vercel.app/" 
   : "http://localhost:3000/api/";
 
 const axiosClient = axios.create({
