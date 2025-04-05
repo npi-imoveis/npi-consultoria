@@ -126,7 +126,7 @@ export function Footer() {
           {/* Ícones de redes sociais */}
           <div className="order-1 md:order-3 flex items-center space-x-4">
             <a
-              href="https://www.instagram.com/npi"
+              href="instagram.com/npi_imoveis"
               aria-label="Siga-nos no Instagram"
               target="_blank"
               rel="noopener noreferrer"
@@ -143,7 +143,7 @@ export function Footer() {
               </svg>
             </a>
             <a
-              href="https://www.facebook.com/npi"
+              href="facebook.com/npiimoveis"
               aria-label="Visite nossa página no Facebook"
               target="_blank"
               rel="noopener noreferrer"
@@ -160,7 +160,7 @@ export function Footer() {
               </svg>
             </a>
             <a
-              href="https://www.youtube.com/npi"
+              href="https://www.youtube.com/c/NPiIMOVEIS"
               aria-label="Assista nossos vídeos no YouTube"
               target="_blank"
               rel="noopener noreferrer"
