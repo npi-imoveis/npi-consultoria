@@ -304,30 +304,30 @@ export default function CondominioPage() {
                 {condominio.valorAluguel && (
                   <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
                     <p className="text-zinc-600 text-xs">Aluguel a partir de</p>
-                    <p className="text-black font-semibold text-sm">R$8.600,00</p>
+                    <h2 className="text-black font-semibold text-[9px]">R$8.600,00</h2>
                   </div>
                 )}
 
                 <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
                   <p className="text-zinc-600 text-xs">Venda a partir:</p>
-                  <p className="text-black font-semibold text-sm">R${" "}{condominio.ValorAntigo}</p>
+                  <h2 className="text-black font-semibold text-[10px]">R${" "}{condominio.ValorAntigo}</h2>
                 </div>
                 {condominio.ValorCondominio && (
                   <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
                     <p className="text-zinc-600 text-xs">Condomínio:</p>
-                    <p className="text-black font-semibold text-sm">
+                    <h2 className="text-black font-semibold text-[10px]">
                       {/* formatterValue foi importado anteriormente mas não é usado aqui */}
                       {formatterValue(condominio.ValorCondominio)}
-                    </p>
+                    </h2>
                   </div>
                 )}
                 {condominio.ValorIptu && (
                   <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
                     <p className="text-zinc-600 text-xs">IPTU:</p>
-                    <p className="text-black font-semibold text-sm">
+                    <h2 className="text-black font-semibold text-[10px]">
                       {/* formatterValue foi importado anteriormente mas não é usado aqui */}
                       {formatterValue(condominio.ValorIptu)}
-                    </p>
+                    </h2>
                   </div>
                 )}
               </div>

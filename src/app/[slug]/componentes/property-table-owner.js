@@ -89,7 +89,7 @@ export function PropertyTableOwner({ imovel }) {
                                 key={index}
                                 className="border-b border-gray-200 text-[10px]  transition-colors"
                             >
-                                <td className="p-3 font-bold">{item.Categoria}</td>
+                                <td className="p-3 font-bold"><h2 className="text-black font-semibold text-[10px]">{item.Categoria}</h2></td>
                                 <td className="p-3 font-semibold text-[9px]">R${" "}{item.Valor}</td>
                                 <td className="p-3">{item.Metragem}</td>
                                 <td className="p-3">{item.Dormitorios}</td>
