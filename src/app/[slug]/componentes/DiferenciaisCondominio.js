@@ -12,7 +12,7 @@ export default function DiferenciaisCondominio({ condominio }) {
             <h2 className="text-xl font-bold text-black">
                 Diferenciais do Condomínio {condominio.Empreendimento}{" "}
             </h2>
-            <p className="mt-6" dangerouslySetInnerHTML={{ __html: diferenciasCondominio }} />
+            <h4 className="text-sm mt-6" dangerouslySetInnerHTML={{ __html: diferenciasCondominio }} />
         </div>
     );
 } 

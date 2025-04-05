@@ -303,18 +303,18 @@ export default function CondominioPage() {
               <div className="grid grid-cols-3 gap-3 mt-4 mb-8">
                 {condominio.valorAluguel && (
                   <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
-                    <p className="text-zinc-600 text-xs">Aluguel a partir de</p>
+                    <h4 className="text-zinc-600 text-xs">Aluguel a partir de</h4>
                     <h2 className="text-black font-semibold text-[9px]">R$8.600,00</h2>
                   </div>
                 )}
 
                 <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
-                  <p className="text-zinc-600 text-xs">Venda a partir:</p>
+                  <h4 className="text-zinc-600 text-xs">Venda a partir:</h4>
                   <h2 className="text-black font-semibold text-[10px]">R${" "}{condominio.ValorAntigo}</h2>
                 </div>
                 {condominio.ValorCondominio && (
                   <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
-                    <p className="text-zinc-600 text-xs">Condomínio:</p>
+                    <h4 className="text-zinc-600 text-xs">Condomínio:</h4>
                     <h2 className="text-black font-semibold text-[10px]">
                       {/* formatterValue foi importado anteriormente mas não é usado aqui */}
                       {formatterValue(condominio.ValorCondominio)}
@@ -323,7 +323,7 @@ export default function CondominioPage() {
                 )}
                 {condominio.ValorIptu && (
                   <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
-                    <p className="text-zinc-600 text-xs">IPTU:</p>
+                    <h4 className="text-zinc-600 text-xs">IPTU:</h4>
                     <h2 className="text-black font-semibold text-[10px]">
                       {/* formatterValue foi importado anteriormente mas não é usado aqui */}
                       {formatterValue(condominio.ValorIptu)}

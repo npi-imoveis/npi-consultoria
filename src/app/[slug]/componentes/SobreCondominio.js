@@ -100,12 +100,12 @@ function DetalhesCondominio({ condominio }) {
                         <span className="text-xs font-bold uppercase">{expanded ? "Ver menos" : "Ver mais"}</span>
                     </button>
                     <div className={`mt-2 text-gray-700 ${expanded ? "block" : "line-clamp-3"}`}>
-                        <p>{condominio.DescricaoUnidades}</p>
+                        <h4 className="text-xs">{condominio.DescricaoUnidades}</h4>
                     </div>
                 </div>
             ) : (
                 <div className="text-gray-700 mt-6">
-                    <p>Não há descrição de unidades disponíveis para este condomínio.</p>
+                    <h4>Não há descrição de unidades disponíveis para este condomínio.</h4>
                 </div>
             )}
         </div>

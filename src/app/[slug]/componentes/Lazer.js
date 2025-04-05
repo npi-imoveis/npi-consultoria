@@ -9,9 +9,9 @@ export default function Lazer({ condominio }) {
             <h2 className="text-xl font-bold text-black">Lazer</h2>
             <div className="flex flex-wrap gap-3 mt-6">
                 {lazer.map((item, index) => (
-                    <span key={index} className="px-4 py-1 text-xs font-bold bg-zinc-100 rounded-full">
+                    <h4 key={index} className="px-4 py-1 text-xs font-bold bg-zinc-100 rounded-full">
                         {item}
-                    </span>
+                    </h4>
                 ))}
             </div>
         </div>

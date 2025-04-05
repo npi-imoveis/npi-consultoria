@@ -15,7 +15,7 @@ export default function FichaTecnica({ condominio }) {
 
             <div>
                 <h2 className="font-semibold text-lg mb-3">Informações Gerais</h2>
-                <span className="my-8 text-xs" dangerouslySetInnerHTML={{ __html: fichaTecnica }} />
+                <h4 className="my-8 text-sm" dangerouslySetInnerHTML={{ __html: fichaTecnica }} />
             </div>
         </div>
     );

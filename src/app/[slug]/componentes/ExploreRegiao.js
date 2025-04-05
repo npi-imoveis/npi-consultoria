@@ -12,9 +12,9 @@ export default function ExploreRegiao({ condominio, currentUrl }) {
         <div className="container mx-auto flex flex-col md:flex-row gap-4 bg-gray-100 mt-4 rounded-lg">
             <div className="bg-white p-10 rounded-lg flex-1">
                 <h2 className="text-xl font-bold">Explore no mapa a região</h2>
-                <p className="text-gray-600 text-sm mt-1">
+                <h4 className="text-gray-600 text-sm mt-1">
                     Encontre imóveis que estão próximos ao condomínio Living Wish Santo Amaro
-                </p>
+                </h4>
                 <div className="mt-4 relative w-full h-full rounded-lg overflow-hidden">
                     <MapsLocator latitude={condominio.Latitude} longitude={condominio.Longitude} />
                 </div>
