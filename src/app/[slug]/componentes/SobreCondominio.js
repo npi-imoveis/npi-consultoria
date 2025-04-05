@@ -70,7 +70,7 @@ function DetalhesCondominio({ condominio }) {
             </div>
             <div className="flex items-center gap-2 mt-2">
                 <Bed size={18} />
-                <span className="text-sm">Imóveis com {condominio.DormitoriosAntigo} quartos</span>
+                <h2 className="text-sm">Imóveis com {condominio.DormitoriosAntigo} quartos</h2>
             </div>
 
             <h1 className="font-semibold mt-6">Condomínio</h1>
@@ -87,7 +87,7 @@ function DetalhesCondominio({ condominio }) {
             </div>
             <div className="flex items-center gap-2 mt-2">
                 <Building size={18} />
-                <span className="text-sm">Construtora: {condominio.Construtora}</span>
+                <h2 className="text-sm">Construtora: {condominio.Construtora}</h2>
             </div>
 
             {condominio.DescricaoUnidades ? (
@@ -104,7 +104,7 @@ function DetalhesCondominio({ condominio }) {
                     </div>
                 </div>
             ) : (
-                <div className="mt-2 text-gray-700 mt-6">
+                <div className="text-gray-700 mt-6">
                     <p>Não há descrição de unidades disponíveis para este condomínio.</p>
                 </div>
             )}
