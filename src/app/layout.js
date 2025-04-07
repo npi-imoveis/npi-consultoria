@@ -22,7 +22,6 @@ export default function RootLayout({ children }) {
   return (
     <html lang="pt-BR">
       <head>
-        {/* Google Tag Manager - HEAD */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
@@ -35,7 +34,6 @@ export default function RootLayout({ children }) {
           }}
         />
       </head>
-
       <body className={`${oxanium.variable} ${michroma.variable} antialiased`}>
         <Organization />
         <WebSite />
