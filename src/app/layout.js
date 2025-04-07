@@ -3,6 +3,7 @@ import "./globals.css";
 import QueryProvider from "./providers/QueryClientProvider";
 import { WhatsappFloat } from "./components/ui/whatsapp";
 import { Organization, WebSite } from "./components/structured-data";
+import { Analytics } from "@vercel/analytics/react"
 
 const oxanium = Oxanium({
   variable: "--font-oxanium",
@@ -38,6 +39,7 @@ export default function RootLayout({ children }) {
         <Organization />
         <WebSite />
         <QueryProvider>{children}</QueryProvider>
+        <Analytics />
         <WhatsappFloat />
       </body>
     </html>
