@@ -3,7 +3,7 @@ import { MetadataRoute } from 'next';
 
 export async function GET() {
     try {
-        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://seu-site.com.br'; // Valor padrão como fallback
+        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://npiconsultoria.com.br'; // Valor padrão como fallback
 
         // 1. Busque os slugs dinâmicos (do banco de dados, CMS, etc.)
         const dynamicPages = await fetchDynamicPages() || []; // Garantir que seja um array
