@@ -22,7 +22,7 @@ export default function ValoresUnidade({ imovel }) {
             <div itemScope itemType="https://schema.org/Offer">
                 <p className="text-black font-medium">Preço:</p>
                 <h2 className="text-2xl font-bold mt-2" itemProp="price" content={imovel.ValorAntigo || "Consultar"}>
-                    {imovel.ValorAntigo ? "R$ " + imovel.ValorAntigo : "Consultar"}
+                    {imovel.ValorAntigo !== "0" ? "R$ " + imovel.ValorAntigo : "Consultar"}
                 </h2>
                 <meta itemProp="priceCurrency" content="BRL" />
             </div>
