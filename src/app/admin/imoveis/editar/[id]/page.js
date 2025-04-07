@@ -220,7 +220,7 @@ export default function EditarImovel({ params }) {
         { name: "Situacao", label: "Situação", type: "text" },
         { name: "Status", label: "Status", type: "text" },
         { name: "Slug", label: "Slug", type: "text" },
-        { name: "Destaque", label: "Destaque", type: "text" },
+        { name: "Destacado", label: "Destaque (Sim/Não)", type: "text" },
         { name: "Condominio", label: "É Condomínio? (Sim/Não)", type: "text" },
       ],
     },

@@ -49,7 +49,10 @@ export async function GET(request) {
     await connectToDatabase();
 
     // Construir o objeto de filtro
-    const filtro = {};
+    const filtro = {
+      // Adicionar filtro para excluir imóveis com ValorAntigo igual a "0" ou vazio
+      ValorAntigo: { $nin: ["0", ""] }
+    };
 
     // Adicionar filtros básicos apenas se os parâmetros estiverem presentes
     if (categoria) filtro.Categoria = categoria;
@@ -122,8 +125,13 @@ export async function GET(request) {
       // Filtrar os imóveis usando comparação numérica
       const imoveisFiltrados = imoveisPreFiltrados.filter(imovel => {
         try {
-          // Converter o preço do imóvel para número
+          // Verificar se ValorAntigo é "0" ou vazio - filtrar esses imóveis
           const precoImovelStr = imovel.ValorAntigo || "0";
+          if (precoImovelStr === "0" || precoImovelStr === "") {
+            return false;
+          }
+
+          // Converter o preço do imóvel para número
           const precoImovelNum = converterPrecoParaNumero(precoImovelStr);
 
           // Log detalhado para comparação

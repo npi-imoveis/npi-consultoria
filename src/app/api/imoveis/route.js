@@ -14,12 +14,9 @@ export async function GET(request) {
 
     await connectToDatabase();
 
-    // Filtro aprimorado para imóveis com Valor ou ValorAntigo preenchidos
+    // Filtro para imóveis com ValorAntigo diferente de "0" e ""
     const filtro = {
-      $or: [
-        { Valor: { $exists: true, $ne: "0", $ne: "" } },
-        { ValorAntigo: { $exists: true, $ne: "0", $ne: "" } },
-      ],
+      ValorAntigo: { $exists: true, $nin: ["0", ""] }
     };
 
     // Contar o total de documentos com o filtro aplicado

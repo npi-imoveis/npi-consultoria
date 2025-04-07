@@ -3,8 +3,6 @@
 import { useEffect, useState } from "react";
 import CardImovel, { CardImovelSkeleton } from "../components/ui/card-imovel";
 import Pagination from "../components/ui/pagination";
-import ResultsInfo from "../components/ui/results-info";
-import { motion, AnimatePresence } from "framer-motion";
 import Map from "./components/map";
 
 import {
@@ -15,7 +13,7 @@ import {
   ListBulletIcon,
 } from "@heroicons/react/24/outline";
 import PropertyFilters from "./components/property-filters";
-import { getImoveis, getImovelById, searchImoveis } from "../services";
+import { getImoveis, searchImoveis } from "../services";
 import useFiltersStore from "../store/filtrosStore";
 import useFavoritosStore from "../store/favoritosStore";
 import useImovelStore from "../store/imovelStore";
