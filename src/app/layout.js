@@ -1,10 +1,9 @@
 import { Oxanium, Michroma } from "next/font/google";
 import "./globals.css";
-import { Header } from "./components/ui/header";
-import { Footer } from "./components/ui/footer";
 import QueryProvider from "./providers/QueryClientProvider";
 import { WhatsappFloat } from "./components/ui/whatsapp";
 import { Organization, WebSite } from "./components/structured-data";
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const oxanium = Oxanium({
   variable: "--font-oxanium",
@@ -41,7 +40,10 @@ export default function RootLayout({ children }) {
       <body className={`${oxanium.variable} ${michroma.variable} antialiased`}>
         <Organization />
         <WebSite />
-        <QueryProvider>{children}</QueryProvider>
+        <QueryProvider>
+          {children}
+          <SpeedInsights />
+        </QueryProvider>
         <WhatsappFloat />
       </body>
     </html>
