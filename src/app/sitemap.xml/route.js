@@ -57,7 +57,7 @@ export async function GET() {
         console.error('Erro ao gerar sitemap:', error);
 
         // Em caso de erro, retorne um sitemap básico com as URLs estáticas apenas
-        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://seu-site.com.br';
+        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://npiconsultoria.com.br';
         const staticUrls = [
             { url: baseUrl, priority: 1.0 },
             { url: `${baseUrl}/sobre/hub-imobiliarias`, priority: 0.8 },
