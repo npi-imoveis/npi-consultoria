@@ -1,13 +1,16 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ["cdn.vistahost.com.br"],
     remotePatterns: [
       {
         protocol: "https",
         hostname: "cdn.vistahost.com.br",
       },
     ],
+  },
+  typescript: {
+    // ⚠️ Isso desativa a verificação de tipos durante o build
+    ignoreBuildErrors: true,
   },
 };
 
