@@ -42,9 +42,9 @@ export default function RootLayout({ children }) {
         <WebSite />
         <QueryProvider>
           {children}
-          <SpeedInsights />
         </QueryProvider>
         <WhatsappFloat />
+        <SpeedInsights />
       </body>
     </html>
   );
