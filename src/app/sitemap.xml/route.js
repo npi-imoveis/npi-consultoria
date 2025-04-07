@@ -8,9 +8,17 @@ export async function GET() {
         // 1. Busque os slugs dinâmicos (do banco de dados, CMS, etc.)
         const dynamicPages = await fetchDynamicPages() || []; // Garantir que seja um array
 
-        // 2. Gere as entradas do sitemap
+        // 2. Gere as entradas do sitemap para páginas genéricas
         const sitemapEntries = dynamicPages.map((page) => ({
             url: `${baseUrl}/${page.slug}`,
+            lastModified: new Date(page.updatedAt),
+            changeFrequency: 'weekly',
+            priority: 0.7,
+        }));
+
+        // Gere entradas específicas para páginas de imóveis
+        const sitemapImoveis = dynamicPages.map((page) => ({
+            url: `${baseUrl}/imovel-${page.codigo}/${page.slug}`,
             lastModified: new Date(page.updatedAt),
             changeFrequency: 'weekly',
             priority: 0.7,
@@ -24,7 +32,7 @@ export async function GET() {
             { url: `${baseUrl}/venda-seu-imovel`, priority: 0.8 },
         ];
 
-        const sitemap = [...staticUrls, ...sitemapEntries];
+        const sitemap = [...staticUrls, ...sitemapImoveis, ...sitemapEntries];
 
         // 4. Retorne o XML formatado
         return new Response(
@@ -78,7 +86,7 @@ export async function GET() {
 
 
 async function fetchDynamicPages() {
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://npiconsultoria.com.br'
 
     try {
         const res = await fetch(`${baseUrl}/api/imoveis/slug`);
@@ -90,15 +98,16 @@ async function fetchDynamicPages() {
 
         const data = await res.json();
 
-        // A API retorna { status: 200, data: [...] } em vez de { pages: [...] }
+        // Verifica se a resposta tem o formato esperado
         if (!data || !data.data) {
             console.error('Formato de resposta inválido:', data);
             return [];
         }
 
-        // Transformar os slugs em objetos com o formato esperado
-        return data.data.map(slug => ({
-            slug,
+        // Retorna os dados já formatados com codigo e slug
+        return data.data.map(item => ({
+            codigo: item.Codigo,
+            slug: item.Slug,
             updatedAt: new Date().toISOString() // Como não temos a data de atualização, usamos a data atual
         }));
     } catch (error) {

@@ -9,18 +9,18 @@ export async function GET(request) {
 
         await connectToDatabase();
 
-        // Remover filtro e retornar apenas os slugs de todos os imóveis
-        const slugs = await Imovel.find({}, { Slug: 1, _id: 0 });
+        // Buscar Slug e Codigo de todos os imóveis
+        const imoveis = await Imovel.find({}, { Slug: 1, Codigo: 1, _id: 0 });
 
         return NextResponse.json({
             status: 200,
-            data: slugs.map(item => item.Slug),
+            data: imoveis.map(item => ({ Codigo: item.Codigo, Slug: item.Slug })),
         });
     } catch (error) {
-        console.error("Erro ao buscar slugs de imóveis:", error);
+        console.error("Erro ao buscar dados de imóveis:", error);
         return NextResponse.json(
             {
-                message: "Erro ao buscar slugs de imóveis",
+                message: "Erro ao buscar dados de imóveis",
                 error: error instanceof Error ? error.message : "Erro desconhecido",
             },
             { status: 500 }
