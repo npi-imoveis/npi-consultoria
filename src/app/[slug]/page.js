@@ -100,11 +100,19 @@ export default function CondominioPage() {
         setCondominio(response?.data || {});
         setImoveisRelacionados(response?.imoveisRelacionados || []);
       } catch (err) {
-        console.error("Error fetching condominio data:", err);
-        setError({
-          statusCode: 500,
-          message: "Erro ao carregar dados do condomínio"
-        });
+        // Evitar logs de erros desnecessários para erros 404
+        if (err.response?.status === 404) {
+          setError({
+            statusCode: 404,
+            message: "Condomínio não encontrado"
+          });
+        } else {
+          console.error("Error fetching condominio data:", err);
+          setError({
+            statusCode: err.response?.status || 500,
+            message: "Erro ao carregar dados do condomínio"
+          });
+        }
       } finally {
         setLoading(false);
       }

@@ -3,21 +3,14 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Header } from "./components/ui/header";
-import { Footer } from "./components/ui/footer";
 
 export default function Error({ error, reset }) {
-    useEffect(() => {
-        // Opcionalmente, log do erro para análise
-        console.error("Erro na aplicação:", error);
-    }, [error]);
+
 
     // Se for um erro 404, exibimos a mesma interface da página 404
     if (error?.statusCode === 404 || error?.message?.includes("not found")) {
         return (
             <div className="flex flex-col min-h-screen">
-
-
                 <main className="flex-grow flex items-center justify-center bg-zinc-100 min-h-[700px]">
                     <div className="container mx-auto px-4 py-20 flex flex-col items-center text-center">
 
@@ -46,8 +39,6 @@ export default function Error({ error, reset }) {
                         </div>
                     </div>
                 </main>
-
-
             </div>
         );
     }
@@ -55,8 +46,6 @@ export default function Error({ error, reset }) {
     // Para outros tipos de erro, mostramos um erro genérico com opção de tentar novamente
     return (
         <div className="flex flex-col min-h-screen">
-            <Header effect={false} />
-
             <main className="flex-grow flex items-center justify-center bg-zinc-100 min-h-[700px]">
                 <div className="container mx-auto px-4 py-20 flex flex-col items-center text-center">
 
@@ -85,8 +74,6 @@ export default function Error({ error, reset }) {
                     </div>
                 </div>
             </main>
-
-            <Footer />
         </div>
     );
 }

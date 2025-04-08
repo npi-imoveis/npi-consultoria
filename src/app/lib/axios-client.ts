@@ -21,8 +21,14 @@ axiosClient.interceptors.response.use(
     if (error.code === 'ERR_NETWORK') {
       console.error('Erro de conectividade de rede:', error.message);
     } else if (error.response) {
-      console.error(`Erro de resposta HTTP [${error.response.status}]:`, 
-        error.response.data?.error || error.response.statusText);
+      // Tratar erros 404 como informação, não como erro
+      if (error.response.status === 404) {
+        console.info(`Recurso não encontrado [404]:`, 
+          error.response.data?.error || error.response.statusText);
+      } else {
+        console.error(`Erro de resposta HTTP [${error.response.status}]:`, 
+          error.response.data?.error || error.response.statusText);
+      }
     } else if (error.request) {
       console.error('Erro de solicitação (sem resposta):', error.message);
     } else {

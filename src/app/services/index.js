@@ -421,6 +421,16 @@ export async function getCondominioPorSlug(slug) {
       message: "Condomínio não encontrado"
     };
   } catch (error) {
+    // Para erros 404, não exibimos como erro no console, pois é um caso esperado
+    if (error.response?.status === 404) {
+      return {
+        data: null,
+        statusCode: 404,
+        message: "Condomínio não encontrado"
+      };
+    }
+
+    // Para outros erros, mantemos o log
     console.error("Erro ao buscar condomínio por slug:", error);
     return {
       data: null,
