@@ -16,7 +16,7 @@ export default function Error({ error, reset }) {
     if (error?.statusCode === 404 || error?.message?.includes("not found")) {
         return (
             <div className="flex flex-col min-h-screen">
-                <Header effect={false} />
+
 
                 <main className="flex-grow flex items-center justify-center bg-zinc-100 min-h-[700px]">
                     <div className="container mx-auto px-4 py-20 flex flex-col items-center text-center">
@@ -47,7 +47,7 @@ export default function Error({ error, reset }) {
                     </div>
                 </main>
 
-                <Footer />
+
             </div>
         );
     }
