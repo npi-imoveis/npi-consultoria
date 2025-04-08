@@ -246,6 +246,8 @@ export default function Imovel() {
     };
   }, [imovel]); // Reconfigurar quando o imóvel mudar
 
+  console.log("Detalhes deste imóvel: ", imovel);
+
   // Mostrar indicador de carregamento
   if (loading) {
     return (

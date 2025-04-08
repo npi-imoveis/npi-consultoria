@@ -15,11 +15,40 @@ export default function EditarImovel({ params }) {
 
   const [imovel, setImovel] = useState(null);
   const [formData, setFormData] = useState({});
+  const [displayValues, setDisplayValues] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  // Função para formatar valores monetários
+  const formatarParaReal = (valor) => {
+    if (valor === null || valor === undefined || valor === "") return "";
+
+    // Remove qualquer caractere não numérico
+    const apenasNumeros = String(valor).replace(/\D/g, "");
+
+    // Converte para número e formata
+    try {
+      const numero = parseInt(apenasNumeros, 10);
+      return numero.toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      });
+    } catch (e) {
+      console.error("Erro ao formatar valor:", e);
+      return String(valor);
+    }
+  };
+
+  // Função para extrair somente os números (remove formatação)
+  const extrairNumeros = (valorFormatado) => {
+    if (!valorFormatado) return "";
+    return valorFormatado.replace(/\D/g, "");
+  };
 
   // Carregar dados do imóvel usando o Codigo
   useEffect(() => {
@@ -31,6 +60,15 @@ export default function EditarImovel({ params }) {
           const imovelData = response.data;
           setImovel(imovelData);
           setFormData(imovelData);
+
+          // Inicializa os valores de exibição formatados
+          const valoresFormatados = {
+            ValorVenda: formatarParaReal(imovelData.ValorVenda),
+            ValorAluguelSite: formatarParaReal(imovelData.ValorAluguelSite),
+            ValorCondominio: formatarParaReal(imovelData.ValorCondominio),
+            ValorIptu: formatarParaReal(imovelData.ValorIptu)
+          };
+          setDisplayValues(valoresFormatados);
         } else {
           setError("Imóvel não encontrado");
         }
@@ -51,8 +89,23 @@ export default function EditarImovel({ params }) {
   const handleChange = (e) => {
     const { name, value } = e.target;
 
+    // Tratamento especial para campos monetários
+    if (["ValorVenda", "ValorAluguelSite", "ValorCondominio", "ValorIptu"].includes(name)) {
+      // Armazena o valor não formatado no formData
+      const valorNumerico = extrairNumeros(value);
+      setFormData(prevData => ({
+        ...prevData,
+        [name]: valorNumerico
+      }));
+
+      // Atualiza o valor formatado para exibição
+      setDisplayValues(prevValues => ({
+        ...prevValues,
+        [name]: formatarParaReal(valorNumerico)
+      }));
+    }
     // Tratamento especial para o campo de vídeo
-    if (name === "Video.1.Video") {
+    else if (name === "Video.1.Video") {
       setFormData((prevData) => ({
         ...prevData,
         Video: {
@@ -217,11 +270,52 @@ export default function EditarImovel({ params }) {
         { name: "Empreendimento", label: "Empreendimento", type: "text" },
         { name: "TituloSite", label: "Título para o Site", type: "text" },
         { name: "Categoria", label: "Categoria", type: "text" },
-        { name: "Situacao", label: "Situação", type: "text" },
-        { name: "Status", label: "Status", type: "text" },
+        {
+          name: "Situacao",
+          label: "Situação",
+          type: "select",
+          options: [
+            { value: "EM CONSTRUÇÃO", label: "EM CONSTRUÇÃO" },
+            { value: "LANÇAMENTO", label: "LANÇAMENTO" },
+            { value: "PRÉ-LANÇAMENTO", label: "PRÉ-LANÇAMENTO" },
+            { value: "PRONTO NOVO", label: "PRONTO NOVO" },
+            { value: "PRONTO USADO", label: "PRONTO USADO" }
+          ]
+        },
+        {
+          name: "Status",
+          label: "Status",
+          type: "select",
+          options: [
+            { value: "LOCAÇÃO", label: "LOCAÇÃO" },
+            { value: "LOCADO", label: "LOCADO" },
+            { value: "PENDENTE", label: "PENDENTE" },
+            { value: "SUSPENSO", label: "SUSPENSO" },
+            { value: "VENDA", label: "VENDA" },
+            { value: "VENDA E LOCAÇÃO", label: "VENDA E LOCAÇÃO" },
+            { value: "VENDIDO", label: "VENDIDO" }
+          ]
+        },
         { name: "Slug", label: "Slug", type: "text" },
-        { name: "Destacado", label: "Destaque (Sim/Não)", type: "text" },
-        { name: "Condominio", label: "É Condomínio? (Sim/Não)", type: "text" },
+        {
+          name: "Destacado",
+          label: "Destaque (Sim/Não)",
+          type: "select",
+          options: [
+            { value: "Sim", label: "Sim" },
+            { value: "Não", label: "Não" }
+          ]
+
+        },
+        {
+          name: "Condominio",
+          label: "É Condomínio? (Sim/Não)",
+          type: "select",
+          options: [
+            { value: "Sim", label: "Sim" },
+            { value: "Não", label: "Não" }
+          ]
+        },
       ],
     },
     {
@@ -254,10 +348,10 @@ export default function EditarImovel({ params }) {
     {
       title: "Valores",
       fields: [
-        { name: "ValorVenda", label: "Valor de Venda (R$)", type: "text" },
-        { name: "ValorAluguelSite", label: "Valor de Aluguel (R$)", type: "text" },
-        { name: "ValorCondominio", label: "Valor do Condomínio (R$)", type: "text" },
-        { name: "ValorIptu", label: "Valor do IPTU (R$)", type: "text" },
+        { name: "ValorVenda", label: "Valor de Venda (R$)", type: "text", isMonetary: true },
+        { name: "ValorAluguelSite", label: "Valor de Aluguel (R$)", type: "text", isMonetary: true },
+        { name: "ValorCondominio", label: "Valor do Condomínio (R$)", type: "text", isMonetary: true },
+        { name: "ValorIptu", label: "Valor do IPTU (R$)", type: "text", isMonetary: true },
       ],
     },
     {
@@ -458,6 +552,31 @@ export default function EditarImovel({ params }) {
                               onChange={handleChange}
                               rows={4}
                               className="border-2 px-5 py-2 text-zinc-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
+                            />
+                          ) : field.type === "select" ? (
+                            <select
+                              id={field.name}
+                              name={field.name}
+                              value={formData[field.name] || ""}
+                              onChange={handleChange}
+                              className="border-2 px-5 py-2 text-zinc-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
+                            >
+                              <option value="">Selecione uma opção</option>
+                              {field.options.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                  {option.label}
+                                </option>
+                              ))}
+                            </select>
+                          ) : field.isMonetary ? (
+                            <input
+                              type="text"
+                              id={field.name}
+                              name={field.name}
+                              value={displayValues[field.name] || ""}
+                              onChange={handleChange}
+                              className="border-2 px-5 py-2 text-zinc-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
+                              placeholder="R$ 0"
                             />
                           ) : (
                             <input

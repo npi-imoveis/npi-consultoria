@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getCondominios } from "@/app/services";
+import { getImovelDestacado } from "@/app/services";
 import AuthCheck from "../components/auth-check";
 import { StarIcon } from "@heroicons/react/24/solid";
 import { StarIcon as StarOutlineIcon } from "@heroicons/react/24/outline";
+import { TrashIcon } from "lucide-react";
 
 export default function CondominiosDestacados() {
   const [condominios, setCondominios] = useState([]);
@@ -16,15 +17,14 @@ export default function CondominiosDestacados() {
     const fetchCondominios = async () => {
       setIsLoading(true);
       try {
-        const response = await getCondominios();
+        const response = await getImovelDestacado();
         if (response && response.data) {
           setCondominios(response.data);
 
-          // Identificar quais são destacados (simulação)
-          // Em uma implementação real, você buscaria isso da API
+          // Filtrar apenas os condominios com Destacado = "Sim"
           const destaques = response.data
-            .filter((condominio, index) => index % 3 === 0) // Simular destaque de alguns condomínios
-            .map((condominio) => condominio._id || condominio.id || condominio.Codigo);
+            .filter(condominio => condominio.Destacado === "Sim")
+            .map(condominio => condominio._id || condominio.id || condominio.Codigo);
 
           setDestacados(destaques);
         }
@@ -49,22 +49,32 @@ export default function CondominiosDestacados() {
     });
 
     // Em uma implementação real, você enviaria uma requisição para a API
+    // para atualizar o status de destaque do condomínio
     console.log(`Alternando destaque do condomínio ${id}`);
   };
 
   // Salvar as alterações
-  const salvarDestaques = () => {
+  const salvarDestaques = async () => {
     // Em uma implementação real, você enviaria os dados para a API
-    alert(`Condomínios destacados salvos: ${destacados.join(", ")}`);
+    try {
+      // Aqui você implementaria a chamada à API para atualizar os destaques
+      // Por exemplo:
+      // await updateCondominiuoDestaques(destacados);
+      alert(`Condomínios destacados atualizados com sucesso!`);
+      console.log("IDs dos condomínios destacados:", destacados);
+    } catch (error) {
+      console.error("Erro ao salvar destaques:", error);
+      alert("Ocorreu um erro ao salvar os destaques");
+    }
   };
 
   return (
     <AuthCheck>
       <div className="max-w-7xl mx-auto text-xs">
         <div className="mb-8">
-          <h1 className="text-xl font-bold text-gray-900 mb-4">Condomínios Destacados</h1>
+          <h1 className="text-xl font-bold text-gray-900 mb-4">Imóveis e Condomínios Destacados</h1>
           <p className="text-gray-600 mb-6">
-            Selecione os condomínios que deseja destacar na página de condomínios do site.
+            Gerencie os imóveis e condomínios que estão marcados como destacados no site.
           </p>
 
           {isLoading ? (
@@ -84,17 +94,16 @@ export default function CondominiosDestacados() {
                     return (
                       <div
                         key={id}
-                        className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow ${
-                          isDestacado ? "ring-2 ring-yellow-400" : ""
-                        }`}
+                        className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow ${isDestacado ? "ring-2 ring-yellow-400" : ""
+                          }`}
                       >
                         <div className="relative">
                           {/* Imagem do condominio (placeholder se não existir) */}
                           <div className="h-48 bg-gray-300 flex items-center justify-center">
-                            {condominio.FotoDestaque ? (
+                            {condominio.Foto[0] ? (
                               <img
-                                src={condominio.FotoDestaque}
-                                alt={condominio.Nome || condominio.Titulo || "Condomínio"}
+                                src={condominio.Foto[0].Foto}
+                                alt={condominio.Empreendimento}
                                 className="w-full h-full object-cover"
                               />
                             ) : (
@@ -109,27 +118,24 @@ export default function CondominiosDestacados() {
                             title={isDestacado ? "Remover destaque" : "Adicionar destaque"}
                           >
                             {isDestacado ? (
-                              <StarIcon className="h-5 w-5 text-yellow-500" />
+                              <TrashIcon className="h-5 w-5 text-red-500" />
                             ) : (
-                              <StarOutlineIcon className="h-5 w-5 text-gray-400 hover:text-yellow-500" />
+                              <TrashIcon className="h-5 w-5 text-gray-300 hover:text-yellow-500" />
                             )}
                           </button>
                         </div>
 
                         <div className="p-4">
-                          <h3 className="font-semibold text-gray-900 mb-1">
-                            {condominio.Nome || condominio.Titulo || "Condomínio"}
+                          <span>Codigo: {condominio.Codigo}</span>
+                          <h3 className="font-semibold text-sm mb-1">
+                            {condominio.Empreendimento || "Condomínio"}
                           </h3>
                           <p className="text-gray-600 mb-2">
-                            {condominio.Cidade ||
-                              condominio.Localizacao ||
-                              "Localização não informada"}
+                            {condominio.BairroComercial}, {condominio.Cidade}
                           </p>
-                          <p className="text-gray-500 line-clamp-2">
-                            {condominio.Descricao ||
-                              condominio.Detalhes ||
-                              "Sem descrição disponível"}
-                          </p>
+                          <span className="text-lg  font-bold text-black line-clamp-2">
+                            {condominio.ValorAntigo}
+                          </span>
                         </div>
                       </div>
                     );

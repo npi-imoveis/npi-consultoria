@@ -4,11 +4,12 @@ import { Button } from "@/app/components/ui/button";
 import { useRef, useState, useEffect } from "react";
 import dynamic from 'next/dynamic';
 import { getCondominioPorSlug } from "@/app/services";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { formatterValue } from "../utils/formatter-value";
 import StructuredData from "@/app/components/structured-data";
 import { Share } from "../components/ui/share";
 import { PropertyTableOwner } from "./componentes/property-table-owner";
+import Error from '../error';
 
 // Importações dinâmicas para componentes grandes ou abaixo da dobra
 const CondominioGallery = dynamic(() => import('./componentes/condominio-gallery'), {
@@ -62,6 +63,7 @@ const formatarHtml = (htmlString) => {
 
 export default function CondominioPage() {
   const params = useParams();
+  const router = useRouter();
   const slug = params.slug;
 
   const [condominio, setCondominio] = useState({});
@@ -75,11 +77,34 @@ export default function CondominioPage() {
       try {
         setLoading(true);
         const response = await getCondominioPorSlug(slug);
+
+        // Verificar se a resposta contém um erro ou o condomínio não foi encontrado
+        if (response?.statusCode === 404 || !response?.data) {
+          // Definir um erro 404 para ser tratado pelo componente Error
+          setError({
+            statusCode: 404,
+            message: response?.message || "Condomínio não encontrado"
+          });
+          return;
+        }
+
+        // Verificar se há algum outro erro
+        if (response?.statusCode && response.statusCode !== 200) {
+          setError({
+            statusCode: response.statusCode,
+            message: response.message || "Erro ao carregar dados do condomínio"
+          });
+          return;
+        }
+
         setCondominio(response?.data || {});
         setImoveisRelacionados(response?.imoveisRelacionados || []);
       } catch (err) {
         console.error("Error fetching condominio data:", err);
-        setError("Erro ao carregar dados do condomínio");
+        setError({
+          statusCode: 500,
+          message: "Erro ao carregar dados do condomínio"
+        });
       } finally {
         setLoading(false);
       }
@@ -259,21 +284,15 @@ export default function CondominioPage() {
     );
   }
 
-  // Se houver erro, mostrar mensagem
+  // Se houver erro, renderizar o componente Error
   if (error) {
-    return (
-      <section className="w-full bg-zinc-100 pb-10 pt-24">
-        <div className="container mx-auto">
-          <div className="bg-white p-8 rounded-lg">
-            <h3 className="text-xl font-bold mb-4">Erro ao carregar dados</h3>
-            <p>{error}</p>
-          </div>
-        </div>
-      </section>
-    );
+    return <Error error={error} reset={() => router.refresh()} />;
   }
 
-  console.log("Detalhes Condominio", condominio);
+  // Verificar se os dados do condomínio são válidos
+  if (!condominio || !condominio.Empreendimento) {
+    return <Error error={{ statusCode: 404, message: "Condomínio não encontrado" }} reset={() => router.refresh()} />;
+  }
 
   return (
     <section className="w-full bg-zinc-100 pb-10">

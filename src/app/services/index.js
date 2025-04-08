@@ -392,9 +392,41 @@ export async function getCondominiosPorImovel(id) {
 export async function getCondominioPorSlug(slug) {
   try {
     const response = await axiosClient.get(`/condominios/slug?slug=${slug}`);
-    return response.data;
+
+    // Check different response data structures and handle each case
+    if (response?.data) {
+      // Case 1: Data directly in data object
+      if (response.data.Empreendimento) {
+        return {
+          data: response.data,
+          imoveisRelacionados: response.data.imoveisRelacionados || [],
+          statusCode: 200
+        };
+      }
+
+      // Case 2: Data in data.data object
+      if (response.data.data && Object.keys(response.data.data).length > 0) {
+        return {
+          data: response.data.data,
+          imoveisRelacionados: response.data.imoveisRelacionados || [],
+          statusCode: 200
+        };
+      }
+    }
+
+    // If we reach here, no valid data was found
+    return {
+      data: null,
+      statusCode: 404,
+      message: "Condomínio não encontrado"
+    };
   } catch (error) {
     console.error("Erro ao buscar condomínio por slug:", error);
+    return {
+      data: null,
+      statusCode: error.response?.status || 500,
+      message: error.response?.data?.message || "Erro ao buscar condomínio"
+    };
   }
 }
 

@@ -34,15 +34,11 @@ export default function Sidebar() {
       icon: BuildingOfficeIcon,
     },
     {
-      name: "Imóveis Destacados",
-      href: "/admin/imoveis-destacados",
+      name: "Destaques",
+      href: "/admin/destacados",
       icon: StarIcon,
     },
-    {
-      name: "Condomínios Destacados",
-      href: "/admin/condominios-destacados",
-      icon: BuildingLibraryIcon,
-    },
+
     {
       name: "Gerenciar Site",
       href: "/admin/gerenciar-site",

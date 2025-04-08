@@ -66,10 +66,45 @@ export default function CadastrarImovel() {
         Foto: {}
     });
 
+    const [displayValues, setDisplayValues] = useState({
+        ValorVenda: "",
+        ValorAluguelSite: "",
+        ValorCondominio: "",
+        ValorIptu: ""
+    });
+
     const [isSaving, setIsSaving] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
     const fileInputRef = useRef(null);
+
+    // Função para formatar valores monetários
+    const formatarParaReal = (valor) => {
+        if (valor === null || valor === undefined || valor === "") return "";
+
+        // Remove qualquer caractere não numérico
+        const apenasNumeros = String(valor).replace(/\D/g, "");
+
+        // Converte para número e formata
+        try {
+            const numero = parseInt(apenasNumeros, 10);
+            return numero.toLocaleString("pt-BR", {
+                style: "currency",
+                currency: "BRL",
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+            });
+        } catch (e) {
+            console.error("Erro ao formatar valor:", e);
+            return String(valor);
+        }
+    };
+
+    // Função para extrair somente os números (remove formatação)
+    const extrairNumeros = (valorFormatado) => {
+        if (!valorFormatado) return "";
+        return valorFormatado.replace(/\D/g, "");
+    };
 
     // Função para buscar endereço pelo CEP
     const fetchAddressByCep = async (cep) => {
@@ -104,8 +139,23 @@ export default function CadastrarImovel() {
     const handleChange = (e) => {
         const { name, value } = e.target;
 
+        // Tratamento especial para campos monetários
+        if (["ValorVenda", "ValorAluguelSite", "ValorCondominio", "ValorIptu"].includes(name)) {
+            // Armazena o valor não formatado no formData
+            const valorNumerico = extrairNumeros(value);
+            setFormData(prevData => ({
+                ...prevData,
+                [name]: valorNumerico
+            }));
+
+            // Atualiza o valor formatado para exibição
+            setDisplayValues(prevValues => ({
+                ...prevValues,
+                [name]: formatarParaReal(valorNumerico)
+            }));
+        }
         // Tratamento especial para o campo de vídeo
-        if (name === "Video.1.Video") {
+        else if (name === "Video.1.Video") {
             setFormData((prevData) => ({
                 ...prevData,
                 Video: {
@@ -476,10 +526,10 @@ export default function CadastrarImovel() {
         {
             title: "Valores",
             fields: [
-                { name: "ValorVenda", label: "Valor de Venda (R$)", type: "text" },
-                { name: "ValorAluguelSite", label: "Valor de Aluguel (R$)", type: "text" },
-                { name: "ValorCondominio", label: "Valor do Condomínio (R$)", type: "text" },
-                { name: "ValorIptu", label: "Valor do IPTU (R$)", type: "text" },
+                { name: "ValorVenda", label: "Valor de Venda (R$)", type: "text", isMonetary: true },
+                { name: "ValorAluguelSite", label: "Valor de Aluguel (R$)", type: "text", isMonetary: true },
+                { name: "ValorCondominio", label: "Valor do Condomínio (R$)", type: "text", isMonetary: true },
+                { name: "ValorIptu", label: "Valor do IPTU (R$)", type: "text", isMonetary: true },
             ],
         },
         {
@@ -605,6 +655,16 @@ export default function CadastrarImovel() {
                                                             </option>
                                                         ))}
                                                     </select>
+                                                ) : field.isMonetary ? (
+                                                    <input
+                                                        type="text"
+                                                        id={field.name}
+                                                        name={field.name}
+                                                        value={displayValues[field.name] || ""}
+                                                        onChange={handleChange}
+                                                        className="border-2 px-5 py-2 text-zinc-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
+                                                        placeholder="R$ 0"
+                                                    />
                                                 ) : (
                                                     <input
                                                         type={field.type}

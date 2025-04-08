@@ -218,8 +218,31 @@ export default function EditarImovel({ params }) {
                 { name: "Empreendimento", label: "Empreendimento", type: "text" },
                 { name: "TituloSite", label: "Título para o Site", type: "text" },
                 { name: "Categoria", label: "Categoria", type: "text" },
-                { name: "Situacao", label: "Situação", type: "text" },
-                { name: "Status", label: "Status", type: "text" },
+                {
+                    name: "Situacao",
+                    label: "Situação",
+                    type: "select",
+                    options: [
+                        { value: "EM CONSTRUÇÃO", label: "EM CONSTRUÇÃO" },
+                        { value: "LANÇAMENTO", label: "LANÇAMENTO" },
+                        { value: "PRÉ-LANÇAMENTO", label: "PRÉ-LANÇAMENTO" },
+                        { value: "PRONTO NOVO", label: "PRONTO NOVO" },
+                        { value: "PRONTO USADO", label: "PRONTO USADO" }
+                    ]
+                },
+                {
+                    name: "Status",
+                    label: "Status",
+                    type: "select",
+                    options: [
+                        { value: "LOCAÇÃO", label: "LOCAÇÃO" },
+                        { value: "LOCADO", label: "LOCADO" },
+                        { value: "PENDENTE", label: "PENDENTE" },
+                        { value: "SUSPENSO", label: "SUSPENSO" },
+                        { value: "VENDA E LOCAÇÃO", label: "VENDA E LOCAÇÃO" },
+                        { value: "VENDIDO", label: "VENDIDO" }
+                    ]
+                },
                 { name: "Slug", label: "Slug", type: "text" },
                 { name: "Destaque", label: "Destaque", type: "text" },
                 { name: "Condominio", label: "É Condomínio? (Sim/Não)", type: "text" },
@@ -461,6 +484,51 @@ export default function EditarImovel({ params }) {
                                                             rows={4}
                                                             className="border-2 px-5 py-2 text-zinc-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
                                                         />
+                                                    ) : field.name === "Situacao" ? (
+                                                        <select
+                                                            id="Situacao"
+                                                            name="Situacao"
+                                                            value={formData["Situacao"] || ""}
+                                                            onChange={handleChange}
+                                                            className="border-2 px-5 py-2 text-zinc-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
+                                                        >
+                                                            <option value="">Selecione uma opção</option>
+                                                            {field.options.map((option) => (
+                                                                <option key={option.value} value={option.value}>
+                                                                    {option.label}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    ) : field.name === "Status" ? (
+                                                        <select
+                                                            id="Status"
+                                                            name="Status"
+                                                            value={formData["Status"] || ""}
+                                                            onChange={handleChange}
+                                                            className="border-2 px-5 py-2 text-zinc-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
+                                                        >
+                                                            <option value="">Selecione uma opção</option>
+                                                            {field.options.map((option) => (
+                                                                <option key={option.value} value={option.value}>
+                                                                    {option.label}
+                                                                </option>
+                                                            ))}
+                                                        </select>
+                                                    ) : field.type === "select" ? (
+                                                        <select
+                                                            id={field.name}
+                                                            name={field.name}
+                                                            value={formData[field.name] || ""}
+                                                            onChange={handleChange}
+                                                            className="border-2 px-5 py-2 text-zinc-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
+                                                        >
+                                                            <option value="">Selecione uma opção</option>
+                                                            {field.options.map((option) => (
+                                                                <option key={option.value} value={option.value}>
+                                                                    {option.label}
+                                                                </option>
+                                                            ))}
+                                                        </select>
                                                     ) : (
                                                         <input
                                                             type={field.type}
