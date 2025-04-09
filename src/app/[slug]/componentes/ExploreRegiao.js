@@ -37,6 +37,7 @@ export default function ExploreRegiao({ condominio, currentUrl }) {
                                 fill
                                 className="object-cover"
                                 priority
+                                unoptimized
                             />
                         </div>
                     ) : (

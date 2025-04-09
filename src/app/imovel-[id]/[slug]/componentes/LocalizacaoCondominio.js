@@ -37,6 +37,7 @@ export default function LocalizacaoCondominio({ imovel }) {
                             fill
                             className="object-cover"
                             priority
+                            unoptimized
                         />
 
                     </div>
