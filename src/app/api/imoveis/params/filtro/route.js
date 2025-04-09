@@ -52,8 +52,11 @@ export async function GET(request) {
 
     // Construir o objeto de filtro
     const filtro = {
-      // Adicionar filtro para excluir imóveis com ValorAntigo igual a "0" ou vazio
-      ValorAntigo: { $nin: ["0", ""] }
+      // Filtro para retornar imóveis que tenham ValorAntigo ou ValorAluguelSite diferentes de "0" e vazio
+      $or: [
+        { ValorAntigo: { $nin: ["0", ""] } },
+        { ValorAluguelSite: { $nin: ["0", ""] } }
+      ]
     };
 
     // Adicionar filtros básicos apenas se os parâmetros estiverem presentes

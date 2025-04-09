@@ -37,7 +37,7 @@ export default function ValoresUnidade({ imovel }) {
 
             <div className="grid grid-cols-2 gap-3 my-8">
 
-                {imovel.ValorAluguelSite !== "0" && imovel.ValorAluguelSite !== "" && imovel.Status === "LOCAÇÃO" && (
+                {imovel.ValorAluguelSite !== "0" && imovel.ValorAluguelSite !== "" && imovel.Status === "VENDA E LOCAÇÃO" && (
                     <div className="flex flex-col bg-zinc-100 p-3 rounded-lg">
                         <p className="text-sm text-zinc-600">Aluguel:</p>
                         <p className="text-black font-semibold">
