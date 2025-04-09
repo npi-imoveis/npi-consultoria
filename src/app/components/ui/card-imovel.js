@@ -62,6 +62,7 @@ export default function CardImovel({
   TipoEndereco,
   Endereco,
   ValorAntigo,
+  ValorAluguelSite,
   Numero,
   Dormitorios,
   Suites,
