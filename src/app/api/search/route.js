@@ -20,7 +20,7 @@ export async function GET(request) {
         const resultado = await Imovel.aggregate([
             {
                 $search: {
-                    index: "default",
+                    index: "default_1",
                     text: {
                         query: query,
                         path: {
