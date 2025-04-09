@@ -815,6 +815,14 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible }) {
           </div>
 
           <div className="my-3 sm:my-4">
+            <span className="block text-[10px] font-semibold text-gray-800 mb-1 mt-2">Finalidade</span>
+            <select
+              className="w-full rounded-md border border-gray-300 bg-white text-xs p-2 focus:outline-none focus:ring-1 focus:ring-black"
+            >
+              <option value="comprar">Comprar</option>
+              <option value="alugar">Alugar</option>
+            </select>
+
             <span className="block text-[10px] font-semibold text-gray-800 mb-1 mt-2">Tipo de imóvel</span>
             <select
               className="w-full rounded-md border border-gray-300 bg-white text-xs p-2 focus:outline-none focus:ring-1 focus:ring-black"

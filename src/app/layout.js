@@ -2,6 +2,7 @@ import { Oxanium, Michroma } from "next/font/google";
 import "./globals.css";
 import QueryProvider from "./providers/QueryClientProvider";
 import { WhatsappFloat } from "./components/ui/whatsapp";
+import { MusicPlayer } from "./components/shared/music-player";
 import { Organization, WebSite } from "./components/structured-data";
 import { Analytics } from "@vercel/analytics/react"
 import { SpeedInsights } from '@vercel/speed-insights/next';
@@ -40,6 +41,7 @@ export default function RootLayout({ children }) {
         <Organization />
         <WebSite />
         <QueryProvider>{children}</QueryProvider>
+        <MusicPlayer />
         <Analytics />
         <SpeedInsights />
         <WhatsappFloat />
