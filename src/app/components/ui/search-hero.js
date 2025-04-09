@@ -17,7 +17,7 @@ export function SearchHero() {
   };
 
   return (
-    <div className="relative w-[450px] md:w-[600px] xl:w-[950px] bg-gray-100/10 rounded-full shadow-md p-1.5 transition-all duration-150 ease-in-out hover:scale-105 hover:shadow-lg">
+    <div className="relative w-[350px] md:w-[600px] xl:w-[950px] bg-gray-100/10 rounded-full shadow-md p-1.5 transition-all duration-150 ease-in-out hover:scale-105 hover:shadow-lg">
       <form onSubmit={handleSubmit}>
         {/* Ícone de busca */}
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
