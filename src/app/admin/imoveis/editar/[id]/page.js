@@ -408,6 +408,7 @@ export default function EditarImovel({ params }) {
                           width={300}
                           height={200}
                           className="object-contain w-full h-full"
+                          unoptimized
                         />
                       ) : (
                         <PhotoIcon className="w-16 h-16 text-gray-400" />
