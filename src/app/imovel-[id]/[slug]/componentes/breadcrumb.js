@@ -13,7 +13,7 @@ export function Breadcrumb({ Categoria, Bairro, Cidade, Empreendimento, Codigo }
   ];
 
   return (
-    <nav className="text-xs text-gray-500 py-4" aria-label="Breadcrumb">
+    <nav className="text-xs text-gray-800 py-4" aria-label="Breadcrumb">
       <ol className="flex space-x-1">
         {items.map((item, index) => (
           <li key={index} className="flex items-center">

@@ -102,10 +102,28 @@ export default function Contato({ imovel, currentUrl }) {
                     .then(() => {
                         setFormState("success");
 
-                        // Redirecionamento para WhatsApp após 3 segundos
-                        setTimeout(() => {
-                            window.location.href = `https://web.whatsapp.com/send?phone=5511969152222&text=Quero saber mais sobre o ${imovel.Empreendimento}, no bairro ${imovel.BairroComercial}, disponivel no link: ${currentUrl}?`;
-                        }, 2000);
+                        // Função para detectar dispositivo móvel
+                        const isMobile = () => {
+                            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+                        };
+
+                        // Construir a mensagem
+                        const message = `Quero saber mais sobre o ${imovel.Empreendimento}, no bairro ${imovel.BairroComercial}, disponivel no link: ${currentUrl}`;
+
+                        // Escolher a URL base apropriada
+                        const baseUrl = isMobile()
+                            ? 'whatsapp://send'
+                            : 'https://web.whatsapp.com/send';
+
+                        // Construir a URL completa
+                        const whatsappUrl = `${baseUrl}?phone=5511969152222&text=${encodeURIComponent(message)}`;
+
+                        // Redirecionar para o WhatsApp
+                        if (isMobile()) {
+                            window.location.href = whatsappUrl;
+                        } else {
+                            window.open(whatsappUrl, '_blank');
+                        }
                     })
                     .catch((error) => {
                         console.error("Erro ao enviar mensagem:", error);
