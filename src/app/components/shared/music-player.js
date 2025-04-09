@@ -24,20 +24,20 @@ export function MusicPlayer() {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed bottom-5 left-5 z-[9999] bg-white/70 shadow-lg py-2 px-4 rounded-full flex items-center gap-2">
+        <div className="fixed bottom-20 right-5 z-[9999] bg-black/50 shadow-lg py-2 px-4 rounded-full flex items-center gap-2">
             {!isPlaying && (
-                <button onClick={() => play()} className="text-gray-800">
+                <button onClick={() => play()} className="text-white">
                     <Play size={18} />
                 </button>
             )}
             {isPlaying && (
-                <button onClick={() => pause()} className="text-gray-800">
+                <button onClick={() => pause()} className="text-white">
                     <Pause size={18} />
                 </button>
             )}
-            <button onClick={close} className="text-gray-800">
+            {/* <button onClick={close} className="text-white">
                 <X size={18} />
-            </button>
+            </button> */}
         </div>
     );
 };

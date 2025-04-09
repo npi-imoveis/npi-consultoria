@@ -18,6 +18,7 @@ export async function getImoveis(params = {}, page = 1, limit = 12) {
       "categoria",
       "cidade",
       "bairros",
+      "finalidade",
       "quartos",
       "banheiros",
       "vagas",

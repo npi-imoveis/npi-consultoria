@@ -327,21 +327,21 @@ export default function CondominioPage() {
               <span className="text-xs text-zinc-700 font-semibold">
                 {condominio.TipoEndereco} {condominio.Endereco}, {condominio.Numero}, {condominio.BairroComercial}, {condominio.Cidade}
               </span>
-              <div className="grid grid-cols-3 gap-3 mt-4 mb-8">
-                {condominio.valorAluguel && (
+              <div className="grid grid-cols-4 gap-3 mt-4 mb-8">
+                {condominio.ValorAluguelSite && (
                   <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
-                    <h4 className="text-zinc-600 text-xs">Aluguel a partir de</h4>
-                    <h2 className="text-black font-semibold text-[9px]">R$8.600,00</h2>
+                    <h4 className="text-zinc-600 text-[10px] font-bold">Aluguel:</h4>
+                    <h2 className="text-black font-semibold text-[10px]">R${" "}{condominio.ValorAluguelSite}</h2>
                   </div>
                 )}
 
                 <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
-                  <h4 className="text-zinc-600 text-xs">Venda a partir:</h4>
+                  <h4 className="text-zinc-600 text-[10px] font-bold">Venda:</h4>
                   <h2 className="text-black font-semibold text-[10px]">R${" "}{condominio.ValorAntigo}</h2>
                 </div>
                 {condominio.ValorCondominio && (
                   <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
-                    <h4 className="text-zinc-600 text-xs">Condomínio:</h4>
+                    <h4 className="text-zinc-600 text-[10px] font-bold">Condomínio:</h4>
                     <h2 className="text-black font-semibold text-[10px]">
                       {/* formatterValue foi importado anteriormente mas não é usado aqui */}
                       {formatterValue(condominio.ValorCondominio)}
@@ -350,7 +350,7 @@ export default function CondominioPage() {
                 )}
                 {condominio.ValorIptu && (
                   <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
-                    <h4 className="text-zinc-600 text-xs">IPTU:</h4>
+                    <h4 className="text-zinc-600 text-[10px] font-bold">IPTU:</h4>
                     <h2 className="text-black font-semibold text-[10px]">
                       {/* formatterValue foi importado anteriormente mas não é usado aqui */}
                       {formatterValue(condominio.ValorIptu)}

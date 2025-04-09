@@ -10,6 +10,7 @@ export async function GET(request) {
   const cidade = url.searchParams.get("cidade");
   // Obter todos os bairros da query (pode ter múltiplos com o mesmo nome)
   const bairros = url.searchParams.getAll("bairros");
+  const finalidade = url.searchParams.get("finalidade");
   const quartos = url.searchParams.get("quartos");
   const banheiros = url.searchParams.get("banheiros");
   const vagas = url.searchParams.get("vagas");
@@ -28,6 +29,7 @@ export async function GET(request) {
     categoria,
     cidade,
     bairros,
+    finalidade,
     quartos,
     banheiros,
     vagas,
@@ -57,6 +59,16 @@ export async function GET(request) {
     // Adicionar filtros básicos apenas se os parâmetros estiverem presentes
     if (categoria) filtro.Categoria = categoria;
     if (cidade) filtro.Cidade = cidade;
+
+    // Adicionar filtro de finalidade - agora obrigatório
+    if (!finalidade) {
+      return NextResponse.json({
+        status: 400,
+        error: "Parâmetro 'finalidade' é obrigatório",
+      });
+    }
+
+    filtro["FinalidadeStatus." + finalidade] = true;
 
     // Tratamento específico para os bairros
     if (bairros && bairros.length > 0) {

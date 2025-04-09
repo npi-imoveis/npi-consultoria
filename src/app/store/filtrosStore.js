@@ -7,6 +7,7 @@ const useFiltersStore = create((set) => ({
   bairros: [],
 
   // Valores selecionados pelo usuário
+  finalidade: "", // Default value
   categoriaSelecionada: "",
   cidadeSelecionada: "",
   bairrosSelecionados: [],
@@ -64,6 +65,7 @@ const useFiltersStore = create((set) => ({
   // Função para limpar todos os filtros
   limparFiltros: () =>
     set({
+      finalidade: "", // Reset to default value
       categoriaSelecionada: "",
       cidadeSelecionada: "",
       bairrosSelecionados: [],

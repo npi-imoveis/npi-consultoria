@@ -156,6 +156,7 @@ export default function BuscaImoveis() {
         console.log("Valores no store - bairrosSelecionados:", filtrosAtuais.bairrosSelecionados);
 
         params = {
+          finalidade: filtrosAtuais.finalidade,
           categoria: filtrosAtuais.categoriaSelecionada,
           cidade: filtrosAtuais.cidadeSelecionada,
           quartos: filtrosAtuais.quartos,
@@ -164,6 +165,7 @@ export default function BuscaImoveis() {
         };
 
         // Log detalhado dos filtros selecionados
+        console.log("Filtros aplicados - Finalidade:", filtrosAtuais.finalidade);
         console.log("Filtros aplicados - Categoria:", filtrosAtuais.categoriaSelecionada);
         console.log("Filtros aplicados - Cidade:", filtrosAtuais.cidadeSelecionada);
 

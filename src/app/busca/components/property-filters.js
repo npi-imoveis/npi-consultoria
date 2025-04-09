@@ -404,6 +404,7 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible }) {
   const aplicarFiltros = useFiltersStore((state) => state.aplicarFiltros);
 
   // Estados para os valores selecionados
+  const [finalidade, setFinalidade] = useState("");
   const [categoriaSelecionada, setCategoriaSelecionada] = useState("");
   const [cidadeSelecionada, setCidadeSelecionada] = useState("");
   // Alterando para array para suportar múltipla seleção
@@ -526,6 +527,7 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible }) {
     const storeValues = useFiltersStore.getState();
 
     // Atualiza os estados locais com os valores do store
+    if (storeValues.finalidade) setFinalidade(storeValues.finalidade);
     if (storeValues.categoriaSelecionada) setCategoriaSelecionada(storeValues.categoriaSelecionada);
     if (storeValues.cidadeSelecionada) setCidadeSelecionada(storeValues.cidadeSelecionada);
     if (storeValues.bairrosSelecionados && storeValues.bairrosSelecionados.length > 0)
@@ -690,10 +692,16 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible }) {
   // Opções para os grupos de seleção
   const opcoes = [1, 2, 3, "4+"];
 
+  // Handler para finalidade
+  const handleFinalidadeChange = (e) => {
+    const novaFinalidade = e.target.value === "comprar" ? "VENDA" : "ALUGUEL";
+    setFinalidade(novaFinalidade);
+  };
+
   // Handler para aplicar os filtros
   const handleAplicarFiltros = () => {
     // Verifica se tanto a categoria quanto a cidade foram selecionadas
-    const filtrosBasicosPreenchidos = categoriaSelecionada && cidadeSelecionada;
+    const filtrosBasicosPreenchidos = categoriaSelecionada && cidadeSelecionada && finalidade;
 
     // Validação final dos valores de preço
     const precoMinFinal = precoMin !== null && precoMin > 0 ? precoMin : null;
@@ -718,6 +726,7 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible }) {
 
     const storeValues = {
       // Valores de texto (valores atuais, mesmo que não alterados)
+      finalidade,
       categoriaSelecionada,
       cidadeSelecionada,
       bairrosSelecionados: bairrosProcessados, // Usar os bairros processados
@@ -818,7 +827,10 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible }) {
             <span className="block text-[10px] font-semibold text-gray-800 mb-1 mt-2">Finalidade</span>
             <select
               className="w-full rounded-md border border-gray-300 bg-white text-xs p-2 focus:outline-none focus:ring-1 focus:ring-black"
+              value={finalidade === "VENDA" ? "comprar" : finalidade === "ALUGUEL" ? "alugar" : ""}
+              onChange={handleFinalidadeChange}
             >
+              <option value="">Selecione a finalidade</option>
               <option value="comprar">Comprar</option>
               <option value="alugar">Alugar</option>
             </select>
