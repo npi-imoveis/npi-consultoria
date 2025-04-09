@@ -54,6 +54,7 @@ export default function AdminLogin() {
             sizes="50vw"
             style={{ objectFit: "cover" }}
             priority
+            unoptimized
           />
         </div>
       </div>
