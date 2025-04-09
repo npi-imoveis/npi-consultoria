@@ -21,7 +21,7 @@ export default function ValoresUnidade({ imovel }) {
         <div className="px-6 pt-6 bg-white rounded-lg">
             <div itemScope itemType="https://schema.org/Offer">
                 <p className="text-black font-medium">Preço:</p>
-                {imovel.Status === "LOCAÇÃO" && imovel.ValorAluguelSite !== "0" && imovel.ValorAluguelSite !== null ? (
+                {imovel.Status === "LOCAÇÃO" && imovel.ValorAluguelSite !== "0" && imovel.ValorAluguelSite !== "" ? (
                     <h2 className="text-2xl font-bold mt-2" itemProp="price" content={imovel.alorAluguelSite}>
                         {"R$ " + imovel.ValorAluguelSite}
                     </h2>
@@ -37,7 +37,7 @@ export default function ValoresUnidade({ imovel }) {
 
             <div className="grid grid-cols-2 gap-3 my-8">
 
-                {imovel.ValorAluguelSite && (
+                {imovel.ValorAluguelSite !== "0" && imovel.ValorAluguelSite !== "" && imovel.Status === "LOCAÇÃO" && (
                     <div className="flex flex-col bg-zinc-100 p-3 rounded-lg">
                         <p className="text-sm text-zinc-600">Aluguel:</p>
                         <p className="text-black font-semibold">
