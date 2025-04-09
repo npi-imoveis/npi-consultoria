@@ -13,12 +13,12 @@ export function Breadcrumb({ Categoria, Bairro, Cidade, Empreendimento, Codigo }
   ];
 
   return (
-    <nav className="text-xs text-gray-800 py-4" aria-label="Breadcrumb">
+    <nav className="text-[10px] text-gray-900 font-bold py-4" aria-label="Breadcrumb">
       <ol className="flex space-x-1">
         {items.map((item, index) => (
           <li key={index} className="flex items-center">
-            {index !== 0 && <ChevronRight className="w-4 h-4 mx-1 text-gray-400" />}
-            <Link href={item.href} className="hover:underline hover:text-gray-700">
+            {index !== 0 && <ChevronRight className="w-4 h-4 mx-1 text-gray-900" />}
+            <Link href={item.href} className="hover:underline hover:text-gray-900">
               {item.name}
             </Link>
           </li>
