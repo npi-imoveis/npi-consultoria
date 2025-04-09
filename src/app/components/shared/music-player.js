@@ -24,7 +24,7 @@ export function MusicPlayer() {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed bottom-5 left-5 z-[9999] bg-white/90 shadow-lg p-2 rounded-full flex items-center gap-4">
+        <div className="fixed bottom-5 left-5 z-[9999] bg-white/90 shadow-lg py-2 px-4 rounded-full flex items-center gap-2">
             {!isPlaying && (
                 <button onClick={() => play()} className="text-gray-800">
                     <Play size={24} />
