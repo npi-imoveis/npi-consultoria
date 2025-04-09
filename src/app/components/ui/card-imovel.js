@@ -160,6 +160,7 @@ export default function CardImovel({
               Status,
               TipoEndereco,
               Endereco,
+              ValorAluguelSite,
               ValorAntigo,
               Numero,
               Dormitorios,
@@ -177,9 +178,16 @@ export default function CardImovel({
         <h2 className="text-[11px] font-semibold leading-4 break-words overflow-hidden text-zinc-600 truncate">
           {descricaoLimitada}
         </h2>
-        <h3 className="text-sm font-bold text-black mb-3 pt-2 truncate">
-          {ValorAntigo ? "R$ " + formatterMoney(ValorAntigo) : "Consultar Disponibilidade"}
-        </h3>
+        {Status === "LOCAÇÃO" && ValorAluguelSite !== "0" && ValorAluguelSite !== "" ? (
+          <h3 className="text-sm font-bold text-black mb-3 pt-2 truncate">
+            {ValorAluguelSite ? "R$ " + ValorAluguelSite : "Consultar Disponibilidade"}
+          </h3>
+        ) : (
+          <h3 className="text-sm font-bold text-black mb-3 pt-2 truncate">
+            {ValorAntigo ? "R$ " + formatterMoney(ValorAntigo) : "Consultar Disponibilidade"}
+          </h3>
+        )}
+
 
         <ul className="space-y-2 text-[10px]">
           <li className="flex items-center space-x-2 overflow-hidden">

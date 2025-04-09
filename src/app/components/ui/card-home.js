@@ -16,6 +16,7 @@ export default function CardHome({
   Foto,
   Numero,
   ValorAntigo,
+  ValorAluguelSite,
   Status,
   Situacao,
   MetragemAnt,
@@ -127,7 +128,11 @@ export default function CardHome({
 
           {/* Price and code */}
           <div className="flex justify-between items-center mt-auto pt-4">
-            <h3 className="text-base font-bold">R$ {formatterMoney(ValorAntigo)}</h3>
+            {Status === "LOCAÇÃO" && ValorAluguelSite !== "0" && ValorAluguelSite !== "" ? (
+              <h3 className="text-base font-bold">R$ {ValorAluguelSite}</h3>
+            ) : (
+              <h3 className="text-base font-bold">R$ {formatterMoney(ValorAntigo)}</h3>
+            )}
 
           </div>
         </div>
