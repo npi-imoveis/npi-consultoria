@@ -170,11 +170,11 @@ export default function Imovel() {
         { property: "og:description", content: metaDescription.content },
         { property: "og:type", content: "website" },
         { property: "og:url", content: currentUrl },
-        { property: "og:image", content: imovel.Foto && imovel.Foto.length > 0 ? imovel.Foto[0].url : "" },
-        { name: "twitter:card", content: "summary_large_image" },
+        { property: "og:image", content: imovel.Foto && imovel.Foto.length > 0 ? imovel.Foto[0].Foto : "" },
+        { name: "twitter:card", content: "og-image.png" },
         { name: "twitter:title", content: pageTitle },
         { name: "twitter:description", content: metaDescription.content },
-        { name: "twitter:image", content: imovel.Foto && imovel.Foto.length > 0 ? imovel.Foto[0].url : "" },
+        { name: "twitter:image", content: imovel.Foto && imovel.Foto.length > 0 ? imovel.Foto[0].Foto : "" },
         { name: "robots", content: "index, follow" },
         { name: "canonical", content: currentUrl }
       ];

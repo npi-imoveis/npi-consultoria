@@ -17,6 +17,7 @@ export function Share({ url, title = "Confira este imóvel!", imovel, variant = 
     try {
       if (navigator.share) {
         await navigator.share({
+
           title: title,
           url: shareUrl,
         });
