@@ -8,9 +8,11 @@ import { ArrowLeftIcon, ArrowPathIcon, PlusCircleIcon, XCircleIcon, PhotoIcon } 
 import Image from "next/image";
 import { formatterSlug } from "@/app/utils/formatter-slug";
 import { getImageUploadMetadata, uploadToS3 } from "@/app/utils/s3-upload";
+import { OpenStreetMapProvider } from 'leaflet-geosearch';
 
 export default function CadastrarImovel() {
     const router = useRouter();
+    const provider = new OpenStreetMapProvider();
 
     const [formData, setFormData] = useState({
         Codigo: "",
@@ -106,6 +108,23 @@ export default function CadastrarImovel() {
         return valorFormatado.replace(/\D/g, "");
     };
 
+    // Função para buscar coordenadas usando OpenStreetMap
+    const fetchCoordinates = async (address) => {
+        try {
+            const searchQuery = `${address.logradouro}, ${address.bairro}, ${address.localidade} - ${address.uf}, ${address.cep}, Brasil`;
+            const results = await provider.search({ query: searchQuery });
+
+            if (results && results.length > 0) {
+                const { y: lat, x: lng } = results[0];
+                return { latitude: lat, longitude: lng };
+            }
+            return null;
+        } catch (error) {
+            console.error("Erro ao buscar coordenadas:", error);
+            return null;
+        }
+    };
+
     // Função para buscar endereço pelo CEP
     const fetchAddressByCep = async (cep) => {
         // Remove caracteres não numéricos
@@ -120,12 +139,18 @@ export default function CadastrarImovel() {
             const data = await response.json();
 
             if (!data.erro) {
+                // Buscar coordenadas após obter o endereço
+                const coordinates = await fetchCoordinates(data);
+
                 setFormData(prevData => ({
                     ...prevData,
                     Endereco: data.logradouro || prevData.Endereco,
                     Bairro: data.bairro || prevData.Bairro,
+                    BairroComercial: data.bairro || prevData.Bairro, // Preenche BairroComercial com o mesmo valor do Bairro
                     Cidade: data.localidade || prevData.Cidade,
-                    UF: data.uf || prevData.UF
+                    UF: data.uf || prevData.UF,
+                    Latitude: coordinates?.latitude?.toString() || prevData.Latitude,
+                    Longitude: coordinates?.longitude?.toString() || prevData.Longitude
                 }));
             }
         } catch (error) {
@@ -561,9 +586,16 @@ export default function CadastrarImovel() {
             title: "Dados do Proprietário",
             fields: [
                 { name: "Proprietario", label: "Nome", type: "text" },
-                { name: "Telefone", label: "Telefone", type: "text" },
-                { name: "Email", label: "E-mail", type: "text" },
-                { name: "Observacao", label: "Observações Gerais", type: "textarea" },
+                { name: "TelefoneProprietario", label: "Telefone", type: "text" },
+                { name: "EmailProprietario", label: "E-mail", type: "text" },
+                { name: "UnidadeProprietario", label: "Unidade", type: "text" },
+                { name: "MetragemProprietario", label: "Metragem", type: "text" },
+                { name: "VagasProprietario", label: "Vagas", type: "text" },
+                { name: "ValorProprietario", label: "Valor", type: "text" },
+                { name: "CondominioProprietario", label: "Condominio", type: "text" },
+                { name: "IptuProprietario", label: "Iptu", type: "text" },
+                { name: "DataProprietario", label: "Data", type: "text" },
+                { name: "ObservacaoProprietario", label: "Observações Gerais", type: "textarea" },
 
             ],
         },

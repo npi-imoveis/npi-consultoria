@@ -29,13 +29,15 @@ export default function AdminImoveis() {
     setIsLoading(true);
     try {
       if (search) {
-        // Se tiver um termo de busca, buscar pelo ID específico
-        const response = await getImovelById(search);
-        if (response && response.data) {
-          setImoveis([response.data]); // Coloca o único imóvel em um array
+        // Usar o endpoint de busca com Atlas Search
+        const response = await fetch(`/api/search?q=${encodeURIComponent(search)}`);
+        const data = await response.json();
+
+        if (data && data.status === 200 && data.data) {
+          setImoveis(data.data);
           setPagination({
-            totalItems: 1,
-            totalPages: 1,
+            totalItems: data.data.length,
+            totalPages: Math.ceil(data.data.length / 20),
             currentPage: 1,
             itemsPerPage: 20,
           });
