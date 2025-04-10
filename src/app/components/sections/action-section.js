@@ -17,6 +17,7 @@ export function ActionSection() {
 
     // Definir os novos filtros para imóveis entre 4 e 10 milhões
     setFilters({
+      finalidade: "VENDA",
       precoMin: 400000000,
       precoMax: 1000000000,
       categoriaSelecionada: "Apartamento",
@@ -36,6 +37,7 @@ export function ActionSection() {
 
     // Definir os novos filtros para imóveis acima de 10 milhões
     setFilters({
+      finalidade: "VENDA",
       precoMin: 1000000000,
       categoriaSelecionada: "Apartamento",
       cidadeSelecionada: "São Paulo"
