@@ -71,6 +71,7 @@ export function SlidePartners() {
               width={150}
               height={50}
               className="object-contain"
+              unoptimized
             />
           </SwiperSlide>
         ))}

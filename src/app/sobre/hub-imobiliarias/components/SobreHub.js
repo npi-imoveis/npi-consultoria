@@ -13,6 +13,7 @@ export function SobreHub() {
               layout="fill"
               objectFit="cover"
               className="md:rounded-t-lg rounded-sm"
+              unoptimized
             />
           </div>
 
@@ -54,6 +55,7 @@ export function SobreHub() {
               layout="fill"
               objectFit="cover"
               className="md:rounded-t-lg rounded-sm"
+              unoptimized
             />
           </div>
         </div>

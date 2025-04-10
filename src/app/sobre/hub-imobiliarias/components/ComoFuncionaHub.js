@@ -11,6 +11,7 @@ export function ComoFuncionaHub() {
           layout="fill"
           objectFit="cover"
           className="opacity-50"
+          unoptimized
         />
         <div className="absolute inset-0 bg-black opacity-60"></div>
       </div>

@@ -61,6 +61,7 @@ export function ActionSection() {
               fill
               style={{ objectFit: "cover" }}
               quality={90}
+              unoptimized
             />
           </div>
 
@@ -94,6 +95,7 @@ export function ActionSection() {
               fill
               style={{ objectFit: "cover" }}
               quality={90}
+              unoptimized
             />
           </div>
 

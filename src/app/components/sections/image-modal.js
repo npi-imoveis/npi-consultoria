@@ -63,6 +63,7 @@ export default function ImageModal({
                         quality={75}
                         sizes="(max-width: 640px) 95vw, (max-width: 1024px) 80vw, 70vw"
                         className="max-w-full max-h-screen object-contain"
+                        unoptimized
                     />
 
                     <button
@@ -97,6 +98,7 @@ export default function ImageModal({
                                 sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
                                 quality={70}
                                 className="object-cover"
+                                unoptimized
                             />
                         </div>
                     ))}

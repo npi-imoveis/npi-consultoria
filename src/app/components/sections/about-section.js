@@ -36,6 +36,7 @@ export function AboutSection() {
           width={400}
           height={400}
           className="z-10 w-full max-w-[500px] sm:w-[400px] lg:w-[500px]"
+          unoptimized
         />
       </div>
     </div>

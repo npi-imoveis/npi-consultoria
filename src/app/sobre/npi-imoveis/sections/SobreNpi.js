@@ -68,6 +68,7 @@ export default function SobreNPI() {
                 layout="fill"
                 objectFit="cover"
                 className="sm:mt-5 sm:ml-5 w-full h-full rounded-3xl"
+                unoptimized
               />
             </div>
           </div>

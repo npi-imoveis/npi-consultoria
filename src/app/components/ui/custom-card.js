@@ -24,6 +24,7 @@ export default function CustomCard({
             style={{ objectFit: "cover" }}
             priority
             className="transition-transform duration-300 ease-in-out group-hover:scale-110"
+            unoptimized
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-gray-400">

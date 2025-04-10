@@ -69,6 +69,7 @@ export default function Sidebar() {
             width={150}
             height={50}
             className="mx-auto"
+            unoptimized
           />
         </div>
 

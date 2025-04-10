@@ -29,6 +29,7 @@ export default function VideoNpi() {
               width={800}
               height={450}
               className="rounded-lg shadow-lg transition-transform duration-300 group-hover:scale-105"
+              unoptimized
             />
             {/* Botão de Play */}
             <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 rounded-lg">

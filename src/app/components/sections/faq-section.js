@@ -61,8 +61,8 @@ export function FaqSection() {
                       </h4>
                       <svg
                         className={`w-6 h-6 text-gray-900 transition-transform duration-500 ${openIndex === index
-                            ? "rotate-180 text-indigo-600"
-                            : ""
+                          ? "rotate-180 text-indigo-600"
+                          : ""
                           }`}
                         viewBox="0 0 22 22"
                         fill="none"
@@ -98,6 +98,7 @@ export function FaqSection() {
 
               width={500}
               height={500}
+              unoptimized
             />
           </div>
         </div>

@@ -27,6 +27,7 @@ export function HeaderPage({ title, description, image }) {
           objectPosition="center"
           className="opacity-90"
           alt="Background"
+          unoptimized
         />
         <div className="absolute inset-0 bg-black bg-opacity-60 backdrop-blur-sm"></div>
       </div>

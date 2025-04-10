@@ -30,7 +30,7 @@ export function WhatsappFloat() {
         onClick={handleWhatsAppClick}
         className="cursor-pointer"
       >
-        <Image src="/assets/images/whatsapp.png" height={48} width={48} alt="Fale conosco pelo WhatsApp" />
+        <Image src="/assets/images/whatsapp.png" height={48} width={48} alt="Fale conosco pelo WhatsApp" unoptimized />
       </a>
     </div>
   );

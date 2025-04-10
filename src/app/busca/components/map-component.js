@@ -61,6 +61,7 @@ const ImovelPopup = ({ imovel }) => {
           width={300}
           height={150}
           className="rounded-lg w-[300px] h-[150px] object-cover"
+          unoptimized
         />
         <h1 className="font-bold text-sm mt-4">{imovel.Empreendimento}</h1>
         <p className="text-xs">

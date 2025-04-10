@@ -42,6 +42,7 @@ export function Header({ effect = true }) {
           height={100}
           width={100}
           alt="logo"
+          unoptimized
         />
       </Link>
 
