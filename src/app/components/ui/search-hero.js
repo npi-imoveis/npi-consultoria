@@ -18,7 +18,7 @@ export function SearchHero() {
   };
 
   return (
-    <div className="relative w-[400px] sm:w-[350px] md:w-[600px] xl:w-[950px] bg-gray-100/10 rounded-2xl sm:rounded-full shadow-md p-1.5 transition-all duration-150 ease-in-out hover:scale-105 hover:shadow-lg mb-20 lg:mb-0">
+    <div className="relative w-[400px] sm:w-[350px] md:w-[600px] xl:w-[950px] bg-gray-100/10 rounded-2xl sm:rounded-full  p-1.5 mb-20 lg:mb-0">
       <form onSubmit={handleSubmit} className="flex flex-col sm:block gap-2 sm:gap-0">
         {/* Ícone de busca */}
 
