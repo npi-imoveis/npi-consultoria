@@ -18,7 +18,7 @@ export function SearchHero() {
   };
 
   return (
-    <div className="relative w-[400px] sm:w-[350px] md:w-[600px] xl:w-[950px] bg-gray-100/10 rounded-2xl sm:rounded-full shadow-md p-1.5 transition-all duration-150 ease-in-out hover:scale-105 hover:shadow-lg">
+    <div className="relative w-[400px] sm:w-[350px] md:w-[600px] xl:w-[950px] bg-gray-100/10 rounded-2xl sm:rounded-full shadow-md p-1.5 transition-all duration-150 ease-in-out hover:scale-105 hover:shadow-lg mb-16 lg:mb-0">
       <form onSubmit={handleSubmit} className="flex flex-col sm:block gap-2 sm:gap-0">
         {/* Ícone de busca */}
 
@@ -26,7 +26,7 @@ export function SearchHero() {
         {/* Campo de busca */}
         <input
           type="text"
-          className="font-semibold text-[10px] md:text-sm w-full pl-10 pr-4 sm:pr-24 py-2 md:py-3 text-white bg-transparent rounded-lg focus:outline-none placeholder-gray-300"
+          className="font-semibold text-[10px] md:text-sm w-full  px-5 py-2 md:py-3 text-white bg-transparent rounded-lg focus:outline-none placeholder-gray-300"
           placeholder="Digite código, endereço, cidade ou condomínio..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
