@@ -4,7 +4,7 @@ import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import AuthCheck from "../../../components/auth-check";
 import { getImovelById, atualizarImovel, excluirImovel } from "@/app/services";
-import { ArrowLeftIcon, ArrowPathIcon, TrashIcon, PlusCircleIcon, XCircleIcon, PhotoIcon } from "@heroicons/react/24/outline";
+import { ArrowLeftIcon, ArrowPathIcon, TrashIcon, PlusCircleIcon, XCircleIcon, PhotoIcon, ArrowUpIcon, ArrowDownIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
 
 export default function EditarImovel({ params }) {
@@ -203,6 +203,54 @@ export default function EditarImovel({ params }) {
     });
   };
 
+  // Função para alterar a posição da imagem
+  const changeImagePosition = (codigo, newPosition) => {
+    console.log(`Trocando imagem ${codigo} com a posição ${newPosition}`);
+
+    setFormData(prevData => {
+      // Obter as chaves ordenadas pelo valor Ordem ou pela ordem natural
+      const keys = [...Object.keys(prevData.Foto)].sort((a, b) => {
+        const orderA = prevData.Foto[a].Ordem || [...Object.keys(prevData.Foto)].indexOf(a);
+        const orderB = prevData.Foto[b].Ordem || [...Object.keys(prevData.Foto)].indexOf(b);
+        return orderA - orderB;
+      });
+
+      // Encontrar o índice atual da imagem que queremos mover
+      const currentIndex = keys.indexOf(codigo);
+      // Índice da posição desejada (ajuste para base 0)
+      const targetIndex = newPosition - 1;
+
+      // Se a posição atual é igual à desejada, não faz nada
+      if (currentIndex === targetIndex) {
+        return prevData;
+      }
+
+      // Obtém o código da imagem que está na posição de destino
+      const targetCode = keys[targetIndex];
+
+      // Criar nova ordem
+      const newOrder = [...keys];
+
+      // Trocar as posições (mantendo o resto da ordem)
+      newOrder[currentIndex] = targetCode;
+      newOrder[targetIndex] = codigo;
+
+      // Criar novo objeto Foto com a nova ordem
+      const newFoto = {};
+      newOrder.forEach((key, idx) => {
+        newFoto[key] = {
+          ...prevData.Foto[key],
+          Ordem: idx + 1
+        };
+      });
+
+      return {
+        ...prevData,
+        Foto: newFoto
+      };
+    });
+  };
+
   // Função para salvar as alterações
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -268,7 +316,7 @@ export default function EditarImovel({ params }) {
       fields: [
         { name: "Codigo", label: "Código", type: "text" },
         { name: "Empreendimento", label: "Empreendimento", type: "text" },
-        { name: "TituloSite", label: "Título para o Site", type: "text" },
+        { name: "Construtora", label: "Construtora", type: "text" },
         { name: "Categoria", label: "Categoria", type: "text" },
         {
           name: "Situacao",
@@ -357,9 +405,8 @@ export default function EditarImovel({ params }) {
     {
       title: "Descrições",
       fields: [
-        { name: "DescricaoUnidades", label: "Descrição das Unidades", type: "textarea" },
-        { name: "DescricaoDiferenciais", label: "Descrição dos Diferenciais", type: "textarea" },
-        { name: "DestaquesDiferenciais", label: "Destaques dos Diferenciais", type: "textarea" },
+        { name: "DescricaoUnidades", label: "Descrição da Unidade", type: "textarea" },
+        { name: "DescricaoDiferenciais", label: "Sobre o Condomínio", type: "textarea" },
         { name: "DestaquesLazer", label: "Destaques de Lazer", type: "textarea" },
         { name: "DestaquesLocalizacao", label: "Destaques de Localização", type: "textarea" },
         { name: "FichaTecnica", label: "Ficha Técnica", type: "textarea" },
@@ -394,65 +441,96 @@ export default function EditarImovel({ params }) {
             </button>
           </div>
 
+          <style jsx global>{`
+            .flash-update {
+              background-color: rgba(59, 130, 246, 0.1);
+              transition: background-color 0.3s ease;
+            }
+          `}</style>
+
           {formData.Foto && Object.keys(formData.Foto).length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {Object.keys(formData.Foto).map((codigo) => {
-                const image = formData.Foto[codigo];
-                return (
-                  <div key={codigo} className="border p-4 rounded-md">
-                    <div className="relative mb-3 h-40 bg-gray-100 flex items-center justify-center overflow-hidden">
-                      {image.Foto ? (
-                        <Image
-                          src={image.Foto}
-                          alt={`Imagem ${codigo}`}
-                          width={300}
-                          height={200}
-                          className="object-contain w-full h-full"
-                          unoptimized
-                        />
-                      ) : (
-                        <PhotoIcon className="w-16 h-16 text-gray-400" />
-                      )}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 grid-fotos">
+              {[...Object.keys(formData.Foto)]
+                .sort((a, b) => {
+                  // Primeiro, verificar se a ordem existe e usá-la
+                  const orderA = formData.Foto[a].Ordem || Object.keys(formData.Foto).indexOf(a);
+                  const orderB = formData.Foto[b].Ordem || Object.keys(formData.Foto).indexOf(b);
+                  return orderA - orderB;
+                })
+                .map((codigo, index) => {
+                  const image = formData.Foto[codigo];
+                  return (
+                    <div key={codigo} className="border p-4 rounded-md">
+                      <div className="relative mb-3 h-40 bg-gray-100 flex items-center justify-center overflow-hidden">
+                        {image.Foto ? (
+                          <Image
+                            src={image.Foto}
+                            alt={`Imagem ${codigo}`}
+                            width={300}
+                            height={200}
+                            className="object-contain w-full h-full"
+                            unoptimized
+                          />
+                        ) : (
+                          <PhotoIcon className="w-16 h-16 text-gray-400" />
+                        )}
+                        <div className="absolute top-0 left-0 bg-black/70 text-white px-2 py-1 text-xs font-semibold">
+                          Posição: {index + 1}
+                        </div>
+                      </div>
+                      <div className="space-y-3">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">
+                            URL da Imagem
+                          </label>
+                          <input
+                            type="text"
+                            value={image.Foto || ""}
+                            onChange={(e) => updateImage(codigo, "Foto", e.target.value)}
+                            className="border-2 px-3 py-1.5 text-zinc-700 w-full text-sm rounded-md focus:outline-none focus:ring-black focus:border-black"
+                            placeholder="https://..."
+                          />
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <input
+                            type="checkbox"
+                            id={`destaque-${codigo}`}
+                            checked={image.Destaque === "Sim"}
+                            onChange={() => setImageAsHighlight(codigo)}
+                            className="h-4 w-4 border-gray-300 rounded text-black focus:ring-black"
+                          />
+                          <label htmlFor={`destaque-${codigo}`} className="text-sm text-gray-700">
+                            Imagem em destaque
+                          </label>
+                        </div>
+                        <div className="flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => removeImage(codigo)}
+                            className="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded-md text-red-700 hover:bg-red-50"
+                          >
+                            <XCircleIcon className="w-4 h-4 mr-1" />
+                            Remover
+                          </button>
+                        </div>
+                        <div className="flex justify-between items-center mt-2 pt-2 border-t">
+                          <span className="text-xs text-gray-500">Posição:</span>
+                          <select
+                            className="border border-gray-300 rounded text-sm px-2 py-1 focus:outline-none focus:ring-1 focus:ring-black"
+                            value={index + 1}
+                            onChange={(e) => changeImagePosition(codigo, parseInt(e.target.value, 10))}
+                          >
+                            {[...Array(Object.keys(formData.Foto).length)].map((_, i) => (
+                              <option key={i} value={i + 1}>
+                                {i + 1}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
                     </div>
-                    <div className="space-y-3">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          URL da Imagem
-                        </label>
-                        <input
-                          type="text"
-                          value={image.Foto || ""}
-                          onChange={(e) => updateImage(codigo, "Foto", e.target.value)}
-                          className="border-2 px-3 py-1.5 text-zinc-700 w-full text-sm rounded-md focus:outline-none focus:ring-black focus:border-black"
-                          placeholder="https://..."
-                        />
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          id={`destaque-${codigo}`}
-                          checked={image.Destaque === "Sim"}
-                          onChange={() => setImageAsHighlight(codigo)}
-                          className="h-4 w-4 border-gray-300 rounded text-black focus:ring-black"
-                        />
-                        <label htmlFor={`destaque-${codigo}`} className="text-sm text-gray-700">
-                          Imagem em destaque
-                        </label>
-                      </div>
-                      <div className="flex justify-end">
-                        <button
-                          type="button"
-                          onClick={() => removeImage(codigo)}
-                          className="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded-md text-red-700 hover:bg-red-50"
-                        >
-                          <XCircleIcon className="w-4 h-4 mr-1" />
-                          Remover
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
             </div>
           ) : (
             <div className="text-center py-6 bg-gray-50 rounded-md">

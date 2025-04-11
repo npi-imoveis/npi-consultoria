@@ -1,7 +1,10 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { HeaderPage } from "../components/ui/header-page";
+import Image from "next/image";
+import { getImageUploadMetadata, uploadToS3 } from "../utils/s3-upload";
+import { PhotoIcon, XCircleIcon } from "@heroicons/react/24/outline";
 
 export default function ImovelForm() {
   const [formState, setFormState] = useState("form"); // estados: "form", "loading", "success"
@@ -23,6 +26,8 @@ export default function ImovelForm() {
     valorIptu: "",
     descricao: "",
   });
+  // Estado para gerenciar as imagens temporárias
+  const [imagensTemporarias, setImagensTemporarias] = useState([]);
   const [errors, setErrors] = useState({
     nome: false,
     email: false,
@@ -39,7 +44,9 @@ export default function ImovelForm() {
     valorCondominio: false,
     valorIptu: false,
     descricao: false,
+    imagens: false,
   });
+  const fileInputRef = useRef(null);
 
   // Função para formatar número de telefone
   const formatarTelefone = (valor) => {
@@ -100,71 +107,151 @@ export default function ImovelForm() {
       valorCondominio: !formData.valorCondominio.trim(),
       valorIptu: !formData.valorIptu.trim(),
       descricao: !formData.descricao.trim(),
+      imagens: imagensTemporarias.length === 0,
     };
 
     setErrors(novosErros);
     return !Object.values(novosErros).some((erro) => erro);
   };
 
-  const handleSubmit = (e) => {
+  // Função para lidar com a adição de imagens
+  const handleAddImages = (files) => {
+    if (!files || files.length === 0) return;
+
+    // Converter FileList para array e criar URLs temporárias
+    const novasImagens = Array.from(files).map(file => ({
+      file,
+      previewUrl: URL.createObjectURL(file),
+      id: Date.now() + Math.random().toString(36).substring(2, 9),
+      isUploading: false
+    }));
+
+    setImagensTemporarias(prev => [...prev, ...novasImagens]);
+    // Limpar erro de imagens se existir
+    if (errors.imagens) {
+      setErrors(prev => ({ ...prev, imagens: false }));
+    }
+  };
+
+  // Função para remover imagem da lista
+  const removerImagem = (id) => {
+    setImagensTemporarias(prev => prev.filter(img => img.id !== id));
+  };
+
+  // Função para lidar com arquivos arrastados
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      handleAddImages(e.dataTransfer.files);
+    }
+  };
+
+  // Função para selecionar arquivos via input
+  const handleFileInputChange = (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+      handleAddImages(e.target.files);
+      // Limpar o input para permitir selecionar os mesmos arquivos novamente
+      e.target.value = '';
+    }
+  };
+
+  // Função para fazer upload das imagens para o S3
+  const uploadImages = async () => {
+    try {
+      const uploadPromises = imagensTemporarias.map(async (imagem) => {
+        try {
+          const metadata = await getImageUploadMetadata(imagem.file);
+          await uploadToS3(metadata);
+          return metadata.fileUrl;
+        } catch (error) {
+          console.error(`Erro ao fazer upload da imagem ${imagem.id}:`, error);
+          throw error;
+        }
+      });
+
+      return await Promise.all(uploadPromises);
+    } catch (error) {
+      console.error("Erro ao fazer upload das imagens:", error);
+      throw new Error("Falha ao enviar uma ou mais imagens");
+    }
+  };
+
+  const handleSubmit = async (e) => {
     if (e) e.preventDefault();
 
     if (validarFormulario()) {
       setFormState("loading");
 
-      import("@emailjs/browser").then((emailjs) => {
-        emailjs.default
-          .send(
-            "service_az9rp6u",
-            "template_p8hi73i",
-            {
-              name: formData.nome,
-              email: formData.email,
-              telefone: formData.telefone,
-              tipoImovel: formData.tipoImovel,
-              acao: formData.acao,
-              cep: formData.cep,
-              endereco: formData.endereco,
-              numero: formData.numero,
-              complemento: formData.complemento,
-              bairro: formData.bairro,
-              cidade: formData.cidade,
-              estado: formData.estado,
-              valorImovel: formData.valorImovel,
-              valorCondominio: formData.valorCondominio,
-              valorIptu: formData.valorIptu,
-              descricao: formData.descricao,
-            },
-            "sraRHEjyadY96d2x1"
-          )
-          .then(() => {
-            setFormState("success");
-            // Limpar o formulário após o sucesso
-            setFormData({
-              nome: "",
-              email: "",
-              telefone: "",
-              tipoImovel: "",
-              acao: "",
-              cep: "",
-              endereco: "",
-              numero: "",
-              complemento: "",
-              bairro: "",
-              cidade: "",
-              estado: "",
-              valorImovel: "",
-              valorCondominio: "",
-              valorIptu: "",
-              descricao: "",
+      try {
+        // Fazer upload das imagens para o S3
+        const imageUrls = await uploadImages();
+
+        import("@emailjs/browser").then((emailjs) => {
+          emailjs.default
+            .send(
+              "service_az9rp6u",
+              "template_p8hi73i",
+              {
+                name: formData.nome,
+                email: formData.email,
+                telefone: formData.telefone,
+                tipoImovel: formData.tipoImovel,
+                acao: formData.acao,
+                cep: formData.cep,
+                endereco: formData.endereco,
+                numero: formData.numero,
+                complemento: formData.complemento,
+                bairro: formData.bairro,
+                cidade: formData.cidade,
+                estado: formData.estado,
+                valorImovel: formData.valorImovel,
+                valorCondominio: formData.valorCondominio,
+                valorIptu: formData.valorIptu,
+                descricao: formData.descricao,
+                imagensUrls: imageUrls.join(", "),
+              },
+              "sraRHEjyadY96d2x1"
+            )
+            .then(() => {
+              setFormState("success");
+              // Limpar o formulário após o sucesso
+              setFormData({
+                nome: "",
+                email: "",
+                telefone: "",
+                tipoImovel: "",
+                acao: "",
+                cep: "",
+                endereco: "",
+                numero: "",
+                complemento: "",
+                bairro: "",
+                cidade: "",
+                estado: "",
+                valorImovel: "",
+                valorCondominio: "",
+                valorIptu: "",
+                descricao: "",
+              });
+              setImagensTemporarias([]);
+            })
+            .catch((error) => {
+              console.error("Erro ao enviar mensagem:", error);
+              setFormState("form");
+              alert("Erro ao enviar mensagem. Por favor, tente novamente.");
             });
-          })
-          .catch((error) => {
-            console.error("Erro ao enviar mensagem:", error);
-            setFormState("form");
-            alert("Erro ao enviar mensagem. Por favor, tente novamente.");
-          });
-      });
+        });
+      } catch (error) {
+        console.error("Erro no processo de envio:", error);
+        setFormState("form");
+        alert("Erro ao processar as imagens. Por favor, tente novamente.");
+      }
     }
   };
 
@@ -396,7 +483,74 @@ export default function ImovelForm() {
             </div>
 
             <div className="sm:col-span-3">
-              <UploadArea />
+              <div className="w-full mx-auto py-4">
+                <div className="mb-4">
+                  <p className="text-sm text-gray-600">
+                    Dicas: Fotos na posição horizontal, com todas as luzes acesas, fotos
+                    do lazer e da fachada, valorizam e chamam mais atenção para o anúncio
+                    do seu imóvel ;)
+                  </p>
+                </div>
+
+                <div
+                  className={`border-2 border-dashed ${errors.imagens ? "border-red-500" : "border-gray-300"} rounded-md p-6 flex flex-col items-center justify-center text-center`}
+                  onDragOver={handleDragOver}
+                  onDrop={handleDrop}
+                >
+                  <PhotoIcon className="h-12 w-12 text-gray-400 mb-2" />
+                  <p className="text-gray-600 font-medium">
+                    Arraste e solte as fotos aqui
+                  </p>
+                  <p className="text-gray-500 my-2">ou</p>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="bg-[#8B6F48] text-white py-2 px-4 rounded font-medium hover:bg-[#7a5f3a] transition-colors"
+                  >
+                    Escolher arquivos
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleFileInputChange}
+                    style={{ display: 'none' }}
+                  />
+                  {errors.imagens && (
+                    <p className="text-red-500 text-xs mt-2">Por favor, adicione pelo menos uma imagem</p>
+                  )}
+                </div>
+
+                {/* Visualização das imagens selecionadas */}
+                {imagensTemporarias.length > 0 && (
+                  <div className="mt-6">
+                    <h3 className="text-md font-medium text-gray-700 mb-4">Imagens selecionadas ({imagensTemporarias.length})</h3>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {imagensTemporarias.map((imagem) => (
+                        <div key={imagem.id} className="relative group bg-gray-100 rounded-md overflow-hidden">
+                          <div className="relative h-40 w-full">
+                            <Image
+                              src={imagem.previewUrl}
+                              alt="Preview da imagem"
+                              fill
+                              style={{ objectFit: 'contain' }}
+                              unoptimized
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => removerImagem(imagem.id)}
+                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-80 hover:opacity-100"
+                          >
+                            <XCircleIcon className="h-5 w-5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="sm:col-span-3">
@@ -430,32 +584,5 @@ export default function ImovelForm() {
         )}
       </div>
     </section>
-  );
-}
-
-function UploadArea() {
-  return (
-    <div className="w-full mx-auto py-4">
-      <div className="mb-4">
-        <p>
-          Dicas: Fotos na posição horizontal, com todas as luzes acesas, fotos
-          do lazer e da fachada, valorizam e chamam mais atenção para o anúncio
-          do seu imóvel ;)
-        </p>
-      </div>
-
-      <div className="border-2 border-dashed border-gray-300 rounded-md p-6 flex flex-col items-center justify-center text-center">
-        <p className="text-gray-600 font-medium">
-          Copie &amp; Cole as fotos aqui
-        </p>
-        <p className="text-gray-500 my-2">ou</p>
-        <button
-          type="button"
-          className="text-[#7a5f3a] hover:underline font-semibold"
-        >
-          Escolher arquivos
-        </button>
-      </div>
-    </div>
   );
 }

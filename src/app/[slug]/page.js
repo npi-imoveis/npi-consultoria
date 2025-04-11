@@ -317,7 +317,7 @@ export default function CondominioPage() {
       <div className="container mx-auto pt-20">
         <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 ">
           <div className="flex flex-col gap-4 ">
-            <div className="px-10 py-6 bg-white max-h-[300px] rounded-lg flex-grow">
+            <div className="px-10 py-6 bg-white max-h-[400px] xl:max-h-[300px] rounded-lg flex-grow">
               <div className="flex justify-between">
                 <span className="text-[10px]">Código:{condominio.Codigo}</span>
                 <Share url={currentUrl} title={`Compartilhe o imóvel ${condominio.Empreendimento} em ${condominio.BairroComercial}`} variant="secondary" />
@@ -327,7 +327,7 @@ export default function CondominioPage() {
               <span className="text-xs text-zinc-700 font-semibold">
                 {condominio.TipoEndereco} {condominio.Endereco}, {condominio.Numero}, {condominio.BairroComercial}, {condominio.Cidade}
               </span>
-              <div className="grid grid-cols-4 gap-3 mt-4 mb-8">
+              <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-3 gap-3 mt-4 mb-8">
                 {condominio.ValorAluguelSite && (
                   <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
                     <h4 className="text-zinc-600 text-[10px] font-bold">Aluguel:</h4>

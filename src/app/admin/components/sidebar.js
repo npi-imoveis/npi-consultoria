@@ -8,10 +8,10 @@ import {
   BuildingOfficeIcon,
   StarIcon,
   Cog6ToothIcon,
-  BuildingLibraryIcon,
+
   TableCellsIcon,
 } from "@heroicons/react/24/outline";
-import { PlusCircle } from "lucide-react";
+
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -22,11 +22,7 @@ export default function Sidebar() {
       href: "/admin/dashboard",
       icon: TableCellsIcon,
     },
-    {
-      name: "Cadastrar Imóvel",
-      href: "/admin/imoveis/cadastrar",
-      icon: PlusCircle,
-    },
+
 
     {
       name: "Gerenciar Imóveis",
