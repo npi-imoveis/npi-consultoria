@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { SearchIcon } from "lucide-react";
 
 export function SearchHero() {
   const router = useRouter();
