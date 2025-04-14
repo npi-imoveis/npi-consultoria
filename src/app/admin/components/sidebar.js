@@ -10,6 +10,7 @@ import {
   Cog6ToothIcon,
 
   TableCellsIcon,
+  UserGroupIcon,
 } from "@heroicons/react/24/outline";
 
 
@@ -22,10 +23,8 @@ export default function Sidebar() {
       href: "/admin/dashboard",
       icon: TableCellsIcon,
     },
-
-
     {
-      name: "Gerenciar Imóveis",
+      name: "Imóveis",
       href: "/admin/imoveis",
       icon: BuildingOfficeIcon,
     },
@@ -33,6 +32,16 @@ export default function Sidebar() {
       name: "Destaques",
       href: "/admin/destacados",
       icon: StarIcon,
+    },
+    {
+      name: "Corretores",
+      href: "/admin/corretores",
+      icon: UserGroupIcon,
+    },
+    {
+      name: "Proprietários",
+      href: "/admin/proprietarios",
+      icon: UserGroupIcon,
     },
 
     {

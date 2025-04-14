@@ -129,6 +129,213 @@ export async function getImoveisAutomacao(params = {}, page = 1, limit = 12) {
     }
 }
 
+export async function getCorretores(params = {}, page = 1, limit = 12) {
+    try {
+        // Garantir que page e limit sejam números válidos
+        const validPage = ensureNumber(page, 1);
+        const validLimit = ensureNumber(limit, 12);
+
+        // Construir a URL com os parâmetros de paginação
+        const url = `/admin/corretores?page=${validPage}&limit=${validLimit}`;
+
+        console.log(`Serviço: Buscando corretores na URL: ${url}`);
+
+        const response = await axiosClient.get(url, {
+            timeout: 25000 // Timeout de 25 segundos
+        });
+
+        console.log(`Serviço: Resposta recebida com status: ${response.status}`);
+
+        // Extrair dados e informações de paginação da resposta
+        const data = response.data.data || [];
+        const paginacao = response.data.paginacao || {};
+
+        // Garantir que todos os valores de paginação sejam números válidos
+        const totalItems = ensureNumber(paginacao.totalItems, data.length);
+        const totalPages = ensureNumber(
+            paginacao.totalPages,
+            Math.max(1, Math.ceil(totalItems / validLimit))
+        );
+        const currentPage = ensureNumber(paginacao.currentPage, validPage);
+        const itemsPerPage = ensureNumber(paginacao.limit, validLimit);
+
+        console.log(`Serviço: Encontrados ${totalItems} corretores, retornando ${data.length}`);
+
+        return {
+            corretores: data,
+            pagination: {
+                totalItems,
+                totalPages,
+                currentPage,
+                itemsPerPage,
+            },
+        };
+    } catch (error) {
+        console.error("Erro ao buscar corretores:", error);
+
+        // Tratamento específico para erros de rede
+        if (error.code === 'ERR_NETWORK') {
+            console.warn("Erro de rede na comunicação com a API. Retornando array vazio.");
+            return {
+                corretores: [],
+                error: "Erro de conexão com o servidor. Tente novamente mais tarde.",
+                pagination: {
+                    totalItems: 0,
+                    totalPages: 1,
+                    currentPage: ensureNumber(page, 1),
+                    itemsPerPage: ensureNumber(limit, 12),
+                },
+            };
+        }
+
+        // Em caso de outros erros, retornamos um objeto com estrutura válida
+        return {
+            corretores: [],
+            error: error.response?.data?.error || "Erro ao buscar corretores",
+            pagination: {
+                totalItems: 0,
+                totalPages: 1,
+                currentPage: ensureNumber(page, 1),
+                itemsPerPage: ensureNumber(limit, 12),
+            },
+        };
+    }
+}
+
+
+export async function getProprietarios(params = {}, page = 1, limit = 12) {
+    try {
+        // Garantir que page e limit sejam números válidos
+        const validPage = ensureNumber(page, 1);
+        const validLimit = ensureNumber(limit, 12);
+
+        // Construir a URL com os parâmetros de paginação
+        const url = `/admin/proprietarios?page=${validPage}&limit=${validLimit}`;
+
+        console.log(`Serviço: Buscando proprietarios na URL: ${url}`);
+
+        const response = await axiosClient.get(url, {
+            timeout: 25000 // Timeout de 25 segundos
+        });
+
+        console.log(`Serviço: Resposta recebida com status: ${response.status}`);
+
+        // Extrair dados e informações de paginação da resposta
+        const data = response.data.data || [];
+        const paginacao = response.data.paginacao || {};
+
+        // Garantir que todos os valores de paginação sejam números válidos
+        const totalItems = ensureNumber(paginacao.totalItems, data.length);
+        const totalPages = ensureNumber(
+            paginacao.totalPages,
+            Math.max(1, Math.ceil(totalItems / validLimit))
+        );
+        const currentPage = ensureNumber(paginacao.currentPage, validPage);
+        const itemsPerPage = ensureNumber(paginacao.limit, validLimit);
+
+        console.log(`Serviço: Encontrados ${totalItems} proprietarios, retornando ${data.length}`);
+
+        return {
+            proprietarios: data,
+            pagination: {
+                totalItems,
+                totalPages,
+                currentPage,
+                itemsPerPage,
+            },
+        };
+    } catch (error) {
+        console.error("Erro ao buscar proprietarios:", error);
+
+        // Tratamento específico para erros de rede
+        if (error.code === 'ERR_NETWORK') {
+            console.warn("Erro de rede na comunicação com a API. Retornando array vazio.");
+            return {
+                proprietarios: [],
+                error: "Erro de conexão com o servidor. Tente novamente mais tarde.",
+                pagination: {
+                    totalItems: 0,
+                    totalPages: 1,
+                    currentPage: ensureNumber(page, 1),
+                    itemsPerPage: ensureNumber(limit, 12),
+                },
+            };
+        }
+
+        // Em caso de outros erros, retornamos um objeto com estrutura válida
+        return {
+            proprietarios: [],
+            error: error.response?.data?.error || "Erro ao buscar proprietarios",
+            pagination: {
+                totalItems: 0,
+                totalPages: 1,
+                currentPage: ensureNumber(page, 1),
+                itemsPerPage: ensureNumber(limit, 12),
+            },
+        };
+    }
+}
+
+export async function getProprietarioById(id) {
+    try {
+        console.log(`Serviço: Buscando proprietario com ID ${id}`);
+        const response = await axiosClient.get(`/admin/proprietarios?id=${id}`, {
+            timeout: 25000
+        });
+
+        if (response && response.data && response.data.status === 200) {
+            return {
+                success: true,
+                data: response.data.data
+            };
+        }
+        return { success: false, error: "Proprietário não encontrado" };
+    } catch (error) {
+        console.error(`Serviço: Erro ao buscar proprietário ${id}:`, error);
+        return {
+            success: false,
+            error: error.response?.data?.error || "Erro ao buscar proprietário"
+        };
+    }
+}
+
+export async function atualizarProprietario(id, dadosProprietario) {
+    try {
+        console.log(`Serviço: Atualizando proprietário com ID ${id}`);
+
+        const response = await axiosClient.put(`/admin/proprietarios`, {
+            id,
+            ...dadosProprietario
+        }, {
+            timeout: 25000
+        });
+
+        console.log("Serviço: Resposta da API de atualização recebida:", response.status);
+
+        return {
+            success: response.data?.success || false,
+            message: response.data?.message || "Proprietário atualizado com sucesso",
+            data: response.data?.data || null,
+        };
+    } catch (error) {
+        console.error(`Serviço: Erro ao atualizar proprietário ${id}:`, error);
+
+        if (error.code === 'ERR_NETWORK') {
+            return {
+                success: false,
+                message: "Erro de conexão com o servidor. Tente novamente mais tarde.",
+                error: "Erro de conexão"
+            };
+        }
+
+        return {
+            success: false,
+            message: error.response?.data?.message || "Erro ao atualizar proprietário",
+            error: error.response?.data?.error || "Erro desconhecido",
+        };
+    }
+}
+
 export async function atualizarImovelAutomacao(codigo, dadosImovel) {
     try {
         console.log(`Serviço: Atualizando imóvel com Codigo ${codigo}`);
@@ -192,6 +399,66 @@ export async function excluirImovelAutomacao(codigo) {
             success: false,
             message: error.response?.data?.message || "Erro ao excluir imóvel",
             error: error.response?.data?.error || "Erro desconhecido",
+        };
+    }
+}
+
+export async function atualizarCorretor(id, dadosCorretor) {
+    try {
+        console.log(`Serviço: Atualizando corretor com ID ${id}`);
+
+        const response = await axiosClient.put(`/admin/corretores`, {
+            id,
+            ...dadosCorretor
+        }, {
+            timeout: 25000
+        });
+
+        console.log("Serviço: Resposta da API de atualização recebida:", response.status);
+
+        return {
+            success: response.data?.success || false,
+            message: response.data?.message || "Corretor atualizado com sucesso",
+            data: response.data?.data || null,
+        };
+    } catch (error) {
+        console.error(`Serviço: Erro ao atualizar corretor ${id}:`, error);
+
+        if (error.code === 'ERR_NETWORK') {
+            return {
+                success: false,
+                message: "Erro de conexão com o servidor. Tente novamente mais tarde.",
+                error: "Erro de conexão"
+            };
+        }
+
+        return {
+            success: false,
+            message: error.response?.data?.message || "Erro ao atualizar corretor",
+            error: error.response?.data?.error || "Erro desconhecido",
+        };
+    }
+}
+
+export async function getCorretorById(id) {
+    try {
+        console.log(`Serviço: Buscando corretor com ID ${id}`);
+        const response = await axiosClient.get(`/admin/corretores?id=${id}`, {
+            timeout: 25000
+        });
+
+        if (response && response.data && response.data.status === 200) {
+            return {
+                success: true,
+                data: response.data.data
+            };
+        }
+        return { success: false, error: "Corretor não encontrado" };
+    } catch (error) {
+        console.error(`Serviço: Erro ao buscar corretor ${id}:`, error);
+        return {
+            success: false,
+            error: error.response?.data?.error || "Erro ao buscar corretor"
         };
     }
 }

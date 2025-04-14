@@ -484,9 +484,11 @@ export default function CadastrarImovel() {
             fields: [
                 { name: "Codigo", label: "Código", type: "text" },
                 { name: "Empreendimento", label: "Empreendimento", type: "text" },
-                { name: "TituloSite", label: "Título para o Site", type: "text" },
+                { name: "Construtura", label: "Construtora", type: "text" },
                 { name: "Categoria", label: "Categoria", type: "text" },
                 { name: "Situacao", label: "Situação", type: "text" },
+
+
                 {
                     name: "Status",
                     label: "Status",
@@ -520,6 +522,10 @@ export default function CadastrarImovel() {
                         { value: "Nao", label: "Não" }
                     ]
                 },
+                { name: "DataCadastro", label: "Data Cadastro", type: "text" },
+                { name: "DataAtualizacao", label: "Data Atualização", type: "text" },
+                { name: "Imobiliaria", label: "Imobiliária", type: "text" },
+
             ],
         },
         {

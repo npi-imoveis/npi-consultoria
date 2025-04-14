@@ -403,6 +403,20 @@ export default function EditarImovel({ params }) {
       ],
     },
     {
+      title: "Corretores Vinculados",
+      fields: [
+        { name: "Corretor", label: "Corretor", type: "text" },
+        {
+          name: "Tipo", label: "Tipo", type: "select", options: [
+            { value: "Captador", label: "Captador" },
+            { value: "Promotor", label: "Promotor" }
+          ]
+        },
+
+      ],
+    },
+
+    {
       title: "Descrições",
       fields: [
         { name: "DescricaoUnidades", label: "Descrição da Unidade", type: "textarea" },
@@ -552,8 +566,7 @@ export default function EditarImovel({ params }) {
             <h1 className="text-xl font-bold text-gray-900">
               {isLoading
                 ? "Carregando..."
-                : `Editar Imóvel: ${formData?.TituloSite || formData?.Titulo || formData?.Codigo || id
-                }`}
+                : `Editar Imóvel: ${formData?.Empreendimento} | Código: ${formData?.Codigo}`}
             </h1>
             <div className="flex gap-2">
               <button
