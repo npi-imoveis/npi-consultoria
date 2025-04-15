@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "@/app/lib/firebase";
 
 export default function AuthCheck({ children }) {
   const router = useRouter();
@@ -9,14 +11,19 @@ export default function AuthCheck({ children }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Verificar autenticação
-    const authStatus = sessionStorage.getItem("admin_authenticated");
-    if (authStatus !== "true") {
-      router.push("/admin/login");
-    } else {
-      setIsAuthenticated(true);
-    }
-    setIsLoading(false);
+    console.log("AuthCheck: Initializing authentication check...");
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        console.log("AuthCheck: User is authenticated.");
+        setIsAuthenticated(true);
+      } else {
+        console.log("AuthCheck: User is not authenticated. Redirecting to login...");
+        router.push("/admin/login");
+      }
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
   }, [router]);
 
   if (isLoading) {

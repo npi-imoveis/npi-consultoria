@@ -3,6 +3,8 @@ import { Inter } from "next/font/google";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import Sidebar from "./components/sidebar";
+import { onAuthStateChanged } from "firebase/auth";
+import { auth } from "@/app/lib/firebase";
 
 // Carregar a fonte Inter no lado do cliente para evitar problemas de hidratação
 const inter = Inter({ subsets: ["latin"] });
@@ -11,14 +13,23 @@ export default function AdminLayout({ children }) {
   const pathname = usePathname();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [userName, setUserName] = useState("");
+  const [userEmail, setUserEmail] = useState("");
 
   useEffect(() => {
     // Marcar componente como montado para evitar problemas de hidratação
     setMounted(true);
 
-    // Verificar autenticação armazenada no sessionStorage
-    const authStatus = sessionStorage.getItem("admin_authenticated");
-    setIsLoggedIn(authStatus === "true");
+    // Verificar autenticação com Firebase
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setIsLoggedIn(!!user);
+      if (user) {
+        setUserName(user.displayName || "Usuário");
+        setUserEmail(user.email || "email@example.com");
+      }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   // Não renderizar nada durante SSR para componentes que dependem de estado do cliente
@@ -53,10 +64,10 @@ export default function AdminLayout({ children }) {
         {isLoggedIn && (
           <header className="bg-black text-white shadow-md">
             <div className="ml-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-              <h1>Bem vindo, Eduardo.</h1>
+              <h1>Bem vindo {userEmail}.</h1>
               <button
                 onClick={() => {
-                  sessionStorage.removeItem("admin_authenticated");
+                  auth.signOut();
                   window.location.href = "/admin/login";
                 }}
                 className="p-4 bg-[#8B6F48] text-white rounded-md hover:[#8B6F48]/80 transition-colors"
