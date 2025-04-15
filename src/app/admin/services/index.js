@@ -464,3 +464,25 @@ export async function getCorretorById(id) {
 }
 
 
+export async function getVinculos(id) {
+    try {
+        console.log(`Serviço: Buscando vinculos com ID ${id}`);
+        const response = await axiosClient.get(`/admin/vinculo?id=${id}`, {
+            timeout: 25000
+        });
+
+        if (response && response.data && response.data.status === 200) {
+            return {
+                success: true,
+                data: response.data.data.corretores
+            };
+        }
+    } catch (error) {
+        console.error(`Serviço: Erro ao buscar vinculos ${id}:`, error);
+        return {
+            success: false,
+            error: error.response?.data?.error || "Erro ao buscar vinculos"
+        };
+    }
+}
+

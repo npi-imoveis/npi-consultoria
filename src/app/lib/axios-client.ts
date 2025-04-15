@@ -1,8 +1,8 @@
 import axios from "axios";
 
 // Determinar a URL base com base no ambiente
-const BASE_URL = process.env.NODE_ENV === 'production' 
-  ? "https://npi-consultoria.vercel.app/api/" 
+const BASE_URL = process.env.NODE_ENV === 'production'
+  ? "https://www.npiconsultoria.com.br/api/"
   : "http://localhost:3000/api/";
 
 const axiosClient = axios.create({
@@ -23,10 +23,10 @@ axiosClient.interceptors.response.use(
     } else if (error.response) {
       // Tratar erros 404 como informação, não como erro
       if (error.response.status === 404) {
-        console.info(`Recurso não encontrado [404]:`, 
+        console.info(`Recurso não encontrado [404]:`,
           error.response.data?.error || error.response.statusText);
       } else {
-        console.error(`Erro de resposta HTTP [${error.response.status}]:`, 
+        console.error(`Erro de resposta HTTP [${error.response.status}]:`,
           error.response.data?.error || error.response.statusText);
       }
     } else if (error.request) {
@@ -34,7 +34,7 @@ axiosClient.interceptors.response.use(
     } else {
       console.error('Erro inesperado:', error.message);
     }
-    
+
     return Promise.reject(error);
   }
 );

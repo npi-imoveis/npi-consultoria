@@ -6,6 +6,7 @@ import AuthCheck from "../../../components/auth-check";
 import { getImovelById, atualizarImovel, excluirImovel } from "@/app/services";
 import { ArrowLeftIcon, ArrowPathIcon, TrashIcon, PlusCircleIcon, XCircleIcon, PhotoIcon, ArrowUpIcon, ArrowDownIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
+import { getVinculos } from "@/app/admin/services";
 
 export default function EditarImovel({ params }) {
   const router = useRouter();
@@ -83,6 +84,14 @@ export default function EditarImovel({ params }) {
     if (id) {
       fetchImovel();
     }
+  }, [id]);
+
+  useEffect(() => {
+    const fetchVinculos = async () => {
+      const response = await getVinculos(id);
+      console.log("Corretores vinculados", response)
+    };
+    fetchVinculos();
   }, [id]);
 
   // Função para lidar com mudanças nos campos
