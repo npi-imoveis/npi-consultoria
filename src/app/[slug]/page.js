@@ -390,7 +390,7 @@ export default function CondominioPage() {
       {condominio.Tour360 && <TourVirtual condominio={condominio} />}
 
       <ExploreRegiao condominio={condominio} currentUrl={currentUrl} />
-      <WhatsappFloat message={`Quero saber mais sobre o ${condominio.Empreendimento}, no bairro ${condominio.BairroComercial}, disponivel no link: ${currentUrl}`} />
+      <WhatsappFloat message={`Quero saber mais sobre o ${condominio.Empreendimento}, no bairro ${condominio.BairroComercial}, disponivel na pagina de Condominio: ${currentUrl}`} />
     </section>
   );
 }
