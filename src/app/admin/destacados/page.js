@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getImovelDestacado } from "@/app/services";
+import { getImovelDestacado, atualizarImovel } from "@/app/services";
 import AuthCheck from "../components/auth-check";
 import { StarIcon } from "@heroicons/react/24/solid";
 import { StarIcon as StarOutlineIcon } from "@heroicons/react/24/outline";
@@ -39,34 +39,33 @@ export default function CondominiosDestacados() {
   }, []);
 
   // Alternar o status de destaque de um condomínio
-  const toggleDestaque = (id) => {
-    setDestacados((prev) => {
-      if (prev.includes(id)) {
-        return prev.filter((itemId) => itemId !== id);
-      } else {
-        return [...prev, id];
-      }
-    });
-
-    // Em uma implementação real, você enviaria uma requisição para a API
-    // para atualizar o status de destaque do condomínio
-    console.log(`Alternando destaque do condomínio ${id}`);
-  };
-
-  // Salvar as alterações
-  const salvarDestaques = async () => {
-    // Em uma implementação real, você enviaria os dados para a API
+  const toggleDestaque = async (id) => {
     try {
-      // Aqui você implementaria a chamada à API para atualizar os destaques
-      // Por exemplo:
-      // await updateCondominiuoDestaques(destacados);
-      alert(`Condomínios destacados atualizados com sucesso!`);
-      console.log("IDs dos condomínios destacados:", destacados);
+      // Atualizar o imóvel no banco de dados para Destacado = "Não"
+      const response = await atualizarImovel(id, { Destacado: "Não" });
+
+      if (response && response.success) {
+        // Se a atualização foi bem-sucedida, remover da lista de destacados
+        setDestacados((prev) => prev.filter((itemId) => itemId !== id));
+
+        // Remover o imóvel da lista de exibição
+        setCondominios((prev) => prev.filter((item) => {
+          const itemId = item._id || item.id || item.Codigo;
+          return itemId !== id;
+        }));
+
+        console.log(`Destaque do imóvel ${id} removido com sucesso`);
+      } else {
+        console.error("Erro ao remover destaque:", response?.message);
+        alert("Erro ao remover destaque do imóvel");
+      }
     } catch (error) {
-      console.error("Erro ao salvar destaques:", error);
-      alert("Ocorreu um erro ao salvar os destaques");
+      console.error(`Erro ao alternar destaque do imóvel ${id}:`, error);
+      alert("Ocorreu um erro ao processar sua solicitação");
     }
   };
+
+
 
   return (
     <AuthCheck>
@@ -147,14 +146,7 @@ export default function CondominiosDestacados() {
                 </div>
               )}
 
-              <div className="mt-6 flex justify-end">
-                <button
-                  onClick={salvarDestaques}
-                  className="inline-flex items-center px-5 py-2 border border-transparent font-medium rounded-md shadow-sm text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
-                >
-                  Salvar Destaques
-                </button>
-              </div>
+
             </>
           )}
         </div>

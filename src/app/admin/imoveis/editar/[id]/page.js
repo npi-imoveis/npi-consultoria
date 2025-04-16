@@ -323,7 +323,16 @@ export default function EditarImovel({ params }) {
     {
       title: "Informações Básicas",
       fields: [
-        { name: "Codigo", label: "Código", type: "text" },
+        {
+          name: "Codigo", label: "Código", type: "text"
+        },
+        {
+          name: "Ativo", label: "Ativo", type: "select",
+          options: [
+            { value: "Sim", label: "Sim" },
+            { value: "Não", label: "Não" }
+          ]
+        },
         { name: "Empreendimento", label: "Empreendimento", type: "text" },
         { name: "Construtora", label: "Construtora", type: "text" },
         { name: "Categoria", label: "Categoria", type: "text" },
@@ -586,16 +595,7 @@ export default function EditarImovel({ params }) {
                 <ArrowLeftIcon className="w-5 h-5 mr-2" />
                 Voltar
               </button>
-              <button
-                type="button"
-                onClick={handleDelete}
-                disabled={isDeleting || isLoading}
-                className={`inline-flex items-center px-5 py-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white ${isDeleting ? "bg-gray-500" : "bg-red-600 hover:bg-red-700"
-                  }`}
-              >
-                <TrashIcon className="w-5 h-5 mr-2" />
-                {isDeleting ? "Excluindo..." : "Excluir"}
-              </button>
+
             </div>
           </div>
 
@@ -700,13 +700,16 @@ export default function EditarImovel({ params }) {
                 </div>
               ))}
 
-              <div className="flex justify-end mt-8">
+              <div className="flex justify-between mt-8">
                 <button
                   type="button"
-                  onClick={() => router.push("/admin/imoveis")}
-                  className="inline-flex items-center px-5 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 mr-3"
+                  onClick={handleDelete}
+                  disabled={isDeleting || isLoading}
+                  className={`inline-flex items-center px-5 py-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white ${isDeleting ? "bg-gray-500" : "bg-red-600 hover:bg-red-700"
+                    }`}
                 >
-                  Cancelar
+                  <TrashIcon className="w-5 h-5 mr-2" />
+                  {isDeleting ? "Excluindo..." : "Excluir Imóvel"}
                 </button>
                 <button
                   type="submit"
