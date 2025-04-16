@@ -1,5 +1,6 @@
 import { connectToDatabase } from "@/app/lib/mongodb";
-import Imovel from "@/app/models/Imovel";
+import ImovelAtivo from "@/app/models/ImovelAtivo";
+
 import { NextResponse } from "next/server";
 
 export async function GET(request) {
@@ -17,7 +18,7 @@ export async function GET(request) {
         await connectToDatabase();
 
         // Utilizando o índice do Atlas Search com a consulta simplificada
-        const resultado = await Imovel.aggregate([
+        const resultado = await ImovelAtivo.aggregate([
             {
                 $search: {
                     index: "default_1",
