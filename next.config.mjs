@@ -1,5 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+
+
   images: {
     remotePatterns: [
       {
@@ -12,6 +14,8 @@ const nextConfig = {
       },
     ],
   },
+
+
 
   typescript: {
     // ⚠️ Isso desativa a verificação de tipos durante o build

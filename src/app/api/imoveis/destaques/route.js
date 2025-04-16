@@ -9,7 +9,7 @@ export async function GET() {
     // Buscar imóveis destacados, ordenados por data de criação (mais recentes primeiro)
     const imoveis = await Imovel.find({ Destacado: "Sim" })
       .sort({ createdAt: -1 }) // Ordenar por data de criação, mais recentes primeiro
-      .limit(15);
+      .limit(30);
 
     // Verificar se encontrou algum imóvel
     if (!imoveis || imoveis.length === 0) {

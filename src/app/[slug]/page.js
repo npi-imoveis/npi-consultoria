@@ -5,12 +5,12 @@ import { useRef, useState, useEffect } from "react";
 import dynamic from 'next/dynamic';
 import { getCondominioPorSlug } from "@/app/services";
 import { useParams, useRouter } from "next/navigation";
-import { formatterValue } from "../utils/formatter-value";
+import { formatterValue } from "@/app/utils/formatter-value";
 import StructuredData from "@/app/components/structured-data";
-import { Share } from "../components/ui/share";
+import { Share } from "@/app/components/ui/share";
 import { PropertyTableOwner } from "./componentes/property-table-owner";
 import Error from '../error';
-import { WhatsappFloat } from "../components/ui/whatsapp";
+import { WhatsappFloat } from "@/app/components/ui/whatsapp";
 
 // Importações dinâmicas para componentes grandes ou abaixo da dobra
 const CondominioGallery = dynamic(() => import('./componentes/condominio-gallery'), {
@@ -56,11 +56,6 @@ const ExploreRegiao = dynamic(() => import('./componentes/ExploreRegiao'), {
 });
 
 const currentUrl = typeof window !== "undefined" ? window.location.href : "";
-
-const formatarHtml = (htmlString) => {
-  if (!htmlString) return "";
-  return htmlString.replace(/\r\n|\r|\n/g, "<br />");
-};
 
 export default function CondominioPage() {
   const params = useParams();
