@@ -44,7 +44,7 @@ export default function RootLayout({ children }) {
         <MusicPlayer />
         <Analytics />
         <SpeedInsights />
-        <WhatsappFloat />
+
       </body>
     </html>
   );

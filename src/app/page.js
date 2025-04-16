@@ -17,6 +17,7 @@ import { FeaturedCondosSection } from "./components/sections/featured-condos-sec
 
 import { TestimonialsSection } from "./components/sections/testimonials-section";
 import { ReviewSection } from "./components/sections/review-section";
+import { WhatsappFloat } from "./components/ui/whatsapp";
 
 
 export const metadata = {
@@ -76,7 +77,7 @@ export default function Home() {
       <TestimonialsSection />
       <ContactSection />
       <SlidePartners />
-
+      <WhatsappFloat />
       <Footer />
     </div>
   );

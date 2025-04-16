@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 
-export function WhatsappFloat() {
+export function WhatsappFloat({ message }) {
   const handleWhatsAppClick = (e) => {
     e.preventDefault();
 
@@ -17,7 +17,7 @@ export function WhatsappFloat() {
       : 'https://web.whatsapp.com/send';
 
     // Construir a URL completa
-    const whatsappUrl = `${baseUrl}?phone=5511969152222`;
+    const whatsappUrl = `${baseUrl}?phone=5511969152222&text=${encodeURIComponent(message)}`;
 
     // Redirecionar para o WhatsApp
     window.location.href = whatsappUrl;

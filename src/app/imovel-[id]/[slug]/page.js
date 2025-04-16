@@ -68,6 +68,7 @@ import useImovelStore from "@/app/store/imovelStore";
 import { getImovelById } from "@/app/services";
 import StructuredData from "@/app/components/structured-data";
 import { smoothScroll, removeHash, handleInitialScroll } from "@/app/utils/smooth-scroll";
+import { WhatsappFloat } from '@/app/components/ui/whatsapp';
 
 const currentUrl = typeof window !== "undefined" ? window.location.href : "";
 
@@ -336,6 +337,7 @@ export default function Imovel() {
       <div className="container mx-auto px-4 md:px-0">
         <FAQImovel imovel={imovel} />
       </div>
+      <WhatsappFloat message={`Quero saber mais sobre o ${imovel.Empreendimento}, no bairro ${imovel.BairroComercial}, disponivel no link: ${currentUrl}`} />
     </section>
   );
 }
