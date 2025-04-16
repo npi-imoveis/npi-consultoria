@@ -6,6 +6,10 @@ const nextConfig = {
         protocol: "https",
         hostname: "cdn.vistahost.com.br",
       },
+      {
+        protocol: "https",
+        hostname: "npi-imoveis.s3.sa-east-1.amazonaws.com",
+      },
     ],
   },
 
