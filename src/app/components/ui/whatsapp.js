@@ -20,7 +20,12 @@ export function WhatsappFloat({ message }) {
     const whatsappUrl = `${baseUrl}?phone=5511969152222&text=${encodeURIComponent(message)}`;
 
     // Redirecionar para o WhatsApp
-    window.location.href = whatsappUrl;
+    if (isMobile()) {
+      window.location.href = whatsappUrl;
+    } else {
+      // Em PCs, abrir em uma nova guia
+      window.open(whatsappUrl, '_blank');
+    }
   };
 
   return (
