@@ -1,5 +1,3 @@
-// app/sitemap.xml/route.ts
-import { MetadataRoute } from 'next';
 
 export async function GET() {
     try {

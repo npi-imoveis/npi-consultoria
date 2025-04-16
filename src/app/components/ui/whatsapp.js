@@ -17,7 +17,11 @@ export function WhatsappFloat({ message }) {
       : 'https://web.whatsapp.com/send';
 
     // Construir a URL completa
-    const whatsappUrl = `${baseUrl}?phone=5511969152222&text=${encodeURIComponent(message)}`;
+    let whatsappUrl = `${baseUrl}?phone=5511969152222`;
+
+    if (message) {
+      whatsappUrl = `${baseUrl}?phone=5511969152222&text=${encodeURIComponent(message)}`;
+    }
 
     // Redirecionar para o WhatsApp
     if (isMobile()) {
