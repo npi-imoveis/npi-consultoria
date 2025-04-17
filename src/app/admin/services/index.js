@@ -52,10 +52,6 @@ export async function getImovelByIdAutomacao(codigo) {
 }
 
 
-
-
-
-
 export async function getImoveisAutomacao(params = {}, page = 1, limit = 12) {
     try {
         // Garantir que page e limit sejam números válidos
@@ -482,6 +478,29 @@ export async function getVinculos(id) {
         return {
             success: false,
             error: error.response?.data?.error || "Erro ao buscar vinculos"
+        };
+    }
+}
+
+
+
+export async function getDashboard() {
+    try {
+        const response = await axiosClient.get("/admin/dashboard", {
+            timeout: 25000
+        });
+
+        if (response && response.data && response.data.status === 200) {
+            return {
+                success: true,
+                data: response.data.data
+            }
+        }
+    } catch (error) {
+        console.error("Erro ao buscar dados do dashboard:", error);
+        return {
+            success: false,
+            error: error.response?.data?.error || "Erro ao buscar dados do dashboard"
         };
     }
 }

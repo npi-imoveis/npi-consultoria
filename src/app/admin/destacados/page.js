@@ -71,10 +71,11 @@ export default function CondominiosDestacados() {
     <AuthCheck>
       <div className="max-w-7xl mx-auto text-xs">
         <div className="mb-8">
-          <h1 className="text-xl font-bold text-gray-900 mb-4">Imóveis e Condomínios Destacados</h1>
-          <p className="text-gray-600 mb-6">
+          <h1 className="text-xl font-bold text-gray-900 mb-4">Imóveis Destacados</h1>
+          <p className="text-gray-600 mb-6 text-sm">
             Gerencie os imóveis e condomínios que estão marcados como destacados no site.
           </p>
+
 
           {isLoading ? (
             <div className="bg-white p-8 rounded-lg shadow-md">
