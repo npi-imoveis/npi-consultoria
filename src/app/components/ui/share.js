@@ -10,7 +10,7 @@ export function Share({ url, title = "Confira este imóvel!", imovel, variant = 
 
   useEffect(() => {
     // Define a URL de compartilhamento no lado do cliente
-    setShareUrl(url || window.location.href);
+    setShareUrl(url);
   }, [url]);
 
   const handleShare = async () => {
