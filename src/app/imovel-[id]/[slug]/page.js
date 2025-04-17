@@ -15,8 +15,6 @@ import { getCondominioPorSlug } from "@/app/services";
 import { WhatsappFloat } from '@/app/components/ui/whatsapp';
 import { Apartment as StructuredDataApartment } from "@/app/components/structured-data";
 
-const currentUrl = typeof window !== "undefined" ? window.location.href : "";
-
 export async function generateMetadata({ params }) {
   const response = await getCondominioPorSlug(params.slug);
   const condominio = response?.data;
@@ -57,7 +55,7 @@ export async function generateMetadata({ params }) {
 export default async function Imovel({ params }) {
   const response = await getCondominioPorSlug(params.slug);
   const imovel = response.data;
-
+  const currentUrl = `${process.env.NEXT_PUBLIC_URL}/imovel-${imovel.Codigo}/${params.slug}`;
 
   return (
     <section className="w-full bg-white pb-32 pt-20">
@@ -69,7 +67,6 @@ export default async function Imovel({ params }) {
         url={currentUrl}
         image={imovel.Foto}
       />
-
 
       <div className="w-full mx-auto">
         <ImageGallery imovel={imovel} />
