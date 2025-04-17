@@ -22,15 +22,15 @@ export async function GET(request) {
         // Buscar o imóvel de referência pelo Slug
         const imovelReferencia = await Imovel.findOne({ Slug: slug });
 
-        if (!imovelReferencia) {
-            return NextResponse.json(
-                {
-                    status: 404,
-                    error: "Imóvel de referência não encontrado",
-                },
-                { status: 404 }
-            );
-        }
+        // if (!imovelReferencia) {
+        //     return NextResponse.json(
+        //         {
+        //             status: 404,
+        //             error: "Imóvel de referência não encontrado",
+        //         },
+        //         { status: 404 }
+        //     );
+        // }
 
         // Buscar imóveis relacionados com o mesmo endereço
         const imoveisRelacionados = await Imovel.find({
