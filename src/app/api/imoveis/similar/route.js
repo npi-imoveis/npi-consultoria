@@ -67,6 +67,7 @@ export async function GET(request) {
       Codigo: { $ne: id },
       Bairro: imovelReferencia.Bairro, // Filtrar pelo mesmo bairro
       AreaPrivativa: { $exists: true, $ne: "" },
+      ValorAntigo: { $nin: ["0", ""] },
       $expr: {
         $and: [
           { $ne: ["$AreaPrivativa", ""] },
