@@ -151,7 +151,7 @@ export default function Imovel() {
   // Configurando o título da página
   useEffect(() => {
     if (imovel?.Empreendimento) {
-      const pageTitle = imovel.Empreendimento;
+      const pageTitle = `${imovel.Empreendimento}, ${imovel.TipoEndereco} ${imovel.Endereco}, ${imovel.Numero}, ${imovel.BairroComercial}`;
       document.title = pageTitle;
 
       // Adicionar meta description mais otimizada

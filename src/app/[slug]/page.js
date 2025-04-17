@@ -120,7 +120,7 @@ export default function CondominioPage() {
   // Atualiza o título da página quando o condomínio for carregado
   useEffect(() => {
     if (condominio?.Empreendimento) {
-      document.title = `Condomínio ${condominio.Empreendimento} `;
+      document.title = `Condomínio ${condominio.Empreendimento}, ${condominio.TipoEndereco} ${condominio.Endereco}, ${condominio.Numero}, ${condominio.BairroComercial}`;
 
       // Criação da descrição para SEO
       const descriptionContent = `Condominio ${condominio.Empreendimento} em ${condominio.BairroComercial || ''}, ${condominio.Cidade || ''}. ${condominio.Empreendimento || ''}: ${condominio.DormitoriosAntigo || ''} quartos, ${condominio.Suites || ''} suítes, ${condominio.BanheiroSocialQtd || ''} banheiros, ${condominio.VagasAntigo || ''} vagas, ${condominio.MetragemAnt || ''}. ${condominio.Situacao || ''} .`;
