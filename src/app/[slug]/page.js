@@ -61,6 +61,8 @@ export default async function CondominioPage({ params }) {
   const condominio = response.data;
   const imoveisRelacionados = response.imoveisRelacionados;
 
+  const url = `${process.env.NEXT_PUBLIC_URL}/${params.slug}`;
+
 
   return (
     <section className="w-full bg-zinc-100 pb-10">
@@ -150,7 +152,7 @@ export default async function CondominioPage({ params }) {
       {condominio.Tour360 && <TourVirtual condominio={condominio} />}
 
       <ExploreRegiao condominio={condominio} currentUrl={currentUrl} />
-      <WhatsappFloat message={`Quero saber mais sobre o ${condominio.Empreendimento}, no bairro ${condominio.BairroComercial}, disponivel na pagina de Condominio: ${currentUrl}`} />
+      <WhatsappFloat message={`Quero saber mais sobre o ${condominio.Empreendimento}, no bairro ${condominio.BairroComercial}, disponivel na pagina de Condominio: ${url}`} />
     </section>
   );
 }
