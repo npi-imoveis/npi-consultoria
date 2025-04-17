@@ -16,7 +16,7 @@ import VideoCondominio from './componentes/VideoCondominio';
 import TourVirtual from './componentes/TourVirtual';
 import ExploreRegiao from './componentes/ExploreRegiao';
 
-
+const currentUrl = typeof window !== "undefined" ? window.location.href : "";
 
 
 export async function generateMetadata({ params }) {
@@ -60,8 +60,6 @@ export default async function CondominioPage({ params }) {
   const response = await getCondominioPorSlug(params.slug);
   const condominio = response.data;
   const imoveisRelacionados = response.imoveisRelacionados;
-
-  const currentUrl = `${process.env.NEXT_PUBLIC_URL}/imovel-${imovel.Codigo}/${params.slug}`;
 
 
   return (
