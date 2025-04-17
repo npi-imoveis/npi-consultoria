@@ -38,7 +38,7 @@ export function ImoveisRelacionados({ imoveisRelacionados }) {
           ) : (
             imoveisRelacionados.map((imovel) => (
 
-              <div key={imovel.Codigo || imovel._id || `imovel-${Math.random()}`} className="flex-1 min-w-[250px]">
+              <div key={imovel.Codigo || imovel._id || `imovel-${Math.random()}`} className="min-w-[320px]">
                 <CardImovel {...imovel} isLoading={false} />
               </div>
             ))
