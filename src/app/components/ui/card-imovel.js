@@ -1,13 +1,11 @@
 import Image from "next/image";
-import { HomeModernIcon, BuildingOffice2Icon, CheckCircleIcon } from "@heroicons/react/24/outline";
+import { HomeModernIcon, BuildingOffice2Icon } from "@heroicons/react/24/outline";
 
 import { Button } from "./button";
 import { Share } from "./share";
-import { formatterValue } from "../../utils/formatter-value";
 import { formatterSlug } from "../../utils/formatter-slug";
 import useImovelStore from "./../../store/imovelStore";
-import Link from "next/link";
-import { ArrowRightLeft, ArrowRightLeftIcon, Bath, Bed, CarIcon, CheckCircle } from "lucide-react";
+import { ArrowRightLeftIcon, Bath, Bed, CarIcon } from "lucide-react";
 
 // Componente Skeleton para o CardImovel
 export function CardImovelSkeleton() {
@@ -68,7 +66,6 @@ export default function CardImovel({
   Suites,
   AreaPrivativa,
   id,
-  shareUrl,
   isLoading,
 }) {
   // Se estiver carregando ou não houver código, mostra o skeleton
@@ -78,8 +75,7 @@ export default function CardImovel({
 
   // Se houver dados, renderiza o componente completo
   const setImovelSelecionado = useImovelStore((state) => state.setImovelSelecionado);
-  const adicionarImovelCache = useImovelStore((state) => state.adicionarImovelCache);
-  const setImovelAtual = useImovelStore((state) => state.setImovelAtual);
+
 
   // Verificar se os valores existem para evitar erros
   const tipoEndereco = TipoEndereco || "";
@@ -140,7 +136,7 @@ export default function CardImovel({
             layout="fill"
             objectFit="cover"
             className="rounded-t-lg transition-transform duration-500 ease-in-out group-hover:scale-110 hover:scale-110"
-            unoptimized
+
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">

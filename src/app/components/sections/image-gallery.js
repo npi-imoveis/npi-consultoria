@@ -80,7 +80,7 @@ export function ImageGallery({ imovel }) {
               loading={isMobile ? "lazy" : "eager"}
               priority={!isMobile}
               className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
-              unoptimized
+
             />
           </div>
 
@@ -114,7 +114,7 @@ export function ImageGallery({ imovel }) {
                     blurDataURL={image.Foto}
                     loading="lazy"
                     className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
-                    unoptimized
+
                   />
                   {isLastImage && images.length > 5 && (
                     <div className="absolute inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center">
@@ -177,7 +177,7 @@ export function ImageGallery({ imovel }) {
                 blurDataURL={images[selectedIndex].Foto}
                 loading="eager"
                 className="max-w-full max-h-screen object-contain"
-                unoptimized
+
               />
 
               <button
@@ -213,7 +213,7 @@ export function ImageGallery({ imovel }) {
                     blurDataURL={image.Foto}
                     loading="lazy"
                     className="object-cover"
-                    unoptimized
+
                   />
                 </div>
               ))}
