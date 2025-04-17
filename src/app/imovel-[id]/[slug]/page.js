@@ -11,7 +11,7 @@ import VideoCondominio from './componentes/VideoCondominio';
 import TourVirtual from './componentes/TourVirtual';
 import Contato from './componentes/Contato';
 import { SimilarProperties } from './componentes/similar-properties';
-import { getCondominioPorSlug, getImovelById } from "@/app/services";
+import { getCondominioPorSlug } from "@/app/services";
 import { WhatsappFloat } from '@/app/components/ui/whatsapp';
 import { Apartment as StructuredDataApartment } from "@/app/components/structured-data";
 
