@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import emailjs from "@emailjs/browser";
+// Remove direct import as we'll use dynamic import
+// import emailjs from "@emailjs/browser";
 
 export function ContactSection() {
   const [formData, setFormData] = useState({
@@ -11,8 +12,7 @@ export function ContactSection() {
     title: "",
     message: "",
   });
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
+  const [formState, setFormState] = useState("form"); // Use formState instead of separate states
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -20,45 +20,55 @@ export function ContactSection() {
 
   const sendEmail = (e) => {
     e.preventDefault();
-    setIsLoading(true);
+    setFormState("loading");
 
-    emailjs
-      .send(
-        "service_az9rp6u",
-        "template_tdiet3w",
-        {
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          title: formData.title,
-          message: `${formData.message}\n\nTelefone para contato: ${formData.phone}`,
-        },
-        "sraRHEjyadY96d2x1"
-      )
-      .then(() => {
-        setIsLoading(false);
-        setIsSuccess(true);
-        setFormData({
-          name: "",
-          phone: "",
-          email: "",
-          title: "",
-          message: "",
+    // Dynamic import of emailjs
+    import("@emailjs/browser").then((emailjs) => {
+      emailjs.default
+        .send(
+          "service_az9rp6u",
+          "template_tdiet3w",
+          {
+            name: formData.name,
+            email: formData.email,
+            phone: formData.phone,
+            title: formData.title,
+            message: formData.message,
+          },
+          "sraRHEjyadY96d2x1"
+        )
+        .then(() => {
+          setFormState("success");
+
+          // Função para detectar dispositivo móvel
+          const isMobile = () => {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+          };
+
+          // Construir a mensagem
+          const message = `NPi Consultoria - Imóveis de Alto Padrão. Olá, estou no site de vocês e gostaria de falar com algum consultor. Pode me ajudar?`;
+
+          // Escolher a URL base apropriada
+          const baseUrl = isMobile()
+            ? 'whatsapp://send'
+            : 'https://web.whatsapp.com/send';
+
+          // Construir a URL completa
+          const whatsappUrl = `${baseUrl}?phone=5511969152222&text=${encodeURIComponent(message)}`;
+
+          // Redirecionar para o WhatsApp
+          if (isMobile()) {
+            window.location.href = whatsappUrl;
+          } else {
+            window.open(whatsappUrl, '_blank');
+          }
+        })
+        .catch((error) => {
+          console.error("Erro ao enviar mensagem:", error);
+          setFormState("form");
+          alert("Erro ao enviar mensagem. Por favor, tente novamente.");
         });
-
-        // Redirecionamento para WhatsApp após 3 segundos
-        setTimeout(() => {
-          window.open(
-            "https://web.whatsapp.com/send?phone=5511969152222&text=NPi%20Consultoria%20-%20Im%C3%B3veis%20de%20Alto%20Padr%C3%A3o.%20Gostaria%20de%20mais%20informa%C3%A7%C3%B5es%20sobre%20o(a)%20Apartamento%20no%20bairro%20Ibirapuera%20que%20vi%20no%20site%20de%20voc%C3%AAs:%20https://www.npiconsultoria.com.br/imovel-105627/horiz-ibirapuera%20-%20H%C3%B3riz%20Ibirapuera.%20Pode%20me%20ajudar?",
-            "_blank"
-          );
-        }, 2000);
-      })
-      .catch((error) => {
-        console.error("Erro ao enviar mensagem:", error);
-        setIsLoading(false);
-        alert("Erro ao enviar mensagem. Por favor, tente novamente.");
-      });
+    });
   };
 
   return (
@@ -76,7 +86,7 @@ export function ContactSection() {
 
         {/* Formulário à direita */}
         <div className="lg:w-1/2">
-          {isSuccess ? (
+          {formState === "success" ? (
             <div className="p-6 flex flex-col items-center justify-center h-full">
               <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4">
                 <p className="text-center">
@@ -86,7 +96,7 @@ export function ContactSection() {
             </div>
           ) : (
             <form onSubmit={sendEmail} className="p-6 rounded-lg">
-              {isLoading ? (
+              {formState === "loading" ? (
                 <div className="flex flex-col items-center justify-center h-64">
                   <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-[#8B6F48] mb-4"></div>
                   <p className="text-center">Enviando mensagem...</p>
