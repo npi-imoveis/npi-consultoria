@@ -2,7 +2,14 @@
 
 const formatarHtml = (htmlString) => {
     if (!htmlString) return "";
-    return htmlString.replace(/\r\n|\r|\n/g, "<br />");
+    // Sanitize the input by removing any HTML tags first
+    const sanitizedString = htmlString.replace(/<[^>]*>/g, '');
+    // Convert newlines to <br /> tags more safely
+    const formattedString = sanitizedString
+        .split(/\r?\n/)
+        .filter(line => line.trim() !== '')
+        .join('<br />');
+    return formattedString;
 };
 
 export default function DiferenciaisCondominio({ condominio }) {
@@ -10,9 +17,12 @@ export default function DiferenciaisCondominio({ condominio }) {
     return (
         <div className="bg-white rounded-lg container mx-auto p-10 mt-4">
             <h2 className="text-xl font-bold text-black">
-                Diferenciais do Condomínio {condominio.Empreendimento}{" "}
+                Diferenciais do Condomínio {condominio.Empreendimento}
             </h2>
-            <h4 className="text-sm mt-6" dangerouslySetInnerHTML={{ __html: diferenciasCondominio }} />
+            <div
+                className="text-sm mt-6 whitespace-pre-line"
+                dangerouslySetInnerHTML={{ __html: diferenciasCondominio }}
+            />
         </div>
     );
 } 

@@ -16,7 +16,7 @@ import VideoCondominio from './componentes/VideoCondominio';
 import TourVirtual from './componentes/TourVirtual';
 import ExploreRegiao from './componentes/ExploreRegiao';
 
-const currentUrl = typeof window !== "undefined" ? window.location.href : "";
+
 
 
 export async function generateMetadata({ params }) {
@@ -37,12 +37,12 @@ export async function generateMetadata({ params }) {
     title: `Condomínio ${condominio.Empreendimento}, ${condominio.TipoEndereco} ${condominio.Endereco}, ${condominio.BairroComercial}`,
     description,
     alternates: {
-      canonical: `${process.env.NEXT_PUBLIC_URL}/${params.slug}`,
+      canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/${params.slug}`,
     },
     openGraph: {
       title: `Condomínio ${condominio.Empreendimento}`,
       description,
-      url: `${process.env.NEXT_PUBLIC_URL}/${params.slug}`,
+      url: `${process.env.NEXT_PUBLIC_SITE_URL}/${params.slug}`,
       images: condominio.Foto?.[0]?.Foto ? [{ url: condominio.Foto[0].Foto }] : [],
       type: "website",
     },
@@ -61,7 +61,7 @@ export default async function CondominioPage({ params }) {
   const condominio = response.data;
   const imoveisRelacionados = response.imoveisRelacionados;
 
-  const url = `${process.env.NEXT_PUBLIC_URL}/${params.slug}`;
+  const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/${params.slug}`;
 
 
   return (
@@ -152,7 +152,7 @@ export default async function CondominioPage({ params }) {
       {condominio.Tour360 && <TourVirtual condominio={condominio} />}
 
       <ExploreRegiao condominio={condominio} currentUrl={currentUrl} />
-      <WhatsappFloat message={`Quero saber mais sobre o ${condominio.Empreendimento}, no bairro ${condominio.BairroComercial}, disponivel na pagina de Condominio: ${url}`} />
+      <WhatsappFloat message={`Quero saber mais sobre o ${condominio.Empreendimento}, no bairro ${condominio.BairroComercial}, disponivel na pagina de Condominio: ${currentUrl}`} />
     </section>
   );
 }

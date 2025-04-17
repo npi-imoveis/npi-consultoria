@@ -1,10 +1,13 @@
-"use client";
 
 import { Share } from "@/app/components/ui/share";
 import { Breadcrumb } from "./breadcrumb";
 import Link from "next/link";
+import { getCondominiosPorImovel } from "@/app/services";
 
-export default function TituloImovel({ imovel, currentUrl }) {
+export default async function TituloImovel({ imovel, currentUrl }) {
+    const response = await getCondominiosPorImovel(imovel.Codigo)
+    const condominio = response.data?.Slug
+
     return (
         <div className="bg-white rounded-lg container mx-auto px-4 md:px-10">
             <Breadcrumb
@@ -31,7 +34,7 @@ export default function TituloImovel({ imovel, currentUrl }) {
             </div>
 
             <Link
-                href={`/${imovel.Slug}`}
+                href={`/${condominio}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-sm font-semibold flex justify-center items-center gap-2 mt-4 bg-zinc-100 p-2 rounded-lg hover:bg-zinc-200 transition-colors"

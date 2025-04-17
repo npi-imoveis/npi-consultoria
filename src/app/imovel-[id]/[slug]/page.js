@@ -35,12 +35,12 @@ export async function generateMetadata({ params }) {
     title: `${condominio.Empreendimento}, ${condominio.TipoEndereco} ${condominio.Endereco}, ${condominio.BairroComercial}`,
     description,
     alternates: {
-      canonical: `${process.env.NEXT_PUBLIC_URL}/${params.slug}`,
+      canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/${params.slug}`,
     },
     openGraph: {
       title: `Condomínio ${condominio.Empreendimento}`,
       description,
-      url: `${process.env.NEXT_PUBLIC_URL}/${params.slug}`,
+      url: `${process.env.NEXT_PUBLIC_SITE_URL}/${params.slug}`,
       images: condominio.Foto?.[0]?.Foto ? [{ url: condominio.Foto[0].Foto }] : [],
       type: "website",
     },
@@ -57,7 +57,7 @@ export async function generateMetadata({ params }) {
 export default async function Imovel({ params }) {
   const response = await getCondominioPorSlug(params.slug);
   const imovel = response.data;
-  const url = `${process.env.NEXT_PUBLIC_URL}/imovel-${imovel.Codigo}/${params.slug}`;
+  const url = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${params.slug}`;
 
   return (
     <section className="w-full bg-white pb-32 pt-20">
