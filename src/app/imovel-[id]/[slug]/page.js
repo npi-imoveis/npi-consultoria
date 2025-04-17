@@ -55,7 +55,6 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function Imovel({ params }) {
-
   const response = await getCondominioPorSlug(params.slug);
   const imovel = response.data;
 

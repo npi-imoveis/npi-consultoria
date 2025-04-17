@@ -247,3 +247,19 @@ p {
   font-size: 14px;
   color: #3c4043;
 }
+
+@keyframes pulse-opacity {
+  0% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.3;
+  }
+}
+
+.animate-pulse-opacity {
+  animation: pulse-opacity 1.5s infinite ease-in-out;
+}
