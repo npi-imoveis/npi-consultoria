@@ -77,7 +77,7 @@ export default function CondominioGallery({ fotos, second, title }) {
             style={{ objectPosition: "center" }}
             priority={currentIndex === 0}
             loading={currentIndex === 0 ? "eager" : "lazy"}
-            unoptimized
+
           />
           <span className="absolute top-2 right-2 bg-black text-white text-[12px] px-2 py-1 rounded z-10">
             {currentIndex + 1} de {images.length}
@@ -164,7 +164,7 @@ export default function CondominioGallery({ fotos, second, title }) {
                     fill
                     className="object-cover"
                     loading="lazy"
-                    unoptimized
+
                   />
                 </div>
               ))}
