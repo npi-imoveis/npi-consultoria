@@ -154,9 +154,13 @@ export default function BuscaImoveis() {
         // Obtém os valores mais recentes do store
         const filtrosAtuais = useFiltersStore.getState();
         console.log("Valores no store - bairrosSelecionados:", filtrosAtuais.bairrosSelecionados);
+        console.log("Valores no store - finalidade:", filtrosAtuais.finalidade);
+
+        // Garantir que finalidade seja sempre "Comprar" se não estiver definida
+        const finalidade = filtrosAtuais.finalidade || "Comprar";
 
         params = {
-          finalidade: filtrosAtuais.finalidade,
+          finalidade: finalidade, // Sempre usa "Comprar" independente do valor no store
           categoria: filtrosAtuais.categoriaSelecionada,
           cidade: filtrosAtuais.cidadeSelecionada,
           quartos: filtrosAtuais.quartos,
@@ -165,33 +169,14 @@ export default function BuscaImoveis() {
         };
 
         // Log detalhado dos filtros selecionados
-        console.log("Filtros aplicados - Finalidade:", filtrosAtuais.finalidade);
+        console.log("Filtros aplicados - Finalidade:", params.finalidade);
         console.log("Filtros aplicados - Categoria:", filtrosAtuais.categoriaSelecionada);
         console.log("Filtros aplicados - Cidade:", filtrosAtuais.cidadeSelecionada);
 
-        // Tratar bairros separadamente para garantir que o formato esteja correto
+        // Adicionar bairros selecionados se existirem
         if (filtrosAtuais.bairrosSelecionados && filtrosAtuais.bairrosSelecionados.length > 0) {
-          console.log("Filtros aplicados - Bairros originais:", filtrosAtuais.bairrosSelecionados);
-
-          // Se por acaso algum dos itens contiver vírgulas, vamos dividir e criar um array plano
-          const bairrosProcessados = [];
-
-          filtrosAtuais.bairrosSelecionados.forEach(bairro => {
-            // Verificar se o bairro contém vírgulas
-            if (typeof bairro === 'string' && bairro.includes(',')) {
-              // Dividir a string e adicionar cada parte como um bairro separado
-              const partes = bairro.split(',').map(parte => parte.trim()).filter(Boolean);
-              partes.forEach(parte => bairrosProcessados.push(parte));
-            } else {
-              // Adicionar o bairro normalmente
-              bairrosProcessados.push(bairro);
-            }
-          });
-
-          console.log("Bairros processados:", bairrosProcessados);
-
-          // Não adicionamos ao objeto params, vamos adicionar cada um individualmente à queryParams depois
-          params.bairrosArray = bairrosProcessados;
+          params.bairrosArray = filtrosAtuais.bairrosSelecionados;
+          console.log("Bairros selecionados:", filtrosAtuais.bairrosSelecionados);
         }
 
         // Adiciona filtros de preço se estiverem definidos
@@ -415,7 +400,7 @@ export default function BuscaImoveis() {
 
   // Efeito para buscar imóveis quando a página muda ou os filtros são aplicados/removidos
   useEffect(() => {
-    // Verificar se há parâmetro de busca na URL
+    // Verificar se há parâmetro de busca na URL apenas para o termo de busca
     const searchParams = new URLSearchParams(window.location.search);
     const searchQuery = searchParams.get('q');
 

@@ -1,64 +1,18 @@
 "use client";
 import { getImoveisByFilters } from "@/app/services";
 import useFiltersStore from "@/app/store/filtrosStore";
-import Link from "next/link";
+
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 
-const cities = [
-  {
-    name: "São Paulo",
-    listings: [
-      "Apartamentos à venda em São Paulo",
-      "Casas à venda em São Paulo",
-      "Studios e kitnets à venda em São Paulo",
-      "Casas em condomínio à venda em São Paulo",
-    ],
-  },
-  {
-    name: "Rio de Janeiro",
-    listings: [
-      "Apartamentos à venda em Rio de Janeiro",
-      "Casas à venda em Rio de Janeiro",
-      "Studios e kitnets à venda em Rio de Janeiro",
-      "Casas em condomínio à venda em Rio de Janeiro",
-    ],
-  },
-  {
-    name: "Porto Alegre",
-    listings: [
-      "Apartamentos à venda em Porto Alegre",
-      "Casas à venda em Porto Alegre",
-      "Studios e kitnets à venda em Porto Alegre",
-      "Casas em condomínio à venda em Porto Alegre",
-    ],
-  },
-  {
-    name: "Belo Horizonte",
-    listings: [
-      "Apartamentos à venda em Belo Horizonte",
-      "Casas à venda em Belo Horizonte",
-      "Studios e kitnets à venda em Belo Horizonte",
-      "Casas em condomínio à venda em Belo Horizonte",
-    ],
-  },
-  {
-    name: "Campinas",
-    listings: [
-      "Apartamentos à venda em Campinas",
-      "Casas à venda em Campinas",
-      "Studios e kitnets à venda em Campinas",
-      "Casas em condomínio à venda em Campinas",
-    ],
-  },
-];
 
 export function ListCities() {
   const [activeTab, setActiveTab] = useState("Comprar");
   const [cidades, setCidades] = useState([]);
   const setFilters = useFiltersStore((state) => state.setFilters);
   const aplicarFiltros = useFiltersStore((state) => state.aplicarFiltros);
+  const limparFiltros = useFiltersStore((state) => state.limparFiltros);
   const router = useRouter();
   const carouselRef = useRef(null);
 
@@ -74,18 +28,24 @@ export function ListCities() {
           cidades: cidadesList,
         });
       } catch (error) {
-        console.error("Erro ao buscar filtros:", error);
+
       }
     }
 
     fetchImoveis();
   }, [setFilters]);
 
+
+
   const handleCidadeClick = (cidade, categoria) => {
+    // Limpar filtros existentes primeiro para garantir estado limpo
+    limparFiltros();
+
     // Atualiza o store com os filtros selecionados
     setFilters({
       cidadeSelecionada: cidade,
       categoriaSelecionada: categoria,
+      finalidade: "VENDA", // Sempre envia "Comprar" como padrão
       bairrosSelecionados: [], // Resetar para array vazio
       filtrosBasicosPreenchidos: true,
     });
@@ -93,10 +53,8 @@ export function ListCities() {
     // Ativa a busca com os filtros
     aplicarFiltros();
 
-    // Redireciona para a página de busca
-    router.push(
-      `/busca?cidade=${encodeURIComponent(cidade)}&categoria=${encodeURIComponent(categoria)}`
-    );
+    // Redireciona para a página de busca sem parâmetros na URL
+    router.push(`/busca`);
   };
 
   const getActionText = () => {
@@ -118,27 +76,7 @@ export function ListCities() {
           Onde você quiser, tem um <br className="hidden sm:block" /> imóvel de luxo para você!
         </h2>
 
-        {/* Botões de alternância */}
-        <div className="flex justify-center lg:justify-start space-x-4 my-6">
-          <button
-            className={`px-6 py-2 rounded-full transition-all duration-300 text-sm ${activeTab === "Comprar"
-              ? "bg-black text-white"
-              : "bg-white text-gray-700 border border-gray-400"
-              }`}
-            onClick={() => setActiveTab("Comprar")}
-          >
-            <span>Comprar</span>
-          </button>
-          <button
-            className={`px-6 py-2 rounded-full transition-all duration-300 text-sm ${activeTab === "Alugar"
-              ? "bg-black text-white"
-              : "bg-white text-gray-700 border border-gray-400"
-              }`}
-            onClick={() => setActiveTab("Alugar")}
-          >
-            <span>Alugar</span>
-          </button>
-        </div>
+
 
         {/* Lista de cidades - Slider */}
         <div

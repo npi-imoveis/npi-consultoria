@@ -9,26 +9,6 @@ import { useInView } from "react-intersection-observer";
 import useImovelStore from "@/app/store/imovelStore";
 import dynamic from 'next/dynamic';
 
-// Carregamento dinâmico do componente de card com lazy loading
-const LazyCardHome = dynamic(() => import('../ui/card-home'), {
-  loading: () => (
-    <div className="animate-pulse w-[350px] h-[400px]">
-      <div className="h-[220px] bg-gray-200 rounded-t-lg"></div>
-      <div className="p-6 bg-white h-[180px]">
-        <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
-        <div className="h-5 bg-gray-200 rounded w-3/4 mb-2"></div>
-        <div className="h-3 bg-gray-200 rounded w-2/3 mb-4"></div>
-        <div className="flex gap-4 mb-4">
-          {[1, 2, 3, 4].map(i => (
-            <div key={i} className="h-5 bg-gray-200 rounded w-12"></div>
-          ))}
-        </div>
-        <div className="h-6 bg-gray-200 rounded w-1/3 mt-auto"></div>
-      </div>
-    </div>
-  ),
-  ssr: false
-});
 
 // Componente memoizado para o card de imóvel
 const MemoizedCardHome = memo(CardHome);
