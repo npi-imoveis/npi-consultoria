@@ -1,3 +1,5 @@
+'use client'
+
 export function PropertyTableOwner({ imovel }) {
 
     // Add safety check - return null if imovel is undefined

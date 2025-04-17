@@ -1,3 +1,5 @@
+'use client'
+
 import { formatterSlug } from "@/app/utils/formatter-slug";
 
 
