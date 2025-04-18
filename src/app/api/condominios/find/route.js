@@ -19,7 +19,6 @@ export async function GET(request) {
 
     await connectToDatabase();
 
-    // Buscar o imóvel de referência pelo Codigo
     const imovelReferencia = await Imovel.findOne({
       Codigo: id,
       ValorAntigo: {
@@ -53,10 +52,12 @@ export async function GET(request) {
     const imoveisMesmoEndereco = await Imovel.find({
       Endereco: imovelReferencia.Endereco,
       Numero: imovelReferencia.Numero,
-      ValorAntigo: {
-        $nin: ["", "0"],
-        $exists: true
-      }
+      $and: [
+        { ValorAntigo: { $exists: true } },
+        { ValorAntigo: { $ne: "0" } },
+        { ValorAntigo: { $ne: "" } },
+        { ValorAntigo: { $ne: null } }
+      ]
     });
 
     // Verificar se encontrou algum imóvel

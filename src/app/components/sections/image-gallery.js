@@ -25,9 +25,15 @@ export function ImageGallery({ imovel }) {
   const [selectedIndex, setSelectedIndex] = useState(null);
   const isMobile = useIsMobile();
 
+  // Validate if imovel exists and has the required properties
+  if (!imovel || !imovel.Empreendimento) {
+    return null;
+  }
+
   const slug = formatterSlug(imovel.Empreendimento);
 
-  const images = imovel.Foto
+  // Ensure Foto is an array and handle edge cases
+  const images = Array.isArray(imovel.Foto) && imovel.Foto.length > 0
     ? [...imovel.Foto].sort((a, b) => {
       if (a.Destaque === "Sim" && b.Destaque !== "Sim") return -1;
       if (a.Destaque !== "Sim" && b.Destaque === "Sim") return 1;
@@ -35,7 +41,18 @@ export function ImageGallery({ imovel }) {
     })
     : [];
 
-  if (images.length === 0) return null;
+  if (images.length === 0) {
+    // Return a placeholder or default image if no images are available
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-1 w-full">
+        <div className="col-span-1 h-[410px] relative">
+          <div className="w-full h-full overflow-hidden bg-gray-200 flex items-center justify-center">
+            <span className="text-gray-500">Imagem não disponível</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const openModal = (index) => {
     setIsModalOpen(true);

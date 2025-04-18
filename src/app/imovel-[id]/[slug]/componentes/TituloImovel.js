@@ -1,12 +1,17 @@
-
 import { Share } from "@/app/components/ui/share";
 import { Breadcrumb } from "./breadcrumb";
 import Link from "next/link";
 import { getCondominiosPorImovel } from "@/app/services";
 
 export default async function TituloImovel({ imovel, currentUrl }) {
-    const response = await getCondominiosPorImovel(imovel.Codigo)
-    const condominio = response.data?.Slug
+    let condominio = null;
+
+    try {
+        const response = await getCondominiosPorImovel(imovel.Codigo)
+        condominio = response?.data?.Slug
+    } catch (error) {
+        console.error('Erro ao carregar dados do condomínio:', error)
+    }
 
     return (
         <div className="bg-white rounded-lg container mx-auto px-4 md:px-10">
@@ -33,30 +38,32 @@ export default async function TituloImovel({ imovel, currentUrl }) {
                 </h2>
             </div>
 
-            <Link
-                href={`/${condominio}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm font-semibold flex justify-center items-center gap-2 mt-4 bg-zinc-100 p-2 rounded-lg hover:bg-zinc-200 transition-colors"
-                aria-label={`Ver informações completas do condomínio ${imovel.Empreendimento}`}
-            >
-                Ver condomínio {imovel.Empreendimento}
-                <svg
-                    className="size-5 rtl:rotate-180"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    aria-hidden="true"
+            {condominio && (
+                <Link
+                    href={`/${condominio}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm font-semibold flex justify-center items-center gap-2 mt-4 bg-zinc-100 p-2 rounded-lg hover:bg-zinc-200 transition-colors"
+                    aria-label={`Ver informações completas do condomínio ${imovel.Empreendimento}`}
                 >
-                    <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M17 8l4 4m0 0l-4 4m4-4H3"
-                    />
-                </svg>
-            </Link>
+                    Ver condomínio {imovel.Empreendimento}
+                    <svg
+                        className="size-5 rtl:rotate-180"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                        aria-hidden="true"
+                    >
+                        <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M17 8l4 4m0 0l-4 4m4-4H3"
+                        />
+                    </svg>
+                </Link>
+            )}
         </div>
     );
 } 

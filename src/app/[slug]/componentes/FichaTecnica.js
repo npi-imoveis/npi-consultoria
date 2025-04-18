@@ -2,7 +2,11 @@
 
 const formatarHtml = (htmlString) => {
     if (!htmlString) return "";
-    return htmlString.replace(/\r\n|\r|\n/g, "<br />");
+    // Normalize line endings to \n first, then replace with <br />
+    return htmlString
+        .replace(/\r\n|\r|\n/g, '\n')
+        .split('\n')
+        .join('<br />');
 };
 
 export default function FichaTecnica({ condominio }) {
@@ -15,7 +19,10 @@ export default function FichaTecnica({ condominio }) {
 
             <div>
                 <h2 className="font-semibold text-lg mb-3">Informações Gerais</h2>
-                <h4 className="my-8 text-sm" dangerouslySetInnerHTML={{ __html: fichaTecnica }} />
+                <div
+                    className="my-8 text-sm"
+                    dangerouslySetInnerHTML={{ __html: fichaTecnica }}
+                />
             </div>
         </div>
     );
