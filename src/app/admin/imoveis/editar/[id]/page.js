@@ -4,9 +4,19 @@ import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import AuthCheck from "../../../components/auth-check";
 import { getImovelById, atualizarImovel, excluirImovel } from "@/app/services";
-import { ArrowLeftIcon, ArrowPathIcon, TrashIcon, PlusCircleIcon, XCircleIcon, PhotoIcon, ArrowUpIcon, ArrowDownIcon } from "@heroicons/react/24/outline";
+import {
+  ArrowLeftIcon,
+  ArrowPathIcon,
+  TrashIcon,
+  PlusCircleIcon,
+  XCircleIcon,
+  PhotoIcon,
+  ArrowUpIcon,
+  ArrowDownIcon,
+} from "@heroicons/react/24/outline";
 import Image from "next/image";
-import { getVinculos } from "@/app/admin/services";
+import { getProprietario, getVinculos } from "@/app/admin/services";
+import Proprietarios from "../../components/proprietarios";
 
 export default function EditarImovel({ params }) {
   const router = useRouter();
@@ -67,7 +77,7 @@ export default function EditarImovel({ params }) {
             ValorVenda: formatarParaReal(imovelData.ValorVenda),
             ValorAluguelSite: formatarParaReal(imovelData.ValorAluguelSite),
             ValorCondominio: formatarParaReal(imovelData.ValorCondominio),
-            ValorIptu: formatarParaReal(imovelData.ValorIptu)
+            ValorIptu: formatarParaReal(imovelData.ValorIptu),
           };
           setDisplayValues(valoresFormatados);
         } else {
@@ -89,7 +99,7 @@ export default function EditarImovel({ params }) {
   useEffect(() => {
     const fetchVinculos = async () => {
       const response = await getVinculos(id);
-      console.log("Corretores vinculados", response)
+      console.log("Corretores vinculados", response);
     };
     fetchVinculos();
   }, [id]);
@@ -102,15 +112,15 @@ export default function EditarImovel({ params }) {
     if (["ValorVenda", "ValorAluguelSite", "ValorCondominio", "ValorIptu"].includes(name)) {
       // Armazena o valor não formatado no formData
       const valorNumerico = extrairNumeros(value);
-      setFormData(prevData => ({
+      setFormData((prevData) => ({
         ...prevData,
-        [name]: valorNumerico
+        [name]: valorNumerico,
       }));
 
       // Atualiza o valor formatado para exibição
-      setDisplayValues(prevValues => ({
+      setDisplayValues((prevValues) => ({
         ...prevValues,
-        [name]: formatarParaReal(valorNumerico)
+        [name]: formatarParaReal(valorNumerico),
       }));
     }
     // Tratamento especial para o campo de vídeo
@@ -216,7 +226,7 @@ export default function EditarImovel({ params }) {
   const changeImagePosition = (codigo, newPosition) => {
     console.log(`Trocando imagem ${codigo} com a posição ${newPosition}`);
 
-    setFormData(prevData => {
+    setFormData((prevData) => {
       // Obter as chaves ordenadas pelo valor Ordem ou pela ordem natural
       const keys = [...Object.keys(prevData.Foto)].sort((a, b) => {
         const orderA = prevData.Foto[a].Ordem || [...Object.keys(prevData.Foto)].indexOf(a);
@@ -249,13 +259,13 @@ export default function EditarImovel({ params }) {
       newOrder.forEach((key, idx) => {
         newFoto[key] = {
           ...prevData.Foto[key],
-          Ordem: idx + 1
+          Ordem: idx + 1,
         };
       });
 
       return {
         ...prevData,
-        Foto: newFoto
+        Foto: newFoto,
       };
     });
   };
@@ -324,14 +334,18 @@ export default function EditarImovel({ params }) {
       title: "Informações Básicas",
       fields: [
         {
-          name: "Codigo", label: "Código", type: "text"
+          name: "Codigo",
+          label: "Código",
+          type: "text",
         },
         {
-          name: "Ativo", label: "Ativo", type: "select",
+          name: "Ativo",
+          label: "Ativo",
+          type: "select",
           options: [
             { value: "Sim", label: "Sim" },
-            { value: "Não", label: "Não" }
-          ]
+            { value: "Não", label: "Não" },
+          ],
         },
         { name: "Empreendimento", label: "Empreendimento", type: "text" },
         { name: "Construtora", label: "Construtora", type: "text" },
@@ -345,8 +359,8 @@ export default function EditarImovel({ params }) {
             { value: "LANÇAMENTO", label: "LANÇAMENTO" },
             { value: "PRÉ-LANÇAMENTO", label: "PRÉ-LANÇAMENTO" },
             { value: "PRONTO NOVO", label: "PRONTO NOVO" },
-            { value: "PRONTO USADO", label: "PRONTO USADO" }
-          ]
+            { value: "PRONTO USADO", label: "PRONTO USADO" },
+          ],
         },
         {
           name: "Status",
@@ -359,8 +373,8 @@ export default function EditarImovel({ params }) {
             { value: "SUSPENSO", label: "SUSPENSO" },
             { value: "VENDA", label: "VENDA" },
             { value: "VENDA E LOCAÇÃO", label: "VENDA E LOCAÇÃO" },
-            { value: "VENDIDO", label: "VENDIDO" }
-          ]
+            { value: "VENDIDO", label: "VENDIDO" },
+          ],
         },
         { name: "Slug", label: "Slug", type: "text" },
         {
@@ -369,9 +383,8 @@ export default function EditarImovel({ params }) {
           type: "select",
           options: [
             { value: "Sim", label: "Sim" },
-            { value: "Não", label: "Não" }
-          ]
-
+            { value: "Não", label: "Não" },
+          ],
         },
         {
           name: "Condominio",
@@ -379,8 +392,8 @@ export default function EditarImovel({ params }) {
           type: "select",
           options: [
             { value: "Sim", label: "Sim" },
-            { value: "Não", label: "Não" }
-          ]
+            { value: "Não", label: "Não" },
+          ],
         },
       ],
     },
@@ -415,8 +428,18 @@ export default function EditarImovel({ params }) {
       title: "Valores",
       fields: [
         { name: "ValorVenda", label: "Valor de Venda (R$)", type: "text", isMonetary: true },
-        { name: "ValorAluguelSite", label: "Valor de Aluguel (R$)", type: "text", isMonetary: true },
-        { name: "ValorCondominio", label: "Valor do Condomínio (R$)", type: "text", isMonetary: true },
+        {
+          name: "ValorAluguelSite",
+          label: "Valor de Aluguel (R$)",
+          type: "text",
+          isMonetary: true,
+        },
+        {
+          name: "ValorCondominio",
+          label: "Valor do Condomínio (R$)",
+          type: "text",
+          isMonetary: true,
+        },
         { name: "ValorIptu", label: "Valor do IPTU (R$)", type: "text", isMonetary: true },
       ],
     },
@@ -425,12 +448,14 @@ export default function EditarImovel({ params }) {
       fields: [
         { name: "Corretor", label: "Corretor", type: "text" },
         {
-          name: "Tipo", label: "Tipo", type: "select", options: [
+          name: "Tipo",
+          label: "Tipo",
+          type: "select",
+          options: [
             { value: "Captador", label: "Captador" },
-            { value: "Promotor", label: "Promotor" }
-          ]
+            { value: "Promotor", label: "Promotor" },
+          ],
         },
-
       ],
     },
 
@@ -550,7 +575,9 @@ export default function EditarImovel({ params }) {
                           <select
                             className="border border-gray-300 rounded text-sm px-2 py-1 focus:outline-none focus:ring-1 focus:ring-black"
                             value={index + 1}
-                            onChange={(e) => changeImagePosition(codigo, parseInt(e.target.value, 10))}
+                            onChange={(e) =>
+                              changeImagePosition(codigo, parseInt(e.target.value, 10))
+                            }
                           >
                             {[...Array(Object.keys(formData.Foto).length)].map((_, i) => (
                               <option key={i} value={i + 1}>
@@ -581,23 +608,19 @@ export default function EditarImovel({ params }) {
       <div className="">
         <div className="mb-8">
           <div className="flex justify-between items-center mb-6">
-            <h1 className="text-xl font-bold text-gray-900">
-              {isLoading
-                ? "Carregando..."
-                : `Editar Imóvel: ${formData?.Empreendimento} | Código: ${formData?.Codigo}`}
-            </h1>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => router.push("/admin/imoveis")}
-                className="inline-flex items-center px-5 py-2 text-xs rounded-md text-gray-700 font-bold hover:text-black/50"
-              >
-                <ArrowLeftIcon className="w-5 h-5 mr-2" />
-                Voltar
+            <div className="flex items-center">
+              <button type="button" onClick={() => router.push("/admin/imoveis")}>
+                <ArrowLeftIcon className="w-10 h-10 mr-2 bg-gray-200 rounded-full p-2" />
               </button>
-
+              <h1 className="text-xl font-bold text-gray-900">
+                {isLoading
+                  ? "Carregando..."
+                  : `Editar Imóvel: ${formData?.Empreendimento} | Código: ${formData?.Codigo}`}
+              </h1>
             </div>
           </div>
+
+          <Proprietarios id={id} />
 
           {error && (
             <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
