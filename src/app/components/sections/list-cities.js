@@ -61,30 +61,16 @@ export function ListCities() {
             <div key={index} className="w-[220px] flex-shrink-0">
               <h3 className="text-lg font-bold text-black mb-2">{cidade}</h3>
               <ul className="text-left">
-                <li className="text-gray-700 mb-1 text-xs">
-                  <button
-                    onClick={() => handleCidadeClick(cidade, "Apartamento")}
-                    className="hover:text-[#8B6F48] transition-colors text-left w-full"
-                  >
-                    Apartamento para comprar em {cidade}
-                  </button>
-                </li>
-                <li className="text-gray-700 mb-1 text-xs">
-                  <button
-                    onClick={() => handleCidadeClick(cidade, "Casa")}
-                    className="hover:text-[#8B6F48] transition-colors text-left w-full"
-                  >
-                    Casa para comprar em {cidade}
-                  </button>
-                </li>
-                <li className="text-gray-700 mb-1 text-xs">
-                  <button
-                    onClick={() => handleCidadeClick(cidade, "Sala Comercial")}
-                    className="hover:text-[#8B6F48] transition-colors text-left w-full"
-                  >
-                    Sala Comercial para comprar em {cidade}
-                  </button>
-                </li>
+                {["Apartamento", "Casa", "Sala Comercial"].map((tipo, idx) => (
+                  <li key={idx} className="text-gray-700 mb-1 text-xs">
+                    <button
+                      onClick={() => handleCidadeClick(cidade, tipo)}
+                      className="hover:text-[#8B6F48] transition-colors text-left w-full"
+                    >
+                      {`${tipo} para comprar em ${cidade}`}
+                    </button>
+                  </li>
+                ))}
               </ul>
             </div>
           ))}
