@@ -15,6 +15,8 @@ import Lazer from './componentes/Lazer';
 import VideoCondominio from './componentes/VideoCondominio';
 import TourVirtual from './componentes/TourVirtual';
 import ExploreRegiao from './componentes/ExploreRegiao';
+import ScrollToImoveisButton from "./componentes/scroll-to-imovel-button";
+
 
 
 
@@ -121,7 +123,11 @@ export default async function CondominioPage({ params }) {
                   </div>
                 )}
               </div>
-              <Button text={`Mostrar imóveis (${imoveisRelacionados.length})`} />
+              <ScrollToImoveisButton
+                text={`Mostrar imóveis (${imoveisRelacionados.length})`}
+
+
+              />
             </div>
             <div className="relative w-full h-[230px] overflow-y-auto bg-white rounded-lg overflow-hidden p-4">
 
@@ -139,8 +145,9 @@ export default async function CondominioPage({ params }) {
         </div>
       </div>
       {imoveisRelacionados && imoveisRelacionados.length > 0 && (
-
-        <ImoveisRelacionados imoveisRelacionados={imoveisRelacionados} />
+        <div id="imoveis-relacionados">
+          <ImoveisRelacionados imoveisRelacionados={imoveisRelacionados} />
+        </div>
 
       )}
       <SobreCondominio condominio={condominio} />

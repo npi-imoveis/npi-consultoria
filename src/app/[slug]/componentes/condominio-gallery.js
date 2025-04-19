@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import { Share } from "@/app/components/ui/share";
 
 export default function CondominioGallery({ fotos, second, title }) {
@@ -104,20 +104,18 @@ export default function CondominioGallery({ fotos, second, title }) {
       {/* Modal para visualização em tela cheia */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-90 z-50 overflow-auto">
-          <div className="flex gap-4 p-5">
+          <div className="flex justify-between gap-4 p-5 pt-28 mt-6 md:mt-0">
+            <button onClick={closeModal} aria-label="Fechar galeria">
+              <ArrowLeft color="white" size={24} />
+            </button>
+
             <Share
               url={typeof window !== "undefined" ? window.location.href : ""}
               title="Confira este condomínio"
               imovel={fotos && fotos.length > 0 ? { Codigo: fotos[0].CondominioId } : null}
             />
           </div>
-          <button
-            onClick={closeModal}
-            className="fixed top-5 right-5 text-white text-3xl cursor-pointer z-50"
-            aria-label="Fechar galeria"
-          >
-            &times;
-          </button>
+
 
           {selectedIndex !== null ? (
             <div className="flex items-center justify-center min-h-screen p-4 relative">

@@ -1,7 +1,7 @@
 {
   "workbench.colorCustomizations": {
-    "titleBar.activeBackground": "#F65B00",
-    "statusBar.background": "#F65B00"
+    "titleBar.activeBackground": "#753ec1",
+    "statusBar.background": "#753ec1"
   },
 
   "files.associations": {
@@ -17,19 +17,16 @@
   "[javascript]": {
     "editor.defaultFormatter": "vscode.typescript-language-features"
   },
-  "[javascriptreact]": {
-    "editor.defaultFormatter": "biomejs.biome"
-  },
+
   "[typescript]": {
     "editor.defaultFormatter": "vscode.typescript-language-features"
   },
-  "[typescriptreact]": {
-    "editor.defaultFormatter": "biomejs.biome"
-  },
+ 
   "[json]": {
     "editor.defaultFormatter": "vscode.json-language-features"
   },
   "[jsonc]": {
     "editor.defaultFormatter": "biomejs.biome"
-  }
+  },
+  "oxc.enable": true
 }
