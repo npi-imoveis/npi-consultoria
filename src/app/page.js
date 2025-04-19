@@ -37,7 +37,7 @@ export const metadata = {
     siteName: "NPi Imóveis",
     images: [
       {
-        url: "/og-image.png",
+        url: "/assets/thumbnail.jpg",
         width: 1200,
         height: 630,
       },
@@ -49,7 +49,7 @@ export const metadata = {
     card: "summary_large_image",
     title: "NPi Imóveis - HUB de Imobiliárias de Alto Padrão",
     description: "Somos um HUB de imobiliárias Boutique que atuam com venda de imóveis de alto padrão, apartamentos e casas de luxo.",
-    images: ["/og-image.png"],
+    images: ["/assets/thumbnail.jpg"],
   },
   icons: {
     icon: "/favicon.ico",
