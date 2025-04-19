@@ -14,13 +14,23 @@ export default function AuthCheck({ children }) {
     console.log("AuthCheck: Initializing authentication check...");
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
-        console.log("AuthCheck: User is authenticated.");
+        // Só faz o controle de expiração se o usuário está autenticado
+        const loginTime = localStorage.getItem("admin_login_time");
+        if (loginTime && Date.now() - Number(loginTime) > 60 * 60 * 1000) {
+          // Sessão expirou
+          auth.signOut();
+          localStorage.removeItem("admin_login_time");
+          router.push("/admin/login");
+          setIsAuthenticated(false);
+          setIsLoading(false);
+          return;
+        }
         setIsAuthenticated(true);
+        setIsLoading(false);
       } else {
-        console.log("AuthCheck: User is not authenticated. Redirecting to login...");
-        router.push("/admin/login");
+        setIsAuthenticated(false);
+        setIsLoading(false);
       }
-      setIsLoading(false);
     });
 
     return () => unsubscribe();
@@ -35,6 +45,10 @@ export default function AuthCheck({ children }) {
   }
 
   if (!isAuthenticated) {
+    // Só redireciona para login se não está autenticado e não está carregando
+    if (typeof window !== "undefined") {
+      router.push("/admin/login");
+    }
     return null;
   }
 

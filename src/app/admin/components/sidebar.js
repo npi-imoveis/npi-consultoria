@@ -38,11 +38,7 @@ export default function Sidebar() {
       href: "/admin/corretores",
       icon: UserGroupIcon,
     },
-    {
-      name: "Proprietários",
-      href: "/admin/proprietarios",
-      icon: UserGroupIcon,
-    },
+
 
     {
       name: "Gerenciar Site",

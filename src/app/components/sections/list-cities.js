@@ -8,64 +8,43 @@ import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 
 
 export function ListCities() {
-  const [activeTab, setActiveTab] = useState("Comprar");
-  const [cidades, setCidades] = useState([]);
+  // Lista estática de cidades
+  const cidades = [
+    "São Paulo",
+    "Guarujá",
+    "São José dos Campos",
+    "Bertioga",
+    "São Caetano do Sul",
+    "Paulínia",
+    "Campinas",
+    "Santo André",
+    "Santana de Parnaíba",
+    "Porto Feliz",
+  ];
+
+  const carouselRef = useRef(null);
+  const router = useRouter();
   const setFilters = useFiltersStore((state) => state.setFilters);
   const aplicarFiltros = useFiltersStore((state) => state.aplicarFiltros);
   const limparFiltros = useFiltersStore((state) => state.limparFiltros);
-  const router = useRouter();
-  const carouselRef = useRef(null);
-
-  useEffect(() => {
-    async function fetchImoveis() {
-      try {
-        const cid = await getImoveisByFilters("Cidade");
-        const cidadesList = cid.data || [];
-        setCidades(cidadesList);
-
-        // Atualiza o store com as categorias e cidades
-        setFilters({
-          cidades: cidadesList,
-        });
-      } catch (error) {
-
-      }
-    }
-
-    fetchImoveis();
-  }, [setFilters]);
-
-
-
-  const handleCidadeClick = (cidade, categoria) => {
-    // Limpar filtros existentes primeiro para garantir estado limpo
-    limparFiltros();
-
-    // Atualiza o store com os filtros selecionados
-    setFilters({
-      cidadeSelecionada: cidade,
-      categoriaSelecionada: categoria,
-      finalidade: "VENDA", // Sempre envia "Comprar" como padrão
-      bairrosSelecionados: [], // Resetar para array vazio
-      filtrosBasicosPreenchidos: true,
-    });
-
-    // Ativa a busca com os filtros
-    aplicarFiltros();
-
-    // Redireciona para a página de busca sem parâmetros na URL
-    router.push(`/busca`);
-  };
-
-  const getActionText = () => {
-    return activeTab === "Comprar" ? "para comprar" : "para alugar";
-  };
 
   const scroll = (direction) => {
     if (carouselRef.current) {
-      const scrollAmount = 300; // Ajuste conforme necessário
+      const scrollAmount = 300;
       carouselRef.current.scrollLeft += direction === "left" ? -scrollAmount : scrollAmount;
     }
+  };
+
+  const handleCidadeClick = (cidade, categoria) => {
+    limparFiltros();
+    setFilters({
+      finalidade: "VENDA",
+      categoriaSelecionada: categoria,
+      cidadeSelecionada: cidade,
+      filtrosBasicosPreenchidos: true,
+    });
+    aplicarFiltros();
+    router.push("/busca");
   };
 
   return (
@@ -76,15 +55,10 @@ export function ListCities() {
           Onde você quiser, tem um <br className="hidden sm:block" /> imóvel de luxo para você!
         </h2>
 
-
-
-        {/* Lista de cidades - Slider */}
-        <div
-          ref={carouselRef}
-          className="flex gap-6 overflow-x-auto scroll-smooth scrollbar-hide no-scrollbar pb-4"
-        >
+        {/* Lista de cidades - Estática */}
+        <div ref={carouselRef} className="flex gap-6 overflow-x-auto scroll-smooth scrollbar-hide no-scrollbar pb-4">
           {cidades.map((cidade, index) => (
-            <div key={index} className="w-[200px] flex-shrink-0">
+            <div key={index} className="w-[220px] flex-shrink-0">
               <h3 className="text-lg font-bold text-black mb-2">{cidade}</h3>
               <ul className="text-left">
                 <li className="text-gray-700 mb-1 text-xs">
@@ -92,7 +66,7 @@ export function ListCities() {
                     onClick={() => handleCidadeClick(cidade, "Apartamento")}
                     className="hover:text-[#8B6F48] transition-colors text-left w-full"
                   >
-                    Apartamentos {getActionText()} em {cidade}
+                    Apartamento para comprar em {cidade}
                   </button>
                 </li>
                 <li className="text-gray-700 mb-1 text-xs">
@@ -100,7 +74,15 @@ export function ListCities() {
                     onClick={() => handleCidadeClick(cidade, "Casa")}
                     className="hover:text-[#8B6F48] transition-colors text-left w-full"
                   >
-                    Casas {getActionText()} em {cidade}
+                    Casa para comprar em {cidade}
+                  </button>
+                </li>
+                <li className="text-gray-700 mb-1 text-xs">
+                  <button
+                    onClick={() => handleCidadeClick(cidade, "Sala Comercial")}
+                    className="hover:text-[#8B6F48] transition-colors text-left w-full"
+                  >
+                    Sala Comercial para comprar em {cidade}
                   </button>
                 </li>
               </ul>

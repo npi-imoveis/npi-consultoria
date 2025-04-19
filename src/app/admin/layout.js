@@ -15,6 +15,7 @@ export default function AdminLayout({ children }) {
   const [mounted, setMounted] = useState(false);
   const [userName, setUserName] = useState("");
   const [userEmail, setUserEmail] = useState("");
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
 
   useEffect(() => {
     // Marcar componente como montado para evitar problemas de hidratação
@@ -22,10 +23,24 @@ export default function AdminLayout({ children }) {
 
     // Verificar autenticação com Firebase
     const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setIsLoggedIn(!!user);
       if (user) {
+        // Controle de expiração de sessão (1 hora)
+        const loginTime = localStorage.getItem("admin_login_time");
+        if (loginTime && Date.now() - Number(loginTime) > 60 * 60 * 1000) {
+          auth.signOut();
+          localStorage.removeItem("admin_login_time");
+          window.location.href = "/admin/login";
+          setIsLoggedIn(false);
+          setIsAuthLoading(false);
+          return;
+        }
+        setIsLoggedIn(true);
         setUserName(user.displayName || "Usuário");
         setUserEmail(user.email || "email@example.com");
+        setIsAuthLoading(false);
+      } else {
+        setIsLoggedIn(false);
+        setIsAuthLoading(false);
       }
     });
 
@@ -37,13 +52,22 @@ export default function AdminLayout({ children }) {
     return null;
   }
 
+  // Enquanto está carregando autenticação, mostra um loading
+  if (isAuthLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-black"></div>
+      </div>
+    );
+  }
+
   // Se for a página de login, não aplica este layout (usa o layout específico de login)
   if (pathname === "/admin/login") {
     return children;
   }
 
   // Redirecionar para login se não estiver autenticado e não estiver na página de login
-  if (!isLoggedIn && pathname !== "/admin/login") {
+  if (!isAuthLoading && !isLoggedIn && pathname !== "/admin/login") {
     // Usando client-side redirect aqui, já que estamos em um componente cliente
     if (typeof window !== "undefined") {
       window.location.href = "/admin/login";
@@ -68,6 +92,7 @@ export default function AdminLayout({ children }) {
               <button
                 onClick={() => {
                   auth.signOut();
+                  localStorage.removeItem("admin_login_time");
                   window.location.href = "/admin/login";
                 }}
                 className="p-4 bg-[#8B6F48] text-white rounded-md hover:[#8B6F48]/80 transition-colors"

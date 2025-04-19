@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { signInWithEmailAndPassword } from "firebase/auth";
@@ -14,6 +14,21 @@ export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    // Se o usuário já está autenticado, redireciona para o dashboard
+    if (auth.currentUser) {
+      router.replace("/admin/dashboard");
+    } else {
+      // Firebase pode demorar para restaurar a sessão, então escuta mudanças
+      const unsubscribe = auth.onAuthStateChanged((user) => {
+        if (user) {
+          router.replace("/admin/dashboard");
+        }
+      });
+      return () => unsubscribe();
+    }
+  }, [router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,6 +47,7 @@ export default function AdminLogin() {
         setSuccess("Login realizado com sucesso!");
         setEmail("");
         setPassword("");
+        localStorage.setItem("admin_login_time", Date.now());
         router.push("/admin/dashboard");
       }
     } catch (err) {
