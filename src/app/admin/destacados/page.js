@@ -6,54 +6,46 @@ import AuthCheck from "../components/auth-check";
 import { StarIcon } from "@heroicons/react/24/solid";
 import { StarIcon as StarOutlineIcon } from "@heroicons/react/24/outline";
 import { TrashIcon } from "lucide-react";
+import { Tab } from "@headlessui/react";
 
 export default function CondominiosDestacados() {
-  const [condominios, setCondominios] = useState([]);
+  const [imoveis, setImoveis] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [destacados, setDestacados] = useState([]);
+  const [tab, setTab] = useState("imoveis");
 
-  // Carregar todos os condominios
   useEffect(() => {
-    const fetchCondominios = async () => {
+    const fetchImoveis = async () => {
       setIsLoading(true);
       try {
         const response = await getImovelDestacado();
         if (response && response.data) {
-          setCondominios(response.data);
-
-          // Filtrar apenas os condominios com Destacado = "Sim"
+          setImoveis(response.data);
+          // Filtrar apenas ids destacados
           const destaques = response.data
-            .filter(condominio => condominio.Destacado === "Sim")
-            .map(condominio => condominio._id || condominio.id || condominio.Codigo);
-
+            .filter((item) => item.Destacado === "Sim")
+            .map((item) => item._id || item.id || item.Codigo);
           setDestacados(destaques);
         }
       } catch (error) {
-        console.error("Erro ao carregar condomínios:", error);
+        console.error("Erro ao carregar imóveis:", error);
       } finally {
         setIsLoading(false);
       }
     };
-
-    fetchCondominios();
+    fetchImoveis();
   }, []);
 
-  // Alternar o status de destaque de um condomínio
+  // Alternar o status de destaque de um imóvel
   const toggleDestaque = async (id) => {
     try {
-      // Atualizar o imóvel no banco de dados para Destacado = "Não"
       const response = await atualizarImovel(id, { Destacado: "Não" });
-
       if (response && response.success) {
-        // Se a atualização foi bem-sucedida, remover da lista de destacados
         setDestacados((prev) => prev.filter((itemId) => itemId !== id));
-
-        // Remover o imóvel da lista de exibição
-        setCondominios((prev) => prev.filter((item) => {
+        setImoveis((prev) => prev.filter((item) => {
           const itemId = item._id || item.id || item.Codigo;
           return itemId !== id;
         }));
-
         console.log(`Destaque do imóvel ${id} removido com sucesso`);
       } else {
         console.error("Erro ao remover destaque:", response?.message);
@@ -65,7 +57,9 @@ export default function CondominiosDestacados() {
     }
   };
 
-
+  // Filtros para as tabs
+  const imoveisDestacados = imoveis.filter((item) => item.Destacado === "Sim");
+  const condominiosDestacados = imoveisDestacados.filter((item) => item.Condominio === "Sim");
 
   return (
     <AuthCheck>
@@ -76,6 +70,21 @@ export default function CondominiosDestacados() {
             Gerencie os imóveis e condomínios que estão marcados como destacados no site.
           </p>
 
+          {/* Tabs */}
+          <div className="mb-6 flex gap-2">
+            <button
+              className={`px-4 py-2 rounded-t-md font-semibold border-b-2 transition-colors ${tab === "imoveis" ? "border-black text-black bg-gray-50" : "border-transparent text-gray-400 bg-gray-100"}`}
+              onClick={() => setTab("imoveis")}
+            >
+              Imóveis
+            </button>
+            <button
+              className={`px-4 py-2 rounded-t-md font-semibold border-b-2 transition-colors ${tab === "condominios" ? "border-black text-black bg-gray-50 " : "border-transparent text-gray-500 bg-gray-100"}`}
+              onClick={() => setTab("condominios")}
+            >
+              Condomínios
+            </button>
+          </div>
 
           {isLoading ? (
             <div className="bg-white p-8 rounded-lg shadow-md">
@@ -85,22 +94,19 @@ export default function CondominiosDestacados() {
             </div>
           ) : (
             <>
-              {condominios.length > 0 ? (
+              {(tab === "imoveis" ? imoveisDestacados : condominiosDestacados).length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {condominios.map((condominio) => {
+                  {(tab === "imoveis" ? imoveisDestacados : condominiosDestacados).map((condominio) => {
                     const id = condominio._id || condominio.id || condominio.Codigo;
                     const isDestacado = destacados.includes(id);
-
                     return (
                       <div
                         key={id}
-                        className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow ${isDestacado ? "ring-2 ring-yellow-400" : ""
-                          }`}
+                        className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow ${isDestacado ? "ring-2 ring-yellow-400" : ""}`}
                       >
                         <div className="relative">
-                          {/* Imagem do condominio (placeholder se não existir) */}
                           <div className="h-48 bg-gray-300 flex items-center justify-center">
-                            {condominio.Foto[0] ? (
+                            {condominio.Foto && condominio.Foto[0] ? (
                               <img
                                 src={condominio.Foto[0].Foto}
                                 alt={condominio.Empreendimento}
@@ -110,8 +116,6 @@ export default function CondominiosDestacados() {
                               <div className="text-gray-500">Sem imagem</div>
                             )}
                           </div>
-
-                          {/* Botão de destaque */}
                           <button
                             onClick={() => toggleDestaque(id)}
                             className="absolute top-2 right-2 bg-white rounded-full p-1 shadow-md focus:outline-none"
@@ -124,7 +128,6 @@ export default function CondominiosDestacados() {
                             )}
                           </button>
                         </div>
-
                         <div className="p-4">
                           <span>Codigo: {condominio.Codigo}</span>
                           <h3 className="font-semibold text-sm mb-1">
@@ -142,12 +145,10 @@ export default function CondominiosDestacados() {
                   })}
                 </div>
               ) : (
-                <div className="bg-white p-8 rounded-lg shadow-md">
-                  <p className="text-center text-gray-600">Nenhum condomínio encontrado.</p>
+                <div className=" p-8 rounded-lg ">
+                  <p className="text-center text-lg text-gray-600">Nenhum {tab === "imoveis" ? "imóvel" : "condomínio"} destacado encontrado.</p>
                 </div>
               )}
-
-
             </>
           )}
         </div>
