@@ -9,7 +9,7 @@ export function AboutSection() {
         <div className="relative z-10 text-center lg:text-left">
           <span className="bg-[#8B6F4B] text-white px-5 py-2 text-sm font-bold">Quem somos</span>
           <h2 className="text-xl font-bold tracking-tight text-black my-5 uppercase">
-            HUB de Imobiliárias Boutique de Alto Padrão
+            HUB de Imobiliárias Boutique <br /> de Alto Padrão
           </h2>
           <span className="text-sm font-bold text-zinc-800"> Conectando sua imobiliária aos clientes de HIGH TICKET.</span>
           <p className="text-black font-medium text-base py-5">

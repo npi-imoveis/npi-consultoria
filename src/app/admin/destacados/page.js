@@ -1,10 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getImovelDestacado, atualizarImovel } from "@/app/services";
+import { getImovelDestacado, atualizarImovel, getCondominioDestacado } from "@/app/services";
 import AuthCheck from "../components/auth-check";
-import { StarIcon } from "@heroicons/react/24/solid";
-import { StarIcon as StarOutlineIcon } from "@heroicons/react/24/outline";
+
 import { TrashIcon } from "lucide-react";
 import { Tab } from "@headlessui/react";
 
@@ -13,6 +12,8 @@ export default function CondominiosDestacados() {
   const [isLoading, setIsLoading] = useState(true);
   const [destacados, setDestacados] = useState([]);
   const [tab, setTab] = useState("imoveis");
+  const [condominios, setCondominios] = useState([]);
+  const [isLoadingCondominios, setIsLoadingCondominios] = useState(false);
 
   useEffect(() => {
     const fetchImoveis = async () => {
@@ -35,6 +36,25 @@ export default function CondominiosDestacados() {
     };
     fetchImoveis();
   }, []);
+
+  useEffect(() => {
+    if (tab === "condominios" && condominios.length === 0) {
+      const fetchCondominios = async () => {
+        setIsLoadingCondominios(true);
+        try {
+          const response = await getCondominioDestacado();
+          if (response && response.data) {
+            setCondominios(response.data);
+          }
+        } catch (error) {
+          console.error("Erro ao carregar condomínios:", error);
+        } finally {
+          setIsLoadingCondominios(false);
+        }
+      };
+      fetchCondominios();
+    }
+  }, [tab, condominios.length]);
 
   // Alternar o status de destaque de um imóvel
   const toggleDestaque = async (id) => {
@@ -59,7 +79,7 @@ export default function CondominiosDestacados() {
 
   // Filtros para as tabs
   const imoveisDestacados = imoveis.filter((item) => item.Destacado === "Sim");
-  const condominiosDestacados = imoveisDestacados.filter((item) => item.Condominio === "Sim");
+  const condominiosDestacados = condominios;
 
   return (
     <AuthCheck>
@@ -86,7 +106,13 @@ export default function CondominiosDestacados() {
             </button>
           </div>
 
-          {isLoading ? (
+          {tab === "imoveis" && isLoading ? (
+            <div className="bg-white p-8 rounded-lg shadow-md">
+              <div className="flex justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-black"></div>
+              </div>
+            </div>
+          ) : tab === "condominios" && isLoadingCondominios ? (
             <div className="bg-white p-8 rounded-lg shadow-md">
               <div className="flex justify-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-black"></div>
@@ -116,17 +142,19 @@ export default function CondominiosDestacados() {
                               <div className="text-gray-500">Sem imagem</div>
                             )}
                           </div>
-                          <button
-                            onClick={() => toggleDestaque(id)}
-                            className="absolute top-2 right-2 bg-white rounded-full p-1 shadow-md focus:outline-none"
-                            title={isDestacado ? "Remover destaque" : "Adicionar destaque"}
-                          >
-                            {isDestacado ? (
-                              <TrashIcon className="h-5 w-5 text-red-500" />
-                            ) : (
-                              <TrashIcon className="h-5 w-5 text-gray-300 hover:text-yellow-500" />
-                            )}
-                          </button>
+                          {tab === "imoveis" && (
+                            <button
+                              onClick={() => toggleDestaque(id)}
+                              className="absolute top-2 right-2 bg-white rounded-full p-1 shadow-md focus:outline-none"
+                              title={isDestacado ? "Remover destaque" : "Adicionar destaque"}
+                            >
+                              {isDestacado ? (
+                                <TrashIcon className="h-5 w-5 text-red-500" />
+                              ) : (
+                                <TrashIcon className="h-5 w-5 text-gray-300 hover:text-yellow-500" />
+                              )}
+                            </button>
+                          )}
                         </div>
                         <div className="p-4">
                           <span>Codigo: {condominio.Codigo}</span>

@@ -96,6 +96,9 @@ export default function EditarImovel({ params }) {
     }
   }, [id]);
 
+
+  console.log("Dados do Imóvel", imovel);
+
   useEffect(() => {
     const fetchVinculos = async () => {
       const response = await getVinculos(id);
@@ -379,7 +382,7 @@ export default function EditarImovel({ params }) {
         { name: "Slug", label: "Slug", type: "text" },
         {
           name: "Destacado",
-          label: "Destaque (Sim/Não)",
+          label: "Imóvel Destaque (Sim/Não)",
           type: "select",
           options: [
             { value: "Sim", label: "Sim" },
@@ -389,6 +392,15 @@ export default function EditarImovel({ params }) {
         {
           name: "Condominio",
           label: "É Condomínio? (Sim/Não)",
+          type: "select",
+          options: [
+            { value: "Sim", label: "Sim" },
+            { value: "Não", label: "Não" },
+          ],
+        },
+        {
+          name: "CondominioDestaque",
+          label: "Condomínio Destaque (Sim/Não)",
           type: "select",
           options: [
             { value: "Sim", label: "Sim" },

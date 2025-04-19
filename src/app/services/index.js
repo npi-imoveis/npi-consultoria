@@ -296,6 +296,16 @@ export async function getImovelDestacado() {
   }
 }
 
+export async function getCondominioDestacado() {
+  try {
+    const response = await axiosClient.get("/condominios/destaques");
+    return response.data;
+  } catch (error) {
+    console.error("Erro ao buscar imóvel destacado:", error);
+    return null;
+  }
+}
+
 export async function getCondominios(limit) {
   try {
     console.log("Serviço: Iniciando busca de condomínios");

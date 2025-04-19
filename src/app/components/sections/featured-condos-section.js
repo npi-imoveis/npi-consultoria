@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import CustomCard from "../ui/custom-card";
 import { TitleSection } from "../ui/title-section";
-import { getCondominios } from "@/app/services";
+import { getCondominioDestacado, getCondominios } from "@/app/services";
 
 export function FeaturedCondosSection() {
   const [condominios, setCondominios] = useState([]);
@@ -15,7 +15,7 @@ export function FeaturedCondosSection() {
     async function fetchCondominios() {
       try {
         console.log("Buscando condomínios...");
-        const response = await getCondominios(8);
+        const response = await getCondominioDestacado();
         console.log("Resposta completa:", response);
 
         if (response && response.data && Array.isArray(response.data.data)) {
@@ -53,7 +53,7 @@ export function FeaturedCondosSection() {
           center
           section="Destaque"
           title="Condomínios em Destaque"
-          description="Os melhores condomínios de alto padrão em um só lugar."
+          description="Os melhores condomínios de alto padrão."
         />
         <div
           ref={carouselRef}
