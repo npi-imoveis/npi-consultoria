@@ -77,6 +77,21 @@ export default function CondominiosDestacados() {
     }
   };
 
+  const removeDestaqueCondominio = async (id) => {
+    try {
+      const response = await atualizarCondominio(id, { CondominioDestaque: "Não" });
+      if (response && response.success) {
+        setDestacados((prev) => prev.filter((itemId) => itemId !== id));
+        setCondominios((prev) => prev.filter((item) => {
+          const itemId = item._id || item.id || item.Codigo;
+          return itemId !== id;
+        }));
+      }
+    } catch (error) {
+      console.error(`Erro ao remover destaque do condomínio ${id}:`, error);
+    }
+  };
+
   // Filtros para as tabs
   const imoveisDestacados = imoveis.filter((item) => item.Destacado === "Sim");
   const condominiosDestacados = condominios;
@@ -128,7 +143,7 @@ export default function CondominiosDestacados() {
                     return (
                       <div
                         key={id}
-                        className={`bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow ${isDestacado ? "ring-2 ring-yellow-400" : ""}`}
+                        className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow "
                       >
                         <div className="relative">
                           <div className="h-48 bg-gray-300 flex items-center justify-center">
@@ -153,6 +168,15 @@ export default function CondominiosDestacados() {
                               ) : (
                                 <TrashIcon className="h-5 w-5 text-gray-300 hover:text-yellow-500" />
                               )}
+                            </button>
+                          )}
+                          {tab === "condominios" && (
+                            <button
+                              onClick={() => removeDestaqueCondominio(id)}
+                              className="absolute top-2 right-2 bg-white rounded-full p-1 shadow-md focus:outline-none"
+                              title="Remover destaque"
+                            >
+                              <TrashIcon className="h-5 w-5 text-red-500" />
                             </button>
                           )}
                         </div>
