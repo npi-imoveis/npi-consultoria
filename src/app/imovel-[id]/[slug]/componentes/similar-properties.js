@@ -18,18 +18,18 @@ export function SimilarProperties({ id }) {
       try {
         const response = await getImoveisSimilares(id);
 
-        // Verificar se a resposta contém dados e se estão no formato esperado
+
         if (response.data && response.data.data && Array.isArray(response.data.data)) {
           setImoveis(response.data.data);
         } else if (response.data && Array.isArray(response.data)) {
           setImoveis(response.data);
         } else {
-          console.error("Formato de resposta inesperado:", response.data);
+
           setImoveis([]);
           setError("Formato de dados inválido recebido do servidor");
         }
       } catch (err) {
-        console.error("Erro ao buscar imóveis:", err);
+
         setError(err.response?.data?.message || "Erro ao buscar imóveis.");
       } finally {
         setLoading(false);
@@ -39,7 +39,7 @@ export function SimilarProperties({ id }) {
     fetchImoveis();
   }, []);
 
-  console.log("Imoveis Destacados", imoveis);
+
 
   const scroll = (direction) => {
     if (carouselRef.current) {

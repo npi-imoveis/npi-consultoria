@@ -143,7 +143,7 @@ export default function CondominiosDestacados() {
                     return (
                       <div
                         key={id}
-                        className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow "
+                        className="bg-white rounded-lg overflow-hidden hover:shadow-lg transition-shadow "
                       >
                         <div className="relative">
                           <div className="h-48 bg-gray-300 flex items-center justify-center">

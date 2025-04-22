@@ -439,7 +439,7 @@ export default function EditarImovel({ params }) {
     {
       title: "Valores",
       fields: [
-        { name: "ValorVenda", label: "Valor de Venda (R$)", type: "text", isMonetary: true },
+        { name: "ValorAntigo", label: "Valor de Venda (R$)", type: "text", isMonetary: true },
         {
           name: "ValorAluguelSite",
           label: "Valor de Aluguel (R$)",
