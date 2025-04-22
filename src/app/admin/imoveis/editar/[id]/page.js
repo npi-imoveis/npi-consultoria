@@ -32,6 +32,7 @@ export default function EditarImovel({ params }) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [showProprietarios, setShowProprietarios] = useState(false);
 
   // Função para formatar valores monetários
   const formatarParaReal = (valor) => {
@@ -95,7 +96,6 @@ export default function EditarImovel({ params }) {
       fetchImovel();
     }
   }, [id]);
-
 
   console.log("Dados do Imóvel", imovel);
 
@@ -630,9 +630,17 @@ export default function EditarImovel({ params }) {
                   : `Editar Imóvel: ${formData?.Empreendimento} | Código: ${formData?.Codigo}`}
               </h1>
             </div>
+            <div>
+              <button
+                className="bg-gray-200 text-black px-6 py-2 rounded-md font-bold hover:bg-gray-300"
+                onClick={() => setShowProprietarios(!showProprietarios)}
+              >
+                Informações dos Proprietários
+              </button>
+            </div>
           </div>
 
-          <Proprietarios id={id} />
+          {showProprietarios && <Proprietarios id={id} />}
 
           {error && (
             <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-6">

@@ -79,7 +79,7 @@ export default function Proprietarios({ id }) {
 
     return (
         <div className="bg-white rounded-lg overflow-hidden p-6 my-6 ">
-            <h1 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Proprietários</h1>
+            <h1 className="text-xl font-semibold mb-4 text-gray-800 border-b pb-2">Informações dos Proprietários</h1>
             {/* Abas */}
             <div className="flex space-x-2 mb-6 border-b">
                 {proprietariosSeparados.map((_, idx) => (
