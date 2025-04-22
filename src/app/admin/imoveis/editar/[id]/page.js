@@ -75,7 +75,7 @@ export default function EditarImovel({ params }) {
 
           // Inicializa os valores de exibição formatados
           const valoresFormatados = {
-            ValorVenda: formatarParaReal(imovelData.ValorVenda),
+            ValorAntigo: formatarParaReal(imovelData.ValorAntigo),
             ValorAluguelSite: formatarParaReal(imovelData.ValorAluguelSite),
             ValorCondominio: formatarParaReal(imovelData.ValorCondominio),
             ValorIptu: formatarParaReal(imovelData.ValorIptu),
@@ -112,7 +112,7 @@ export default function EditarImovel({ params }) {
     const { name, value } = e.target;
 
     // Tratamento especial para campos monetários
-    if (["ValorVenda", "ValorAluguelSite", "ValorCondominio", "ValorIptu"].includes(name)) {
+    if (["ValorAntigo", "ValorAluguelSite", "ValorCondominio", "ValorIptu"].includes(name)) {
       // Armazena o valor não formatado no formData
       const valorNumerico = extrairNumeros(value);
       setFormData((prevData) => ({
