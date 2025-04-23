@@ -1,4 +1,4 @@
-import { connectToDatabaseAutomacao } from "@/app/lib/mongodb";
+import { connectToDatabase } from "@/app/lib/mongodb";
 import Corretores from "@/app/models/Corretores";
 import Imovel from "@/app/models/Imovel";
 import Review from "@/app/models/Review";
@@ -22,7 +22,7 @@ export async function GET(request) {
         }
 
         // Se não estiver em cache, busca no banco de dados
-        await connectToDatabaseAutomacao();
+        await connectToDatabase();
 
         const condominio = await Imovel.find();
         const condominios = await Imovel.find({ Condominio: "Sim" });

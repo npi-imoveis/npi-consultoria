@@ -1,4 +1,4 @@
-import { connectToDatabaseAutomacao } from "@/app/lib/mongodb";
+import { connectToDatabase } from "@/app/lib/mongodb";
 import Review from "@/app/models/Review";
 
 import { NextResponse } from "next/server";
@@ -18,7 +18,7 @@ export async function GET(request) {
         let connection;
         try {
             console.log("API automacao: Tentando conectar ao banco de dados (automação)");
-            connection = await connectToDatabaseAutomacao();
+            connection = await connectToDatabase();
             console.log("API automacao: Conexão ao banco de dados estabelecida com sucesso para automação");
         } catch (connError) {
             console.error("API automacao: Erro ao conectar ao banco de dados (automação):", connError);

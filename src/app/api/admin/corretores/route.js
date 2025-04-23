@@ -1,4 +1,4 @@
-import { connectToDatabaseAutomacao } from "@/app/lib/mongodb";
+import { connectToDatabase } from "@/app/lib/mongodb";
 import Corretores from "@/app/models/Corretores";
 import { NextResponse } from "next/server";
 
@@ -7,7 +7,7 @@ export async function GET(request) {
         const url = new URL(request.url);
         const id = url.searchParams.get("id");
 
-        await connectToDatabaseAutomacao();
+        await connectToDatabase();
 
         // Se tiver ID, busca corretor específico
         if (id) {
@@ -54,7 +54,7 @@ export async function PUT(request) {
         const data = await request.json();
         const { id, ...updateData } = data;
 
-        await connectToDatabaseAutomacao();
+        await connectToDatabase();
 
         const corretor = await Corretores.findByIdAndUpdate(
             id,

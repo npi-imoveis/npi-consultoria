@@ -1,5 +1,5 @@
 import Cadimo from "@/app/admin/models/cadimo";
-import { connectToDatabaseAutomacao } from "@/app/lib/mongodb";
+import { connectToDatabase } from "@/app/lib/mongodb";
 import { NextResponse } from "next/server";
 
 export async function GET(request) {
@@ -7,7 +7,7 @@ export async function GET(request) {
         const url = new URL(request.url);
         const id = url.searchParams.get("id");
 
-        await connectToDatabaseAutomacao();
+        await connectToDatabase();
 
         if (id) {
             const proprietario = await Cadimo.findOne({ PLACA: id });
@@ -31,7 +31,7 @@ export async function PUT(request) {
         const id = url.searchParams.get("id");
         const updateData = await request.json();
 
-        await connectToDatabaseAutomacao();
+        await connectToDatabase();
 
         if (!id) {
             return NextResponse.json({

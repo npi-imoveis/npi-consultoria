@@ -1,4 +1,4 @@
-import { connectToDatabaseAutomacao } from "@/app/lib/mongodb";
+import { connectToDatabase } from "@/app/lib/mongodb";
 import Cdimag from "@/app/models/Cdimag";
 import Corretores from "@/app/models/Corretores";
 import { NextResponse } from "next/server";
@@ -15,7 +15,7 @@ export async function GET(request) {
             }, { status: 400 });
         }
 
-        await connectToDatabaseAutomacao();
+        await connectToDatabase();
 
         // Buscar todos os documentos em Cdimag que possuem o codigoO igual ao código do imóvel
         const vinculos = await Cdimag.find({ codigoO: Number(id) });

@@ -1,4 +1,4 @@
-import { connectToDatabaseAutomacao } from "@/app/lib/mongodb";
+import { connectToDatabase } from "@/app/lib/mongodb";
 import Review from "@/app/models/Review";
 import { NextResponse } from "next/server";
 
@@ -18,7 +18,7 @@ export async function GET(request, { params }) {
 
         console.log(`API automacao: Buscando imóvel com código: ${codigo}`);
 
-        await connectToDatabaseAutomacao();
+        await connectToDatabase();
         console.log("API automacao: Collection:", Review.collection.name);
 
         // Buscar o imóvel pelo código
@@ -71,7 +71,7 @@ export async function POST(request, { params }) {
 
         console.log(`API automacao: Atualizando imóvel com código: ${codigo}`);
 
-        await connectToDatabaseAutomacao();
+        await connectToDatabase();
         console.log("API automacao: Collection:", Review.collection.name);
 
         // Verificar se o imóvel existe
@@ -134,7 +134,7 @@ export async function PUT(request, { params }) {
 
         console.log(`API automacao: Atualizando imóvel com código: ${codigo}`);
 
-        await connectToDatabaseAutomacao();
+        await connectToDatabase();
         console.log("API automacao: Collection:", Review.collection.name);
 
         // Verificar se o imóvel existe
@@ -195,7 +195,7 @@ export async function DELETE(request, { params }) {
 
         console.log(`API automacao: Excluindo imóvel com código: ${codigo}`);
 
-        await connectToDatabaseAutomacao();
+        await connectToDatabase();
         console.log("API automacao: Collection:", Review.collection.name);
 
         // Verificar se o imóvel existe
