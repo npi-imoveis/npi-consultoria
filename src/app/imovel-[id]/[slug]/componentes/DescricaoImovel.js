@@ -1,4 +1,5 @@
 "use client";
+import { useState, useEffect } from 'react';
 
 const formatarHtml = (htmlString) => {
     if (!htmlString) return "";
@@ -6,15 +7,26 @@ const formatarHtml = (htmlString) => {
 };
 
 export default function DescricaoImovel({ imovel }) {
-    const DescricaoUnidade = formatarHtml(imovel.DescricaoUnidades);
+    const [descricao, setDescricao] = useState('');
+
+    useEffect(() => {
+        setDescricao(formatarHtml(imovel.DescricaoUnidades));
+    }, [imovel.DescricaoUnidades]);
+
     return (
         <div className="bg-white container mx-auto border-t-2 p-4 md:p-10 mt-4">
             <h2 className="text-xl font-bold text-black" id="descricao-unidade">Descrição da Unidade</h2>
-            <p
-                className="text-base my-8 text-zinc-600"
-                dangerouslySetInnerHTML={{ __html: DescricaoUnidade }}
-                aria-labelledby="descricao-unidade"
-            />
+            {descricao ? (
+                <p
+                    className="text-base my-8 text-zinc-600"
+                    dangerouslySetInnerHTML={{ __html: descricao }}
+                    aria-labelledby="descricao-unidade"
+                />
+            ) : (
+                <p className="text-base my-8 text-zinc-600" aria-labelledby="descricao-unidade">
+                    Carregando descrição...
+                </p>
+            )}
         </div>
     );
 } 

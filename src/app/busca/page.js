@@ -340,7 +340,7 @@ export default function BuscaImoveis() {
       // Renderiza 12 skeletons durante o carregamento
       return Array(12)
         .fill(null)
-        .map((_, index) => <div key={`skeleton-${index}`} className="flex-1 min-w-[250px]"><CardImovelSkeleton /></div>);
+        .map((_, index) => <div key={`skeleton-${index}`} className="min-w-[250px]"><CardImovelSkeleton /></div>);
     }
 
     // Renderiza os imóveis carregados
@@ -368,7 +368,7 @@ export default function BuscaImoveis() {
         // Garantir que cada imóvel tenha um código único
         const key =
           imovel.Codigo || `imovel-${imovel._id || Math.random().toString(36).substr(2, 9)}`;
-        return <div key={key} className="flex-1 min-w-[250px]"><CardImovel {...imovel} /></div>;
+        return <div key={key} className="flex-1 min-w-[260px]"><CardImovel {...imovel} /></div>;
       });
     }
 

@@ -9,6 +9,7 @@ import Image from "next/image";
 import { formatterSlug } from "@/app/utils/formatter-slug";
 import { getImageUploadMetadata, uploadToS3 } from "@/app/utils/s3-upload";
 import { OpenStreetMapProvider } from 'leaflet-geosearch';
+import { formatterNumber } from "@/app/utils/formatter-number";
 
 export default function CadastrarImovel() {
     const router = useRouter();
@@ -22,8 +23,11 @@ export default function CadastrarImovel() {
         Situacao: "",
         Status: "",
         Slug: "",
-        Destaque: "Nao",
-        Condominio: "Nao",
+        Destacado: "Não",
+        Condominio: "Não",
+        CondominioDestaque: "Não",
+        Ativo: "Sim",
+        Construtora: "",
         Endereco: "",
         Numero: "",
         Complemento: "",
@@ -41,7 +45,7 @@ export default function CadastrarImovel() {
         BanheiroSocialQtd: "",
         Vagas: "",
         AnoConstrucao: "",
-        ValorVenda: "",
+        ValorAntigo: "",
         ValorAluguelSite: "",
         ValorCondominio: "",
         ValorIptu: "",
@@ -52,10 +56,8 @@ export default function CadastrarImovel() {
         DestaquesLocalizacao: "",
         FichaTecnica: "",
         Tour360: "",
-        Proprietario: "",
-        Telefone: "",
-        Email: "",
-        Observacao: "",
+        Corretor: "",
+        Tipo: "",
         Video: {
             1: {
                 Codigo: "1",
@@ -69,7 +71,7 @@ export default function CadastrarImovel() {
     });
 
     const [displayValues, setDisplayValues] = useState({
-        ValorVenda: "",
+        ValorAntigo: "",
         ValorAluguelSite: "",
         ValorCondominio: "",
         ValorIptu: ""
@@ -165,7 +167,7 @@ export default function CadastrarImovel() {
         const { name, value } = e.target;
 
         // Tratamento especial para campos monetários
-        if (["ValorVenda", "ValorAluguelSite", "ValorCondominio", "ValorIptu"].includes(name)) {
+        if (["ValorAntigo", "ValorAluguelSite", "ValorCondominio", "ValorIptu"].includes(name)) {
             // Armazena o valor não formatado no formData
             const valorNumerico = extrairNumeros(value);
             setFormData(prevData => ({
@@ -344,6 +346,54 @@ export default function CadastrarImovel() {
         });
     };
 
+    // Função para alterar a posição da imagem
+    const changeImagePosition = (codigo, newPosition) => {
+        setFormData((prevData) => {
+            if (!prevData.Foto) return prevData;
+
+            // Obter as chaves ordenadas pelo valor Ordem ou pela ordem natural
+            const keys = [...Object.keys(prevData.Foto)].sort((a, b) => {
+                const orderA = prevData.Foto[a].Ordem || [...Object.keys(prevData.Foto)].indexOf(a);
+                const orderB = prevData.Foto[b].Ordem || [...Object.keys(prevData.Foto)].indexOf(b);
+                return orderA - orderB;
+            });
+
+            // Encontrar o índice atual da imagem que queremos mover
+            const currentIndex = keys.indexOf(codigo);
+            // Índice da posição desejada (ajuste para base 0)
+            const targetIndex = newPosition - 1;
+
+            // Se a posição atual é igual à desejada, não faz nada
+            if (currentIndex === targetIndex) {
+                return prevData;
+            }
+
+            // Obtém o código da imagem que está na posição de destino
+            const targetCode = keys[targetIndex];
+
+            // Criar nova ordem
+            const newOrder = [...keys];
+
+            // Trocar as posições (mantendo o resto da ordem)
+            newOrder[currentIndex] = targetCode;
+            newOrder[targetIndex] = codigo;
+
+            // Criar novo objeto Foto com a nova ordem
+            const newFoto = {};
+            newOrder.forEach((key, idx) => {
+                newFoto[key] = {
+                    ...prevData.Foto[key],
+                    Ordem: idx + 1,
+                };
+            });
+
+            return {
+                ...prevData,
+                Foto: newFoto,
+            };
+        });
+    };
+
     // Função para salvar as alterações
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -352,6 +402,11 @@ export default function CadastrarImovel() {
         setSuccess("");
 
         try {
+            const payload = {
+                ...formData,
+                ValorAntigo: formatterNumber(formData.ValorAntigo),
+            }
+            console.log("Formulário Enviado", payload);
             const result = await cadastrarImovel(formData);
             if (result && result.success) {
                 setSuccess("Imóvel cadastrado com sucesso!");
@@ -369,169 +424,84 @@ export default function CadastrarImovel() {
         }
     };
 
-    // Modificar o componente de renderização das imagens
-    const renderImageSection = () => (
-        <div className="w-full space-y-4">
-            <div className="flex justify-between items-center mb-4">
-                <h3 className="text-md font-medium text-gray-700">Gerenciar Imagens</h3>
-                <button
-                    type="button"
-                    onClick={addImage}
-                    className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-black hover:bg-gray-800"
-                >
-                    <PlusCircleIcon className="w-5 h-5 mr-2" />
-                    Adicionar Imagem
-                </button>
-            </div>
-
-            {formData.Foto && Object.keys(formData.Foto).length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {Object.keys(formData.Foto).map((codigo) => {
-                        const image = formData.Foto[codigo];
-                        return (
-                            <div key={codigo} className="border p-4 rounded-md">
-                                <div className="relative mb-3 h-40 bg-gray-100 flex items-center justify-center overflow-hidden">
-                                    {image.Foto ? (
-                                        <Image
-                                            src={image.Foto}
-                                            alt={`Imagem ${codigo}`}
-                                            width={300}
-                                            height={200}
-                                            className="object-contain w-full h-full"
-                                            unoptimized
-                                        />
-                                    ) : (
-                                        <PhotoIcon className="w-16 h-16 text-gray-400" />
-                                    )}
-                                    {image.isUploading && (
-                                        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                                            <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-white"></div>
-                                        </div>
-                                    )}
-                                </div>
-                                <div className="space-y-3">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Selecionar Imagem
-                                        </label>
-                                        <div className="flex gap-2">
-                                            <button
-                                                type="button"
-                                                onClick={() => triggerFileInput(codigo)}
-                                                className="flex-1 px-3 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm bg-white hover:bg-gray-50 text-gray-700"
-                                                disabled={image.isUploading}
-                                            >
-                                                {image.isUploading ? "Enviando..." : "Selecionar Arquivo"}
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            URL da Imagem
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={image.Foto || ""}
-                                            onChange={(e) => updateImage(codigo, "Foto", e.target.value)}
-                                            className="border-2 px-3 py-1.5 text-zinc-700 w-full text-sm rounded-md focus:outline-none focus:ring-black focus:border-black"
-                                            placeholder="URL será preenchida automaticamente após o upload"
-                                            readOnly
-                                        />
-                                    </div>
-
-                                    <div className="flex items-center space-x-2">
-                                        <input
-                                            type="checkbox"
-                                            id={`destaque-${codigo}`}
-                                            checked={image.Destaque === "Sim"}
-                                            onChange={() => setImageAsHighlight(codigo)}
-                                            className="h-4 w-4 border-gray-300 rounded text-black focus:ring-black"
-                                        />
-                                        <label htmlFor={`destaque-${codigo}`} className="text-sm text-gray-700">
-                                            Imagem em destaque
-                                        </label>
-                                    </div>
-                                    <div className="flex justify-end">
-                                        <button
-                                            type="button"
-                                            onClick={() => removeImage(codigo)}
-                                            className="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded-md text-red-700 hover:bg-red-50"
-                                        >
-                                            <XCircleIcon className="w-4 h-4 mr-1" />
-                                            Remover
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            ) : (
-                <div className="text-center py-6 bg-gray-50 rounded-md">
-                    <PhotoIcon className="mx-auto h-12 w-12 text-gray-400" />
-                    <p className="mt-2 text-sm text-gray-500">Nenhuma imagem adicionada ainda.</p>
-                    <p className="text-sm text-gray-500">Clique em "Adicionar Imagem" para começar.</p>
-                </div>
-            )}
-        </div>
-    );
-
     // Agrupar campos por categorias para melhor organização
     const fieldGroups = [
         {
             title: "Informações Básicas",
             fields: [
                 { name: "Codigo", label: "Código", type: "text" },
+                {
+                    name: "Ativo",
+                    label: "Ativo",
+                    type: "select",
+                    options: [
+                        { value: "Sim", label: "Sim" },
+                        { value: "Não", label: "Não" },
+                    ]
+                },
                 { name: "Empreendimento", label: "Empreendimento", type: "text" },
-                { name: "Construtura", label: "Construtora", type: "text" },
+                { name: "Construtora", label: "Construtora", type: "text" },
                 { name: "Categoria", label: "Categoria", type: "text" },
-                { name: "Situacao", label: "Situação", type: "text" },
-
-
+                {
+                    name: "Situacao",
+                    label: "Situação",
+                    type: "select",
+                    options: [
+                        { value: "EM CONSTRUÇÃO", label: "EM CONSTRUÇÃO" },
+                        { value: "LANÇAMENTO", label: "LANÇAMENTO" },
+                        { value: "PRÉ-LANÇAMENTO", label: "PRÉ-LANÇAMENTO" },
+                        { value: "PRONTO NOVO", label: "PRONTO NOVO" },
+                        { value: "PRONTO USADO", label: "PRONTO USADO" },
+                    ]
+                },
                 {
                     name: "Status",
                     label: "Status",
                     type: "select",
                     options: [
-                        { value: "VENDA", label: "VENDA" },
-                        { value: "VENDIDO", label: "VENDIDO" },
                         { value: "LOCAÇÃO", label: "LOCAÇÃO" },
                         { value: "LOCADO", label: "LOCADO" },
-                        { value: "VENDA E LOCAÇÃO", label: "VENDA E LOCAÇÃO" },
                         { value: "PENDENTE", label: "PENDENTE" },
-                        { value: "SUSPENSO", label: "SUSPENSO" }
+                        { value: "SUSPENSO", label: "SUSPENSO" },
+                        { value: "VENDA", label: "VENDA" },
+                        { value: "VENDA E LOCAÇÃO", label: "VENDA E LOCAÇÃO" },
+                        { value: "VENDIDO", label: "VENDIDO" },
                     ]
                 },
                 { name: "Slug", label: "Slug", type: "text" },
                 {
-                    name: "Destaque",
-                    label: "Destaque",
+                    name: "Destacado",
+                    label: "Imóvel Destaque (Sim/Não)",
                     type: "select",
                     options: [
                         { value: "Sim", label: "Sim" },
-                        { value: "Nao", label: "Não" }
+                        { value: "Não", label: "Não" },
                     ]
                 },
                 {
                     name: "Condominio",
-                    label: "É Condomínio?",
+                    label: "É Condomínio? (Sim/Não)",
                     type: "select",
                     options: [
                         { value: "Sim", label: "Sim" },
-                        { value: "Nao", label: "Não" }
+                        { value: "Não", label: "Não" },
                     ]
                 },
-                { name: "DataCadastro", label: "Data Cadastro", type: "text" },
-                { name: "DataAtualizacao", label: "Data Atualização", type: "text" },
-                { name: "Imobiliaria", label: "Imobiliária", type: "text" },
-
+                {
+                    name: "CondominioDestaque",
+                    label: "Condomínio Destaque (Sim/Não)",
+                    type: "select",
+                    options: [
+                        { value: "Sim", label: "Sim" },
+                        { value: "Não", label: "Não" },
+                    ]
+                },
             ],
         },
         {
             title: "Localização",
             fields: [
-                { name: "CEP", label: "CEP", type: "text", placeholder: "00000-000" },
+                { name: "CEP", label: "CEP", type: "text" },
                 { name: "Endereco", label: "Endereço", type: "text" },
                 { name: "Numero", label: "Número", type: "text" },
                 { name: "Complemento", label: "Complemento", type: "text" },
@@ -558,22 +528,45 @@ export default function CadastrarImovel() {
         {
             title: "Valores",
             fields: [
-                { name: "ValorVenda", label: "Valor de Venda (R$)", type: "text", isMonetary: true },
-                { name: "ValorAluguelSite", label: "Valor de Aluguel (R$)", type: "text", isMonetary: true },
-                { name: "ValorCondominio", label: "Valor do Condomínio (R$)", type: "text", isMonetary: true },
+                { name: "ValorAntigo", label: "Valor de Venda (R$)", type: "text", isMonetary: true },
+                {
+                    name: "ValorAluguelSite",
+                    label: "Valor de Aluguel (R$)",
+                    type: "text",
+                    isMonetary: true,
+                },
+                {
+                    name: "ValorCondominio",
+                    label: "Valor do Condomínio (R$)",
+                    type: "text",
+                    isMonetary: true,
+                },
                 { name: "ValorIptu", label: "Valor do IPTU (R$)", type: "text", isMonetary: true },
+            ],
+        },
+        {
+            title: "Corretores Vinculados",
+            fields: [
+                { name: "Corretor", label: "Corretor", type: "text" },
+                {
+                    name: "Tipo",
+                    label: "Tipo",
+                    type: "select",
+                    options: [
+                        { value: "Captador", label: "Captador" },
+                        { value: "Promotor", label: "Promotor" },
+                    ]
+                },
             ],
         },
         {
             title: "Descrições",
             fields: [
                 { name: "DescricaoUnidades", label: "Descrição da Unidade", type: "textarea" },
-                { name: "FichaTecnica", label: "Ficha Técnica", type: "textarea" },
-                { name: "DescricaoDiferenciais", label: "Descrição dos Diferenciais", type: "textarea" },
-                { name: "DestaquesDiferenciais", label: "Destaques dos Diferenciais", type: "textarea" },
-                { name: "DestaquesLazer", label: "Destaques de Lazer (Criar separando por vírgula, ou com quebra de linha)", type: "textarea" },
+                { name: "DescricaoDiferenciais", label: "Sobre o Condomínio", type: "textarea" },
+                { name: "DestaquesLazer", label: "Destaques de Lazer", type: "textarea" },
                 { name: "DestaquesLocalizacao", label: "Destaques de Localização", type: "textarea" },
-
+                { name: "FichaTecnica", label: "Ficha Técnica", type: "textarea" },
             ],
         },
         {
@@ -589,26 +582,124 @@ export default function CadastrarImovel() {
             ],
         },
         {
-            title: "Dados do Proprietário",
-            fields: [
-                { name: "Proprietario", label: "Nome", type: "text" },
-                { name: "TelefoneProprietario", label: "Telefone", type: "text" },
-                { name: "EmailProprietario", label: "E-mail", type: "text" },
-                { name: "UnidadeProprietario", label: "Unidade", type: "text" },
-                { name: "MetragemProprietario", label: "Metragem", type: "text" },
-                { name: "VagasProprietario", label: "Vagas", type: "text" },
-                { name: "ValorProprietario", label: "Valor", type: "text" },
-                { name: "CondominioProprietario", label: "Condominio", type: "text" },
-                { name: "IptuProprietario", label: "Iptu", type: "text" },
-                { name: "DataProprietario", label: "Data", type: "text" },
-                { name: "ObservacaoProprietario", label: "Observações Gerais", type: "textarea" },
-
-            ],
-        },
-        {
             title: "Imagens",
             type: "custom",
-            render: renderImageSection
+            render: () => (
+                <div className="w-full space-y-4">
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-md font-medium text-gray-700">Gerenciar Imagens</h3>
+                        <button
+                            type="button"
+                            onClick={addImage}
+                            className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md shadow-sm text-white bg-black hover:bg-gray-800"
+                        >
+                            <PlusCircleIcon className="w-5 h-5 mr-2" />
+                            Adicionar Imagem
+                        </button>
+                    </div>
+
+                    <style jsx global>{`
+                        .flash-update {
+                            background-color: rgba(59, 130, 246, 0.1);
+                            transition: background-color 0.3s ease;
+                        }
+                    `}</style>
+
+                    {formData.Foto && Object.keys(formData.Foto).length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 grid-fotos">
+                            {[...Object.keys(formData.Foto)]
+                                .sort((a, b) => {
+                                    // Primeiro, verificar se a ordem existe e usá-la
+                                    const orderA = formData.Foto[a].Ordem || Object.keys(formData.Foto).indexOf(a);
+                                    const orderB = formData.Foto[b].Ordem || Object.keys(formData.Foto).indexOf(b);
+                                    return orderA - orderB;
+                                })
+                                .map((codigo, index) => {
+                                    const image = formData.Foto[codigo];
+                                    return (
+                                        <div key={codigo} className="border p-4 rounded-md">
+                                            <div className="relative mb-3 h-40 bg-gray-100 flex items-center justify-center overflow-hidden">
+                                                {image.Foto ? (
+                                                    <Image
+                                                        src={image.Foto}
+                                                        alt={`Imagem ${codigo}`}
+                                                        width={300}
+                                                        height={200}
+                                                        className="object-contain w-full h-full"
+                                                        unoptimized
+                                                    />
+                                                ) : (
+                                                    <PhotoIcon className="w-16 h-16 text-gray-400" />
+                                                )}
+                                                <div className="absolute top-0 left-0 bg-black/70 text-white px-2 py-1 text-xs font-semibold">
+                                                    Posição: {index + 1}
+                                                </div>
+                                            </div>
+                                            <div className="space-y-3">
+                                                <div>
+                                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                        URL da Imagem
+                                                    </label>
+                                                    <input
+                                                        type="text"
+                                                        value={image.Foto || ""}
+                                                        onChange={(e) => updateImage(codigo, "Foto", e.target.value)}
+                                                        className="border-2 px-3 py-1.5 text-zinc-700 w-full text-sm rounded-md focus:outline-none focus:ring-black focus:border-black"
+                                                        placeholder="https://..."
+                                                    />
+                                                </div>
+                                                <div className="flex items-center space-x-2">
+                                                    <input
+                                                        type="checkbox"
+                                                        id={`destaque-${codigo}`}
+                                                        checked={image.Destaque === "Sim"}
+                                                        onChange={() => setImageAsHighlight(codigo)}
+                                                        className="h-4 w-4 border-gray-300 rounded text-black focus:ring-black"
+                                                    />
+                                                    <label htmlFor={`destaque-${codigo}`} className="text-sm text-gray-700">
+                                                        Imagem em destaque
+                                                    </label>
+                                                </div>
+                                                <div className="flex justify-end">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeImage(codigo)}
+                                                        className="inline-flex items-center px-2 py-1 border border-transparent text-xs font-medium rounded-md text-red-700 hover:bg-red-50"
+                                                    >
+                                                        <XCircleIcon className="w-4 h-4 mr-1" />
+                                                        Remover
+                                                    </button>
+                                                </div>
+                                                <div className="flex justify-between items-center mt-2 pt-2 border-t">
+                                                    <span className="text-xs text-gray-500">Posição:</span>
+                                                    <select
+                                                        className="border border-gray-300 rounded text-sm px-2 py-1 focus:outline-none focus:ring-1 focus:ring-black"
+                                                        value={index + 1}
+                                                        onChange={(e) =>
+                                                            changeImagePosition(codigo, parseInt(e.target.value, 10))
+                                                        }
+                                                    >
+                                                        {[...Array(Object.keys(formData.Foto).length)].map((_, i) => (
+                                                            <option key={i} value={i + 1}>
+                                                                {i + 1}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                        </div>
+                    ) : (
+                        <div className="text-center py-6 bg-gray-50 rounded-md">
+                            <PhotoIcon className="mx-auto h-12 w-12 text-gray-400" />
+                            <p className="mt-2 text-sm text-gray-500">Nenhuma imagem adicionada ainda.</p>
+                            <p className="text-sm text-gray-500">Clique em "Adicionar Imagem" para começar.</p>
+                        </div>
+                    )}
+                </div>
+            ),
         },
     ];
 
@@ -688,6 +779,7 @@ export default function CadastrarImovel() {
                                                         onChange={handleChange}
                                                         className="border-2 px-5 py-2 text-zinc-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
                                                     >
+                                                        <option value="">Selecione uma opção</option>
                                                         {field.options.map((option) => (
                                                             <option key={option.value} value={option.value}>
                                                                 {option.label}
