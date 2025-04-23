@@ -11,12 +11,13 @@ import {
   PlusCircleIcon,
   XCircleIcon,
   PhotoIcon,
-  ArrowUpIcon,
-  ArrowDownIcon,
+
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
-import { getProprietario, getVinculos } from "@/app/admin/services";
+import { getVinculos } from "@/app/admin/services";
 import Proprietarios from "../../components/proprietarios";
+import { formatterValue } from '@/app/utils/formatter-value';
+import { formatterNumber } from './../../../../utils/formatter-number';
 
 export default function EditarImovel({ params }) {
   const router = useRouter();
@@ -281,8 +282,15 @@ export default function EditarImovel({ params }) {
     setSuccess("");
 
     try {
-      // Usar o Codigo do imóvel para atualizar
-      const result = await atualizarImovel(formData.Codigo, formData);
+      const payload = {
+
+        ...formData,
+        ValorAntigo: formatterNumber(formData.ValorAntigo),
+
+      }
+      console.log("Formulário", payload);
+
+      const result = await atualizarImovel(formData.Codigo, payload);
       if (result && result.success) {
         setSuccess("Imóvel atualizado com sucesso!");
         setTimeout(() => {
