@@ -36,7 +36,7 @@ export async function generateMetadata({ params }) {
   const description = `Condomínio ${condominio.Empreendimento} em ${condominio.BairroComercial}, ${condominio.Cidade}. ${condominio.Empreendimento}: ${condominio.DormitoriosAntigo} quartos, ${condominio.Suites} suítes, ${condominio.BanheiroSocialQtd} banheiros, ${condominio.VagasAntigo} vagas, ${condominio.MetragemAnt}. ${condominio.Situacao}.`;
 
   return {
-    title: `Condomínio ${condominio.Empreendimento}, ${condominio.TipoEndereco} ${condominio.Endereco}, ${condominio.BairroComercial}`,
+    title: `Condomínio ${condominio.Empreendimento}, ${condominio.TipoEndereco} ${condominio.Endereco}, ${condominio.Numero}, ${condominio.BairroComercial}`,
     description,
     alternates: {
       canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/${params.slug}`,
