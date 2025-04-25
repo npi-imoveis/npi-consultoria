@@ -1,35 +1,34 @@
-"use client";
+
 
 import Image from "next/image";
+import { getContentSobreNpi } from "@/app/lib/site-content";
 
-export function HistoriaNpi() {
+export async function HistoriaNpi() {
+
+  const content = await getContentSobreNpi();
   const historyData = [
     {
       year: "2007 - 2010",
-      title: "Consultoria Personalizada",
-      description:
-        "A operação foi pensada não como uma imobiliária tradicional, mas sim como uma consultoria personalizada que se preocupava com a dor de cada cliente, oferecendo uma alternativa segura e eficaz para o desgastante processo de busca por imóveis.",
+      title: content["sobrenpi_ano_title"],
+      description: content["sobrenpi_ano_description"],
       image: "/assets/images/sobre/01.jpg",
     },
     {
       year: "2008",
-      title: "Lançamento do novo site",
-      description:
-        "A NPi lança seu novo site, dinâmico, focado em SEO e de conteúdo aberto. Uma ferramenta de busca eficaz e completa para quem buscava lançamentos em São Paulo.",
+      title: content["sobrenpi_ano1_title"],
+      description: content["sobrenpi_ano1_description"],
       image: "/assets/images/sobre/03.jpg",
     },
     {
       year: "2011 - 2016",
-      title: "Nova sede em Moema",
-      description:
-        "Em 2011, a NPi inaugura sua nova sede em Moema, ampliando sua estrutura física e fortalecendo seu time de vendas. O site é reformulado para destacar ainda mais as vantagens oferecidas aos clientes.",
+      title: content["sobrenpi_ano2_title"],
+      description: content["sobrenpi_ano2_description"],
       image: "/assets/images/sobre/03.jpg",
     },
     {
       year: "2017",
-      title: "Mudança para Brooklin",
-      description:
-        "A NPi se muda para o edifício LWM CORPORATE no Brooklin, adotando um formato mais moderno, enxuto e tecnológico, consolidando-se nas primeiras páginas do Google e no mercado imobiliário.",
+      title: content["sobrenpi_ano3_title"],
+      description: content["sobrenpi_ano3_description"],
       image: "/assets/images/sobre/04.jpg",
     },
   ];

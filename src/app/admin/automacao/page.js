@@ -12,9 +12,13 @@ import {
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 import { getImoveisAutomacao, getImovelByIdAutomacao } from "../services";
+import useImovelAdminStore from "../store/imovelAdminStore";
+import { TrashIcon } from "lucide-react";
+import Modal from "../components/modal";
 
 export default function AdminImoveis() {
   const router = useRouter();
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [imoveis, setImoveis] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -26,6 +30,9 @@ export default function AdminImoveis() {
     currentPage: 1,
     itemsPerPage: 20,
   });
+
+  // Acesso ao store de imóveis admin
+  const setImovelSelecionado = useImovelAdminStore((state) => state.setImovelSelecionado);
 
   const loadImoveis = async (page = 1, codigo = "") => {
     setIsLoading(true);
@@ -138,6 +145,14 @@ export default function AdminImoveis() {
       return;
     }
 
+    // Encontrar o imóvel selecionado pelo código
+    const imovelSelecionado = imoveis.find((imovel) => imovel.Codigo === imovelCodigo);
+
+    // Salvar o imóvel selecionado no store
+    if (imovelSelecionado) {
+      setImovelSelecionado(imovelSelecionado);
+    }
+
     const url = `/admin/automacao/editar/${imovelCodigo}`;
     console.log("Navegando para:", url);
     router.push(url);
@@ -163,6 +178,14 @@ export default function AdminImoveis() {
 
   return (
     <AuthCheck>
+      {isModalOpen && (
+        <Modal
+          title="Deletar Imóvel"
+          description="Tem certeza que deseja deletar esse registro? Ele será removido permanentemente."
+          buttonText="Deletar"
+          link="/admin/automacao"
+        />
+      )}
       <div className="">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Automação de Imóveis</h1>
@@ -216,9 +239,7 @@ export default function AdminImoveis() {
                   <ExclamationTriangleIcon className="h-5 w-5 text-red-400" />
                 </div>
                 <div className="ml-3">
-                  <p className="text-sm text-red-700">
-                    {error}
-                  </p>
+                  <p className="text-sm text-red-700">{error}</p>
                   <div className="mt-2">
                     <button
                       onClick={handleReload}
@@ -241,7 +262,7 @@ export default function AdminImoveis() {
                     scope="col"
                     className="px-6 py-3 text-left text-[10px] font-bold  uppercase tracking-wider"
                   >
-                    Código
+                    ID
                   </th>
                   <th
                     scope="col"
@@ -287,11 +308,11 @@ export default function AdminImoveis() {
                   // Dados dos imóveis
                   imoveis.map((imovel) => (
                     <tr key={imovel.Codigo || imovel._id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-900 font-bold">
+                      <td className="px-6 py-4 whitespace-nowrap text-[10px] text-gray-900 font-bold">
                         {imovel.Codigo || "-"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-xs text-zinc-700">
-                        {imovel.Empreendimento || "-"}
+                        {imovel.Empreendimento || "Não Informado"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-xs text-zinc-700">
                         {imovel.Categoria || "-"}
@@ -303,21 +324,19 @@ export default function AdminImoveis() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap sticky right-0 bg-white">
                         <div className="flex items-center space-x-3">
-                          <a
-                            href={`/imovel-${imovel.Codigo}/${imovel.Slug || 'detalhe'}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-black hover:text-gray-700"
-                            title="Ver no site"
-                          >
-                            <EyeIcon className="h-5 w-5" />
-                          </a>
                           <button
                             className="text-black hover:text-gray-700"
                             title="Editar"
                             onClick={() => handleEdit(imovel.Codigo)}
                           >
                             <PencilSquareIcon className="h-5 w-5" />
+                          </button>
+                          <button
+                            className="text-red-500 hover:text-red-400"
+                            title="Deletar Imóvel"
+                            onClick={() => setIsModalOpen(!isModalOpen)}
+                          >
+                            <TrashIcon className="h-5 w-5" />
                           </button>
                         </div>
                       </td>

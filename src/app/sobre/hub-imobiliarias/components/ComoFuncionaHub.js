@@ -1,6 +1,8 @@
+import { getContentSobre } from "@/app/lib/site-content";
 import Image from "next/image";
 
-export function ComoFuncionaHub() {
+export async function ComoFuncionaHub() {
+  const content = await getContentSobre();
   return (
     <section className="relative bg-black text-white py-16">
       {/* Background escurecido */}
@@ -45,40 +47,30 @@ export function ComoFuncionaHub() {
           {/* Card 1 */}
           <div className="bg-black/40 p-6 rounded-md shadow-lg">
             <h1 className="text-xl uppercase font-semibold mb-2">
-              Colaboração eficiente
+              {content["sobre_page_howto_title"]}
             </h1>
             <p className="text-lg leading-relaxed text-gray-300">
-              A NPI com mais de 5000 posições na 1ª página do Google, é
-              responsável por gerar todos os clientes, já pré-qualificados com
-              tecnologia de ponta, para as imobiliárias parceiras do HUB. E
-              esses parceiros, especializados na região setorizada, receberão
-              toda demanda desses clientes pré-qualificados.
+              {content["sobre_page_howto_description"]}
             </p>
           </div>
 
           {/* Card 2 */}
           <div className="bg-black/40 p-6 rounded-md shadow-lg">
             <h1 className="text-xl uppercase font-semibold mb-2">
-              Conexão e treinamento
+              {content["sobre_page_howto_title2"]}
             </h1>
             <p className="text-lg leading-relaxed text-gray-300">
-              Para garantir a coesão e a eficácia do HUB, realizamos reuniões de
-              alinhamento mensais, onde todas as imobiliárias parceiras
-              participam para discutir estratégias, compartilhar experiências e
-              ajustar abordagens conforme necessário.
+              {content["sobre_page_howto_description2"]}
             </p>
           </div>
 
           {/* Card 3 */}
           <div className="bg-black/40 p-6 rounded-md shadow-lg">
             <h1 className="text-xl uppercase font-semibold mb-2">
-              Ecossistema do HUB
+              {content["sobre_page_howto_title3"]}
             </h1>
             <p className="text-lg leading-relaxed text-gray-300">
-              O HUB é mais do que uma rede de imobiliárias; é um ecossistema
-              dinâmico que une tecnologia, especialização e colaboração. Cada
-              parceiro é escolhido com base em critérios rigorosos, incluindo
-              conhecimento de mercado e compromisso com a excelência.
+              {content["sobre_page_howto_description3"]}
             </p>
           </div>
         </div>

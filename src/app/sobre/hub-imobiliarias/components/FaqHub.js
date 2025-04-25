@@ -1,34 +1,26 @@
-"use client";
 import { TitleSection } from "@/app/components/ui/title-section";
-import { useState } from "react";
+import { getContentFaq } from "@/app/lib/site-content";
 
-export function FaqHub() {
-  const [openIndex, setOpenIndex] = useState(null);
-
-  const toggleAccordion = (index) => {
-    setOpenIndex(openIndex === index ? null : index);
-  };
+export async function FaqHub() {
+  const content = await getContentFaq();
 
   const faqs = [
     {
-      question: "Como funciona a setorização no HUB?",
-      answer:
-        "Cada imobiliária parceira do HUB se especializa em uma região ou bairro específico. Isso permite que elas ofereçam um atendimento mais personalizado e eficaz, com profundo conhecimento do mercado local, resultando em uma maior taxa de conversão de leads.",
+      question: content["faq_question_1"],
+      answer: content["faq_answer_1"],
+
     },
     {
-      question: "Quem pode se tornar um parceiro do HUB?",
-      answer:
-        "Selecionamos imobiliárias com base em critérios rigorosos, incluindo expertise no mercado de alto padrão, alinhamento com nossos valores e fit cultural. As imobiliárias precisam ter um forte conhecimento da região onde atuam e um compromisso com a excelência no atendimento.",
+      question: content["faq_question_2"],
+      answer: content["faq_answer_2"],
     },
     {
-      question: "Como os clientes são distribuídos entre as imobiliárias?",
-      answer:
-        "A NPi Imóveis gera e qualifica os clientes, distribuindo-os para as imobiliárias parceiras com base na especialização regional. Isso garante que cada cliente seja atendido pela imobiliária mais capacitada para lidar com suas necessidades específicas.",
+      question: content["faq_question_3"],
+      answer: content["faq_answer_3"],
     },
     {
-      question: "Quais são os benefícios de participar do HUB?",
-      answer:
-        "As imobiliárias parceiras se beneficiam de clientes qualificados, suporte tecnológico, treinamentos contínuos, e a força de um ecossistema colaborativo. Esse modelo permite que os parceiros se concentrem em seu core business enquanto têm acesso a uma rede de apoio e recursos de ponta.",
+      question: content["faq_question_4"],
+      answer: content["faq_answer_4"],
     },
   ];
 
@@ -48,43 +40,20 @@ export function FaqHub() {
                 {faqs.map((faq, index) => (
                   <div
                     key={index}
-                    className={`accordion py-6 border-b border-gray-200 ${
-                      openIndex === index ? "active" : ""
-                    }`}
+                    className="accordion py-6 border-b border-gray-200"
                   >
-                    <button
-                      className="flex justify-between items-center w-full text-left text-lg sm:text-xl font-medium text-gray-700 transition duration-500 hover:text-indigo-600"
-                      onClick={() => toggleAccordion(index)}
-                    >
+                    <div className="flex justify-between items-center w-full text-left text-lg sm:text-xl font-medium text-gray-700">
                       <p className="text-base sm:text-lg text-black font-semibold">
                         {faq.question}
                       </p>
-                      <svg
-                        className={`w-6 h-6 text-gray-900 transition-transform duration-500 ${
-                          openIndex === index
-                            ? "rotate-180 text-indigo-600"
-                            : ""
-                        }`}
-                        viewBox="0 0 22 22"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path
-                          d="M16.5 8.25L12.4142 12.3358C11.7475 13.0025 11.4142 13.3358 11 13.3358C10.5858 13.3358 10.2525 13.0025 9.58579 12.3358L5.5 8.25"
-                          stroke="currentColor"
-                          strokeWidth="1.6"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        ></path>
-                      </svg>
-                    </button>
-                    {openIndex === index && (
-                      <div className="accordion-content w-full pt-4">
-                        <p className="text-sm sm:text-base text-gray-800">
-                          {faq.answer}
-                        </p>
-                      </div>
-                    )}
+
+
+                    </div>
+                    <div className="accordion-content w-full pt-4">
+                      <p className="text-sm sm:text-base text-gray-800">
+                        {faq.answer}
+                      </p>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -101,6 +70,6 @@ export function FaqHub() {
           </div>
         </div>
       </div>
-    </section>
+    </section >
   );
 }

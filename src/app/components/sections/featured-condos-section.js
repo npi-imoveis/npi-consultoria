@@ -19,21 +19,16 @@ export function FeaturedCondosSection() {
         console.log("Resposta completa:", response);
 
         if (response && response.data && Array.isArray(response.data.data)) {
-          console.log("Dados encontrados em response.data.data");
           setCondominios(response.data.data);
         } else if (response && response.data && Array.isArray(response.data)) {
-          console.log("Dados encontrados em response.data");
           setCondominios(response.data);
         } else if (response && Array.isArray(response)) {
-          console.log("Dados encontrados diretamente em response");
           setCondominios(response);
         } else {
-          console.error("Formato de resposta inesperado:", response);
           setCondominios([]);
           setError("Formato de dados inválido recebido do servidor");
         }
       } catch (err) {
-        console.error("Erro ao buscar condominios:", err);
         setError(err.response?.data?.message || "Erro ao buscar condominios.");
       } finally {
         setLoading(false);
@@ -41,10 +36,6 @@ export function FeaturedCondosSection() {
     }
     fetchCondominios();
   }, []);
-
-  console.log("Condominios carregados:", condominios);
-  console.log("Estado de carregamento:", loading);
-  console.log("Erro:", error);
 
   return (
     <section className="w-full bg-zinc-100">

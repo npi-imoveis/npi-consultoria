@@ -448,7 +448,7 @@ export async function getCorretorById(id) {
         if (response && response.data && response.data.status === 200) {
             return {
                 success: true,
-                data: response.data.data,
+                data: response.data,
             };
         }
         return { success: false, error: "Corretor não encontrado" };

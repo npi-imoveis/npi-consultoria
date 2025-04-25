@@ -15,7 +15,7 @@
     "source.organizeImports.biome": "explicit"
   },
   "[javascript]": {
-    "editor.defaultFormatter": "vscode.typescript-language-features"
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
 
   "[typescript]": {

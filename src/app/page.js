@@ -19,20 +19,21 @@ import { TestimonialsSection } from "./components/sections/testimonials-section"
 import { ReviewSection } from "./components/sections/review-section";
 import { WhatsappFloat } from "./components/ui/whatsapp";
 
-
 export const metadata = {
   title: "NPi Imóveis - HUB de Imobiliárias de Alto Padrão",
-  description: "Somos um HUB de imobiliárias Boutique que atuam com venda de imóveis de alto padrão, apartamentos e casas de luxo.",
+  description:
+    "Somos um HUB de imobiliárias Boutique que atuam com venda de imóveis de alto padrão, apartamentos e casas de luxo.",
   metadataBase: new URL(`${process.env.NEXT_PUBLIC_SITE_URL}`),
   alternates: {
-    canonical: '/',
+    canonical: "/",
     languages: {
-      'pt-BR': '/pt-BR',
+      "pt-BR": "/pt-BR",
     },
   },
   openGraph: {
     title: "NPi Imóveis - HUB de Imobiliárias de Alto Padrão",
-    description: "Somos um HUB de imobiliárias Boutique que atuam com venda de imóveis de alto padrão, apartamentos e casas de luxo.",
+    description:
+      "Somos um HUB de imobiliárias Boutique que atuam com venda de imóveis de alto padrão, apartamentos e casas de luxo.",
     url: process.env.NEXT_PUBLIC_SITE_URL,
     siteName: "NPi Imóveis",
     images: [
@@ -48,7 +49,8 @@ export const metadata = {
   twitter: {
     card: "summary_large_image",
     title: "NPi Imóveis - HUB de Imobiliárias de Alto Padrão",
-    description: "Somos um HUB de imobiliárias Boutique que atuam com venda de imóveis de alto padrão, apartamentos e casas de luxo.",
+    description:
+      "Somos um HUB de imobiliárias Boutique que atuam com venda de imóveis de alto padrão, apartamentos e casas de luxo.",
     images: ["/assets/thumbnail.jpg"],
   },
   icons: {
@@ -56,27 +58,22 @@ export const metadata = {
   },
 };
 
-
 export default function Home() {
   return (
     <div>
       <Header />
       <HeroSection />
-      <PropertyList />
-
-      <AboutSection />
-      <ReviewSection />
-
       <ActionSection />
       <FeaturedCondosSection />
-
-      <LuxuryGridSection />
-      <FaqSection />
+      <PropertyList />
       <ListCities />
-
-      <TestimonialsSection />
-      <ContactSection />
+      <LuxuryGridSection />
+      <AboutSection />
+      <ReviewSection />
       <SlidePartners />
+      <TestimonialsSection />
+      <FaqSection />
+      <ContactSection />
       <WhatsappFloat />
       <Footer />
     </div>

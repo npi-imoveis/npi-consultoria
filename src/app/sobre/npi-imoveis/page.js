@@ -1,4 +1,3 @@
-"use client";
 
 import { HeaderPage } from "@/app/components/ui/header-page";
 import SobreNPI from "./sections/SobreNpi";
@@ -6,7 +5,7 @@ import SobreNPI from "./sections/SobreNpi";
 import { HistoriaNpi } from "./sections/HistoriaNpi";
 import VideoNpi from "./sections/VideoNpi";
 
-export default function SobrePage() {
+export default async function SobrePage() {
   return (
     <section>
       <HeaderPage

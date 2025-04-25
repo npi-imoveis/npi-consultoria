@@ -1,4 +1,5 @@
 import { connectToDatabase } from "@/app/lib/mongodb";
+import Cdimag from "@/app/models/Cdimag";
 import Corretores from "@/app/models/Corretores";
 import { NextResponse } from "next/server";
 
@@ -11,10 +12,19 @@ export async function GET(request) {
 
         // Se tiver ID, busca corretor específico
         if (id) {
+
+            const vinculo = await Cdimag.find({ codigoD: Number(id) });
+            const imoveisByCorretor = vinculo.map(imovel => imovel.codigoO);
+
+            console.log("Vinculos: ", imoveisByCorretor);
+
             const corretor = await Corretores.findOne({ codigoD: id });
+
+
             return NextResponse.json({
                 status: 200,
-                data: corretor || null
+                data: corretor || null,
+                imoveis: imoveisByCorretor
             });
         }
 

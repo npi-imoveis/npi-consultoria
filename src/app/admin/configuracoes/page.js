@@ -67,7 +67,7 @@ export default function Configuracoes() {
 
   return (
     <AuthCheck>
-      <div className="max-w-5xl mx-auto text-xs">
+      <div className="w-full mx-auto text-xs">
         <div className="mb-8">
           <h1 className="text-xl font-bold text-gray-900 mb-4">Configurações do Site</h1>
           <p className="text-gray-600 mb-6">
@@ -76,7 +76,7 @@ export default function Configuracoes() {
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Informações Gerais */}
-            <div className="bg-white shadow-md rounded-lg overflow-hidden p-6">
+            <div className="bg-white  rounded-lg overflow-hidden p-6">
               <h2 className="font-semibold mb-4 text-gray-800 border-b pb-2">Informações Gerais</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -146,7 +146,7 @@ export default function Configuracoes() {
             </div>
 
             {/* Contato */}
-            <div className="bg-white shadow-md rounded-lg overflow-hidden p-6">
+            <div className="bg-white  rounded-lg overflow-hidden p-6">
               <h2 className="font-semibold mb-4 text-gray-800 border-b pb-2">Contato</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -205,7 +205,7 @@ export default function Configuracoes() {
             </div>
 
             {/* Redes Sociais */}
-            <div className="bg-white shadow-md rounded-lg overflow-hidden p-6">
+            <div className="bg-white  rounded-lg overflow-hidden p-6">
               <h2 className="font-semibold mb-4 text-gray-800 border-b pb-2">Redes Sociais</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -233,115 +233,6 @@ export default function Configuracoes() {
                     onChange={handleChange}
                     className="border-2 px-5 py-2 text-zinc-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
                   />
-                </div>
-              </div>
-            </div>
-
-            {/* Cores do Site */}
-            <div className="bg-white shadow-md rounded-lg overflow-hidden p-6">
-              <h2 className="font-semibold mb-4 text-gray-800 border-b pb-2">Aparência</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label htmlFor="cores.primaria" className="block font-medium text-gray-700 mb-1">
-                    Cor Primária
-                  </label>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="color"
-                      id="cores.primaria"
-                      name="cores.primaria"
-                      value={formData.cores.primaria}
-                      onChange={handleChange}
-                      className="h-10 w-10 rounded cursor-pointer"
-                    />
-                    <input
-                      type="text"
-                      value={formData.cores.primaria}
-                      onChange={(e) =>
-                        handleChange({ target: { name: "cores.primaria", value: e.target.value } })
-                      }
-                      className="border-2 px-5 py-2 text-zinc-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label
-                    htmlFor="cores.secundaria"
-                    className="block font-medium text-gray-700 mb-1"
-                  >
-                    Cor Secundária
-                  </label>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="color"
-                      id="cores.secundaria"
-                      name="cores.secundaria"
-                      value={formData.cores.secundaria}
-                      onChange={handleChange}
-                      className="h-10 w-10 rounded cursor-pointer"
-                    />
-                    <input
-                      type="text"
-                      value={formData.cores.secundaria}
-                      onChange={(e) =>
-                        handleChange({
-                          target: { name: "cores.secundaria", value: e.target.value },
-                        })
-                      }
-                      className="border-2 px-5 py-2 text-zinc-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label htmlFor="cores.destaque" className="block font-medium text-gray-700 mb-1">
-                    Cor de Destaque
-                  </label>
-                  <div className="flex items-center space-x-2">
-                    <input
-                      type="color"
-                      id="cores.destaque"
-                      name="cores.destaque"
-                      value={formData.cores.destaque}
-                      onChange={handleChange}
-                      className="h-10 w-10 rounded cursor-pointer"
-                    />
-                    <input
-                      type="text"
-                      value={formData.cores.destaque}
-                      onChange={(e) =>
-                        handleChange({ target: { name: "cores.destaque", value: e.target.value } })
-                      }
-                      className="border-2 px-5 py-2 text-zinc-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Visualização das cores */}
-              <div className="mt-6 p-4 border border-gray-200 rounded-md">
-                <h3 className="font-medium text-gray-700 mb-3">Visualização das Cores</h3>
-                <div className="flex space-x-4">
-                  <div>
-                    <div
-                      className="h-10 w-20 rounded"
-                      style={{ backgroundColor: formData.cores.primaria }}
-                    ></div>
-                    <p className="mt-1 text-center">Primária</p>
-                  </div>
-                  <div>
-                    <div
-                      className="h-10 w-20 rounded"
-                      style={{ backgroundColor: formData.cores.secundaria }}
-                    ></div>
-                    <p className="mt-1 text-center">Secundária</p>
-                  </div>
-                  <div>
-                    <div
-                      className="h-10 w-20 rounded"
-                      style={{ backgroundColor: formData.cores.destaque }}
-                    ></div>
-                    <p className="mt-1 text-center">Destaque</p>
-                  </div>
                 </div>
               </div>
             </div>

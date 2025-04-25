@@ -162,3 +162,57 @@ export async function DELETE(request, { params }) {
     );
   }
 }
+
+// Método para criar um novo imóvel com Codigo específico
+export async function POST(request, { params }) {
+  // O id nos parâmetros é o Codigo do imóvel
+  const { id } = params;
+  console.log(`Criando novo imóvel com Codigo: ${id}`);
+
+  try {
+    await connectToDatabase();
+
+    // Obter os dados do corpo da requisição
+    const dadosImovel = await request.json();
+
+    // Verificar se já existe um imóvel com este Codigo
+    const imovelExistente = await Imovel.findOne({ Codigo: id });
+
+    if (imovelExistente) {
+      console.log(`Imóvel com Codigo ${id} já existe`);
+      return NextResponse.json(
+        {
+          status: 409,
+          error: "Imóvel com este código já existe",
+        },
+        { status: 409 }
+      );
+    }
+
+    // Definir o Codigo no objeto de dados
+    dadosImovel.Codigo = id;
+
+    // Criar um novo imóvel
+    const novoImovel = new Imovel(dadosImovel);
+    const imovelSalvo = await novoImovel.save();
+
+    console.log(`Imóvel com Codigo ${id} criado com sucesso`);
+
+    return NextResponse.json({
+      status: 201,
+      success: true,
+      message: "Imóvel criado com sucesso",
+      data: imovelSalvo,
+    }, { status: 201 });
+  } catch (error) {
+    console.error(`Erro ao criar imóvel com Codigo ${id}:`, error);
+    return NextResponse.json(
+      {
+        status: 500,
+        success: false,
+        error: error instanceof Error ? error.message : "Erro desconhecido",
+      },
+      { status: 500 }
+    );
+  }
+}

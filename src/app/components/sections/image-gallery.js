@@ -33,13 +33,14 @@ export function ImageGallery({ imovel }) {
   const slug = formatterSlug(imovel.Empreendimento);
 
   // Ensure Foto is an array and handle edge cases
-  const images = Array.isArray(imovel.Foto) && imovel.Foto.length > 0
-    ? [...imovel.Foto].sort((a, b) => {
-      if (a.Destaque === "Sim" && b.Destaque !== "Sim") return -1;
-      if (a.Destaque !== "Sim" && b.Destaque === "Sim") return 1;
-      return 0;
-    })
-    : [];
+  const images =
+    Array.isArray(imovel.Foto) && imovel.Foto.length > 0
+      ? [...imovel.Foto].sort((a, b) => {
+          if (a.Destaque === "Sim" && b.Destaque !== "Sim") return -1;
+          if (a.Destaque !== "Sim" && b.Destaque === "Sim") return 1;
+          return 0;
+        })
+      : [];
 
   if (images.length === 0) {
     // Return a placeholder or default image if no images are available
@@ -97,7 +98,7 @@ export function ImageGallery({ imovel }) {
               loading={isMobile ? "lazy" : "eager"}
               priority={!isMobile}
               className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
-
+              unoptimized
             />
           </div>
 
@@ -131,7 +132,7 @@ export function ImageGallery({ imovel }) {
                     blurDataURL={image.Foto}
                     loading="lazy"
                     className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
-
+                    unoptimized
                   />
                   {isLastImage && images.length > 5 && (
                     <div className="absolute inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center">
@@ -180,7 +181,6 @@ export function ImageGallery({ imovel }) {
             />
           </div>
 
-
           {selectedIndex !== null ? (
             <div className="flex items-center justify-center min-h-screen p-4 relative">
               <Image
@@ -194,7 +194,7 @@ export function ImageGallery({ imovel }) {
                 blurDataURL={images[selectedIndex].Foto}
                 loading="eager"
                 className="max-w-full max-h-screen object-contain"
-
+                unoptimized
               />
 
               <button
@@ -230,7 +230,7 @@ export function ImageGallery({ imovel }) {
                     blurDataURL={image.Foto}
                     loading="lazy"
                     className="object-cover"
-
+                    unoptimized
                   />
                 </div>
               ))}

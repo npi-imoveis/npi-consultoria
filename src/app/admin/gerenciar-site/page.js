@@ -1,23 +1,26 @@
 "use client";
 
 import AuthCheck from "../components/auth-check";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import UpdateContent from './components/update';
 
-// Componentes reutilizáveis
+
+
 function Section({ title, children }) {
   return (
-    <section className="mb-8">
-      <h2 className="text-xl font-semibold mb-4 pb-2 border-b border-gray-200">{title}</h2>
+    <section className="mb-8 bg-white rounded-lg p-8">
+      <h2 className="text-xl font-semibold mb-4 pb-2 border-b border-gray-200 my-4">{title}</h2>
       {children}
     </section>
   );
 }
 
-function InputField({ label, ...props }) {
+function InputField({ label, name, ...props }) {
   return (
     <div>
       <label className="block text-sm font-medium mb-1">{label}</label>
       <input
+        name={name}
         className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
         {...props}
       />
@@ -25,11 +28,12 @@ function InputField({ label, ...props }) {
   );
 }
 
-function TextareaField({ label, ...props }) {
+function TextareaField({ label, name, ...props }) {
   return (
     <div>
       <label className="block text-sm font-medium mb-1">{label}</label>
       <textarea
+        name={name}
         className="w-full border rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[80px]"
         {...props}
       />
@@ -37,22 +41,100 @@ function TextareaField({ label, ...props }) {
   );
 }
 
-function ImageUpload({ label, onChange }) {
+function ImageUpload({ label, onChange, value, name }) {
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(value || null);
+  const [error, setError] = useState(null);
+
+  // Atualizar previewUrl quando value muda
+  useEffect(() => {
+    if (value) {
+      setPreviewUrl(value);
+    }
+  }, [value]);
+
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validar tamanho (2MB max)
+    if (file.size > 2 * 1024 * 1024) {
+      setError("O arquivo é muito grande. Tamanho máximo: 2MB.");
+      return;
+    }
+
+    // Armazenar o arquivo selecionado
+    setSelectedFile(file);
+    setError(null);
+
+    // Criar e mostrar preview local
+    const localPreviewUrl = URL.createObjectURL(file);
+    setPreviewUrl(localPreviewUrl);
+
+    // Notificar componente pai da mudança (sem fazer upload)
+    if (onChange) {
+      onChange({
+        target: {
+          name,
+          value: null, // Caminho ainda não disponível
+          file, // Passar o arquivo para fazer upload depois
+          previewUrl: localPreviewUrl
+        }
+      });
+    }
+  };
+
   return (
     <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-lg p-6 min-h-[120px]">
       <label className="block text-sm font-medium mb-2">{label}</label>
-      <input type="file" accept="image/*" className="mb-2" onChange={onChange} />
-      <span className="text-xs text-gray-500">(JPG, PNG, até 2MB)</span>
+
+      {previewUrl && (
+        <div className="mb-4 relative w-full max-w-[200px]">
+          <img
+            src={previewUrl}
+            alt="Preview"
+            className="w-full h-auto rounded-md object-cover"
+          />
+        </div>
+      )}
+
+      <input
+        type="file"
+        accept="image/*"
+        className="mb-2"
+        onChange={handleFileChange}
+        name={name}
+      />
+
+      {error && <p className="text-xs text-red-500">{error}</p>}
+      {!error && (
+        <span className="text-xs text-gray-500">(JPG, PNG, até 2MB)</span>
+      )}
     </div>
   );
 }
 
 export default function GerenciarSite() {
   const [tab, setTab] = useState("home");
+  const [form, setForm] = useState({});
+
+
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const res = await fetch("/api/admin/content/get/");
+      const data = await res.json();
+      setForm(data);
+
+    };
+    fetchData();
+  }, []);
+
   return (
     <AuthCheck>
-      <div className="mx-auto px-4 py-8">
+      <div className="mx-auto">
         <h1 className="text-2xl font-bold mb-4">Gerenciar Site</h1>
+
         {/* Tabs */}
         <div className="mb-6 flex gap-2">
           {[
@@ -71,56 +153,194 @@ export default function GerenciarSite() {
           ))}
         </div>
         {/* Tab Content */}
-        <div className="bg-white rounded-lg p-8 min-h-[200px]">
-          {tab === "home" && <HomeTab />}
-          {tab === "hub" && <HubTab />}
-          {tab === "sobre" && <SobreTab />}
-          {tab === "servicos" && <ServicosTab />}
+        <div className="min-h-[200px]">
+          {tab === "home" && <HomeTab form={form} />}
+          {tab === "hub" && <HubTab form={form} />}
+          {tab === "sobre" && <SobreTab form={form} />}
+          {tab === "servicos" && <ServicosTab form={form} />}
         </div>
       </div>
     </AuthCheck>
   );
 }
 
-function HomeTab() {
+function HomeTab({ form }) {
+  const [formData, setFormData] = useState(form || {});
+  const [imagePreviews, setImagePreviews] = useState({});
+  const [pendingImages, setPendingImages] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState({ type: null, message: null });
+
+  useEffect(() => {
+    if (form) {
+      setFormData(form);
+    }
+  }, [form]);
+
+  const stats = [
+    { label: "Posições 1 Página", name: "stats_position" },
+    { label: "Visualizações no Google", name: "stats_views" },
+    { label: "Cliques no site", name: "stats_clicks" },
+    { label: "Imobiliárias parceiras", name: "stats_partners" },
+    { label: "Imóveis cadastrados", name: "stats_properties" },
+  ]
+
+  const cards = [
+    { title: "card_destacado_title", description: "card_destacado_description" },
+    { title: "card_destacado_title2", description: "card_destacado_description2" },
+  ]
+
+  const handleChange = (e) => {
+    setFormData((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
+
+  const handleImageChange = (e) => {
+    const { name, file, previewUrl } = e.target;
+
+    // Armazenar o arquivo para upload posterior
+    if (file) {
+      setPendingImages((prev) => ({
+        ...prev,
+        [name]: file,
+      }));
+    }
+
+    // Armazenar a URL de preview
+    if (previewUrl) {
+      setImagePreviews((prev) => ({
+        ...prev,
+        [name]: previewUrl,
+      }));
+    }
+  };
+
+  // Função para upload de uma imagem
+  const uploadImage = async (name, file) => {
+    try {
+      // Criar FormData para enviar o arquivo
+      const formData = new FormData();
+      formData.append('file', file);
+
+      // Enviar para a API de upload local
+      const response = await fetch('/api/upload-local', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Erro ao fazer upload');
+      }
+
+      // Retornar o caminho do arquivo
+      return data.filePath;
+    } catch (error) {
+      console.error(`Erro no upload da imagem ${name}:`, error);
+      throw error;
+    }
+  };
+
+
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 ">
       <Section title="Quem somos">
         <div className="flex flex-col md:flex-row gap-8">
           <div className="flex-1 space-y-4">
-            <InputField label="Título" placeholder="Digite o título" type="text" />
-            <InputField label="Subtítulo" placeholder="Digite o subtítulo" type="text" />
-            <TextareaField label="Descrição" placeholder="Digite a descrição" />
+            <InputField
+              label="Título"
+              name="sobre_titulo"
+              value={formData["sobre_titulo"] || ""}
+              onChange={handleChange}
+              type="text"
+            />
+            <InputField
+              label="Subtítulo"
+              name="sobre_subtitulo"
+              value={formData["sobre_subtitulo"] || ""}
+              onChange={handleChange}
+              type="text"
+            />
+            <TextareaField
+              label="Descrição"
+              name="sobre_descricao"
+              value={formData["sobre_descricao"] || ""}
+              onChange={handleChange}
+            />
           </div>
           <div className="flex-1">
-            <ImageUpload label="Imagem" />
+            <ImageUpload
+              label="Imagem"
+              name="sobre_imagem"
+              value={formData["sobre_imagem"]}
+              onChange={handleImageChange}
+            />
           </div>
+        </div>
+        <div className="mt-4">
+          <button
+            className="bg-black px-4 py-2 text-white rounded-md disabled:bg-gray-400"
+          >
+            Atualizar Quem Somos
+          </button>
         </div>
       </Section>
       <Section title="Nossos Resultados em Números">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[
-            "Posições 1 Página",
-            "Visualizações no Google",
-            "Cliques no site",
-            "Imobiliárias parceiras",
-            "Imóveis cadastrados",
-          ].map((label, i) => (
-            <InputField key={i} label={label} placeholder={`Digite o número de ${label.toLowerCase()}`} type="number" />
+          {stats.map(({ label, name }, i) => (
+            <InputField
+              key={i}
+              label={label}
+              name={name}
+              value={formData[name] || ""}
+              onChange={handleChange}
+            />
           ))}
         </div>
+        <button
+          className="mt-4 bg-black px-4 py-2 text-white rounded-md disabled:bg-gray-400"
+        >
+          Atualizar Resultados
+        </button>
       </Section>
       <Section title="Cards Destacados">
         <div className="flex flex-col md:flex-row gap-8">
-          {[0, 1].map((idx) => (
+          {cards.map(({ title, description }, idx) => (
             <div key={idx} className="flex-1 bg-gray-50 rounded-lg p-6 space-y-4">
-              <InputField label="Título" placeholder="Digite o título" type="text" />
-              <InputField label="Descrição" placeholder="Digite a descrição" type="text" />
-              <ImageUpload label="Imagem" />
+              <InputField
+                label="Título"
+                name={title}
+                value={formData[title] || ""}
+                onChange={handleChange}
+                type="text"
+              />
+              <InputField
+                label="Descrição"
+                name={description}
+                value={formData[description] || ""}
+                onChange={handleChange}
+                type="text"
+              />
+              <ImageUpload
+                label="Imagem"
+                name={`card_image_${idx}`}
+                value={formData[`card_image_${idx}`] || ""}
+                onChange={handleImageChange}
+              />
             </div>
           ))}
         </div>
+        <button
+          className="mt-4 bg-black px-4 py-2 text-white rounded-md disabled:bg-gray-400"
+        >
+          Atualizar Cards Destacados
+        </button>
       </Section>
+
       <Section title="Testemunhos">
         <TestemunhosSection />
       </Section>
@@ -128,7 +348,7 @@ function HomeTab() {
   );
 }
 
-function HubTab() {
+function HubTab({ form }) {
   return (
     <div className="space-y-8">
       <Section title="Header">
@@ -249,6 +469,8 @@ function TestemunhosSection() {
       return updated;
     });
   };
+
+
 
   const handleFileChange = (idx, file) => {
     setTestemunhos((prev) => {

@@ -8,11 +8,9 @@ import {
   BuildingOfficeIcon,
   StarIcon,
   Cog6ToothIcon,
-
   TableCellsIcon,
   UserGroupIcon,
 } from "@heroicons/react/24/outline";
-
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -39,7 +37,6 @@ export default function Sidebar() {
       icon: UserGroupIcon,
     },
 
-
     {
       name: "Gerenciar Site",
       href: "/admin/gerenciar-site",
@@ -58,9 +55,7 @@ export default function Sidebar() {
   };
 
   return (
-    <div
-      className="bg-black text-white h-screen w-64 transition-all duration-300 ease-in-out fixed top-0 left-0 z-10"
-    >
+    <div className="bg-black text-white h-screen w-64 transition-all duration-300 ease-in-out fixed top-0 left-0 z-10">
       <div className="p-4 flex flex-col h-full">
         {/* Cabeçalho */}
         <div className="flex items-center justify-center mb-8 mt-2">
@@ -70,7 +65,6 @@ export default function Sidebar() {
             width={150}
             height={50}
             className="mx-auto"
-            unoptimized
           />
         </div>
 
@@ -81,10 +75,11 @@ export default function Sidebar() {
               <li key={item.name}>
                 <Link
                   href={item.href}
-                  className={`flex items-center p-3 rounded-md transition-colors text-xs ${isActive(item.href)
-                    ? "bg-zinc-800 text-white"
-                    : "hover:bg-zinc-900 text-zinc-300"
-                    }`}
+                  className={`flex items-center p-3 rounded-md transition-colors text-xs ${
+                    isActive(item.href)
+                      ? "bg-zinc-800 text-white"
+                      : "hover:bg-zinc-900 text-zinc-300"
+                  }`}
                 >
                   <item.icon className="h-4 w-4 mr-3" />
                   <span>{item.name}</span>
@@ -93,9 +88,7 @@ export default function Sidebar() {
             ))}
           </ul>
           <button className="w-full mt-8 bg-[#8B6F48] hover:bg-[#8B6F48]/80 text-white p-4 rounded-md transition-colors text-xs">
-            <Link href="/admin/automacao">
-              Automação
-            </Link>
+            <Link href="/admin/automacao">Automação</Link>
           </button>
         </nav>
 

@@ -76,7 +76,6 @@ export default function CardImovel({
   // Se houver dados, renderiza o componente completo
   const setImovelSelecionado = useImovelStore((state) => state.setImovelSelecionado);
 
-
   // Verificar se os valores existem para evitar erros
   const tipoEndereco = TipoEndereco || "";
   const endereco = Endereco || "";
@@ -121,8 +120,8 @@ export default function CardImovel({
   const urlFoto = fotoDestacada && fotoDestacada.Foto;
 
   const formatterMoney = (value) => {
-    return value.replace(/,\d{2}$/, '');
-  }
+    return value.replace(/,\d{2}$/, "");
+  };
 
   return (
     <section className="max-w-[350px] h-[420px] rounded-lg overflow-hidden bg-white flex flex-col shadow-[0px_0px_15px_rgba(0,0,0,0.09)] transition-transform duration-300 hover:shadow-[0px_0px_20px_rgba(0,0,0,0.15)] hover:-translate-y-1">
@@ -136,7 +135,7 @@ export default function CardImovel({
             layout="fill"
             objectFit="cover"
             className="rounded-t-lg transition-transform duration-500 ease-in-out group-hover:scale-110 hover:scale-110"
-
+            unoptimized
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
@@ -185,7 +184,6 @@ export default function CardImovel({
           </h3>
         )}
 
-
         <ul className="space-y-2 text-[10px]">
           <li className="flex items-center space-x-2 overflow-hidden">
             <ArrowRightLeftIcon className="w-4 h-4 md:w-5 md:h-5 text-gray-500 flex-shrink-0" />
@@ -210,7 +208,11 @@ export default function CardImovel({
 
         {/* Botão de ação */}
         <div className="mt-auto pt-4  ">
-          <Button link={`/imovel-${Codigo}/${slug}`} text="Saiba mais" onClick={handleButtonClick} />
+          <Button
+            link={`/imovel-${Codigo}/${slug}`}
+            text="Saiba mais"
+            onClick={handleButtonClick}
+          />
         </div>
       </div>
     </section>

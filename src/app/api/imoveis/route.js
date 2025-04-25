@@ -25,7 +25,7 @@ export async function GET(request) {
 
     // Filtro para imóveis com ValorAntigo diferente de "0" e ""
     const filtro = {
-      ValorAntigo: { $exists: true, $nin: ["0", ""] }
+      ValorAntigo: { $exists: true, $nin: ["0", ""] },
     };
 
     // Contar o total de documentos com o filtro aplicado
@@ -57,6 +57,72 @@ export async function GET(request) {
     return NextResponse.json(
       {
         message: "Erro ao buscar imóveis",
+        error: error instanceof Error ? error.message : "Erro desconhecido",
+      },
+      { status: 500 }
+    );
+  }
+}
+
+export async function POST(request) {
+  console.log("Processando imóvel");
+
+  try {
+    await connectToDatabase();
+
+    // Obter os dados do corpo da requisição
+    const dadosImovel = await request.json();
+
+    // Verificar se o Codigo foi fornecido
+    if (!dadosImovel.Codigo) {
+      return NextResponse.json(
+        {
+          status: 400,
+          error: "O campo Codigo é obrigatório",
+        },
+        { status: 400 }
+      );
+    }
+
+    // Se o _id foi fornecido, tenta excluir o documento existente primeiro
+    if (dadosImovel._id) {
+      try {
+        await Imovel.deleteOne({ _id: dadosImovel._id });
+        console.log(`Documento anterior com _id ${dadosImovel._id} excluído`);
+      } catch (deleteError) {
+        console.log("Erro ao excluir documento anterior (pode não existir):", deleteError);
+      }
+    }
+
+    // Criar um novo documento
+    const novoImovel = new Imovel(dadosImovel);
+    const imovelSalvo = await novoImovel.save();
+
+    console.log(`Imóvel com Codigo ${dadosImovel.Codigo} processado com sucesso`);
+
+    // Invalidar cache relacionado a imóveis
+    const keys = cache.keys();
+    keys.forEach((key) => {
+      if (key.startsWith("imoveis_")) {
+        cache.del(key);
+      }
+    });
+
+    return NextResponse.json(
+      {
+        status: 200,
+        success: true,
+        message: "Imóvel processado com sucesso",
+        data: imovelSalvo,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Erro ao processar imóvel:", error);
+    return NextResponse.json(
+      {
+        status: 500,
+        success: false,
         error: error instanceof Error ? error.message : "Erro desconhecido",
       },
       { status: 500 }

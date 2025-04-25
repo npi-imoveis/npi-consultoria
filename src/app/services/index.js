@@ -226,6 +226,20 @@ export async function atualizarImovel(codigo, dadosImovel) {
   }
 }
 
+
+export async function criarImovel(codigo, dadosImovel) {
+  try {
+    const response = await axiosClient.post(`/imoveis/${codigo}`, dadosImovel);
+    return response.data;
+  } catch (error) {
+    console.error("Serviço: Erro ao criar imóvel:", error);
+    return {
+      success: false,
+
+    }
+  }
+}
+
 // Função para excluir um imóvel pelo Codigo
 export async function excluirImovel(codigo) {
   try {

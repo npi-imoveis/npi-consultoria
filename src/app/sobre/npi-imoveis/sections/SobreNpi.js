@@ -1,10 +1,12 @@
-"use client";
 
 import { Button } from "@/app/components/ui/button";
 import { Chip } from "@/app/components/ui/chip";
 import Image from "next/image";
+import { getContentSobreNpi } from "@/app/lib/site-content";
 
-export default function SobreNPI() {
+export default async function SobreNPI() {
+  const content = await getContentSobreNpi();
+
   return (
     <section className="py-24 relative xl:mr-0 lg:mr-5 mr-0">
       <div className="w-full max-w-7xl px-4 md:px-5 lg:px-5 mx-auto">
@@ -16,20 +18,16 @@ export default function SobreNPI() {
                 <Chip text="Quem Somos" />
                 <div className="w-full flex flex-col justify-start lg:items-start items-center gap-3">
                   <h1 className="text-black text-xl font-bold leading-normal lg:text-start text-center">
-                    A NPi Imóveis nasceu em 2007.
+                    {content["sobrenpi_title"]}
                   </h1>
                   <p className="text-black text-base font-normal leading-relaxed lg:text-start text-center">
-                    Com os empreendedores Eduardo Lima e Aline Monteiro de Barros, a ideia inicial
-                    era para suprir algumas lacunas de uma mercado imobiliário em plena expansão.
-                    Nasciamos com uma proposta inovadora de parcerias B2B com as maiores
-                    construtoras do mercado, e com isso, aproximou o nosso cliente final aos donos
-                    ou diretores das incorporadoras.
+                    {content["sobrenpi_description"]}
                   </p>
                 </div>
               </div>
 
               {/* Informações de Estatísticas */}
-              <div className="w-full flex flex-col justify-center items-start gap-6">
+              {/* <div className="w-full flex flex-col justify-center items-start gap-6">
                 <div className="w-full grid md:grid-cols-2 grid-cols-1 gap-8">
                   {[
                     {
@@ -52,7 +50,7 @@ export default function SobreNPI() {
                     </div>
                   ))}
                 </div>
-              </div>
+              </div> */}
             </div>
 
             {/* Botão */}

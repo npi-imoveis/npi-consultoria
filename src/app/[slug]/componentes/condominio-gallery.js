@@ -13,10 +13,10 @@ export default function CondominioGallery({ fotos, second, title }) {
   // Reorganiza as imagens para que a foto em destaque seja a primeira
   const images = fotos
     ? [...fotos].sort((a, b) => {
-      if (a.Destaque === "Sim" && b.Destaque !== "Sim") return -1;
-      if (a.Destaque !== "Sim" && b.Destaque === "Sim") return 1;
-      return 0;
-    })
+        if (a.Destaque === "Sim" && b.Destaque !== "Sim") return -1;
+        if (a.Destaque !== "Sim" && b.Destaque === "Sim") return 1;
+        return 0;
+      })
     : [];
 
   // Se a propriedade second for true e tiver pelo menos 2 imagens, coloca a segunda imagem como primeira
@@ -77,7 +77,7 @@ export default function CondominioGallery({ fotos, second, title }) {
             style={{ objectPosition: "center" }}
             priority={currentIndex === 0}
             loading={currentIndex === 0 ? "eager" : "lazy"}
-
+            unoptimized
           />
           <span className="absolute top-2 right-2 bg-black text-white text-[12px] px-2 py-1 rounded z-10">
             {currentIndex + 1} de {images.length}
@@ -115,7 +115,6 @@ export default function CondominioGallery({ fotos, second, title }) {
               imovel={fotos && fotos.length > 0 ? { Codigo: fotos[0].CondominioId } : null}
             />
           </div>
-
 
           {selectedIndex !== null ? (
             <div className="flex items-center justify-center min-h-screen p-4 relative">
@@ -157,12 +156,12 @@ export default function CondominioGallery({ fotos, second, title }) {
                 >
                   <Image
                     src={image.Foto}
-                    alt={`${title || 'Imagem do condomínio'} ${idx + 1}`}
+                    alt={`${title || "Imagem do condomínio"} ${idx + 1}`}
                     title={title}
                     fill
                     className="object-cover"
                     loading="lazy"
-
+                    unoptimized
                   />
                 </div>
               ))}

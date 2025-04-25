@@ -5,6 +5,8 @@ import { useState, useEffect } from "react";
 import Sidebar from "./components/sidebar";
 import { onAuthStateChanged } from "firebase/auth";
 import { auth } from "@/app/lib/firebase";
+import { User2Icon } from "lucide-react";
+import Link from "next/link";
 
 // Carregar a fonte Inter no lado do cliente para evitar problemas de hidratação
 const inter = Inter({ subsets: ["latin"] });
@@ -13,7 +15,7 @@ export default function AdminLayout({ children }) {
   const pathname = usePathname();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [mounted, setMounted] = useState(false);
-  const [userName, setUserName] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [userEmail, setUserEmail] = useState("");
   const [isAuthLoading, setIsAuthLoading] = useState(true);
 
@@ -35,7 +37,7 @@ export default function AdminLayout({ children }) {
           return;
         }
         setIsLoggedIn(true);
-        setUserName(user.displayName || "Usuário");
+        setDisplayName(user.displayName || "Usuário");
         setUserEmail(user.email || "email@example.com");
         setIsAuthLoading(false);
       } else {
@@ -82,20 +84,25 @@ export default function AdminLayout({ children }) {
 
       {/* Conteúdo principal */}
       <div
-        className={`min-h-screen ${isLoggedIn ? "ml-64" : ""
-          } transition-all duration-300 ease-in-out`}
+        className={`min-h-screen ${
+          isLoggedIn ? "ml-64" : ""
+        } transition-all duration-300 ease-in-out`}
       >
         {isLoggedIn && (
-          <header className="bg-black text-white shadow-md">
-            <div className="ml-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
-              <h1>Bem vindo {userEmail}.</h1>
+          <header className="bg-black text-white ">
+            <div className="flex justify-end items-center pr-10 py-4">
+              <Link href="/admin/usuario" className="flex items-center">
+                <User2Icon className="w-8 h-8 mr-2" />
+                <span className="mr-4">{displayName}</span>
+              </Link>
+
               <button
                 onClick={() => {
                   auth.signOut();
                   localStorage.removeItem("admin_login_time");
                   window.location.href = "/admin/login";
                 }}
-                className="p-4 bg-[#8B6F48] text-white rounded-md hover:[#8B6F48]/80 transition-colors"
+                className=" text-white border-2 border-white rounded-md px-4 py-2 hover:border-gray-700 hover:text-gray-700 transition-all"
               >
                 Sair
               </button>

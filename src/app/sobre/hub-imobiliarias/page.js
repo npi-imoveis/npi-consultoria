@@ -1,18 +1,20 @@
 import { HeaderPage } from "@/app/components/ui/header-page";
-import { HeroHub } from "./components/HeroHub";
 import { SobreHub } from "./components/SobreHub";
 import { ComoFuncionaHub } from "./components/ComoFuncionaHub";
-import { FaqSection } from "@/app/components/sections/faq-section";
 import { ReviewSection } from "@/app/components/sections/review-section";
 import { FaqHub } from "./components/FaqHub";
 import { ContactSection } from "@/app/components/sections/contact-section";
+import { getContentHome } from "@/app/lib/site-content";
 
-export default function SobrePage() {
+
+export default async function SobrePage() {
+  const content = await getContentHome();
+
   return (
     <section>
       <HeaderPage
-        title="HUB de Imobiliárias Boutique de Alto Padrão"
-        description="Ecossistema colaborativo que reúne imobiliárias boutique especializadas em imóveis de alto padrão, oferecendo uma estratégia inovadora para a captação de clientes de high ticket altamente qualificados."
+        title={content["sobre_titulo"]}
+        description={content["sobre_subtitulo"]}
         image="/assets/images/imoveis/02.jpg"
       />
       <QuemSomos />
