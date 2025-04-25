@@ -172,13 +172,7 @@ const VincularImovelSection = ({ formData, displayValues, onChange, validation }
     }
   };
 
-  // Function to handle modal close and navigation
-  const handleModalClose = () => {
-    setIsModalOpen(false);
-    // Navigate to the new property
-    router.push(`/admin/imoveis/gerenciar?codigo=${newPropertyCode}`);
-  };
-  
+
   return (
     <FormSection title="Vincular Imóvel">
       {isModalOpen && (

@@ -39,11 +39,11 @@ const Modal = ({ title, description, buttonText, link, onClose }) => {
           >
             Fechar
           </button>
-          <a href={link} target="_blank" rel="noopener noreferrer">
+          <Link href={link} target="_blank" rel="noopener noreferrer">
             <button className="px-4 py-2 bg-black rounded-md text-white hover:bg-black/80">
               {buttonText}
             </button>
-          </a>
+          </Link>
         </div>
       </div>
     </div>
