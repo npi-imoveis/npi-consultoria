@@ -466,14 +466,6 @@ export default function CadastrarImovel() {
         TipoEndereco: getTipoEndereco(formData.Endereco),
         Foto: fotosArray,
       };
-      console.log("Payload", payload);
-      // const result = await cadastrarImovel(payload);
-      // if (result && result.success) {
-      //   setSuccess("Imóvel cadastrado com sucesso!");
-      //   setIsModalOpen(true);
-      // } else {
-      //   setError(result?.message || "Erro ao cadastrar imóvel");
-      // }
     } catch (error) {
       console.error("Erro ao cadastrar imóvel:", error);
       setError("Ocorreu um erro ao salvar o imóvel");
