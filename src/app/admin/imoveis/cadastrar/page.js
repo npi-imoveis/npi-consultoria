@@ -469,16 +469,14 @@ export default function CadastrarImovel() {
         Foto: fotosArray,
       };
 
-      console.log("Formulário Enviado", payload);
-
-      // const result = await cadastrarImovel(payload);
-      // if (result && result.success) {
-      //   setNewImovelCode(newCode);
-      //   setSuccess("Imóvel cadastrado com sucesso!");
-      //   setIsModalOpen(true);
-      // } else {
-      //   setError(result?.message || "Erro ao cadastrar imóvel");
-      // }
+      const result = await cadastrarImovel(payload);
+      if (result && result.success) {
+        setNewImovelCode(newCode);
+        setSuccess("Imóvel cadastrado com sucesso!");
+        setIsModalOpen(true);
+      } else {
+        setError(result?.message || "Erro ao cadastrar imóvel");
+      }
     } catch (error) {
       console.error("Erro ao cadastrar imóvel:", error);
       setError("Ocorreu um erro ao salvar o imóvel");
