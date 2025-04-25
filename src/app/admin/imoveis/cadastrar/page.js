@@ -21,6 +21,7 @@ import Modal from "../../components/modal";
 import { getTipoEndereco } from "./../../../utils/formater-tipo-address";
 import { salvarLog } from "../../services/log-service";
 import { getCurrentUserAndDate } from "@/app/utils/get-log";
+import { formatAddress } from "./../../../utils/formatter-address";
 
 export default function CadastrarImovel() {
   const router = useRouter();
@@ -53,18 +54,18 @@ export default function CadastrarImovel() {
     Latitude: "",
     Longitude: "",
     Regiao: "",
-    AreaPrivativa: "0",
-    AreaTotal: "0",
-    Dormitorios: "0",
-    Suites: "0",
-    BanheiroSocialQtd: "0",
-    Vagas: "0",
+    AreaPrivativa: "",
+    AreaTotal: "",
+    Dormitorios: "",
+    Suites: "",
+    BanheiroSocialQtd: "",
+    Vagas: "",
     DataEntrega: "",
     AnoConstrucao: "",
-    ValorAntigo: "0",
-    ValorAluguelSite: "0",
-    ValorCondominio: "0",
-    ValorIptu: "0",
+    ValorAntigo: "",
+    ValorAluguelSite: "",
+    ValorCondominio: "",
+    ValorIptu: "",
     DescricaoUnidades: "",
     DescricaoDiferenciais: "",
     DestaquesDiferenciais: "",
@@ -348,13 +349,6 @@ export default function CadastrarImovel() {
     }
   };
 
-  // Função para acionar o input de arquivo
-  const triggerFileInput = (codigo) => {
-    // Armazenar o código atual para uso quando o arquivo for selecionado
-    fileInputRef.current.setAttribute("data-codigo", codigo);
-    fileInputRef.current.click();
-  };
-
   // Função para lidar com a seleção de arquivos
   const handleFileInputChange = (e) => {
     const files = e.target.files;
@@ -466,27 +460,30 @@ export default function CadastrarImovel() {
         ...formData,
         ValorAntigo: formatterNumber(formData.ValorAntigo),
         TipoEndereco: getTipoEndereco(formData.Endereco),
+        Endereco: formatAddress(formData.Endereco),
         Foto: fotosArray,
       };
 
-      const result = await cadastrarImovel(payload);
-      if (result && result.success) {
-        setSuccess("Imóvel cadastrado com sucesso!");
-        setIsModalOpen(true);
-        try {
-          const { user, timestamp } = await getCurrentUserAndDate();
-          await salvarLog({
-            user: user.displayName,
-            email: user.email,
-            data: timestamp.toISOString(),
-            action: "Atualização de imóvel",
-          });
-        } catch (logError) {
-          console.error("Erro ao salvar log de atualização:", logError);
-        }
-      } else {
-        setError(result?.message || "Erro ao cadastrar imóvel");
-      }
+      console.log("Dados Formulário", payload);
+
+      // const result = await cadastrarImovel(payload);
+      // if (result && result.success) {
+      //   setSuccess("Imóvel cadastrado com sucesso!");
+      //   setIsModalOpen(true);
+      //   try {
+      //     const { user, timestamp } = await getCurrentUserAndDate();
+      //     await salvarLog({
+      //       user: user.displayName,
+      //       email: user.email,
+      //       data: timestamp.toISOString(),
+      //       action: "Atualização de imóvel",
+      //     });
+      //   } catch (logError) {
+      //     console.error("Erro ao salvar log de atualização:", logError);
+      //   }
+      // } else {
+      //   setError(result?.message || "Erro ao cadastrar imóvel");
+      // }
     } catch (error) {
       console.error("Erro ao cadastrar imóvel:", error);
       setError("Ocorreu um erro ao salvar o imóvel");
