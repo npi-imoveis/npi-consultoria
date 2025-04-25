@@ -34,7 +34,7 @@ const Modal = ({ title, description, buttonText, link }) => {
             onClick={handleClose}
             className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100"
           >
-            Cancelar
+            Fechar
           </button>
           <Link href={link} target="_blank">
             <button className="px-4 py-2 bg-black rounded-md text-white hover:bg-black/80">

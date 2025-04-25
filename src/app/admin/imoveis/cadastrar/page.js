@@ -69,9 +69,9 @@ export default function CadastrarImovel() {
     DestaquesLocalizacao: "",
     FichaTecnica: "",
     Tour360: "",
-    Corretor: "",
-    TipoCorretor: "",
-    EmailCorretor: "",
+    Corretor: "Eduardo Lima",
+    TipoCorretor: "Corretor",
+    EmailCorretor: "eduardolima@npiconsultoria.com.br",
     Video: "",
     Foto: "",
   });
@@ -804,7 +804,7 @@ export default function CadastrarImovel() {
       {isModalOpen && (
         <Modal
           title="Imóvel Cadastrado com Sucesso"
-          description={`O imóvel ${formData?.Empreendimento} foi cadastrado com sucesso com o código ${newImovelCode}! Ele agora está disponível na lista de imóveis do site.`}
+          description={`O imóvel ${formData?.Empreendimento} foi cadastrado com sucesso com o código ${newImovelCode}. Ele agora está disponível na lista de imóveis do site.`}
           buttonText="Ver no site"
           link={`/imovel-${newImovelCode}/${formData?.Slug}`}
         />
