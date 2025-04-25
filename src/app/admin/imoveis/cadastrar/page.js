@@ -464,14 +464,12 @@ export default function CadastrarImovel() {
 
       const payload = {
         ...formData,
-
         ValorAntigo: formatterNumber(formData.ValorAntigo),
         Foto: fotosArray,
       };
 
       const result = await cadastrarImovel(payload);
       if (result && result.success) {
-        setNewImovelCode(newCode);
         setSuccess("Imóvel cadastrado com sucesso!");
         setIsModalOpen(true);
       } else {
