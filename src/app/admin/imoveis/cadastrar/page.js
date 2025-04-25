@@ -18,6 +18,7 @@ import { OpenStreetMapProvider } from "leaflet-geosearch";
 import { formatterNumber } from "@/app/utils/formatter-number";
 import ImageUploadModal from "./../../components/add-modal";
 import Modal from "../../components/modal";
+import { getTipoEndereco } from "./../../../utils/formater-tipo-address";
 
 export default function CadastrarImovel() {
   const router = useRouter();
@@ -462,16 +463,17 @@ export default function CadastrarImovel() {
       const payload = {
         ...formData,
         ValorAntigo: formatterNumber(formData.ValorAntigo),
+        TipoEndereco: getTipoEndereco(formData.Endereco),
         Foto: fotosArray,
       };
-
-      const result = await cadastrarImovel(payload);
-      if (result && result.success) {
-        setSuccess("Imóvel cadastrado com sucesso!");
-        setIsModalOpen(true);
-      } else {
-        setError(result?.message || "Erro ao cadastrar imóvel");
-      }
+      console.log("Payload", payload);
+      // const result = await cadastrarImovel(payload);
+      // if (result && result.success) {
+      //   setSuccess("Imóvel cadastrado com sucesso!");
+      //   setIsModalOpen(true);
+      // } else {
+      //   setError(result?.message || "Erro ao cadastrar imóvel");
+      // }
     } catch (error) {
       console.error("Erro ao cadastrar imóvel:", error);
       setError("Ocorreu um erro ao salvar o imóvel");
@@ -603,20 +605,20 @@ export default function CadastrarImovel() {
     {
       title: "Valores",
       fields: [
-        { name: "ValorAntigo", label: "Valor de Venda (R$)", type: "text", isMonetary: true },
+        { name: "ValorAntigo", label: "Valor da Venda", type: "text", isMonetary: true },
         {
           name: "ValorAluguelSite",
-          label: "Valor de Aluguel (R$)",
+          label: "Valor de Aluguel",
           type: "text",
           isMonetary: true,
         },
         {
           name: "ValorCondominio",
-          label: "Valor do Condomínio (R$)",
+          label: "Valor do Condomínio",
           type: "text",
           isMonetary: true,
         },
-        { name: "ValorIptu", label: "Valor do IPTU (R$)", type: "text", isMonetary: true },
+        { name: "ValorIptu", label: "Valor do IPTU ", type: "text", isMonetary: true },
       ],
     },
     {
