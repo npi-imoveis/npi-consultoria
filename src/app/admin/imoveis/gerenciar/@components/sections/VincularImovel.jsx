@@ -187,7 +187,7 @@ const VincularImovelSection = ({ formData, displayValues, onChange, validation }
           description={`O imóvel ${newPropertyName} foi cadastrado com sucesso com o código ${newPropertyCode}. Ele agora está disponível na lista de imóveis do site.`}
           buttonText="Ver imóvel"
           link={`/imovel-${newPropertyCode}/${formData?.Slug}`}
-          onClose={handleModalClose}
+       
         />
       )}
 
