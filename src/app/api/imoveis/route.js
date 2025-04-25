@@ -2,6 +2,7 @@ import { connectToDatabase } from "@/app/lib/mongodb";
 import Imovel, { IImovel } from "@/app/models/Imovel";
 import { NextResponse } from "next/server";
 import cache from "@/app/lib/cache";
+import ImovelAtivo from "@/app/models/ImovelAtivo";
 
 export async function GET(request) {
   try {
@@ -98,6 +99,9 @@ export async function POST(request) {
     const novoImovel = new Imovel(dadosImovel);
     const imovelSalvo = await novoImovel.save();
 
+    const novoImovelAtivo = new ImovelAtivo(dadosImovel);
+    const imovelAtivoSalvo = await novoImovelAtivo.save();
+
     console.log(`Imóvel com Codigo ${dadosImovel.Codigo} processado com sucesso`);
 
     // Invalidar cache relacionado a imóveis
@@ -114,6 +118,7 @@ export async function POST(request) {
         success: true,
         message: "Imóvel processado com sucesso",
         data: imovelSalvo,
+        imovelAtivo: imovelAtivoSalvo,
       },
       { status: 200 }
     );
