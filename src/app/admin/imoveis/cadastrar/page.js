@@ -464,26 +464,24 @@ export default function CadastrarImovel() {
         Foto: fotosArray,
       };
 
-      console.log("Dados Formulário", payload);
-
-      // const result = await cadastrarImovel(payload);
-      // if (result && result.success) {
-      //   setSuccess("Imóvel cadastrado com sucesso!");
-      //   setIsModalOpen(true);
-      //   try {
-      //     const { user, timestamp } = await getCurrentUserAndDate();
-      //     await salvarLog({
-      //       user: user.displayName,
-      //       email: user.email,
-      //       data: timestamp.toISOString(),
-      //       action: "Atualização de imóvel",
-      //     });
-      //   } catch (logError) {
-      //     console.error("Erro ao salvar log de atualização:", logError);
-      //   }
-      // } else {
-      //   setError(result?.message || "Erro ao cadastrar imóvel");
-      // }
+      const result = await cadastrarImovel(payload);
+      if (result && result.success) {
+        setSuccess("Imóvel cadastrado com sucesso!");
+        setIsModalOpen(true);
+        try {
+          const { user, timestamp } = await getCurrentUserAndDate();
+          await salvarLog({
+            user: user.displayName,
+            email: user.email,
+            data: timestamp.toISOString(),
+            action: "Atualização de imóvel",
+          });
+        } catch (logError) {
+          console.error("Erro ao salvar log de atualização:", logError);
+        }
+      } else {
+        setError(result?.message || "Erro ao cadastrar imóvel");
+      }
     } catch (error) {
       console.error("Erro ao cadastrar imóvel:", error);
       setError("Ocorreu um erro ao salvar o imóvel");
