@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import AuthCheck from "../../components/auth-check";
-import { cadastrarImovel } from "@/app/services";
+import { cadastrarImovel, getImoveisByFilters } from "@/app/services";
 import {
   ArrowLeftIcon,
   ArrowPathIcon,
@@ -17,10 +17,14 @@ import { getImageUploadMetadata, uploadToS3 } from "@/app/utils/s3-upload";
 import { OpenStreetMapProvider } from "leaflet-geosearch";
 import { formatterNumber } from "@/app/utils/formatter-number";
 import ImageUploadModal from "./../../components/add-modal";
+import Modal from "../../components/modal";
 
 export default function CadastrarImovel() {
   const router = useRouter();
   const provider = new OpenStreetMapProvider();
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [newImovelCode, setNewImovelCode] = useState("");
 
   const [formData, setFormData] = useState({
     Codigo: "",
@@ -90,6 +94,14 @@ export default function CadastrarImovel() {
   const fileInputRef = useRef(null);
   const [showImageModal, setShowImageModal] = useState(false);
 
+  useEffect(() => {
+    const newCode = generateRandomCode();
+    setNewImovelCode(newCode);
+    setFormData((prevData) => ({
+      ...prevData,
+      Codigo: newCode,
+    }));
+  }, []);
   // Função para formatar valores monetários
   const formatarParaReal = (valor) => {
     if (valor === null || valor === undefined || valor === "") return "";
@@ -302,6 +314,10 @@ export default function CadastrarImovel() {
     });
   };
 
+  const generateRandomCode = () => {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+  };
+
   // Função para lidar com upload de arquivo
   const handleFileUpload = async (codigo, file) => {
     try {
@@ -444,20 +460,25 @@ export default function CadastrarImovel() {
     setSuccess("");
 
     try {
+      const fotosArray = formData.Foto ? Object.values(formData.Foto) : [];
+
       const payload = {
         ...formData,
+
         ValorAntigo: formatterNumber(formData.ValorAntigo),
+        Foto: fotosArray,
       };
+
       console.log("Formulário Enviado", payload);
-      const result = await cadastrarImovel(formData);
-      if (result && result.success) {
-        setSuccess("Imóvel cadastrado com sucesso!");
-        setTimeout(() => {
-          router.push("/admin/imoveis");
-        }, 2000);
-      } else {
-        setError(result?.message || "Erro ao cadastrar imóvel");
-      }
+
+      // const result = await cadastrarImovel(payload);
+      // if (result && result.success) {
+      //   setNewImovelCode(newCode);
+      //   setSuccess("Imóvel cadastrado com sucesso!");
+      //   setIsModalOpen(true);
+      // } else {
+      //   setError(result?.message || "Erro ao cadastrar imóvel");
+      // }
     } catch (error) {
       console.error("Erro ao cadastrar imóvel:", error);
       setError("Ocorreu um erro ao salvar o imóvel");
@@ -471,7 +492,7 @@ export default function CadastrarImovel() {
     {
       title: "Informações Básicas",
       fields: [
-        { name: "Codigo", label: "Código", type: "text" },
+        { name: "Codigo", label: "Código (Gerado automaticamente)", type: "text", disabled: true },
         {
           name: "Ativo",
           label: "Ativo",
@@ -483,7 +504,25 @@ export default function CadastrarImovel() {
         },
         { name: "Empreendimento", label: "Empreendimento", type: "text" },
         { name: "Construtora", label: "Construtora", type: "text" },
-        { name: "Categoria", label: "Categoria", type: "text" },
+        {
+          name: "Categoria",
+          label: "Categoria",
+          type: "select",
+          options: [
+            { value: "Apartamento", label: "Apartamento" },
+            { value: "Casa", label: "Casa" },
+            { value: "Casa Comercial", label: "Casa Comercial" },
+            { value: "Casa em Condominio", label: "Casa em Condominio" },
+            { value: "Cobertura", label: "Cobertura" },
+            { value: "Flat", label: "Flat" },
+            { value: "Garden", label: "Garden" },
+            { value: "Loft", label: "Loft" },
+            { value: "Loja", label: "Loja" },
+            { value: "Prédio Comercial", label: "Prédio Comercial" },
+            { value: "Sala Comercial", label: "Sala Comercial" },
+            { value: "Terreno", label: "Terreno" },
+          ],
+        },
         {
           name: "Situacao",
           label: "Situação",
@@ -764,6 +803,14 @@ export default function CadastrarImovel() {
           onUploadComplete={handleImagesUploaded}
         />
       )}
+      {isModalOpen && (
+        <Modal
+          title="Imóvel Cadastrado com Sucesso"
+          description={`O imóvel ${formData?.Empreendimento} foi cadastrado com sucesso com o código ${newImovelCode}! Ele agora está disponível na lista de imóveis do site.`}
+          buttonText="Ver no site"
+          link={`/imovel-${newImovelCode}/${formData?.Slug}`}
+        />
+      )}
       <div className="">
         <div className="mb-8">
           <div className="flex justify-between items-center mb-6">
@@ -868,6 +915,7 @@ export default function CadastrarImovel() {
                             onChange={handleChange}
                             className="border-2 px-5 py-2 text-zinc-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
                             placeholder={field.placeholder || ""}
+                            disabled={field.disabled}
                           />
                         )}
                       </div>
