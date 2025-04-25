@@ -11,7 +11,7 @@ const featuresFields = [
   { name: "Suites", label: "Suítes", type: "text" },
   { name: "BanheiroSocialQtd", label: "Banheiros Sociais", type: "text" },
   { name: "Vagas", label: "Vagas de Garagem", type: "text" },
-  { name: "AnoConstrucao", label: "Ano de Construção", type: "text" },
+
 ];
 
 const FeaturesSection = ({ formData, displayValues, onChange }) => {
