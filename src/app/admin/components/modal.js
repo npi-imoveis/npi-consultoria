@@ -3,11 +3,14 @@
 import { useState } from "react";
 import Link from "next/link";
 
-const Modal = ({ title, description, buttonText, link }) => {
+const Modal = ({ title, description, buttonText, link, onClose }) => {
   const [isOpen, setIsOpen] = useState(true);
 
   const handleClose = () => {
     setIsOpen(false);
+    if (onClose) {
+      onClose();
+    }
   };
 
   if (!isOpen) return null;
@@ -36,11 +39,11 @@ const Modal = ({ title, description, buttonText, link }) => {
           >
             Fechar
           </button>
-          <Link href={link} target="_blank">
+          <a href={link} target="_blank" rel="noopener noreferrer">
             <button className="px-4 py-2 bg-black rounded-md text-white hover:bg-black/80">
               {buttonText}
             </button>
-          </Link>
+          </a>
         </div>
       </div>
     </div>

@@ -11,6 +11,7 @@ import {
   EyeIcon,
   PencilSquareIcon,
 } from "@heroicons/react/24/outline";
+import useImovelStore from "../store/imovelStore";
 
 export default function AdminImoveis() {
   const router = useRouter();
@@ -111,8 +112,37 @@ export default function AdminImoveis() {
   };
 
   // Função para navegar para a página de edição
-  const handleEdit = (imovelCodigo) => {
-    router.push(`/admin/imoveis/editar/${imovelCodigo}`);
+  const handleEdit = async (imovelCodigo) => {
+    setIsLoading(true);
+    try {
+      // Get the imovel data by ID
+      const response = await getImovelById(imovelCodigo);
+
+      if (response && response.data) {
+        // Access the store's setImovelSelecionado function
+        const setImovelSelecionado = useImovelStore.getState().setImovelSelecionado;
+
+        // Add the Automacao property to the imovel data
+        const imovelWithAutomacao = {
+          ...response.data,
+          Automacao: false,
+        };
+
+        // Set the imovel in the store
+        setImovelSelecionado(imovelWithAutomacao);
+
+        // Redirect to the gerenciar page instead of the editar page
+        router.push("/admin/imoveis/gerenciar");
+      } else {
+        console.error("Erro ao buscar imóvel:", response?.error || "Imóvel não encontrado");
+        alert("Erro ao buscar dados do imóvel. Tente novamente.");
+      }
+    } catch (error) {
+      console.error("Erro ao editar imóvel:", error);
+      alert("Ocorreu um erro ao buscar os dados do imóvel.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Função para formatar valores monetários
@@ -140,7 +170,7 @@ export default function AdminImoveis() {
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-2xl font-bold text-gray-900">Gerenciamento de Imóveis</h1>
             <button
-              onClick={() => router.push('/admin/imoveis/cadastrar')}
+              onClick={() => router.push("/admin/imoveis/cadastrar")}
               className="inline-flex items-center px-5 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
             >
               Cadastrar Novo Imóvel

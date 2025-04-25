@@ -12,7 +12,7 @@ import {
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 import { getImoveisAutomacao, getImovelByIdAutomacao } from "../services";
-import useImovelAdminStore from "../store/imovelAdminStore";
+import useImovelStore from "../store/imovelStore";
 import { TrashIcon } from "lucide-react";
 import Modal from "../components/modal";
 
@@ -32,7 +32,7 @@ export default function AdminImoveis() {
   });
 
   // Acesso ao store de imóveis admin
-  const setImovelSelecionado = useImovelAdminStore((state) => state.setImovelSelecionado);
+  const setImovelSelecionado = useImovelStore((state) => state.setImovelSelecionado);
 
   const loadImoveis = async (page = 1, codigo = "") => {
     setIsLoading(true);
@@ -150,12 +150,17 @@ export default function AdminImoveis() {
 
     // Salvar o imóvel selecionado no store
     if (imovelSelecionado) {
-      setImovelSelecionado(imovelSelecionado);
-    }
+      // Adicionar flag Automacao: true antes de salvar no store
+      const imovelComAutomacao = {
+        ...imovelSelecionado,
+        Automacao: true,
+      };
 
-    const url = `/admin/automacao/editar/${imovelCodigo}`;
-    console.log("Navegando para:", url);
-    router.push(url);
+      setImovelSelecionado(imovelComAutomacao);
+      router.push("/admin/imoveis/gerenciar");
+    } else {
+      console.error("Imóvel não encontrado na lista");
+    }
   };
 
   // Função para formatar valores monetários
