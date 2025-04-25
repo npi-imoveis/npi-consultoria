@@ -30,9 +30,9 @@ export default function CadastrarImovel() {
     Codigo: "",
     Empreendimento: "",
     TituloSite: "",
-    Categoria: "",
-    Situacao: "",
-    Status: "",
+    Categoria: "Apartamento",
+    Situacao: "PRONTO NOVO",
+    Status: "VENDA",
     Slug: "",
     Destacado: "Não",
     Condominio: "Não",
@@ -49,17 +49,19 @@ export default function CadastrarImovel() {
     CEP: "",
     Latitude: "",
     Longitude: "",
-    AreaPrivativa: "",
-    AreaTotal: "",
-    Dormitorios: "",
-    Suites: "",
-    BanheiroSocialQtd: "",
-    Vagas: "",
+    Regiao: "",
+    AreaPrivativa: "0",
+    AreaTotal: "0",
+    Dormitorios: "0",
+    Suites: "0",
+    BanheiroSocialQtd: "0",
+    Vagas: "0",
+    DataEntrega: "",
     AnoConstrucao: "",
-    ValorAntigo: "",
-    ValorAluguelSite: "",
-    ValorCondominio: "",
-    ValorIptu: "",
+    ValorAntigo: "0",
+    ValorAluguelSite: "0",
+    ValorCondominio: "0",
+    ValorIptu: "0",
     DescricaoUnidades: "",
     DescricaoDiferenciais: "",
     DestaquesDiferenciais: "",
@@ -68,17 +70,10 @@ export default function CadastrarImovel() {
     FichaTecnica: "",
     Tour360: "",
     Corretor: "",
-    Tipo: "",
-    Video: {
-      1: {
-        Codigo: "1",
-        Destaque: "Nao",
-        Tipo: "youtube",
-        Video: "",
-        VideoCodigo: "1",
-      },
-    },
-    Foto: {},
+    TipoCorretor: "",
+    EmailCorretor: "",
+    Video: "",
+    Foto: "",
   });
 
   const [displayValues, setDisplayValues] = useState({
@@ -159,6 +154,7 @@ export default function CadastrarImovel() {
       setIsSaving(true); // Usa o mesmo estado para indicar carregamento
       const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
       const data = await response.json();
+      console.log("Endereço", data);
 
       if (!data.erro) {
         // Buscar coordenadas após obter o endereço
@@ -171,6 +167,7 @@ export default function CadastrarImovel() {
           BairroComercial: data.bairro || prevData.Bairro, // Preenche BairroComercial com o mesmo valor do Bairro
           Cidade: data.localidade || prevData.Cidade,
           UF: data.uf || prevData.UF,
+          Regiao: data.regiao || prevData.Regiao,
           Latitude: coordinates?.latitude?.toString() || prevData.Latitude,
           Longitude: coordinates?.longitude?.toString() || prevData.Longitude,
         }));
@@ -468,13 +465,15 @@ export default function CadastrarImovel() {
         Foto: fotosArray,
       };
 
-      const result = await cadastrarImovel(payload);
-      if (result && result.success) {
-        setSuccess("Imóvel cadastrado com sucesso!");
-        setIsModalOpen(true);
-      } else {
-        setError(result?.message || "Erro ao cadastrar imóvel");
-      }
+      console.log("Dados Formulario", payload);
+
+      // const result = await cadastrarImovel(payload);
+      // if (result && result.success) {
+      //   setSuccess("Imóvel cadastrado com sucesso!");
+      //   setIsModalOpen(true);
+      // } else {
+      //   setError(result?.message || "Erro ao cadastrar imóvel");
+      // }
     } catch (error) {
       console.error("Erro ao cadastrar imóvel:", error);
       setError("Ocorreu um erro ao salvar o imóvel");
@@ -488,7 +487,7 @@ export default function CadastrarImovel() {
     {
       title: "Informações Básicas",
       fields: [
-        { name: "Codigo", label: "Código (Gerado automaticamente)", type: "text", disabled: true },
+        { name: "Codigo", label: "Código (Aut)", type: "text", disabled: true },
         {
           name: "Ativo",
           label: "Ativo",
@@ -545,7 +544,7 @@ export default function CadastrarImovel() {
             { value: "VENDIDO", label: "VENDIDO" },
           ],
         },
-        { name: "Slug", label: "Slug", type: "text" },
+        { name: "Slug", label: "Slug", type: "text", disabled: true },
         {
           name: "Destacado",
           label: "Imóvel Destaque (Sim/Não)",
@@ -557,7 +556,7 @@ export default function CadastrarImovel() {
         },
         {
           name: "Condominio",
-          label: "É Condomínio? (Sim/Não)",
+          label: "É Condomínio? ",
           type: "select",
           options: [
             { value: "Sim", label: "Sim" },
@@ -566,13 +565,14 @@ export default function CadastrarImovel() {
         },
         {
           name: "CondominioDestaque",
-          label: "Condomínio Destaque (Sim/Não)",
+          label: "Condomínio Destaque",
           type: "select",
           options: [
             { value: "Sim", label: "Sim" },
             { value: "Não", label: "Não" },
           ],
         },
+        { name: "DataEntrega", label: "Data de Entrega", type: "text" },
       ],
     },
     {
@@ -586,6 +586,7 @@ export default function CadastrarImovel() {
         { name: "BairroComercial", label: "Bairro Comercial", type: "text" },
         { name: "Cidade", label: "Cidade", type: "text" },
         { name: "UF", label: "UF", type: "text" },
+        { name: "Regiao", label: "Região", type: "text" },
         { name: "Latitude", label: "Latitude", type: "text" },
         { name: "Longitude", label: "Longitude", type: "text" },
       ],
@@ -599,7 +600,6 @@ export default function CadastrarImovel() {
         { name: "Suites", label: "Suítes", type: "text" },
         { name: "BanheiroSocialQtd", label: "Banheiros Sociais", type: "text" },
         { name: "Vagas", label: "Vagas de Garagem", type: "text" },
-        { name: "AnoConstrucao", label: "Ano de Construção", type: "text" },
       ],
     },
     {
@@ -624,9 +624,10 @@ export default function CadastrarImovel() {
     {
       title: "Corretores Vinculados",
       fields: [
-        { name: "Corretor", label: "Corretor", type: "text" },
+        { name: "Corretor", label: "Nome", type: "text" },
+        { name: "EmailCorretor", label: "E-mail", type: "text" },
         {
-          name: "Tipo",
+          name: "TipoCorretor",
           label: "Tipo",
           type: "select",
           options: [
@@ -665,6 +666,7 @@ export default function CadastrarImovel() {
         <div className="w-full space-y-4">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-md font-medium text-gray-700">Gerenciar Imagens</h3>
+
             <div className="flex gap-2">
               <button
                 type="button"

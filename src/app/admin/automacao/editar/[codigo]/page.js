@@ -773,7 +773,10 @@ export default function EditarImovel({ params }) {
           ) : (
             <div className="text-center py-6 bg-gray-50 rounded-md">
               <PhotoIcon className="mx-auto h-12 w-12 text-gray-400" />
-              <p className="mt-2 text-sm text-gray-500">Nenhuma imagem adicionada ainda.</p>
+              <p className="mt-2 text-sm text-gray-500">
+                Nenhuma imagem adicionada ainda. É preciso adicionar no minimo 5 imagens para ser
+                cadastrado no site.
+              </p>
               <p className="text-sm text-gray-500">Clique em "Adicionar Imagem" para começar.</p>
             </div>
           )}
