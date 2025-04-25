@@ -128,7 +128,7 @@ export default function ProprietariosSection({ id }) {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e) e.preventDefault();
     setLoading(true);
     setFeedback(null);
     try {
@@ -167,35 +167,33 @@ export default function ProprietariosSection({ id }) {
       
       <Feedback feedback={feedback} />
       
-      <form onSubmit={handleSubmit}>
-        {/* Renderiza apenas o proprietário da aba ativa */}
-        <div className="mb-6 border-b pb-4">
-          <h2 className="font-bold mb-2">Proprietário {abaAtiva + 1}</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {CAMPOS_PROPRIETARIO.map(({ name, label, type, rows }) => (
-              <FormField
-                key={`prop-${abaAtiva}-${name}`}
-                label={label}
-                name={name}
-                type={type}
-                rows={rows}
-                value={proprietariosSeparados[abaAtiva][name]}
-                onChange={e => handleChange(abaAtiva, e)}
-                disabled={loading}
-              />
-            ))}
-          </div>
+      <div className="mb-6 border-b pb-4">
+        <h2 className="font-bold mb-2">Proprietário {abaAtiva + 1}</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {CAMPOS_PROPRIETARIO.map(({ name, label, type, rows }) => (
+            <FormField
+              key={`prop-${abaAtiva}-${name}`}
+              label={label}
+              name={name}
+              type={type}
+              rows={rows}
+              value={proprietariosSeparados[abaAtiva][name]}
+              onChange={e => handleChange(abaAtiva, e)}
+              disabled={loading}
+            />
+          ))}
         </div>
-        <div className="flex justify-end mt-8">
-          <button
-            type="submit"
-            className="bg-black hover:bg-opacity-80 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition-all duration-300 ease-in-out"
-            disabled={loading}
-          >
-            {loading ? 'Salvando...' : 'Salvar'}
-          </button>
-        </div>
-      </form>
+      </div>
+      <div className="flex justify-end mt-8">
+        <button
+          type="button"
+          onClick={handleSubmit}
+          className="bg-black hover:bg-opacity-80 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition-all duration-300 ease-in-out"
+          disabled={loading}
+        >
+          {loading ? 'Salvando...' : 'Salvar'}
+        </button>
+      </div>
     </div>
   );
 }
