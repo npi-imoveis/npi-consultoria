@@ -153,7 +153,7 @@ const VincularImovelSection = ({ formData, displayValues, onChange, validation }
       const result = await criarImovel(newCode, newPropertyData);
 
       if (result && result.success) {
-        setSuccess(`Imóvel relacionado cadastrado com sucesso! Código: ${newCode}`);
+        setSuccess(`Imóvel relacionado cadastrado com sucesso! Código: ${newCode}. Acesse no link: https://www.imobiliaria.com.br/imovel-${newCode}/${formData?.Slug}`);
         
         // Store the new property code and name for the modal
         setNewPropertyCode(newCode);
