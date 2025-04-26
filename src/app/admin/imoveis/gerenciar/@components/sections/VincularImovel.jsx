@@ -85,10 +85,10 @@ const VincularImovelSection = ({ formData, displayValues, onChange, validation }
     { name: "ValorAluguelSite", label: "Valor de Aluguel", type: "text", isMonetary: true },
     { name: "AreaPrivativa", label: "Área Privativa (m²)", type: "text" },
     { name: "AreaTotal", label: "Área Total (m²)", type: "text" },
-    { name: "Dormitorios", label: "Dormitórios", type: "text" },
-    { name: "Suites", label: "Suítes", type: "text" },
+    { name: "DormitoriosAntigo", label: "Dormitórios", type: "text" },
+    { name: "SuitesAntigo", label: "Suítes", type: "text" },
     { name: "BanheiroSocialQtd", label: "Banheiros Sociais", type: "text" },
-    { name: "Vagas", label: "Vagas de Garagem", type: "text" },
+    { name: "VagasAntigo", label: "Vagas de Garagem", type: "text" },
   ];
 
   // Create fields with unique ID prefixes to avoid conflicts

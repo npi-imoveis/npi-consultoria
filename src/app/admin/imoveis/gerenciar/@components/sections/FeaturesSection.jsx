@@ -7,10 +7,10 @@ import FieldGroup from '../FieldGroup';
 const featuresFields = [
   { name: "AreaPrivativa", label: "Área Privativa (m²)", type: "text" },
   { name: "AreaTotal", label: "Área Total (m²)", type: "text" },
-  { name: "Dormitorios", label: "Dormitórios", type: "text" },
-  { name: "Suites", label: "Suítes", type: "text" },
+  { name: "DormitoriosAntigo", label: "Dormitórios", type: "text" },
+  { name: "SuitesAntigo", label: "Suítes", type: "text" },
   { name: "BanheiroSocialQtd", label: "Banheiros Sociais", type: "text" },
-  { name: "Vagas", label: "Vagas de Garagem", type: "text" },
+  { name: "VagasAntigo", label: "Vagas de Garagem", type: "text" },
 
 ];
 
