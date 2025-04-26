@@ -1,30 +1,30 @@
 "use client";
 
-import { memo, useState, useId } from 'react';
-import FormSection from '../FormSection';
-import FieldGroup from '../FieldGroup';
-import useImovelStore from '@/app/admin/store/imovelStore';
-import { cadastrarImovel, criarImovel } from '@/app/services';
-import { useRouter } from 'next/navigation';
-import { generateRandomCode } from '../hooks/useImovelForm';
-import { formatterNumber } from '@/app/utils/formatter-number';
-import Modal from '@/app/admin/components/modal';
+import { memo, useState, useId } from "react";
+import FormSection from "../FormSection";
+import FieldGroup from "../FieldGroup";
+import useImovelStore from "@/app/admin/store/imovelStore";
+import { cadastrarImovel, criarImovel } from "@/app/services";
+import { useRouter } from "next/navigation";
+import { generateRandomCode } from "../hooks/useImovelForm";
+import { formatterNumber } from "@/app/utils/formatter-number";
+import Modal from "@/app/admin/components/modal";
 
 const VincularImovelSection = ({ formData, displayValues, onChange, validation }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newPropertyCode, setNewPropertyCode] = useState('');
-  const [newPropertyName, setNewPropertyName] = useState('');
+  const [newPropertyCode, setNewPropertyCode] = useState("");
+  const [newPropertyName, setNewPropertyName] = useState("");
   const router = useRouter();
   const uniqueIdPrefix = useId(); // React's useId hook to generate unique IDs
-  const [slug, setSlug] = useState('');
-  
+  const [slug, setSlug] = useState("");
+
   // Get Automacao flag from the store
   const imovelSelecionado = useImovelStore((state) => state.imovelSelecionado);
   const isAutomacao = imovelSelecionado?.Automacao === true;
-  
+
   // Create dynamic fields array to update the label based on Automacao flag
   // Add a unique prefix to each field name to prevent duplicates
   const basicInfoFields = [
@@ -96,7 +96,7 @@ const VincularImovelSection = ({ formData, displayValues, onChange, validation }
   const getNamespacedFields = () => {
     return basicInfoFields.map((field, index) => ({
       ...field,
-      id: `vincular-${uniqueIdPrefix}-${field.name}-${index}` // Ensure IDs are unique
+      id: `vincular-${uniqueIdPrefix}-${field.name}-${index}`, // Ensure IDs are unique
     }));
   };
 
@@ -104,7 +104,7 @@ const VincularImovelSection = ({ formData, displayValues, onChange, validation }
   const getVinculadoFormData = () => {
     const vinculadoData = { ...formData };
     // Map the fields to local versions if they exist in formData
-    basicInfoFields.forEach(field => {
+    basicInfoFields.forEach((field) => {
       if (formData[field.name] !== undefined) {
         vinculadoData[field.name] = formData[field.name];
       }
@@ -122,8 +122,8 @@ const VincularImovelSection = ({ formData, displayValues, onChange, validation }
   // Function to handle creating a related property
   const handleCreateRelatedProperty = async () => {
     setIsSubmitting(true);
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
 
     try {
       // Generate a new code using the imported function
@@ -138,7 +138,7 @@ const VincularImovelSection = ({ formData, displayValues, onChange, validation }
       };
 
       // Update fields that were changed in the form
-      basicInfoFields.forEach(field => {
+      basicInfoFields.forEach((field) => {
         if (formData[field.name] !== undefined) {
           if (field.name === "ValorAntigo" || field.name === "ValorAluguelSite") {
             newPropertyData[field.name] = formatterNumber(formData[field.name]);
@@ -151,7 +151,7 @@ const VincularImovelSection = ({ formData, displayValues, onChange, validation }
       // Modificar o Slug para incluir a categoria
       if (newPropertyData.Slug && newPropertyData.Categoria) {
         // Converter a categoria para minúsculo e substituir espaços por hífens
-        const categoriaFormatada = newPropertyData.Categoria.toLowerCase().replace(/\s+/g, '-');
+        const categoriaFormatada = newPropertyData.Categoria.toLowerCase().replace(/\s+/g, "-");
         // Adicionar a categoria no início do slug
         newPropertyData.Slug = `${categoriaFormatada}-${newPropertyData.Slug}`;
         setSlug(newPropertyData.Slug);
@@ -162,40 +162,40 @@ const VincularImovelSection = ({ formData, displayValues, onChange, validation }
       const result = await criarImovel(newCode, newPropertyData);
 
       if (result && result.success) {
-        setSuccess(`Imóvel relacionado cadastrado com sucesso! Código: ${newCode}. Acesse no link: https://www.imobiliaria.com.br/imovel-${newCode}/${formData?.Slug}`);
-        
+        setSuccess(
+          `Imóvel relacionado cadastrado com sucesso! Código: ${newCode}. Acesse no link: https://www.imobiliaria.com.br/imovel-${newCode}/${newPropertyData.Slug}`
+        );
+
         // Store the new property code and name for the modal
         setNewPropertyCode(newCode);
-        setNewPropertyName(newPropertyData.Empreendimento || 'Novo Imóvel');
-        
+        setNewPropertyName(newPropertyData.Empreendimento || "Novo Imóvel");
+
         // Open the modal
         setIsModalOpen(true);
       } else {
-        setError(result?.message || 'Erro ao cadastrar imóvel relacionado');
+        setError(result?.message || "Erro ao cadastrar imóvel relacionado");
       }
     } catch (error) {
-      console.error('Erro ao cadastrar imóvel relacionado:', error);
-      setError('Ocorreu um erro ao cadastrar o imóvel relacionado');
+      console.error("Erro ao cadastrar imóvel relacionado:", error);
+      setError("Ocorreu um erro ao cadastrar o imóvel relacionado");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-
   return (
-    <FormSection title="Vincular Imóvel">
+    <FormSection title="Duplicar Imóvel">
       {isModalOpen && (
         <Modal
           title="Imóvel Relacionado Cadastrado com Sucesso"
           description={`O imóvel ${newPropertyName} foi cadastrado com sucesso com o código ${newPropertyCode}. Ele agora está disponível na lista de imóveis do site.`}
           buttonText="Ver imóvel"
           link={`/imovel-${newPropertyCode}/${slug}`}
-       
         />
       )}
 
-      <FieldGroup 
-        fields={getNamespacedFields()} 
+      <FieldGroup
+        fields={getNamespacedFields()}
         formData={getVinculadoFormData()}
         displayValues={getVinculadoDisplayValues()}
         onChange={onChange}
@@ -204,13 +204,19 @@ const VincularImovelSection = ({ formData, displayValues, onChange, validation }
 
       {/* Status messages */}
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mt-4" role="alert">
+        <div
+          className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mt-4"
+          role="alert"
+        >
           <span className="block sm:inline">{error}</span>
         </div>
       )}
-      
+
       {success && (
-        <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mt-4" role="alert">
+        <div
+          className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mt-4"
+          role="alert"
+        >
           <span className="block sm:inline">{success}</span>
         </div>
       )}
@@ -223,11 +229,11 @@ const VincularImovelSection = ({ formData, displayValues, onChange, validation }
           disabled={isSubmitting}
           className="bg-black hover:bg-opacity-80 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition-all duration-300 ease-in-out"
         >
-          {isSubmitting ? 'Cadastrando...' : 'Cadastrar Imóvel Relacionado'}
+          {isSubmitting ? "Cadastrando..." : "Cadastrar Imóvel Relacionado"}
         </button>
       </div>
     </FormSection>
   );
 };
 
-export default memo(VincularImovelSection); 
+export default memo(VincularImovelSection);

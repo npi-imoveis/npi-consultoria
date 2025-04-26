@@ -271,7 +271,7 @@ export default function GerenciarImovel() {
                   : "bg-gray-200 text-gray-500 hover:bg-gray-300"
               }`}
             >
-              Vincular Imóvel
+              Duplicar Imóvel
             </button>
           )}
         </div>
