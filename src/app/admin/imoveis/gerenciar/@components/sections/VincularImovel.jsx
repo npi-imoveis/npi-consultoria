@@ -19,6 +19,7 @@ const VincularImovelSection = ({ formData, displayValues, onChange, validation }
   const [newPropertyName, setNewPropertyName] = useState('');
   const router = useRouter();
   const uniqueIdPrefix = useId(); // React's useId hook to generate unique IDs
+  const [slug, setSlug] = useState('');
   
   // Get Automacao flag from the store
   const imovelSelecionado = useImovelStore((state) => state.imovelSelecionado);
@@ -153,6 +154,7 @@ const VincularImovelSection = ({ formData, displayValues, onChange, validation }
         const categoriaFormatada = newPropertyData.Categoria.toLowerCase().replace(/\s+/g, '-');
         // Adicionar a categoria no início do slug
         newPropertyData.Slug = `${categoriaFormatada}-${newPropertyData.Slug}`;
+        setSlug(newPropertyData.Slug);
       }
 
       console.log("Imovel Vinculado", newPropertyData);
@@ -187,7 +189,7 @@ const VincularImovelSection = ({ formData, displayValues, onChange, validation }
           title="Imóvel Relacionado Cadastrado com Sucesso"
           description={`O imóvel ${newPropertyName} foi cadastrado com sucesso com o código ${newPropertyCode}. Ele agora está disponível na lista de imóveis do site.`}
           buttonText="Ver imóvel"
-          link={`/imovel-${newPropertyCode}/${formData?.Slug}`}
+          link={`/imovel-${newPropertyCode}/${slug}`}
        
         />
       )}
