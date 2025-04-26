@@ -1,5 +1,6 @@
 import { connectToDatabase } from "@/app/lib/mongodb";
 import Imovel from "@/app/models/Imovel";
+import ImovelAtivo from "@/app/models/ImovelAtivo";
 import { NextResponse } from "next/server";
 
 export async function GET(request, { params }) {
@@ -196,14 +197,21 @@ export async function POST(request, { params }) {
     const novoImovel = new Imovel(dadosImovel);
     const imovelSalvo = await novoImovel.save();
 
+    const novoImovelAtivo = new ImovelAtivo(dadosImovel);
+    const imovelAtivoSalvo = await novoImovelAtivo.save();
+
     console.log(`Imóvel com Codigo ${id} criado com sucesso`);
 
-    return NextResponse.json({
-      status: 201,
-      success: true,
-      message: "Imóvel criado com sucesso",
-      data: imovelSalvo,
-    }, { status: 201 });
+    return NextResponse.json(
+      {
+        status: 201,
+        success: true,
+        message: "Imóvel criado com sucesso",
+        data: imovelSalvo,
+        imovelAtivo: imovelAtivoSalvo,
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error(`Erro ao criar imóvel com Codigo ${id}:`, error);
     return NextResponse.json(

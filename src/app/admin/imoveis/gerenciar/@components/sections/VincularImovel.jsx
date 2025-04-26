@@ -147,8 +147,15 @@ const VincularImovelSection = ({ formData, displayValues, onChange, validation }
         }
       });
 
-      console.log("Imovel Vinculado", newPropertyData);
+      // Modificar o Slug para incluir a categoria
+      if (newPropertyData.Slug && newPropertyData.Categoria) {
+        // Converter a categoria para minúsculo e substituir espaços por hífens
+        const categoriaFormatada = newPropertyData.Categoria.toLowerCase().replace(/\s+/g, '-');
+        // Adicionar a categoria no início do slug
+        newPropertyData.Slug = `${categoriaFormatada}-${newPropertyData.Slug}`;
+      }
 
+ 
       // Submit the new property
       const result = await criarImovel(newCode, newPropertyData);
 
