@@ -155,7 +155,7 @@ const VincularImovelSection = ({ formData, displayValues, onChange, validation }
         newPropertyData.Slug = `${categoriaFormatada}-${newPropertyData.Slug}`;
       }
 
- 
+      console.log("Imovel Vinculado", newPropertyData);
       // Submit the new property
       const result = await criarImovel(newCode, newPropertyData);
 
