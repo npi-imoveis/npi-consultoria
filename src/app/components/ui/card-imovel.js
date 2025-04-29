@@ -6,6 +6,7 @@ import { Share } from "./share";
 import { formatterSlug } from "../../utils/formatter-slug";
 import useImovelStore from "./../../store/imovelStore";
 import { ArrowRightLeftIcon, Bath, Bed, CarIcon } from "lucide-react";
+import { formatterValue } from "@/app/utils/formatter-value";
 
 // Componente Skeleton para o CardImovel
 export function CardImovelSkeleton() {
@@ -176,7 +177,7 @@ export default function CardImovel({
         </h2>
         {Status === "LOCAÇÃO" && ValorAluguelSite !== "0" && ValorAluguelSite !== "" ? (
           <h3 className="text-sm font-bold text-black mb-3 pt-2 truncate">
-            {ValorAluguelSite ? "R$ " + ValorAluguelSite : "Consultar Disponibilidade"}
+            {ValorAluguelSite ? formatterValue(ValorAluguelSite) : "Consultar Disponibilidade"}
           </h3>
         ) : (
           <h3 className="text-sm font-bold text-black mb-3 pt-2 truncate">
