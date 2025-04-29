@@ -30,6 +30,9 @@ export const metadata = {
       "pt-BR": "/pt-BR",
     },
   },
+  other: {
+    "google-site-verification": "jIbU4BYULeE_XJZo-2yGSOdfyz-3v0JuI0mqUItNU-4",
+  },
   openGraph: {
     title: "NPi Imóveis - HUB de Imobiliárias de Alto Padrão",
     description:
