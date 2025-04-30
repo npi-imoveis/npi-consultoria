@@ -308,6 +308,16 @@ export async function getCondominioDestacado() {
   }
 }
 
+export async function getContentSite() {
+  try {
+    const response = await axiosClient.get("admin/content");
+    return response?.data?.data;
+  } catch (error) {
+    console.error("Erro ao buscar conteúdo:", error);
+    return null;
+  }
+}
+
 export async function getCondominios(limit) {
   try {
     const response = await axiosClient.get(`/condominios?limit=${limit}`);

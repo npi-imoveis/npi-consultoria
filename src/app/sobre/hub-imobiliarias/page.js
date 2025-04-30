@@ -4,10 +4,10 @@ import { ComoFuncionaHub } from "./components/ComoFuncionaHub";
 import { ReviewSection } from "@/app/components/sections/review-section";
 import { FaqHub } from "./components/FaqHub";
 import { ContactSection } from "@/app/components/sections/contact-section";
-import getContent from "@/app/lib/get-content";
+import { getContentSite } from "@/app/services";
 
 export default async function SobrePage() {
-  const content = await getContent();
+  const content = await getContentSite();
 
   return (
     <section>

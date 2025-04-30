@@ -1,12 +1,11 @@
 import { HeaderPage } from "@/app/components/ui/header-page";
 import SobreNPI from "./sections/SobreNpi";
-
+import { getContentSite } from "@/app/services";
 import { HistoriaNpi } from "./sections/HistoriaNpi";
 import VideoNpi from "./sections/VideoNpi";
-import getContent from "@/app/lib/get-content";
 
 export default async function SobrePage() {
-  const content = await getContent();
+  const content = await getContentSite();
   return (
     <section>
       <HeaderPage

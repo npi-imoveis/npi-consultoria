@@ -18,7 +18,7 @@ import { FeaturedCondosSection } from "./components/sections/featured-condos-sec
 import { TestimonialsSection } from "./components/sections/testimonials-section";
 import { ReviewSection } from "./components/sections/review-section";
 import { WhatsappFloat } from "./components/ui/whatsapp";
-import getContent from "@/app/lib/get-content";
+import { getContentSite } from "./services";
 
 export const metadata = {
   title: "NPi Imóveis - HUB de Imobiliárias de Alto Padrão",
@@ -63,7 +63,7 @@ export const metadata = {
 };
 
 export default async function Home() {
-  const content = await getContent();
+  const content = await getContentSite();
 
   return (
     <div>

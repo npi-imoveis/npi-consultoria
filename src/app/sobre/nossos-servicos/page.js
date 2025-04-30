@@ -1,10 +1,10 @@
 import { HeaderPage } from "@/app/components/ui/header-page";
-import getContent from "@/app/lib/get-content";
+import { getContentSite } from "@/app/services";
 
 import { BriefcaseBusinessIcon } from "lucide-react";
 
 export default async function ServicesPage() {
-  const content = await getContent();
+  const content = await getContentSite();
 
   return (
     <section>
