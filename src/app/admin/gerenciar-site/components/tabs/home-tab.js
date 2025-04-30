@@ -5,7 +5,7 @@ import Section from "../ui/section";
 import { InputField, TextareaField } from "../ui/form-fields";
 import TestemunhosSection from "../sections/testemunhos-section";
 import LogosParceirosSection from "../sections/logos-parceiros-section";
-import HomeImageSection from "../sections/home-image-section";
+import ImageSection from "../sections/image-section";
 import Button from "../ui/button";
 
 export default function HomeTab({ form }) {
@@ -243,7 +243,7 @@ export default function HomeTab({ form }) {
             />
           </div>
           <div className="flex-1">
-            <HomeImageSection onChange={handleChange} />
+            <ImageSection directory="home" filename="about" onChange={handleImageChange} />
           </div>
         </div>
         <div className="mt-4 flex flex-col space-y-2">

@@ -5,6 +5,7 @@ import Section from "../ui/section";
 import { InputField, TextareaField } from "../ui/form-fields";
 import HubImageSection from "../sections/hub-image-section";
 import Button from "../ui/button";
+import ImageSection from "../sections/image-section";
 
 export default function HubTab({ form }) {
   const [formData, setFormData] = useState(form?.sobre_hub || {});
@@ -192,9 +193,9 @@ export default function HubTab({ form }) {
       <Section title="Sobre">
         <div className="flex flex-col md:flex-row gap-8 mb-8">
           <div className="flex-1">
-            <HubImageSection
-              name="about_image1"
-              filename="sobre_hub1.jpg"
+            <ImageSection
+              directory="sobre_hub"
+              filename="sobre_hub1"
               onChange={handleImageChange}
             />
           </div>
@@ -231,9 +232,9 @@ export default function HubTab({ form }) {
             />
           </div>
           <div className="flex-1">
-            <HubImageSection
-              name="about_image2"
-              filename="sobre_hub2.jpg"
+            <ImageSection
+              directory="sobre_hub"
+              filename="sobre_hub2"
               onChange={handleImageChange}
             />
           </div>

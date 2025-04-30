@@ -29,7 +29,7 @@ export async function HistoriaNpi({ historia }) {
               <div className="lg:w-1/2">
                 <div className="relative w-full h-[250px] lg:h-[300px] rounded-lg overflow-hidden">
                   <Image
-                    src={`/uploads/sobre_npi/0${index + 1}.jpg`}
+                    src={`/uploads/historia/0${index + 1}.jpg`}
                     alt={item.title}
                     layout="fill"
                     objectFit="cover"

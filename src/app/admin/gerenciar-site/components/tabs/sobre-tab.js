@@ -5,6 +5,7 @@ import Section from "../ui/section";
 import { InputField, TextareaField, ImageUpload } from "../ui/form-fields";
 import NossaHistoriaSection from "../sections/nossa-historia-section";
 import Button from "../ui/button";
+import ImageSection from "../sections/image-section";
 
 export default function SobreTab({ form }) {
   const [formData, setFormData] = useState(form?.sobre_npi || {});
@@ -228,12 +229,7 @@ export default function SobreTab({ form }) {
             />
           </div>
           <div className="flex-1">
-            <ImageUpload
-              label="Imagem"
-              name="image"
-              value={formData.image || ""}
-              onChange={handleImageChange}
-            />
+            <ImageSection directory="sobre_npi" filename="sobre" onChange={handleImageChange} />
           </div>
         </div>
         <div className="mt-4 flex flex-col space-y-2">

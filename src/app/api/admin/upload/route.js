@@ -22,7 +22,7 @@ function isImageFile(filename) {
 // Função para validar o diretório
 function validateDirectory(dir) {
   // Lista de diretórios permitidos
-  const allowedDirs = ["parceiros", "home", "sobre_hub", "sobre_npi"];
+  const allowedDirs = ["parceiros", "home", "sobre_hub", "sobre_npi", "historia"];
   return allowedDirs.includes(dir);
 }
 
@@ -60,6 +60,7 @@ export async function POST(request) {
     const formData = await request.formData();
     const file = formData.get("file");
     const directory = formData.get("directory");
+    const customFilename = formData.get("customFilename");
 
     if (!directory || !validateDirectory(directory)) {
       return NextResponse.json(
@@ -87,7 +88,22 @@ export async function POST(request) {
     await ensureDirectoryExists(targetDir);
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const filename = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+
+    // Determinar o nome do arquivo
+    let filename;
+    if (customFilename) {
+      // Se o customFilename não tiver extensão, use a extensão do arquivo original
+      const originalExt = path.extname(file.name).toLowerCase();
+      if (path.extname(customFilename).toLowerCase() === "") {
+        filename = `${customFilename}${originalExt}`;
+      } else {
+        filename = customFilename;
+      }
+    } else {
+      // Usar o nome original do arquivo (sanitizado)
+      filename = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+    }
+
     const filepath = path.join(targetDir, filename);
 
     await writeFile(filepath, buffer);

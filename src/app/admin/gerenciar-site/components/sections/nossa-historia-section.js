@@ -3,13 +3,14 @@
 import { useState, useEffect } from "react";
 import { InputField, TextareaField, ImageUpload } from "../ui/form-fields";
 import TabButtons from "../ui/tab-buttons";
+import ImageSection from "./image-section";
 
 export default function NossaHistoriaSection({ form, onChange }) {
   const [historias, setHistorias] = useState([
-    { ano: "", title: "", description: "", image: "" },
-    { ano: "", title: "", description: "", image: "" },
-    { ano: "", title: "", description: "", image: "" },
-    { ano: "", title: "", description: "", image: "" },
+    { ano: "", title: "", description: "" },
+    { ano: "", title: "", description: "" },
+    { ano: "", title: "", description: "" },
+    { ano: "", title: "", description: "" },
   ]);
   const [activeTab, setActiveTab] = useState(0);
 
@@ -23,7 +24,6 @@ export default function NossaHistoriaSection({ form, onChange }) {
           ano: historiaData[index]?.ano || "",
           title: historiaData[index]?.title || "",
           description: historiaData[index]?.description || "",
-          image: historiaData[index]?.image || "",
         }));
 
       setHistorias(formattedHistoria);
@@ -54,11 +54,14 @@ export default function NossaHistoriaSection({ form, onChange }) {
   };
 
   const handleImageChange = (e) => {
-    const { name, previewUrl } = e.target;
-    const idx = parseInt(name.split("_")[1]) - 1;
-
-    if (previewUrl) {
-      handleChange(idx, "image", previewUrl);
+    const { name, value } = e.target;
+    if (onChange) {
+      onChange({
+        target: {
+          name: name,
+          value: value,
+        },
+      });
     }
   };
 
@@ -94,10 +97,9 @@ export default function NossaHistoriaSection({ form, onChange }) {
           />
         </div>
         <div className="flex-1">
-          <ImageUpload
-            label="Imagem"
-            name={`historia_${activeTab + 1}`}
-            value={historias[activeTab].image || ""}
+          <ImageSection
+            directory="historia"
+            filename={`0${activeTab + 1}`}
             onChange={handleImageChange}
           />
         </div>

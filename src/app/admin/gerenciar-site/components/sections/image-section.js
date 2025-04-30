@@ -2,30 +2,43 @@
 
 import { useState, useEffect } from "react";
 
-export default function HomeImageSection({ onChange }) {
+export default function ImageSection({ onChange, filename, directory }) {
   const [image, setImage] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [status, setStatus] = useState({ show: false, type: null, message: null });
-  const DIRECTORY = "home";
+  const [previewImage, setPreviewImage] = useState(null);
+  const DIRECTORY = directory;
 
   useEffect(() => {
     fetchImage();
-  }, []);
+  }, [filename, DIRECTORY]);
 
   const fetchImage = async () => {
     try {
       const response = await fetch(`/api/admin/upload?directory=${DIRECTORY}`);
       const data = await response.json();
       if (data.success && data.images.length > 0) {
-        setImage(data.images[0]); // Pegamos apenas a primeira imagem
-        // Notifica o componente pai sobre a mudança
-        if (onChange) {
-          onChange({
-            target: {
-              name: "sobre.image_url",
-              value: data.images[0],
-            },
-          });
+        // Procurar pela imagem específica com o nome do arquivo
+        let targetImage;
+        if (filename) {
+          targetImage = data.images.find((img) => img.includes(filename));
+        }
+        // Se não encontrar ou filename não for fornecido, pega a primeira imagem
+        if (!targetImage && data.images.length > 0) {
+          targetImage = data.images[0];
+        }
+
+        if (targetImage) {
+          setImage(targetImage);
+          // Notifica o componente pai sobre a mudança
+          if (onChange) {
+            onChange({
+              target: {
+                name: `${DIRECTORY}_image`,
+                value: targetImage,
+              },
+            });
+          }
         }
       }
     } catch (error) {
@@ -41,11 +54,18 @@ export default function HomeImageSection({ onChange }) {
     setIsUploading(true);
     showStatusMessage("info", "Enviando imagem...");
 
+    // Cria um preview da imagem
+    const fileReader = new FileReader();
+    fileReader.onload = (event) => {
+      setPreviewImage(event.target.result);
+    };
+    fileReader.readAsDataURL(files[0]);
+
     try {
       // Se já existe uma imagem, vamos deletá-la primeiro
       if (image) {
-        const filename = image.split("/").pop();
-        await fetch(`/api/admin/upload?directory=${DIRECTORY}&filename=${filename}`, {
+        const oldFilename = image.split("/").pop();
+        await fetch(`/api/admin/upload?directory=${DIRECTORY}&filename=${oldFilename}`, {
           method: "DELETE",
         });
       }
@@ -53,6 +73,11 @@ export default function HomeImageSection({ onChange }) {
       const formData = new FormData();
       formData.append("file", files[0]);
       formData.append("directory", DIRECTORY);
+
+      // Adicionar o nome personalizado da imagem, se disponível
+      if (filename) {
+        formData.append("customFilename", filename);
+      }
 
       const response = await fetch("/api/admin/upload", {
         method: "POST",
@@ -62,7 +87,20 @@ export default function HomeImageSection({ onChange }) {
       const data = await response.json();
       if (data.success) {
         showStatusMessage("success", "Imagem enviada com sucesso!");
-        fetchImage(); // Atualiza a imagem
+        setImage(data.path);
+
+        // Notifica o componente pai sobre a mudança
+        if (onChange) {
+          onChange({
+            target: {
+              name: `${DIRECTORY}_image`,
+              value: data.path,
+            },
+          });
+        }
+
+        // Limpa o preview após o upload bem-sucedido
+        setPreviewImage(null);
       } else {
         showStatusMessage("error", data.error || "Erro ao enviar imagem");
       }
@@ -80,6 +118,9 @@ export default function HomeImageSection({ onChange }) {
       setStatus({ show: false, type: null, message: null });
     }, 5000);
   };
+
+  // Determina qual imagem mostrar: o preview (se disponível) ou a imagem carregada
+  const displayImage = previewImage || image;
 
   return (
     <div className="space-y-4">
@@ -118,16 +159,16 @@ export default function HomeImageSection({ onChange }) {
         </div>
       )}
 
-      {image && (
+      {displayImage && (
         <div className="relative group">
           <div className="aspect-w-16 aspect-h-9 bg-gray-50 rounded-lg overflow-hidden">
             <img
-              src={image}
+              src={displayImage}
               alt="Imagem da Home"
               className="w-full h-full object-cover"
               onError={(e) => {
                 e.target.onerror = null;
-                console.error(`Erro ao carregar imagem: ${image}`);
+                console.error(`Erro ao carregar imagem: ${displayImage}`);
               }}
             />
           </div>
