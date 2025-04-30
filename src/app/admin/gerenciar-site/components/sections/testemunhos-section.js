@@ -82,6 +82,14 @@ export default function TestemunhosSection({ form, onChange }) {
         body: JSON.stringify({ testemunhos: formattedTestemunhos }),
       });
 
+      await fetch("/api/revalidate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ path: "/" }),
+      });
+
       if (response.ok) {
         showStatusMessage("success", "Testemunhos atualizados com sucesso!");
       } else {

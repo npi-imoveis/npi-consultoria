@@ -64,6 +64,14 @@ export default function NossosServicosSection({ form }) {
         }),
       });
 
+      await fetch("/api/revalidate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ path: "/" }),
+      });
+
       if (response.ok) {
         showStatusMessage("success", "Serviços atualizados com sucesso!");
       } else {
