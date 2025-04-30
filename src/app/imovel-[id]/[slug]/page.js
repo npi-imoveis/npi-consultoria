@@ -1,24 +1,25 @@
-import { ImageGallery } from '@/app/components/sections/image-gallery';
-import { FAQImovel } from './componentes/FAQImovel';
-import DetalhesCondominio from './componentes/DetalhesCondominio';
-import LocalizacaoCondominio from './componentes/LocalizacaoCondominio';
-import FichaTecnica from './componentes/FichaTecnica';
-import Lazer from './componentes/Lazer';
-import TituloImovel from './componentes/TituloImovel';
-import DetalhesImovel from './componentes/DetalhesImovel';
-import DescricaoImovel from './componentes/DescricaoImovel';
-import VideoCondominio from './componentes/VideoCondominio';
-import TourVirtual from './componentes/TourVirtual';
-import Contato from './componentes/Contato';
-import { SimilarProperties } from './componentes/similar-properties';
+import { ImageGallery } from "@/app/components/sections/image-gallery";
+import { FAQImovel } from "./componentes/FAQImovel";
+import DetalhesCondominio from "./componentes/DetalhesCondominio";
+import LocalizacaoCondominio from "./componentes/LocalizacaoCondominio";
+import FichaTecnica from "./componentes/FichaTecnica";
+import Lazer from "./componentes/Lazer";
+import TituloImovel from "./componentes/TituloImovel";
+import DetalhesImovel from "./componentes/DetalhesImovel";
+import DescricaoImovel from "./componentes/DescricaoImovel";
+import VideoCondominio from "./componentes/VideoCondominio";
+import TourVirtual from "./componentes/TourVirtual";
+import Contato from "./componentes/Contato";
+import { SimilarProperties } from "./componentes/similar-properties";
 import { getCondominioPorSlug } from "@/app/services";
-import { WhatsappFloat } from '@/app/components/ui/whatsapp';
+import { WhatsappFloat } from "@/app/components/ui/whatsapp";
 import { Apartment as StructuredDataApartment } from "@/app/components/structured-data";
 
 const currentUrl = typeof window !== "undefined" ? window.location.href : "";
 
 export async function generateMetadata({ params }) {
-  const response = await getCondominioPorSlug(params.slug);
+  const { slug } = await params;
+  const response = await getCondominioPorSlug(slug);
   const condominio = response?.data;
 
   if (!condominio) {
@@ -35,12 +36,12 @@ export async function generateMetadata({ params }) {
     title: `${condominio.Empreendimento}, ${condominio.TipoEndereco} ${condominio.Endereco}, ${condominio.BairroComercial}`,
     description,
     alternates: {
-      canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/${params.slug}`,
+      canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`,
     },
     openGraph: {
       title: `Condomínio ${condominio.Empreendimento}`,
       description,
-      url: `${process.env.NEXT_PUBLIC_SITE_URL}/${params.slug}`,
+      url: `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`,
       images: condominio.Foto?.[0]?.Foto ? [{ url: condominio.Foto[0].Foto }] : [],
       type: "website",
     },
@@ -55,16 +56,26 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function Imovel({ params }) {
-  const response = await getCondominioPorSlug(params.slug);
+  const { slug } = await params;
+
+  const response = await getCondominioPorSlug(slug);
   const imovel = response.data;
-  const url = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${params.slug}`;
+  const url = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${slug}`;
 
   return (
     <section className="w-full bg-white pb-32 pt-20">
       <StructuredDataApartment
         title={imovel.Empreendimento}
-        price={imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : 'Consulte'}
-        description={`${imovel.Categoria} à venda em ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.Empreendimento}: ${imovel.DormitoriosAntigo} quartos, ${imovel.Suites} suítes, ${imovel.BanheiroSocialQtd} banheiros, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt}. ${imovel.Situacao}. Valor: ${imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : 'Consulte'}. ${imovel.TipoEndereco} ${imovel.Endereco}.`}
+        price={imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}
+        description={`${imovel.Categoria} à venda em ${imovel.BairroComercial}, ${imovel.Cidade}. ${
+          imovel.Empreendimento
+        }: ${imovel.DormitoriosAntigo} quartos, ${imovel.Suites} suítes, ${
+          imovel.BanheiroSocialQtd
+        } banheiros, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt}. ${
+          imovel.Situacao
+        }. Valor: ${imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}. ${
+          imovel.TipoEndereco
+        } ${imovel.Endereco}.`}
         address={`${imovel.TipoEndereco} ${imovel.Endereco}, ${imovel.Numero}, ${imovel.BairroComercial}, ${imovel.Cidade}`}
         url={currentUrl}
         image={imovel.Foto}
@@ -96,7 +107,9 @@ export default async function Imovel({ params }) {
       <div className="container mx-auto px-4 md:px-0">
         <FAQImovel imovel={imovel} />
       </div>
-      <WhatsappFloat message={`Quero saber mais sobre o ${imovel.Empreendimento}, no bairro ${imovel.BairroComercial}, disponivel na pagina do Imóvel: ${url}`} />
+      <WhatsappFloat
+        message={`Quero saber mais sobre o ${imovel.Empreendimento}, no bairro ${imovel.BairroComercial}, disponivel na pagina do Imóvel: ${url}`}
+      />
     </section>
   );
 }

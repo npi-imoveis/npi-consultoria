@@ -19,7 +19,8 @@ import ScrollToImoveisButton from "./componentes/scroll-to-imovel-button";
 import { notFound } from "next/navigation";
 
 export async function generateMetadata({ params }) {
-  const response = await getCondominioPorSlug(params.slug);
+  const { slug } = await params;
+  const response = await getCondominioPorSlug(slug);
 
   const condominio = response?.data;
 
@@ -37,12 +38,12 @@ export async function generateMetadata({ params }) {
     title: `Condomínio ${condominio.Empreendimento}, ${condominio.TipoEndereco} ${condominio.Endereco}, ${condominio.Numero}, ${condominio.BairroComercial}`,
     description,
     alternates: {
-      canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/${params.slug}`,
+      canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`,
     },
     openGraph: {
       title: `Condomínio ${condominio.Empreendimento}`,
       description,
-      url: `${process.env.NEXT_PUBLIC_SITE_URL}/${params.slug}`,
+      url: `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`,
       images: condominio.Foto?.[0]?.Foto ? [{ url: condominio.Foto[0].Foto }] : [],
       type: "website",
     },
@@ -57,7 +58,8 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function CondominioPage({ params }) {
-  const response = await getCondominioPorSlug(params.slug);
+  const { slug } = await params;
+  const response = await getCondominioPorSlug(slug);
 
   if (!response.data) {
     notFound();
@@ -66,7 +68,7 @@ export default async function CondominioPage({ params }) {
   const condominio = response.data;
   const imoveisRelacionados = response.imoveisRelacionados;
 
-  const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/${params.slug}`;
+  const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`;
 
   return (
     <section className="w-full bg-zinc-100 pb-10">
