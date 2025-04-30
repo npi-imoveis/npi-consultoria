@@ -174,6 +174,14 @@ export default function HomeTab({ form }) {
         body: JSON.stringify(payload),
       });
 
+      await fetch("/api/revalidate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ path: "/" }),
+      });
+
       if (response.ok) {
         showStatusMessage(
           section,
