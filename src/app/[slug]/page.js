@@ -16,9 +16,11 @@ import VideoCondominio from "./componentes/VideoCondominio";
 import TourVirtual from "./componentes/TourVirtual";
 import ExploreRegiao from "./componentes/ExploreRegiao";
 import ScrollToImoveisButton from "./componentes/scroll-to-imovel-button";
+import { notFound } from "next/navigation";
 
 export async function generateMetadata({ params }) {
   const response = await getCondominioPorSlug(params.slug);
+
   const condominio = response?.data;
 
   if (!condominio) {
@@ -56,6 +58,11 @@ export async function generateMetadata({ params }) {
 
 export default async function CondominioPage({ params }) {
   const response = await getCondominioPorSlug(params.slug);
+
+  if (!response.data) {
+    notFound();
+  }
+
   const condominio = response.data;
   const imoveisRelacionados = response.imoveisRelacionados;
 
