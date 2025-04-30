@@ -3,20 +3,25 @@ import { useState } from "react";
 import Image from "next/image";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { TitleSection } from "@/app/components/ui/title-section";
+import { Button } from "@/app/components/ui/button";
 
-export default function VideoNpi() {
+export default function VideoNpi({ missao }) {
   const [isOpen, setIsOpen] = useState(false);
+
+  console.log("Missão", missao);
 
   return (
     <section className="bg-white py-24 px-6 lg:px-0">
       <div className="container mx-auto max-w-6xl">
         {/* Título e Descrição */}
         <TitleSection
-          section="Nossa Missão e Serviços"
-          title="Nossa Missão e Serviços"
-          description="Desde 2007, a NPi se dedica a oferecer um serviço imparcial e de excelência, ajudando nossos clientes a realizarem o sonho de adquirir um imóvel."
+          section={missao?.title || "Missão e Serviços"}
+          title={missao?.title || "Nossa Missão e Serviços"}
+          description={
+            missao?.description ||
+            "Desde 2007, a NPi se dedica a oferecer um serviço imparcial e de excelência, ajudando nossos clientes a realizarem o sonho de adquirir um imóvel."
+          }
         />
-
         <div className="grid lg:grid-cols-2 grid-cols-1 gap-12 items-center">
           {/* Vídeo Thumbnail */}
           <div
@@ -52,34 +57,15 @@ export default function VideoNpi() {
               Atendimento Personalizado
             </h1>
             <p className="text-black mt-4">
-              Nossa missão é entender as necessidades de cada cliente e oferecer
-              as melhores opções de imóveis, garantindo um processo de compra
-              fácil, ágil e seguro.
+              Nossa missão é entender as necessidades de cada cliente e oferecer as melhores opções
+              de imóveis, garantindo um processo de compra fácil, ágil e seguro.
             </p>
 
             {/* Lista de Serviços */}
             <div className="mt-6 space-y-6">
-              {[
-                {
-                  title: "Avaliação de Imóveis",
-                  description:
-                    "Equipe altamente capacitada para precificar o seu imóvel com uma metodologia completa.",
-                },
-                {
-                  title: "Assessoria Jurídica",
-                  description:
-                    "Consultoria especializada no mercado imobiliário para assessorar nossos clientes.",
-                },
-                {
-                  title: "Consultoria Patrimonial",
-                  description:
-                    "Analisamos a carteira imobiliária de nossos clientes para novas oportunidades de investimento.",
-                },
-              ].map((service, index) => (
+              {missao?.itens?.map((service, index) => (
                 <div key={index} className="bg-zinc-100 p-4 rounded-lg ">
-                  <h1 className="text-lg font-semibold text-black">
-                    {service.title}
-                  </h1>
+                  <h1 className="text-lg font-semibold text-black">{service.title}</h1>
                   <p className="text-black mt-2">{service.description}</p>
                 </div>
               ))}
@@ -105,7 +91,7 @@ export default function VideoNpi() {
               <iframe
                 width="100%"
                 height="100%"
-                src="https://www.youtube.com/embed/paE-zyy_C8M?si=BjDUoJ4zSdTVrnqw"
+                src={missao?.youtube}
                 title="Vídeo Institucional NPi"
                 frameBorder="0"
                 allowFullScreen

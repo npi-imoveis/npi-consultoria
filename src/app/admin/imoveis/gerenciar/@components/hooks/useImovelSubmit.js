@@ -23,7 +23,6 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create") => {
       { field: "Numero", label: "Número" },
       { field: "Bairro", label: "Bairro" },
       { field: "Cidade", label: "Cidade" },
-      { field: "Regiao", label: "Região" },
     ];
 
     // Check required fields

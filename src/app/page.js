@@ -61,21 +61,26 @@ export const metadata = {
   },
 };
 
-export default function Home() {
+export default async function Home() {
+  const data = await fetch(`${process.env.API_URL}/admin/content`);
+  const content = await data.json();
+
+  console.log("content", content.data.testemunhos);
+
   return (
     <div>
       <Header />
       <HeroSection />
-      <ActionSection />
+      <ActionSection cards={content?.data?.cards_destacados} />
       <FeaturedCondosSection />
       <PropertyList />
       <ListCities />
       <LuxuryGridSection />
-      <AboutSection />
-      <ReviewSection />
+      <AboutSection about={content?.data?.sobre} />
+      <ReviewSection stats={content?.data?.stats} />
       <SlidePartners />
-      <TestimonialsSection />
-      <FaqSection />
+      <TestimonialsSection testimonials={content?.data?.testemunhos} />
+      <FaqSection faqs={content?.data?.faq} />
       <ContactSection />
       <WhatsappFloat />
       <Footer />

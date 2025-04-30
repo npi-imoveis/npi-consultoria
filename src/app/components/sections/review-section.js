@@ -1,8 +1,4 @@
-import { getContentStats } from "@/app/lib/site-content";
-
-export async function ReviewSection() {
-  const content = await getContentStats();
-
+export async function ReviewSection({ stats }) {
   return (
     <div className="bg-gradient-to-r from-black to-zinc-800 min-h-[600px] py-16  flex flex-col justify-center items-center">
       <div className="container mx-auto">
@@ -22,7 +18,7 @@ export async function ReviewSection() {
               Posições na 1ª página do Google
             </dt>
             <dd className="order-first text-xl sm:text-4xl font-bold tracking-tight text-white">
-              <span>{content["stats_position"]}</span>
+              <span>{stats?.position || "5.037"}</span>
             </dd>
           </div>
 
@@ -32,13 +28,13 @@ export async function ReviewSection() {
                 Visualizações no Google
               </dt>
               <dd className="order-first text-xl sm:text-2xl font-semibold tracking-tight text-white">
-                <span>{content["stats_views"]}</span>
+                <span>{stats?.views || "17.200.000"}</span>
               </dd>
             </div>
             <div className="flex flex-col bg-white/5 p-6 md:p-8 rounded-lg">
               <dt className="text-sm font-semibold leading-6 text-gray-300">Cliques no Site</dt>
               <dd className="order-first text-xl sm:text-2xl font-semibold tracking-tight text-white">
-                <span>{content["stats_clicks"]}</span>
+                <span>{stats?.clicks || "274.000"}</span>
               </dd>
             </div>
             <div className="flex flex-col bg-white/5 p-6 md:p-8 rounded-lg">
@@ -46,14 +42,14 @@ export async function ReviewSection() {
                 Imobiliárias parceiras
               </dt>
               <dd className="order-first text-xl sm:text-2xl font-semibold tracking-tight text-white">
-                <span>{content["stats_partners"]}</span>
+                <span>{stats?.partners || "27"}</span>
               </dd>
             </div>
             <div className="flex flex-col bg-white/5 p-6 md:p-8 rounded-lg">
               <dt className="text-sm font-semibold leading-6 text-gray-300">Imóveis Cadastrados</dt>
               <dd className="order-first text-xl sm:text-2xl font-semibold tracking-tight text-white">
                 <span>
-                  <span>{content["stats_properties"]}</span>
+                  <span>{stats?.properties || "6.137"}</span>
                 </span>
               </dd>
             </div>

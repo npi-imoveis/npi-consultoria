@@ -6,10 +6,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import useFiltersStore from "@/app/store/filtrosStore";
 
-export function ActionSection() {
+export function ActionSection({ cards }) {
   const router = useRouter();
-  const setFilters = useFiltersStore(state => state.setFilters);
-  const aplicarFiltros = useFiltersStore(state => state.aplicarFiltros);
+  const setFilters = useFiltersStore((state) => state.setFilters);
+  const aplicarFiltros = useFiltersStore((state) => state.aplicarFiltros);
+
+  console.log("cards", cards);
 
   const handleSearchLuxuryCondos = () => {
     // Limpar filtros anteriores
@@ -18,10 +20,10 @@ export function ActionSection() {
     // Definir os novos filtros para imóveis entre 4 e 10 milhões
     setFilters({
       finalidade: "VENDA",
-      precoMin: 400000000,
-      precoMax: 1000000000,
+      precoMin: 4000000,
+      precoMax: 10000000,
       categoriaSelecionada: "Apartamento",
-      cidadeSelecionada: "São Paulo"
+      cidadeSelecionada: "São Paulo",
     });
 
     // Aplicar os filtros
@@ -38,9 +40,9 @@ export function ActionSection() {
     // Definir os novos filtros para imóveis acima de 10 milhões
     setFilters({
       finalidade: "VENDA",
-      precoMin: 1000000000,
+      precoMin: 10000000,
       categoriaSelecionada: "Apartamento",
-      cidadeSelecionada: "São Paulo"
+      cidadeSelecionada: "São Paulo",
     });
 
     // Aplicar os filtros
@@ -70,10 +72,12 @@ export function ActionSection() {
           <div className="relative z-10 flex flex-col justify-start h-full p-10 text-start lg:text-left">
             <div className="text-white flex flex-col lg:flex-row items-center justify-between">
               <div className="mb-4 lg:mb-0">
-                <p className="text-sm font-semibold mb-2">Condomínios de luxo</p>
+                <p className="text-sm font-semibold mb-2">
+                  {cards[0].title || "Condomínios de luxo"}
+                </p>
                 <p className="font-bold text-lg md:text-xl uppercase">
-                  Os melhores condomínios de alto padrão <br />
-                  entre 4 e 10 milhões.
+                  {cards[0].description ||
+                    "Os melhores condomínios de alto padrão entre 4 e 10 milhões."}
                 </p>
               </div>
               {/* Botão com ícone de seta */}
@@ -104,9 +108,11 @@ export function ActionSection() {
           <div className="relative z-10 flex flex-col justify-start h-full p-10 text-start lg:text-left">
             <div className="text-white flex flex-col lg:flex-row items-center justify-between">
               <div className="mb-4 lg:mb-0">
-                <p className="text-sm font-semibold mb-2">Imóveis exclusivos</p>
+                <p className="text-sm font-semibold mb-2">
+                  {cards[1].title || "Imóveis exclusivos"}
+                </p>
                 <p className="font-bold text-lg md:text-xl uppercase">
-                  Imóveis de alto padrão <br />acima de 10 milhões.
+                  {cards[1].description || "Imóveis de alto padrão acima de 10 milhões."}
                 </p>
               </div>
               {/* Botão com ícone de seta */}

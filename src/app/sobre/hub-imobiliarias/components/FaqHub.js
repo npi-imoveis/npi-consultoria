@@ -1,29 +1,6 @@
 import { TitleSection } from "@/app/components/ui/title-section";
-import { getContentFaq } from "@/app/lib/site-content";
 
-export async function FaqHub() {
-  const content = await getContentFaq();
-
-  const faqs = [
-    {
-      question: content["faq_question_1"],
-      answer: content["faq_answer_1"],
-
-    },
-    {
-      question: content["faq_question_2"],
-      answer: content["faq_answer_2"],
-    },
-    {
-      question: content["faq_question_3"],
-      answer: content["faq_answer_3"],
-    },
-    {
-      question: content["faq_question_4"],
-      answer: content["faq_answer_4"],
-    },
-  ];
-
+export async function FaqHub({ faqs }) {
   return (
     <section className="py-16 px-10 lg:px-0 lg:py-24">
       <div className="container mx-auto">
@@ -38,21 +15,14 @@ export async function FaqHub() {
               />
               <div className="accordion-group">
                 {faqs.map((faq, index) => (
-                  <div
-                    key={index}
-                    className="accordion py-6 border-b border-gray-200"
-                  >
+                  <div key={index} className="accordion py-6 border-b border-gray-200">
                     <div className="flex justify-between items-center w-full text-left text-lg sm:text-xl font-medium text-gray-700">
                       <p className="text-base sm:text-lg text-black font-semibold">
                         {faq.question}
                       </p>
-
-
                     </div>
                     <div className="accordion-content w-full pt-4">
-                      <p className="text-sm sm:text-base text-gray-800">
-                        {faq.answer}
-                      </p>
+                      <p className="text-sm sm:text-base text-gray-800">{faq.answer}</p>
                     </div>
                   </div>
                 ))}
@@ -70,6 +40,6 @@ export async function FaqHub() {
           </div>
         </div>
       </div>
-    </section >
+    </section>
   );
 }

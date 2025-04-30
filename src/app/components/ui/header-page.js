@@ -7,12 +7,12 @@ export function HeaderPage({ title, description, image }) {
   const breadcrumbItems = [
     {
       name: "Home",
-      url: process.env.NEXT_PUBLIC_SITE_URL
+      url: process.env.NEXT_PUBLIC_SITE_URL,
     },
     {
       name: title,
-      url: typeof window !== "undefined" ? window.location.href : ""
-    }
+      url: typeof window !== "undefined" ? window.location.href : "",
+    },
   ];
 
   return (

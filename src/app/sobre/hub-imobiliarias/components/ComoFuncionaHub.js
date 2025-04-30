@@ -1,8 +1,6 @@
-import { getContentSobre } from "@/app/lib/site-content";
 import Image from "next/image";
 
-export async function ComoFuncionaHub() {
-  const content = await getContentSobre();
+export async function ComoFuncionaHub({ howto }) {
   return (
     <section className="relative bg-black text-white py-16">
       {/* Background escurecido */}
@@ -22,9 +20,7 @@ export async function ComoFuncionaHub() {
       <div className="relative z-10 container mx-auto px-6 flex flex-col lg:flex-row items-start gap-12">
         {/* Título e botão */}
         <div className="lg:w-1/3">
-          <h1 className="text-xl uppercase font-semibold leading-snug">
-            Como funciona o HUB
-          </h1>
+          <h1 className="text-xl uppercase font-semibold leading-snug">Como funciona o HUB</h1>
           <button className="mt-8 bg-white text-black font-medium py-2 px-4 rounded-md shadow-md flex items-center gap-2">
             Faça parte
             <svg
@@ -44,35 +40,12 @@ export async function ComoFuncionaHub() {
 
         {/* Cartões de informação */}
         <div className="lg:w-2/3 space-y-8">
-          {/* Card 1 */}
-          <div className="bg-black/40 p-6 rounded-md shadow-lg">
-            <h1 className="text-xl uppercase font-semibold mb-2">
-              {content["sobre_page_howto_title"]}
-            </h1>
-            <p className="text-lg leading-relaxed text-gray-300">
-              {content["sobre_page_howto_description"]}
-            </p>
-          </div>
-
-          {/* Card 2 */}
-          <div className="bg-black/40 p-6 rounded-md shadow-lg">
-            <h1 className="text-xl uppercase font-semibold mb-2">
-              {content["sobre_page_howto_title2"]}
-            </h1>
-            <p className="text-lg leading-relaxed text-gray-300">
-              {content["sobre_page_howto_description2"]}
-            </p>
-          </div>
-
-          {/* Card 3 */}
-          <div className="bg-black/40 p-6 rounded-md shadow-lg">
-            <h1 className="text-xl uppercase font-semibold mb-2">
-              {content["sobre_page_howto_title3"]}
-            </h1>
-            <p className="text-lg leading-relaxed text-gray-300">
-              {content["sobre_page_howto_description3"]}
-            </p>
-          </div>
+          {howto.map((item, index) => (
+            <div key={index} className="bg-black/40 p-6 rounded-md shadow-lg">
+              <h1 className="text-xl uppercase font-semibold mb-2">{item.title}</h1>
+              <p className="text-lg leading-relaxed text-gray-300">{item.description}</p>
+            </div>
+          ))}
         </div>
       </div>
     </section>
