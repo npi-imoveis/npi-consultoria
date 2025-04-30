@@ -8,7 +8,6 @@ export function Footer() {
 
   return (
     <footer className="bg-zinc-200" aria-labelledby="footer-heading">
-
       <div className="container mx-auto px-4 py-12 md:py-24 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 text-black">
         {/* Coluna 1 - Informações da NPi */}
         <div>
@@ -20,9 +19,12 @@ export function Footer() {
           <div className="mt-6">
             <span className="font-semibold mb-2">Endereço</span>
             <address className="text-sm not-italic">
-              LWM Corporate<br />
-              Rua George Ohm, 206<br />
-              Cj. 101 – Torre B – Brooklin<br />
+              LWM Corporate
+              <br />
+              Rua George Ohm, 206
+              <br />
+              Cj. 101 – Torre B – Brooklin
+              <br />
               São Paulo – SP – 04576-020
             </address>
           </div>
@@ -33,7 +35,10 @@ export function Footer() {
           <h3 className="font-semibold mb-3">Contato</h3>
           <div className="mb-4">
             <h4 className="font-semibold mb-2">Telefone</h4>
-            <a href="tel:+551126144414" className="flex items-center space-x-2 text-sm group hover:underline transition-colors py-2">
+            <a
+              href="tel:+551126144414"
+              className="flex items-center space-x-2 text-sm group hover:underline transition-colors py-2"
+            >
               <PhoneIcon className="w-5 h-5" aria-hidden="true" />
               <span className="group-hover:underline">(11) 2614-4414</span>
             </a>
@@ -41,7 +46,10 @@ export function Footer() {
 
           <div>
             <span className="font-semibold mb-2">Email</span>
-            <a href="mailto:npi@npiconsultoria.com.br" className="flex items-center space-x-2 text-sm group hover:underline transition-colors py-2">
+            <a
+              href="mailto:npi@npiconsultoria.com.br"
+              className="flex items-center space-x-2 text-sm group hover:underline transition-colors py-2"
+            >
               <EnvelopeIcon className="w-5 h-5" aria-hidden="true" />
               <span className="group-hover:underline">npi@npiconsultoria.com.br</span>
             </a>
@@ -63,7 +71,6 @@ export function Footer() {
               </li>
               <li>
                 <Link
-
                   href="/sobre/npi-imoveis"
                   className="inline-block py-2 hover:underline transition-colors"
                 >
@@ -112,7 +119,10 @@ export function Footer() {
         <div className="container mx-auto px-4 py-6 flex flex-col md:flex-row items-center justify-between gap-4">
           {/* Links de políticas */}
           <div className="order-2 md:order-1">
-            <Link href="/politica-de-privacidade" className="text-sm py-2 px-3 inline-block hover:underline">
+            <Link
+              href="/politica-de-privacidade"
+              className="text-sm py-2 px-3 inline-block hover:underline"
+            >
               Política de Privacidade
             </Link>
           </div>
@@ -120,14 +130,15 @@ export function Footer() {
           {/* Copyright */}
           <div className="order-3 md:order-2 text-center text-sm">
             <p className="font-semibold">
-              © {currentYear} - Todos os Direitos Reservados | NPi Consultoria - Imóveis de Alto Padrão
+              © {currentYear} - Todos os Direitos Reservados | NPi Consultoria - Imóveis de Alto
+              Padrão
             </p>
           </div>
 
           {/* Ícones de redes sociais */}
           <div className="order-1 md:order-3 flex items-center space-x-4">
             <a
-              href="instagram.com/npi_imoveis"
+              href="https://www.instagram.com/npi_imoveis"
               aria-label="Siga-nos no Instagram"
               target="_blank"
               rel="noopener noreferrer"
@@ -144,7 +155,7 @@ export function Footer() {
               </svg>
             </a>
             <a
-              href="facebook.com/npiimoveis"
+              href="https://www.facebook.com/npiimoveis"
               aria-label="Visite nossa página no Facebook"
               target="_blank"
               rel="noopener noreferrer"
