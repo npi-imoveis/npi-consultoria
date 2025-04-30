@@ -49,7 +49,6 @@ export default function ImoveisDestacados() {
     });
 
     // Em uma implementação real, você enviaria uma requisição para a API
-    console.log(`Alternando destaque do imóvel ${codigo}`);
   };
 
   // Salvar as alterações

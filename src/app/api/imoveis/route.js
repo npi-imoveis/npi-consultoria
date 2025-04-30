@@ -66,8 +66,6 @@ export async function GET(request) {
 }
 
 export async function POST(request) {
-  console.log("Processando imóvel");
-
   try {
     await connectToDatabase();
 
@@ -89,10 +87,7 @@ export async function POST(request) {
     if (dadosImovel._id) {
       try {
         await Imovel.deleteOne({ _id: dadosImovel._id });
-        console.log(`Documento anterior com _id ${dadosImovel._id} excluído`);
-      } catch (deleteError) {
-        console.log("Erro ao excluir documento anterior (pode não existir):", deleteError);
-      }
+      } catch (deleteError) {}
     }
 
     // Criar um novo documento
@@ -101,8 +96,6 @@ export async function POST(request) {
 
     const novoImovelAtivo = new ImovelAtivo(dadosImovel);
     const imovelAtivoSalvo = await novoImovelAtivo.save();
-
-    console.log(`Imóvel com Codigo ${dadosImovel.Codigo} processado com sucesso`);
 
     // Invalidar cache relacionado a imóveis
     const keys = cache.keys();

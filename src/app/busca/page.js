@@ -116,15 +116,14 @@ export default function BuscaImoveis() {
     checkScreenSize();
 
     // Adicionar listener para mudanças de tamanho
-    window.addEventListener('resize', checkScreenSize);
+    window.addEventListener("resize", checkScreenSize);
 
     // Limpar listener ao desmontar
-    return () => window.removeEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener("resize", checkScreenSize);
   }, [isClient]);
 
   // Função para lidar com a mudança de página
   const handlePageChange = (newPage) => {
-    console.log(`Mudando para a página ${newPage}`);
     setCurrentPage(newPage);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -153,8 +152,6 @@ export default function BuscaImoveis() {
       if (comFiltros) {
         // Obtém os valores mais recentes do store
         const filtrosAtuais = useFiltersStore.getState();
-        console.log("Valores no store - bairrosSelecionados:", filtrosAtuais.bairrosSelecionados);
-        console.log("Valores no store - finalidade:", filtrosAtuais.finalidade);
 
         // Garantir que finalidade seja sempre "Comprar" se não estiver definida
         const finalidade = filtrosAtuais.finalidade || "Comprar";
@@ -169,25 +166,19 @@ export default function BuscaImoveis() {
         };
 
         // Log detalhado dos filtros selecionados
-        console.log("Filtros aplicados - Finalidade:", params.finalidade);
-        console.log("Filtros aplicados - Categoria:", filtrosAtuais.categoriaSelecionada);
-        console.log("Filtros aplicados - Cidade:", filtrosAtuais.cidadeSelecionada);
 
         // Adicionar bairros selecionados se existirem
         if (filtrosAtuais.bairrosSelecionados && filtrosAtuais.bairrosSelecionados.length > 0) {
           params.bairrosArray = filtrosAtuais.bairrosSelecionados;
-          console.log("Bairros selecionados:", filtrosAtuais.bairrosSelecionados);
         }
 
         // Adiciona filtros de preço se estiverem definidos
         if (filtrosAtuais.precoMin !== null) {
           params.precoMinimo = filtrosAtuais.precoMin;
-          console.log("Filtros aplicados - Preço Mínimo:", filtrosAtuais.precoMin);
         }
 
         if (filtrosAtuais.precoMax !== null) {
           params.precoMaximo = filtrosAtuais.precoMax;
-          console.log("Filtros aplicados - Preço Máximo:", filtrosAtuais.precoMax);
         }
 
         // Adiciona filtros de área se estiverem definidos
@@ -207,13 +198,10 @@ export default function BuscaImoveis() {
         if (filtrosAtuais.proximoMetro) {
           params.proximoMetro = true;
         }
-
-        console.log("Buscando imóveis com filtros:", params);
       }
 
       // Buscar imóveis com a função unificada
       const response = await getImoveis(params, currentPage, 12);
-      console.log("Resposta completa:", response);
 
       // Verificar se a resposta contém dados válidos
       if (response && response.imoveis) {
@@ -221,7 +209,6 @@ export default function BuscaImoveis() {
 
         // Armazenar os imóveis no cache da store para uso futuro
         if (Array.isArray(response.imoveis) && response.imoveis.length > 0) {
-          console.log("Armazenando", response.imoveis.length, "imóveis no store");
           adicionarVariosImoveisCache(response.imoveis);
         }
       } else {
@@ -239,10 +226,7 @@ export default function BuscaImoveis() {
           limit: Number(response.pagination.itemsPerPage) || 12,
         };
         setPagination(validPagination);
-        console.log("Informações de paginação validadas:", validPagination);
       }
-
-      console.log("Imóveis carregados:", response.imoveis);
     } catch (error) {
       console.error("Erro ao buscar imóveis:", error);
       setImoveis([]);
@@ -304,7 +288,7 @@ export default function BuscaImoveis() {
           totalPages: Math.ceil(response.data.length / 12),
           currentPage: 1,
           itemsPerPage: 12,
-          limit: 12
+          limit: 12,
         });
 
         if (Array.isArray(response.data) && response.data.length > 0) {
@@ -319,7 +303,7 @@ export default function BuscaImoveis() {
     } finally {
       setIsLoading(false);
     }
-  }
+  };
 
   // Função para alternar a visibilidade do filtro
   const toggleFiltro = () => {
@@ -340,7 +324,11 @@ export default function BuscaImoveis() {
       // Renderiza 12 skeletons durante o carregamento
       return Array(12)
         .fill(null)
-        .map((_, index) => <div key={`skeleton-${index}`} className="min-w-[250px]"><CardImovelSkeleton /></div>);
+        .map((_, index) => (
+          <div key={`skeleton-${index}`} className="min-w-[250px]">
+            <CardImovelSkeleton />
+          </div>
+        ));
     }
 
     // Renderiza os imóveis carregados
@@ -351,15 +339,15 @@ export default function BuscaImoveis() {
       if (ordenacao === "maior_valor") {
         imoveisOrdenados.sort((a, b) => {
           // Converter ValorAntigo para número para comparação
-          const valorA = a.ValorAntigo ? parseFloat(a.ValorAntigo.replace(/\D/g, '')) : 0;
-          const valorB = b.ValorAntigo ? parseFloat(b.ValorAntigo.replace(/\D/g, '')) : 0;
+          const valorA = a.ValorAntigo ? parseFloat(a.ValorAntigo.replace(/\D/g, "")) : 0;
+          const valorB = b.ValorAntigo ? parseFloat(b.ValorAntigo.replace(/\D/g, "")) : 0;
           return valorB - valorA; // Ordem decrescente
         });
       } else if (ordenacao === "menor_valor") {
         imoveisOrdenados.sort((a, b) => {
           // Converter ValorAntigo para número para comparação
-          const valorA = a.ValorAntigo ? parseFloat(a.ValorAntigo.replace(/\D/g, '')) : 0;
-          const valorB = b.ValorAntigo ? parseFloat(b.ValorAntigo.replace(/\D/g, '')) : 0;
+          const valorA = a.ValorAntigo ? parseFloat(a.ValorAntigo.replace(/\D/g, "")) : 0;
+          const valorB = b.ValorAntigo ? parseFloat(b.ValorAntigo.replace(/\D/g, "")) : 0;
           return valorA - valorB; // Ordem crescente
         });
       }
@@ -368,7 +356,11 @@ export default function BuscaImoveis() {
         // Garantir que cada imóvel tenha um código único
         const key =
           imovel.Codigo || `imovel-${imovel._id || Math.random().toString(36).substr(2, 9)}`;
-        return <div key={key} className="flex-1 min-w-[260px]"><CardImovel {...imovel} /></div>;
+        return (
+          <div key={key} className="flex-1 min-w-[260px]">
+            <CardImovel {...imovel} />
+          </div>
+        );
       });
     }
 
@@ -402,21 +394,20 @@ export default function BuscaImoveis() {
   useEffect(() => {
     // Verificar se há parâmetro de busca na URL apenas para o termo de busca
     const searchParams = new URLSearchParams(window.location.search);
-    const searchQuery = searchParams.get('q');
+    const searchQuery = searchParams.get("q");
 
     console.log("Estado atual:", {
       filtrosAplicados,
       atualizacoesFiltros,
       mostrandoFavoritos,
       searchTerm,
-      currentPage
+      currentPage,
     });
 
     setIsLoading(true);
 
     // Prioridade 1: Mostrar favoritos se estiver nesse modo
     if (mostrandoFavoritos) {
-      console.log("Exibindo favoritos");
       setImoveis(favoritos);
       setPagination({
         totalItems: favoritos.length,
@@ -431,7 +422,6 @@ export default function BuscaImoveis() {
 
     // Prioridade 2: Usar filtros se tiverem sido aplicados
     if (filtrosAplicados) {
-      console.log("Buscando imóveis com filtros aplicados");
       // Limpar qualquer termo de busca ao usar filtros
       if (searchTerm) setSearchTerm("");
       buscarImoveis(true);
@@ -441,7 +431,6 @@ export default function BuscaImoveis() {
     // Prioridade 3: Usar termo de busca da URL ou do estado
     if (searchQuery || searchTerm) {
       const termToSearch = searchQuery || searchTerm;
-      console.log("Buscando por termo:", termToSearch);
 
       // Atualiza o input se veio da URL
       if (searchQuery && searchQuery !== searchTerm) {
@@ -453,9 +442,8 @@ export default function BuscaImoveis() {
     }
 
     // Prioridade 4: Busca padrão sem filtros
-    console.log("Buscando todos os imóveis");
-    buscarImoveis(false);
 
+    buscarImoveis(false);
   }, [filtrosAplicados, atualizacoesFiltros, currentPage, mostrandoFavoritos, favoritos]);
 
   // Função para construir o texto dos filtros aplicados para exibir na página
@@ -503,15 +491,25 @@ export default function BuscaImoveis() {
 
   return (
     <>
-      <section className={`bg-zinc-100 pb-32 px-4 sm:px-8 md:px-10 relative ${!uiVisible ? 'opacity-0' : 'opacity-100 transition-opacity duration-300'}`}>
+      <section
+        className={`bg-zinc-100 pb-32 px-4 sm:px-8 md:px-10 relative ${
+          !uiVisible ? "opacity-0" : "opacity-100 transition-opacity duration-300"
+        }`}
+      >
         {/* Fixed search bar that stays below the header */}
-        <div className={`fixed top-20 left-0 right-0 ${filtroVisivel ? 'z-[999997]' : 'z-40'} bg-white px-4 sm:px-6 md:px-10 py-4 md:py-6 shadow-sm`}>
+        <div
+          className={`fixed top-20 left-0 right-0 ${
+            filtroVisivel ? "z-[999997]" : "z-40"
+          } bg-white px-4 sm:px-6 md:px-10 py-4 md:py-6 shadow-sm`}
+        >
           <div className="flex flex-col md:flex-row justify-between items-center gap-3 w-full mx-auto">
             <div className="grid grid-cols-2 items-center gap-2 w-full md:w-[300px]">
               {isMobile && (
                 <button
                   onClick={toggleFiltro}
-                  className={`flex items-center justify-center gap-1 sm:gap-2 ${filtroVisivel ? "bg-black text-white" : "bg-zinc-200 text-black"} font-bold px-2 sm:px-4 py-2 rounded-lg hover:bg-zinc-200/40 transition-colors`}
+                  className={`flex items-center justify-center gap-1 sm:gap-2 ${
+                    filtroVisivel ? "bg-black text-white" : "bg-zinc-200 text-black"
+                  } font-bold px-2 sm:px-4 py-2 rounded-lg hover:bg-zinc-200/40 transition-colors`}
                 >
                   <AdjustmentsHorizontalIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                   <span className="text-xs">{filtroVisivel ? "Fechar Filtros" : "Filtros"}</span>
@@ -520,12 +518,13 @@ export default function BuscaImoveis() {
               <button
                 onClick={toggleMapa}
                 disabled={!filtrosBasicosPreenchidos}
-                className={`flex items-center justify-center gap-1 sm:gap-2 ${mostrandoMapa
-                  ? "bg-black text-white"
-                  : filtrosBasicosPreenchidos
+                className={`flex items-center justify-center gap-1 sm:gap-2 ${
+                  mostrandoMapa
+                    ? "bg-black text-white"
+                    : filtrosBasicosPreenchidos
                     ? "bg-zinc-200 text-black hover:bg-zinc-200/40 transition-colors"
                     : "bg-zinc-300 text-gray-500 cursor-not-allowed"
-                  } font-bold px-2 sm:px-4 py-2 rounded-lg relative`}
+                } font-bold px-2 sm:px-4 py-2 rounded-lg relative`}
               >
                 {mostrandoMapa ? (
                   <>
@@ -547,8 +546,17 @@ export default function BuscaImoveis() {
             </div>
             <div className="relative w-full mt-2 md:mt-0 md:w-[600px]">
               <div className="absolute inset-y-0 left-2 sm:left-3 flex items-center pointer-events-none">
-                <svg className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd"></path>
+                <svg
+                  className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+                    clipRule="evenodd"
+                  ></path>
                 </svg>
               </div>
               <input
@@ -558,7 +566,7 @@ export default function BuscaImoveis() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
+                  if (e.key === "Enter") {
                     handleSearch(searchTerm);
                   }
                 }}
@@ -574,8 +582,9 @@ export default function BuscaImoveis() {
             <div className="mt-2 md:mt-0">
               <button
                 onClick={toggleFavoritos}
-                className={`flex items-center gap-1 sm:gap-2 ${mostrandoFavoritos ? "bg-red-500 text-white" : "bg-zinc-200 text-black"
-                  } font-bold px-3 sm:px-4 py-2 rounded-lg hover:bg-red-400 transition-colors relative`}
+                className={`flex items-center gap-1 sm:gap-2 ${
+                  mostrandoFavoritos ? "bg-red-500 text-white" : "bg-zinc-200 text-black"
+                } font-bold px-3 sm:px-4 py-2 rounded-lg hover:bg-red-400 transition-colors relative`}
               >
                 <HeartIcon className="h-4 w-4 sm:h-5 sm:w-5" />
                 <span className="text-xs">Favoritos</span>
@@ -591,8 +600,22 @@ export default function BuscaImoveis() {
 
         <div className="pt-80 sm:pt-72 md:pt-44 flex flex-col md:flex-row gap-4 md:gap-6 pb-10 relative">
           {/* Container do filtro - tem que ficar acima de tudo */}
-          <div className={`${!fullyInitialized ? 'hidden' : (isMobile ? (filtroVisivel ? 'block' : 'hidden') : 'block')} w-full md:w-[300px] sticky top-40 self-start overflow-y-auto scrollbar-hide h-fit max-h-[calc(100vh-200px)] z-[50] transition-all duration-300`}>
-            <PropertyFilters onFilter={resetarEstadoBusca} isVisible={filtroVisivel} setIsVisible={setFiltroVisivel} />
+          <div
+            className={`${
+              !fullyInitialized
+                ? "hidden"
+                : isMobile
+                ? filtroVisivel
+                  ? "block"
+                  : "hidden"
+                : "block"
+            } w-full md:w-[300px] sticky top-40 self-start overflow-y-auto scrollbar-hide h-fit max-h-[calc(100vh-200px)] z-[50] transition-all duration-300`}
+          >
+            <PropertyFilters
+              onFilter={resetarEstadoBusca}
+              isVisible={filtroVisivel}
+              setIsVisible={setFiltroVisivel}
+            />
           </div>
 
           {/* Container do conteúdo principal - tem que ficar abaixo do filtro */}
@@ -616,7 +639,9 @@ export default function BuscaImoveis() {
                   </select>
                 </div>
 
-                <div className="flex flex-wrap gap-3 sm:gap-4 overflow-hidden z-0">{renderCards()}</div>
+                <div className="flex flex-wrap gap-3 sm:gap-4 overflow-hidden z-0">
+                  {renderCards()}
+                </div>
               </div>
             )}
 

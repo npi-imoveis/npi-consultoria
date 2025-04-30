@@ -326,8 +326,6 @@ export default function EditarImovel({ params }) {
 
   // Função para alterar a posição da imagem
   const changeImagePosition = (codigo, newPosition) => {
-    console.log(`Trocando imagem ${codigo} com a posição ${newPosition}`);
-
     setFormData((prevData) => {
       // Obter as chaves ordenadas pelo valor Ordem ou pela ordem natural
       const keys = [...Object.keys(prevData.Foto)].sort((a, b) => {

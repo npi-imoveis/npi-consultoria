@@ -11,8 +11,6 @@ export function ActionSection({ cards }) {
   const setFilters = useFiltersStore((state) => state.setFilters);
   const aplicarFiltros = useFiltersStore((state) => state.aplicarFiltros);
 
-  console.log("cards", cards);
-
   const handleSearchLuxuryCondos = () => {
     // Limpar filtros anteriores
     useFiltersStore.getState().limparFiltros();

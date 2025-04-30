@@ -17,11 +17,9 @@ export function Share({ url, title = "Confira este imóvel!", imovel, variant = 
     try {
       if (navigator.share) {
         await navigator.share({
-
           title: title,
           url: shareUrl,
         });
-        console.log("Conteúdo compartilhado com sucesso");
       } else {
         // Fallback para navegadores que não suportam a API Share
         navigator.clipboard.writeText(shareUrl);
@@ -49,8 +47,9 @@ export function Share({ url, title = "Confira este imóvel!", imovel, variant = 
     <div className="flex gap-4">
       <button
         onClick={toggleFavorite}
-        className={`transition-colors duration-300 hover:text-red-500 ${variant === "primary" ? "text-white" : "text-zinc-700"
-          }`}
+        className={`transition-colors duration-300 hover:text-red-500 ${
+          variant === "primary" ? "text-white" : "text-zinc-700"
+        }`}
         aria-label="Favoritar"
       >
         <Heart
@@ -61,8 +60,9 @@ export function Share({ url, title = "Confira este imóvel!", imovel, variant = 
       </button>
       <button
         onClick={handleShare}
-        className={`transition-colors duration-300 hover:text-[#8B6F48] ${variant === "primary" ? "text-white" : "text-zinc-700"
-          }`}
+        className={`transition-colors duration-300 hover:text-[#8B6F48] ${
+          variant === "primary" ? "text-white" : "text-zinc-700"
+        }`}
         aria-label="Compartilhar"
       >
         <Share2 size={22} />

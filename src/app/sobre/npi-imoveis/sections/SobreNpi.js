@@ -1,7 +1,6 @@
 import { Button } from "@/app/components/ui/button";
 import { Chip } from "@/app/components/ui/chip";
 import Image from "next/image";
-import { getContentSobreNpi } from "@/app/lib/site-content";
 
 export default async function SobreNPI({ sobre }) {
   return (

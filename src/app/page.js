@@ -18,6 +18,7 @@ import { FeaturedCondosSection } from "./components/sections/featured-condos-sec
 import { TestimonialsSection } from "./components/sections/testimonials-section";
 import { ReviewSection } from "./components/sections/review-section";
 import { WhatsappFloat } from "./components/ui/whatsapp";
+import getContent from "@/app/lib/get-content";
 
 export const metadata = {
   title: "NPi Imóveis - HUB de Imobiliárias de Alto Padrão",
@@ -62,25 +63,22 @@ export const metadata = {
 };
 
 export default async function Home() {
-  const data = await fetch(`${process.env.API_URL}/admin/content`);
-  const content = await data.json();
-
-  console.log("content", content.data.testemunhos);
+  const content = await getContent();
 
   return (
     <div>
       <Header />
       <HeroSection />
-      <ActionSection cards={content?.data?.cards_destacados} />
+      <ActionSection cards={content?.cards_destacados} />
       <FeaturedCondosSection />
       <PropertyList />
       <ListCities />
       <LuxuryGridSection />
-      <AboutSection about={content?.data?.sobre} />
-      <ReviewSection stats={content?.data?.stats} />
+      <AboutSection about={content?.sobre} />
+      <ReviewSection stats={content?.stats} />
       <SlidePartners />
-      <TestimonialsSection testimonials={content?.data?.testemunhos} />
-      <FaqSection faqs={content?.data?.faq} />
+      <TestimonialsSection testimonials={content?.testemunhos} />
+      <FaqSection faqs={content?.faq} />
       <ContactSection />
       <WhatsappFloat />
       <Footer />

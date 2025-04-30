@@ -4,22 +4,22 @@ import { ComoFuncionaHub } from "./components/ComoFuncionaHub";
 import { ReviewSection } from "@/app/components/sections/review-section";
 import { FaqHub } from "./components/FaqHub";
 import { ContactSection } from "@/app/components/sections/contact-section";
+import getContent from "@/app/lib/get-content";
 
 export default async function SobrePage() {
-  const data = await fetch(`${process.env.API_URL}/admin/content`);
-  const content = await data.json();
+  const content = await getContent();
 
   return (
     <section>
       <HeaderPage
-        title={content?.data?.sobre_hub?.header}
-        description={content?.data?.sobre_hub?.header_description}
+        title={content?.sobre_hub?.header}
+        description={content?.sobre_hub?.header_description}
         image="/assets/images/imoveis/02.jpg"
       />
-      <SobreHub sobre={content?.data?.sobre_hub} />
-      <ReviewSection stats={content?.data?.stats} />
-      <ComoFuncionaHub howto={content?.data?.sobre_hub?.howto} />
-      <FaqHub faqs={content?.data?.faq} />
+      <SobreHub sobre={content?.sobre_hub} />
+      <ReviewSection stats={content?.stats} />
+      <ComoFuncionaHub howto={content?.sobre_hub?.howto} />
+      <FaqHub faqs={content?.faq} />
       <ContactSection />
     </section>
   );

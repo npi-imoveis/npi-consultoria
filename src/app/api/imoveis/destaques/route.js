@@ -12,11 +12,10 @@ export async function GET() {
     // Verificar se os dados estão em cache
     const cachedData = cache.get(CACHE_KEY);
     if (cachedData) {
-      console.log("Retornando imóveis destacados do cache");
       return NextResponse.json({
         status: 200,
         data: cachedData,
-        fromCache: true
+        fromCache: true,
       });
     }
 
@@ -30,14 +29,11 @@ export async function GET() {
 
     // Verificar se encontrou algum imóvel
     if (!imoveis || imoveis.length === 0) {
-      console.log("Nenhum imóvel destacado encontrado");
       return NextResponse.json({
         status: 200,
         data: [],
       });
     }
-
-    console.log(`Encontrados ${imoveis.length} imóveis destacados, salvando no cache`);
 
     // Salvar no cache
     cache.set(CACHE_KEY, imoveis);
@@ -45,7 +41,7 @@ export async function GET() {
     return NextResponse.json({
       status: 200,
       data: imoveis,
-      fromCache: false
+      fromCache: false,
     });
   } catch (error) {
     console.error("Erro ao buscar imóveis destacados:", error);

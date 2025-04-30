@@ -1,10 +1,10 @@
 import { HeaderPage } from "@/app/components/ui/header-page";
+import getContent from "@/app/lib/get-content";
 
 import { BriefcaseBusinessIcon } from "lucide-react";
 
 export default async function ServicesPage() {
-  const data = await fetch(`${process.env.API_URL}/admin/content`);
-  const content = await data.json();
+  const content = await getContent();
 
   return (
     <section>
@@ -15,7 +15,7 @@ export default async function ServicesPage() {
       />
       <div className="container mx-auto py-12 px-4 sm:px-6 lg:px-8">
         <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {content?.data?.servicos?.map((servico, index) => (
+          {content?.servicos?.map((servico, index) => (
             <div
               key={index}
               className=" bg-zinc-50 p-9 space-y-3 relative overflow-hidden rounded-lg"

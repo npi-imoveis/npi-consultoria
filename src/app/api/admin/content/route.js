@@ -23,7 +23,12 @@ export async function GET(request) {
       data: content,
     });
   } catch (error) {
-    console.error("Erro ao buscar conteúdo:", error);
+    console.error("Detailed error in content fetch:", {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+    });
+
     return NextResponse.json(
       {
         status: 500,

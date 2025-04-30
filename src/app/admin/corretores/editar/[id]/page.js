@@ -45,8 +45,6 @@ export default function EditarCorretor({ params }) {
     }
   }, [id, router]);
 
-  console.log("Imoveis Vinculados: ", imoveis);
-
   // Função para lidar com mudanças nos campos
   const handleChange = (e) => {
     const { name, value } = e.target;

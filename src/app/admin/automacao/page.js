@@ -138,8 +138,6 @@ export default function AdminImoveis() {
 
   // Função para navegar para a página de edição
   const handleEdit = (imovelCodigo) => {
-    console.log("Tentando editar imóvel com código:", imovelCodigo);
-
     if (!imovelCodigo) {
       console.error("Código do imóvel não encontrado");
       return;

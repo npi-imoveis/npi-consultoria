@@ -158,7 +158,6 @@ export default function CadastrarImovel() {
       setIsSaving(true); // Usa o mesmo estado para indicar carregamento
       const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
       const data = await response.json();
-      console.log("Endereço", data);
 
       if (!data.erro) {
         // Buscar coordenadas após obter o endereço

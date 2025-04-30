@@ -7,8 +7,6 @@ function ensureNumber(value, defaultValue) {
 
 export async function getImovelByIdAutomacao(codigo) {
   try {
-    console.log(`Serviço: Buscando imóvel com Codigo ${codigo}`);
-
     // Garantir que estamos buscando pelo Codigo
     const response = await axiosClient.get(`/automacao/${codigo}`, {
       timeout: 25000, // Timeout de 25 segundos
@@ -16,22 +14,16 @@ export async function getImovelByIdAutomacao(codigo) {
 
     // Verificar se a resposta contém dados válidos
     if (response && response.data) {
-      console.log("Serviço: Resposta da API recebida:", response.status);
-
       // Verificar se os dados estão em data.data
       if (response.data.data) {
-        console.log("Serviço: Imóvel encontrado em data.data");
         return response.data;
       } else {
-        console.log("Serviço: Dados não encontrados no formato esperado");
         return { data: null, status: response.data.status };
       }
     } else {
-      console.error(`Serviço: Resposta vazia da API para imóvel ${codigo}`);
       return { data: null, status: 404 };
     }
   } catch (error) {
-    console.error(`Serviço: Erro ao buscar imóvel ${codigo}:`, error);
     if (error.code === "ERR_NETWORK") {
       return {
         data: null,
@@ -56,13 +48,9 @@ export async function getImoveisAutomacao(params = {}, page = 1, limit = 12) {
     // Construir a URL com os parâmetros de paginação
     const url = `/automacao?page=${validPage}&limit=${validLimit}`;
 
-    console.log(`Serviço: Buscando imóveis na URL: ${url}`);
-
     const response = await axiosClient.get(url, {
       timeout: 25000, // Timeout de 25 segundos
     });
-
-    console.log(`Serviço: Resposta recebida com status: ${response.status}`);
 
     // Extrair dados e informações de paginação da resposta
     const data = response.data.data || [];
@@ -76,8 +64,6 @@ export async function getImoveisAutomacao(params = {}, page = 1, limit = 12) {
     );
     const currentPage = ensureNumber(paginacao.currentPage, validPage);
     const itemsPerPage = ensureNumber(paginacao.limit, validLimit);
-
-    console.log(`Serviço: Encontrados ${totalItems} imóveis, retornando ${data.length}`);
 
     return {
       imoveis: data,
@@ -129,13 +115,9 @@ export async function getCorretores(params = {}, page = 1, limit = 12) {
     // Construir a URL com os parâmetros de paginação
     const url = `/admin/corretores?page=${validPage}&limit=${validLimit}`;
 
-    console.log(`Serviço: Buscando corretores na URL: ${url}`);
-
     const response = await axiosClient.get(url, {
       timeout: 25000, // Timeout de 25 segundos
     });
-
-    console.log(`Serviço: Resposta recebida com status: ${response.status}`);
 
     // Extrair dados e informações de paginação da resposta
     const data = response.data.data || [];
@@ -149,8 +131,6 @@ export async function getCorretores(params = {}, page = 1, limit = 12) {
     );
     const currentPage = ensureNumber(paginacao.currentPage, validPage);
     const itemsPerPage = ensureNumber(paginacao.limit, validLimit);
-
-    console.log(`Serviço: Encontrados ${totalItems} corretores, retornando ${data.length}`);
 
     return {
       corretores: data,
@@ -202,13 +182,9 @@ export async function getProprietarios(params = {}, page = 1, limit = 12) {
     // Construir a URL com os parâmetros de paginação
     const url = `/admin/proprietarios?page=${validPage}&limit=${validLimit}`;
 
-    console.log(`Serviço: Buscando proprietarios na URL: ${url}`);
-
     const response = await axiosClient.get(url, {
       timeout: 25000, // Timeout de 25 segundos
     });
-
-    console.log(`Serviço: Resposta recebida com status: ${response.status}`);
 
     // Extrair dados e informações de paginação da resposta
     const data = response.data.data || [];
@@ -222,8 +198,6 @@ export async function getProprietarios(params = {}, page = 1, limit = 12) {
     );
     const currentPage = ensureNumber(paginacao.currentPage, validPage);
     const itemsPerPage = ensureNumber(paginacao.limit, validLimit);
-
-    console.log(`Serviço: Encontrados ${totalItems} proprietarios, retornando ${data.length}`);
 
     return {
       proprietarios: data,
@@ -268,7 +242,6 @@ export async function getProprietarios(params = {}, page = 1, limit = 12) {
 
 export async function getProprietarioById(id) {
   try {
-    console.log(`Serviço: Buscando proprietario com ID ${id}`);
     const response = await axiosClient.get(`/admin/proprietarios?id=${id}`, {
       timeout: 25000,
     });
@@ -291,8 +264,6 @@ export async function getProprietarioById(id) {
 
 export async function atualizarProprietario(id, dadosProprietario) {
   try {
-    console.log(`Serviço: Atualizando proprietário com ID ${id}`);
-
     const response = await axiosClient.put(
       `/admin/proprietarios`,
       {
@@ -303,8 +274,6 @@ export async function atualizarProprietario(id, dadosProprietario) {
         timeout: 25000,
       }
     );
-
-    console.log("Serviço: Resposta da API de atualização recebida:", response.status);
 
     return {
       success: response.data?.success || false,
@@ -332,13 +301,9 @@ export async function atualizarProprietario(id, dadosProprietario) {
 
 export async function atualizarImovelAutomacao(codigo, dadosImovel) {
   try {
-    console.log(`Serviço: Atualizando imóvel com Codigo ${codigo}`);
-
     const response = await axiosClient.post(`/automacao/${codigo}`, dadosImovel, {
       timeout: 25000, // Timeout de 25 segundos
     });
-
-    console.log("Serviço: Resposta da API de atualização recebida:", response.status);
 
     return {
       success: response.data?.success || false,
@@ -366,13 +331,9 @@ export async function atualizarImovelAutomacao(codigo, dadosImovel) {
 
 export async function excluirImovelAutomacao(codigo) {
   try {
-    console.log(`Serviço: Excluindo imóvel com Codigo ${codigo}`);
-
     const response = await axiosClient.delete(`/automacao/${codigo}`, {
       timeout: 25000, // Timeout de 25 segundos
     });
-
-    console.log("Serviço: Resposta da API de exclusão recebida:", response.status);
 
     return {
       success: response.data?.success || false,
@@ -399,8 +360,6 @@ export async function excluirImovelAutomacao(codigo) {
 
 export async function atualizarCorretor(id, dadosCorretor) {
   try {
-    console.log(`Serviço: Atualizando corretor com ID ${id}`);
-
     const response = await axiosClient.put(
       `/admin/corretores`,
       {
@@ -411,8 +370,6 @@ export async function atualizarCorretor(id, dadosCorretor) {
         timeout: 25000,
       }
     );
-
-    console.log("Serviço: Resposta da API de atualização recebida:", response.status);
 
     return {
       success: response.data?.success || false,
@@ -440,7 +397,6 @@ export async function atualizarCorretor(id, dadosCorretor) {
 
 export async function getCorretorById(id) {
   try {
-    console.log(`Serviço: Buscando corretor com ID ${id}`);
     const response = await axiosClient.get(`/admin/corretores?id=${id}`, {
       timeout: 25000,
     });
@@ -463,7 +419,6 @@ export async function getCorretorById(id) {
 
 export async function getVinculos(id) {
   try {
-    console.log(`Serviço: Buscando vinculos com ID ${id}`);
     const response = await axiosClient.get(`/admin/vinculo?id=${id}`, {
       timeout: 25000,
     });
@@ -527,8 +482,6 @@ export async function getProprietario(id) {
 
 export async function updateProprietario(id, dadosProprietario) {
   try {
-    console.log(`Serviço: Atualizando proprietário com PLACA ${id}`);
-
     const response = await axiosClient.put(`/admin/proprietario?id=${id}`, dadosProprietario, {
       timeout: 25000,
     });

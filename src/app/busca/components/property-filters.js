@@ -227,7 +227,7 @@ const InputPreco = ({ placeholder, value, onChange }) => {
         style: "currency",
         currency: "BRL",
         minimumFractionDigits: 0,
-        maximumFractionDigits: 0
+        maximumFractionDigits: 0,
       });
     } catch (e) {
       console.error("Erro ao formatar valor:", e);
@@ -481,7 +481,8 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible }) {
       if (cidadeSelecionada) {
         try {
           console.log(
-            `Buscando bairros para cidade: ${cidadeSelecionada}${categoriaSelecionada ? ` e categoria: ${categoriaSelecionada}` : ""
+            `Buscando bairros para cidade: ${cidadeSelecionada}${
+              categoriaSelecionada ? ` e categoria: ${categoriaSelecionada}` : ""
             }`
           );
 
@@ -489,8 +490,6 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible }) {
           const response = await getBairrosPorCidade(cidadeSelecionada, categoriaSelecionada);
 
           if (response && response.data) {
-            console.log("Resposta da API de bairros:", response);
-
             // Extrair a lista de bairros da resposta
             const bairrosList = response.data || [];
 
@@ -499,8 +498,6 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible }) {
             setFilters({
               bairros: bairrosList,
             });
-
-            console.log("Bairros carregados:", bairrosList.length);
           } else {
             console.error("Formato de resposta inválido para bairros:", response);
             setBairros([]);
@@ -587,17 +584,17 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible }) {
     checkScreenSize();
 
     // Adicionar listener para mudanças de tamanho
-    window.addEventListener('resize', checkScreenSize);
+    window.addEventListener("resize", checkScreenSize);
 
     // Limpar listener ao desmontar
-    return () => window.removeEventListener('resize', checkScreenSize);
+    return () => window.removeEventListener("resize", checkScreenSize);
   }, [isClient]);
 
   // Efeito para medir a altura correta do header e controlar o overflow
   useEffect(() => {
     if (isMobile && isVisible) {
       // Tentativa de encontrar o elemento do header para medir sua altura real
-      const headerElement = document.querySelector('.fixed.top-20');
+      const headerElement = document.querySelector(".fixed.top-20");
       if (headerElement) {
         const headerRect = headerElement.getBoundingClientRect();
         const topPosition = headerRect.bottom;
@@ -605,14 +602,14 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible }) {
       }
 
       // Impedir rolagem do body quando o filtro está aberto em mobile
-      document.body.style.overflow = 'hidden';
+      document.body.style.overflow = "hidden";
     } else {
       // Restaurar rolagem quando o filtro está fechado ou em desktop
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
     }
 
     return () => {
-      document.body.style.overflow = '';
+      document.body.style.overflow = "";
     };
   }, [isMobile, isVisible]);
 
@@ -646,10 +643,10 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible }) {
 
   // Handler para bairro - alterado para lidar com múltipla seleção
   const handleBairroChange = (bairro) => {
-    setBairrosSelecionados(prev => {
+    setBairrosSelecionados((prev) => {
       // Se o bairro já estiver selecionado, remove
       if (prev.includes(bairro)) {
-        return prev.filter(b => b !== bairro);
+        return prev.filter((b) => b !== bairro);
       }
       // Caso contrário, adiciona à lista
       return [...prev, bairro];
@@ -657,7 +654,7 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible }) {
   };
 
   // Função para filtrar bairros com base na pesquisa
-  const bairrosFiltrados = bairros.filter(bairro =>
+  const bairrosFiltrados = bairros.filter((bairro) =>
     bairro.toLowerCase().includes(bairroFilter.toLowerCase())
   );
 
@@ -713,11 +710,14 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible }) {
 
     // Garantir que cada bairro é uma string individual (sem vírgulas)
     const bairrosProcessados = [];
-    bairrosSelecionados.forEach(bairro => {
-      if (typeof bairro === 'string' && bairro.includes(',')) {
+    bairrosSelecionados.forEach((bairro) => {
+      if (typeof bairro === "string" && bairro.includes(",")) {
         // Dividir a string e adicionar cada parte como um bairro separado
-        const partes = bairro.split(',').map(parte => parte.trim()).filter(Boolean);
-        partes.forEach(parte => bairrosProcessados.push(parte));
+        const partes = bairro
+          .split(",")
+          .map((parte) => parte.trim())
+          .filter(Boolean);
+        partes.forEach((parte) => bairrosProcessados.push(parte));
       } else {
         // Adicionar o bairro normalmente
         bairrosProcessados.push(bairro);
@@ -800,13 +800,16 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible }) {
         />
       )}
       <div
-        className={`bg-white text-black rounded-lg shadow-sm w-full overflow-y-auto scrollbar-hide ${isClient && isMobile && isVisible ? 'fixed inset-0 z-[999999]' : ''} transition-all duration-300`}
+        className={`bg-white text-black rounded-lg shadow-sm w-full overflow-y-auto scrollbar-hide ${
+          isClient && isMobile && isVisible ? "fixed inset-0 z-[999999]" : ""
+        } transition-all duration-300`}
         style={{
-          top: isClient && isMobile && isVisible ? `${headerHeight}px` : 'auto',
-          height: isClient && isMobile && isVisible ? `calc(100vh - ${headerHeight}px)` : 'auto',
-          maxHeight: isClient && isMobile ? `calc(100vh - ${headerHeight}px)` : 'calc(100vh - 200px)',
+          top: isClient && isMobile && isVisible ? `${headerHeight}px` : "auto",
+          height: isClient && isMobile && isVisible ? `calc(100vh - ${headerHeight}px)` : "auto",
+          maxHeight:
+            isClient && isMobile ? `calc(100vh - ${headerHeight}px)` : "calc(100vh - 200px)",
           // Ocultar completamente até que a inicialização esteja completa para evitar flash durante hidratação
-          display: !uiVisible ? 'none' : 'block',
+          display: !uiVisible ? "none" : "block",
         }}
       >
         <div className="w-full p-4 sm:p-6">
@@ -824,7 +827,9 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible }) {
           </div>
 
           <div className="my-3 sm:my-4">
-            <span className="block text-[10px] font-semibold text-gray-800 mb-1 mt-2">Finalidade</span>
+            <span className="block text-[10px] font-semibold text-gray-800 mb-1 mt-2">
+              Finalidade
+            </span>
             <select
               className="w-full rounded-md border border-gray-300 bg-white text-xs p-2 focus:outline-none focus:ring-1 focus:ring-black"
               value={finalidade === "VENDA" ? "comprar" : finalidade === "ALUGUEL" ? "alugar" : ""}
@@ -835,7 +840,9 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible }) {
               <option value="alugar">Alugar</option>
             </select>
 
-            <span className="block text-[10px] font-semibold text-gray-800 mb-1 mt-2">Tipo de imóvel</span>
+            <span className="block text-[10px] font-semibold text-gray-800 mb-1 mt-2">
+              Tipo de imóvel
+            </span>
             <select
               className="w-full rounded-md border border-gray-300 bg-white text-xs p-2 focus:outline-none focus:ring-1 focus:ring-black"
               value={categoriaSelecionada}
@@ -886,7 +893,11 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible }) {
                 )}
 
                 {/* Área de checkboxes para bairros */}
-                <div className={`mt-1 border border-gray-200 rounded-md bg-white max-h-40 overflow-y-auto ${!cidadeSelecionada || !bairrosExpanded ? 'hidden' : ''}`}>
+                <div
+                  className={`mt-1 border border-gray-200 rounded-md bg-white max-h-40 overflow-y-auto ${
+                    !cidadeSelecionada || !bairrosExpanded ? "hidden" : ""
+                  }`}
+                >
                   {/* Botões de selecionar todos/limpar todos */}
                   {bairrosFiltrados.length > 0 && (
                     <div className="flex justify-between border-b border-gray-100 px-2 py-1">
@@ -915,14 +926,17 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible }) {
                           onChange={() => handleBairroChange(bairro)}
                           className="mr-2 h-4 w-4"
                         />
-                        <label htmlFor={`bairro-${bairro}`} className="text-xs cursor-pointer flex-1">
+                        <label
+                          htmlFor={`bairro-${bairro}`}
+                          className="text-xs cursor-pointer flex-1"
+                        >
                           {bairro}
                         </label>
                       </div>
                     ))
                   ) : (
                     <div className="px-2 py-1 text-xs text-gray-500">
-                      {bairroFilter ? 'Nenhum bairro encontrado' : 'Selecione uma cidade primeiro'}
+                      {bairroFilter ? "Nenhum bairro encontrado" : "Selecione uma cidade primeiro"}
                     </div>
                   )}
                 </div>
@@ -931,7 +945,8 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible }) {
                 {bairrosExpanded && (
                   <button
                     onClick={() => setBairrosExpanded(false)}
-                    className="text-xs text-black bg-gray-100 w-full py-1 rounded-b-md">
+                    className="text-xs text-black bg-gray-100 w-full py-1 rounded-b-md"
+                  >
                     Fechar
                   </button>
                 )}
@@ -940,12 +955,16 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible }) {
               {/* Lista de bairros selecionados */}
               {bairrosSelecionados.length > 0 && (
                 <div className="mt-2 flex flex-wrap gap-1">
-                  {bairrosSelecionados.map(bairro => (
-                    <div key={bairro} className="bg-gray-100 rounded-full px-2 py-1 text-[10px] flex items-center">
+                  {bairrosSelecionados.map((bairro) => (
+                    <div
+                      key={bairro}
+                      className="bg-gray-100 rounded-full px-2 py-1 text-[10px] flex items-center"
+                    >
                       {bairro}
                       <button
                         onClick={() => handleBairroChange(bairro)}
-                        className="ml-1 text-gray-500 hover:text-black">
+                        className="ml-1 text-gray-500 hover:text-black"
+                      >
                         ×
                       </button>
                     </div>
@@ -1009,7 +1028,9 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible }) {
 
           {/* Área com limite de 3 dígitos */}
           <div className="mb-4">
-            <span className="block text-[10px] font-semibold text-gray-800 mb-2">Área do imóvel</span>
+            <span className="block text-[10px] font-semibold text-gray-800 mb-2">
+              Área do imóvel
+            </span>
             <div className="flex gap-2">
               <InputArea
                 placeholder="0 m²"
@@ -1024,8 +1045,6 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible }) {
             </div>
           </div>
 
-
-
           {/* <Checkbox
             id="proximoMetro"
             label="Próximo ao metrô/trem"
@@ -1034,8 +1053,14 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible }) {
           /> */}
 
           {/* Botões */}
-          <div className={`${isClient && isMobile ? 'fixed bottom-0 left-0 right-0 w-full px-4 py-4 bg-white border-t border-gray-200 shadow-lg z-[999999]' : 'sticky bottom-0 bg-white pt-3 pb-1 z-10'}`}>
-            <div className={isClient && isMobile ? 'pb-safe' : ''}>
+          <div
+            className={`${
+              isClient && isMobile
+                ? "fixed bottom-0 left-0 right-0 w-full px-4 py-4 bg-white border-t border-gray-200 shadow-lg z-[999999]"
+                : "sticky bottom-0 bg-white pt-3 pb-1 z-10"
+            }`}
+          >
+            <div className={isClient && isMobile ? "pb-safe" : ""}>
               <button
                 onClick={handleAplicarFiltros}
                 className="w-full bg-black shadow-md text-white px-4 py-3 rounded-md mb-2 text-xs sm:text-sm"

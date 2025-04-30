@@ -43,9 +43,8 @@ export async function GET(request) {
   });
 
   // Log para verificar como os bairros estão sendo recebidos
-  console.log("Bairros recebidos:", bairros);
+
   // Log para verificar os valores de preço recebidos
-  console.log("Valores de preço recebidos: precoMinimo =", precoMinimo, "precoMaximo =", precoMaximo);
 
   try {
     await connectToDatabase();
@@ -53,10 +52,7 @@ export async function GET(request) {
     // Construir o objeto de filtro
     const filtro = {
       // Filtro para retornar imóveis que tenham ValorAntigo ou ValorAluguelSite diferentes de "0" e vazio
-      $or: [
-        { ValorAntigo: { $nin: ["0", ""] } },
-        { ValorAluguelSite: { $nin: ["0", ""] } }
-      ]
+      $or: [{ ValorAntigo: { $nin: ["0", ""] } }, { ValorAluguelSite: { $nin: ["0", ""] } }],
     };
 
     // Adicionar filtros básicos apenas se os parâmetros estiverem presentes
@@ -85,8 +81,6 @@ export async function GET(request) {
 
     // Adicionar filtros de área
     if (areaMinima || areaMaxima) {
-      console.log("Aplicando filtros de área - Mínima:", areaMinima, "Máxima:", areaMaxima);
-
       filtro.AreaPrivativa = {};
 
       if (areaMinima) {
@@ -97,8 +91,6 @@ export async function GET(request) {
         filtro.AreaPrivativa.$lte = parseInt(areaMaxima, 10);
       }
     }
-
-    console.log("Filtro base aplicado (antes do preço):", JSON.stringify(filtro, null, 2));
 
     // Função para converter string de preço para número para comparação
     const converterPrecoParaNumero = (valor) => {
@@ -114,8 +106,6 @@ export async function GET(request) {
         // Converte para número
         const numero = Number(valorStr);
 
-        console.log(`Conversão de preço: "${valor}" => ${numero}`);
-
         return numero;
       } catch (error) {
         console.error(`Erro ao converter preço "${valor}":`, error);
@@ -125,20 +115,14 @@ export async function GET(request) {
 
     // Buscar imóveis e aplicar filtro de preço após converter os valores
     if (precoMinimo || precoMaximo) {
-      console.log("Aplicando filtros de preço avançados - Mínimo:", precoMinimo, "Máximo:", precoMaximo);
-
       const precoMinimoNumerico = precoMinimo ? converterPrecoParaNumero(precoMinimo) : null;
       const precoMaximoNumerico = precoMaximo ? converterPrecoParaNumero(precoMaximo) : null;
 
-      console.log("Preço mínimo numérico:", precoMinimoNumerico);
-      console.log("Preço máximo numérico:", precoMaximoNumerico);
-
       // Criar uma etapa adicional de agregação para filtrar por preço
       const imoveisPreFiltrados = await Imovel.find(filtro);
-      console.log(`Encontrados ${imoveisPreFiltrados.length} imóveis antes do filtro de preço`);
 
       // Filtrar os imóveis usando comparação numérica
-      const imoveisFiltrados = imoveisPreFiltrados.filter(imovel => {
+      const imoveisFiltrados = imoveisPreFiltrados.filter((imovel) => {
         try {
           // Verificar se ValorAntigo é "0" ou vazio - filtrar esses imóveis
           const precoImovelStr = imovel.ValorAntigo || "0";
@@ -156,13 +140,20 @@ export async function GET(request) {
             valorConvertido: precoImovelNum,
             precoMinimo: precoMinimoNumerico,
             precoMaximo: precoMaximoNumerico,
-            comparacaoMin: precoMinimoNumerico ? (precoImovelNum < precoMinimoNumerico ? "REJEITADO" : "OK") : "Não aplicável",
-            comparacaoMax: precoMaximoNumerico ? (precoImovelNum > precoMaximoNumerico ? "REJEITADO" : "OK") : "Não aplicável"
+            comparacaoMin: precoMinimoNumerico
+              ? precoImovelNum < precoMinimoNumerico
+                ? "REJEITADO"
+                : "OK"
+              : "Não aplicável",
+            comparacaoMax: precoMaximoNumerico
+              ? precoImovelNum > precoMaximoNumerico
+                ? "REJEITADO"
+                : "OK"
+              : "Não aplicável",
           };
 
           // Imprimir a comparação para os primeiros imóveis apenas (para evitar logs excessivos)
           if (imovel.Codigo?.includes("001") || Math.random() < 0.1) {
-            console.log("Comparação de preço:", JSON.stringify(logComparacao, null, 2));
           }
 
           // Aplicar os filtros de preço com verificação de valores nulos/indefinidos
@@ -181,8 +172,6 @@ export async function GET(request) {
           return false;
         }
       });
-
-      console.log(`Restaram ${imoveisFiltrados.length} imóveis após filtro de preço`);
 
       // Contar o total de itens filtrados
       const totalItems = imoveisFiltrados.length;
@@ -204,20 +193,15 @@ export async function GET(request) {
       });
     } else {
       // Se não há filtro de preço, continua com a consulta normal
-      console.log("Filtro aplicado (sem preço):", JSON.stringify(filtro, null, 2));
 
       // Contar o total de documentos que correspondem ao filtro (para paginação)
       const totalItems = await Imovel.countDocuments(filtro);
-      console.log("Total de itens encontrados:", totalItems);
 
       // Calcular o total de páginas
       const totalPages = Math.ceil(totalItems / limit);
 
       // Ordenar por data de inclusão (mais recentes primeiro)
-      const imoveis = await Imovel.find(filtro)
-        .sort({ DataInclusao: -1 })
-        .skip(skip)
-        .limit(limit);
+      const imoveis = await Imovel.find(filtro).sort({ DataInclusao: -1 }).skip(skip).limit(limit);
 
       return NextResponse.json({
         status: 200,

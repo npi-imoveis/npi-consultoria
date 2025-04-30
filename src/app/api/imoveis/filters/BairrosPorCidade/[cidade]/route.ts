@@ -23,7 +23,7 @@ export async function GET(request, { params }) {
         `Filtrando bairros por cidade: ${decodeURIComponent(cidade)} e categoria: ${categoria}`
       );
     } else {
-      console.log(`Buscando bairros para a cidade: ${decodeURIComponent(cidade)}`);
+
     }
 
     // Buscar bairros distintos com base na condição
@@ -35,8 +35,7 @@ export async function GET(request, { params }) {
       .sort((a, b) => a.localeCompare(b));
 
     console.log(
-      `Encontrados ${bairrosFiltrados.length} bairros para a cidade ${decodeURIComponent(cidade)}${
-        categoria ? ` e categoria ${categoria}` : ""
+      `Encontrados ${bairrosFiltrados.length} bairros para a cidade ${decodeURIComponent(cidade)}${categoria ? ` e categoria ${categoria}` : ""
       }`
     );
 

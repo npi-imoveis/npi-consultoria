@@ -38,12 +38,9 @@ export default function AdminLogin() {
     setError("");
     setSuccess("");
 
-    console.log("Login: Attempting to sign in...");
-
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       if (userCredential.user) {
-        console.log("Login: Sign in successful.");
         setSuccess("Login realizado com sucesso!");
         setEmail("");
         setPassword("");
@@ -51,9 +48,9 @@ export default function AdminLogin() {
         router.push("/admin/dashboard");
       }
     } catch (err) {
-      console.error('Erro de autenticação:', err);
+      console.error("Erro de autenticação:", err);
       setError(
-        err.code === 'auth/invalid-credential'
+        err.code === "auth/invalid-credential"
           ? "E-mail ou senha incorretos"
           : "Ocorreu um erro ao tentar fazer login"
       );
@@ -173,8 +170,9 @@ export default function AdminLogin() {
               <button
                 type="submit"
                 disabled={isAuthenticating}
-                className={`w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white ${isAuthenticating ? "bg-gray-400" : "bg-black hover:bg-black/80"
-                  } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-400 transition-colors`}
+                className={`w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white ${
+                  isAuthenticating ? "bg-gray-400" : "bg-black hover:bg-black/80"
+                } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-400 transition-colors`}
               >
                 {isAuthenticating ? "Entrando..." : "Entrar"}
               </button>

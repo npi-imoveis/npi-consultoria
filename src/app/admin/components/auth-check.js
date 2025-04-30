@@ -11,7 +11,6 @@ export default function AuthCheck({ children }) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    console.log("AuthCheck: Initializing authentication check...");
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         // Só faz o controle de expiração se o usuário está autenticado

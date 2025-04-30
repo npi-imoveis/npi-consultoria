@@ -95,7 +95,6 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create") => {
         let result;
 
         if (mode === "edit") {
-          console.log("Formulario Edit", payload);
           //Em modo de edição, chamar o serviço de atualização
           result = await atualizarImovel(formData.Codigo, payload);
 

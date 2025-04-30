@@ -93,8 +93,6 @@ export default function GerenciarImovel() {
         return displayObj;
       };
 
-      console.log("Imóvel selecionado:", imovelSelecionado);
-
       // Processar dados de fotos para o formato correto
       const processPhotos = () => {
         if (!imovelSelecionado.Foto) return [];
@@ -156,8 +154,6 @@ export default function GerenciarImovel() {
 
       // Atualiza os valores de exibição formatados
       setDisplayValues(formatMonetaryDisplayValues());
-
-      console.log("Imóvel carregado do store para edição:", imovelSelecionado.Codigo);
     }
   }, [imovelSelecionado, mode, setFormData, setDisplayValues]);
 

@@ -71,9 +71,9 @@ const ImovelPopup = ({ imovel }) => {
         <p className="text-sm font-bold mt-1">
           {imovel.ValorVenda
             ? Number(imovel.ValorVenda).toLocaleString("pt-BR", {
-              style: "currency",
-              currency: "BRL",
-            })
+                style: "currency",
+                currency: "BRL",
+              })
             : "Consulte"}
         </p>
         <div className="mt-2">
@@ -123,7 +123,6 @@ const MapComponent = ({ filtros }) => {
         vagas: filtros.vagas,
       });
 
-      console.log("Imóveis para o mapa:", response);
       setImoveis(response.data || []);
     } catch (err) {
       console.error("Erro ao buscar imóveis para o mapa:", err);
@@ -170,7 +169,7 @@ const MapComponent = ({ filtros }) => {
     // Se tiver bairro selecionado, centralizar no primeiro imóvel com coordenadas válidas
     if (filtros.bairrosSelecionados && filtros.bairrosSelecionados.length > 0) {
       const primeiroImovelValido = imoveis.find(
-        imovel =>
+        (imovel) =>
           imovel.Latitude &&
           imovel.Longitude &&
           !isNaN(parseFloat(imovel.Latitude)) &&
@@ -180,7 +179,7 @@ const MapComponent = ({ filtros }) => {
       if (primeiroImovelValido) {
         setMapCenter([
           parseFloat(primeiroImovelValido.Latitude),
-          parseFloat(primeiroImovelValido.Longitude)
+          parseFloat(primeiroImovelValido.Longitude),
         ]);
         setMapZoom(15); // Zoom maior para um único imóvel
         return;

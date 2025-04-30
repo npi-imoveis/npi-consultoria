@@ -157,7 +157,6 @@ const VincularImovelSection = ({ formData, displayValues, onChange, validation }
         setSlug(newPropertyData.Slug);
       }
 
-      console.log("Imovel Vinculado", newPropertyData);
       // Submit the new property
       const result = await criarImovel(newCode, newPropertyData);
 

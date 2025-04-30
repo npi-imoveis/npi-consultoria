@@ -7,8 +7,6 @@ export async function GET(request, { params }) {
   // Extrair o id dos parâmetros (este id é o Codigo do imóvel)
   const { id } = params;
 
-  console.log("Buscando imóvel com Codigo:", id);
-
   try {
     await connectToDatabase();
 
@@ -16,7 +14,6 @@ export async function GET(request, { params }) {
     const imovel = await Imovel.findOne({ Codigo: id });
 
     if (!imovel) {
-      console.log(`Imóvel com Codigo ${id} não encontrado`);
       return NextResponse.json(
         {
           status: 404,
@@ -25,8 +22,6 @@ export async function GET(request, { params }) {
         { status: 404 }
       );
     }
-
-    console.log(`Imóvel com Codigo ${id} encontrado`);
 
     return NextResponse.json({
       status: 200,
@@ -48,7 +43,6 @@ export async function GET(request, { params }) {
 export async function PUT(request, { params }) {
   // O id nos parâmetros é o Codigo do imóvel
   const { id } = params;
-  console.log(`Atualizando imóvel com Codigo: ${id}`);
 
   try {
     await connectToDatabase();
@@ -60,7 +54,6 @@ export async function PUT(request, { params }) {
     const imovelExistente = await Imovel.findOne({ Codigo: id });
 
     if (!imovelExistente) {
-      console.log(`Imóvel com Codigo ${id} não encontrado para atualização`);
       return NextResponse.json(
         {
           status: 404,
@@ -87,8 +80,6 @@ export async function PUT(request, { params }) {
       );
     }
 
-    console.log(`Imóvel com Codigo ${id} atualizado com sucesso`);
-
     return NextResponse.json({
       status: 200,
       success: true,
@@ -112,7 +103,6 @@ export async function PUT(request, { params }) {
 export async function DELETE(request, { params }) {
   // O id nos parâmetros é o Codigo do imóvel
   const { id } = params;
-  console.log(`Excluindo imóvel com Codigo: ${id}`);
 
   try {
     await connectToDatabase();
@@ -121,7 +111,6 @@ export async function DELETE(request, { params }) {
     const imovelExistente = await Imovel.findOne({ Codigo: id });
 
     if (!imovelExistente) {
-      console.log(`Imóvel com Codigo ${id} não encontrado para exclusão`);
       return NextResponse.json(
         {
           status: 404,
@@ -143,8 +132,6 @@ export async function DELETE(request, { params }) {
         { status: 500 }
       );
     }
-
-    console.log(`Imóvel com Codigo ${id} excluído com sucesso`);
 
     return NextResponse.json({
       status: 200,
@@ -168,7 +155,6 @@ export async function DELETE(request, { params }) {
 export async function POST(request, { params }) {
   // O id nos parâmetros é o Codigo do imóvel
   const { id } = params;
-  console.log(`Criando novo imóvel com Codigo: ${id}`);
 
   try {
     await connectToDatabase();
@@ -180,7 +166,6 @@ export async function POST(request, { params }) {
     const imovelExistente = await Imovel.findOne({ Codigo: id });
 
     if (imovelExistente) {
-      console.log(`Imóvel com Codigo ${id} já existe`);
       return NextResponse.json(
         {
           status: 409,
@@ -199,8 +184,6 @@ export async function POST(request, { params }) {
 
     const novoImovelAtivo = new ImovelAtivo(dadosImovel);
     const imovelAtivoSalvo = await novoImovelAtivo.save();
-
-    console.log(`Imóvel com Codigo ${id} criado com sucesso`);
 
     return NextResponse.json(
       {

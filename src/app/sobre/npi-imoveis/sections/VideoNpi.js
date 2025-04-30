@@ -3,12 +3,9 @@ import { useState } from "react";
 import Image from "next/image";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { TitleSection } from "@/app/components/ui/title-section";
-import { Button } from "@/app/components/ui/button";
 
 export default function VideoNpi({ missao }) {
   const [isOpen, setIsOpen] = useState(false);
-
-  console.log("Missão", missao);
 
   return (
     <section className="bg-white py-24 px-6 lg:px-0">

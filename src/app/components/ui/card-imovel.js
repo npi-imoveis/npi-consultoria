@@ -107,7 +107,6 @@ export default function CardImovel({
   const handleButtonClick = () => {
     // Armazenar o ID e slug no store
     setImovelSelecionado(Codigo, slug);
-    console.log("Imóvel selecionado:", Codigo, slug);
   };
 
   // Verificar se há fotos disponíveis

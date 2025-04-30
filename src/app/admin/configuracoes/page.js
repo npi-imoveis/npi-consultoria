@@ -62,7 +62,6 @@ export default function Configuracoes() {
     }, 1000);
 
     // Em uma implementação real, você enviaria os dados para a API
-    console.log("Configurações salvas:", formData);
   };
 
   return (

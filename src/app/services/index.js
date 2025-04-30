@@ -47,20 +47,23 @@ export async function getImoveis(params = {}, page = 1, limit = 12) {
     }
 
     // Tratar o array de bairros especificamente
-    if (params.bairrosArray && Array.isArray(params.bairrosArray) && params.bairrosArray.length > 0) {
+    if (
+      params.bairrosArray &&
+      Array.isArray(params.bairrosArray) &&
+      params.bairrosArray.length > 0
+    ) {
       // Adicionar cada bairro como um parâmetro separado
-      params.bairrosArray.forEach(bairro => {
-        if (bairro && typeof bairro === 'string' && bairro.trim() !== '') {
+      params.bairrosArray.forEach((bairro) => {
+        if (bairro && typeof bairro === "string" && bairro.trim() !== "") {
           queryParams.append("bairros", bairro.trim());
         }
       });
-      console.log("Array de bairros enviado corretamente:", params.bairrosArray);
     }
 
     // Corrigir o envio dos bairros para garantir que cada bairro seja enviado como um valor separado
-    if (params.bairros && typeof params.bairros === 'string') {
-      const bairrosArray = params.bairros.split(',').map(bairro => bairro.trim());
-      bairrosArray.forEach(bairro => {
+    if (params.bairros && typeof params.bairros === "string") {
+      const bairrosArray = params.bairros.split(",").map((bairro) => bairro.trim());
+      bairrosArray.forEach((bairro) => {
         queryParams.append("bairros", bairro);
       });
     }
@@ -79,9 +82,7 @@ export async function getImoveis(params = {}, page = 1, limit = 12) {
       url = `/imoveis?${queryString}`;
     }
 
-    console.log("URL da requisição:", url);
     // Imprimir os parâmetros para depuração
-    console.log("Parâmetros enviados:", Object.fromEntries(queryParams.entries()));
 
     const response = await axiosClient.get(url);
 
@@ -149,7 +150,8 @@ export async function getBairrosPorCidade(cidade, categoria) {
     const url = `/imoveis/filters/${filtro}${queryString ? `?${queryString}` : ""}`;
 
     console.log(
-      `Buscando bairros para cidade: ${cidade}${categoria ? ` e categoria: ${categoria}` : ""
+      `Buscando bairros para cidade: ${cidade}${
+        categoria ? ` e categoria: ${categoria}` : ""
       }, usando URL: ${url}`
     );
 
@@ -164,21 +166,15 @@ export async function getBairrosPorCidade(cidade, categoria) {
 // Função para buscar um imóvel pelo Codigo
 export async function getImovelById(codigo) {
   try {
-    console.log(`Serviço: Buscando imóvel com Codigo ${codigo}`);
-
     // Garantir que estamos buscando pelo Codigo
     const response = await axiosClient.get(`/imoveis/${codigo}`);
 
     // Verificar se a resposta contém dados válidos
     if (response && response.data) {
-      console.log("Serviço: Resposta da API recebida:", response.status);
-
       // Verificar se os dados estão em data.data
       if (response.data.data) {
-        console.log("Serviço: Imóvel encontrado em data.data");
         return response.data;
       } else {
-        console.log("Serviço: Dados não encontrados no formato esperado");
         return { data: null, status: response.data.status };
       }
     } else {
@@ -198,8 +194,6 @@ export async function getImovelById(codigo) {
 // Função para atualizar um imóvel pelo Codigo
 export async function atualizarImovel(codigo, dadosImovel) {
   try {
-    console.log(`Serviço: Atualizando imóvel com Codigo ${codigo}`);
-
     // Garantir que estamos atualizando pelo Codigo
     const response = await axiosClient.put(`/imoveis/${codigo}`, dadosImovel);
 
@@ -226,7 +220,6 @@ export async function atualizarImovel(codigo, dadosImovel) {
   }
 }
 
-
 export async function criarImovel(codigo, dadosImovel) {
   try {
     const response = await axiosClient.post(`/imoveis/${codigo}`, dadosImovel);
@@ -235,16 +228,13 @@ export async function criarImovel(codigo, dadosImovel) {
     console.error("Serviço: Erro ao criar imóvel:", error);
     return {
       success: false,
-
-    }
+    };
   }
 }
 
 // Função para excluir um imóvel pelo Codigo
 export async function excluirImovel(codigo) {
   try {
-    console.log(`Serviço: Excluindo imóvel com Codigo ${codigo}`);
-
     // Garantir que estamos excluindo pelo Codigo
     const response = await axiosClient.delete(`/imoveis/${codigo}`);
 
@@ -273,8 +263,6 @@ export async function excluirImovel(codigo) {
 // Função para cadastrar um novo imóvel
 export async function cadastrarImovel(dadosImovel) {
   try {
-    console.log("Serviço: Cadastrando novo imóvel");
-
     const response = await axiosClient.post(`/imoveis`, dadosImovel);
 
     if (response && response.status >= 200 && response.status < 300) {
@@ -322,23 +310,16 @@ export async function getCondominioDestacado() {
 
 export async function getCondominios(limit) {
   try {
-    console.log("Serviço: Iniciando busca de condomínios");
     const response = await axiosClient.get(`/condominios?limit=${limit}`);
-    console.log("Serviço: Resposta bruta da API:", response);
 
     // Verificar se a resposta contém dados válidos
     if (response && response.data) {
-      console.log("Serviço: Dados encontrados na resposta");
-
       // Verificar se os dados estão em data.data ou diretamente em data
       if (response.data.data && Array.isArray(response.data.data)) {
-        console.log(`Serviço: Encontrados ${response.data.data.length} condomínios em data.data`);
         return response.data;
       } else if (Array.isArray(response.data)) {
-        console.log(`Serviço: Encontrados ${response.data.length} condomínios diretamente em data`);
         return { data: response.data };
       } else {
-        console.log("Serviço: Formato de dados não reconhecido, retornando array vazio");
         return { data: [] };
       }
     } else {
@@ -366,7 +347,7 @@ export const getImoveisParaMapa = async (filtros = {}) => {
 
       // Tratar a seleção múltipla de bairros
       if (filtros.bairros && Array.isArray(filtros.bairros) && filtros.bairros.length > 0) {
-        filtros.bairros.forEach(bairro => {
+        filtros.bairros.forEach((bairro) => {
           params.append("bairros", bairro);
         });
       }
@@ -376,7 +357,6 @@ export const getImoveisParaMapa = async (filtros = {}) => {
       if (filtros.vagas) params.append("vagas", filtros.vagas);
 
       // Adicionar log para verificar o array de bairros
-      console.log("Array de bairros enviado:", filtros.bairros);
 
       url += `?${params.toString()}`;
     }
@@ -398,7 +378,7 @@ export const getImoveisParaMapa = async (filtros = {}) => {
 export async function getImoveisSimilares(id) {
   try {
     const response = await axiosClient.get(`/imoveis/similar?id=${id}`);
-    console.log("Imoveis Similares", response.data);
+
     return response.data;
   } catch (error) {
     console.error("Erro ao buscar imóveis similares:", error);
@@ -425,7 +405,7 @@ export async function getCondominioPorSlug(slug) {
         return {
           data: response.data,
           imoveisRelacionados: response.data.imoveisRelacionados || [],
-          statusCode: 200
+          statusCode: 200,
         };
       }
 
@@ -434,7 +414,7 @@ export async function getCondominioPorSlug(slug) {
         return {
           data: response.data.data,
           imoveisRelacionados: response.data.imoveisRelacionados || [],
-          statusCode: 200
+          statusCode: 200,
         };
       }
     }
@@ -443,7 +423,7 @@ export async function getCondominioPorSlug(slug) {
     return {
       data: null,
       statusCode: 404,
-      message: "Condomínio não encontrado"
+      message: "Condomínio não encontrado",
     };
   } catch (error) {
     // Para erros 404, não exibimos como erro no console, pois é um caso esperado
@@ -451,7 +431,7 @@ export async function getCondominioPorSlug(slug) {
       return {
         data: null,
         statusCode: 404,
-        message: "Condomínio não encontrado"
+        message: "Condomínio não encontrado",
       };
     }
 
@@ -460,7 +440,7 @@ export async function getCondominioPorSlug(slug) {
     return {
       data: null,
       statusCode: error.response?.status || 500,
-      message: error.response?.data?.message || "Erro ao buscar condomínio"
+      message: error.response?.data?.message || "Erro ao buscar condomínio",
     };
   }
 }

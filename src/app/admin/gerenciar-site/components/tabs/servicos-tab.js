@@ -38,8 +38,6 @@ export default function ServicosTab({ form }) {
         sectionData[key] = formData[key] === "" ? null : formData[key];
       });
 
-      console.log(`Enviando dados da seção ${section}:`, sectionData);
-
       setSubmitStatus({
         type: "success",
         message: "Conteúdo atualizado com sucesso!",

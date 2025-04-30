@@ -6,7 +6,6 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 
-
 export function ListCities() {
   // Lista estática de cidades
   const cidades = [
@@ -56,7 +55,10 @@ export function ListCities() {
         </h2>
 
         {/* Lista de cidades - Estática */}
-        <div ref={carouselRef} className="flex gap-6 overflow-x-auto scroll-smooth scrollbar-hide no-scrollbar pb-4">
+        <div
+          ref={carouselRef}
+          className="flex gap-6 overflow-x-auto scroll-smooth scrollbar-hide no-scrollbar pb-4"
+        >
           {cidades.map((cidade, index) => (
             <div key={index} className="w-[220px] flex-shrink-0">
               <h3 className="text-lg font-bold text-black mb-2">{cidade}</h3>

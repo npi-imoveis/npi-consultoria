@@ -11,13 +11,12 @@ import {
   PlusCircleIcon,
   XCircleIcon,
   PhotoIcon,
-
 } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import { getVinculos } from "@/app/admin/services";
 import Proprietarios from "../../components/proprietarios";
-import { formatterValue } from '@/app/utils/formatter-value';
-import { formatterNumber } from './../../../../utils/formatter-number';
+import { formatterValue } from "@/app/utils/formatter-value";
+import { formatterNumber } from "./../../../../utils/formatter-number";
 
 export default function EditarImovel({ params }) {
   const router = useRouter();
@@ -98,12 +97,9 @@ export default function EditarImovel({ params }) {
     }
   }, [id]);
 
-  console.log("Dados do Imóvel", imovel);
-
   useEffect(() => {
     const fetchVinculos = async () => {
       const response = await getVinculos(id);
-      console.log("Corretores vinculados", response);
     };
     fetchVinculos();
   }, [id]);
@@ -228,8 +224,6 @@ export default function EditarImovel({ params }) {
 
   // Função para alterar a posição da imagem
   const changeImagePosition = (codigo, newPosition) => {
-    console.log(`Trocando imagem ${codigo} com a posição ${newPosition}`);
-
     setFormData((prevData) => {
       // Obter as chaves ordenadas pelo valor Ordem ou pela ordem natural
       const keys = [...Object.keys(prevData.Foto)].sort((a, b) => {
@@ -283,12 +277,9 @@ export default function EditarImovel({ params }) {
 
     try {
       const payload = {
-
         ...formData,
         ValorAntigo: formatterNumber(formData.ValorAntigo),
-
-      }
-      console.log("Formulário", payload);
+      };
 
       const result = await atualizarImovel(formData.Codigo, payload);
       if (result && result.success) {
@@ -756,8 +747,9 @@ export default function EditarImovel({ params }) {
                   type="button"
                   onClick={handleDelete}
                   disabled={isDeleting || isLoading}
-                  className={`inline-flex items-center px-5 py-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white ${isDeleting ? "bg-gray-500" : "bg-red-600 hover:bg-red-700"
-                    }`}
+                  className={`inline-flex items-center px-5 py-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white ${
+                    isDeleting ? "bg-gray-500" : "bg-red-600 hover:bg-red-700"
+                  }`}
                 >
                   <TrashIcon className="w-5 h-5 mr-2" />
                   {isDeleting ? "Excluindo..." : "Excluir Imóvel"}
@@ -765,8 +757,9 @@ export default function EditarImovel({ params }) {
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className={`inline-flex items-center px-5 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white ${isSaving ? "bg-gray-500" : "bg-black hover:bg-gray-800"
-                    }`}
+                  className={`inline-flex items-center px-5 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white ${
+                    isSaving ? "bg-gray-500" : "bg-black hover:bg-gray-800"
+                  }`}
                 >
                   {isSaving ? (
                     <>

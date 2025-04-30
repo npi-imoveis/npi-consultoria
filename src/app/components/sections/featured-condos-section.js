@@ -14,9 +14,7 @@ export function FeaturedCondosSection() {
   useEffect(() => {
     async function fetchCondominios() {
       try {
-        console.log("Buscando condomínios...");
         const response = await getCondominioDestacado();
-        console.log("Resposta completa:", response);
 
         if (response && response.data && Array.isArray(response.data.data)) {
           setCondominios(response.data.data);
@@ -69,8 +67,6 @@ export function FeaturedCondosSection() {
                 condominio.Foto.length > 0 &&
                 condominio.Foto[0] &&
                 condominio.Foto[0].Foto;
-
-              console.log("Renderizando condomínio:", condominio.Empreendimento || "Sem nome");
 
               return (
                 <CustomCard

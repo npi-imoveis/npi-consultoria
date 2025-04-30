@@ -13,14 +13,11 @@ export async function GET() {
 
     // Verificar se encontrou algum condomínio
     if (!condominios || condominios.length === 0) {
-      console.log("Nenhum condomínio encontrado");
       return NextResponse.json({
         status: 200,
         data: [],
       });
     }
-
-    console.log(`Encontrados ${condominios.length} condomínios`);
 
     return NextResponse.json({
       status: 200,
