@@ -11,8 +11,8 @@ export default function NotFound() {
           </h2>
 
           <p className="text-lg mb-8 max-w-2xl mx-auto text-gray-700">
-            A página que você está procurando pode ter sido removida, teve seu nome alterado ou está
-            temporariamente indisponível.
+            A página do imóvel que você está procurando pode ter sido removida, teve seu nome
+            alterado ou está temporariamente indisponível.
           </p>
 
           <div className="flex flex-col md:flex-row gap-4 justify-center">
