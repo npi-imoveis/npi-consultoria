@@ -23,11 +23,13 @@ import { formatterSlug } from "@/app/utils/formatter-slug";
 import { formatarParaReal } from "@/app/utils/formatter-real";
 import ProprietariosSection from "./@components/sections/ProprietariosSection";
 import VincularImovelSection from "./@components/sections/VincularImovel";
+import { desativarImovel } from "@/app/services";
 
 export default function GerenciarImovel() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showProprietarios, setShowProprietarios] = useState(false);
   const [showVincularImovel, setShowVincularImovel] = useState(false);
+  const [isDesativando, setIsDesativando] = useState(false);
   const router = useRouter();
 
   // Acessar o store para verificar se estamos em modo de edição
@@ -218,6 +220,43 @@ export default function GerenciarImovel() {
     }
   };
 
+  // Função para desativar o imóvel
+  const handleDesativarImovel = async () => {
+    if (!formData.Codigo) {
+      setError("Não é possível desativar um imóvel sem código.");
+      return;
+    }
+
+    if (
+      !window.confirm(
+        "Tem certeza que deseja desativar este imóvel? Ele será movido para a lista de imóveis inativos."
+      )
+    ) {
+      return;
+    }
+
+    setIsDesativando(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const result = await desativarImovel(formData.Codigo);
+      if (result && result.success) {
+        setSuccess("Imóvel desativado com sucesso!");
+        setTimeout(() => {
+          router.push("/admin/imoveis");
+        }, 2000);
+      } else {
+        setError(result?.message || "Erro ao desativar imóvel");
+      }
+    } catch (error) {
+      console.error("Erro ao desativar imóvel:", error);
+      setError("Ocorreu um erro ao desativar o imóvel");
+    } finally {
+      setIsDesativando(false);
+    }
+  };
+
   return (
     <AuthCheck>
       {showImageModal && (
@@ -245,31 +284,46 @@ export default function GerenciarImovel() {
 
       <div className="">
         <FormHeader title={getFormTitle()} error={error} success={success} />
-        <div className="flex justify-end gap-2 py-4">
+        <div className="flex justify-between gap-2 py-4">
           <button
-            onClick={toggleProprietarios}
-            className={`font-bold px-4 py-2 rounded-md ${
-              showProprietarios
-                ? "bg-[#8B6F48] text-white hover:bg-[#8B6F48]/40"
-                : "bg-gray-200 text-gray-500 hover:bg-gray-300"
+            onClick={handleDesativarImovel}
+            disabled={isDesativando || mode !== "edit"}
+            className={`border-2 font-bold px-4 py-2 rounded-md ${
+              isDesativando
+                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                : mode !== "edit"
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200"
+                : "text-gray-700 hover:text-gray-900 hover:border-gray-400"
             }`}
           >
-            Proprietários
+            {isDesativando ? "Desativando..." : "Desativar Imóvel"}
           </button>
-
-          {/* Only show the Vincular Imóvel button in edit mode and if Automacao is true */}
-          {mode === "edit" && (
+          <div className="flex gap-2">
             <button
-              onClick={toggleVincularImovel}
+              onClick={toggleProprietarios}
               className={`font-bold px-4 py-2 rounded-md ${
-                showVincularImovel
+                showProprietarios
                   ? "bg-[#8B6F48] text-white hover:bg-[#8B6F48]/40"
                   : "bg-gray-200 text-gray-500 hover:bg-gray-300"
               }`}
             >
-              Duplicar Imóvel
+              Proprietários
             </button>
-          )}
+
+            {/* Only show the Vincular Imóvel button in edit mode and if Automacao is true */}
+            {mode === "edit" && (
+              <button
+                onClick={toggleVincularImovel}
+                className={`font-bold px-4 py-2 rounded-md ${
+                  showVincularImovel
+                    ? "bg-[#8B6F48] text-white hover:bg-[#8B6F48]/40"
+                    : "bg-gray-200 text-gray-500 hover:bg-gray-300"
+                }`}
+              >
+                Duplicar Imóvel
+              </button>
+            )}
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-8">
@@ -286,9 +340,12 @@ export default function GerenciarImovel() {
             />
           )}
 
-          {/* Basic Info Section */}
+          {/* Basic Info Section with updated Ativo field */}
           <BasicInfoSection
-            formData={formData}
+            formData={{
+              ...formData,
+              Ativo: formData.Ativo || "Sim",
+            }}
             displayValues={displayValues}
             onChange={handleChange}
             validation={validation}

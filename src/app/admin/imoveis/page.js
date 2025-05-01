@@ -5,12 +5,7 @@ import { getImoveis, getImovelById } from "@/app/services";
 import AuthCheck from "../components/auth-check";
 import Pagination from "@/app/components/ui/pagination";
 import { useRouter } from "next/navigation";
-import {
-  MagnifyingGlassIcon,
-  ArrowPathIcon,
-  EyeIcon,
-  PencilSquareIcon,
-} from "@heroicons/react/24/outline";
+import { MagnifyingGlassIcon, EyeIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 import useImovelStore from "../store/imovelStore";
 
 export default function AdminImoveis() {

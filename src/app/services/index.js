@@ -468,3 +468,30 @@ export async function searchImoveis(query) {
     return { data: [] };
   }
 }
+
+// Função para desativar um imóvel pelo Codigo
+export async function desativarImovel(codigo) {
+  try {
+    const response = await axiosClient.post("/admin/desativar", { codigo });
+
+    if (response && response.status >= 200 && response.status < 300) {
+      return {
+        success: true,
+        message: "Imóvel desativado com sucesso",
+      };
+    } else {
+      console.error("Serviço: Erro na resposta ao desativar imóvel", response);
+      return {
+        success: false,
+        message: "Erro ao desativar imóvel",
+      };
+    }
+  } catch (error) {
+    console.error("Serviço: Erro ao desativar imóvel:", error);
+    return {
+      success: false,
+      message: error.response?.data?.message || "Erro ao desativar imóvel",
+      error: error,
+    };
+  }
+}

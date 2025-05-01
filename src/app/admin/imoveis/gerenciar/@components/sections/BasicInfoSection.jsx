@@ -1,32 +1,29 @@
 "use client";
 
-import { memo } from 'react';
-import FormSection from '../FormSection';
-import FieldGroup from '../FieldGroup';
-import useImovelStore from '@/app/admin/store/imovelStore';
+import { memo } from "react";
+import FormSection from "../FormSection";
+import FieldGroup from "../FieldGroup";
+import useImovelStore from "@/app/admin/store/imovelStore";
 
 const BasicInfoSection = ({ formData, displayValues, onChange, validation }) => {
   // Get Automacao flag from the store
   const imovelSelecionado = useImovelStore((state) => state.imovelSelecionado);
   const isAutomacao = imovelSelecionado?.Automacao === true;
-  
+
   // Create dynamic fields array to update the label based on Automacao flag
   const basicInfoFields = [
-    { 
-      name: "Codigo", 
-      label: isAutomacao ? "Código (Aut)" : "Código", 
-      type: "text", 
+    {
+      name: "Codigo",
+      label: isAutomacao ? "Código (Aut)" : "Código",
+      type: "text",
       disabled: true,
-      className: isAutomacao ? "bg-gray-100" : "" 
+      className: isAutomacao ? "bg-gray-100" : "",
     },
     {
       name: "Ativo",
       label: "Ativo",
-      type: "select",
-      options: [
-        { value: "Sim", label: "Sim" },
-        { value: "Não", label: "Não" },
-      ],
+      type: "text",
+      disabled: true,
     },
     { name: "Empreendimento", label: "Empreendimento", type: "text" },
     { name: "Construtora", label: "Construtora", type: "text" },
@@ -75,7 +72,14 @@ const BasicInfoSection = ({ formData, displayValues, onChange, validation }) => 
         { value: "VENDIDO", label: "VENDIDO" },
       ],
     },
-    { name: "Slug", label: "Slug (Automático)", type: "text", disabled: true, readOnly: true, className: "bg-gray-100" },
+    {
+      name: "Slug",
+      label: "Slug (Automático)",
+      type: "text",
+      disabled: true,
+      readOnly: true,
+      className: "bg-gray-100",
+    },
     {
       name: "Destacado",
       label: "Imóvel Destaque (Sim/Não)",
@@ -105,13 +109,13 @@ const BasicInfoSection = ({ formData, displayValues, onChange, validation }) => 
     },
     { name: "DataEntrega", label: "Data de Entrega", type: "text" },
   ];
-  
+
   return (
     <FormSection title="Informações Básicas">
-      <FieldGroup 
-        fields={basicInfoFields} 
-        formData={formData} 
-        displayValues={displayValues} 
+      <FieldGroup
+        fields={basicInfoFields}
+        formData={formData}
+        displayValues={displayValues}
         onChange={onChange}
         validation={validation}
       />
@@ -119,4 +123,4 @@ const BasicInfoSection = ({ formData, displayValues, onChange, validation }) => 
   );
 };
 
-export default memo(BasicInfoSection); 
+export default memo(BasicInfoSection);

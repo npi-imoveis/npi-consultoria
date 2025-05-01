@@ -3,24 +3,18 @@
 import { ArrowLeft } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-const FormHeader = ({ 
-  title, 
-  subtitle,
-  isEditMode = false,
-  propertyName = "" 
-}) => {
+const FormHeader = ({ title, subtitle, isEditMode = false, propertyName = "" }) => {
   const router = useRouter();
 
-  const displayTitle = isEditMode && propertyName 
-    ? `Editar Imóvel: ${propertyName}`
-    : "Cadastrar Novo Imóvel";
+  const displayTitle =
+    isEditMode && propertyName ? `Editar Imóvel: ${propertyName}` : "Cadastrar Novo Imóvel";
 
   return (
     <div className="py-2 border-b border-gray-200">
       <div className="flex items-center mb-2">
         <button
           type="button"
-          onClick={() => router.push("/admin/automacao")}
+          onClick={() => router.push("/admin/imoveis")}
           className="mr-2 p-1 rounded-full hover:bg-gray-100"
         >
           <ArrowLeft className="h-4 w-4" />
@@ -32,4 +26,4 @@ const FormHeader = ({
   );
 };
 
-export default FormHeader; 
+export default FormHeader;
