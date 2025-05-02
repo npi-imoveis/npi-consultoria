@@ -138,18 +138,16 @@ export default function Contato({ imovel, currentUrl }) {
 
   return (
     <div className="rounded-lg min-w-[350px] w-full bg-white shadow-2xl p-4 mt-4 lg:mt-[-50px]">
-      <ValoresUnidade imovel={imovel} />
+      <ValoresUnidade imovel={imovel} currentUrl={currentUrl} />
 
       <div className="px-6 pb-10">
         <h3 className="text-base font-bold text-black" id="contato-form">
-          {imovel.ValorAntigo !== "0"
-            ? "Gostou deste imóvel?"
-            : "Quero uma unidade nesse condomínio"}
+          Gostou deste imóvel?
         </h3>
         <p className="text-sm text-gray-600 mt-2">
           {imovel.ValorAntigo !== "0"
             ? "Fale conosco pelo WhatsApp ou preencha o formulário de contato."
-            : "Mas não se preocupe, é possivel que outros imóveis estejam disponíveis no mesmo condomínio."}
+            : "Não se preocupe, é possivel que outros imóveis estejam disponíveis no mesmo condomínio."}
         </p>
 
         {formState === "form" && (

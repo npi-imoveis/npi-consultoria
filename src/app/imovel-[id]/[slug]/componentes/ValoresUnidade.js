@@ -18,7 +18,30 @@ const formatarValorMonetario = (valor) => {
   return `R$ ${valorFormatado}`;
 };
 
-export default function ValoresUnidade({ imovel }) {
+export default function ValoresUnidade({ imovel, currentUrl }) {
+  function sendWhatsapp() {
+    const isMobile = () => {
+      return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent
+      );
+    };
+
+    // Construir a mensagem
+    const message = `Quero saber mais sobre o ${imovel.Empreendimento}, no bairro ${imovel.BairroComercial}, disponivel no link: ${currentUrl}`;
+
+    // Escolher a URL base apropriada
+    const baseUrl = isMobile() ? "whatsapp://send" : "https://web.whatsapp.com/send";
+
+    // Construir a URL completa
+    const whatsappUrl = `${baseUrl}?phone=5511969152222&text=${encodeURIComponent(message)}`;
+
+    // Redirecionar para o WhatsApp
+    if (isMobile()) {
+      window.location.href = whatsappUrl;
+    } else {
+      window.open(whatsappUrl, "_blank");
+    }
+  }
   return (
     <div className="px-6 pt-6 bg-white rounded-lg">
       <div itemScope itemType="https://schema.org/Offer">
@@ -39,7 +62,16 @@ export default function ValoresUnidade({ imovel }) {
             itemProp="price"
             content={imovel.ValorAntigo || "Consultar"}
           >
-            {imovel.ValorAntigo !== "0" ? "R$ " + imovel.ValorAntigo : "Consultar"}
+            {imovel.ValorAntigo !== "0" ? (
+              "R$ " + imovel.ValorAntigo
+            ) : (
+              <button
+                onClick={sendWhatsapp}
+                className="bg-[#8B6F48] text-white text-sm px-4 py-2 rounded-lg w-full"
+              >
+                Quero um imóvel nesse condomínio.
+              </button>
+            )}
           </h2>
         )}
         <meta itemProp="priceCurrency" content="BRL" />
