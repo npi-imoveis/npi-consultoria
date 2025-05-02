@@ -5,7 +5,12 @@ import { getImoveis, getImovelById } from "@/app/services";
 import AuthCheck from "../components/auth-check";
 import Pagination from "@/app/components/ui/pagination";
 import { useRouter } from "next/navigation";
-import { MagnifyingGlassIcon, EyeIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
+import {
+  MagnifyingGlassIcon,
+  ArrowPathIcon,
+  EyeIcon,
+  PencilSquareIcon,
+} from "@heroicons/react/24/outline";
 import useImovelStore from "../store/imovelStore";
 
 export default function AdminImoveis() {
@@ -26,7 +31,7 @@ export default function AdminImoveis() {
     try {
       if (search) {
         // Usar o endpoint de busca com Atlas Search
-        const response = await fetch(`/api/search?q=${encodeURIComponent(search)}`);
+        const response = await fetch(`/api/search/admin?q=${encodeURIComponent(search)}`);
         const data = await response.json();
 
         if (data && data.status === 200 && data.data) {

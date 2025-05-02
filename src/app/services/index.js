@@ -90,6 +90,9 @@ export async function getImoveis(params = {}, page = 1, limit = 12) {
     const data = response.data.data || [];
     const paginacao = response.data.paginacao || {};
 
+    const imoveisAtivos = response.data.imoveisAtivos || [];
+    const paginacaoAtivos = response.data.paginacaoAtivos || {};
+
     // Garantir que todos os valores de paginação sejam números válidos
     const totalItems = ensureNumber(paginacao.totalItems, data.length);
     const totalPages = ensureNumber(
@@ -99,8 +102,24 @@ export async function getImoveis(params = {}, page = 1, limit = 12) {
     const currentPage = ensureNumber(paginacao.currentPage, validPage);
     const itemsPerPage = ensureNumber(paginacao.limit, validLimit);
 
+    // Paginação dos imóveis ativos
+    const totalItemsAtivos = ensureNumber(paginacaoAtivos.totalItems, imoveisAtivos.length);
+    const totalPagesAtivos = ensureNumber(
+      paginacaoAtivos.totalPages,
+      Math.max(1, Math.ceil(totalItemsAtivos / validLimit))
+    );
+    const currentPageAtivos = ensureNumber(paginacaoAtivos.currentPage, validPage);
+    const itemsPerPageAtivos = ensureNumber(paginacaoAtivos.limit, validLimit);
+
     return {
       imoveis: data,
+      imoveisAtivos: imoveisAtivos,
+      paginationAtivos: {
+        totalItems: totalItemsAtivos,
+        totalPages: totalPagesAtivos,
+        currentPage: currentPageAtivos,
+        itemsPerPage: itemsPerPageAtivos,
+      },
       pagination: {
         totalItems,
         totalPages,
@@ -113,6 +132,13 @@ export async function getImoveis(params = {}, page = 1, limit = 12) {
     // Em caso de erro, retornamos um objeto com estrutura válida
     return {
       imoveis: [],
+      imoveisAtivos: [],
+      paginationAtivos: {
+        totalItems: 0,
+        totalPages: 1,
+        currentPage: ensureNumber(page, 1),
+        itemsPerPage: ensureNumber(limit, 12),
+      },
       pagination: {
         totalItems: 0,
         totalPages: 1,
