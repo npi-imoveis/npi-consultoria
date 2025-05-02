@@ -43,8 +43,11 @@ export async function GET(request) {
       );
     }
 
-    // Converter a área privativa para número
-    const areaReferencia = parseFloat(imovelReferencia.AreaPrivativa);
+    // Converter a área privativa para número, removendo qualquer texto não numérico
+    const areaReferenciaString = imovelReferencia.AreaPrivativa.toString()
+      .replace(/[^\d.,]/g, "")
+      .replace(",", ".");
+    const areaReferencia = parseFloat(areaReferenciaString);
 
     // Definir margem de variação (20%)
     const margemVariacao = areaReferencia * 0.2;
@@ -68,26 +71,28 @@ export async function GET(request) {
       Bairro: imovelReferencia.Bairro, // Filtrar pelo mesmo bairro
       AreaPrivativa: { $exists: true, $ne: "" },
       ValorAntigo: { $nin: ["0", ""] },
-      $expr: {
-        $and: [
-          { $ne: ["$AreaPrivativa", ""] },
-          {
-            $let: {
-              vars: {
-                areaNum: { $toDouble: "$AreaPrivativa" },
-              },
-              in: {
-                $and: [{ $gte: ["$$areaNum", areaMinima] }, { $lte: ["$$areaNum", areaMaxima] }],
-              },
-            },
-          },
-        ],
-      },
-    }).limit(10);
+    })
+      .limit(20)
+      .lean();
+
+    // Filtrar os resultados em JavaScript para garantir a conversão correta
+    const filtrados = imoveisSimilares
+      .filter((imovel) => {
+        try {
+          const areaString = imovel.AreaPrivativa.toString()
+            .replace(/[^\d.,]/g, "")
+            .replace(",", ".");
+          const area = parseFloat(areaString);
+          return !isNaN(area) && area >= areaMinima && area <= areaMaxima;
+        } catch (e) {
+          return false;
+        }
+      })
+      .slice(0, 10);
 
     return NextResponse.json({
       status: 200,
-      data: imoveisSimilares,
+      data: filtrados,
     });
   } catch (error) {
     console.error("Erro ao buscar imóveis similares:", error);
