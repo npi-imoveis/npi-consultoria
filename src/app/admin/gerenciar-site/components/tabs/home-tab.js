@@ -108,9 +108,11 @@ export default function HomeTab({ form }) {
   };
 
   const handleImageChange = (e) => {
-    const { name, file, previewUrl } = e.target;
+    const { name, value, previewUrl } = e.target;
+    // Usar previewUrl ou value, o que estiver disponível
+    const imageUrl = previewUrl || value;
 
-    if (previewUrl) {
+    if (imageUrl) {
       // Se for um campo de imagem para a seção "sobre", atualizar o formData
       if (name.startsWith("sobre.")) {
         const field = name.split(".")[1];
@@ -118,7 +120,7 @@ export default function HomeTab({ form }) {
           ...prev,
           sobre: {
             ...prev.sobre,
-            [field]: previewUrl,
+            [field]: imageUrl,
           },
         }));
       }

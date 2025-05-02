@@ -58,8 +58,8 @@ export default function NossaHistoriaSection({ form, onChange }) {
     if (onChange) {
       onChange({
         target: {
-          name: name,
-          value: value,
+          name,
+          value,
         },
       });
     }

@@ -36,6 +36,7 @@ export default function ImageSection({ onChange, filename, directory }) {
               target: {
                 name: `${DIRECTORY}_image`,
                 value: targetImage,
+                previewUrl: targetImage,
               },
             });
           }
@@ -95,12 +96,13 @@ export default function ImageSection({ onChange, filename, directory }) {
             target: {
               name: `${DIRECTORY}_image`,
               value: data.path,
+              previewUrl: data.path,
             },
           });
         }
 
-        // Limpa o preview após o upload bem-sucedido
-        setPreviewImage(null);
+        // Mantém o preview com a nova URL em vez de limpar
+        setPreviewImage(data.path);
       } else {
         showStatusMessage("error", data.error || "Erro ao enviar imagem");
       }
@@ -121,6 +123,7 @@ export default function ImageSection({ onChange, filename, directory }) {
 
   // Determina qual imagem mostrar: o preview (se disponível) ou a imagem carregada
   const displayImage = previewImage || image;
+  const inputId = `${DIRECTORY}_image_${filename || "default"}_input`;
 
   return (
     <div className="space-y-4">
@@ -132,11 +135,11 @@ export default function ImageSection({ onChange, filename, directory }) {
             onChange={handleUpload}
             disabled={isUploading}
             className="hidden"
-            id="homeImageInput"
+            id={inputId}
           />
           <label
-            htmlFor="homeImageInput"
-            className={`inline-block px-4 py-2 bg-black text-white rounded cursor-pointer  transition-colors ${
+            htmlFor={inputId}
+            className={`inline-block px-4 py-2 bg-black text-white rounded cursor-pointer transition-colors ${
               isUploading ? "opacity-50 cursor-not-allowed" : ""
             }`}
           >
@@ -164,7 +167,7 @@ export default function ImageSection({ onChange, filename, directory }) {
           <div className="aspect-w-16 aspect-h-9 bg-gray-50 rounded-lg overflow-hidden">
             <img
               src={displayImage}
-              alt="Imagem da Home"
+              alt="Imagem do Conteúdo"
               className="w-full h-full object-cover"
               onError={(e) => {
                 e.target.onerror = null;

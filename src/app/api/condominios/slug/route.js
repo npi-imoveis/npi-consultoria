@@ -1,4 +1,5 @@
 import { connectToDatabase } from "@/app/lib/mongodb";
+import Imovel from "@/app/models/Imovel";
 import ImovelAtivo from "@/app/models/ImovelAtivo";
 import { NextResponse } from "next/server";
 
@@ -19,7 +20,7 @@ export async function GET(request) {
 
     await connectToDatabase();
 
-    const imovelReferencia = await ImovelAtivo.findOne({ Slug: slug });
+    const imovelReferencia = await Imovel.findOne({ Slug: slug });
 
     if (!imovelReferencia) {
       return NextResponse.json(

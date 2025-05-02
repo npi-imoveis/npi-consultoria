@@ -63,11 +63,13 @@ export default function HubTab({ form }) {
   };
 
   const handleImageChange = (e) => {
-    const { name, file, previewUrl } = e.target;
-    if (previewUrl) {
+    const { name, value, previewUrl } = e.target;
+    // Usar previewUrl ou value, o que estiver disponível
+    const imageUrl = previewUrl || value;
+    if (imageUrl) {
       setFormData((prev) => ({
         ...prev,
-        [name]: previewUrl,
+        [name]: imageUrl,
       }));
     }
   };
