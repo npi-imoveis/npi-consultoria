@@ -3,6 +3,7 @@ import Imovel, { IImovel } from "@/app/models/Imovel";
 import { NextResponse } from "next/server";
 import cache from "@/app/lib/cache";
 import ImovelAtivo from "@/app/models/ImovelAtivo";
+import ImovelInativo from "@/app/models/ImovelInativo";
 
 export async function GET(request) {
   try {
@@ -29,18 +30,39 @@ export async function GET(request) {
       ValorAntigo: { $exists: true, $nin: ["0", ""] },
     };
 
-    // Contar o total de documentos com o filtro aplicado
-    const totalItems = await Imovel.countDocuments(filtro);
+    // Pipeline de agregação para garantir códigos únicos
+    const imoveisAgregados = await Imovel.aggregate([
+      // Filtrar conforme os critérios iniciais
+      { $match: filtro },
+      // Agrupar por Codigo e manter apenas o documento mais recente
+      {
+        $group: {
+          _id: "$Codigo",
+          doc: { $first: "$$ROOT" },
+        },
+      },
+      // Desempacotar o documento para preservar a estrutura original
+      { $replaceRoot: { newRoot: "$doc" } },
+      // Contar total para paginação
+      {
+        $facet: {
+          total: [{ $count: "count" }],
+          // Aplicar paginação
+          dados: [{ $skip: skip }, { $limit: limit }],
+        },
+      },
+    ]);
+
+    // Extrair os resultados da agregação
+    const imoveisPaginados = imoveisAgregados[0]?.dados || [];
+    const totalItems = imoveisAgregados[0]?.total[0]?.count || 0;
 
     // Calcular o total de páginas
     const totalPages = Math.ceil(totalItems / limit);
 
-    // Buscar imóveis com paginação e filtro
-    const imoveis = await Imovel.find(filtro).skip(skip).limit(limit);
-
     const response = {
       status: 200,
-      data: imoveis,
+      data: imoveisPaginados,
       paginacao: {
         totalItems,
         totalPages,
@@ -94,11 +116,10 @@ export async function POST(request) {
       );
     }
 
-    // Verificar se já existe um imóvel com o mesmo Slug
+    // Verificar se já existe um imóvel com o mesmo Slug (que não seja o atual)
     const slugExistente = await Imovel.findOne({
       Slug: dadosImovel.Slug,
-      // Excluir o próprio documento da busca se um _id foi fornecido
-      ...(dadosImovel._id ? { _id: { $ne: dadosImovel._id } } : {}),
+      Codigo: { $ne: dadosImovel.Codigo },
     });
 
     if (slugExistente) {
@@ -111,19 +132,68 @@ export async function POST(request) {
       );
     }
 
-    // Se o _id foi fornecido, tenta excluir o documento existente primeiro
-    if (dadosImovel._id) {
-      try {
-        await Imovel.deleteOne({ _id: dadosImovel._id });
-      } catch (deleteError) {}
+    let imovelSalvo;
+    let imovelAtivoSalvo = null;
+    let imovelInativoSalvo = null;
+    let message = "Imóvel criado com sucesso";
+
+    // Verificar se já existe um imóvel com o mesmo Codigo
+    const imovelExistente = await Imovel.findOne({ Codigo: dadosImovel.Codigo });
+
+    // Atualizar ou criar no modelo Imovel principal (independente de estar ativo ou não)
+    if (imovelExistente) {
+      // Atualizar o imóvel existente
+      imovelSalvo = await Imovel.findOneAndUpdate({ Codigo: dadosImovel.Codigo }, dadosImovel, {
+        new: true,
+        upsert: false,
+      });
+      message = "Imóvel atualizado com sucesso";
+    } else {
+      // Criar um novo imóvel
+      const novoImovel = new Imovel(dadosImovel);
+      imovelSalvo = await novoImovel.save();
     }
 
-    // Criar um novo documento
-    const novoImovel = new Imovel(dadosImovel);
-    const imovelSalvo = await novoImovel.save();
+    // Gerenciar modelos ImovelAtivo e ImovelInativo baseado no campo Ativo
+    if (dadosImovel.Ativo === "Sim") {
+      // Se está ativo, deve estar em ImovelAtivo
+      const imovelAtivoExistente = await ImovelAtivo.findOne({ Codigo: dadosImovel.Codigo });
 
-    const novoImovelAtivo = new ImovelAtivo(dadosImovel);
-    const imovelAtivoSalvo = await novoImovelAtivo.save();
+      if (imovelAtivoExistente) {
+        // Atualizar o imóvel ativo existente
+        imovelAtivoSalvo = await ImovelAtivo.findOneAndUpdate(
+          { Codigo: dadosImovel.Codigo },
+          dadosImovel,
+          { new: true, upsert: false }
+        );
+      } else {
+        // Criar um novo imóvel ativo
+        const novoImovelAtivo = new ImovelAtivo(dadosImovel);
+        imovelAtivoSalvo = await novoImovelAtivo.save();
+      }
+
+      // Remover da coleção de inativos se existir
+      await ImovelInativo.deleteOne({ Codigo: dadosImovel.Codigo });
+    } else if (dadosImovel.Ativo === "Não") {
+      // Se está inativo, deve estar em ImovelInativo e não em ImovelAtivo
+      const imovelInativoExistente = await ImovelInativo.findOne({ Codigo: dadosImovel.Codigo });
+
+      if (imovelInativoExistente) {
+        // Atualizar o imóvel inativo existente
+        imovelInativoSalvo = await ImovelInativo.findOneAndUpdate(
+          { Codigo: dadosImovel.Codigo },
+          dadosImovel,
+          { new: true, upsert: false }
+        );
+      } else {
+        // Criar um novo imóvel inativo
+        const novoImovelInativo = new ImovelInativo(dadosImovel);
+        imovelInativoSalvo = await novoImovelInativo.save();
+      }
+
+      // Remover da coleção de ativos se existir
+      await ImovelAtivo.deleteOne({ Codigo: dadosImovel.Codigo });
+    }
 
     // Invalidar cache relacionado a imóveis
     const keys = cache.keys();
@@ -137,9 +207,10 @@ export async function POST(request) {
       {
         status: 200,
         success: true,
-        message: "Imóvel processado com sucesso",
+        message: message,
         data: imovelSalvo,
         imovelAtivo: imovelAtivoSalvo,
+        imovelInativo: imovelInativoSalvo,
       },
       { status: 200 }
     );
