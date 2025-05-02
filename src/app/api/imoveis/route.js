@@ -83,6 +83,34 @@ export async function POST(request) {
       );
     }
 
+    // Verificar se o Slug foi fornecido
+    if (!dadosImovel.Slug) {
+      return NextResponse.json(
+        {
+          status: 400,
+          error: "O campo Slug é obrigatório",
+        },
+        { status: 400 }
+      );
+    }
+
+    // Verificar se já existe um imóvel com o mesmo Slug
+    const slugExistente = await Imovel.findOne({
+      Slug: dadosImovel.Slug,
+      // Excluir o próprio documento da busca se um _id foi fornecido
+      ...(dadosImovel._id ? { _id: { $ne: dadosImovel._id } } : {}),
+    });
+
+    if (slugExistente) {
+      return NextResponse.json(
+        {
+          status: 400,
+          error: "Já existe um imóvel com este Slug. Por favor, use um Slug único.",
+        },
+        { status: 400 }
+      );
+    }
+
     // Se o _id foi fornecido, tenta excluir o documento existente primeiro
     if (dadosImovel._id) {
       try {

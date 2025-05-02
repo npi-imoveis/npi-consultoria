@@ -104,10 +104,10 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create") => {
             try {
               const { user, timestamp } = await getCurrentUserAndDate();
               await salvarLog({
-                user: user.displayName,
+                user: user.displayName ? user.displayName : "Não Identificado",
                 email: user.email,
                 data: timestamp.toISOString(),
-                action: "Atualização de imóvel",
+                action: `Usuário ${user.email} atualizou o imóvel ${formData.Codigo}`,
               });
             } catch (logError) {
               console.error("Erro ao salvar log de atualização:", logError);

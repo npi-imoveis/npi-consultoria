@@ -5,6 +5,7 @@ import { formatterSlug } from "@/app/utils/formatter-slug";
 import { OpenStreetMapProvider } from "leaflet-geosearch";
 import { REQUIRED_FIELDS } from "../FieldGroup";
 import useImovelStore from "@/app/admin/store/imovelStore";
+import { getCorretorById } from "@/app/admin/services/corretor";
 
 // Export the generateRandomCode function so it can be reused
 export const generateRandomCode = () => {
@@ -62,9 +63,10 @@ export const useImovelForm = () => {
     DestaquesLocalizacao: "",
     FichaTecnica: "",
     Tour360: "",
-    Corretor: "Eduardo Lima",
+    Corretor: "",
     TipoCorretor: "Corretor",
-    EmailCorretor: "eduardolima@npiconsultoria.com.br",
+    EmailCorretor: "",
+    CelularCorretor: "",
     Video: "",
     Foto: [],
   });
@@ -111,6 +113,31 @@ export const useImovelForm = () => {
       }
     }
   }, [formData.Empreendimento, formData.Slug]);
+
+  useEffect(() => {
+    const fetchCorretor = async () => {
+      try {
+        if (formData.Codigo) {
+          const response = await getCorretorById(formData.Codigo);
+          if (response.success) {
+            setFormData((prev) => ({
+              ...prev,
+              Corretor: response.data.nome,
+              EmailCorretor: response.data.email,
+              CelularCorretor: response.data.celular,
+            }));
+          } else {
+            // Se não encontrar o corretor, mantém os dados atuais
+            console.log("Corretor não encontrado para o código:", formData.Codigo);
+          }
+        }
+      } catch (error) {
+        console.error("Erro ao buscar corretor:", error);
+      }
+    };
+
+    fetchCorretor();
+  }, [formData.Codigo]);
 
   // Função para formatar valores monetários
   const formatarParaReal = useCallback((valor) => {
@@ -326,14 +353,13 @@ export const useImovelForm = () => {
   }, []);
 
   // Função para definir uma imagem como destaque
-  const setImageAsHighlight = useCallback((codigo) => {
+  const setImageAsHighlight = useCallback((fotoUrl) => {
     setFormData((prevData) => {
       if (!Array.isArray(prevData.Foto)) return prevData;
 
-      // Set all photos to not highlighted except the selected one
       const updatedFotos = prevData.Foto.map((photo) => ({
         ...photo,
-        Destaque: photo.Codigo === codigo ? "Sim" : "Nao",
+        Destaque: photo.Foto === fotoUrl ? "Sim" : "Nao",
       }));
 
       return {

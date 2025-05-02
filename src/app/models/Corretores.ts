@@ -1,32 +1,28 @@
 import mongoose, { Schema, model, models } from "mongoose";
 
-export interface ICorretores{
-    nomeCompleto: string;
+export interface ICorretores {
+    nome: string;
     codigoD: string;
-    inativo: string;
     rg: string;
     cpf: string;
     nascimento: string;
     nacional: string;
-    estCivil: string;
     sexo: string;
     cnh: string;
-    creci: string;
     celular: string;
-    endereco: string;
-    email: string;
+    creci: string;
     bairro: string;
     cidade: string;
     uf: string;
     cep: string;
     pais: string;
     fone: string;
-    createdAt?: Date;
-    updatedAt?: Date;
-}
-
+    email: string;
+    estCivil: string;
+    imoveis_vinculados: [];
+};
 const CorretoresSchema = new Schema({
-    nomeCompleto: String,
+    nome: String,
     codigoD: String,
     inativo: String,
     rg: String,
@@ -46,12 +42,16 @@ const CorretoresSchema = new Schema({
     cep: String,
     pais: String,
     fone: String,
+    imoveis_vinculados: {
+        type: Array,
+        default: []
+    }
 },
-{
-    timestamps: true,
-    collection: 'corretores',
-    strict: false,
-}
+    {
+        timestamps: true,
+        collection: 'corretores',
+        strict: false,
+    }
 );
 
 const Corretores = models.Corretores || model('Corretores', CorretoresSchema);

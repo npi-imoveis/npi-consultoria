@@ -12,15 +12,11 @@ export async function GET(request) {
 
     // Se tiver ID, busca corretor específico
     if (id) {
-      const vinculo = await Cdimag.find({ codigoD: Number(id) });
-      const imoveisByCorretor = vinculo.map((imovel) => imovel.codigoO);
-
       const corretor = await Corretores.findOne({ codigoD: id });
 
       return NextResponse.json({
         status: 200,
         data: corretor || null,
-        imoveis: imoveisByCorretor,
       });
     }
 
@@ -30,7 +26,7 @@ export async function GET(request) {
     const skip = (page - 1) * limit;
 
     // Filtro para corretores não inativos
-    const filter = { inativo: "Nao" };
+    const filter = {};
 
     const [totalItems, corretores] = await Promise.all([
       Corretores.countDocuments(filter),

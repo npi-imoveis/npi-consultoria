@@ -57,15 +57,15 @@ export default function CadastrarImovel() {
     AreaPrivativa: "",
     AreaTotal: "",
     Dormitorios: "",
-    Suites: "",
+    SuiteAntigo: "",
     BanheiroSocialQtd: "",
     Vagas: "",
     DataEntrega: "",
     AnoConstrucao: "",
-    ValorAntigo: "",
-    ValorAluguelSite: "",
-    ValorCondominio: "",
-    ValorIptu: "",
+    ValorAntigo: "0",
+    ValorAluguelSite: "0",
+    ValorCondominio: "0",
+    ValorIptu: "0",
     DescricaoUnidades: "",
     DescricaoDiferenciais: "",
     DestaquesDiferenciais: "",
@@ -603,10 +603,10 @@ export default function CadastrarImovel() {
       fields: [
         { name: "AreaPrivativa", label: "Área Privativa (m²)", type: "text" },
         { name: "AreaTotal", label: "Área Total (m²)", type: "text" },
-        { name: "Dormitorios", label: "Dormitórios", type: "text" },
-        { name: "Suites", label: "Suítes", type: "text" },
+        { name: "DormitoriosAntigo", label: "Dormitórios", type: "text" },
+        { name: "SuiteAntigo", label: "Suítes", type: "text" },
         { name: "BanheiroSocialQtd", label: "Banheiros Sociais", type: "text" },
-        { name: "Vagas", label: "Vagas de Garagem", type: "text" },
+        { name: "VagasAntigo", label: "Vagas de Garagem", type: "text" },
       ],
     },
     {
@@ -750,7 +750,7 @@ export default function CadastrarImovel() {
                             id={`destaque-${codigo}`}
                             checked={image.Destaque === "Sim"}
                             onChange={() => setImageAsHighlight(codigo)}
-                            className="h-4 w-4 border-gray-300 rounded text-black focus:ring-black"
+                            className="h-6 w-6 border-gray-300 rounded text-black focus:ring-black"
                           />
                           <label htmlFor={`destaque-${codigo}`} className="text-sm text-gray-700">
                             Imagem em destaque

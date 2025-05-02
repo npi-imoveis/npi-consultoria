@@ -1,8 +1,8 @@
 "use client";
 
-import { memo } from 'react';
-import FormSection from '../FormSection';
-import FieldGroup from '../FieldGroup';
+import { memo } from "react";
+import FormSection from "../FormSection";
+import FieldGroup from "../FieldGroup";
 
 const locationFields = [
   { name: "CEP", label: "CEP", type: "text" },
@@ -21,15 +21,15 @@ const locationFields = [
 const LocationSection = ({ formData, displayValues, onChange, validation }) => {
   return (
     <FormSection title="Localização">
-      <FieldGroup 
-        fields={locationFields} 
-        formData={formData} 
-        displayValues={displayValues} 
-        onChange={onChange} 
+      <FieldGroup
+        fields={locationFields}
+        formData={formData}
+        displayValues={displayValues}
+        onChange={onChange}
         validation={validation}
       />
     </FormSection>
   );
 };
 
-export default memo(LocationSection); 
+export default memo(LocationSection);

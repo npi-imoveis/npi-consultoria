@@ -1,23 +1,24 @@
 "use client";
 
-import { memo } from 'react';
+import { memo } from "react";
 import { ArrowPathIcon, ExclamationCircleIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 
 const FormFooter = ({ isSaving, isValid = true, isEditMode = false, onCancel }) => {
   const router = useRouter();
-  
+
   return (
     <div className="flex justify-between items-center mt-6">
       {!isValid && (
         <div className="flex items-center text-red-600">
           <ExclamationCircleIcon className="w-4 h-4 mr-1" />
           <p className="text-xs">
-            Preencha todos os campos obrigatórios e adicione pelo menos 5 fotos para cadastrar o imóvel.
+            Preencha todos os campos obrigatórios e adicione pelo menos 5 fotos para cadastrar o
+            imóvel.
           </p>
         </div>
       )}
-      
+
       <div className="flex ml-auto">
         <button
           type="button"
@@ -30,10 +31,11 @@ const FormFooter = ({ isSaving, isValid = true, isEditMode = false, onCancel }) 
           type="submit"
           disabled={isSaving || !isValid}
           className={`inline-flex items-center px-4 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white 
-            ${isSaving 
-              ? "bg-gray-500" 
-              : !isValid 
-                ? "bg-gray-400 cursor-not-allowed" 
+            ${
+              isSaving
+                ? "bg-gray-500"
+                : !isValid
+                ? "bg-gray-400 cursor-not-allowed"
                 : "bg-black hover:bg-gray-800"
             }`}
         >
@@ -42,8 +44,10 @@ const FormFooter = ({ isSaving, isValid = true, isEditMode = false, onCancel }) 
               <ArrowPathIcon className="w-4 h-4 mr-1 animate-spin" />
               {isEditMode ? "Atualizando..." : "Cadastrando..."}
             </>
+          ) : isEditMode ? (
+            "Atualizar Imóvel"
           ) : (
-            isEditMode ? "Atualizar Imóvel" : "Cadastrar Imóvel"
+            "Cadastrar Imóvel"
           )}
         </button>
       </div>
@@ -51,4 +55,4 @@ const FormFooter = ({ isSaving, isValid = true, isEditMode = false, onCancel }) 
   );
 };
 
-export default memo(FormFooter); 
+export default memo(FormFooter);

@@ -4,8 +4,10 @@ import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 
 import { atualizarCorretor, getCorretorById } from "@/app/admin/services";
-import { ArrowLeftIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
+import { ArrowLeftIcon, ArrowPathIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 import AuthCheck from "@/app/admin/components/auth-check";
+import { getImovelById } from "@/app/services";
+import useImovelStore from "@/app/admin/store/imovelStore";
 
 export default function EditarCorretor({ params }) {
   const router = useRouter();
@@ -27,7 +29,7 @@ export default function EditarCorretor({ params }) {
         const result = await getCorretorById(id);
         if (result.success && result.data?.data) {
           setFormData(result.data.data);
-          setImoveis(result.data.imoveis);
+          setImoveis(result.data.data.imoveis_vinculados);
         } else {
           setError("Corretor não encontrado");
           router.push("/admin/corretores");
@@ -52,6 +54,39 @@ export default function EditarCorretor({ params }) {
       ...prevData,
       [name]: value,
     }));
+  };
+
+  const handleEdit = async (imovelCodigo) => {
+    setIsLoading(true);
+    try {
+      // Get the imovel data by ID
+      const response = await getImovelById(imovelCodigo);
+
+      if (response && response.data) {
+        // Access the store's setImovelSelecionado function
+        const setImovelSelecionado = useImovelStore.getState().setImovelSelecionado;
+
+        // Add the Automacao property to the imovel data
+        const imovelWithAutomacao = {
+          ...response.data,
+          Automacao: false,
+        };
+
+        // Set the imovel in the store
+        setImovelSelecionado(imovelWithAutomacao);
+
+        // Redirect to the gerenciar page instead of the editar page
+        router.push("/admin/imoveis/gerenciar");
+      } else {
+        console.error("Erro ao buscar imóvel:", response?.error || "Imóvel não encontrado");
+        alert("Erro ao buscar dados do imóvel. Tente novamente.");
+      }
+    } catch (error) {
+      console.error("Erro ao editar imóvel:", error);
+      alert("Ocorreu um erro ao buscar os dados do imóvel.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Função para salvar as alterações
@@ -226,20 +261,74 @@ export default function EditarCorretor({ params }) {
               {/* Seção de Imóveis Vinculados */}
               <div className="bg-white rounded-lg p-6 mb-6">
                 <h2 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">
-                  Imóveis Vinculados (Códigos)
+                  Imóveis Vinculados
                 </h2>
 
                 {imoveis && imoveis.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {imoveis.map((imovel, index) => (
-                      <div
-                        key={index}
-                        className="border rounded-md px-3 py-2 bg-gray-50 hover:bg-gray-100 cursor-pointer"
-                        onClick={() => router.push(`/admin/imoveis/editar/${imovel}`)}
-                      >
-                        <span className="text-black font-medium hover:font-bold">{imovel}</span>
-                      </div>
-                    ))}
+                  <div className="max-h-[600px] overflow-x-auto">
+                    <table className="divide-y divide-gray-200 w-full">
+                      <thead className="bg-gray-50 sticky top-0">
+                        <tr>
+                          <th
+                            scope="col"
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          >
+                            Código
+                          </th>
+                          <th
+                            scope="col"
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          >
+                            Empreendimento
+                          </th>
+                          {/* <th
+                            scope="col"
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          >
+                            Disponibilidade
+                          </th> */}
+                          {/* <th
+                            scope="col"
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          >
+                            Valor
+                          </th> */}
+                          <th
+                            scope="col"
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          >
+                            Editar
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {imoveis.map((imovel, index) => (
+                          <tr key={index} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap text-xs font-medium text-gray-900">
+                              {imovel.Codigo}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
+                              {imovel.Empreendimento.slice(0, 40) || "-"}
+                            </td>
+                            {/* <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
+                              {imovel.Disponibilidade || "-"}
+                            </td> */}
+                            {/* <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
+                              {imovel.Valor ? `R$ ${imovel.Valor}` : "-"}
+                            </td> */}
+                            <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
+                              <button
+                                className="text-black hover:text-indigo-900"
+                                title="Editar"
+                                onClick={() => handleEdit(imovel.Codigo)}
+                              >
+                                <PencilSquareIcon className="h-5 w-5" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 ) : (
                   <p className="text-gray-500 italic">Nenhum imóvel vinculado a este corretor.</p>

@@ -1,21 +1,20 @@
 "use client";
 
-import { memo } from 'react';
-import FormField from './FormField';
+import { memo } from "react";
+import FormField from "./FormField";
 
 // List of required fields
 export const REQUIRED_FIELDS = [
-  "Empreendimento", "Slug", "CEP", "Endereco", 
-  "Numero", "Bairro", "Cidade", "Regiao"
+  "Empreendimento",
+  "Slug",
+  "CEP",
+  "Endereco",
+  "Numero",
+  "Bairro",
+  "Cidade",
 ];
 
-const FieldGroup = ({ 
-  fields, 
-  formData, 
-  displayValues,
-  onChange,
-  validation = {}
-}) => {
+const FieldGroup = ({ fields, formData, displayValues, onChange, validation = {} }) => {
   const getFieldValue = (field) => {
     if (field.name === "Video.1.Video") {
       return formData?.Video?.[1]?.Video || "";
@@ -47,4 +46,4 @@ const FieldGroup = ({
   );
 };
 
-export default memo(FieldGroup); 
+export default memo(FieldGroup);

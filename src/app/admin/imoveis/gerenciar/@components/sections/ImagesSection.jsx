@@ -1,24 +1,25 @@
 "use client";
 
-import { memo, useRef } from 'react';
-import Image from 'next/image';
+import { memo, useRef } from "react";
+import Image from "next/image";
 import { PlusCircleIcon, XCircleIcon, PhotoIcon } from "@heroicons/react/24/outline";
-import FormSection from '../FormSection';
+import FormSection from "../FormSection";
 
-const ImagesSection = ({ 
-  formData, 
-  addSingleImage, 
-  showImageModal, 
-  updateImage, 
-  removeImage, 
-  setImageAsHighlight, 
+const ImagesSection = ({
+  formData,
+  addSingleImage,
+  showImageModal,
+  updateImage,
+  removeImage,
+  setImageAsHighlight,
   changeImagePosition,
-  validation
+  validation,
 }) => {
   const fileInputRef = useRef(null);
   // Handle both array and object formats for backward compatibility
-  const photos = Array.isArray(formData.Foto) ? formData.Foto : 
-    Object.keys(formData.Foto || {}).map(key => formData.Foto[key]);
+  const photos = Array.isArray(formData.Foto)
+    ? formData.Foto
+    : Object.keys(formData.Foto || {}).map((key) => formData.Foto[key]);
   const photoCount = photos.length;
   const requiredPhotoCount = validation?.requiredPhotoCount || 5;
   const hasEnoughPhotos = photoCount >= requiredPhotoCount;
@@ -29,9 +30,9 @@ const ImagesSection = ({
         <div className="flex justify-between items-center mb-4">
           <div>
             <h3 className="text-sm font-medium text-gray-700">Gerenciar Imagens</h3>
-            <p className={`text-xs ${hasEnoughPhotos ? 'text-green-600' : 'text-red-500'}`}>
-              {photoCount} de {requiredPhotoCount} fotos necessárias 
-              {hasEnoughPhotos ? ' ✓' : ' (mínimo de 5 fotos obrigatório)'}
+            <p className={`text-xs ${hasEnoughPhotos ? "text-green-600" : "text-red-500"}`}>
+              {photoCount} de {requiredPhotoCount} fotos necessárias
+              {hasEnoughPhotos ? " ✓" : " (mínimo de 5 fotos obrigatório)"}
             </p>
           </div>
 
@@ -73,8 +74,8 @@ const ImagesSection = ({
               })
               .map((image, index) => {
                 // Generate unique key for each photo, ensuring uniqueness even with duplicate Codigo values
-                const uniquePhotoKey = `${image.Codigo || ''}-${index}-${Date.now()}`;
-                
+                const uniquePhotoKey = `${image.Foto || ""}-${index}`;
+
                 return (
                   <div key={uniquePhotoKey} className="border p-3 rounded-md">
                     <div className="relative mb-2 h-36 bg-gray-100 flex items-center justify-center overflow-hidden">
@@ -112,10 +113,13 @@ const ImagesSection = ({
                           type="checkbox"
                           id={`destaque-${uniquePhotoKey}`}
                           checked={image.Destaque === "Sim"}
-                          onChange={() => setImageAsHighlight(image.Codigo)}
-                          className="h-3 w-3 border-gray-300 rounded text-black focus:ring-black"
+                          onChange={() => setImageAsHighlight(image.Foto)}
+                          className="h-6 w-6 border-gray-300 rounded text-black focus:ring-black"
                         />
-                        <label htmlFor={`destaque-${uniquePhotoKey}`} className="text-xs text-gray-700">
+                        <label
+                          htmlFor={`destaque-${uniquePhotoKey}`}
+                          className="text-xs text-gray-700"
+                        >
                           Imagem em destaque
                         </label>
                       </div>
@@ -155,7 +159,9 @@ const ImagesSection = ({
             <PhotoIcon className="mx-auto h-10 w-10 text-gray-400" />
             <p className="mt-2 text-xs text-gray-500">Nenhuma imagem adicionada ainda.</p>
             <p className="text-xs text-gray-500">Clique em "Adicionar Imagem" para começar.</p>
-            <p className="text-xs text-red-500 font-medium mt-2">É necessário adicionar pelo menos 5 fotos</p>
+            <p className="text-xs text-red-500 font-medium mt-2">
+              É necessário adicionar pelo menos 5 fotos
+            </p>
           </div>
         )}
       </div>
@@ -163,4 +169,4 @@ const ImagesSection = ({
   );
 };
 
-export default memo(ImagesSection); 
+export default memo(ImagesSection);
