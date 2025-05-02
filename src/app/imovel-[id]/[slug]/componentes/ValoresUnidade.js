@@ -19,7 +19,7 @@ const formatarValorMonetario = (valor) => {
 };
 
 export default function ValoresUnidade({ imovel }) {
-  const url = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${slug}`;
+  const url = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
   function sendWhatsapp() {
     const isMobile = () => {
       return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
@@ -28,7 +28,7 @@ export default function ValoresUnidade({ imovel }) {
     };
 
     // Construir a mensagem
-    const message = `Quero saber mais sobre o ${imovel.Empreendimento}, no bairro ${imovel.BairroComercial}, disponivel no link: ${url}`;
+    const message = `Quero saber mais sobre o ${imovel.Empreendimento}, no bairro ${imovel.BairroComercial}, disponível no link: ${url}`;
 
     // Escolher a URL base apropriada
     const baseUrl = isMobile() ? "whatsapp://send" : "https://web.whatsapp.com/send";
