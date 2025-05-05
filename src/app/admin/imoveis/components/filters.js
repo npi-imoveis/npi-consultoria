@@ -21,8 +21,21 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     }
   };
 
+  const handleClearFilters = () => {
+    setFilters({
+      categoria: "",
+      status: "",
+      situacao: "",
+      cadastro: "Ativo",
+    });
+
+    if (onFilter) {
+      onFilter({});
+    }
+  };
+
   return (
-    <div className="mt-4 grid grid-cols-5 gap-2 border-t py-4">
+    <div className="w-full mt-4 grid grid-cols-5 gap-2 border-t py-4">
       <SelectFilter
         name="categoria"
         options={[
@@ -41,6 +54,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         ]}
         placeholder="Categoria"
         onChange={(e) => setFilters({ ...filters, categoria: e.target.value })}
+        value={filters.categoria}
       />
       <SelectFilter
         name="status"
@@ -55,6 +69,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         ]}
         placeholder="Status"
         onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+        value={filters.status}
       />
       <SelectFilter
         name="situacao"
@@ -67,6 +82,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         ]}
         placeholder="Situação"
         onChange={(e) => setFilters({ ...filters, situacao: e.target.value })}
+        value={filters.situacao}
       />
       <SelectFilter
         name="cadastro"
@@ -76,24 +92,34 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         ]}
         placeholder="Cadastro"
         onChange={(e) => setFilters({ ...filters, cadastro: e.target.value })}
+        value={filters.cadastro}
       />
-      <button
-        className="mt-2 bg-gray-200 font-bold rounded-lg text-gray-600 hover:bg-gray-300"
-        onClick={handleFilters}
-      >
-        Filtrar
-      </button>
+      <div className="mt-2 flex gap-2">
+        <button
+          className="w-full bg-gray-200 font-bold rounded-lg text-gray-600 hover:bg-gray-300"
+          onClick={handleFilters}
+        >
+          Filtrar
+        </button>
+        <button
+          className="w-full bg-red-100 font-bold rounded-lg text-red-600 hover:bg-red-200"
+          onClick={handleClearFilters}
+        >
+          Limpar
+        </button>
+      </div>
     </div>
   );
 }
 
-function SelectFilter({ options, name, onChange }) {
+function SelectFilter({ options, name, onChange, value }) {
   return (
     <div>
       <select
         name={name}
         className="mt-2 w-full text-xs rounded-lg border border-gray-300 bg-white p-2 focus:outline-none focus:ring-1 focus:ring-black"
         onChange={onChange}
+        value={value || ""}
       >
         <option value="">Selecione {name}</option>
         {options.map((option, index) => (
