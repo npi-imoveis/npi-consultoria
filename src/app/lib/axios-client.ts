@@ -8,11 +8,11 @@ const getBaseUrl = () => {
 
     // Se estiver no servidor, usa URL absoluta para API interna
     if (isServer) {
-      return "/api/";
+      return process.env.NEXT_PUBLIC_API_URL || "https://npiconsultoria.com.br/api/";
     }
 
-    // No cliente em produção, usa URL relativa
-    return "/api/";
+    // No cliente em produção, usa URL completa
+    return process.env.NEXT_PUBLIC_API_URL || "https://npiconsultoria.com.br/api/";
   }
 
   // Em desenvolvimento, usa localhost
@@ -58,4 +58,4 @@ axiosClient.interceptors.response.use(
 export default axiosClient;
 
 // LOCAL = http://localhost:3000/api/
-// PROD = https://npi-imoveis.vercel.app/api/
+// PROD = https://npiconsultoria.com.br/api/

@@ -5,7 +5,7 @@ export const uploadImagem = async (file, tipo, id) => {
     formData.append("tipo", tipo);
     formData.append("id", id);
 
-    const response = await fetch(`${API_URL}/upload-imagem`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/upload-imagem`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${getToken()}`,
@@ -30,7 +30,7 @@ export const uploadImagem = async (file, tipo, id) => {
  */
 export const removerImagem = async (imagemUrl, tipo, id) => {
   try {
-    const response = await fetch(`${API_URL}/remover-imagem`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/remover-imagem`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
