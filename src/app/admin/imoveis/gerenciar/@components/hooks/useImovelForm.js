@@ -48,6 +48,7 @@ export const useImovelForm = () => {
     AreaTotal: "",
     Dormitorios: "",
     Suites: "",
+    Imobiliaria: "",
     BanheiroSocialQtd: "",
     Vagas: "",
     DataEntrega: "",
@@ -127,22 +128,12 @@ export const useImovelForm = () => {
               CelularCorretor: response.data.celular,
             }));
           } else {
-            setFormData((prev) => ({
-              ...prev,
-              Corretor: "",
-              EmailCorretor: "",
-              CelularCorretor: "",
-            }));
+            // Se não encontrar o corretor, mantém os dados atuais
+            console.log("Corretor não encontrado para o código:", formData.Codigo);
           }
         }
       } catch (error) {
         console.error("Erro ao buscar corretor:", error);
-        setFormData((prev) => ({
-          ...prev,
-          Corretor: "",
-          EmailCorretor: "",
-          CelularCorretor: "",
-        }));
       }
     };
 

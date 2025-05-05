@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { deleteImovelAutomacao } from "../services/delete";
 
-export default function ModalDelete({ id, title, description, buttonText, link, onClose }) {
+export default function ModalDelete({ id, title, description, onClose }) {
   const [isOpen, setIsOpen] = useState(true);
 
   const handleClose = () => {
