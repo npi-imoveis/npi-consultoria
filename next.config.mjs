@@ -1,8 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-
-
-
   images: {
     remotePatterns: [
       {
@@ -16,8 +13,6 @@ const nextConfig = {
     ],
   },
 
-
-
   typescript: {
     // ⚠️ Isso desativa a verificação de tipos durante o build
     ignoreBuildErrors: true,
@@ -29,7 +24,7 @@ const nextConfig = {
   },
 
   // Garantir que o Next.js gere a página 404 estática
-  output: 'standalone', // Ou 'export' se estiver gerando static sites
+  output: "standalone", // Ou 'export' se estiver gerando static sites
 };
 
 export default nextConfig;

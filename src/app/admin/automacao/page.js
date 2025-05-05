@@ -14,7 +14,7 @@ import {
 import { getImoveisAutomacao, getImovelByIdAutomacao } from "../services";
 import useImovelStore from "../store/imovelStore";
 import { TrashIcon } from "lucide-react";
-import Modal from "../components/modal";
+import ModalDelete from "../components/modal-delete";
 
 export default function AdminImoveis() {
   const router = useRouter();
@@ -24,6 +24,7 @@ export default function AdminImoveis() {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [codigoImovel, setCodigoImovel] = useState(null);
   const [pagination, setPagination] = useState({
     totalItems: 0,
     totalPages: 1,
@@ -179,12 +180,18 @@ export default function AdminImoveis() {
     }).format(valorNumerico);
   };
 
+  const handleDelete = async (codigo) => {
+    setCodigoImovel(codigo);
+    setIsModalOpen(true);
+  };
+
   return (
     <AuthCheck>
       {isModalOpen && (
-        <Modal
+        <ModalDelete
+          id={codigoImovel}
           title="Deletar Imóvel"
-          description="Tem certeza que deseja deletar esse registro? Ele será removido permanentemente."
+          description={`O imovél Codigo: ${codigoImovel} será deletado da lista de automação. Tem certeza que deseja continuar?`}
           buttonText="Deletar"
           link="/admin/automacao"
         />
@@ -337,7 +344,7 @@ export default function AdminImoveis() {
                           <button
                             className="text-red-500 hover:text-red-400"
                             title="Deletar Imóvel"
-                            onClick={() => setIsModalOpen(!isModalOpen)}
+                            onClick={() => handleDelete(imovel.Codigo)}
                           >
                             <TrashIcon className="h-5 w-5" />
                           </button>
