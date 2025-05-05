@@ -185,6 +185,11 @@ export default function AdminImoveis() {
     setIsModalOpen(true);
   };
 
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    loadImoveis(currentPage, searchTerm);
+  };
+
   return (
     <AuthCheck>
       {isModalOpen && (
@@ -194,6 +199,7 @@ export default function AdminImoveis() {
           description={`O imovél Codigo: ${codigoImovel} será deletado da lista de automação. Tem certeza que deseja continuar?`}
           buttonText="Deletar"
           link="/admin/automacao"
+          onClose={handleCloseModal}
         />
       )}
       <div className="">
@@ -335,14 +341,14 @@ export default function AdminImoveis() {
                       <td className="px-6 py-4 whitespace-nowrap sticky right-0 bg-white">
                         <div className="flex items-center space-x-3">
                           <button
-                            className="text-black hover:text-gray-700 bg-gray-100 p-2 rounded-md"
+                            className="text-black font-bold hover:text-gray-700 bg-gray-100 p-2 rounded-md"
                             title="Editar"
                             onClick={() => handleEdit(imovel.Codigo)}
                           >
                             <PencilSquareIcon className="h-5 w-5" />
                           </button>
                           <button
-                            className="text-red-500 hover:text-red-400 bg-gray-100 p-2 rounded-md"
+                            className="text-red-500 font-bold hover:text-red-400 bg-gray-100 p-2 rounded-md"
                             title="Deletar Imóvel"
                             onClick={() => handleDelete(imovel.Codigo)}
                           >
