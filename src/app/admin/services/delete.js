@@ -2,7 +2,7 @@ import axiosClient from "@/app/lib/axios-client";
 
 export async function deleteImovelAutomacao(codigo) {
   try {
-    const response = await axiosClient.delete(`/imoveis/automacao/${codigo}`);
+    const response = await axiosClient.delete(`/automacao/${codigo}`);
     return response.data;
   } catch (error) {
     console.error("Erro ao deletar imóvel:", error);

@@ -335,18 +335,18 @@ export default function AdminImoveis() {
                       <td className="px-6 py-4 whitespace-nowrap sticky right-0 bg-white">
                         <div className="flex items-center space-x-3">
                           <button
-                            className="text-black hover:text-gray-700"
+                            className="text-black hover:text-gray-700 bg-gray-100 p-2 rounded-md"
                             title="Editar"
                             onClick={() => handleEdit(imovel.Codigo)}
                           >
                             <PencilSquareIcon className="h-5 w-5" />
                           </button>
                           <button
-                            className="text-red-500 hover:text-red-400"
+                            className="text-red-500 hover:text-red-400 bg-gray-100 p-2 rounded-md"
                             title="Deletar Imóvel"
                             onClick={() => handleDelete(imovel.Codigo)}
                           >
-                            <TrashIcon className="h-5 w-5" />
+                            <TrashIcon className="h-4 w-4" />
                           </button>
                         </div>
                       </td>
