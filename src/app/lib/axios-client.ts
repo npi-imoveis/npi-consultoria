@@ -1,9 +1,25 @@
 import axios from "axios";
 
 // Determinar a URL base com base no ambiente
-const BASE_URL = process.env.NODE_ENV === 'production'
-  ? "https://www.npiconsultoria.com.br/api/"
-  : "http://localhost:3000/api/";
+const getBaseUrl = () => {
+  if (process.env.NODE_ENV === 'production') {
+    // Verifica se estamos em ambiente de servidor ou cliente
+    const isServer = typeof window === 'undefined';
+
+    // Se estiver no servidor, usa URL absoluta para API interna
+    if (isServer) {
+      return "/api/";
+    }
+
+    // No cliente em produção, usa URL relativa
+    return "/api/";
+  }
+
+  // Em desenvolvimento, usa localhost
+  return "http://localhost:3000/api/";
+};
+
+const BASE_URL = getBaseUrl();
 
 const axiosClient = axios.create({
   baseURL: BASE_URL,
