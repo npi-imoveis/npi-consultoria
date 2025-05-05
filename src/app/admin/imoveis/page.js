@@ -10,6 +10,7 @@ import useImovelStore from "../store/imovelStore";
 import { getImoveisDashboard } from "../services/imoveis";
 
 import FiltersImoveisAdmin from "./components/filters";
+import { TrashIcon } from "lucide-react";
 
 export default function AdminImoveis() {
   const router = useRouter();
@@ -18,6 +19,8 @@ export default function AdminImoveis() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState({});
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [codigoImovel, setCodigoImovel] = useState(null);
   const [pagination, setPagination] = useState({
     totalItems: 0,
     totalPages: 1,
@@ -200,8 +203,29 @@ export default function AdminImoveis() {
     }).format(valorNumerico);
   };
 
+  const handleDelete = async (codigo) => {
+    setCodigoImovel(codigo);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    loadImoveis(currentPage, searchTerm);
+  };
+
   return (
     <AuthCheck>
+      {isModalOpen && (
+        <ModalDelete
+          id={codigoImovel}
+          title="Deletar Imóvel"
+          description={`O imóvel com Código: ${codigoImovel} será deletado. Tem certeza que deseja continuar?`}
+          buttonText="Deletar"
+          link="/admin/imoveis"
+          onClose={handleCloseModal}
+          type="corretor"
+        />
+      )}
       <div className="">
         <div className="mb-8">
           <div className="flex justify-between items-center mb-4">
@@ -255,7 +279,7 @@ export default function AdminImoveis() {
                 <tr>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-[10px] font-bold  uppercase tracking-wider"
+                    className="px-6 bg-gray-50 py-3 text-left text-[10px] font-bold  uppercase tracking-wider"
                   >
                     Código
                   </th>
@@ -310,7 +334,7 @@ export default function AdminImoveis() {
                   // Dados dos imóveis
                   imoveis.map((imovel) => (
                     <tr key={imovel.Codigo || imovel._id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-900 font-bold">
+                      <td className="px-6 bg-gray-50 py-4 whitespace-nowrap text-xs text-gray-900 font-bold">
                         {imovel.Codigo || "-"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
@@ -341,17 +365,24 @@ export default function AdminImoveis() {
                             href={`/imovel-${imovel.Codigo}/${imovel.Slug}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-black hover:text-gray-700"
+                            className="text-black hover:text-gray-700 bg-gray-100 p-2 rounded-md"
                             title="Ver no site"
                           >
                             <EyeIcon className="h-5 w-5" />
                           </a>
                           <button
-                            className="text-black hover:text-gray-700"
+                            className="text-black hover:text-gray-700 bg-gray-100 p-2 rounded-md"
                             title="Editar"
                             onClick={() => handleEdit(imovel.Codigo)}
                           >
                             <PencilSquareIcon className="h-5 w-5" />
+                          </button>
+                          <button
+                            className="text-red-500 font-bold hover:text-red-400 bg-gray-100 p-2 rounded-md"
+                            title="Deletar Imóvel"
+                            onClick={() => handleDelete(imovel.Codigo)}
+                          >
+                            <TrashIcon className="h-4 w-4" />
                           </button>
                         </div>
                       </td>
