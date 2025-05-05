@@ -1,5 +1,4 @@
 import { connectToDatabase } from "@/app/lib/mongodb";
-import Cdimag from "@/app/models/Cdimag";
 import Corretores from "@/app/models/Corretores";
 import { NextResponse } from "next/server";
 

@@ -48,7 +48,6 @@ export const useImovelForm = () => {
     AreaTotal: "",
     Dormitorios: "",
     Suites: "",
-    Imobiliaria: "",
     BanheiroSocialQtd: "",
     Vagas: "",
     DataEntrega: "",
@@ -64,8 +63,9 @@ export const useImovelForm = () => {
     DestaquesLocalizacao: "",
     FichaTecnica: "",
     Tour360: "",
+    IdCorretor: "",
     Corretor: "",
-    TipoCorretor: "Corretor",
+    Imobiliaria: "",
     EmailCorretor: "",
     CelularCorretor: "",
     Video: "",
@@ -117,23 +117,19 @@ export const useImovelForm = () => {
 
   useEffect(() => {
     const fetchCorretor = async () => {
-      try {
-        if (formData.Codigo) {
-          const response = await getCorretorById(formData.Codigo);
-          if (response.success) {
-            setFormData((prev) => ({
-              ...prev,
-              Corretor: response.data.nome,
-              EmailCorretor: response.data.email,
-              CelularCorretor: response.data.celular,
-            }));
-          } else {
-            // Se não encontrar o corretor, mantém os dados atuais
-            console.log("Corretor não encontrado para o código:", formData.Codigo);
-          }
+      if (formData.Codigo && !isAutomacao) {
+        const response = await getCorretorById(formData.Codigo);
+        if (response.success) {
+          setFormData((prev) => ({
+            ...prev,
+            Corretor: response.data.nome,
+            EmailCorretor: response.data.email,
+            CelularCorretor: response.data.celular,
+          }));
+        } else {
+          // Se não encontrar o corretor, mantém os dados atuais
+          console.log("Corretor não encontrado para o código:", formData.Codigo);
         }
-      } catch (error) {
-        console.error("Erro ao buscar corretor:", error);
       }
     };
 
