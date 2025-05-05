@@ -200,6 +200,7 @@ export default function AdminImoveis() {
           buttonText="Deletar"
           link="/admin/automacao"
           onClose={handleCloseModal}
+          type="automacao"
         />
       )}
       <div className="">

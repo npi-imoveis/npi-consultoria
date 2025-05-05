@@ -37,3 +37,27 @@ export async function GET(request) {
     return NextResponse.json({ error: "Erro ao buscar informações do corretor" }, { status: 500 });
   }
 }
+
+export async function DELETE(request) {
+  const url = new URL(request.url);
+  const id = url.searchParams.get("id");
+
+  try {
+    await connectToDatabase();
+
+    const corretor = await Corretores.findOne({
+      codigoD: id,
+    });
+
+    if (!corretor) {
+      return NextResponse.json({ error: "Corretor não encontrado" }, { status: 404 });
+    }
+
+    await Corretores.deleteOne({ codigoD: id });
+
+    return NextResponse.json({ message: "Corretor deletado com sucesso" }, { status: 200 });
+  } catch (error) {
+    console.error("Erro ao deletar corretor:", error);
+    return NextResponse.json({ error: "Erro ao deletar corretor" }, { status: 500 });
+  }
+}

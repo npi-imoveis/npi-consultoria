@@ -4,9 +4,6 @@ import { InformationCircleIcon } from "@heroicons/react/24/outline";
 import { useEffect, useState, useRef } from "react";
 import useFiltersStore from "@/app/store/filtrosStore";
 import { getImoveisByFilters, getBairrosPorCidade } from "@/app/services";
-import axiosClient from "@/app/lib/axios-client";
-import { motion } from "framer-motion";
-import { ArrowRightLeft } from "lucide-react";
 
 // Componente de Input Numérico reutilizável
 const InputNumerico = ({ placeholder, value, onChange }) => {

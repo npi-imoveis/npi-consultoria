@@ -5,15 +5,10 @@ import { getImoveis, getImovelById } from "@/app/services";
 import AuthCheck from "../components/auth-check";
 import Pagination from "@/app/components/ui/pagination";
 import { useRouter } from "next/navigation";
-import {
-  MagnifyingGlassIcon,
-  ArrowPathIcon,
-  EyeIcon,
-  PencilSquareIcon,
-} from "@heroicons/react/24/outline";
+import { EyeIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 import useImovelStore from "../store/imovelStore";
 import { getImoveisDashboard } from "../services/imoveis";
-import Loading from "./loading";
+
 import FiltersImoveisAdmin from "./components/filters";
 
 export default function AdminImoveis() {
@@ -56,8 +51,20 @@ export default function AdminImoveis() {
           });
         }
       } else {
+        // Construir os parâmetros de filtro para a API
+        const apiFilters = { ...filters };
+
+        // Processar filtros de valor
+        if (apiFilters.ValorMin) {
+          apiFilters.ValorMin = apiFilters.ValorMin.toString();
+        }
+
+        if (apiFilters.ValorMax) {
+          apiFilters.ValorMax = apiFilters.ValorMax.toString();
+        }
+
         // Se não tiver termo de busca, buscar todos os imóveis normalmente
-        const response = await getImoveisDashboard(filters, page, 12);
+        const response = await getImoveisDashboard(apiFilters, page, 12);
         if (response && response.data) {
           setImoveis(response.data);
           setPagination({
@@ -117,9 +124,28 @@ export default function AdminImoveis() {
 
   // Handler para os filtros
   const handleFilterApply = (newFilters) => {
-    setFilters(newFilters);
+    // Transformar filtros para o formato esperado pela API
+    const processedFilters = { ...newFilters };
+
+    // Limpar filtros vazios
+    Object.keys(processedFilters).forEach((key) => {
+      // Remover arrays vazios
+      if (Array.isArray(processedFilters[key]) && processedFilters[key].length === 0) {
+        delete processedFilters[key];
+      }
+      // Remover strings vazias
+      else if (processedFilters[key] === "") {
+        delete processedFilters[key];
+      }
+      // Remover null ou undefined
+      else if (processedFilters[key] === null || processedFilters[key] === undefined) {
+        delete processedFilters[key];
+      }
+    });
+
+    setFilters(processedFilters);
     setCurrentPage(1);
-    loadImoveis(1, searchTerm);
+    loadImoveis(1);
   };
 
   // Função para navegar para a página de edição

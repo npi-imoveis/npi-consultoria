@@ -7,13 +7,17 @@ import Pagination from "@/app/components/ui/pagination";
 import { useRouter } from "next/navigation";
 import { MagnifyingGlassIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 import { getCorretores } from "../services";
+import ModalDelete from "../components/modal-delete";
+import { TrashIcon } from "lucide-react";
 
 export default function AdminCorretores() {
   const router = useRouter();
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [corretores, setCorretores] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [codigoCorretor, setCodigoCorretor] = useState("");
   const [pagination, setPagination] = useState({
     totalItems: 0,
     totalPages: 1,
@@ -105,8 +109,29 @@ export default function AdminCorretores() {
     router.push(`/admin/corretores/editar/${corretorId}`);
   };
 
+  const handleDelete = async (codigo) => {
+    setCodigoCorretor(codigo);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    loadImoveis(currentPage, searchTerm);
+  };
+
   return (
     <AuthCheck>
+      {isModalOpen && (
+        <ModalDelete
+          id={codigoCorretor}
+          title="Deletar Corretor"
+          description={`O corretor será deletado da lista de parceiros. Tem certeza que deseja continuar?`}
+          buttonText="Deletar"
+          link="/admin/corretores"
+          onClose={handleCloseModal}
+          type="corretor"
+        />
+      )}
       <div className="">
         <div className="mb-8">
           <div className="flex justify-between items-center mb-4">
@@ -161,6 +186,12 @@ export default function AdminCorretores() {
                     scope="col"
                     className="px-6 py-3 text-left text-[10px] font-bold tracking-wider capitalize"
                   >
+                    ID
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-[10px] font-bold tracking-wider capitalize"
+                  >
                     Nome
                   </th>
                   <th
@@ -179,7 +210,7 @@ export default function AdminCorretores() {
                     scope="col"
                     className="px-6 py-3 text-left text-[10px] font-bold tracking-wider"
                   >
-                    CRECI
+                    Imóveis
                   </th>
                   <th
                     scope="col"
@@ -205,6 +236,9 @@ export default function AdminCorretores() {
                 ) : corretores.length > 0 ? (
                   corretores.map((corretor) => (
                     <tr key={corretor._id} className="hover:bg-gray-50">
+                      <td className="px-6 bg-gray-50 py-4 whitespace-nowrap text-[10px] text-gray-900 font-bold capitalize">
+                        {corretor.codigoD || "-"}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-900 font-bold capitalize">
                         {corretor.nomeCompleto || corretor.nome}
                       </td>
@@ -215,16 +249,23 @@ export default function AdminCorretores() {
                         {corretor.celular || "-"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-xs text-zinc-700">
-                        {corretor.creci || "-"}
+                        {corretor.imoveis_vinculados.length || "-"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap sticky right-0 bg-white">
                         <div className="flex items-center space-x-3">
                           <button
-                            className="text-black hover:text-gray-700"
+                            className="text-black font-bold hover:text-gray-700 bg-gray-100 p-2 rounded-md"
                             title="Editar"
                             onClick={() => handleEdit(corretor.codigoD)}
                           >
                             <PencilSquareIcon className="h-5 w-5" />
+                          </button>
+                          <button
+                            className="text-red-500 font-bold hover:text-red-400 bg-gray-100 p-2 rounded-md"
+                            title="Deletar Imóvel"
+                            onClick={() => handleDelete(corretor.codigoD)}
+                          >
+                            <TrashIcon className="h-4 w-4" />
                           </button>
                         </div>
                       </td>

@@ -162,6 +162,7 @@ export default function EditarCorretor({ params }) {
         { name: "celular", label: "Celular", type: "text" },
         { name: "fone", label: "Telefone Fixo", type: "text" },
         { name: "email", label: "E-mail", type: "email" },
+        { name: "imobiliaria", label: "Imobiliaria" },
       ],
     },
     {

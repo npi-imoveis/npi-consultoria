@@ -7,29 +7,83 @@ export async function GET(request) {
   try {
     const url = new URL(request.url);
 
-    // Parâmetros de paginação
     const limit = parseInt(url.searchParams.get("limit") || "25", 10);
     const page = parseInt(url.searchParams.get("page") || "1", 10);
     const skip = (page - 1) * limit;
 
-    // Extrair parâmetros de filtro da URL
     const filtro = {};
+    const allKeys = Array.from(url.searchParams.keys());
 
-    // Adicionar ao filtro apenas os parâmetros que existem na URL
-    // e não são parâmetros de paginação
-    url.searchParams.forEach((value, key) => {
-      if (!["limit", "page"].includes(key) && value) {
-        filtro[key] = value;
+    allKeys.forEach((key) => {
+      if (!["limit", "page"].includes(key)) {
+        const values = url.searchParams.getAll(key);
+        const normalizedKey = key.endsWith("[]") ? key.replace("[]", "") : key;
+
+        if (values.length > 1) {
+          filtro[normalizedKey] = { $in: values };
+        } else if (values.length === 1 && values[0] !== "") {
+          filtro[normalizedKey] = values[0];
+        }
       }
     });
 
-    // Criar uma chave única para o cache baseada nos parâmetros
-    const filterParams = Object.entries(filtro)
-      .map(([key, value]) => `${key}=${value}`)
-      .join("_");
-    const cacheKey = `imoveis_page${page}_limit${limit}${filterParams ? "_" + filterParams : ""}`;
+    if (filtro.bairros) {
+      filtro.BairroComercial = filtro.bairros;
+      delete filtro.bairros;
+    }
 
-    // Verificar se os dados estão em cache
+    // ===============================
+    // Lógica de faixa de valor ajustada
+    // ===============================
+    const matchStage = { ...filtro };
+
+    const exprConditions = [];
+
+    const cleanedValorAntigo = {
+      $toDouble: {
+        $replaceAll: {
+          input: {
+            $reduce: {
+              input: { $split: ["$ValorAntigo", "."] },
+              initialValue: "",
+              in: { $concat: ["$$value", "$$this"] },
+            },
+          },
+          find: ",",
+          replacement: "",
+        },
+      },
+    };
+
+    if (matchStage.ValorMin) {
+      const min = parseInt(matchStage.ValorMin.toString().replace(/\D/g, ""));
+      exprConditions.push({ $gte: [cleanedValorAntigo, min] });
+      delete matchStage.ValorMin;
+    }
+
+    if (matchStage.ValorMax) {
+      const max = parseInt(matchStage.ValorMax.toString().replace(/\D/g, ""));
+      exprConditions.push({ $lte: [cleanedValorAntigo, max] });
+      delete matchStage.ValorMax;
+    }
+
+    if (exprConditions.length > 0) {
+      matchStage.$expr = { $and: exprConditions };
+    }
+
+    // ===============================
+    // Cache
+    // ===============================
+    const filterParams = Object.entries(filtro)
+      .map(([key, value]) => {
+        if (typeof value === "object" && value.$in) {
+          return `${key}=${value.$in.join(",")}`;
+        }
+        return `${key}=${value}`;
+      })
+      .join("_");
+
+    const cacheKey = `imoveis_page${page}_limit${limit}${filterParams ? "_" + filterParams : ""}`;
     const cachedData = cache.get(cacheKey);
     if (cachedData) {
       return NextResponse.json(cachedData);
@@ -37,60 +91,37 @@ export async function GET(request) {
 
     await connectToDatabase();
 
-    // Pipeline de agregação para garantir códigos únicos
     const imoveisAgregados = await Imovel.aggregate([
-      // Filtrar conforme os critérios de filtro
-      { $match: filtro },
-      // Agrupar por Codigo e manter apenas o documento mais recente
+      { $match: matchStage },
       {
         $group: {
           _id: "$Codigo",
           doc: { $first: "$$ROOT" },
         },
       },
-      // Desempacotar o documento para preservar a estrutura original
       { $replaceRoot: { newRoot: "$doc" } },
-      // Contar total para paginação
-      {
-        $facet: {
-          total: [{ $count: "count" }],
-          // Aplicar paginação
-          dados: [{ $skip: skip }, { $limit: limit }],
-        },
-      },
+      { $skip: skip },
+      { $limit: limit },
     ]);
 
-    // Extrair os resultados da agregação
-    const imoveisPaginados = imoveisAgregados[0]?.dados || [];
-    const totalItems = imoveisAgregados[0]?.total[0]?.count || 0;
+    const total = await Imovel.countDocuments(filtro);
+    const totalPages = Math.ceil(total / limit);
 
-    // Calcular o total de páginas
-    const totalPages = Math.ceil(totalItems / limit);
-
-    const response = {
-      status: 200,
-      data: imoveisPaginados,
+    const result = {
+      data: imoveisAgregados,
       paginacao: {
-        totalItems,
+        totalItems: total,
         totalPages,
         currentPage: page,
-        limit,
+        itemsPerPage: limit,
       },
-      filtros: filtro,
+      status: 200,
     };
 
-    // Armazenar os dados em cache
-    cache.set(cacheKey, response);
-
-    return NextResponse.json(response);
+    cache.set(cacheKey, result);
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Erro ao buscar imóveis:", error);
-    return NextResponse.json(
-      {
-        message: "Erro ao buscar imóveis",
-        error: error instanceof Error ? error.message : "Erro desconhecido",
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Erro ao buscar imóveis" }, { status: 500 });
   }
 }

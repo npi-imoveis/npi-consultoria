@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { deleteImovelAutomacao } from "../services/delete";
+import { deleteCorretor } from "../services/corretor";
 
-export default function ModalDelete({ id, title, description, onClose }) {
+export default function ModalDelete({ id, title, description, onClose, type }) {
   const [isOpen, setIsOpen] = useState(true);
 
   const handleClose = () => {
@@ -17,12 +18,21 @@ export default function ModalDelete({ id, title, description, onClose }) {
 
   const handleDelete = async () => {
     try {
-      const response = await deleteImovelAutomacao(id);
-      if (response.success) {
-        handleClose();
+      if (type === "automacao") {
+        const response = await deleteImovelAutomacao(id);
+        if (response.success) {
+          handleClose();
+        }
+      } else if (type === "corretor") {
+        const response = await deleteCorretor(id);
+        if (response.success) {
+          handleClose();
+        }
       }
     } catch (error) {
       console.error("Erro ao deletar imóvel:", error);
+    } finally {
+      handleClose();
     }
   };
 
