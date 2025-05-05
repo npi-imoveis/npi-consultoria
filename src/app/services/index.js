@@ -175,12 +175,6 @@ export async function getBairrosPorCidade(cidade, categoria) {
     const queryString = params.toString();
     const url = `/imoveis/filters/${filtro}${queryString ? `?${queryString}` : ""}`;
 
-    console.log(
-      `Buscando bairros para cidade: ${cidade}${
-        categoria ? ` e categoria: ${categoria}` : ""
-      }, usando URL: ${url}`
-    );
-
     const response = await axiosClient.get(url);
     return response.data;
   } catch (error) {

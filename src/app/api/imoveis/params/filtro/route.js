@@ -25,22 +25,6 @@ export async function GET(request) {
   const skip = (page - 1) * limit;
 
   // Log dos parâmetros recebidos para debug
-  console.log("Parâmetros recebidos:", {
-    categoria,
-    cidade,
-    bairros,
-    finalidade,
-    quartos,
-    banheiros,
-    vagas,
-    precoMinimo,
-    precoMaximo,
-    areaMinima,
-    areaMaxima,
-    limit,
-    page,
-    skip,
-  });
 
   // Log para verificar como os bairros estão sendo recebidos
 

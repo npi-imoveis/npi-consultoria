@@ -1,7 +1,7 @@
 import mongoose, { Schema, model, models } from "mongoose";
 
 // Interface para o documento de imóvel
-export interface IImovelAtivo {
+export interface IImovelInativo {
     AnoConstrucao: string;
     AreaPrivativa: string;
     AreaTotal: string;
@@ -150,7 +150,7 @@ export interface IImovelAtivo {
 }
 
 // Schema do imóvel
-const ImovelAtivoSchema: Schema = new Schema(
+const ImovelInativoSchema: Schema = new Schema(
     {
         AnoConstrucao: String,
         AreaPrivativa: String,
@@ -285,6 +285,6 @@ const ImovelAtivoSchema: Schema = new Schema(
     }
 );
 
-const ImovelAtivo = models.ImovelAtivo || model<IImovelAtivo>("ImovelAtivo", ImovelAtivoSchema);
+const ImovelInativo = models.ImovelInativo || model<IImovelInativo>("ImovelInativo", ImovelInativoSchema);
 
-export default ImovelAtivo;
+export default ImovelInativo;

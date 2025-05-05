@@ -1,58 +1,40 @@
-import { connectToDatabase } from "@/app/lib/mongodb";
-import Corretores from "@/app/models/Corretores";
-import Imovel from "@/app/models/Imovel";
-import Review from "@/app/models/Review";
 import { NextResponse } from "next/server";
-import NodeCache from "node-cache";
+import Imovel from "@/app/models/Imovel";
+import ImovelAtivo from "@/app/models/ImovelAtivo";
 
-// Inicializa o cache com TTL de 5 minutos (300 segundos)
-const dashboardCache = new NodeCache({ stdTTL: 300 });
-const CACHE_KEY = "dashboard_data";
+import Review from "@/app/models/Review";
+import { connectToDatabase } from "@/app/lib/mongodb";
+import ImovelInativo from "@/app/models/ImovelInativo";
+import Corretores from "@/app/models/Corretores";
 
-export async function GET(request) {
-    try {
-        // Verifica se os dados já estão em cache
-        const cachedData = dashboardCache.get(CACHE_KEY);
-        if (cachedData) {
-            return NextResponse.json({
-                status: 200,
-                data: cachedData,
-                source: "cache"
-            });
-        }
+export async function GET() {
+  try {
+    await connectToDatabase();
 
-        // Se não estiver em cache, busca no banco de dados
-        await connectToDatabase();
+    const imoveis = await Imovel.countDocuments();
+    const imoveisAtivos = await ImovelAtivo.countDocuments();
+    const imoveisInativos = await ImovelInativo.countDocuments();
+    const imoveisParaReview = await Review.countDocuments();
 
-        const condominio = await Imovel.find();
-        const condominios = await Imovel.find({ Condominio: "Sim" });
-        const automacao = await Review.find()
+    const condominios = await Imovel.countDocuments({
+      Condominio: "Sim",
+    });
 
-        const corretores = await Corretores.find({})
-
-        const totalImoveis = condominio.length;
-        const totalCondominios = condominios.length;
-        const totalAutomacao = automacao.length;
-        const totalCorretores = corretores.length;
-
-        // Prepara os dados
-        const dashboardData = {
-            totalImoveis,
-            totalCondominios,
-            totalAutomacao,
-            totalCorretores
-        };
-
-        // Armazena os dados no cache
-        dashboardCache.set(CACHE_KEY, dashboardData);
-
-        return NextResponse.json({
-            status: 200,
-            data: dashboardData,
-            source: "database"
-        });
-    } catch (error) {
-        console.error("Erro ao buscar dados do dashboard:", error);
-        return NextResponse.json({ error: "Erro ao buscar dados do dashboard" }, { status: 500 });
-    }
+    return NextResponse.json({
+      status: 200,
+      data: {
+        imoveis,
+        imoveisAtivos,
+        imoveisInativos,
+        condominios,
+        imoveisParaReview,
+      },
+    });
+  } catch (error) {
+    console.error("Erro ao buscar dados do dashboard:", error);
+    return NextResponse.json({
+      status: 500,
+      message: "Erro ao buscar dados do dashboard",
+    });
+  }
 }

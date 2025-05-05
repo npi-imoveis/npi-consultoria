@@ -17,10 +17,7 @@ const firebaseConfig = {
 // Inicializa o Firebase apenas uma vez
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-console.log("Firebase: Initialized.", {
-  apps: getApps().map(app => app.name),
-  currentApp: app.name
-});
+
 
 // Inicializa Authentication com persistência local
 const auth = getAuth(app);

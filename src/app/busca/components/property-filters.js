@@ -480,12 +480,6 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible }) {
     async function fetchBairros() {
       if (cidadeSelecionada) {
         try {
-          console.log(
-            `Buscando bairros para cidade: ${cidadeSelecionada}${
-              categoriaSelecionada ? ` e categoria: ${categoriaSelecionada}` : ""
-            }`
-          );
-
           // Usar a função de serviço específica para bairros por cidade que agora aceita categoria
           const response = await getBairrosPorCidade(cidadeSelecionada, categoriaSelecionada);
 

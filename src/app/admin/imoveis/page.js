@@ -12,6 +12,9 @@ import {
   PencilSquareIcon,
 } from "@heroicons/react/24/outline";
 import useImovelStore from "../store/imovelStore";
+import { getImoveisDashboard } from "../services/imoveis";
+import Loading from "./loading";
+import FiltersImoveisAdmin from "./components/filters";
 
 export default function AdminImoveis() {
   const router = useRouter();
@@ -19,6 +22,7 @@ export default function AdminImoveis() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [filters, setFilters] = useState({});
   const [pagination, setPagination] = useState({
     totalItems: 0,
     totalPages: 1,
@@ -53,12 +57,12 @@ export default function AdminImoveis() {
         }
       } else {
         // Se não tiver termo de busca, buscar todos os imóveis normalmente
-        const response = await getImoveis({}, page, 20);
-        if (response && response.imoveis) {
-          setImoveis(response.imoveis);
+        const response = await getImoveisDashboard(filters, page, 12);
+        if (response && response.data) {
+          setImoveis(response.data);
           setPagination({
-            ...response.pagination,
-            itemsPerPage: 20,
+            ...response.paginacao,
+            itemsPerPage: 12,
           });
         } else {
           setImoveis([]);
@@ -77,7 +81,7 @@ export default function AdminImoveis() {
         totalItems: 0,
         totalPages: 1,
         currentPage: 1,
-        itemsPerPage: 20,
+        itemsPerPage: 12,
       });
     } finally {
       setIsLoading(false);
@@ -89,7 +93,7 @@ export default function AdminImoveis() {
     if (!searchTerm) {
       loadImoveis(currentPage);
     }
-  }, [currentPage]);
+  }, [currentPage, filters]);
 
   // Função para lidar com a mudança de página
   const handlePageChange = (newPage) => {
@@ -109,6 +113,13 @@ export default function AdminImoveis() {
     setSearchTerm("");
     setCurrentPage(1);
     loadImoveis(1, "");
+  };
+
+  // Handler para os filtros
+  const handleFilterApply = (newFilters) => {
+    setFilters(newFilters);
+    setCurrentPage(1);
+    loadImoveis(1, searchTerm);
   };
 
   // Função para navegar para a página de edição
@@ -180,34 +191,35 @@ export default function AdminImoveis() {
           {/* Barra de pesquisa */}
           <div className="bg-white p-4 rounded-lg  mb-6">
             <form onSubmit={handleSearch} className="flex items-center gap-2">
-              <div className="relative flex-grow">
-                <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                  <MagnifyingGlassIcon className="h-5 w-5 text-gray-400" />
-                </div>
+              <div className="flex w-full items-center justify-center gap-2">
                 <input
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Buscar por ID do imóvel..."
-                  className="border-2 px-5 py-2 text-zinc-700 pl-10 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
+                  placeholder="Buscar por código, endereço, cidade ou condomínio..."
+                  className="w-full text-xs rounded-lg border border-gray-300 bg-white p-2 focus:outline-none focus:ring-1 focus:ring-black"
                 />
-              </div>
-              <button
-                type="submit"
-                className="inline-flex items-center px-5 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
-              >
-                Buscar
-              </button>
-              {searchTerm && (
                 <button
-                  type="button"
-                  onClick={clearSearch}
-                  className="inline-flex items-center px-5 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
+                  type="submit"
+                  className="min-w-[200px] px-5 py-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
                 >
-                  Limpar
+                  Busca Livre
                 </button>
-              )}
+                {searchTerm && (
+                  <button
+                    type="button"
+                    onClick={clearSearch}
+                    className="min-w-[200px] px-5 py-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
+                  >
+                    Limpar
+                  </button>
+                )}
+              </div>
             </form>
+          </div>
+
+          <div>
+            <FiltersImoveisAdmin onFilter={handleFilterApply} />
           </div>
 
           {/* Tabela de imóveis */}
@@ -225,8 +237,15 @@ export default function AdminImoveis() {
                     scope="col"
                     className="px-6 py-3 text-left text-[10px] font-bold  uppercase tracking-wider"
                   >
+                    Ativo
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-[10px] font-bold  uppercase tracking-wider"
+                  >
                     Empreendimento
                   </th>
+
                   <th
                     scope="col"
                     className="px-6 py-3 text-left text-[10px] font-bold  uppercase tracking-wider"
@@ -267,6 +286,17 @@ export default function AdminImoveis() {
                     <tr key={imovel.Codigo || imovel._id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-900 font-bold">
                         {imovel.Codigo || "-"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            imovel.Ativo === "Sim"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
+                        >
+                          {imovel.Ativo || "-"}
+                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-xs text-zinc-700">
                         {imovel.Empreendimento || "-"}

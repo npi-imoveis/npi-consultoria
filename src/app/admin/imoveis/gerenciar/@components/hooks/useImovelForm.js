@@ -127,12 +127,22 @@ export const useImovelForm = () => {
               CelularCorretor: response.data.celular,
             }));
           } else {
-            // Se não encontrar o corretor, mantém os dados atuais
-            console.log("Corretor não encontrado para o código:", formData.Codigo);
+            setFormData((prev) => ({
+              ...prev,
+              Corretor: "",
+              EmailCorretor: "",
+              CelularCorretor: "",
+            }));
           }
         }
       } catch (error) {
         console.error("Erro ao buscar corretor:", error);
+        setFormData((prev) => ({
+          ...prev,
+          Corretor: "",
+          EmailCorretor: "",
+          CelularCorretor: "",
+        }));
       }
     };
 

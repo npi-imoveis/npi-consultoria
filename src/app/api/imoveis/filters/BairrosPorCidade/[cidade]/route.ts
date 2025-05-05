@@ -19,9 +19,7 @@ export async function GET(request, { params }) {
     // Adicionar filtro de categoria se estiver presente
     if (categoria) {
       condition.Categoria = categoria;
-      console.log(
-        `Filtrando bairros por cidade: ${decodeURIComponent(cidade)} e categoria: ${categoria}`
-      );
+
     } else {
 
     }
@@ -34,10 +32,7 @@ export async function GET(request, { params }) {
       .filter((bairro) => bairro && bairro.trim() !== "")
       .sort((a, b) => a.localeCompare(b));
 
-    console.log(
-      `Encontrados ${bairrosFiltrados.length} bairros para a cidade ${decodeURIComponent(cidade)}${categoria ? ` e categoria ${categoria}` : ""
-      }`
-    );
+
 
     // Retornar os bairros como resposta
     return NextResponse.json({

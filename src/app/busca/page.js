@@ -396,14 +396,6 @@ export default function BuscaImoveis() {
     const searchParams = new URLSearchParams(window.location.search);
     const searchQuery = searchParams.get("q");
 
-    console.log("Estado atual:", {
-      filtrosAplicados,
-      atualizacoesFiltros,
-      mostrandoFavoritos,
-      searchTerm,
-      currentPage,
-    });
-
     setIsLoading(true);
 
     // Prioridade 1: Mostrar favoritos se estiver nesse modo
