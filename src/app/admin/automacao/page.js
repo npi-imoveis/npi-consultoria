@@ -335,7 +335,7 @@ export default function AdminImoveis() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-xs text-zinc-700">
                         {formatarValor(
-                          imovel.ValorVenda || imovel.ValorAluguelSite || imovel.Valor
+                          imovel.ValorAntigo || imovel.ValorAluguelSite || imovel.Valor
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap sticky right-0 bg-white">

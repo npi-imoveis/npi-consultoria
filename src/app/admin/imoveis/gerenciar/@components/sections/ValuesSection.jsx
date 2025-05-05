@@ -1,8 +1,8 @@
 "use client";
 
-import { memo } from 'react';
-import FormSection from '../FormSection';
-import FieldGroup from '../FieldGroup';
+import { memo } from "react";
+import FormSection from "../FormSection";
+import FieldGroup from "../FieldGroup";
 
 const valuesFields = [
   { name: "ValorAntigo", label: "Valor da Venda", type: "text", isMonetary: true },
@@ -14,14 +14,14 @@ const valuesFields = [
 const ValuesSection = ({ formData, displayValues, onChange }) => {
   return (
     <FormSection title="Valores">
-      <FieldGroup 
-        fields={valuesFields} 
-        formData={formData} 
-        displayValues={displayValues} 
-        onChange={onChange} 
+      <FieldGroup
+        fields={valuesFields}
+        formData={formData}
+        displayValues={displayValues}
+        onChange={onChange}
       />
     </FormSection>
   );
 };
 
-export default memo(ValuesSection); 
+export default memo(ValuesSection);
