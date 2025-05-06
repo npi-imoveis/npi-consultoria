@@ -11,6 +11,7 @@ import { getImoveisDashboard } from "../services/imoveis";
 
 import FiltersImoveisAdmin from "./components/filters";
 import { TrashIcon } from "lucide-react";
+import ModalDelete from "../components/modal-delete";
 
 export default function AdminImoveis() {
   const router = useRouter();
@@ -223,7 +224,7 @@ export default function AdminImoveis() {
           buttonText="Deletar"
           link="/admin/imoveis"
           onClose={handleCloseModal}
-          type="corretor"
+          type="imovel"
         />
       )}
       <div className="">

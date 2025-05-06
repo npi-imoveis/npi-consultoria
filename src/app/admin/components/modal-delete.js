@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { deleteImovelAutomacao } from "../services/delete";
 import { deleteCorretor } from "../services/corretor";
+import { deleteImovel } from "../services/imovel";
 
 export default function ModalDelete({ id, title, description, onClose, type }) {
   const [isOpen, setIsOpen] = useState(true);
@@ -23,8 +24,17 @@ export default function ModalDelete({ id, title, description, onClose, type }) {
         if (response.success) {
           handleClose();
         }
-      } else if (type === "corretor") {
+      }
+
+      if (type === "corretor") {
         const response = await deleteCorretor(id);
+        if (response.success) {
+          handleClose();
+        }
+      }
+
+      if (type === "imovel") {
+        const response = await deleteImovel(id);
         if (response.success) {
           handleClose();
         }

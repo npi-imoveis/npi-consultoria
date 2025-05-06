@@ -226,3 +226,18 @@ export async function POST(request) {
     );
   }
 }
+
+export async function DELETE(request) {
+  try {
+    const { id } = await request.json();
+    await connectToDatabase();
+    await Imovel.deleteOne({ Codigo: id });
+    return NextResponse.json({ success: true, message: "Imóvel deletado com sucesso" });
+  } catch (error) {
+    console.error("Erro ao deletar imóvel:", error);
+    return NextResponse.json(
+      { success: false, message: "Erro ao deletar imóvel" },
+      { status: 500 }
+    );
+  }
+}
