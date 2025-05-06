@@ -94,12 +94,29 @@ export const useImovelForm = () => {
     if (isAutomacao) {
       const code = generateRandomCode();
       setNewImovelCode(code);
-      setFormData((prev) => ({
-        ...prev,
-        Codigo: code,
-      }));
+      // Forçar a atualização do formData.Codigo
+      setFormData((prev) => {
+        // Se o código já existe e é diferente, não atualizar
+        if (prev.Codigo && prev.Codigo !== code) {
+          return prev;
+        }
+        return {
+          ...prev,
+          Codigo: code,
+        };
+      });
     }
   }, [isAutomacao]);
+
+  // Ensure formData.Codigo is always synced with newImovelCode
+  useEffect(() => {
+    if (isAutomacao && newImovelCode && (!formData.Codigo || formData.Codigo !== newImovelCode)) {
+      setFormData((prev) => ({
+        ...prev,
+        Codigo: newImovelCode,
+      }));
+    }
+  }, [newImovelCode, formData.Codigo, isAutomacao]);
 
   // Ensure Slug is always generated from Empreendimento
   useEffect(() => {

@@ -215,7 +215,7 @@ export async function getImovelById(codigo) {
 export async function atualizarImovel(codigo, dadosImovel) {
   try {
     // Garantir que estamos atualizando pelo Codigo
-    const response = await axiosClient.put(`/imoveis/${codigo}`, dadosImovel);
+    const response = await axiosClient.post(`/imoveis/${codigo}`, dadosImovel);
 
     if (response && response.status >= 200 && response.status < 300) {
       return {
