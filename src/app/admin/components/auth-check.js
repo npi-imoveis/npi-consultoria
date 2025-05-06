@@ -15,7 +15,7 @@ export default function AuthCheck({ children }) {
       if (user) {
         // Só faz o controle de expiração se o usuário está autenticado
         const loginTime = localStorage.getItem("admin_login_time");
-        if (loginTime && Date.now() - Number(loginTime) > 60 * 60 * 1000) {
+        if (loginTime && Date.now() - Number(loginTime) > 60 * 60 * 10000) {
           // Sessão expirou
           auth.signOut();
           localStorage.removeItem("admin_login_time");

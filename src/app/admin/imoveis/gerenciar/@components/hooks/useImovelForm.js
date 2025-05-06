@@ -22,6 +22,7 @@ export const useImovelForm = () => {
 
   const [formData, setFormData] = useState({
     Codigo: "",
+    CodigoOriginal: "",
     Empreendimento: "",
     TituloSite: "",
     Categoria: "Apartamento",

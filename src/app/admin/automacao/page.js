@@ -135,7 +135,7 @@ export default function AdminImoveis() {
   // Função para navegar para a página de edição
   const handleEdit = (imovelCodigo) => {
     if (!imovelCodigo) {
-      console.error("Código do imóvel não encontrado");
+      alert("Código do imóvel não encontrado");
       return;
     }
 
@@ -148,6 +148,7 @@ export default function AdminImoveis() {
       const imovelComAutomacao = {
         ...imovelSelecionado,
         Automacao: true,
+        CodigoOriginal: imovelSelecionado.Codigo,
       };
 
       setImovelSelecionado(imovelComAutomacao);
