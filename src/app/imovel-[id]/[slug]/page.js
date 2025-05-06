@@ -93,7 +93,7 @@ export default async function Imovel({ params }) {
           <FichaTecnica imovel={imovel} />
           <DetalhesCondominio imovel={imovel} />
           <Lazer imovel={imovel} />
-          {imovel.Video.length != 0 && <VideoCondominio imovel={imovel} />}
+          {imovel.Video && <VideoCondominio imovel={imovel} />}
           {imovel.Tour360 && <TourVirtual link={imovel.Tour360} titulo={imovel.Empreendimento} />}
           <SimilarProperties id={imovel.Codigo} />
           <LocalizacaoCondominio imovel={imovel} />
