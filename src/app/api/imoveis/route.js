@@ -1,5 +1,5 @@
 import { connectToDatabase } from "@/app/lib/mongodb";
-import Imovel, { IImovel } from "@/app/models/Imovel";
+import Imovel from "@/app/models/Imovel";
 import { NextResponse } from "next/server";
 import cache from "@/app/lib/cache";
 import ImovelAtivo from "@/app/models/ImovelAtivo";
@@ -232,6 +232,8 @@ export async function DELETE(request) {
     const { id } = await request.json();
     await connectToDatabase();
     await Imovel.deleteOne({ Codigo: id });
+    await ImovelAtivo.deleteOne({ Codigo: id });
+    await ImovelInativo.deleteOne({ Codigo: id });
     return NextResponse.json({ success: true, message: "Imóvel deletado com sucesso" });
   } catch (error) {
     console.error("Erro ao deletar imóvel:", error);
