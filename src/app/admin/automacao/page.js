@@ -37,27 +37,22 @@ export default function AdminImoveis() {
 
   const loadImoveis = async (page = 1, codigo = "") => {
     setIsLoading(true);
-    setError(null);
 
     try {
       if (codigo) {
-        // Se tiver um termo de busca, buscar pelo ID específico
-        const response = await getImovelByIdAutomacao(codigo);
-        if (response && response.data) {
-          setImoveis([response.data]); // Coloca o único imóvel em um array
+        const response = await fetch(`/api/search/automacao?q=${encodeURIComponent(codigo)}`);
+        const data = await response.json();
+
+        if (data && data.data) {
+          setImoveis(data.data); // Coloca o único imóvel em um array
           setPagination({
-            totalItems: 1,
-            totalPages: 1,
+            totalItems: data.data.length,
+            totalPages: Math.ceil(data.data.length / 12),
             currentPage: 1,
             itemsPerPage: 20,
           });
         } else {
           setImoveis([]);
-          if (response.error) {
-            setError(response.error);
-          } else {
-            setError("Imóvel não encontrado");
-          }
           setPagination({
             totalItems: 0,
             totalPages: 1,
@@ -67,12 +62,12 @@ export default function AdminImoveis() {
         }
       } else {
         // Se não tiver termo de busca, buscar todos os imóveis normalmente
-        const response = await getImoveisAutomacao({}, page, 20);
+        const response = await getImoveisAutomacao({}, page, 12);
         if (response && response.imoveis) {
           setImoveis(response.imoveis);
           setPagination({
             ...response.pagination,
-            itemsPerPage: 20,
+            itemsPerPage: 12,
           });
 
           if (response.error) {
@@ -218,7 +213,7 @@ export default function AdminImoveis() {
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Buscar por ID do imóvel..."
+                  placeholder="Buscar por ID, empreendimento, endereço..."
                   className="border-2 px-5 py-2 text-zinc-700 pl-10 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
                 />
               </div>
@@ -247,28 +242,6 @@ export default function AdminImoveis() {
               </button>
             </form>
           </div>
-
-          {/* Mensagem de erro */}
-          {error && (
-            <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-6">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <ExclamationTriangleIcon className="h-5 w-5 text-red-400" />
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm text-red-700">{error}</p>
-                  <div className="mt-2">
-                    <button
-                      onClick={handleReload}
-                      className="text-sm font-medium text-red-700 hover:text-red-600"
-                    >
-                      Tentar novamente
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* Tabela de imóveis */}
           <div className="relative overflow-x-auto">
