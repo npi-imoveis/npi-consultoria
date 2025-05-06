@@ -1,3 +1,5 @@
+import axiosClient from "@/app/lib/axios-client";
+
 export async function deleteImovel(id) {
   try {
     const response = await axiosClient.delete(`imoveis?id=${id}`);
