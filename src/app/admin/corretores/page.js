@@ -116,7 +116,7 @@ export default function AdminCorretores() {
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    loadImoveis(currentPage, searchTerm);
+    loadCorretores(currentPage, searchTerm);
   };
 
   return (

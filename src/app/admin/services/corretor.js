@@ -39,3 +39,21 @@ export async function deleteCorretor(id) {
     };
   }
 }
+
+export async function criarCorretor(corretor) {
+  try {
+    const response = await axiosClient.post("/admin/corretor", corretor);
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.error("Erro ao criar corretor:", error);
+    return {
+      success: false,
+      message: "Erro ao criar corretor",
+      data: {
+        nome: "",
+        email: "",
+        celular: "",
+      },
+    };
+  }
+}

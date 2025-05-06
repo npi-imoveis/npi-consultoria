@@ -67,10 +67,6 @@ export async function POST(request) {
   try {
     const data = await request.json();
 
-    if (!data.codigoD) {
-      return NextResponse.json({ error: "codigoD é obrigatório" }, { status: 400 });
-    }
-
     await connectToDatabase();
 
     // Verificar se já existe um corretor com o mesmo codigoD
