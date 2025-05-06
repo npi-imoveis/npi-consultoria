@@ -98,20 +98,21 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create") => {
           //Em modo de edição, chamar o serviço de atualização
           result = await atualizarImovel(formData.Codigo, payload);
 
+          try {
+            const { user, timestamp } = await getCurrentUserAndDate();
+            await salvarLog({
+              user: user.displayName ? user.displayName : "Não Identificado",
+              email: user.email,
+              data: timestamp.toISOString(),
+              action: `Usuário ${user.email} atualizou o imóvel ${formData.Codigo}`,
+            });
+          } catch (logError) {
+            console.error("Erro ao salvar log de atualização:", logError);
+          }
+
           if (result && result.success) {
             setSuccess("Imóvel atualizado com sucesso!");
             setIsModalOpen(true);
-            try {
-              const { user, timestamp } = await getCurrentUserAndDate();
-              await salvarLog({
-                user: user.displayName ? user.displayName : "Não Identificado",
-                email: user.email,
-                data: timestamp.toISOString(),
-                action: `Usuário ${user.email} atualizou o imóvel ${formData.Codigo}`,
-              });
-            } catch (logError) {
-              console.error("Erro ao salvar log de atualização:", logError);
-            }
           } else {
             setError(result?.message || "Erro ao atualizar imóvel");
           }
