@@ -108,6 +108,11 @@ const BasicInfoSection = ({ formData, displayValues, onChange, validation }) => 
       ],
     },
     { name: "DataEntrega", label: "Data de Entrega", type: "text" },
+    isAutomacao && {
+      name: "LinkImovelOriginal",
+      label: "Link Parceiro",
+      type: "text",
+    },
   ];
 
   return (
