@@ -41,9 +41,9 @@ export default function AdminImoveis() {
           setImoveis(data.data);
           setPagination({
             totalItems: data.data.length,
-            totalPages: Math.ceil(data.data.length / 20),
+            totalPages: Math.ceil(data.data.length / 12),
             currentPage: 1,
-            itemsPerPage: 20,
+            itemsPerPage: 12,
           });
         } else {
           setImoveis([]);
@@ -51,7 +51,7 @@ export default function AdminImoveis() {
             totalItems: 0,
             totalPages: 1,
             currentPage: 1,
-            itemsPerPage: 20,
+            itemsPerPage: 12,
           });
         }
       } else {
@@ -81,7 +81,7 @@ export default function AdminImoveis() {
             totalItems: 0,
             totalPages: 1,
             currentPage: 1,
-            itemsPerPage: 20,
+            itemsPerPage: 12,
           });
         }
       }

@@ -30,7 +30,7 @@ export default function AdminCorretores() {
     try {
       if (search) {
         // Implementar busca de corretores quando necessário
-        const response = await fetch(`/api/search-corretores?q=${encodeURIComponent(search)}`);
+        const response = await fetch(`/api/search/corretores?q=${encodeURIComponent(search)}`);
         const data = await response.json();
 
         if (data && data.status === 200 && data.data) {
@@ -233,7 +233,7 @@ export default function AdminCorretores() {
                         </td>
                       </tr>
                     ))
-                ) : corretores.length > 0 ? (
+                ) : corretores?.length > 0 ? (
                   corretores.map((corretor) => (
                     <tr key={corretor._id} className="hover:bg-gray-50">
                       <td className="px-6 bg-gray-50 py-4 whitespace-nowrap text-[10px] text-gray-900 font-bold capitalize">
@@ -249,7 +249,7 @@ export default function AdminCorretores() {
                         {corretor.celular || "-"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-xs text-zinc-700">
-                        {corretor.imoveis_vinculados.length || "-"}
+                        {corretor.imoveis_vinculados?.length || "-"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap sticky right-0 bg-white">
                         <div className="flex items-center space-x-3">
