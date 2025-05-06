@@ -37,9 +37,9 @@ export default function AdminCorretores() {
           setCorretores(data.data);
           setPagination({
             totalItems: data.data.length,
-            totalPages: Math.ceil(data.data.length / 20),
+            totalPages: Math.ceil(data.data.length / 12),
             currentPage: 1,
-            itemsPerPage: 20,
+            itemsPerPage: 12,
           });
         } else {
           setCorretores([]);
@@ -47,16 +47,16 @@ export default function AdminCorretores() {
             totalItems: 0,
             totalPages: 1,
             currentPage: 1,
-            itemsPerPage: 20,
+            itemsPerPage: 12,
           });
         }
       } else {
-        const response = await getCorretores({}, page, 20);
+        const response = await getCorretores({}, page, 12);
         if (response && response.corretores) {
           setCorretores(response.corretores);
           setPagination({
             ...response.pagination,
-            itemsPerPage: 20,
+            itemsPerPage: 12,
           });
         } else {
           setCorretores([]);
@@ -64,7 +64,7 @@ export default function AdminCorretores() {
             totalItems: 0,
             totalPages: 1,
             currentPage: 1,
-            itemsPerPage: 20,
+            itemsPerPage: 12,
           });
         }
       }
@@ -137,7 +137,7 @@ export default function AdminCorretores() {
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-2xl font-bold text-gray-900">Gerenciamento de Corretores</h1>
             <button
-              onClick={() => router.push("/admin/corretores/cadastrar")}
+              onClick={() => router.push("/admin/corretores/editar/new")}
               className="inline-flex items-center px-5 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
             >
               Cadastrar Novo Corretor

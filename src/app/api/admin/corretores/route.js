@@ -57,7 +57,7 @@ export async function PUT(request) {
 
     await connectToDatabase();
 
-    const corretor = await Corretores.findByIdAndUpdate(id, updateData, { new: true });
+    const corretor = await Corretores.findOneAndUpdate({ codigoD: id }, updateData, { new: true });
 
     if (!corretor) {
       return NextResponse.json({ error: "Corretor não encontrado" }, { status: 404 });
