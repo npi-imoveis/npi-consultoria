@@ -355,105 +355,101 @@ export default function EditarCorretor({ params }) {
               ))}
 
               {/* Seção de Imóveis Vinculados - só mostrar se não for novo corretor */}
-              {!isNewCorretor && (
-                <div className="bg-white rounded-lg p-6 mb-6">
-                  <div className="flex justify-between items-center">
-                    <h2 className="text-lg font-semibold text-gray-900 mb-4 ">
-                      Imóveis Vinculados
-                      <span className="text-xs text-gray-500">
-                        {" "}
-                        - ({imoveis.length} encontrados)
-                      </span>
-                    </h2>
-                    <div className="flex items-center gap-2">
-                      <input
-                        onChange={(e) => setImovelCodigo(e.target.value)}
-                        type="text"
-                        placeholder="Digite o código do imóvel	"
-                        className="border-2 px-3 py-2 text-gray-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
-                      />
-                      <button
-                        onClick={handleVincularImovel}
-                        className="w-[300px] rounded-md bg-black text-white px-4 py-2.5"
-                      >
-                        Vincular novo imóvel
-                      </button>
-                    </div>
+
+              <div className="bg-white rounded-lg p-6 mb-6">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4 ">
+                    Imóveis Vinculados
+                    <span className="text-xs text-gray-500"> - ({imoveis.length} encontrados)</span>
+                  </h2>
+                  <div className="flex items-center gap-2">
+                    <input
+                      onChange={(e) => setImovelCodigo(e.target.value)}
+                      type="text"
+                      placeholder="Digite o código do imóvel	"
+                      className="border-2 px-3 py-2 text-gray-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
+                    />
+                    <button
+                      onClick={handleVincularImovel}
+                      className="w-[300px] rounded-md bg-black text-white px-4 py-2.5"
+                    >
+                      Vincular novo imóvel
+                    </button>
                   </div>
-
-                  {imoveis && imoveis.length > 0 ? (
-                    <div className="max-h-[600px] overflow-x-auto mt-4">
-                      <table className="divide-y divide-gray-200 w-full">
-                        <thead className="bg-gray-50 sticky top-0">
-                          <tr>
-                            <th
-                              scope="col"
-                              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                            >
-                              Código
-                            </th>
-                            <th
-                              scope="col"
-                              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                            >
-                              Empreendimento
-                            </th>
-                            <th
-                              scope="col"
-                              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                            >
-                              Categoria
-                            </th>
-
-                            <th
-                              scope="col"
-                              className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                            >
-                              Editar
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                          {imoveis.map((imovel, index) => (
-                            <tr key={index} className="hover:bg-gray-50">
-                              <td className="px-6 py-4 whitespace-nowrap text-xs font-medium text-gray-900">
-                                {imovel.Codigo}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
-                                {imovel.Empreendimento.slice(0, 40) || "-"}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
-                                {imovel.Categoria || "-"}
-                              </td>
-
-                              <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
-                                <div className="flex items-center space-x-3">
-                                  <button
-                                    className="text-black hover:text-indigo-900 bg-gray-100 p-2 rounded-md"
-                                    title="Editar"
-                                    onClick={() => handleEdit(imovel.Codigo)}
-                                  >
-                                    <PencilSquareIcon className="h-5 w-5" />
-                                  </button>
-                                  <button
-                                    className="text-red-500 font-bold hover:text-red-400 bg-gray-100 p-2 rounded-md"
-                                    title="Desvincular Imóvel"
-                                    onClick={() => handleDesvincularImovel(imovel.Codigo)}
-                                  >
-                                    <TrashIcon className="h-4 w-4" />
-                                  </button>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  ) : (
-                    <p className="text-gray-500 italic">Nenhum imóvel vinculado a este corretor.</p>
-                  )}
                 </div>
-              )}
+
+                {imoveis && imoveis.length > 0 ? (
+                  <div className="max-h-[600px] overflow-x-auto mt-4">
+                    <table className="divide-y divide-gray-200 w-full">
+                      <thead className="bg-gray-50 sticky top-0">
+                        <tr>
+                          <th
+                            scope="col"
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          >
+                            Código
+                          </th>
+                          <th
+                            scope="col"
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          >
+                            Empreendimento
+                          </th>
+                          <th
+                            scope="col"
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          >
+                            Categoria
+                          </th>
+
+                          <th
+                            scope="col"
+                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                          >
+                            Editar
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {imoveis.map((imovel, index) => (
+                          <tr key={index} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap text-xs font-medium text-gray-900">
+                              {imovel.Codigo}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
+                              {imovel.Empreendimento.slice(0, 40) || "-"}
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
+                              {imovel.Categoria || "-"}
+                            </td>
+
+                            <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-500">
+                              <div className="flex items-center space-x-3">
+                                <button
+                                  className="text-black hover:text-indigo-900 bg-gray-100 p-2 rounded-md"
+                                  title="Editar"
+                                  onClick={() => handleEdit(imovel.Codigo)}
+                                >
+                                  <PencilSquareIcon className="h-5 w-5" />
+                                </button>
+                                <button
+                                  className="text-red-500 font-bold hover:text-red-400 bg-gray-100 p-2 rounded-md"
+                                  title="Desvincular Imóvel"
+                                  onClick={() => handleDesvincularImovel(imovel.Codigo)}
+                                >
+                                  <TrashIcon className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="text-gray-500 italic">Nenhum imóvel vinculado a este corretor.</p>
+                )}
+              </div>
 
               <div className="flex justify-end mt-6">
                 <button
