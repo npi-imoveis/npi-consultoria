@@ -15,6 +15,7 @@ import { getCondominioPorSlug } from "@/app/services";
 import { WhatsappFloat } from "@/app/components/ui/whatsapp";
 import { Apartment as StructuredDataApartment } from "@/app/components/structured-data";
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
+import { notFound } from "next/navigation";
 
 const currentUrl = typeof window !== "undefined" ? window.location.href : "";
 
@@ -60,6 +61,10 @@ export default async function Imovel({ params }) {
   const { slug } = await params;
 
   const response = await getCondominioPorSlug(slug);
+
+  if (!response.data) {
+    notFound();
+  }
   const imovel = response.data;
   const url = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${slug}`;
 
