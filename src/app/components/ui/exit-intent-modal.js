@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from "react";
 
+const EXIT_INTENT_MODAL_KEY = "exitIntentModalLastShown";
+const TWELVE_HOURS_MS = 12 * 60 * 60 * 1000;
+
 export default function ExitIntentModal({ condominio, link }) {
   const [isOpen, setIsOpen] = useState(false);
   const [formState, setFormState] = useState("form"); // "form", "loading", "success"
@@ -118,7 +121,13 @@ export default function ExitIntentModal({ condominio, link }) {
     const handleMouseOut = (e) => {
       // Se o ponteiro sai do viewport pelo topo (y <= 0)
       if (e.clientY <= 0) {
-        setIsOpen(true);
+        // Verifica se já se passaram 12 horas desde a última exibição
+        const lastShown = localStorage.getItem(EXIT_INTENT_MODAL_KEY);
+        const now = Date.now();
+        if (!lastShown || now - Number(lastShown) > TWELVE_HOURS_MS) {
+          setIsOpen(true);
+          localStorage.setItem(EXIT_INTENT_MODAL_KEY, now.toString());
+        }
         window.removeEventListener("mouseout", handleMouseOut);
       }
     };
@@ -131,11 +140,11 @@ export default function ExitIntentModal({ condominio, link }) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-[800px] mx-4">
+      <div className="bg-white rounded-lg p-4 w-[800px] mx-4">
         <div className="w-full flex justify-end">
           <button onClick={() => setIsOpen(false)}>X</button>
         </div>
-        <h2 className="text-2xl font-bold text-center">Ei, espere!</h2>
+        <h2 className="text-2xl font-bold text-center">Espere, não vá embora ainda</h2>
         <p className="mt-2 text-center">
           Notamos seu interesse no <strong>{condominio}</strong>. <br />
           Preencha o formuário abaixo para receber uma seleção personalizada.

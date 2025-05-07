@@ -303,7 +303,7 @@ export default function AdminImoveis() {
                         {imovel.Codigo || "-"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-xs text-zinc-700">
-                        {imovel.Empreendimento || "Não Informado"}
+                        {imovel.Empreendimento || imovel.TermoSeo || "Não Informado"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-xs text-zinc-700">
                         {imovel.Categoria || "-"}

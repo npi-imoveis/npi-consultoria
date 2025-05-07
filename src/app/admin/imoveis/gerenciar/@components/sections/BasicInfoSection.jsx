@@ -25,7 +25,17 @@ const BasicInfoSection = ({ formData, displayValues, onChange, validation }) => 
       type: "text",
       disabled: true,
     },
-    { name: "Empreendimento", label: "Empreendimento", type: "text" },
+    {
+      name: "TermoSeo",
+      label: "Termo SEO",
+      type: "text",
+    },
+    {
+      name: "Empreendimento",
+      label: "Empreendimento",
+      type: "text",
+    },
+
     { name: "Construtora", label: "Construtora", type: "text" },
     {
       name: "Categoria",
@@ -108,7 +118,7 @@ const BasicInfoSection = ({ formData, displayValues, onChange, validation }) => 
       ],
     },
     { name: "DataEntrega", label: "Data de Entrega", type: "text" },
-    isAutomacao && {
+    {
       name: "LinkImovelOriginal",
       label: "Link Parceiro",
       type: "text",

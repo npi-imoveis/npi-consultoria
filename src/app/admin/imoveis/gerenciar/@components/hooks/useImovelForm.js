@@ -124,8 +124,8 @@ export const useImovelForm = () => {
 
   // Ensure Slug is always generated from Empreendimento
   useEffect(() => {
-    if (formData.Empreendimento) {
-      const slug = formatterSlug(formData.Empreendimento);
+    if (formData.Empreendimento || formData.TermoSeo) {
+      const slug = formatterSlug(formData.Empreendimento || formData.TermoSeo);
       // Only update if the slug has actually changed
       if (slug !== formData.Slug) {
         setFormData((prev) => ({
@@ -134,7 +134,7 @@ export const useImovelForm = () => {
         }));
       }
     }
-  }, [formData.Empreendimento, formData.Slug]);
+  }, [formData.Empreendimento, formData.TermoSeo, formData.Slug]);
 
   useEffect(() => {
     const fetchCorretor = async () => {
