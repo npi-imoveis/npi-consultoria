@@ -18,6 +18,7 @@ import ExploreRegiao from "./componentes/ExploreRegiao";
 import ScrollToImoveisButton from "./componentes/scroll-to-imovel-button";
 import { notFound } from "next/navigation";
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
+import removePalavraCondominio from "@/app/utils/formatter-condominio";
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
@@ -105,8 +106,8 @@ export default async function CondominioPage({ params }) {
                 />
               </div>
 
-              <h1 className="text-xl font-semibold mt-2">
-                Condomínio {condominio.Empreendimento}{" "}
+              <h1 className="text-xl font-bold mt-2">
+                Condomínio {removePalavraCondominio(condominio.Empreendimento)}{" "}
               </h1>
               <span className="text-xs text-zinc-700 font-semibold">
                 {condominio.TipoEndereco} {condominio.Endereco}, {condominio.Numero},{" "}
