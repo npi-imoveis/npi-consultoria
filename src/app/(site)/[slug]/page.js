@@ -17,6 +17,7 @@ import TourVirtual from "./componentes/TourVirtual";
 import ExploreRegiao from "./componentes/ExploreRegiao";
 import ScrollToImoveisButton from "./componentes/scroll-to-imovel-button";
 import { notFound } from "next/navigation";
+import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 
 export async function generateMetadata({ params }) {
   const { slug } = await params;
@@ -88,6 +89,8 @@ export default async function CondominioPage({ params }) {
         url={currentUrl}
         image={condominio.Foto}
       />
+
+      <ExitIntentModal condominio={condominio.Empreendimento} link={currentUrl} />
 
       <div className="container mx-auto pt-20">
         <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 ">
