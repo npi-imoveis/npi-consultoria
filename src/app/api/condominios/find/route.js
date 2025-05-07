@@ -23,17 +23,17 @@ export async function GET(request) {
       Codigo: id,
       ValorAntigo: {
         $nin: ["", "0"],
-        $exists: true
-      }
+        $exists: true,
+      },
     });
 
     if (!imovelReferencia) {
       return NextResponse.json(
         {
-          status: 404,
+          status: 204,
           error: "Imóvel de referência não encontrado ou sem valor antigo válido",
         },
-        { status: 404 }
+        { status: 204 }
       );
     }
 
@@ -56,8 +56,8 @@ export async function GET(request) {
         { ValorAntigo: { $exists: true } },
         { ValorAntigo: { $ne: "0" } },
         { ValorAntigo: { $ne: "" } },
-        { ValorAntigo: { $ne: null } }
-      ]
+        { ValorAntigo: { $ne: null } },
+      ],
     });
 
     // Verificar se encontrou algum imóvel
@@ -76,12 +76,10 @@ export async function GET(request) {
       return parseInt(atual.Codigo) < parseInt(menor.Codigo) ? atual : menor;
     }, imoveisMesmoEndereco[0]);
 
-
     return NextResponse.json({
       status: 200,
       data: imovelMenorCodigo,
       imoveisRelacionados: imoveisMesmoEndereco,
-
     });
   } catch (error) {
     console.error("Erro ao buscar imóvel com o menor código:", error);
