@@ -36,7 +36,7 @@ const CAMPOS_PROPRIETARIO = [
   { name: "metrag", label: "Metragem" },
   { name: "valor", label: "Valor" },
   { name: "data", label: "Data" },
-  { name: "observacoes", label: "Observações", rows: 4 }
+  { name: "observacoes", label: "Observações", rows: 4 },
 ];
 
 // Componente de Aba
@@ -45,9 +45,7 @@ const ProprietarioTab = ({ index, isActive, onClick }) => (
     type="button"
     onClick={onClick}
     className={`px-4 py-2 font-medium border-b-2 transition-colors duration-200 focus:outline-none ${
-      isActive
-        ? 'border-black text-black'
-        : 'border-transparent text-gray-500 hover:text-black'
+      isActive ? "border-black text-black" : "border-transparent text-gray-500 hover:text-black"
     }`}
   >
     Proprietário {index + 1}
@@ -57,13 +55,13 @@ const ProprietarioTab = ({ index, isActive, onClick }) => (
 // Componente de Feedback
 const Feedback = ({ feedback }) => {
   if (!feedback) return null;
-  
+
   return (
-    <div className={`mb-4 p-3 rounded ${
-      feedback.type === 'success' 
-        ? 'bg-green-100 text-green-800' 
-        : 'bg-red-100 text-red-800'
-    }`}>
+    <div
+      className={`mb-4 p-3 rounded ${
+        feedback.type === "success" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+      }`}
+    >
       {feedback.message}
     </div>
   );
@@ -72,7 +70,7 @@ const Feedback = ({ feedback }) => {
 export default function ProprietariosSection({ id }) {
   // Estrutura de chaves para os campos do proprietário
   const getProprietarioKey = (index, field) => {
-    const idx = String(index + 1).padStart(2, '0');
+    const idx = String(index + 1).padStart(2, "0");
     const fieldMap = {
       nome: `NOME${idx}`,
       fone: `FONE_P${idx}`,
@@ -105,7 +103,7 @@ export default function ProprietariosSection({ id }) {
       if (response && response.data) {
         setProprietarios(response.data);
       }
-    }
+    };
     fetchProprietarios();
   }, [id]);
 
@@ -124,7 +122,7 @@ export default function ProprietariosSection({ id }) {
   const handleChange = (index, e) => {
     const { name, value } = e.target;
     const key = getProprietarioKey(index, name);
-    setProprietarios(prev => ({ ...prev, [key]: value }));
+    setProprietarios((prev) => ({ ...prev, [key]: value }));
   };
 
   const handleSubmit = async (e) => {
@@ -133,30 +131,32 @@ export default function ProprietariosSection({ id }) {
     setFeedback(null);
     try {
       const result = await updateProprietario(id, proprietarios);
-      setFeedback({ 
-        type: 'success', 
-        message: result.success 
-          ? (result.message || 'Dados atualizados com sucesso!') 
-          : (result.message || 'Erro ao atualizar dados.')
+      setFeedback({
+        type: "success",
+        message: result.success
+          ? result.message || "Dados atualizados com sucesso!"
+          : result.message || "Erro ao atualizar dados.",
       });
       if (!result.success) {
-        setFeedback({ type: 'error', message: result.message || 'Erro ao atualizar dados.' });
+        setFeedback({ type: "error", message: result.message || "Erro ao atualizar dados." });
       }
     } catch (err) {
-      setFeedback({ type: 'error', message: 'Erro inesperado ao atualizar dados.' });
+      setFeedback({ type: "error", message: "Erro inesperado ao atualizar dados." });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="bg-white rounded-lg overflow-hidden p-5 ">
-      <h2 className="text-lg font-semibold mb-4 text-gray-800 border-b pb-2">Informações dos Proprietários</h2>
-      
+    <div className="bg-white rounded-lg overflow-hidden p-5 border-2 border-[#8B6F48]">
+      <h2 className="text-lg font-semibold mb-4 text-gray-800 border-b pb-2">
+        Informações dos Proprietários
+      </h2>
+
       {/* Abas */}
       <div className="flex space-x-2 mb-6 border-b">
         {Array.from({ length: 5 }).map((_, idx) => (
-          <ProprietarioTab 
+          <ProprietarioTab
             key={`prop-tab-${idx}`}
             index={idx}
             isActive={abaAtiva === idx}
@@ -164,9 +164,9 @@ export default function ProprietariosSection({ id }) {
           />
         ))}
       </div>
-      
+
       <Feedback feedback={feedback} />
-      
+
       <div className="mb-6 border-b pb-4">
         <h2 className="font-bold mb-2">Proprietário {abaAtiva + 1}</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -178,7 +178,7 @@ export default function ProprietariosSection({ id }) {
               type={type}
               rows={rows}
               value={proprietariosSeparados[abaAtiva][name]}
-              onChange={e => handleChange(abaAtiva, e)}
+              onChange={(e) => handleChange(abaAtiva, e)}
               disabled={loading}
             />
           ))}
@@ -191,7 +191,7 @@ export default function ProprietariosSection({ id }) {
           className="bg-black hover:bg-opacity-80 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition-all duration-300 ease-in-out"
           disabled={loading}
         >
-          {loading ? 'Salvando...' : 'Salvar'}
+          {loading ? "Salvando..." : "Salvar"}
         </button>
       </div>
     </div>

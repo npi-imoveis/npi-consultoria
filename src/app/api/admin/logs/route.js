@@ -1,5 +1,6 @@
 import { connectToDatabase } from "@/app/lib/mongodb";
 import Logs from "@/app/models/Logs";
+import { NextResponse } from "next/server";
 
 export async function POST(request) {
   try {
@@ -21,6 +22,20 @@ export async function POST(request) {
     );
   } catch (error) {
     console.error("Erro ao salvar log:", error);
-    return NextResponse.json({});
+  }
+}
+
+export async function GET() {
+  try {
+    await connectToDatabase();
+
+    const logs = await Logs.find();
+
+    return NextResponse.json({
+      status: 200,
+      data: logs,
+    });
+  } catch (error) {
+    console.error("Erro ao buscar logs:", error);
   }
 }

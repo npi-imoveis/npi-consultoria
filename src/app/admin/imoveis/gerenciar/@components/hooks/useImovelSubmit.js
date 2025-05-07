@@ -7,6 +7,7 @@ import { getTipoEndereco } from "@/app/utils/formater-tipo-address";
 import { formatAddress } from "@/app/utils/formatter-address";
 import { salvarLog } from "@/app/admin/services/log-service";
 import { getCurrentUserAndDate } from "@/app/utils/get-log";
+import { isAbsolute } from "path";
 
 export const useImovelSubmit = (formData, setIsModalOpen, mode = "create") => {
   const [isSaving, setIsSaving] = useState(false);
@@ -93,6 +94,16 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create") => {
         const payload = preparePayload(formData);
 
         let result;
+
+        if (formData.Automacao) {
+          result = await criarImovel(formData.Codigo, payload);
+          if (result && result.success) {
+            setSuccess("Imóvel cadastrado com sucesso!");
+            setIsModalOpen(true);
+          } else {
+            setError(result?.message || "Erro ao criar imóvel");
+          }
+        }
 
         if (mode === "edit") {
           //Em modo de edição, chamar o serviço de atualização

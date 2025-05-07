@@ -9,3 +9,13 @@ export async function salvarLog(params) {
     throw error;
   }
 }
+
+export async function buscarLogs() {
+  try {
+    const response = await axiosClient.get("/admin/logs");
+    return response.data;
+  } catch (error) {
+    console.error("Erro ao buscar logs:", error);
+    throw error;
+  }
+}

@@ -243,3 +243,108 @@ export async function DELETE(request) {
     );
   }
 }
+
+export async function PUT(request) {
+  try {
+    await connectToDatabase();
+
+    // Obter os dados do corpo da requisição
+    const dadosImovel = await request.json();
+
+    // Verificar se o Codigo foi fornecido
+    if (!dadosImovel.Codigo) {
+      return NextResponse.json(
+        {
+          status: 400,
+          error: "O campo Codigo é obrigatório",
+        },
+        { status: 400 }
+      );
+    }
+
+    // Verificar se o imóvel existe
+    const imovelExistente = await Imovel.findOne({ Codigo: dadosImovel.Codigo });
+    if (!imovelExistente) {
+      return NextResponse.json(
+        {
+          status: 404,
+          error: "Imóvel não encontrado para atualização",
+        },
+        { status: 404 }
+      );
+    }
+
+    // Atualizar o imóvel existente
+    const imovelAtualizado = await Imovel.findOneAndUpdate(
+      { Codigo: dadosImovel.Codigo },
+      dadosImovel,
+      { new: true, upsert: false }
+    );
+
+    let imovelAtivoAtualizado = null;
+    let imovelInativoAtualizado = null;
+
+    // Gerenciar modelos ImovelAtivo e ImovelInativo baseado no campo Ativo
+    if (dadosImovel.Ativo === "Sim") {
+      // Atualizar ou criar em ImovelAtivo
+      const imovelAtivoExistente = await ImovelAtivo.findOne({ Codigo: dadosImovel.Codigo });
+      if (imovelAtivoExistente) {
+        imovelAtivoAtualizado = await ImovelAtivo.findOneAndUpdate(
+          { Codigo: dadosImovel.Codigo },
+          dadosImovel,
+          { new: true, upsert: false }
+        );
+      } else {
+        const novoImovelAtivo = new ImovelAtivo(dadosImovel);
+        imovelAtivoAtualizado = await novoImovelAtivo.save();
+      }
+      // Remover da coleção de inativos se existir
+      await ImovelInativo.deleteOne({ Codigo: dadosImovel.Codigo });
+    } else if (dadosImovel.Ativo === "Não") {
+      // Atualizar ou criar em ImovelInativo
+      const imovelInativoExistente = await ImovelInativo.findOne({ Codigo: dadosImovel.Codigo });
+      if (imovelInativoExistente) {
+        imovelInativoAtualizado = await ImovelInativo.findOneAndUpdate(
+          { Codigo: dadosImovel.Codigo },
+          dadosImovel,
+          { new: true, upsert: false }
+        );
+      } else {
+        const novoImovelInativo = new ImovelInativo(dadosImovel);
+        imovelInativoAtualizado = await novoImovelInativo.save();
+      }
+      // Remover da coleção de ativos se existir
+      await ImovelAtivo.deleteOne({ Codigo: dadosImovel.Codigo });
+    }
+
+    // Invalidar cache relacionado a imóveis
+    const keys = cache.keys();
+    keys.forEach((key) => {
+      if (key.startsWith("imoveis_")) {
+        cache.del(key);
+      }
+    });
+
+    return NextResponse.json(
+      {
+        status: 200,
+        success: true,
+        message: "Imóvel atualizado com sucesso",
+        data: imovelAtualizado,
+        imovelAtivo: imovelAtivoAtualizado,
+        imovelInativo: imovelInativoAtualizado,
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error("Erro ao atualizar imóvel:", error);
+    return NextResponse.json(
+      {
+        status: 500,
+        success: false,
+        error: error instanceof Error ? error.message : "Erro desconhecido",
+      },
+      { status: 500 }
+    );
+  }
+}

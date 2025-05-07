@@ -146,26 +146,6 @@ export default function AdminLogin() {
               </div>
             </div>
 
-            <div className="flex justify-between items-center mt-2">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  disabled={isAuthenticating}
-                  className="h-4 w-4 text-cyan-400 focus:ring-cyan-400 border-gray-300 rounded"
-                />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
-                  Manter Conectado
-                </label>
-              </div>
-              <div>
-                <a href="#" className="text-xs text-[#8B6F48] hover:text-[#8B6F48]/80">
-                  Esqueceu a Senha?
-                </a>
-              </div>
-            </div>
-
             <div>
               <button
                 type="submit"
@@ -178,15 +158,6 @@ export default function AdminLogin() {
               </button>
             </div>
           </form>
-
-          <div className="mt-6 text-center">
-            <span className="text-sm text-gray-600">
-              É uma imobiliária?{" "}
-              <a href="#" className="text-[#8B6F48] hover:text-[#8B6F48]/80">
-                Cadastrar
-              </a>
-            </span>
-          </div>
         </div>
       </div>
     </div>

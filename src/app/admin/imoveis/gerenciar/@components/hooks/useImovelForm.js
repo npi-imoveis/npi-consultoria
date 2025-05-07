@@ -6,10 +6,12 @@ import { OpenStreetMapProvider } from "leaflet-geosearch";
 import { REQUIRED_FIELDS } from "../FieldGroup";
 import useImovelStore from "@/app/admin/store/imovelStore";
 import { getCorretorById } from "@/app/admin/services/corretor";
+import { generateUniqueCode } from "@/app/utils/idgenerate";
 
 // Export the generateRandomCode function so it can be reused
-export const generateRandomCode = () => {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+export const generateRandomCode = async () => {
+  const code = await generateUniqueCode();
+  return code;
 };
 
 export const useImovelForm = () => {
@@ -93,19 +95,20 @@ export const useImovelForm = () => {
   // Generate random code on init only if in Automacao mode
   useEffect(() => {
     if (isAutomacao) {
-      const code = generateRandomCode();
-      setNewImovelCode(code);
-      // Forçar a atualização do formData.Codigo
-      setFormData((prev) => {
-        // Se o código já existe e é diferente, não atualizar
-        if (prev.Codigo && prev.Codigo !== code) {
-          return prev;
-        }
-        return {
-          ...prev,
-          Codigo: code,
-        };
-      });
+      const fetchCode = async () => {
+        const code = await generateRandomCode();
+        setNewImovelCode(code);
+        setFormData((prev) => {
+          if (prev.Codigo && prev.Codigo !== code) {
+            return prev;
+          }
+          return {
+            ...prev,
+            Codigo: code,
+          };
+        });
+      };
+      fetchCode();
     }
   }, [isAutomacao]);
 

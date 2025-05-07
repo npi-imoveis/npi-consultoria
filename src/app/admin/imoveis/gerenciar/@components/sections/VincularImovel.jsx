@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { generateRandomCode } from "../hooks/useImovelForm";
 import { formatterNumber } from "@/app/utils/formatter-number";
 import Modal from "@/app/admin/components/modal";
+import { generateUniqueCode } from "@/app/utils/idgenerate";
 
 const VincularImovelSection = ({ formData, displayValues, onChange, validation }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -127,13 +128,14 @@ const VincularImovelSection = ({ formData, displayValues, onChange, validation }
 
     try {
       // Generate a new code using the imported function
-      const newCode = generateRandomCode();
+      const newCode = await generateUniqueCode();
 
       // Create a new property based on the current selected property
       // but with the fields updated from this form
       const newPropertyData = {
         ...imovelSelecionado, // Copy all fields from the original property
         Codigo: newCode, // Use the new code
+        Condominio: "Não",
         _id: undefined, // Remove the _id to let MongoDB generate a new one
       };
 
@@ -149,30 +151,32 @@ const VincularImovelSection = ({ formData, displayValues, onChange, validation }
       });
 
       // Modificar o Slug para incluir a categoria
-      if (newPropertyData.Slug && newPropertyData.Categoria) {
+      if (newPropertyData.Slug && newPropertyData.Categoria && newPropertyData.AreaPrivativa) {
         // Converter a categoria para minúsculo e substituir espaços por hífens
         const categoriaFormatada = newPropertyData.Categoria.toLowerCase().replace(/\s+/g, "-");
+        const areaFormatada = newPropertyData.AreaPrivativa.toLowerCase().replace(/\s+/g, "-");
         // Adicionar a categoria no início do slug
-        newPropertyData.Slug = `${categoriaFormatada}-${newPropertyData.Slug}`;
+        newPropertyData.Slug = `${categoriaFormatada}-${areaFormatada}-metros-${newPropertyData.Slug}-${newCode}`;
         setSlug(newPropertyData.Slug);
       }
 
       // Submit the new property
-      const result = await criarImovel(newCode, newPropertyData);
+      if (newCode) {
+        const result = await criarImovel(newCode, newPropertyData);
+        if (result && result.success) {
+          setSuccess(
+            `Imóvel cadastrado com sucesso! Código: ${newCode}. Acesse no link: https://npiconsultoria.com.br/imovel-${newCode}/${newPropertyData.Slug}`
+          );
 
-      if (result && result.success) {
-        setSuccess(
-          `Imóvel relacionado cadastrado com sucesso! Código: ${newCode}. Acesse no link: https://www.imobiliaria.com.br/imovel-${newCode}/${newPropertyData.Slug}`
-        );
+          // Store the new property code and name for the modal
+          setNewPropertyCode(newCode);
+          setNewPropertyName(newPropertyData.Empreendimento || "Novo Imóvel");
 
-        // Store the new property code and name for the modal
-        setNewPropertyCode(newCode);
-        setNewPropertyName(newPropertyData.Empreendimento || "Novo Imóvel");
-
-        // Open the modal
-        setIsModalOpen(true);
-      } else {
-        setError(result?.message || "Erro ao cadastrar imóvel relacionado");
+          // Open the modal
+          setIsModalOpen(true);
+        } else {
+          setError(result?.message || "Erro ao cadastrar imóvel relacionado");
+        }
       }
     } catch (error) {
       console.error("Erro ao cadastrar imóvel relacionado:", error);
@@ -182,14 +186,27 @@ const VincularImovelSection = ({ formData, displayValues, onChange, validation }
     }
   };
 
+  // Function to handle closing the modal and resetting the form
+  const handleCloseModalAndReset = () => {
+    setIsModalOpen(false);
+    setTimeout(() => {
+      basicInfoFields.forEach((field) => {
+        onChange({ target: { name: field.name, value: "" } });
+      });
+      setError("");
+      setSuccess("");
+    }, 2000);
+  };
+
   return (
-    <FormSection title="Duplicar Imóvel">
+    <FormSection title="Cadastrar novo imóvel" highlight={true}>
       {isModalOpen && (
         <Modal
-          title="Imóvel Relacionado Cadastrado com Sucesso"
-          description={`O imóvel ${newPropertyName} foi cadastrado com sucesso com o código ${newPropertyCode}. Ele agora está disponível na lista de imóveis do site.`}
-          buttonText="Ver imóvel"
+          title="Imóvel Cadastrado com Sucesso"
+          description={`${formData.Categoria} em ${newPropertyName} com ${formData.AreaPrivativa}m² cadastrado com sucesso com o código ${newPropertyCode}. Ele agora está disponível na lista de imóveis do site.`}
+          buttonText="Ver no site"
           link={`/imovel-${newPropertyCode}/${slug}`}
+          onClose={handleCloseModalAndReset}
         />
       )}
 
@@ -221,14 +238,19 @@ const VincularImovelSection = ({ formData, displayValues, onChange, validation }
       )}
 
       {/* Button to create related property */}
-      <div className="w-full flex justify-end mt-6">
+      <div className="w-full flex justify-between mt-6">
+        <span className="text-xs text-gray-500">
+          Esse formulário cria uma nova <strong>pagina de imóvel</strong> copiando os dados do
+          condomínio original. <br />
+          Será gerado um novo código e slug, além das informações preenchidas acima.
+        </span>
         <button
           type="button"
           onClick={handleCreateRelatedProperty}
           disabled={isSubmitting}
-          className="bg-black hover:bg-opacity-80 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline transition-all duration-300 ease-in-out"
+          className="bg-black hover:bg-opacity-80 text-white font-bold py-3 px-4 rounded focus:outline-none focus:shadow-outline transition-all duration-300 ease-in-out"
         >
-          {isSubmitting ? "Cadastrando..." : "Cadastrar Imóvel Relacionado"}
+          {isSubmitting ? "Cadastrando..." : "Cadastrar Imóvel"}
         </button>
       </div>
     </FormSection>

@@ -257,6 +257,23 @@ export default function GerenciarImovel() {
     }
   };
 
+  const title = () => {
+    if (isAutomacao) return "Imóvel cadastrado com sucesso";
+    if (mode === "create") return "Imóvel cadastrado com sucesso";
+    if (mode === "edit") return `Imóvel ${formData?.Empreendimento} atualizado com sucesso`;
+    return "";
+  };
+
+  const description = () => {
+    if (isAutomacao)
+      return `O imóvel ${formData?.Empreendimento} foi cadastrado com sucesso com o código ${newImovelCode}. Ele agora está disponível na lista de imóveis do site.`; // ou algum valor padrão
+    if (mode === "create")
+      return `O imóvel ${formData?.Empreendimento} foi cadastrado com sucesso com o código ${newImovelCode}. Ele agora está disponível na lista de imóveis do site.`;
+    if (mode === "edit")
+      return `O imóvel ${formData?.Empreendimento} com Código ${formData?.Codigo} foi atualizado com sucesso.`;
+    return "";
+  };
+
   return (
     <AuthCheck>
       {showImageModal && (
@@ -269,14 +286,8 @@ export default function GerenciarImovel() {
 
       {isModalOpen && (
         <Modal
-          title={
-            mode === "edit" ? "Imóvel Atualizado com Sucesso" : "Imóvel Cadastrado com Sucesso"
-          }
-          description={
-            mode === "edit"
-              ? `O imóvel ${formData?.Empreendimento} foi atualizado com sucesso.`
-              : `O imóvel ${formData?.Empreendimento} foi cadastrado com sucesso com o código ${newImovelCode}. Ele agora está disponível na lista de imóveis do site.`
-          }
+          title={title()}
+          description={description()}
           buttonText="Ver no site"
           link={`/imovel-${formData.Codigo || newImovelCode}/${formData?.Slug}`}
         />
