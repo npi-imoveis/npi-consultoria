@@ -14,6 +14,7 @@ import { SimilarProperties } from "./componentes/similar-properties";
 import { getCondominioPorSlug } from "@/app/services";
 import { WhatsappFloat } from "@/app/components/ui/whatsapp";
 import { Apartment as StructuredDataApartment } from "@/app/components/structured-data";
+import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 
 const currentUrl = typeof window !== "undefined" ? window.location.href : "";
 
@@ -80,6 +81,7 @@ export default async function Imovel({ params }) {
         url={currentUrl}
         image={imovel.Foto}
       />
+      <ExitIntentModal condominio={imovel.Empreendimento} link={url} />
 
       <div className="w-full mx-auto">
         <ImageGallery imovel={imovel} />

@@ -131,7 +131,10 @@ export default function ExitIntentModal({ condominio, link }) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-[600px] mx-4">
+      <div className="bg-white rounded-lg p-6 w-[800px] mx-4">
+        <div className="w-full flex justify-end">
+          <button onClick={() => setIsOpen(false)}>X</button>
+        </div>
         <h2 className="text-2xl font-bold text-center">Ei, espere!</h2>
         <p className="mt-2 text-center">
           Notamos seu interesse no <strong>{condominio}</strong>. <br />
@@ -182,7 +185,7 @@ export default function ExitIntentModal({ condominio, link }) {
                 )}
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-2 mt-4 border p-4 rounded-lg">
+            <div className="grid grid-cols-3 gap-2 mt-4 border p-4 rounded-lg">
               <div className="flex flex-col gap-2">
                 <label className="text-[10px] font-bold">Tipo de imóvel</label>
                 <select
