@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getImoveis, getImovelById } from "@/app/services";
+import { getImovelById } from "@/app/services";
 import AuthCheck from "../components/auth-check";
 import Pagination from "@/app/components/ui/pagination";
 import { useRouter } from "next/navigation";
@@ -26,7 +26,7 @@ export default function AdminImoveis() {
     totalItems: 0,
     totalPages: 1,
     currentPage: 1,
-    itemsPerPage: 20,
+    itemsPerPage: 12,
   });
 
   const loadImoveis = async (page = 1, search = "") => {
@@ -324,9 +324,9 @@ export default function AdminImoveis() {
                     .fill(null)
                     .map((_, index) => (
                       <tr key={`loading-${index}`}>
-                        <td colSpan={5} className="px-6 py-4 whitespace-nowrap">
-                          <div className="animate-pulse flex space-x-4">
-                            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                        <td colSpan={5} className="w-full px-6 py-4 whitespace-nowrap">
+                          <div className="w-full animate-pulse flex space-x-4">
+                            <div className="h-4 w-full bg-gray-200 rounded "></div>
                           </div>
                         </td>
                       </tr>

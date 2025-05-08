@@ -31,12 +31,7 @@ export async function GET(request) {
     }
 
     // Filtro básico para todos os documentos
-    const filtro = {
-      $or: [
-        { Valor: { $exists: true, $ne: "0", $ne: "" } },
-        { ValorAntigo: { $exists: true, $ne: "0", $ne: "" } },
-      ],
-    };
+    const filtro = {};
 
     // Adiciona um log para confirmar qual collection está sendo usada
 
@@ -51,19 +46,9 @@ export async function GET(request) {
       .limit(limit)
       .lean(); // Usar lean() para melhor performance
 
-    // Use um Map para garantir Codigos únicos
-    const imoveisMap = new Map();
-    imoveis.forEach((imovel) => {
-      if (!imoveisMap.has(imovel.Codigo)) {
-        imoveisMap.set(imovel.Codigo, imovel);
-      }
-    });
-
-    const imoveisUnicos = Array.from(imoveisMap.values());
-
     return NextResponse.json({
       status: 200,
-      data: imoveisUnicos,
+      data: imoveis,
       paginacao: {
         totalItems,
         totalPages,

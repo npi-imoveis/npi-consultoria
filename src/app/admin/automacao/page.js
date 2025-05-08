@@ -29,7 +29,7 @@ export default function AdminImoveis() {
     totalItems: 0,
     totalPages: 1,
     currentPage: 1,
-    itemsPerPage: 20,
+    itemsPerPage: 12,
   });
 
   // Acesso ao store de imóveis admin
@@ -49,7 +49,7 @@ export default function AdminImoveis() {
             totalItems: data.data.length,
             totalPages: Math.ceil(data.data.length / 12),
             currentPage: 1,
-            itemsPerPage: 20,
+            itemsPerPage: 12,
           });
         } else {
           setImoveis([]);
@@ -57,7 +57,7 @@ export default function AdminImoveis() {
             totalItems: 0,
             totalPages: 1,
             currentPage: 1,
-            itemsPerPage: 20,
+            itemsPerPage: 12,
           });
         }
       } else {
@@ -80,7 +80,7 @@ export default function AdminImoveis() {
             totalItems: 0,
             totalPages: 1,
             currentPage: 1,
-            itemsPerPage: 20,
+            itemsPerPage: 12,
           });
         }
       }
@@ -92,7 +92,7 @@ export default function AdminImoveis() {
         totalItems: 0,
         totalPages: 1,
         currentPage: 1,
-        itemsPerPage: 20,
+        itemsPerPage: 12,
       });
     } finally {
       setIsLoading(false);
@@ -131,6 +131,8 @@ export default function AdminImoveis() {
     setError(null);
     loadImoveis(currentPage, searchTerm);
   };
+
+  console.log("Imóveis Automação", imoveis);
 
   // Função para navegar para a página de edição
   const handleEdit = (imovelCodigo) => {
@@ -265,7 +267,7 @@ export default function AdminImoveis() {
                     scope="col"
                     className="px-6 py-3 text-left text-[10px] font-bold  uppercase tracking-wider"
                   >
-                    Categoria
+                    Data da Automação
                   </th>
                   <th
                     scope="col"
@@ -288,9 +290,9 @@ export default function AdminImoveis() {
                     .fill(null)
                     .map((_, index) => (
                       <tr key={`loading-${index}`}>
-                        <td colSpan={5} className="px-6 py-4 whitespace-nowrap">
-                          <div className="animate-pulse flex space-x-4">
-                            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                        <td colSpan={5} className="w-full px-6 py-4 whitespace-nowrap">
+                          <div className="w-full animate-pulse flex space-x-4">
+                            <div className="h-4 w-full bg-gray-200 rounded "></div>
                           </div>
                         </td>
                       </tr>
@@ -298,15 +300,15 @@ export default function AdminImoveis() {
                 ) : imoveis.length > 0 ? (
                   // Dados dos imóveis
                   imoveis.map((imovel) => (
-                    <tr key={imovel.Codigo || imovel._id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-[10px] text-gray-900 font-bold">
+                    <tr key={imovel._id} className="hover:bg-gray-50">
+                      <td className="px-6 bg-gray-50 py-4 whitespace-nowrap text-[10px] text-gray-900 font-bold">
                         {imovel.Codigo || "-"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-xs text-zinc-700">
                         {imovel.Empreendimento || imovel.TermoSeo || "Não Informado"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-xs text-zinc-700">
-                        {imovel.Categoria || "-"}
+                        {imovel.DataHoraAtualizacao || "-"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-xs text-zinc-700">
                         {formatarValor(
