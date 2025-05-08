@@ -24,12 +24,32 @@ const BrokerSection = ({ formData, displayValues, onChange }) => {
     };
     fetchCorretores();
   }, []);
+
+  const corretorField = () => {
+    if (formData.Corretor) {
+      return {
+        name: "Corretor",
+        label: "Nome",
+        type: "text",
+        value: formData.Corretor,
+      };
+    }
+    if (!formData.Corretor) {
+      return {
+        name: "Corretor",
+        label: "Nome",
+        type: "select",
+        options: corretores,
+      };
+    }
+    return;
+  };
   const brokerFields = [
-    { name: "Corretor", label: "Nome", type: "select", options: corretores },
+    corretorField(),
     { name: "EmailCorretor", label: "E-mail", type: "text" },
     { name: "CelularCorretor", label: "Celular", type: "text" },
     {
-      name: "Imobiliaria",
+      name: "ImobParceiro",
       label: "Imobiliaria",
       type: "text",
     },

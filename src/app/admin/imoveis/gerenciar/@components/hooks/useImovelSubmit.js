@@ -100,6 +100,27 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create") => {
           if (result && result.success) {
             setSuccess("Imóvel cadastrado com sucesso!");
             setIsModalOpen(true);
+
+            try {
+              const { user, timestamp } = await getCurrentUserAndDate();
+              await salvarLog({
+                user: user.displayName ? user.displayName : "Não Identificado",
+                email: user.email,
+                data: timestamp.toISOString(),
+                action: `Automação: Usuário ${user.displayName || "Não Identificado"} - ${
+                  user.email
+                } - criou o imóvel ${formData.Codigo} a partir da automação`,
+              });
+            } catch (logError) {
+              await salvarLog({
+                user: user.displayName ? user.displayName : "Não Identificado",
+                email: user.email,
+                data: timestamp.toISOString(),
+                action: `Automação: Erro ao criar automação: ${
+                  user.displayName || "Não Identificado"
+                } - ${user.email} -  imóvel ${formData.Codigo} código de erro: ${logError}`,
+              });
+            }
           } else {
             setError(result?.message || "Erro ao criar imóvel");
           }
@@ -118,7 +139,14 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create") => {
               action: `Usuário ${user.email} atualizou o imóvel ${formData.Codigo}`,
             });
           } catch (logError) {
-            console.error("Erro ao salvar log de atualização:", logError);
+            await salvarLog({
+              user: user.displayName ? user.displayName : "Não Identificado",
+              email: user.email,
+              data: timestamp.toISOString(),
+              action: `Imóveis: Erro ao editar imóvel: ${
+                user.displayName || "Não Identificado"
+              } - ${user.email} -  imóvel ${formData.Codigo} código de erro: ${logError}`,
+            });
           }
 
           if (result && result.success) {
@@ -143,7 +171,14 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create") => {
                 action: `Usuário ${user.email} atualizou o imóvel ${formData.Codigo}`,
               });
             } catch (logError) {
-              console.error("Erro ao salvar log de cadastro:", logError);
+              await salvarLog({
+                user: user.displayName ? user.displayName : "Não Identificado",
+                email: user.email,
+                data: timestamp.toISOString(),
+                action: `Imóveis: Erro ao criar imóvel: ${
+                  user.displayName || "Não Identificado"
+                } - ${user.email} -  imóvel ${formData.Codigo} código de erro: ${logError}`,
+              });
             }
           } else {
             setError(result?.message || "Erro ao cadastrar imóvel");
