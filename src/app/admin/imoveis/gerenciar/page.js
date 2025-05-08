@@ -294,7 +294,12 @@ export default function GerenciarImovel() {
       )}
 
       <div className="">
-        <FormHeader title={getFormTitle()} error={error} success={success} />
+        <FormHeader
+          title={getFormTitle()}
+          error={error}
+          success={success}
+          isAutomacao={isAutomacao}
+        />
         <div className="flex justify-between gap-2 py-4">
           {formData.Ativo === "Sim" && (
             <button
