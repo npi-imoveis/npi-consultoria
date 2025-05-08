@@ -125,7 +125,13 @@ export const useImovelForm = () => {
   // Ensure Slug is always generated from Empreendimento
   useEffect(() => {
     if (formData.Empreendimento || formData.TermoSeo) {
-      const slug = formatterSlug(formData.Empreendimento || formData.TermoSeo);
+      let slug;
+
+      if (isAutomacao && formData.TermoSeo) {
+        slug = formatterSlug(formData.TermoSeo);
+      } else {
+        slug = formatterSlug(formData.Empreendimento);
+      }
       // Only update if the slug has actually changed
       if (slug !== formData.Slug) {
         setFormData((prev) => ({
