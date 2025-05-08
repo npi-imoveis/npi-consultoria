@@ -24,11 +24,12 @@ export default function Contato({ condominio, currentUrl, bairro }) {
         "service_az9rp6u",
         "template_tdiet3w",
         {
+          title: formData.subject,
           name: formData.name,
           email: formData.email,
           phone: formData.phone,
-          title: formData.subject,
-          message: `Assunto: ${formData.subject}\n\nTelefone para contato: ${formData.phone}`,
+          link: currentUrl,
+          message: `Interesse no condomínio ${condominio.Empreendimento}, no bairro ${condominio.BairroComercial}, disponivel no link: ${currentUrl}`,
         },
         "sraRHEjyadY96d2x1"
       )
@@ -44,16 +45,16 @@ export default function Contato({ condominio, currentUrl, bairro }) {
 
         // Função para detectar dispositivo móvel
         const isMobile = () => {
-          return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+          return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+            navigator.userAgent
+          );
         };
 
         // Construir a mensagem
         const message = `Quero saber mais sobre o ${condominio.Empreendimento}, no bairro ${condominio.BairroComercial}, disponivel no link: ${currentUrl}`;
 
         // Escolher a URL base apropriada
-        const baseUrl = isMobile()
-          ? 'whatsapp://send'
-          : 'https://web.whatsapp.com/send';
+        const baseUrl = isMobile() ? "whatsapp://send" : "https://web.whatsapp.com/send";
 
         // Construir a URL completa
         const whatsappUrl = `${baseUrl}?phone=5511969152222&text=${encodeURIComponent(message)}`;
@@ -62,7 +63,7 @@ export default function Contato({ condominio, currentUrl, bairro }) {
         if (isMobile()) {
           window.location.href = whatsappUrl;
         } else {
-          window.open(whatsappUrl, '_blank');
+          window.open(whatsappUrl, "_blank");
         }
       })
       .catch((error) => {

@@ -94,6 +94,7 @@ export default function Contato({ imovel, currentUrl }) {
               name: formData.nome,
               email: formData.email,
               phone: formData.telefone,
+              link: currentUrl,
               title: `Interesse no imóvel ${imovel.Empreendimento}`,
               message: `Interesse no imóvel ${imovel.Empreendimento}, código ${imovel.Codigo}.\n\nTelefone para contato: ${formData.telefone}`,
             },
