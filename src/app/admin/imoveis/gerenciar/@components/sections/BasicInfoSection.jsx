@@ -123,6 +123,13 @@ const BasicInfoSection = ({ formData, displayValues, onChange, validation }) => 
       label: "Link Parceiro",
       type: "text",
     },
+    {
+      name: "createdAt",
+
+      label: "Data de Criação",
+      type: "text",
+      disabled: true,
+    },
   ];
 
   return (

@@ -19,15 +19,15 @@ export default function FichaTecnica({ imovel }) {
       <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
         <div className="flex flex-col bg-zinc-100 p-5 rounded-lg">
           <p className="text-xs text-zinc-900">Empreendimento</p>
-          <span className="font-bold text-xs">{imovel.Empreendimento}</span>
+          <span className="font-bold text-xs">{imovel.Empreendimento || "Não Informado"}</span>
         </div>
         <div className="flex flex-col bg-zinc-100 p-5 rounded-lg">
           <p className="text-xs text-zinc-900">Fase da Obra</p>
-          <span className="font-bold text-xs">{imovel.Situacao}</span>
+          <span className="font-bold text-xs">{imovel.Situacao || "Não Informado"}</span>
         </div>
         <div className="flex flex-col bg-zinc-100 p-5 rounded-lg">
           <p className="text-xs text-zinc-900">Data Entrega</p>
-          <span className="font-bold text-[10px]">{date}</span>
+          <span className="font-bold text-[10px]">{date || "Não Informado"}</span>
         </div>
         <div className="flex flex-col bg-zinc-100 p-5 rounded-lg">
           <p className="text-xs text-zinc-900">Construtora</p>

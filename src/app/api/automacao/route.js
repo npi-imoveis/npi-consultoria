@@ -40,11 +40,7 @@ export async function GET(request) {
     // Calcular o total de páginas
     const totalPages = Math.ceil(totalItems / limit);
 
-    const imoveis = await Review.find(filtro)
-      .sort({ Empreendimento: 1 })
-      .skip(skip)
-      .limit(limit)
-      .lean(); // Usar lean() para melhor performance
+    const imoveis = await Review.find(filtro).sort({ _id: -1 }).skip(skip).limit(limit).lean(); // Usar lean() para melhor performance
 
     return NextResponse.json({
       status: 200,
