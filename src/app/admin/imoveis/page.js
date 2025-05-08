@@ -335,12 +335,12 @@ export default function AdminImoveis() {
                   // Dados dos imóveis
                   imoveis.map((imovel) => (
                     <tr key={imovel.Codigo || imovel._id} className="hover:bg-gray-50">
-                      <td className="px-6 bg-gray-50 py-4 whitespace-nowrap text-xs text-gray-900 font-bold">
+                      <td className="px-6 bg-gray-50 py-4 whitespace-nowrap text-[10px] text-gray-900 font-bold">
                         {imovel.Codigo || "-"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium ${
                             imovel.Ativo === "Sim"
                               ? "bg-green-100 text-green-800"
                               : "bg-red-100 text-red-800"
@@ -349,13 +349,13 @@ export default function AdminImoveis() {
                           {imovel.Ativo || "-"}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-xs text-zinc-700">
+                      <td className="px-6 font-bold py-4 whitespace-nowrap text-[10px] text-zinc-700">
                         {imovel.Empreendimento || "-"}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-xs text-zinc-700">
+                      <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700">
                         {imovel.Categoria || "-"}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-xs text-zinc-700">
+                      <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700">
                         {formatarValor(
                           imovel.ValorVenda || imovel.ValorAluguelSite || imovel.Valor
                         )}

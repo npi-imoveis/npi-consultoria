@@ -12,23 +12,7 @@ export async function GET(request) {
     const page = parseInt(url.searchParams.get("page") || "1", 10);
     const skip = (page - 1) * limit;
 
-    let connection;
-    try {
-      connection = await connectToDatabase();
-    } catch (connError) {
-      console.error("API automacao: Erro ao conectar ao banco de dados (automação):", connError);
-      return NextResponse.json({
-        status: 500,
-        error: "Erro ao conectar ao banco de dados",
-        data: [],
-        paginacao: {
-          totalItems: 0,
-          totalPages: 1,
-          currentPage: page,
-          limit,
-        },
-      });
-    }
+    await connectToDatabase();
 
     // Filtro básico para todos os documentos
     const filtro = {};

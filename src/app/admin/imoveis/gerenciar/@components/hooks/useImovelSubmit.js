@@ -140,7 +140,7 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create") => {
                 user: user.displayName,
                 email: user.email,
                 data: timestamp.toISOString(),
-                action: "Cadastro de imóvel",
+                action: `Usuário ${user.email} atualizou o imóvel ${formData.Codigo}`,
               });
             } catch (logError) {
               console.error("Erro ao salvar log de cadastro:", logError);

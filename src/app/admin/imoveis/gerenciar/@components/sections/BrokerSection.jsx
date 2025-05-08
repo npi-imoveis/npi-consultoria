@@ -7,17 +7,20 @@ import { getCorretores } from "@/app/admin/services/corretores";
 
 const BrokerSection = ({ formData, displayValues, onChange }) => {
   const [corretores, setCorretores] = useState([]);
+
   useEffect(() => {
     const fetchCorretores = async () => {
-      const response = await getCorretores();
-      const corretor = response.data?.data?.map((item, index) => {
-        return {
-          value: item.nome,
-          label: item.nome,
-        };
-      });
+      if (!formData.Corretor) {
+        const response = await getCorretores();
+        const corretor = response.data?.data?.map((item, index) => {
+          return {
+            value: item.nome,
+            label: item.nome,
+          };
+        });
 
-      setCorretores(corretor);
+        setCorretores(corretor);
+      }
     };
     fetchCorretores();
   }, []);

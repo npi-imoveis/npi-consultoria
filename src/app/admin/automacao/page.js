@@ -304,13 +304,13 @@ export default function AdminImoveis() {
                       <td className="px-6 bg-gray-50 py-4 whitespace-nowrap text-[10px] text-gray-900 font-bold">
                         {imovel.Codigo || "-"}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-xs text-zinc-700">
+                      <td className="px-6 font-bold py-4 whitespace-nowrap text-[10px] text-zinc-700">
                         {imovel.Empreendimento || imovel.TermoSeo || "Não Informado"}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-xs text-zinc-700">
+                      <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700">
                         {imovel.DataHoraAtualizacao || "-"}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-xs text-zinc-700">
+                      <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700">
                         {formatarValor(
                           imovel.ValorAntigo || imovel.ValorAluguelSite || imovel.Valor
                         )}

@@ -68,9 +68,9 @@ export const useImovelForm = () => {
     Tour360: "",
     IdCorretor: "",
     Corretor: "",
-    Imobiliaria: "",
     EmailCorretor: "",
     CelularCorretor: "",
+    Imobiliaria: "",
     Video: "",
     Foto: [],
   });
@@ -138,19 +138,27 @@ export const useImovelForm = () => {
 
   useEffect(() => {
     const fetchCorretor = async () => {
-      if (formData.Codigo && !isAutomacao) {
-        const response = await getCorretorById(formData.Codigo);
-        if (response.success) {
-          setFormData((prev) => ({
-            ...prev,
-            Corretor: response.data.nome,
-            EmailCorretor: response.data.email,
-            CelularCorretor: response.data.celular,
-          }));
-        } else {
-          // Se não encontrar o corretor, mantém os dados atuais
-          console.log("Corretor não encontrado para o código:", formData.Codigo);
+      try {
+        if (formData.Codigo && !isAutomacao) {
+          const response = await getCorretorById(formData.Codigo);
+          if (response.data) {
+            setFormData((prev) => ({
+              ...prev,
+              Corretor: response.data.nome,
+              EmailCorretor: response.data.email,
+              CelularCorretor: response.data.celular,
+            }));
+          } else {
+            setFormData((prev) => ({
+              ...prev,
+              Corretor: "",
+              EmailCorretor: "",
+              CelularCorretor: "",
+            }));
+          }
         }
+      } catch (error) {
+        console.error("Erro ao buscar corretor:", error);
       }
     };
 

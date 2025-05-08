@@ -4,6 +4,8 @@ import { useState } from "react";
 import { deleteImovelAutomacao } from "../services/delete";
 import { deleteCorretor } from "../services/corretor";
 import { deleteImovel } from "../services/imovel";
+import { getCurrentUserAndDate } from "@/app/utils/get-log";
+import { salvarLog } from "../services/log-service";
 
 export default function ModalDelete({ id, title, description, onClose, type }) {
   const [isOpen, setIsOpen] = useState(true);
@@ -21,8 +23,20 @@ export default function ModalDelete({ id, title, description, onClose, type }) {
     try {
       if (type === "automacao") {
         const response = await deleteImovelAutomacao(id);
+
         if (response.success) {
           handleClose();
+          try {
+            const { user, timestamp } = await getCurrentUserAndDate();
+            await salvarLog({
+              user: user.displayName ? user.displayName : "Não Identificado",
+              email: user.email,
+              data: timestamp.toISOString(),
+              action: `Usuário ${user.email} deletou automação ${id}`,
+            });
+          } catch (error) {
+            console.error("Erro ao deletar automação", error);
+          }
         }
       }
 
@@ -30,6 +44,17 @@ export default function ModalDelete({ id, title, description, onClose, type }) {
         const response = await deleteCorretor(id);
         if (response.success) {
           handleClose();
+          try {
+            const { user, timestamp } = await getCurrentUserAndDate();
+            await salvarLog({
+              user: user.displayName ? user.displayName : "Não Identificado",
+              email: user.email,
+              data: timestamp.toISOString(),
+              action: `Usuário ${user.email} deletou corretor ${id}`,
+            });
+          } catch (error) {
+            console.error("Erro ao deletar corretor", error);
+          }
         }
       }
 
@@ -37,6 +62,17 @@ export default function ModalDelete({ id, title, description, onClose, type }) {
         const response = await deleteImovel(id);
         if (response.success) {
           handleClose();
+          try {
+            const { user, timestamp } = await getCurrentUserAndDate();
+            await salvarLog({
+              user: user.displayName ? user.displayName : "Não Identificado",
+              email: user.email,
+              data: timestamp.toISOString(),
+              action: `Usuário ${user.email} deletou corretor ${id}`,
+            });
+          } catch (error) {
+            console.error("Erro ao deletar corretor", error);
+          }
         }
       }
     } catch (error) {

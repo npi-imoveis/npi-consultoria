@@ -229,11 +229,15 @@ export async function POST(request) {
 
 export async function DELETE(request) {
   try {
-    const { id } = await request.json();
+    const url = new URL(request.url);
+    const id = url.searchParams.get("id");
+
     await connectToDatabase();
+
     await Imovel.deleteOne({ Codigo: id });
     await ImovelAtivo.deleteOne({ Codigo: id });
     await ImovelInativo.deleteOne({ Codigo: id });
+
     return NextResponse.json({ success: true, message: "Imóvel deletado com sucesso" });
   } catch (error) {
     console.error("Erro ao deletar imóvel:", error);
