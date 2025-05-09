@@ -26,12 +26,12 @@ export async function addUsuario({ email, password, displayName }) {
   }
 }
 
-export async function updateSenhaUsuario({ uid, password }) {
+export async function updateDadosUsuario({ uid, displayName, password }) {
   try {
-    const response = await axiosClient.put("admin/usuarios", { uid, password });
+    const response = await axiosClient.put("admin/usuarios", { uid, displayName, password });
     return { success: true, data: response.data };
   } catch (error) {
-    return { success: false, message: error?.response?.data?.error || "Erro ao atualizar senha" };
+    return { success: false, message: error?.response?.data?.error || "Erro ao atualizar dados" };
   }
 }
 

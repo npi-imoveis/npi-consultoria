@@ -38,14 +38,24 @@ export async function POST(request) {
 
 export async function PUT(request) {
   try {
-    const { uid, password } = await request.json();
-    if (!uid || !password) {
-      return NextResponse.json({ error: "UID e nova senha são obrigatórios" }, { status: 400 });
+    const { uid, password, displayName } = await request.json();
+    if (!uid) {
+      return NextResponse.json({ error: "UID é obrigatório" }, { status: 400 });
     }
-    const userRecord = await admin.auth().updateUser(uid, { password });
+
+    // Monta objeto de atualização dinamicamente
+    const updateData = {};
+    if (password) updateData.password = password;
+    if (displayName) updateData.displayName = displayName;
+
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json({ error: "Nada para atualizar" }, { status: 400 });
+    }
+
+    const userRecord = await admin.auth().updateUser(uid, updateData);
     return NextResponse.json({ user: userRecord });
   } catch (error) {
-    console.error("Erro ao atualizar senha:", error);
+    console.error("Erro ao atualizar usuário:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

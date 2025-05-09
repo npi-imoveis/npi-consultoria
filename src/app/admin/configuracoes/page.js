@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import AuthCheck from "../components/auth-check";
-import { addUsuario, getUsuarios, updateSenhaUsuario, deleteUsuario } from "../services/usuarios";
+import { addUsuario, getUsuarios, updateDadosUsuario, deleteUsuario } from "../services/usuarios";
 import { FaEdit, FaTrash } from "react-icons/fa";
 import Modal from "../components/modal";
 
@@ -116,8 +116,9 @@ export default function Configuracoes() {
     }
     // Atualiza senha se preenchida
     if (editData.password) {
-      const res = await updateSenhaUsuario({
+      const res = await updateDadosUsuario({
         uid: usuarioEditando.uid,
+        displayName: usuarioEditando.displayName,
         password: editData.password,
       });
       if (!res.success) {
