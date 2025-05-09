@@ -180,10 +180,8 @@ export default function Configuracoes() {
                   <input
                     type="text"
                     placeholder="Nome"
-                    value={novoUsuario.displayName}
-                    onChange={(e) =>
-                      setNovoUsuario({ ...novoUsuario, displayName: e.target.value })
-                    }
+                    value={editData.displayName}
+                    onChange={(e) => setEditData({ ...editData, displayName: e.target.value })}
                     className="border px-5 py-2 text-zinc-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
                     required
                   />
@@ -442,7 +440,6 @@ export default function Configuracoes() {
               onChange={(e) => setEditData({ ...editData, displayName: e.target.value })}
               className="border px-5 py-2 text-zinc-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
               required
-              disabled
             />
             <input
               type="email"
