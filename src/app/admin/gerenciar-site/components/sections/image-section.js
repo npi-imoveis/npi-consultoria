@@ -10,6 +10,7 @@ export default function ImageSection({ onChange, filename, directory }) {
   const DIRECTORY = directory;
 
   useEffect(() => {
+    setPreviewImage(null);
     fetchImage();
   }, [filename, DIRECTORY]);
 
