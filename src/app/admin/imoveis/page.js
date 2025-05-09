@@ -233,7 +233,7 @@ export default function AdminImoveis() {
             <h1 className="text-2xl font-bold text-gray-900">Gerenciamento de Imóveis</h1>
             <button
               onClick={() => router.push("/admin/imoveis/cadastrar")}
-              className="inline-flex items-center px-5 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
+              className="inline-flex items-center px-5 py-2 border border-transparent text-xs font-bold rounded-md shadow-xl text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
             >
               Cadastrar Novo Imóvel
             </button>
@@ -248,11 +248,11 @@ export default function AdminImoveis() {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Buscar por código, endereço, cidade ou condomínio..."
-                  className="w-full text-xs rounded-lg border border-gray-300 bg-white p-2 focus:outline-none focus:ring-1 focus:ring-black"
+                  className="w-full text-xs rounded-md border border-gray-300 bg-white p-2 focus:outline-none focus:ring-1 focus:ring-black"
                 />
                 <button
                   type="submit"
-                  className="min-w-[200px] px-5 py-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
+                  className="min-w-[200px] px-5 py-2 border border-transparent text-[10px] font-bold rounded-md shadow-sm text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
                 >
                   Busca Livre
                 </button>
@@ -260,7 +260,7 @@ export default function AdminImoveis() {
                   <button
                     type="button"
                     onClick={clearSearch}
-                    className="min-w-[200px] px-5 py-2 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
+                    className="min-w-[200px] px-5 py-2 border border-transparent text-[10px] font-bold rounded-md shadow-sm text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
                   >
                     Limpar
                   </button>
@@ -392,7 +392,7 @@ export default function AdminImoveis() {
                 ) : (
                   // Nenhum resultado
                   <tr>
-                    <td colSpan={5} className="px-6 py-4 text-center text-xs text-gray-500">
+                    <td colSpan={5} className="px-6 py-4 text-center text-[10px] text-gray-500">
                       Nenhum imóvel encontrado
                     </td>
                   </tr>

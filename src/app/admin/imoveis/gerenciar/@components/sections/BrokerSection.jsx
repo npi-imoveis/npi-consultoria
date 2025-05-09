@@ -53,10 +53,15 @@ const BrokerSection = ({ formData, displayValues, onChange }) => {
       label: "Imobiliaria",
       type: "text",
     },
+    {
+      name: "ImobiliariaObs",
+      label: "Observações",
+      type: "textarea",
+    },
   ];
 
   return (
-    <FormSection title="Corretores Vinculados">
+    <FormSection title="Corretores Vinculados (Imobiliária)">
       <FieldGroup
         fields={brokerFields}
         formData={formData}

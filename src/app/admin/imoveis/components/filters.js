@@ -340,13 +340,13 @@ export default function FiltersImoveisAdmin({ onFilter }) {
 
       <div className="grid grid-cols-2 gap-4 mt-2">
         <button
-          className="bg-gray-200 font-bold rounded-lg text-gray-600 hover:bg-gray-300 p-2"
+          className="bg-gray-200 font-bold rounded-md text-zinc-600 hover:bg-zinc-300 p-2"
           onClick={handleFilters}
         >
           Filtrar
         </button>
         <button
-          className="bg-red-100 font-bold rounded-lg text-red-600 hover:bg-red-200 p-2"
+          className="bg-red-100 font-bold rounded-md text-red-600 hover:bg-red-200 p-2"
           onClick={handleClearFilters}
         >
           Limpar

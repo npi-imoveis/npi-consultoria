@@ -239,16 +239,16 @@ export default function AdminCorretores() {
                       <td className="px-6 bg-gray-50 py-4 whitespace-nowrap text-[10px] text-gray-900 font-bold capitalize">
                         {corretor.codigoD || "-"}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-900 font-bold capitalize">
+                      <td className="px-6 py-4 whitespace-nowrap text-[10px] text-gray-900 font-bold capitalize">
                         {corretor.nomeCompleto || corretor.nome}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-xs text-zinc-700">
+                      <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700">
                         {corretor.email || "-"}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-xs text-zinc-700">
+                      <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700">
                         {corretor.celular || "-"}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-xs text-zinc-700">
+                      <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700">
                         {corretor.imoveis_vinculados?.length || "-"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap sticky right-0 bg-white">
@@ -273,7 +273,7 @@ export default function AdminCorretores() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={5} className="px-6 py-4 text-center text-xs text-gray-500">
+                    <td colSpan={5} className="px-6 py-4 text-center text-[10px] text-gray-500">
                       Nenhum corretor encontrado
                     </td>
                   </tr>

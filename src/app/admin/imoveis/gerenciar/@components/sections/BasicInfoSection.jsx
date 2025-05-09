@@ -124,11 +124,15 @@ const BasicInfoSection = ({ formData, displayValues, onChange, validation }) => 
       type: "text",
     },
     {
-      name: "createdAt",
-
-      label: "Data de Criação",
+      name: "DataHoraAtualizacao",
+      label: "Data de Atualização",
       type: "text",
       disabled: true,
+    },
+    {
+      name: "Disponibilidade",
+      label: "Disponibilidade (Observações)",
+      type: "textarea",
     },
   ];
 

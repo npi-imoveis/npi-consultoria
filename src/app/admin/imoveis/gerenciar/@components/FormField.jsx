@@ -19,7 +19,7 @@ const FormField = ({
 
   return (
     <div className={fullWidth ? "col-span-full" : ""}>
-      <label htmlFor={elementId} className="block text-xs font-medium text-gray-700 mb-1">
+      <label htmlFor={elementId} className="block text-[10px] font-bold text-zinc-600 mb-1">
         {label}
         {isRequired && <FormRequiredIndicator isValid={isValid} />}
       </label>
@@ -31,7 +31,7 @@ const FormField = ({
           value={value || ""}
           onChange={onChange}
           rows={4}
-          className={`border-2 px-4 py-2 text-zinc-700 w-full text-xs rounded-md focus:outline-none focus:ring-black focus:border-black ${
+          className={`border px-4 py-2 text-zinc-700 w-full text-[10px] rounded-md focus:outline-none focus:ring-black focus:border-black ${
             isRequired && !isValid ? "border-red-300 bg-red-50" : ""
           }`}
         />
@@ -41,7 +41,7 @@ const FormField = ({
           name={name}
           value={value || ""}
           onChange={onChange}
-          className={`border-2 px-4 py-2 text-zinc-700 w-full text-xs rounded-md focus:outline-none focus:ring-black focus:border-black ${
+          className={`border px-4 py-2 text-zinc-700 w-full text-[10px] rounded-md focus:outline-none focus:ring-black focus:border-black ${
             isRequired && !isValid ? "border-red-300 bg-red-50" : ""
           }`}
         >
@@ -59,7 +59,7 @@ const FormField = ({
           name={name}
           value={displayValue || ""}
           onChange={onChange}
-          className={`border-2 px-4 py-2 text-zinc-700 w-full text-xs rounded-md focus:outline-none focus:ring-black focus:border-black ${
+          className={`border px-4 py-2 text-zinc-700 w-full text-[10px] rounded-md focus:outline-none focus:ring-black focus:border-black ${
             isRequired && !isValid ? "border-red-300 bg-red-50" : ""
           }`}
           placeholder="R$ 0"
@@ -71,7 +71,7 @@ const FormField = ({
           name={name}
           value={value || ""}
           onChange={onChange}
-          className={`border-2 px-4 py-2 text-zinc-700 w-full text-xs rounded-md focus:outline-none focus:ring-black focus:border-black ${
+          className={`border px-4 py-2 text-zinc-700 w-full text-[10px] rounded-md focus:outline-none focus:ring-black focus:border-black ${
             isRequired && !isValid ? "border-red-300 bg-red-50" : ""
           } ${className || ""}`}
           placeholder={placeholder || ""}
@@ -79,7 +79,7 @@ const FormField = ({
           readOnly={readOnly}
         />
       )}
-      {isRequired && !isValid && <p className="text-xs text-red-500 mt-1">Campo obrigatório</p>}
+      {isRequired && !isValid && <p className="text-[10px] text-red-500 mt-1">Campo obrigatório</p>}
     </div>
   );
 };
