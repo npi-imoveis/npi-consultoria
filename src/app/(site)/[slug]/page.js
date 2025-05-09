@@ -175,7 +175,9 @@ export default async function CondominioPage({ params }) {
       {condominio.FichaTecnica && <FichaTecnica condominio={condominio} />}
       {condominio.DescricaoDiferenciais && <DiferenciaisCondominio condominio={condominio} />}
       {condominio.DestaquesLazer && <Lazer condominio={condominio} />}
-      {condominio.Video.length != 0 && <VideoCondominio condominio={condominio} />}
+      {condominio.Video && Object.keys(condominio.Video).length > 0 && (
+        <VideoCondominio condominio={condominio} />
+      )}
       {condominio.Tour360 && <TourVirtual condominio={condominio} />}
 
       <ExploreRegiao condominio={condominio} currentUrl={currentUrl} />
