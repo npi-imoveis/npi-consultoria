@@ -6,7 +6,6 @@ import Pagination from "../components/ui/pagination";
 import Map from "./components/map";
 
 import {
-  FunnelIcon,
   AdjustmentsHorizontalIcon,
   MapIcon,
   HeartIcon,
@@ -24,15 +23,13 @@ export default function BuscaImoveis() {
   const filtrosAtuais = useFiltersStore((state) => state);
   const filtrosAplicados = useFiltersStore((state) => state.filtrosAplicados);
   const filtrosBasicosPreenchidos = useFiltersStore((state) => state.filtrosBasicosPreenchidos);
-  const setCidadeSelecionada = useFiltersStore((state) => state.setCidadeSelecionada);
-  const setCategoriaSelecionada = useFiltersStore((state) => state.setCategoriaSelecionada);
+
   const [searchTerm, setSearchTerm] = useState("");
   // Adicionar estado para ordenação
   const [ordenacao, setOrdenacao] = useState("relevancia");
 
   // Acessando funções do store de imóveis
   const adicionarVariosImoveisCache = useImovelStore((state) => state.adicionarVariosImoveisCache);
-  const adicionarImovelCache = useImovelStore((state) => state.adicionarImovelCache);
 
   // Estado para controlar a visualização de mapa ou lista
   const [mostrandoMapa, setMostrandoMapa] = useState(false);
@@ -631,9 +628,7 @@ export default function BuscaImoveis() {
                   </select>
                 </div>
 
-                <div className="flex flex-wrap gap-3 sm:gap-4 overflow-hidden z-0">
-                  {renderCards()}
-                </div>
+                <div className="flex flex-wrap gap-3 overflow-hidden z-0">{renderCards()}</div>
               </div>
             )}
 

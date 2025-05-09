@@ -755,6 +755,10 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible }) {
 
     // Resetar a página para 1 quando aplicar filtros
     if (onFilter) onFilter();
+
+    if (isClient && isMobile && setIsVisible) {
+      setIsVisible(false);
+    }
   };
   // Handler para limpar os filtros
   const handleLimparFiltros = () => {
