@@ -112,6 +112,12 @@ export const useImovelForm = () => {
     }
   }, [isAutomacao]);
 
+  useEffect(() => {
+    if (formData.CEP && formData.CEP.length >= 8) {
+      fetchAddressByCep(formData.CEP);
+    }
+  }, [formData.CEP]);
+
   // Ensure formData.Codigo is always synced with newImovelCode
   useEffect(() => {
     if (isAutomacao && newImovelCode && (!formData.Codigo || formData.Codigo !== newImovelCode)) {
@@ -240,7 +246,6 @@ export const useImovelForm = () => {
             ...prevData,
             Endereco: data.logradouro || prevData.Endereco,
             Bairro: data.bairro || prevData.Bairro,
-            BairroComercial: data.bairro || prevData.Bairro, // Preenche BairroComercial com o mesmo valor do Bairro
             Cidade: data.localidade || prevData.Cidade,
             UF: data.uf || prevData.UF,
             Regiao: data.regiao || prevData.Regiao,
