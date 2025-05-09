@@ -19,7 +19,11 @@ export default function Logs() {
     <AuthCheck>
       <div className="">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Logs</h1>
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-bold text-gray-900 mb-4">Logs</h1>
+            <button className="bg-red-500 text-white px-4 py-2 rounded-md">Limpar Logs</button>
+          </div>
+
           <div className="relative overflow-x-auto mt-6">
             <div className="h-[500px] overflow-y-auto rounded-lg">
               <table className="min-w-full divide-y divide-gray-200 rounded-lg ">
@@ -49,13 +53,6 @@ export default function Logs() {
                     >
                       Ação
                     </th>
-
-                    <th
-                      scope="col"
-                      className="px-6 py-3 text-left text-[10px] font-bold  tracking-wider sticky right-0 bg-gray-50"
-                    >
-                      Ações
-                    </th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200 h-[500px]">
@@ -72,25 +69,6 @@ export default function Logs() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700">
                         {log.action || "-"}
-                      </td>
-
-                      <td className="px-6 py-4 whitespace-nowrap sticky right-0 bg-white">
-                        <div className="flex items-center space-x-3">
-                          <button
-                            className="text-black font-bold hover:text-gray-700 bg-gray-100 p-2 rounded-md"
-                            title="Editar"
-                            onClick={() => handleEdit(corretor.codigoD)}
-                          >
-                            <PencilSquareIcon className="h-5 w-5" />
-                          </button>
-                          <button
-                            className="text-red-500 font-bold hover:text-red-400 bg-gray-100 p-2 rounded-md"
-                            title="Deletar Imóvel"
-                            onClick={() => handleDelete(corretor.codigoD)}
-                          >
-                            <TrashIcon className="h-4 w-4" />
-                          </button>
-                        </div>
                       </td>
                     </tr>
                   ))}

@@ -29,7 +29,7 @@ export async function GET() {
   try {
     await connectToDatabase();
 
-    const logs = await Logs.find();
+    const logs = await Logs.find().sort({ _id: -1 });
 
     return NextResponse.json({
       status: 200,

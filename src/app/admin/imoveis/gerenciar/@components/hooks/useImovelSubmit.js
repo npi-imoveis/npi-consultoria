@@ -107,18 +107,14 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create") => {
                 user: user.displayName ? user.displayName : "Não Identificado",
                 email: user.email,
                 data: timestamp.toISOString(),
-                action: `Automação: Usuário ${user.displayName || "Não Identificado"} - ${
-                  user.email
-                } - criou o imóvel ${formData.Codigo} a partir da automação`,
+                action: `Automação:  ${user.email} - criou o imóvel ${formData.Codigo} a partir da automação`,
               });
             } catch (logError) {
               await salvarLog({
                 user: user.displayName ? user.displayName : "Não Identificado",
                 email: user.email,
                 data: timestamp.toISOString(),
-                action: `Automação: Erro ao criar automação: ${
-                  user.displayName || "Não Identificado"
-                } - ${user.email} -  imóvel ${formData.Codigo} código de erro: ${logError}`,
+                action: `Automação: Erro ao criar automação: ${user.email} - imóvel ${formData.Codigo} código de erro: ${logError}`,
               });
             }
           } else {
@@ -143,9 +139,7 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create") => {
               user: user.displayName ? user.displayName : "Não Identificado",
               email: user.email,
               data: timestamp.toISOString(),
-              action: `Imóveis: Erro ao editar imóvel: ${
-                user.displayName || "Não Identificado"
-              } - ${user.email} -  imóvel ${formData.Codigo} código de erro: ${logError}`,
+              action: `Imóveis: Erro ao editar imóvel: ${user.email} -  imóvel ${formData.Codigo} código de erro: ${logError}`,
             });
           }
 
@@ -175,9 +169,7 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create") => {
                 user: user.displayName ? user.displayName : "Não Identificado",
                 email: user.email,
                 data: timestamp.toISOString(),
-                action: `Imóveis: Erro ao criar imóvel: ${
-                  user.displayName || "Não Identificado"
-                } - ${user.email} -  imóvel ${formData.Codigo} código de erro: ${logError}`,
+                action: `Imóveis: Erro ao criar imóvel: ${user.email} -  imóvel ${formData.Codigo} código de erro: ${logError}`,
               });
             }
           } else {
