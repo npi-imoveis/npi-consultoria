@@ -17,3 +17,49 @@ export async function GET() {
     return NextResponse.json({ error: "Erro ao listar usuários" }, { status: 500 });
   }
 }
+
+export async function POST(request) {
+  try {
+    const { email, password, displayName } = await request.json();
+    if (!email || !password) {
+      return NextResponse.json({ error: "Email e senha são obrigatórios" }, { status: 400 });
+    }
+    const userRecord = await admin.auth().createUser({
+      email,
+      password,
+      displayName,
+    });
+    return NextResponse.json({ user: userRecord });
+  } catch (error) {
+    console.error("Erro ao criar usuário:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+export async function PUT(request) {
+  try {
+    const { uid, password } = await request.json();
+    if (!uid || !password) {
+      return NextResponse.json({ error: "UID e nova senha são obrigatórios" }, { status: 400 });
+    }
+    const userRecord = await admin.auth().updateUser(uid, { password });
+    return NextResponse.json({ user: userRecord });
+  } catch (error) {
+    console.error("Erro ao atualizar senha:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+export async function DELETE(request) {
+  try {
+    const { uid } = await request.json();
+    if (!uid) {
+      return NextResponse.json({ error: "UID é obrigatório" }, { status: 400 });
+    }
+    await admin.auth().deleteUser(uid);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Erro ao deletar usuário:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}

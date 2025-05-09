@@ -1,9 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 
-const Modal = ({ title, description, buttonText, link, onClose }) => {
+const Modal = ({ title, onClose, children }) => {
   const [isOpen, setIsOpen] = useState(true);
 
   const handleClose = () => {
@@ -27,27 +26,7 @@ const Modal = ({ title, description, buttonText, link, onClose }) => {
         </div>
 
         {/* Content */}
-        <div className="p-4">
-          <p className="text-gray-700 text-base">{description}</p>
-        </div>
-
-        {/* Footer */}
-        <div className="border-t p-4 flex justify-end gap-3">
-          <button
-            onClick={handleClose}
-            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100"
-          >
-            Fechar
-          </button>
-          <Link
-            href={link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-4 py-2 bg-black rounded-md text-white hover:bg-black/80"
-          >
-            {buttonText}
-          </Link>
-        </div>
+        <div className="p-4">{children}</div>
       </div>
     </div>
   );

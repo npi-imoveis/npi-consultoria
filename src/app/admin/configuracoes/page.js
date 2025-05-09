@@ -1,7 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import AuthCheck from "../components/auth-check";
+import { addUsuario, getUsuarios, updateSenhaUsuario, deleteUsuario } from "../services/usuarios";
+import { FaEdit, FaTrash } from "react-icons/fa";
+import Modal from "../components/modal";
 
 export default function Configuracoes() {
   const [formData, setFormData] = useState({
@@ -24,6 +27,37 @@ export default function Configuracoes() {
 
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [usuarios, setUsuarios] = useState([]);
+  const [showAdd, setShowAdd] = useState(false);
+  const [novoUsuario, setNovoUsuario] = useState({ email: "", password: "", displayName: "" });
+  const [showEdit, setShowEdit] = useState(false);
+  const [usuarioEditando, setUsuarioEditando] = useState(null);
+  const [editData, setEditData] = useState({ displayName: "", password: "" });
+  const [showDelete, setShowDelete] = useState(false);
+  const [usuarioDeletando, setUsuarioDeletando] = useState(null);
+
+  useEffect(() => {
+    async function fetchUsuarios() {
+      const { data } = await getUsuarios();
+      setUsuarios(data?.users || []);
+      console.log("Usuarios", data?.users);
+    }
+    fetchUsuarios();
+  }, []);
+
+  const handleAdd = async (e) => {
+    e.preventDefault();
+    const res = await addUsuario(novoUsuario);
+    if (res.success) {
+      setShowAdd(false);
+      setNovoUsuario({ email: "", password: "", displayName: "" });
+      // Atualiza lista
+      const { data } = await getUsuarios();
+      setUsuarios(data?.users || []);
+    } else {
+      alert(res.message);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -64,6 +98,62 @@ export default function Configuracoes() {
     // Em uma implementação real, você enviaria os dados para a API
   };
 
+  const handleEditClick = (user) => {
+    setUsuarioEditando(user);
+    setEditData({ displayName: user.displayName || "", password: "" });
+    setShowEdit(true);
+  };
+
+  const handleEdit = async (e) => {
+    e.preventDefault();
+    let success = true;
+    let msg = "";
+    // Atualiza nome se mudou
+    if (editData.displayName !== usuarioEditando.displayName) {
+      // Não há endpoint para atualizar displayName, só senha. Poderia ser implementado na API futuramente.
+      msg = "Apenas a senha pode ser alterada no momento.";
+      success = false;
+    }
+    // Atualiza senha se preenchida
+    if (editData.password) {
+      const res = await updateSenhaUsuario({
+        uid: usuarioEditando.uid,
+        password: editData.password,
+      });
+      if (!res.success) {
+        msg = res.message;
+        success = false;
+      }
+    }
+    if (success) {
+      setShowEdit(false);
+      setUsuarioEditando(null);
+      setEditData({ displayName: "", password: "" });
+      const { data } = await getUsuarios();
+      setUsuarios(data?.users || []);
+    } else {
+      alert(msg || "Erro ao editar usuário");
+    }
+  };
+
+  const handleDeleteClick = (user) => {
+    setUsuarioDeletando(user);
+    setShowDelete(true);
+  };
+
+  const handleDelete = async () => {
+    if (!usuarioDeletando) return;
+    const res = await deleteUsuario(usuarioDeletando.uid);
+    if (res.success) {
+      setShowDelete(false);
+      setUsuarioDeletando(null);
+      const { data } = await getUsuarios();
+      setUsuarios(data?.users || []);
+    } else {
+      alert(res.message || "Erro ao deletar usuário");
+    }
+  };
+
   return (
     <AuthCheck>
       <div className="w-full mx-auto text-xs">
@@ -72,6 +162,85 @@ export default function Configuracoes() {
           <p className="text-gray-600 mb-6">
             Configure as informações gerais do site, contato e aparência.
           </p>
+          <div className="bg-white  rounded-lg overflow-hidden p-6 mb-6">
+            <div className="flex justify-between items-center">
+              <h2 className="font-bold mb-4  ">Gerenciar Usuários</h2>
+              <button
+                className="bg-black  text-white px-4 py-2 rounded"
+                onClick={() => setShowAdd(!showAdd)}
+              >
+                Adicionar Novo Usuário
+              </button>
+            </div>
+
+            {showAdd && (
+              <Modal title="Adicionar Novo Usuário" onClose={() => setShowAdd(false)}>
+                <form onSubmit={handleAdd} className="flex flex-col gap-3 w-full">
+                  <input
+                    type="text"
+                    placeholder="Nome"
+                    value={novoUsuario.displayName}
+                    onChange={(e) =>
+                      setNovoUsuario({ ...novoUsuario, displayName: e.target.value })
+                    }
+                    className="border px-5 py-2 text-zinc-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
+                    required
+                  />
+                  <input
+                    type="email"
+                    placeholder="Email"
+                    value={novoUsuario.email}
+                    onChange={(e) => setNovoUsuario({ ...novoUsuario, email: e.target.value })}
+                    className="border px-5 py-2 text-zinc-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
+                    required
+                  />
+                  <input
+                    type="password"
+                    placeholder="Senha"
+                    value={novoUsuario.password}
+                    onChange={(e) => setNovoUsuario({ ...novoUsuario, password: e.target.value })}
+                    className="border px-5 py-2 text-zinc-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
+                    required
+                  />
+                  <div className="flex gap-2 justify-end mt-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowAdd(false)}
+                      className="border px-4 py-2 rounded-md"
+                    >
+                      Cancelar
+                    </button>
+                    <button type="submit" className="bg-black text-white px-4 py-2 rounded-md">
+                      Adicionar Usuário
+                    </button>
+                  </div>
+                </form>
+              </Modal>
+            )}
+            <div className="flex gap-4 mt-6">
+              {usuarios.map((user) => (
+                <div
+                  key={user.uid}
+                  className="bg-zinc-100 p-6 rounded-lg flex flex-col gap-2 w-[250px]"
+                >
+                  <h1 className="font-bold text-sm">{user.displayName || "Sem nome"}</h1>
+                  <p className="text-xs ">{user.email}</p>
+                  <p className="text-xs ">
+                    Criado em:
+                    {new Date(user.creationTime).toLocaleDateString()}
+                  </p>
+                  <div className="flex gap-2 mt-2">
+                    <button className="text-blue-600" onClick={() => handleEditClick(user)}>
+                      <FaEdit size={18} />
+                    </button>
+                    <button className="text-red-600" onClick={() => handleDeleteClick(user)}>
+                      <FaTrash size={18} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Informações Gerais */}
@@ -88,7 +257,7 @@ export default function Configuracoes() {
                     name="nome_site"
                     value={formData.nome_site}
                     onChange={handleChange}
-                    className="border-2 px-5 py-2 text-zinc-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
+                    className="border px-5 py-2 text-zinc-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
                   />
                 </div>
                 <div>
@@ -104,7 +273,7 @@ export default function Configuracoes() {
                     name="meta_description"
                     value={formData.meta_description}
                     onChange={handleChange}
-                    className="border-2 px-5 py-2 text-zinc-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
+                    className="border px-5 py-2 text-zinc-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
                   />
                 </div>
                 <div>
@@ -122,7 +291,7 @@ export default function Configuracoes() {
                     onChange={handleChange}
                     min="1"
                     max="100"
-                    className="border-2 px-5 py-2 text-zinc-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
+                    className="border px-5 py-2 text-zinc-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
                   />
                 </div>
                 <div>
@@ -138,7 +307,7 @@ export default function Configuracoes() {
                     name="google_analytics"
                     value={formData.google_analytics}
                     onChange={handleChange}
-                    className="border-2 px-5 py-2 text-zinc-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
+                    className="border px-5 py-2 text-zinc-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
                   />
                 </div>
               </div>
@@ -158,7 +327,7 @@ export default function Configuracoes() {
                     name="email_contato"
                     value={formData.email_contato}
                     onChange={handleChange}
-                    className="border-2 px-5 py-2 text-zinc-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
+                    className="border px-5 py-2 text-zinc-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
                   />
                 </div>
                 <div>
@@ -171,7 +340,7 @@ export default function Configuracoes() {
                     name="telefone"
                     value={formData.telefone}
                     onChange={handleChange}
-                    className="border-2 px-5 py-2 text-zinc-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
+                    className="border px-5 py-2 text-zinc-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
                   />
                 </div>
                 <div>
@@ -184,7 +353,7 @@ export default function Configuracoes() {
                     name="whatsapp"
                     value={formData.whatsapp}
                     onChange={handleChange}
-                    className="border-2 px-5 py-2 text-zinc-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
+                    className="border px-5 py-2 text-zinc-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
                   />
                 </div>
                 <div>
@@ -197,7 +366,7 @@ export default function Configuracoes() {
                     name="endereco"
                     value={formData.endereco}
                     onChange={handleChange}
-                    className="border-2 px-5 py-2 text-zinc-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
+                    className="border px-5 py-2 text-zinc-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
                   />
                 </div>
               </div>
@@ -217,7 +386,7 @@ export default function Configuracoes() {
                     name="instagram"
                     value={formData.instagram}
                     onChange={handleChange}
-                    className="border-2 px-5 py-2 text-zinc-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
+                    className="border px-5 py-2 text-zinc-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
                   />
                 </div>
                 <div>
@@ -230,7 +399,7 @@ export default function Configuracoes() {
                     name="facebook"
                     value={formData.facebook}
                     onChange={handleChange}
-                    className="border-2 px-5 py-2 text-zinc-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
+                    className="border px-5 py-2 text-zinc-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
                   />
                 </div>
               </div>
@@ -262,6 +431,71 @@ export default function Configuracoes() {
           </form>
         </div>
       </div>
+      {showEdit && usuarioEditando && (
+        <Modal title="Editar Usuário" onClose={() => setShowEdit(false)}>
+          <form onSubmit={handleEdit} className="flex flex-col gap-3 w-full">
+            <input
+              type="text"
+              placeholder="Nome"
+              value={editData.displayName}
+              onChange={(e) => setEditData({ ...editData, displayName: e.target.value })}
+              className="border px-5 py-2 text-zinc-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
+              required
+              disabled
+            />
+            <input
+              type="email"
+              placeholder="Email"
+              value={usuarioEditando.email}
+              className="border px-5 py-2 text-zinc-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
+              disabled
+            />
+            <input
+              type="password"
+              placeholder="Nova senha (opcional)"
+              value={editData.password}
+              onChange={(e) => setEditData({ ...editData, password: e.target.value })}
+              className="border px-5 py-2 text-zinc-700 w-full rounded-md focus:outline-none focus:ring-black focus:border-black"
+            />
+            <div className="flex gap-2 justify-end mt-2">
+              <button
+                type="button"
+                onClick={() => setShowEdit(false)}
+                className="border px-4 py-2 rounded-md"
+              >
+                Cancelar
+              </button>
+              <button type="submit" className="bg-black text-white px-4 py-2 rounded-md">
+                Salvar Alterações
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
+      {showDelete && usuarioDeletando && (
+        <Modal title="Remover Usuário" onClose={() => setShowDelete(false)}>
+          <div className="mb-4">
+            Tem certeza que deseja remover o usuário{" "}
+            <b>{usuarioDeletando.displayName || usuarioDeletando.email}</b>?
+          </div>
+          <div className="flex gap-2 justify-end mt-2">
+            <button
+              type="button"
+              onClick={() => setShowDelete(false)}
+              className="border px-4 py-2 rounded-md"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={handleDelete}
+              className="bg-red-600 text-white px-4 py-2 rounded-md"
+            >
+              Remover
+            </button>
+          </div>
+        </Modal>
+      )}
     </AuthCheck>
   );
 }

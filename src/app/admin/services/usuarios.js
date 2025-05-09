@@ -16,3 +16,31 @@ export async function getUsuarios() {
     };
   }
 }
+
+export async function addUsuario({ email, password, displayName }) {
+  try {
+    const response = await axiosClient.post("admin/usuarios", { email, password, displayName });
+    return { success: true, data: response.data };
+  } catch (error) {
+    return { success: false, message: error?.response?.data?.error || "Erro ao adicionar usuário" };
+  }
+}
+
+export async function updateSenhaUsuario({ uid, password }) {
+  try {
+    const response = await axiosClient.put("admin/usuarios", { uid, password });
+    return { success: true, data: response.data };
+  } catch (error) {
+    return { success: false, message: error?.response?.data?.error || "Erro ao atualizar senha" };
+  }
+}
+
+// Função para deletar usuário
+export async function deleteUsuario(uid) {
+  try {
+    const response = await axiosClient.delete("admin/usuarios", { data: { uid } });
+    return { success: true, data: response.data };
+  } catch (error) {
+    return { success: false, message: error?.response?.data?.error || "Erro ao deletar usuário" };
+  }
+}
