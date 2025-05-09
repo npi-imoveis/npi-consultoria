@@ -177,6 +177,17 @@ export const useImovelForm = () => {
     fetchCorretor();
   }, [formData.Codigo]);
 
+  const maskDateBR = useCallback((value) => {
+    // Remove tudo que não for número
+    let v = value.replace(/\D/g, "");
+    // Adiciona a barra após o dia
+    if (v.length > 2) v = v.replace(/^(\d{2})(\d)/, "$1/$2");
+    // Adiciona a barra após o mês
+    if (v.length > 5) v = v.replace(/^(\d{2})\/(\d{2})(\d)/, "$1/$2/$3");
+    // Limita a 10 caracteres (dd/mm/yyyy)
+    return v.slice(0, 10);
+  }, []);
+
   // Função para formatar valores monetários
   const formatarParaReal = useCallback((valor) => {
     if (valor === null || valor === undefined || valor === "") return "";
@@ -264,6 +275,15 @@ export const useImovelForm = () => {
   const handleChange = useCallback(
     (e) => {
       const { name, value } = e.target;
+
+      if (name === "DataEntrega") {
+        const maskedValue = maskDateBR(value);
+        setFormData((prevData) => ({
+          ...prevData,
+          [name]: maskedValue,
+        }));
+        return;
+      }
 
       // Tratamento especial para campos monetários
       if (["ValorAntigo", "ValorAluguelSite", "ValorCondominio", "ValorIptu"].includes(name)) {

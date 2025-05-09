@@ -8,7 +8,6 @@ const formatarHtml = (htmlString) => {
 };
 
 export default function FichaTecnica({ imovel }) {
-  const date = formatterDate(imovel.DataEntrega);
   const fichaTecnica = formatarHtml(imovel.FichaTecnica);
 
   return (
@@ -27,7 +26,7 @@ export default function FichaTecnica({ imovel }) {
         </div>
         <div className="flex flex-col bg-zinc-100 p-5 rounded-lg">
           <p className="text-xs text-zinc-900">Data Entrega</p>
-          <span className="font-bold text-[10px]">{date || "Não Informado"}</span>
+          <span className="font-bold text-[10px]">{imovel.DataEntrega || "Não Informado"}</span>
         </div>
         <div className="flex flex-col bg-zinc-100 p-5 rounded-lg">
           <p className="text-xs text-zinc-900">Construtora</p>
