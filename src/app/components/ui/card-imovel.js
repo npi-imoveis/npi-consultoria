@@ -135,7 +135,6 @@ export default function CardImovel({
             layout="fill"
             objectFit="cover"
             className="rounded-t-lg transition-transform duration-500 ease-in-out group-hover:scale-110 hover:scale-110"
-            unoptimized
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">

@@ -24,11 +24,12 @@ export function Header({ effect = true }) {
         fixed top-0 left-0 w-full py-2 px-4 md:px-10 
         flex justify-between items-center 
         z-[999999]
-        ${effect
-          ? isScrolled
-            ? "bg-black/90 border-none"
-            : "bg-transparent border-b-2 border-zinc-500 border-opacity-20"
-          : isScrolled
+        ${
+          effect
+            ? isScrolled
+              ? "bg-black/90 border-none"
+              : "bg-transparent border-b-2 border-zinc-500 border-opacity-20"
+            : isScrolled
             ? "bg-black/90 border-none"
             : "bg-black border-none"
         }
@@ -37,13 +38,7 @@ export function Header({ effect = true }) {
     >
       {/* Logo */}
       <Link href="/">
-        <Image
-          src="/assets/images/logo_light.png"
-          height={100}
-          width={100}
-          alt="logo"
-          unoptimized
-        />
+        <Image src="/assets/images/logo_light.png" height={100} width={100} alt="logo" />
       </Link>
 
       {/* Ícone do menu mobile */}
@@ -52,26 +47,16 @@ export function Header({ effect = true }) {
         onClick={() => setIsMenuOpen(!isMenuOpen)}
         aria-label={isMenuOpen ? "Fechar menu" : "Abrir menu"}
       >
-        {isMenuOpen ? (
-          <XMarkIcon className="w-8 h-8" />
-        ) : (
-          <Bars3Icon className="w-8 h-8" />
-        )}
+        {isMenuOpen ? <XMarkIcon className="w-8 h-8" /> : <Bars3Icon className="w-8 h-8" />}
       </button>
 
       {/* Menu Desktop */}
       <nav className="hidden md:flex items-center space-x-8 text-white/60 uppercase text-xs">
-        <Link
-          className="font-bold text-white hover:text-[#8B6F4B] tracking-widest"
-          href="/busca"
-        >
+        <Link className="font-bold text-white hover:text-[#8B6F4B] tracking-widest" href="/busca">
           Encontre seu imóvel
         </Link>
 
-        <Link
-          className="font-bold hover:text-[#8B6F4B] tracking-widest"
-          href="/venda-seu-imovel"
-        >
+        <Link className="font-bold hover:text-[#8B6F4B] tracking-widest" href="/venda-seu-imovel">
           Anunciar
         </Link>
         <Link

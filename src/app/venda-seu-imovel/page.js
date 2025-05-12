@@ -58,7 +58,9 @@ export default function ImovelForm() {
     } else if (numeroLimitado.length <= 7) {
       return `(${numeroLimitado.slice(0, 2)}) ${numeroLimitado.slice(2)}`;
     } else {
-      return `(${numeroLimitado.slice(0, 2)}) ${numeroLimitado.slice(2, 7)}-${numeroLimitado.slice(7)}`;
+      return `(${numeroLimitado.slice(0, 2)}) ${numeroLimitado.slice(2, 7)}-${numeroLimitado.slice(
+        7
+      )}`;
     }
   };
 
@@ -119,23 +121,23 @@ export default function ImovelForm() {
     if (!files || files.length === 0) return;
 
     // Converter FileList para array e criar URLs temporárias
-    const novasImagens = Array.from(files).map(file => ({
+    const novasImagens = Array.from(files).map((file) => ({
       file,
       previewUrl: URL.createObjectURL(file),
       id: Date.now() + Math.random().toString(36).substring(2, 9),
-      isUploading: false
+      isUploading: false,
     }));
 
-    setImagensTemporarias(prev => [...prev, ...novasImagens]);
+    setImagensTemporarias((prev) => [...prev, ...novasImagens]);
     // Limpar erro de imagens se existir
     if (errors.imagens) {
-      setErrors(prev => ({ ...prev, imagens: false }));
+      setErrors((prev) => ({ ...prev, imagens: false }));
     }
   };
 
   // Função para remover imagem da lista
   const removerImagem = (id) => {
-    setImagensTemporarias(prev => prev.filter(img => img.id !== id));
+    setImagensTemporarias((prev) => prev.filter((img) => img.id !== id));
   };
 
   // Função para lidar com arquivos arrastados
@@ -157,7 +159,7 @@ export default function ImovelForm() {
     if (e.target.files && e.target.files.length > 0) {
       handleAddImages(e.target.files);
       // Limpar o input para permitir selecionar os mesmos arquivos novamente
-      e.target.value = '';
+      e.target.value = "";
     }
   };
 
@@ -264,8 +266,8 @@ export default function ImovelForm() {
       />
       <div className="container mx-auto px-4 py-16">
         <p className="py-4">
-          <strong>Dicas:</strong> Fotos na posição horizontal e luzes acesas de
-          todos ambientes e do lazer, valorizam mais o anuncio do seu imóvel ;)
+          <strong>Dicas:</strong> Fotos na posição horizontal e luzes acesas de todos ambientes e do
+          lazer, valorizam mais o anuncio do seu imóvel ;)
         </p>
 
         {formState === "form" && (
@@ -280,12 +282,16 @@ export default function ImovelForm() {
                 onChange={handleInputChange}
                 required
               />
-              {errors.nome && <p className="text-red-500 text-xs mt-1">Por favor, informe seu nome</p>}
+              {errors.nome && (
+                <p className="text-red-500 text-xs mt-1">Por favor, informe seu nome</p>
+              )}
             </div>
 
             <div>
               <input
-                className={`border rounded py-2 px-3 w-full ${errors.email ? "border-red-500" : ""}`}
+                className={`border rounded py-2 px-3 w-full ${
+                  errors.email ? "border-red-500" : ""
+                }`}
                 placeholder="E-mail*"
                 type="email"
                 name="email"
@@ -293,12 +299,16 @@ export default function ImovelForm() {
                 onChange={handleInputChange}
                 required
               />
-              {errors.email && <p className="text-red-500 text-xs mt-1">Por favor, informe um e-mail válido</p>}
+              {errors.email && (
+                <p className="text-red-500 text-xs mt-1">Por favor, informe um e-mail válido</p>
+              )}
             </div>
 
             <div>
               <input
-                className={`border rounded py-2 px-3 w-full ${errors.telefone ? "border-red-500" : ""}`}
+                className={`border rounded py-2 px-3 w-full ${
+                  errors.telefone ? "border-red-500" : ""
+                }`}
                 placeholder="Telefone*"
                 type="tel"
                 name="telefone"
@@ -306,12 +316,18 @@ export default function ImovelForm() {
                 onChange={handleInputChange}
                 required
               />
-              {errors.telefone && <p className="text-red-500 text-xs mt-1">Por favor, informe um telefone válido com DDD</p>}
+              {errors.telefone && (
+                <p className="text-red-500 text-xs mt-1">
+                  Por favor, informe um telefone válido com DDD
+                </p>
+              )}
             </div>
 
             <div>
               <select
-                className={`border rounded py-2 px-3 w-full bg-white ${errors.tipoImovel ? "border-red-500" : ""}`}
+                className={`border rounded py-2 px-3 w-full bg-white ${
+                  errors.tipoImovel ? "border-red-500" : ""
+                }`}
                 name="tipoImovel"
                 value={formData.tipoImovel}
                 onChange={handleInputChange}
@@ -321,12 +337,16 @@ export default function ImovelForm() {
                 <option>Apartamento</option>
                 <option>Casa</option>
               </select>
-              {errors.tipoImovel && <p className="text-red-500 text-xs mt-1">Por favor, selecione o tipo de imóvel</p>}
+              {errors.tipoImovel && (
+                <p className="text-red-500 text-xs mt-1">Por favor, selecione o tipo de imóvel</p>
+              )}
             </div>
 
             <div>
               <select
-                className={`border rounded py-2 px-3 w-full bg-white ${errors.acao ? "border-red-500" : ""}`}
+                className={`border rounded py-2 px-3 w-full bg-white ${
+                  errors.acao ? "border-red-500" : ""
+                }`}
                 name="acao"
                 value={formData.acao}
                 onChange={handleInputChange}
@@ -336,7 +356,9 @@ export default function ImovelForm() {
                 <option>Venda</option>
                 <option>Locação</option>
               </select>
-              {errors.acao && <p className="text-red-500 text-xs mt-1">Por favor, selecione a ação desejada</p>}
+              {errors.acao && (
+                <p className="text-red-500 text-xs mt-1">Por favor, selecione a ação desejada</p>
+              )}
             </div>
 
             <div>
@@ -354,7 +376,9 @@ export default function ImovelForm() {
 
             <div>
               <input
-                className={`border rounded py-2 px-3 w-full ${errors.endereco ? "border-red-500" : ""}`}
+                className={`border rounded py-2 px-3 w-full ${
+                  errors.endereco ? "border-red-500" : ""
+                }`}
                 placeholder="Endereço*"
                 type="text"
                 name="endereco"
@@ -362,12 +386,16 @@ export default function ImovelForm() {
                 onChange={handleInputChange}
                 required
               />
-              {errors.endereco && <p className="text-red-500 text-xs mt-1">Por favor, informe o endereço</p>}
+              {errors.endereco && (
+                <p className="text-red-500 text-xs mt-1">Por favor, informe o endereço</p>
+              )}
             </div>
 
             <div>
               <input
-                className={`border rounded py-2 px-3 w-full ${errors.numero ? "border-red-500" : ""}`}
+                className={`border rounded py-2 px-3 w-full ${
+                  errors.numero ? "border-red-500" : ""
+                }`}
                 placeholder="Número*"
                 type="text"
                 name="numero"
@@ -375,7 +403,9 @@ export default function ImovelForm() {
                 onChange={handleInputChange}
                 required
               />
-              {errors.numero && <p className="text-red-500 text-xs mt-1">Por favor, informe o número</p>}
+              {errors.numero && (
+                <p className="text-red-500 text-xs mt-1">Por favor, informe o número</p>
+              )}
             </div>
 
             <div>
@@ -391,7 +421,9 @@ export default function ImovelForm() {
 
             <div>
               <input
-                className={`border rounded py-2 px-3 w-full ${errors.bairro ? "border-red-500" : ""}`}
+                className={`border rounded py-2 px-3 w-full ${
+                  errors.bairro ? "border-red-500" : ""
+                }`}
                 placeholder="Bairro*"
                 type="text"
                 name="bairro"
@@ -399,12 +431,16 @@ export default function ImovelForm() {
                 onChange={handleInputChange}
                 required
               />
-              {errors.bairro && <p className="text-red-500 text-xs mt-1">Por favor, informe o bairro</p>}
+              {errors.bairro && (
+                <p className="text-red-500 text-xs mt-1">Por favor, informe o bairro</p>
+              )}
             </div>
 
             <div>
               <input
-                className={`border rounded py-2 px-3 w-full ${errors.cidade ? "border-red-500" : ""}`}
+                className={`border rounded py-2 px-3 w-full ${
+                  errors.cidade ? "border-red-500" : ""
+                }`}
                 placeholder="Cidade*"
                 type="text"
                 name="cidade"
@@ -412,12 +448,16 @@ export default function ImovelForm() {
                 onChange={handleInputChange}
                 required
               />
-              {errors.cidade && <p className="text-red-500 text-xs mt-1">Por favor, informe a cidade</p>}
+              {errors.cidade && (
+                <p className="text-red-500 text-xs mt-1">Por favor, informe a cidade</p>
+              )}
             </div>
 
             <div>
               <select
-                className={`border rounded py-2 px-3 w-full bg-white ${errors.estado ? "border-red-500" : ""}`}
+                className={`border rounded py-2 px-3 w-full bg-white ${
+                  errors.estado ? "border-red-500" : ""
+                }`}
                 name="estado"
                 value={formData.estado}
                 onChange={handleInputChange}
@@ -427,12 +467,16 @@ export default function ImovelForm() {
                 <option>São Paulo</option>
                 <option>Outro Estado</option>
               </select>
-              {errors.estado && <p className="text-red-500 text-xs mt-1">Por favor, selecione o estado</p>}
+              {errors.estado && (
+                <p className="text-red-500 text-xs mt-1">Por favor, selecione o estado</p>
+              )}
             </div>
 
             <div>
               <input
-                className={`border rounded py-2 px-3 w-full ${errors.valorImovel ? "border-red-500" : ""}`}
+                className={`border rounded py-2 px-3 w-full ${
+                  errors.valorImovel ? "border-red-500" : ""
+                }`}
                 placeholder="Valor do Imóvel (R$)*"
                 type="number"
                 name="valorImovel"
@@ -440,12 +484,16 @@ export default function ImovelForm() {
                 onChange={handleInputChange}
                 required
               />
-              {errors.valorImovel && <p className="text-red-500 text-xs mt-1">Por favor, informe o valor do imóvel</p>}
+              {errors.valorImovel && (
+                <p className="text-red-500 text-xs mt-1">Por favor, informe o valor do imóvel</p>
+              )}
             </div>
 
             <div>
               <input
-                className={`border rounded py-2 px-3 w-full ${errors.valorCondominio ? "border-red-500" : ""}`}
+                className={`border rounded py-2 px-3 w-full ${
+                  errors.valorCondominio ? "border-red-500" : ""
+                }`}
                 placeholder="Valor do Condomínio (R$)*"
                 type="number"
                 name="valorCondominio"
@@ -453,12 +501,18 @@ export default function ImovelForm() {
                 onChange={handleInputChange}
                 required
               />
-              {errors.valorCondominio && <p className="text-red-500 text-xs mt-1">Por favor, informe o valor do condomínio</p>}
+              {errors.valorCondominio && (
+                <p className="text-red-500 text-xs mt-1">
+                  Por favor, informe o valor do condomínio
+                </p>
+              )}
             </div>
 
             <div>
               <input
-                className={`border rounded py-2 px-3 w-full ${errors.valorIptu ? "border-red-500" : ""}`}
+                className={`border rounded py-2 px-3 w-full ${
+                  errors.valorIptu ? "border-red-500" : ""
+                }`}
                 placeholder="Valor do IPTU (R$)*"
                 type="number"
                 name="valorIptu"
@@ -466,12 +520,16 @@ export default function ImovelForm() {
                 onChange={handleInputChange}
                 required
               />
-              {errors.valorIptu && <p className="text-red-500 text-xs mt-1">Por favor, informe o valor do IPTU</p>}
+              {errors.valorIptu && (
+                <p className="text-red-500 text-xs mt-1">Por favor, informe o valor do IPTU</p>
+              )}
             </div>
 
             <div className="sm:col-span-3">
               <textarea
-                className={`border rounded py-2 px-3 w-full ${errors.descricao ? "border-red-500" : ""}`}
+                className={`border rounded py-2 px-3 w-full ${
+                  errors.descricao ? "border-red-500" : ""
+                }`}
                 placeholder="Faça uma descrição rica em detalhes do seu imóvel*"
                 rows={4}
                 name="descricao"
@@ -479,28 +537,31 @@ export default function ImovelForm() {
                 onChange={handleInputChange}
                 required
               />
-              {errors.descricao && <p className="text-red-500 text-xs mt-1">Por favor, informe a descrição do imóvel</p>}
+              {errors.descricao && (
+                <p className="text-red-500 text-xs mt-1">
+                  Por favor, informe a descrição do imóvel
+                </p>
+              )}
             </div>
 
             <div className="sm:col-span-3">
               <div className="w-full mx-auto py-4">
                 <div className="mb-4">
                   <p className="text-sm text-gray-600">
-                    Dicas: Fotos na posição horizontal, com todas as luzes acesas, fotos
-                    do lazer e da fachada, valorizam e chamam mais atenção para o anúncio
-                    do seu imóvel ;)
+                    Dicas: Fotos na posição horizontal, com todas as luzes acesas, fotos do lazer e
+                    da fachada, valorizam e chamam mais atenção para o anúncio do seu imóvel ;)
                   </p>
                 </div>
 
                 <div
-                  className={`border-2 border-dashed ${errors.imagens ? "border-red-500" : "border-gray-300"} rounded-md p-6 flex flex-col items-center justify-center text-center`}
+                  className={`border-2 border-dashed ${
+                    errors.imagens ? "border-red-500" : "border-gray-300"
+                  } rounded-md p-6 flex flex-col items-center justify-center text-center`}
                   onDragOver={handleDragOver}
                   onDrop={handleDrop}
                 >
                   <PhotoIcon className="h-12 w-12 text-gray-400 mb-2" />
-                  <p className="text-gray-600 font-medium">
-                    Arraste e solte as fotos aqui
-                  </p>
+                  <p className="text-gray-600 font-medium">Arraste e solte as fotos aqui</p>
                   <p className="text-gray-500 my-2">ou</p>
                   <button
                     type="button"
@@ -515,27 +576,33 @@ export default function ImovelForm() {
                     accept="image/*"
                     multiple
                     onChange={handleFileInputChange}
-                    style={{ display: 'none' }}
+                    style={{ display: "none" }}
                   />
                   {errors.imagens && (
-                    <p className="text-red-500 text-xs mt-2">Por favor, adicione pelo menos uma imagem</p>
+                    <p className="text-red-500 text-xs mt-2">
+                      Por favor, adicione pelo menos uma imagem
+                    </p>
                   )}
                 </div>
 
                 {/* Visualização das imagens selecionadas */}
                 {imagensTemporarias.length > 0 && (
                   <div className="mt-6">
-                    <h3 className="text-md font-medium text-gray-700 mb-4">Imagens selecionadas ({imagensTemporarias.length})</h3>
+                    <h3 className="text-md font-medium text-gray-700 mb-4">
+                      Imagens selecionadas ({imagensTemporarias.length})
+                    </h3>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                       {imagensTemporarias.map((imagem) => (
-                        <div key={imagem.id} className="relative group bg-gray-100 rounded-md overflow-hidden">
+                        <div
+                          key={imagem.id}
+                          className="relative group bg-gray-100 rounded-md overflow-hidden"
+                        >
                           <div className="relative h-40 w-full">
                             <Image
                               src={imagem.previewUrl}
                               alt="Preview da imagem"
                               fill
-                              style={{ objectFit: 'contain' }}
-                              unoptimized
+                              style={{ objectFit: "contain" }}
                             />
                           </div>
                           <button
@@ -565,8 +632,15 @@ export default function ImovelForm() {
         )}
 
         {formState === "loading" && (
-          <div className="flex items-center justify-center mt-8 h-40" aria-live="polite" aria-busy="true">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#8B6F48]" role="status">
+          <div
+            className="flex items-center justify-center mt-8 h-40"
+            aria-live="polite"
+            aria-busy="true"
+          >
+            <div
+              className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#8B6F48]"
+              role="status"
+            >
               <span className="sr-only">Carregando...</span>
             </div>
           </div>
