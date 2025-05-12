@@ -17,6 +17,8 @@ import { Apartment as StructuredDataApartment } from "@/app/components/structure
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 import { notFound } from "next/navigation";
 
+import { headers } from "next/headers";
+
 const currentUrl = typeof window !== "undefined" ? window.location.href : "";
 
 export async function generateMetadata({ params }) {
@@ -59,7 +61,6 @@ export async function generateMetadata({ params }) {
 
 export default async function Imovel({ params }) {
   const { slug } = await params;
-
   const response = await getCondominioPorSlug(slug);
 
   if (!response.data) {

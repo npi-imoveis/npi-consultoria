@@ -10,6 +10,38 @@ const nextConfig = {
         protocol: "https",
         hostname: "npi-imoveis.s3.sa-east-1.amazonaws.com",
       },
+      {
+        protocol: "https",
+        hostname: "s3.amazonaws.com",
+      },
+      {
+        protocol: "https",
+        hostname: "cdn.uso.com.br",
+      },
+      {
+        protocol: "https",
+        hostname: "npi-imoveis.s3.amazonaws.com",
+      },
+      {
+        protocol: "https",
+        hostname: "objectstorage.sa-saopaulo-1.oraclecloud.com",
+      },
+      {
+        protocol: "https",
+        hostname: "images.usenonstop.com.br",
+      },
+      {
+        protocol: "https",
+        hostname: "static.orulo.com.br",
+      },
+      {
+        protocol: "https",
+        hostname: "buildingeng.com.br",
+      },
+      {
+        protocol: "https",
+        hostname: "tresorresidence.com.br",
+      },
     ],
   },
 

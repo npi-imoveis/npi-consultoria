@@ -55,7 +55,6 @@ export function SlidePartners() {
               width={150}
               height={50}
               className="object-contain"
-              unoptimized
               onError={(e) => {
                 console.error(`Error loading image: ${logo}`);
                 e.target.style.display = "none";
