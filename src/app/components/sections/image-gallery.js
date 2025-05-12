@@ -92,11 +92,11 @@ export function ImageGallery({ imovel }) {
               title={imovel.Empreendimento}
               width={800}
               height={600}
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              sizes="(max-width: 350px) 100vw, (max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               placeholder="blur"
               blurDataURL={images[0].blurDataURL || "/placeholder.png"} // Use um placeholder otimizado
-              loading={isMobile ? "lazy" : "eager"}
-              priority={!isMobile}
+              loading="eager" // Carregamento prioritário para melhorar o LCP
+              priority={true} // Priorizar a imagem principal
               className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
             />
           </div>
