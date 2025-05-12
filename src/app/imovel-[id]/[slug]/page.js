@@ -67,9 +67,7 @@ export default async function Imovel({ params }) {
   const imovel = response.data;
 
   const headersList = headers();
-  const currentUrl = `${headersList.get("x-forwarded-proto") || "http"}://${headersList.get(
-    "host"
-  )}/imovel-${imovel.Codigo}/${slug}`;
+  const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`;
 
   return (
     <section className="w-full bg-white pb-32 pt-20">

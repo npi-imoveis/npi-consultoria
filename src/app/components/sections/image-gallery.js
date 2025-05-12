@@ -92,9 +92,9 @@ export function ImageGallery({ imovel }) {
               title={imovel.Empreendimento}
               width={800}
               height={600}
-              sizes="(max-width: 768px) 100vw, 50vw"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               placeholder="blur"
-              blurDataURL={images[0].Foto}
+              blurDataURL={images[0].blurDataURL || "/placeholder.png"} // Use um placeholder otimizado
               loading={isMobile ? "lazy" : "eager"}
               priority={!isMobile}
               className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
@@ -128,7 +128,7 @@ export function ImageGallery({ imovel }) {
                     height={300}
                     sizes="25vw"
                     placeholder="blur"
-                    blurDataURL={image.Foto}
+                    blurDataURL={image.blurDataURL || "/placeholder.png"}
                     loading="lazy"
                     className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
                   />
@@ -189,7 +189,7 @@ export function ImageGallery({ imovel }) {
                 height={800}
                 sizes="100vw"
                 placeholder="blur"
-                blurDataURL={images[selectedIndex].Foto}
+                blurDataURL={images[selectedIndex].blurDataURL || "/placeholder.png"}
                 loading="eager"
                 className="max-w-full max-h-screen object-contain"
               />
@@ -224,7 +224,7 @@ export function ImageGallery({ imovel }) {
                     fill
                     sizes="(max-width: 768px) 50vw, 25vw"
                     placeholder="blur"
-                    blurDataURL={image.Foto}
+                    blurDataURL={image.blurDataURL || "/placeholder.png"}
                     loading="lazy"
                     className="object-cover"
                   />
