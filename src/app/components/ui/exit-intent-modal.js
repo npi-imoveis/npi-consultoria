@@ -139,7 +139,7 @@ export default function ExitIntentModal({ condominio, link }) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[999999]">
       <div className="bg-white rounded-lg p-4 w-[800px] mx-4">
         <div className="w-full flex justify-end">
           <button onClick={() => setIsOpen(false)}>X</button>
@@ -305,12 +305,17 @@ export default function ExitIntentModal({ condominio, link }) {
                 className="border text-xs rounded-md p-2"
               />
             </div>
-            <button
-              type="submit"
-              className="mt-4 text-sm font-bold px-6 py-2 bg-black text-white rounded-full"
-            >
-              Enviar
-            </button>
+            <div className="flex gap-4 justify-end items-center">
+              <button className="mt-4 text-sm font-bold px-6 py-2 border text-black rounded-full">
+                Fechar
+              </button>
+              <button
+                type="submit"
+                className="mt-4 text-sm font-bold px-6 py-2 bg-black text-white rounded-full"
+              >
+                Enviar
+              </button>
+            </div>
           </form>
         )}
         {formState === "loading" && (
