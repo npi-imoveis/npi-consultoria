@@ -76,7 +76,6 @@ const ImageUploadModal = ({ title = "Upload de Imagens", onClose, onUploadComple
           uploadedUrls.push({
             Foto: metadata.fileUrl,
             Destaque: "Nao",
-            Codigo: Date.now().toString() + Math.random().toString(36).substr(2, 5),
           });
         }
       }

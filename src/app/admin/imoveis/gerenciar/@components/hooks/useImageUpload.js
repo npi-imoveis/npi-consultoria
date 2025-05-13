@@ -6,20 +6,18 @@ import { getImageUploadMetadata, uploadToS3 } from "@/app/utils/s3-upload";
 export const useImageUpload = (updateImage, setSuccess, setError) => {
   const handleImagesUploaded = useCallback(
     (uploadedImages) => {
-      if (!uploadedImages.length) return;
-
-      uploadedImages.forEach((image) => {
-        updateImage(image.Codigo, "Foto", image.Foto);
-        updateImage(image.Codigo, "Destaque", image.Destaque || "Nao");
-      });
+      // Esta função não é mais usada, mantida apenas para compatibilidade
+      console.log("Esta função está obsoleta, usar handleImagesUploaded de useImovelForm");
 
       // Exibe mensagem de sucesso
-      setSuccess(`${uploadedImages.length} imagem(ns) enviada(s) com sucesso!`);
-      setTimeout(() => {
-        setSuccess("");
-      }, 3000);
+      if (uploadedImages && uploadedImages.length) {
+        setSuccess(`${uploadedImages.length} imagem(ns) enviada(s) com sucesso!`);
+        setTimeout(() => {
+          setSuccess("");
+        }, 3000);
+      }
     },
-    [updateImage, setSuccess]
+    [setSuccess]
   );
 
   const handleFileUpload = useCallback(

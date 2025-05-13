@@ -57,6 +57,7 @@ export default function GerenciarImovel() {
     setImageAsHighlight,
     changeImagePosition,
     validation,
+    handleImagesUploaded,
   } = useImovelForm();
 
   const { handleSubmit, isSaving, error, success, setError, setSuccess } = useImovelSubmit(
@@ -65,11 +66,7 @@ export default function GerenciarImovel() {
     mode
   );
 
-  const { handleImagesUploaded, handleFileUpload } = useImageUpload(
-    updateImage,
-    setSuccess,
-    setError
-  );
+  const { handleFileUpload } = useImageUpload(updateImage, setSuccess, setError);
 
   // Carregar dados do imóvel do store se estiver no modo de edição
   useEffect(() => {

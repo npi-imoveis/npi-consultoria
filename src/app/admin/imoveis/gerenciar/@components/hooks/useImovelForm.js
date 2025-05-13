@@ -7,6 +7,7 @@ import { REQUIRED_FIELDS } from "../FieldGroup";
 import useImovelStore from "@/app/admin/store/imovelStore";
 import { getCorretorById } from "@/app/admin/services/corretor";
 import { generateUniqueCode } from "@/app/utils/idgenerate";
+import { us } from "./../../../../../../../.next/server/vendor-chunks/leaflet";
 
 // Export the generateRandomCode function so it can be reused
 export const generateRandomCode = async () => {
@@ -371,17 +372,21 @@ export const useImovelForm = () => {
   }, []);
 
   // Função para atualizar uma imagem específica
-  const updateImage = useCallback((codigo, campo, valor) => {
+  const updateImage = useCallback((codigo, field, value) => {
     setFormData((prevData) => {
-      const newFoto = { ...(prevData.Foto || {}) };
-      const currentImage = newFoto[codigo] || { Codigo: codigo, Destaque: "Nao", Foto: "" };
+      if (!Array.isArray(prevData.Foto)) return prevData;
 
-      newFoto[codigo] = {
-        ...currentImage,
-        [campo]: valor,
+      // Atualiza apenas a imagem com o Codigo correspondente
+      const updatedFotos = prevData.Foto.map((photo) =>
+        photo.Codigo === codigo ? { ...photo, [field]: value } : photo
+      );
+
+      console.log("Dados UpdatedFotos", updatedFotos);
+
+      return {
+        ...prevData,
+        Foto: updatedFotos,
       };
-
-      return { ...prevData, Foto: newFoto };
     });
   }, []);
 
@@ -409,13 +414,13 @@ export const useImovelForm = () => {
   }, []);
 
   // Função para definir uma imagem como destaque
-  const setImageAsHighlight = useCallback((fotoUrl) => {
+  const setImageAsHighlight = useCallback((codigo) => {
     setFormData((prevData) => {
       if (!Array.isArray(prevData.Foto)) return prevData;
 
       const updatedFotos = prevData.Foto.map((photo) => ({
         ...photo,
-        Destaque: photo.Foto === fotoUrl ? "Sim" : "Nao",
+        Destaque: photo.Codigo === codigo ? "Sim" : "Nao",
       }));
 
       return {
@@ -482,6 +487,31 @@ export const useImovelForm = () => {
     });
   }, [formData]);
 
+  const handleImagesUploaded = (novasImagens) => {
+    if (!novasImagens || !Array.isArray(novasImagens) || novasImagens.length === 0) {
+      return; // Não fazer nada se não receber imagens
+    }
+
+    setFormData((prevData) => {
+      // Criar array existente ou vazio se não existir
+      const fotosExistentes = Array.isArray(prevData.Foto) ? [...prevData.Foto] : [];
+
+      // Para cada imagem nova, criar um objeto com estrutura correta
+      const novasFotos = novasImagens.map((image, index) => ({
+        Codigo: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+        Foto: image.Foto,
+        Destaque: "Nao",
+        Ordem: fotosExistentes.length + index + 1, // Garantir que fique após as existentes
+      }));
+
+      // Retornar state atualizado com ARRAY concatenado
+      return {
+        ...prevData,
+        Foto: [...fotosExistentes, ...novasFotos],
+      };
+    });
+  };
+
   return {
     formData,
     setFormData,
@@ -500,6 +530,7 @@ export const useImovelForm = () => {
     changeImagePosition,
     validation,
     generateRandomCode,
+    handleImagesUploaded,
   };
 };
 

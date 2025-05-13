@@ -113,7 +113,7 @@ const ImagesSection = ({
                           type="checkbox"
                           id={`destaque-${uniquePhotoKey}`}
                           checked={image.Destaque === "Sim"}
-                          onChange={() => setImageAsHighlight(image.Foto)}
+                          onChange={() => setImageAsHighlight(image.Codigo)}
                           className="h-6 w-6 border-gray-300 rounded text-black focus:ring-black"
                         />
                         <label
