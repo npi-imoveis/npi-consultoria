@@ -7,7 +7,6 @@ import { REQUIRED_FIELDS } from "../FieldGroup";
 import useImovelStore from "@/app/admin/store/imovelStore";
 import { getCorretorById } from "@/app/admin/services/corretor";
 import { generateUniqueCode } from "@/app/utils/idgenerate";
-import { us } from "./../../../../../../../.next/server/vendor-chunks/leaflet";
 
 // Export the generateRandomCode function so it can be reused
 export const generateRandomCode = async () => {
