@@ -371,18 +371,17 @@ export const useImovelForm = () => {
   }, []);
 
   // Função para atualizar uma imagem específica
-  const updateImage = useCallback((codigo, field, value) => {
+  const updateImage = useCallback((codigo, campo, valor) => {
     setFormData((prevData) => {
-      if (!Array.isArray(prevData.Foto)) return prevData;
+      const newFoto = { ...(prevData.Foto || {}) };
+      const currentImage = newFoto[codigo] || { Codigo: codigo, Destaque: "Nao", Foto: "" };
 
-      const updatedFotos = prevData.Foto.map((photo) =>
-        photo.Codigo === codigo ? { ...photo, [field]: value } : photo
-      );
-
-      return {
-        ...prevData,
-        Foto: updatedFotos,
+      newFoto[codigo] = {
+        ...currentImage,
+        [campo]: valor,
       };
+
+      return { ...prevData, Foto: newFoto };
     });
   }, []);
 

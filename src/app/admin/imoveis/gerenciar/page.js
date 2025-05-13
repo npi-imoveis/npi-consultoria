@@ -103,7 +103,7 @@ export default function GerenciarImovel() {
         if (Array.isArray(imovelSelecionado.Foto)) {
           return imovelSelecionado.Foto.map((foto, index) => ({
             ...foto,
-            Codigo: foto.Codigo || `photo-${Date.now()}-${index}`,
+            Codigo: `photo-${Date.now()}-${index}`,
             Destaque: foto.Destaque || "Nao",
             Ordem: foto.Ordem || index + 1,
           }));
@@ -115,7 +115,7 @@ export default function GerenciarImovel() {
             const foto = imovelSelecionado.Foto[key];
             return {
               ...foto,
-              Codigo: foto.Codigo || key,
+              Codigo: key,
               Destaque: foto.Destaque || "Nao",
               Ordem: foto.Ordem || index + 1,
             };

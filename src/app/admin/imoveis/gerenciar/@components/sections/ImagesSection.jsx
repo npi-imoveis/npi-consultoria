@@ -18,8 +18,8 @@ const ImagesSection = ({
   const fileInputRef = useRef(null);
   // Handle both array and object formats for backward compatibility
   const photos = Array.isArray(formData.Foto)
-    ? formData.Foto
-    : Object.keys(formData.Foto || {}).map((key) => formData.Foto[key]);
+  ? formData.Foto
+  : Object.keys(formData.Foto || {}).map((key) => formData.Foto[key]);
   const photoCount = photos.length;
   const requiredPhotoCount = validation?.requiredPhotoCount || 5;
   const hasEnoughPhotos = photoCount >= requiredPhotoCount;
