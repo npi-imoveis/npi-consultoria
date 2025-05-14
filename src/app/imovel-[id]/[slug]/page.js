@@ -16,7 +16,6 @@ import { WhatsappFloat } from "@/app/components/ui/whatsapp";
 import { Apartment as StructuredDataApartment } from "@/app/components/structured-data";
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 import { notFound } from "next/navigation";
-import { headers } from "next/headers";
 
 export async function generateMetadata({ params }) {
   const { slug } = params;
@@ -31,6 +30,9 @@ export async function generateMetadata({ params }) {
     };
   }
 
+  const destaqueFotoObj = condominio.Foto?.find((f) => f.Destaque === "Sim");
+  const destaqueFotoUrl = destaqueFotoObj?.Foto;
+
   const description = `${condominio.Empreendimento} em ${condominio.BairroComercial}, ${condominio.Cidade}. ${condominio.Empreendimento}: ${condominio.DormitoriosAntigo} quartos, ${condominio.Suites} suítes, ${condominio.BanheiroSocialQtd} banheiros, ${condominio.VagasAntigo} vagas, ${condominio.MetragemAnt}. ${condominio.Situacao}.`;
 
   return {
@@ -43,7 +45,7 @@ export async function generateMetadata({ params }) {
       title: `Condomínio ${condominio.Empreendimento}`,
       description,
       url: `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`,
-      images: condominio.Foto?.[0]?.Foto ? [{ url: condominio.Foto[0].Foto }] : [],
+      images: destaqueFotoUrl ? [{ url: destaqueFotoUrl }] : [],
       type: "website",
     },
     twitter: {
@@ -51,13 +53,14 @@ export async function generateMetadata({ params }) {
       title: `Condomínio ${condominio.Empreendimento}`,
       description,
       site: "@NPIImoveis",
-      images: condominio.Foto?.[0]?.Foto ? [condominio.Foto[0].Foto] : [],
+      images: destaqueFotoUrl ? [destaqueFotoUrl] : [],
     },
   };
 }
 
 export default async function Imovel({ params }) {
   const { slug } = params;
+
   const response = await getCondominioPorSlug(slug);
 
   if (!response?.data) {
@@ -65,8 +68,6 @@ export default async function Imovel({ params }) {
   }
 
   const imovel = response.data;
-
-  const headersList = headers();
   const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`;
 
   return (
