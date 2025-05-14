@@ -108,24 +108,19 @@ export default function Configuracoes() {
     e.preventDefault();
     let success = true;
     let msg = "";
-    // Atualiza nome se mudou
-    if (editData.displayName !== usuarioEditando.displayName) {
-      // Não há endpoint para atualizar displayName, só senha. Poderia ser implementado na API futuramente.
-      msg = "Apenas a senha pode ser alterada no momento.";
+
+    // Atualiza senha se preenchida
+
+    const res = await updateDadosUsuario({
+      uid: usuarioEditando.uid,
+      displayName: editData.displayName,
+      password: editData.password,
+    });
+    if (!res.success) {
+      msg = res.message;
       success = false;
     }
-    // Atualiza senha se preenchida
-    if (editData.password) {
-      const res = await updateDadosUsuario({
-        uid: usuarioEditando.uid,
-        displayName: usuarioEditando.displayName,
-        password: editData.password,
-      });
-      if (!res.success) {
-        msg = res.message;
-        success = false;
-      }
-    }
+
     if (success) {
       setShowEdit(false);
       setUsuarioEditando(null);
@@ -216,19 +211,19 @@ export default function Configuracoes() {
                 </form>
               </Modal>
             )}
-            <div className="flex gap-4 mt-6">
+            <div className="space-y-4 mt-6">
               {usuarios.map((user) => (
                 <div
                   key={user.uid}
-                  className="bg-zinc-100 p-6 rounded-lg flex flex-col gap-2 w-[250px]"
+                  className="w-full grid grid-cols-4 bg-zinc-100 px-4 py-2 rounded-lg gap-2 "
                 >
-                  <h1 className="font-bold text-sm">{user.displayName || "Sem nome"}</h1>
+                  <h1 className="font-bold text-xs">{user.displayName || "Sem nome"}</h1>
                   <p className="text-xs ">{user.email}</p>
                   <p className="text-xs ">
                     Criado em:
                     {new Date(user.creationTime).toLocaleDateString()}
                   </p>
-                  <div className="flex gap-2 mt-2">
+                  <div className="flex justify-end gap-2 mt-2">
                     <button className="text-blue-600" onClick={() => handleEditClick(user)}>
                       <FaEdit size={18} />
                     </button>
