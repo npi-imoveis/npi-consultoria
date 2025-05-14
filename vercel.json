@@ -1,6 +1,11 @@
 {
   "redirects": [
     {
+      "source": "/imovel-105656/ez-infinity-paraiso",
+      "destination": "/imovel-105656/lindenberg-ibirapuera",
+      "permanent": true
+    },
+    {
       "source": "/imovel-106541/",
       "destination": "/imovel-014/topaz-aclimacao-cobertura",
       "permanent": true

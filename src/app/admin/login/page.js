@@ -121,7 +121,7 @@ export default function AdminLogin() {
                   type="email"
                   required
                   disabled={isAuthenticating}
-                  className="text-sm py-3 px-4 text-gray-500 w-full rounded-md border border-gray-300 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent"
+                  className="text-xs py-3 px-4 text-gray-500 w-full rounded-md border border-gray-300 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent"
                   placeholder="exemplo@email.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -137,7 +137,7 @@ export default function AdminLogin() {
                   type="password"
                   required
                   disabled={isAuthenticating}
-                  className="text-sm py-3 px-4 text-gray-500 w-full rounded-md border border-gray-300 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent"
+                  className="text-xs py-3 px-4 text-gray-500 w-full rounded-md border border-gray-300 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:border-transparent"
                   placeholder="Digite sua senha"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -149,7 +149,7 @@ export default function AdminLogin() {
               <button
                 type="submit"
                 disabled={isAuthenticating}
-                className={`w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white ${
+                className={`w-full flex justify-center py-3 px-4 border border-transparent text-xs font-medium rounded-md text-white ${
                   isAuthenticating ? "bg-gray-400" : "bg-black hover:bg-black/80"
                 } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-400 transition-colors`}
               >
