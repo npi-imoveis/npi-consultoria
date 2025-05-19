@@ -4,6 +4,11 @@ import { getContentSite } from "@/app/services";
 import { HistoriaNpi } from "./sections/HistoriaNpi";
 import VideoNpi from "./sections/VideoNpi";
 
+export const metadata = {
+  title: "NPi Imóveis - Sobre NPi Imóveis",
+  description: "Conheça a NPi Imóveis",
+};
+
 export default async function SobrePage() {
   const content = await getContentSite();
   return (

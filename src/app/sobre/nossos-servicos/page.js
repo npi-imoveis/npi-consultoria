@@ -3,6 +3,11 @@ import { getContentSite } from "@/app/services";
 
 import { BriefcaseBusinessIcon } from "lucide-react";
 
+export const metadata = {
+  title: "NPi Imóveis - Nossos Serviços",
+  description: "Conheça nossos serviços",
+};
+
 export default async function ServicesPage() {
   const content = await getContentSite();
 

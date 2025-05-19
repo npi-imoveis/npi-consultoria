@@ -178,7 +178,9 @@ export default async function CondominioPage({ params }) {
       {condominio.Video && Object.keys(condominio.Video).length > 0 && (
         <VideoCondominio condominio={condominio} />
       )}
-      {condominio.Tour360 && <TourVirtual condominio={condominio} />}
+      {condominio.Tour360 && (
+        <TourVirtual link={condominio.Tour360} titulo={condominio.Empreendimento} />
+      )}
 
       <ExploreRegiao condominio={condominio} currentUrl={currentUrl} />
       <WhatsappFloat

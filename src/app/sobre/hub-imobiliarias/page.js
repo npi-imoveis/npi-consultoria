@@ -6,6 +6,11 @@ import { FaqHub } from "./components/FaqHub";
 import { ContactSection } from "@/app/components/sections/contact-section";
 import { getContentSite } from "@/app/services";
 
+export const metadata = {
+  title: "NPi Imóveis - Sobre Hub Imobiliárias",
+  description: "Conheça o Hub Imobiliárias",
+};
+
 export default async function SobrePage() {
   const content = await getContentSite();
 
