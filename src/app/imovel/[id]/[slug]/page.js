@@ -11,15 +11,19 @@ import VideoCondominio from "./componentes/VideoCondominio";
 import TourVirtual from "./componentes/TourVirtual";
 import Contato from "./componentes/Contato";
 import { SimilarProperties } from "./componentes/similar-properties";
-import { getCondominioPorSlug } from "@/app/services";
+import { getCondominioPorSlug, getImovelById } from "@/app/services";
 import { WhatsappFloat } from "@/app/components/ui/whatsapp";
 import { Apartment as StructuredDataApartment } from "@/app/components/structured-data";
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 import { notFound } from "next/navigation";
+import { cookies } from "next/headers";
 
 export async function generateMetadata({ params }) {
-  const { slug } = params;
-  const response = await getCondominioPorSlug(slug);
+  const { id, slug } = params;
+  // const response = await getCondominioPorSlug(slug);
+  const response = await getImovelById(id);
+  // Acessando cookies no server component
+
   const condominio = response?.data;
 
   if (!condominio) {

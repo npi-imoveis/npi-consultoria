@@ -105,8 +105,10 @@ export default function CardImovel({
 
   // Função para lidar com o clique no botão
   const handleButtonClick = () => {
-    // Armazenar o ID e slug no store
+    // Armazenar o ID e slug no store e cookie
     setImovelSelecionado(Codigo, slug);
+    document.cookie = `Codigo=${Codigo}; path=/`;
+    document.cookie = `slug=${slug}; path=/`;
   };
 
   // Verificar se há fotos disponíveis
@@ -208,7 +210,7 @@ export default function CardImovel({
         {/* Botão de ação */}
         <div className="mt-auto pt-4  ">
           <Button
-            link={`/imovel-${Codigo}/${slug}`}
+            link={`/imovel/${Codigo}/${slug}`}
             text="Saiba mais"
             onClick={handleButtonClick}
           />
