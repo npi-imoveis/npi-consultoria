@@ -16,7 +16,6 @@ import { WhatsappFloat } from "@/app/components/ui/whatsapp";
 import { Apartment as StructuredDataApartment } from "@/app/components/structured-data";
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 import { notFound } from "next/navigation";
-import { cookies } from "next/headers";
 
 export async function generateMetadata({ params }) {
   const { id, slug } = params;
@@ -63,9 +62,12 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function Imovel({ params }) {
-  const { slug } = params;
+  const { id, slug } = params;
+  // const response = await getCondominioPorSlug(slug);
+  const response = await getImovelById(id);
+  // Acessando cookies no server component
 
-  const response = await getCondominioPorSlug(slug);
+  // const response = await getCondominioPorSlug(slug);
 
   if (!response?.data) {
     notFound();
