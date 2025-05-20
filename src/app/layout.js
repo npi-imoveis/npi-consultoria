@@ -1,12 +1,12 @@
 import { Oxanium, Michroma } from "next/font/google";
 import "./globals.css";
 import QueryProvider from "./providers/QueryClientProvider";
-import { WhatsappFloat } from "./components/ui/whatsapp";
 import { MusicPlayer } from "./components/shared/music-player";
 import { Organization, WebSite } from "./components/structured-data";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import GoogleAnalytics from "./analytics";
+
+import Script from "next/script";
 
 const oxanium = Oxanium({
   variable: "--font-oxanium",
@@ -37,9 +37,20 @@ export default function RootLayout({ children }) {
             `,
           }}
         />
+        <Script
+          src={`https://www.googletagmanager.com/gtag/js?id=H6xVZZzTftkeoxMcqNiMrxCN`}
+          strategy="afterInteractive"
+        />
+        <Script id="gtag-init" strategy="afterInteractive">
+          {`
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'H6xVZZzTftkeoxMcqNiMrxCN');
+        `}
+        </Script>
       </head>
       <body className={`${oxanium.variable} ${michroma.variable} antialiased`}>
-        <GoogleAnalytics trackingId="H6xVZZzTftkeoxMcqNiMrxCN" />
         <Organization />
         <WebSite />
         <QueryProvider>{children}</QueryProvider>
