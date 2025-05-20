@@ -4,8 +4,9 @@ import QueryProvider from "./providers/QueryClientProvider";
 import { WhatsappFloat } from "./components/ui/whatsapp";
 import { MusicPlayer } from "./components/shared/music-player";
 import { Organization, WebSite } from "./components/structured-data";
-import { Analytics } from "@vercel/analytics/react"
-import { SpeedInsights } from '@vercel/speed-insights/next';
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
+import GoogleAnalytics from "./analytics";
 
 const oxanium = Oxanium({
   variable: "--font-oxanium",
@@ -38,13 +39,13 @@ export default function RootLayout({ children }) {
         />
       </head>
       <body className={`${oxanium.variable} ${michroma.variable} antialiased`}>
+        <GoogleAnalytics trackingId="H6xVZZzTftkeoxMcqNiMrxCN" />
         <Organization />
         <WebSite />
         <QueryProvider>{children}</QueryProvider>
         <MusicPlayer />
         <Analytics />
         <SpeedInsights />
-
       </body>
     </html>
   );
