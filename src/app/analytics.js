@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import Script from "next/script";
 
-export default function GoogleAnalytics({ trackingId }: { trackingId: string }) {
+export default function GoogleAnalytics({ trackingId }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
