@@ -29,6 +29,39 @@ export default function AdminImoveis() {
     itemsPerPage: 12,
   });
 
+  // Função para salvar busca livre
+  const saveSearchState = (term, results) => {
+    localStorage.setItem("admin_searchTerm", term);
+    localStorage.setItem("admin_searchResults", JSON.stringify(results));
+  };
+
+  // Função para limpar busca livre
+  const clearSearchState = () => {
+    localStorage.removeItem("admin_searchTerm");
+    localStorage.removeItem("admin_searchResults");
+  };
+
+  // Restaurar busca livre ao montar
+  useEffect(() => {
+    const savedTerm = localStorage.getItem("admin_searchTerm");
+    const savedResults = localStorage.getItem("admin_searchResults");
+    if (savedTerm && savedResults) {
+      setSearchTerm(savedTerm);
+      setImoveis(JSON.parse(savedResults));
+      setPagination({
+        totalItems: JSON.parse(savedResults).length,
+        totalPages: Math.ceil(JSON.parse(savedResults).length / 12),
+        currentPage: 1,
+        itemsPerPage: 12,
+      });
+      setIsLoading(false);
+      return;
+    }
+    // Só carrega todos se não houver busca livre salva
+    loadImoveis(currentPage);
+    // eslint-disable-next-line
+  }, []);
+
   const loadImoveis = async (page = 1, search = "") => {
     setIsLoading(true);
     try {
@@ -39,6 +72,7 @@ export default function AdminImoveis() {
 
         if (data && data.status === 200 && data.data) {
           setImoveis(data.data);
+          saveSearchState(search, data.data);
           setPagination({
             totalItems: data.data.length,
             totalPages: Math.ceil(data.data.length / 12),
@@ -47,6 +81,7 @@ export default function AdminImoveis() {
           });
         } else {
           setImoveis([]);
+          saveSearchState(search, []);
           setPagination({
             totalItems: 0,
             totalPages: 1,
@@ -99,9 +134,10 @@ export default function AdminImoveis() {
     }
   };
 
-  // Carregar imóveis quando a página mudar ou quando realizar busca
+  // Carregar imóveis quando a página mudar ou filtros mudarem, mas só se não houver busca livre salva
   useEffect(() => {
-    if (!searchTerm) {
+    const savedTerm = localStorage.getItem("admin_searchTerm");
+    if (!savedTerm) {
       loadImoveis(currentPage);
     }
   }, [currentPage, filters]);
@@ -124,6 +160,7 @@ export default function AdminImoveis() {
     setSearchTerm("");
     setCurrentPage(1);
     loadImoveis(1, "");
+    clearSearchState();
   };
 
   // Handler para os filtros

@@ -4,14 +4,8 @@ import { useState, useEffect } from "react";
 import AuthCheck from "../components/auth-check";
 import Pagination from "@/app/components/ui/pagination";
 import { useRouter } from "next/navigation";
-import {
-  MagnifyingGlassIcon,
-  ArrowPathIcon,
-  EyeIcon,
-  PencilSquareIcon,
-  ExclamationTriangleIcon,
-} from "@heroicons/react/24/outline";
-import { getImoveisAutomacao, getImovelByIdAutomacao } from "../services";
+import { MagnifyingGlassIcon, ArrowPathIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
+import { getImoveisAutomacao } from "../services";
 import useImovelStore from "../store/imovelStore";
 import { TrashIcon } from "lucide-react";
 import ModalDelete from "../components/modal-delete";

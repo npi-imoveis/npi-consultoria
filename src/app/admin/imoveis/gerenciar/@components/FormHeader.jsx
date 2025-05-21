@@ -15,7 +15,7 @@ const FormHeader = ({
   const displayTitle =
     isEditMode && propertyName ? `Editar Imóvel: ${propertyName}` : "Cadastrar Novo Imóvel";
 
-  const link = isAutomacao ? `/admin/imoveis/automacao` : `/admin/imoveis`;
+  const link = isAutomacao ? `/admin/automacao` : `/admin/imoveis`;
 
   return (
     <div className="py-2 border-b border-gray-200">
