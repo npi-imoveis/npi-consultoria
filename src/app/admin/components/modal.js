@@ -1,14 +1,23 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 
-const Modal = ({ title, onClose, children }) => {
+const Modal = ({ title, onClose, children, description, buttonText, link }) => {
   const [isOpen, setIsOpen] = useState(true);
 
   const handleClose = () => {
     setIsOpen(false);
     if (onClose) {
       onClose();
+    }
+  };
+
+  const handleRedirect = () => {
+    if (link) {
+      window.open(link, "_blank");
+    } else {
+      handleClose();
     }
   };
 
@@ -25,8 +34,20 @@ const Modal = ({ title, onClose, children }) => {
           </button>
         </div>
 
-        {/* Content */}
-        <div className="p-4">{children}</div>
+        {children && <div className="p-4">{children}</div>}
+        {!children && (
+          <div className="p-4">
+            <p>{description}</p>
+          </div>
+        )}
+        <div className="w-full flex justify-end p-4">
+          <button
+            onClick={handleRedirect}
+            className="bg-black text-white px-4 py-2 rounded hover:bg-opacity-80 transition duration-300"
+          >
+            {buttonText}
+          </button>
+        </div>
       </div>
     </div>
   );

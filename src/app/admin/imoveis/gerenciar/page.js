@@ -428,6 +428,11 @@ export default function GerenciarImovel() {
             validation={validation}
             key="images-section"
           />
+          {error && (
+            <div className="bg-red-100 p-4 text-red-500 rounded-lg">
+              {error}: verifique se esse imóvel já esta cadastrado anteriormente.
+            </div>
+          )}
 
           <FormFooter
             isSaving={isSaving}

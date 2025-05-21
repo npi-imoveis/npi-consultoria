@@ -1,13 +1,12 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { cadastrarImovel, atualizarImovel, criarImovel } from "@/app/services";
+import { atualizarImovel, criarImovel } from "@/app/services";
 import { formatterNumber } from "@/app/utils/formatter-number";
 import { getTipoEndereco } from "@/app/utils/formater-tipo-address";
 import { formatAddress } from "@/app/utils/formatter-address";
 import { salvarLog } from "@/app/admin/services/log-service";
 import { getCurrentUserAndDate } from "@/app/utils/get-log";
-import { isAbsolute } from "path";
 
 export const useImovelSubmit = (formData, setIsModalOpen, mode = "create") => {
   const [isSaving, setIsSaving] = useState(false);
