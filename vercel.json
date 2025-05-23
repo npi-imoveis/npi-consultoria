@@ -461,11 +461,6 @@
       "permanent": true
     },
     {
-      "source": "/undefined",
-      "destination": "/imovel-10026/vista-caconde",
-      "permanent": true
-    },
-    {
       "source": "/pt-BR",
       "destination": "/imovel-4352/parkway-panamby",
       "permanent": true
