@@ -126,8 +126,6 @@ export default function AdminImoveis() {
     loadImoveis(currentPage, searchTerm);
   };
 
-  console.log("Imóveis Automação", imoveis);
-
   // Função para navegar para a página de edição
   const handleEdit = (imovelCodigo) => {
     if (!imovelCodigo) {
@@ -321,7 +319,7 @@ export default function AdminImoveis() {
                           <button
                             className="text-red-500 font-bold hover:text-red-400 bg-gray-100 p-2 rounded-md"
                             title="Deletar Imóvel"
-                            onClick={() => handleDelete(imovel.Codigo)}
+                            onClick={() => handleDelete(imovel._id)}
                           >
                             <TrashIcon className="h-4 w-4" />
                           </button>

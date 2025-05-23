@@ -173,10 +173,21 @@ export async function DELETE(request, { params }) {
 
     await connectToDatabase();
 
-    // Verificar se o imóvel existe
-    const imovelExistente = await Review.findOne({ Codigo: codigo });
+    // Tentar excluir pelo Codigo primeiro
+    let imovelExistente = await Review.findOne({ Codigo: codigo });
+    let deleteResult = null;
 
-    if (!imovelExistente) {
+    if (imovelExistente) {
+      deleteResult = await Review.findOneAndDelete({ Codigo: codigo });
+    } else {
+      // Se não encontrar pelo Codigo, tenta pelo _id
+      imovelExistente = await Review.findById(codigo);
+      if (imovelExistente) {
+        deleteResult = await Review.findByIdAndDelete(codigo);
+      }
+    }
+
+    if (!deleteResult) {
       return NextResponse.json(
         {
           message: "Imóvel não encontrado",
@@ -185,9 +196,6 @@ export async function DELETE(request, { params }) {
         { status: 404 }
       );
     }
-
-    // Excluir o imóvel
-    await Review.findOneAndDelete({ Codigo: codigo });
 
     return NextResponse.json({
       status: 200,
