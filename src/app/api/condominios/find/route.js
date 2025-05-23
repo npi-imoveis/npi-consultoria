@@ -71,14 +71,15 @@ export async function GET(request) {
       );
     }
 
-    // Encontrar o imóvel com o menor código
+    // Priorizar imóvel com Condominio: "Sim"
+    const imovelCondominio = imoveisMesmoEndereco.find((imovel) => imovel.Condominio === "Sim");
     const imovelMenorCodigo = imoveisMesmoEndereco.reduce((menor, atual) => {
       return parseInt(atual.Codigo) < parseInt(menor.Codigo) ? atual : menor;
     }, imoveisMesmoEndereco[0]);
 
     return NextResponse.json({
       status: 200,
-      data: imovelMenorCodigo,
+      data: imovelCondominio || imovelMenorCodigo,
       imoveisRelacionados: imoveisMesmoEndereco,
     });
   } catch (error) {

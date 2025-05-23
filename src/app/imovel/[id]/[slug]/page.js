@@ -74,7 +74,7 @@ export default async function Imovel({ params }) {
   }
 
   const imovel = response.data;
-  const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`;
+  const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${slug}`;
 
   return (
     <section className="w-full bg-white pb-32 pt-20">
