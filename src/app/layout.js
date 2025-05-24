@@ -21,6 +21,7 @@ const michroma = Michroma({
 });
 
 const GTM_ID = "GTM-NN6HZC";
+const ANALYTICS_ID = "H6xVZZzTftkeoxMcqNiMrxCN"
 
 export default function RootLayout({ children }) {
   return (
@@ -38,7 +39,7 @@ export default function RootLayout({ children }) {
           }}
         />
         <Script
-          src={`https://www.googletagmanager.com/gtag/js?id=H6xVZZzTftkeoxMcqNiMrxCN`}
+          src={`https://www.googletagmanager.com/gtag/js?id=${ANALYTICS_ID}`}
           strategy="afterInteractive"
         />
         <Script id="gtag-init" strategy="afterInteractive">
@@ -46,7 +47,7 @@ export default function RootLayout({ children }) {
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
-          gtag('config', 'H6xVZZzTftkeoxMcqNiMrxCN');
+          gtag('config', '${ANALYTICS_ID}');
         `}
         </Script>
       </head>
