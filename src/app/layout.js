@@ -21,7 +21,7 @@ const michroma = Michroma({
 });
 
 const GTM_ID = "GTM-NN6HZC";
-const ANALYTICS_ID = "H6xVZZzTftkeoxMcqNiMrxCN"
+const ANALYTICS_ID = "G-405E52JFGM"
 
 export default function RootLayout({ children }) {
   return (
