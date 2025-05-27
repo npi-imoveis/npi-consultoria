@@ -3,15 +3,16 @@
 import { Bed, Bath, Car, ShowerHead } from "lucide-react";
 
 export default function DetalhesImovel({ imovel }) {
-  // Definir a metragem corretamente, evitando repetição do "m²"
-  const metragem = imovel.MetragemAnt || imovel.AreaPrivativa;
-  const possuiM2 = String(metragem).includes("m²");
+  // Garantir que a metragem seja uma string e remover possíveis espaços extras
+  const metragem = String(imovel.MetragemAnt || imovel.AreaPrivativa).trim();
+
+  // Remover "m²" caso já esteja presente e adicionar corretamente depois
+  const metragemFormatada = metragem.endsWith("m²") ? metragem : `${metragem} m²`;
 
   return (
     <div className="flex flex-col bg-white container mx-auto border-t-2 p-4 md:p-10 mt-4">
       <span className="text-xl font-bold text-black">
-        {imovel.Categoria} de {possuiM2 ? metragem : `${metragem} m²`} para{" "}
-        {imovel.Status.toLowerCase()}
+        {imovel.Categoria} de {metragemFormatada} para {imovel.Status.toLowerCase()}
       </span>
       <div className="flex flex-wrap gap-2 mt-8" aria-label="Características do imóvel">
         <div className="flex flex-col bg-zinc-100 rounded-lg items-center px-4 py-2 text-xs min-w-[110px]">
@@ -23,6 +24,8 @@ export default function DetalhesImovel({ imovel }) {
         </div>
       </div>
     </div>
+  );
+}
   );
 }
         <div className="flex flex-col bg-zinc-100 rounded-lg items-center px-4 py-2 text-xs min-w-[110px]">
