@@ -94,7 +94,7 @@ export const useImovelForm = () => {
 
   // Generate random code on init only if in Automacao mode
   useEffect(() => {
-    if (isAutomacao) {
+    if (isAutomacao || !formData.Codigo) {
       const fetchCode = async () => {
         const code = await generateRandomCode();
         setNewImovelCode(code);
