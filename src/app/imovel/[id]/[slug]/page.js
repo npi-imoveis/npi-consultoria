@@ -42,12 +42,12 @@ export async function generateMetadata({ params }) {
     title: `${condominio.Empreendimento}, ${condominio.TipoEndereco} ${condominio.Endereco}, ${condominio.Numero}, ${condominio.BairroComercial}`,
     description,
     alternates: {
-      canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`,
+      canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${condominio.Codigo}/${slug}`,
     },
     openGraph: {
       title: `Condomínio ${condominio.Empreendimento}`,
       description,
-      url: `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`,
+      url: `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${condominio.Codigo}/${slug}`,
       images: destaqueFotoUrl ? [{ url: destaqueFotoUrl }] : [],
       type: "website",
     },
