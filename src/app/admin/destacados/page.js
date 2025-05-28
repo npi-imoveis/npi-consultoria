@@ -78,7 +78,7 @@ export default function CondominiosDestacados() {
 
   const removeDestaqueCondominio = async (id) => {
     try {
-      const response = await atualizarCondominio(id, { CondominioDestaque: "Não" });
+      const response = await atualizarImovel(id, { CondominioDestaque: "Não" });
       if (response && response.success) {
         setDestacados((prev) => prev.filter((itemId) => itemId !== id));
         setCondominios((prev) =>

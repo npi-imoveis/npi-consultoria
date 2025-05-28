@@ -39,44 +39,37 @@ export async function GET(request, { params }) {
   }
 }
 
-// Método para atualizar um imóvel existente pelo Codigo
 export async function PUT(request, { params }) {
-  // O id nos parâmetros é o Codigo do imóvel
   const { id } = params;
 
   try {
     await connectToDatabase();
 
-    // Obter os dados do corpo da requisição
     const dadosAtualizados = await request.json();
 
-    // Verificar se o imóvel existe pelo Codigo
-    const imovelExistente = await Imovel.findOne({ Codigo: id });
+    // Tenta encontrar e atualizar pelo Codigo
+    let imovelAtualizado = await Imovel.findOneAndUpdate(
+      { Codigo: id },
+      { $set: dadosAtualizados },
+      { new: true }
+    );
 
-    if (!imovelExistente) {
+    // Se não encontrou pelo Codigo, tenta pelo _id
+    if (!imovelAtualizado) {
+      imovelAtualizado = await Imovel.findByIdAndUpdate(
+        id,
+        { $set: dadosAtualizados },
+        { new: true }
+      );
+    }
+
+    if (!imovelAtualizado) {
       return NextResponse.json(
         {
           status: 404,
           error: "Imóvel não encontrado",
         },
         { status: 404 }
-      );
-    }
-
-    // Atualizar o imóvel no banco de dados pelo Codigo
-    const imovelAtualizado = await Imovel.findOneAndUpdate(
-      { Codigo: id },
-      { $set: dadosAtualizados },
-      { new: true } // Retorna o documento atualizado
-    );
-
-    if (!imovelAtualizado) {
-      return NextResponse.json(
-        {
-          status: 500,
-          error: "Erro ao atualizar imóvel",
-        },
-        { status: 500 }
       );
     }
 
@@ -87,7 +80,7 @@ export async function PUT(request, { params }) {
       data: imovelAtualizado,
     });
   } catch (error) {
-    console.error(`Erro ao atualizar imóvel com Codigo ${id}:`, error);
+    console.error(`Erro ao atualizar imóvel com Codigo ou _id ${id}:`, error);
     return NextResponse.json(
       {
         status: 500,
