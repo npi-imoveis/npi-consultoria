@@ -76,7 +76,7 @@ export default async function CondominioPage({ params }) {
   const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`;
 
   function isValidValue(value) {
-    return value !== undefined && valor !== null && valor !== "0" && valor !== "" && !valor;
+    return value !== undefined && value !== null && value !== "0" && value !== "" && !value;
   }
 
   return (
