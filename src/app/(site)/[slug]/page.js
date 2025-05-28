@@ -75,6 +75,10 @@ export default async function CondominioPage({ params }) {
 
   const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`;
 
+  function isValidValue(value) {
+    return value !== undefined && valor !== null && valor !== "0" && valor !== "" && !valor;
+  }
+
   return (
     <section className="w-full bg-zinc-100 pb-10">
       <StructuredDataApartment
@@ -154,9 +158,9 @@ export default async function CondominioPage({ params }) {
               <ScrollToImoveisButton text={`Mostrar imóveis (${imoveisRelacionados.length})`} />
             </div>
             <div className="relative w-full h-[230px] overflow-y-auto bg-white rounded-lg overflow-hidden p-4">
-              {condominio.ValorVenda2 != "0" ||
-              condominio.ValorGarden != "0" ||
-              condominio.ValorCobertura != "0" ? (
+              {isValidValue(condominio.ValorVenda2) ||
+              isValidValue(condominio.ValorGarden) ||
+              isValidValue(condominio.ValorCobertura) ? (
                 <PropertyTableOwner imovel={condominio} />
               ) : (
                 <PropertyTable imoveisRelacionados={imoveisRelacionados} />
