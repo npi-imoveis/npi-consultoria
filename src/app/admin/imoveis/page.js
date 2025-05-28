@@ -251,6 +251,13 @@ export default function AdminImoveis() {
     loadImoveis(currentPage, searchTerm);
   };
 
+  const handleCadastrarNovoImovel = () => {
+    // Limpa o imóvel selecionado e define o modo para criação
+    const limparImovelSelecionado = useImovelStore.getState().limparImovelSelecionado;
+    limparImovelSelecionado();
+    router.push("/admin/imoveis/gerenciar");
+  };
+
   return (
     <AuthCheck>
       {isModalOpen && (
@@ -269,7 +276,7 @@ export default function AdminImoveis() {
           <div className="flex justify-between items-center mb-4">
             <h1 className="text-2xl font-bold text-gray-900">Gerenciamento de Imóveis</h1>
             <button
-              onClick={() => router.push("/admin/imoveis/gerenciar")}
+              onClick={handleCadastrarNovoImovel}
               className="inline-flex items-center px-5 py-2 border border-transparent text-xs font-bold rounded-md shadow-xl text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
             >
               Cadastrar Novo Imóvel
