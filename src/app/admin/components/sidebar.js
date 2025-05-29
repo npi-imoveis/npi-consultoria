@@ -47,6 +47,7 @@ export default function Sidebar() {
       href: "/admin/configuracoes",
       icon: Cog6ToothIcon,
     },
+
     {
       name: "Redirects",
       href: "/admin/redirect",
