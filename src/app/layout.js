@@ -21,13 +21,13 @@ const michroma = Michroma({
 });
 
 const GTM_ID = "GTM-NN6HZC";
-const ANALYTICS_ID = "G-405E52JFGM"
+const ANALYTICS_ID = "G-405E52JFGM";
 
 export default function RootLayout({ children }) {
   return (
     <html lang="pt-BR">
-      <head>
-        <script
+      <body className={`${oxanium.variable} ${michroma.variable} antialiased`}>
+        <Script
           dangerouslySetInnerHTML={{
             __html: `
               (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -50,8 +50,6 @@ export default function RootLayout({ children }) {
           gtag('config', '${ANALYTICS_ID}');
         `}
         </Script>
-      </head>
-      <body className={`${oxanium.variable} ${michroma.variable} antialiased`}>
         <Organization />
         <WebSite />
         <QueryProvider>{children}</QueryProvider>
