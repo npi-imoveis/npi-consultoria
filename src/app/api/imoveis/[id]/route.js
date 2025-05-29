@@ -2,6 +2,7 @@ import { connectToDatabase } from "@/app/lib/mongodb";
 import Imovel from "@/app/models/Imovel";
 import ImovelAtivo from "@/app/models/ImovelAtivo";
 import { NextResponse } from "next/server";
+import { verifyCors } from "../../_utils/cors";
 
 export async function GET(request, { params }) {
   // Extrair o id dos parâmetros (este id é o Codigo do imóvel)

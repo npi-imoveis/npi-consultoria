@@ -3,8 +3,6 @@ import { NextResponse } from "next/server";
 
 export function middleware(request) {
   const { pathname } = request.nextUrl;
-  console.log("====== MIDDLEWARE EXECUTADO ======");
-  console.log("URL original:", pathname);
 
   // Verifica se a URL segue o padrão /imovel-:id/:slug
   // Ex: /imovel-123/apartamento-centro
@@ -15,9 +13,6 @@ export function middleware(request) {
     // Cria a nova URL interna para processamento
     const url = request.nextUrl.clone();
     url.pathname = `/imovel/${id}/${slug}`;
-
-    console.log("Reescrevendo para:", url.pathname);
-    console.log("====== FIM DO LOG ======");
 
     // Reescreve a URL internamente sem mudar a URL visível para o usuário
     return NextResponse.rewrite(url);
@@ -32,15 +27,10 @@ export function middleware(request) {
     const url = request.nextUrl.clone();
     url.pathname = `/imovel-${id}/${slug}`;
 
-    console.log("Redirecionando para:", url.pathname);
-    console.log("====== FIM DO LOG ======");
-
     // Redireciona para a URL no formato correto (visível para o usuário)
     return NextResponse.redirect(url);
   }
 
-  console.log("Nenhum rewrite necessário");
-  console.log("====== FIM DO LOG ======");
   return NextResponse.next();
 }
 

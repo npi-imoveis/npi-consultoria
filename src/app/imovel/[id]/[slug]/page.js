@@ -25,14 +25,6 @@ export async function generateMetadata({ params }) {
 
   const condominio = response?.data;
 
-  if (!condominio) {
-    return {
-      title: "Condomínio não encontrado | NPI Imóveis",
-      description: "O condomínio solicitado não foi encontrado.",
-      robots: "noindex",
-    };
-  }
-
   const destaqueFotoObj = condominio.Foto?.find((f) => f.Destaque === "Sim");
   const destaqueFotoUrl = destaqueFotoObj?.Foto;
 
