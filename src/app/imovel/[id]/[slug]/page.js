@@ -11,14 +11,14 @@ import VideoCondominio from "./componentes/VideoCondominio";
 import TourVirtual from "./componentes/TourVirtual";
 import Contato from "./componentes/Contato";
 import { SimilarProperties } from "./componentes/similar-properties";
-import { getCondominioPorSlug, getImovelById } from "@/app/services";
+import { getImovelById } from "@/app/services";
 import { WhatsappFloat } from "@/app/components/ui/whatsapp";
 import { Apartment as StructuredDataApartment } from "@/app/components/structured-data";
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 import { notFound } from "next/navigation";
 
 export async function generateMetadata({ params }) {
-  const { id, slug } = params;
+  const { id } = params;
   // const response = await getCondominioPorSlug(slug);
   const response = await getImovelById(id);
   // Acessando cookies no server component
@@ -34,12 +34,12 @@ export async function generateMetadata({ params }) {
     title: `${condominio.Empreendimento}, ${condominio.TipoEndereco} ${condominio.Endereco}, ${condominio.Numero}, ${condominio.BairroComercial}`,
     description,
     alternates: {
-      canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${condominio.Codigo}/${slug}`,
+      canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${condominio.Codigo}/${condominio.Slug}`,
     },
     openGraph: {
       title: `Condomínio ${condominio.Empreendimento}`,
       description,
-      url: `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${condominio.Codigo}/${slug}`,
+      url: `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${condominio.Codigo}/${condominio.Slug}`,
       images: destaqueFotoUrl ? [{ url: destaqueFotoUrl }] : [],
       type: "website",
     },
@@ -66,7 +66,7 @@ export default async function Imovel({ params }) {
   }
 
   const imovel = response.data;
-  const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${slug}`;
+  const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
 
   return (
     <section className="w-full bg-white pb-32 pt-20">
