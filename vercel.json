@@ -171,11 +171,6 @@
       "permanent": true
     },
     {
-      "source": "/imovel-3089/edificio-urbanity-business",
-      "destination": "/imovel-3089/edificio-urbanity-offices",
-      "permanent": true
-    },
-    {
       "source": "/imovel-107152/condominio-les-jardins-des-jardins-jardim-paulista",
       "destination": "/imovel-107152/les-jardins-des-jardins-jardim-paulista",
       "permanent": true
@@ -206,11 +201,6 @@
       "permanent": true
     },
     {
-      "source": "/imovel-5050/atrium-i-vila-olimpia",
-      "destination": "/imovel-5050/atrium-i-vila-olimpia",
-      "permanent": true
-    },
-    {
       "source": "/imovel-4604/condominio-biografia-vila-mariana-97m2",
       "destination": "/imovel-4604/condominio-biografia-vila-mariana",
       "permanent": true
@@ -233,11 +223,6 @@
     {
       "source": "/imovel-107049/authentique-moema-189-m",
       "destination": "/imovel-107049/condominio-authentique-moema",
-      "permanent": true
-    },
-    {
-      "source": "/imovel-963640/le-six-by-lavvi",
-      "destination": "/imovel-963640/le-six-by-lavvi",
       "permanent": true
     },
     {
@@ -268,11 +253,6 @@
     {
       "source": "/imovel-105764/les-jardins-des-jardins-jardim-paulista",
       "destination": "/imovel-105764/alameda-jau-1477-jardins",
-      "permanent": true
-    },
-    {
-      "source": "/imovel-106211/monogram-moema",
-      "destination": "/imovel-106211/monogram-moema",
       "permanent": true
     },
     {
@@ -318,16 +298,6 @@
     {
       "source": "/imovel-5286/white-2880-pinheiros-reboucas-2880",
       "destination": "/imovel-5286/white-2880-pinheiros",
-      "permanent": true
-    },
-    {
-      "source": "/imovel-107549/rua-tabapua-266",
-      "destination": "/imovel-107549/rua-tabapua-266",
-      "permanent": true
-    },
-    {
-      "source": "/imovel-259/edificio-advanced-tower-aluguel",
-      "destination": "/imovel-259/edificio-advanced-tower-aluguel",
       "permanent": true
     },
     {
@@ -458,16 +428,6 @@
     {
       "source": "/imovel-105667/le-premier-juriti-moema",
       "destination": "/imovel-105667/le-premier-juriti",
-      "permanent": true
-    },
-    {
-      "source": "/imovel-1384/face-vila-mariana",
-      "destination": "/imovel-1384/face-vila-mariana",
-      "permanent": true
-    },
-    {
-      "source": "/imovel-8366/terrazo-di-mariana",
-      "destination": "/imovel-8366/terrazzo-di-mariana",
       "permanent": true
     },
     {
@@ -860,12 +820,7 @@
       "destination": "/imovel-5243/apartamento-apogeo-chacara-klabin",
       "permanent": true
     },
-    {
-      "source": "/imovel-2070/edificio-riverside-aluguel-rua-hungria",
-      "destination": "/imovel-2070/edificio-riverside-rua-hungria-aluguel",
-      "permanent": true
-    },
-    {
+   {
       "source": "/imovel-107133/clock-vila-romana",
       "destination": "/imovel-107133/edificio-clock-vila-romana",
       "permanent": true
@@ -1060,42 +1015,17 @@
       "destination": "/imovel-980/vogue-moema",
       "permanent": true
     },
-    {
-      "source": "/imovel-106604/even-portugal-587",
-      "destination": "/imovel-106604/even-portugal-587",
-      "permanent": true
-    },
-    {
-      "source": "/imovel-107982/edificio-atlantis",
-      "destination": "/imovel-107982/edificio-atlantis",
-      "permanent": true
-    },
-    {
-      "source": "/imovel-108136/luna-dorata",
-      "destination": "/imovel-108136/luna-dorata",
-      "permanent": true
-    },
-    {
+  {
       "source": "/imovel-4756/face-vila-mariana",
       "destination": "/imovel-4756/edificio-face-vila-mariana",
       "permanent": true
     },
-    {
-      "source": "/imovel-106527/camapua-cobertura-itaim-bibi",
-      "destination": "/imovel-106527/camapua-cobertura-itaim-bibi",
-      "permanent": true
-    },
-    {
+   {
       "source": "/imovel-4788/maison-la-frontiere-vila-olimpia-156-m-3-200-000-00",
       "destination": "/imovel-4788/edificio-maison-la-frontiere",
       "permanent": true
     },
-    {
-      "source": "/imovel-107134/casa-alto-de-pinheiros-4-dorms-venda",
-      "destination": "/imovel-107134/casa-alto-de-pinheiros-4-dorms-venda",
-      "permanent": true
-    },
-    {
+   {
       "source": "/imovel-106373/arborea-itaim",
       "destination": "/imovel-106373/arborea-itaim-cobertura",
       "permanent": true
@@ -1128,11 +1058,6 @@
     {
       "source": "/imovel-106579/vila-nova-luxury-home-design-cobertura",
       "destination": "/imovel-106579/rua-marcos-lopes-272",
-      "permanent": true
-    },
-    {
-      "source": "/imovel-106939/fasano-itaim-pedroso-alvarenga",
-      "destination": "/imovel-106939/fasano-itaim-pedroso-alvarenga",
       "permanent": true
     },
     {
@@ -1381,11 +1306,6 @@
       "permanent": true
     },
     {
-      "source": "/imovel-105773/maison-damboise-campo-belo",
-      "destination": "/imovel-105773/maison-damboise-campo-belo",
-      "permanent": true
-    },
-    {
       "source": "/imovel-490/domna/",
       "destination": "/imovel-490/domna-pompeia",
       "permanent": true
@@ -1442,11 +1362,6 @@
     },
     {
       "source": "/imovel-106813/",
-      "destination": "/imovel-106813/huma-itaim-bibi-apartamento-2-quartos",
-      "permanent": true
-    },
-    {
-      "source": "/imovel-106813/huma-itaim-bibi-apartamento-2-quartos/",
       "destination": "/imovel-106813/huma-itaim-bibi-apartamento-2-quartos",
       "permanent": true
     },
@@ -1623,11 +1538,6 @@
     {
       "source": "/imovel-4314/one-eleven-helbor",
       "destination": "/imovel-4314/one-eleven-home-by-helbor-vila-olimpia",
-      "permanent": true
-    },
-    {
-      "source": "/imovel-10065/haus-mitre-residences-brooklin-apto-de-62-m²-1-suite",
-      "destination": "/imovel-10065/haus-mitre-residences-brooklin--apto-de-62-m-1-suite",
       "permanent": true
     },
     {
@@ -2586,11 +2496,6 @@
       "permanent": true
     },
     {
-      "source": "/imovel-5049/ideal-klabin-chacra-klabin",
-      "destination": "/imovel-5049/ideal-klabin-chacara-klabin",
-      "permanent": true
-    },
-    {
       "source": "/imovel-4449/camatai-moema",
       "destination": "/imovel-4449/mariana-park-vila-mariana-joaquim-tavora",
       "permanent": true
@@ -2806,11 +2711,6 @@
       "permanent": true
     },
     {
-      "source": "/imovel-106799/condominio-st-jamespark-condominium",
-      "destination": "/imovel-106799/condominio-st-jamespark-condominium",
-      "permanent": true
-    },
-    {
       "source": "/imovel-108157/facebook.com/npiimoveis",
       "destination": "/imovel-108157/chacara-a-venda-em-itatiba",
       "permanent": true
@@ -2893,11 +2793,6 @@
     {
       "source": "/imovel-672/cobertura-varanda-pompeia",
       "destination": "/imovel-672/varanda-pompeia--joaquim-ferreira-55",
-      "permanent": true
-    },
-    {
-      "source": "/imovel-106542/vertis-itaim",
-      "destination": "/imovel-106542/vertis-itaim",
       "permanent": true
     },
     {
@@ -3365,12 +3260,7 @@
       "destination": "/imovel-198/edificio-jardin-des-tuileries",
       "permanent": true
     },
-    {
-      "source": "/imovel-106710/condominio-patrio-ibirapuera",
-      "destination": "/imovel-106710/condominio-patrio-ibirapuera",
-      "permanent": true
-    },
-    {
+   {
       "source": "/imovel-323/facebook.com/npiimoveis",
       "destination": "/imovel-323/le-premier-ibirapuera-parc",
       "permanent": true
@@ -3508,11 +3398,6 @@
     {
       "source": "/imovel-106902/condominio-lindenberg-id-itaim",
       "destination": "/imovel-106902/rua-benedito-lapin-197",
-      "permanent": true
-    },
-    {
-      "source": "/imovel-106809/edificio-caroline-mahal",
-      "destination": "/imovel-106809/lindenberg-caroline-mahal",
       "permanent": true
     },
     {
@@ -3725,12 +3610,7 @@
       "destination": "/imovel-10002/modo-saude--democratas-571",
       "permanent": true
     },
-    {
-      "source": "/imovel-105950/place-vendome-265-m",
-      "destination": "/imovel-105950/place-vendome-265-m",
-      "permanent": true
-    },
-    {
+   {
       "source": "/imovel-107327/facebook.com/npiimoveis",
       "destination": "/imovel-107327/edificio-bandeirantes",
       "permanent": true
@@ -4006,11 +3886,6 @@
       "permanent": true
     },
     {
-      "source": "/imovel-5144/ser-vila-madanela",
-      "destination": "/imovel-5144/e-vila-madanela",
-      "permanent": true
-    },
-    {
       "source": "/imovel-106258/instagram.com/npi_imoveis",
       "destination": "/imovel-106258/panamericano",
       "permanent": true
@@ -4081,11 +3956,6 @@
       "permanent": true
     },
     {
-      "source": "/imovel-1986/essenza-moema-moema",
-      "destination": "/imovel-1986/cyrela-essenza-moema",
-      "permanent": true
-    },
-    {
       "source": "/imovel-106539/facebook.com/npiimoveis",
       "destination": "/imovel-106539/vitacon-lorena-residencial",
       "permanent": true
@@ -4133,11 +4003,6 @@
     {
       "source": "/imovel-106535/facebook.com/npiimoveis",
       "destination": "/imovel-106535/avenida-portugal-228",
-      "permanent": true
-    },
-    {
-      "source": "/imovel-108106/royal-garden-paulinia",
-      "destination": "/imovel-108106/royal-garden-paulinia",
       "permanent": true
     },
     {
@@ -5331,11 +5196,6 @@
       "permanent": true
     },
     {
-      "source": "/imovel-106695/omini-pinheiros",
-      "destination": "/imovel-106695/omni-pinheiros",
-      "permanent": true
-    },
-    {
       "source": "/imovel-4239/parque-dos-pinheiros",
       "destination": "/imovel-4239/villa-sorrento-moema-cobertura",
       "permanent": true
@@ -5478,11 +5338,6 @@
     {
       "source": "/imovel-9033/line-alto-da-boa-vista",
       "destination": "/imovel-9033/line-alto-da-boa-vista-cobertura",
-      "permanent": true
-    },
-    {
-      "source": "/imovel-197/lofficina-jardins",
-      "destination": "/imovel-197/lofficina-jardins",
       "permanent": true
     },
     {
