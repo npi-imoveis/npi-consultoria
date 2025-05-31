@@ -61,11 +61,6 @@
       "permanent": true
     },
     {
-      "source": "/imovel-164/olimpic-condominio-resort-saude",
-      "destination": "/imovel-164/olimpic-condominium-resort-saude",
-      "permanent": true
-    },
-    {
       "source": "/imovel-1216/edificio-cidade-jardim-corporate",
       "destination": "/imovel-1216/edificio-cidade-jardim-corporate-center",
       "permanent": true
@@ -78,11 +73,6 @@
     {
       "source": "/imovel-106820/condominio-skyline-jockey",
       "destination": "/imovel-106820/skyline-jockey-apartamento-3-quartos",
-      "permanent": true
-    },
-    {
-      "source": "/imovel-5348/edificio-neo-offices-faria-lima",
-      "destination": "/imovel-5348/edificio-neo-offices-faria-lima",
       "permanent": true
     },
     {
@@ -131,11 +121,6 @@
       "permanent": true
     },
     {
-      "source": "/imovel-106402/design-cidade-jardim",
-      "destination": "/imovel-106402/design-cidade-jardim",
-      "permanent": true
-    },
-    {
       "source": "/imovel-105656/ez-infinity-paraiso",
       "destination": "/imovel-105656/lindenberg-ibirapuera-cobertura",
       "permanent": true
@@ -153,11 +138,6 @@
     {
       "source": "/imovel-106339/upscale",
       "destination": "/imovel-106339/upscale-diogo-jacome",
-      "permanent": true
-    },
-    {
-      "source": "/imovel-482/in-citta",
-      "destination": "/imovel-482/in-citta",
       "permanent": true
     },
     {
@@ -376,18 +356,8 @@
       "permanent": true
     },
     {
-      "source": "/imovel-5329/expand-pinheiros-cardeal-arcoverde-2958",
-      "destination": "/imovel-5329/expand-pinheiros-cardeal-arcoverde-2958",
-      "permanent": true
-    },
-    {
       "source": "/imovel-106730/condominio-jose-maria-lisboa-jardim-paulista",
       "destination": "/imovel-106730/rua-jose-maria-lisboa-731",
-      "permanent": true
-    },
-    {
-      "source": "/imovel-107391/vivacita-sao-caetano",
-      "destination": "/imovel-107391/vivacitta-sao-caetano",
       "permanent": true
     },
     {
@@ -415,12 +385,7 @@
       "destination": "/imovel-398/ilha-mariana",
       "permanent": true
     },
-    {
-      "source": "/imovel-106701/andre-ambere-brooklin",
-      "destination": "/imovel-106701/andre-ampere-brooklin",
-      "permanent": true
-    },
-    {
+   {
       "source": "/imovel-105975/edificio-saint-hilaire-le-grand",
       "destination": "/imovel-105975/edificio-saint-hilaire",
       "permanent": true
@@ -473,11 +438,6 @@
     {
       "source": "/imovel-107077/o-parque-gamaro-brooklin-4-suites",
       "destination": "/imovel-107077/condominio-o-parque-brooklin",
-      "permanent": true
-    },
-    {
-      "source": "/imovel-106988/condominio-maison-ravel",
-      "destination": "/imovel-106988/edificio-maison-ravel",
       "permanent": true
     },
     {
