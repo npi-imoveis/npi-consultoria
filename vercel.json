@@ -5,6 +5,11 @@
       "destination": "/imovel-107104/apartamento-venda-cidade-jardim",
       "permanent": true
     },
+{
+      "source": "/imovel-106994/montparnasse",
+      "destination": "/imovel-106991/montparnasse-vila-nova-conceicao",
+      "permanent": true
+    },    
     {
       "source": "/imovel-107181/casa-na-rua-capricornio-vila-guiomar",
       "destination": "/imovel-107181/casa-a-venda-santo-andre",
