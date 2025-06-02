@@ -5,7 +5,12 @@
       "destination": "/imovel-107104/apartamento-venda-cidade-jardim",
       "permanent": true
     },
-{
+    {
+      "source": "/imovel-1779/residencial-wave",
+      "destination": "/imovel-1779/condominio-wave",
+      "permanent": true
+    },
+    {
       "source": "/imovel-106994/montparnasse",
       "destination": "/imovel-106991/montparnasse-vila-nova-conceicao",
       "permanent": true
