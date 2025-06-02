@@ -43,13 +43,19 @@ export async function GET(request) {
       $toDouble: {
         $replaceAll: {
           input: {
-            $reduce: {
-              input: { $split: ["$ValorAntigo", "."] },
-              initialValue: "",
-              in: { $concat: ["$$value", "$$this"] },
+            $replaceAll: {
+              input: {
+                $reduce: {
+                  input: { $split: ["$ValorAntigo", "."] },
+                  initialValue: "",
+                  in: { $concat: ["$$value", "$$this"] },
+                },
+              },
+              find: ",",
+              replacement: "",
             },
           },
-          find: ",",
+          find: " ",
           replacement: "",
         },
       },
@@ -65,6 +71,99 @@ export async function GET(request) {
       const max = parseInt(matchStage.ValorMax.toString().replace(/\D/g, ""));
       exprConditions.push({ $lte: [cleanedValorAntigo, max] });
       delete matchStage.ValorMax;
+    }
+
+    // ===============================
+    // Lógica de faixa de área
+    // ===============================
+    const cleanedAreaPrivativa = {
+      $cond: {
+        if: {
+          $or: [
+            { $eq: ["$AreaPrivativa", ""] },
+            { $eq: ["$AreaPrivativa", null] },
+            { $eq: [{ $type: "$AreaPrivativa" }, "missing"] },
+            {
+              $eq: [
+                {
+                  $trim: {
+                    input: {
+                      $replaceAll: {
+                        input: {
+                          $replaceAll: {
+                            input: {
+                              $replaceAll: {
+                                input: {
+                                  $replaceAll: {
+                                    input: "$AreaPrivativa",
+                                    find: " m²",
+                                    replacement: "",
+                                  },
+                                },
+                                find: "m²",
+                                replacement: "",
+                              },
+                            },
+                            find: "m2",
+                            replacement: "",
+                          },
+                        },
+                        find: ",",
+                        replacement: ".",
+                      },
+                    },
+                  },
+                },
+                "",
+              ],
+            },
+          ],
+        },
+        then: 0,
+        else: {
+          $toDouble: {
+            $trim: {
+              input: {
+                $replaceAll: {
+                  input: {
+                    $replaceAll: {
+                      input: {
+                        $replaceAll: {
+                          input: {
+                            $replaceAll: {
+                              input: "$AreaPrivativa",
+                              find: " m²",
+                              replacement: "",
+                            },
+                          },
+                          find: "m²",
+                          replacement: "",
+                        },
+                      },
+                      find: "m2",
+                      replacement: "",
+                    },
+                  },
+                  find: ",",
+                  replacement: ".",
+                },
+              },
+            },
+          },
+        },
+      },
+    };
+
+    if (matchStage.AreaMin) {
+      const min = parseInt(matchStage.AreaMin.toString().replace(/\D/g, ""));
+      exprConditions.push({ $gte: [cleanedAreaPrivativa, min] });
+      delete matchStage.AreaMin;
+    }
+
+    if (matchStage.AreaMax) {
+      const max = parseInt(matchStage.AreaMax.toString().replace(/\D/g, ""));
+      exprConditions.push({ $lte: [cleanedAreaPrivativa, max] });
+      delete matchStage.AreaMax;
     }
 
     if (exprConditions.length > 0) {

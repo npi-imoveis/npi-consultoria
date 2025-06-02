@@ -16,6 +16,8 @@ export default function FiltersImoveisAdmin({ onFilter }) {
   const [bairrosSelecionados, setBairrosSelecionados] = useState([]);
   const [valorMin, setValorMin] = useState(null);
   const [valorMax, setValorMax] = useState(null);
+  const [areaMin, setAreaMin] = useState(null);
+  const [areaMax, setAreaMax] = useState(null);
 
   // Estados de UI
   const [bairroFilter, setBairroFilter] = useState("");
@@ -105,6 +107,29 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     return valorLimpo === "" ? null : Number(valorLimpo);
   };
 
+  const formatarArea = (valor) => {
+    if (valor === null || valor === undefined || valor === 0) return "";
+    return `${valor} m²`;
+  };
+
+  const converterAreaParaNumero = (areaFormatada) => {
+    if (!areaFormatada || areaFormatada.trim() === "") return null;
+    try {
+      let areaLimpa = areaFormatada
+        .replace(/\s*m²?\s*/gi, "")
+        .replace(/m2/gi, "")
+        .trim();
+      // Converte vírgula para ponto (decimais)
+      areaLimpa = areaLimpa.replace(",", ".");
+      // Remove outros caracteres não numéricos exceto ponto
+      areaLimpa = areaLimpa.replace(/[^\d.]/g, "");
+      return areaLimpa === "" ? null : parseFloat(areaLimpa);
+    } catch (error) {
+      console.error(`Erro ao converter área "${areaFormatada}":`, error);
+      return null;
+    }
+  };
+
   // Filtrar bairros pela pesquisa
   const bairrosFiltrados = bairros.filter((bairro) =>
     bairro.toLowerCase().includes(bairroFilter.toLowerCase())
@@ -132,6 +157,8 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       bairros: bairrosSelecionados.length > 0 ? bairrosSelecionados : undefined,
       ValorMin: valorMin,
       ValorMax: valorMax,
+      AreaMin: areaMin,
+      AreaMax: areaMax,
     };
 
     // Log para diagnóstico
@@ -156,6 +183,8 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     setBairroFilter("");
     setValorMin(null);
     setValorMax(null);
+    setAreaMin(null);
+    setAreaMax(null);
 
     if (onFilter) {
       onFilter({});
@@ -222,7 +251,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Bairros dropdown com pesquisa e seleção múltipla */}
         <div ref={bairrosRef}>
           <label htmlFor="bairros" className="text-xs text-gray-500 block mb-2">
@@ -332,6 +361,27 @@ export default function FiltersImoveisAdmin({ onFilter }) {
               placeholder="Valor Máximo"
               value={valorMax ? formatarParaReal(valorMax) : ""}
               onChange={(e) => setValorMax(converterParaNumero(e.target.value))}
+              className="w-full text-xs rounded-lg border border-gray-300 bg-white p-2 focus:outline-none focus:ring-1 focus:ring-black"
+            />
+          </div>
+        </div>
+
+        {/* Faixa de Área */}
+        <div>
+          <label className="text-xs text-gray-500 block mb-2">Área do Imóvel</label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              placeholder="Área Mínima"
+              value={areaMin ? formatarArea(areaMin) : ""}
+              onChange={(e) => setAreaMin(converterAreaParaNumero(e.target.value))}
+              className="w-full text-xs rounded-lg border border-gray-300 bg-white p-2 focus:outline-none focus:ring-1 focus:ring-black"
+            />
+            <input
+              type="text"
+              placeholder="Área Máxima"
+              value={areaMax ? formatarArea(areaMax) : ""}
+              onChange={(e) => setAreaMax(converterAreaParaNumero(e.target.value))}
               className="w-full text-xs rounded-lg border border-gray-300 bg-white p-2 focus:outline-none focus:ring-1 focus:ring-black"
             />
           </div>

@@ -14,9 +14,9 @@ export default async function AdminDashboard() {
   const dashboard = await getDashboard();
 
   // Sort corretores by the number of linked properties in descending order
-  const sortedCorretores = [...corretores].sort(
-    (a, b) => b.imoveis_vinculados.length - a.imoveis_vinculados.length
-  );
+  const sortedCorretores = [...corretores]
+    .sort((a, b) => b.imoveis_vinculados.length - a.imoveis_vinculados.length)
+    .slice(0, 10);
 
   return (
     <AuthCheck>
@@ -56,6 +56,9 @@ export default async function AdminDashboard() {
               <h2 className="text-lg font-bold">Parceiros (ranking) </h2>
               <span>Imóveis Vinculados</span>
             </div>
+            <p className="text-xs text-gray-600 mt-1 mb-4">
+              Mostrando os 10 parceiros com mais imóveis vinculados
+            </p>
 
             <div className="mt-4">
               {sortedCorretores.map((parceiro) => (
