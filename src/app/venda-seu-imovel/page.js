@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from "react";
 import { HeaderPage } from "../components/ui/header-page";
+import { Footer } from "../components/ui/footer";
 import Image from "next/image";
 import { getImageUploadMetadata, uploadToS3 } from "../utils/s3-upload";
 import { PhotoIcon, XCircleIcon } from "@heroicons/react/24/outline";
@@ -657,6 +658,7 @@ export default function ImovelForm() {
           </div>
         )}
       </div>
+      <Footer />
     </section>
   );
 }

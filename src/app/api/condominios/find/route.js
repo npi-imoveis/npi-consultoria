@@ -22,7 +22,7 @@ export async function GET(request) {
     const imovelReferencia = await Imovel.findOne({
       Codigo: id,
       ValorAntigo: {
-        $nin: ["", "0"],
+        $nin: ["", null],
         $exists: true,
       },
     });
@@ -54,7 +54,6 @@ export async function GET(request) {
       Numero: imovelReferencia.Numero,
       $and: [
         { ValorAntigo: { $exists: true } },
-        { ValorAntigo: { $ne: "0" } },
         { ValorAntigo: { $ne: "" } },
         { ValorAntigo: { $ne: null } },
       ],
