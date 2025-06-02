@@ -1,7 +1,7 @@
-'use client'
+"use client";
 
 import { formatterSlug } from "@/app/utils/formatter-slug";
-
+import { formatterValue } from "@/app/utils/formatter-value";
 
 // Componente de Skeleton para a tabela
 const TableSkeleton = () => (
@@ -27,8 +27,8 @@ export function PropertyTable({ imoveisRelacionados, isLoading }) {
         <thead>
           <tr className=" bg-zinc-100 text-[8px] ">
             <th className="p-3">Tipo</th>
-            <th className="p-3">Valor</th>
-            <th className="p-3">Metragem</th>
+            <th className="p-3">Venda/Aluguel</th>
+            <th className="p-3">Metragem (m²)</th>
             <th className="p-3">Dormitórios</th>
             <th className="p-3">Suítes</th>
             <th className="p-3">Vagas</th>
@@ -45,9 +45,16 @@ export function PropertyTable({ imoveisRelacionados, isLoading }) {
                 className="border-b border-gray-200 text-[10px] hover:bg-gray-50 cursor-pointer transition-colors"
                 onClick={() => (window.location.href = href)}
               >
-                <td className="p-3 font-bold"><h2 className="text-black font-semibold text-[10px]">{imovel.Categoria}</h2></td>
-                <td className="p-3 font-semibold text-[9px]">R${" "}{imovel.ValorAntigo}</td>
-                <td className="p-3">{imovel.MetragemAnt}</td>
+                <td className="p-3 font-bold">
+                  <h2 className="text-black font-semibold text-[10px]">{imovel.Categoria}</h2>
+                </td>
+                <td className="p-3 font-semibold text-[9px]">
+                  R${" "}
+                  {imovel.ValorAntigo !== "0"
+                    ? imovel.ValorAntigo
+                    : formatterValue(imovel.ValorAluguelSite)}
+                </td>
+                <td className="p-3">{imovel.MetragemAnt} m² </td>
                 <td className="p-3">{imovel.DormitoriosAntigo}</td>
                 <td className="p-3">{imovel.SuiteAntigo}</td>
                 <td className="p-3">{imovel.VagasAntigo}</td>
