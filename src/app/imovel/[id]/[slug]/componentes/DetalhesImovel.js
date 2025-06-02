@@ -6,7 +6,7 @@ export default function DetalhesImovel({ imovel }) {
   return (
     <div className="flex flex-col bg-white container mx-auto border-t-2 p-4 md:p-10 mt-4">
       <span className="text-xl font-bold text-black">
-        {imovel.Categoria} de {imovel.MetragemAnt || imovel.AreaPrivativa} m² para{" "}
+        {imovel.Categoria} de {imovel.AreaPrivativa || imovel.MetragemAnt} m² para{" "}
         {imovel.Status.toLowerCase()}
       </span>
       <div className="flex flex-wrap gap-2 mt-8" aria-label="Características do imóvel">
