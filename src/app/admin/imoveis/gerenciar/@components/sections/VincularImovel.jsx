@@ -22,9 +22,33 @@ const VincularImovelSection = ({ formData, displayValues, onChange, validation }
   const uniqueIdPrefix = useId(); // React's useId hook to generate unique IDs
   const [slug, setSlug] = useState("");
 
+  // Estado local independente para o formulário de vincular imóvel
+  const [localFormData, setLocalFormData] = useState({});
+  const [localDisplayValues, setLocalDisplayValues] = useState({});
+
   // Get Automacao flag from the store
   const imovelSelecionado = useImovelStore((state) => state.imovelSelecionado);
   const isAutomacao = imovelSelecionado?.Automacao === true;
+
+  // Função local onChange para não afetar o imóvel original
+  const handleLocalChange = (event) => {
+    const { name, value } = event.target;
+
+    // Atualizar o estado local
+    setLocalFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    // Se for um campo monetário, também atualizar o displayValue
+    const field = basicInfoFields.find((f) => f.name === name);
+    if (field && field.isMonetary) {
+      setLocalDisplayValues((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    }
+  };
 
   // Create dynamic fields array to update the label based on Automacao flag
   // Add a unique prefix to each field name to prevent duplicates
@@ -101,25 +125,6 @@ const VincularImovelSection = ({ formData, displayValues, onChange, validation }
     }));
   };
 
-  // Map formData to vinculado fields to avoid React duplicate key warnings
-  const getVinculadoFormData = () => {
-    const vinculadoData = { ...formData };
-    // Map the fields to local versions if they exist in formData
-    basicInfoFields.forEach((field) => {
-      if (formData[field.name] !== undefined) {
-        vinculadoData[field.name] = formData[field.name];
-      }
-    });
-    return vinculadoData;
-  };
-
-  // Map displayValues to vinculado display values
-  const getVinculadoDisplayValues = () => {
-    const vinculadoDisplayValues = { ...displayValues };
-    // Add any specific mappings here if needed
-    return vinculadoDisplayValues;
-  };
-
   // Function to handle creating a related property
   const handleCreateRelatedProperty = async () => {
     setIsSubmitting(true);
@@ -139,13 +144,13 @@ const VincularImovelSection = ({ formData, displayValues, onChange, validation }
         _id: undefined, // Remove the _id to let MongoDB generate a new one
       };
 
-      // Update fields that were changed in the form
+      // Update fields that were changed in the LOCAL form data
       basicInfoFields.forEach((field) => {
-        if (formData[field.name] !== undefined) {
+        if (localFormData[field.name] !== undefined && localFormData[field.name] !== "") {
           if (field.name === "ValorAntigo" || field.name === "ValorAluguelSite") {
-            newPropertyData[field.name] = formatterNumber(formData[field.name]);
+            newPropertyData[field.name] = formatterNumber(localFormData[field.name]);
           } else {
-            newPropertyData[field.name] = formData[field.name];
+            newPropertyData[field.name] = localFormData[field.name];
           }
         }
       });
@@ -190,9 +195,9 @@ const VincularImovelSection = ({ formData, displayValues, onChange, validation }
   const handleCloseModalAndReset = () => {
     setIsModalOpen(false);
     setTimeout(() => {
-      basicInfoFields.forEach((field) => {
-        onChange({ target: { name: field.name, value: "" } });
-      });
+      // Limpar apenas o estado local, não o formulário principal
+      setLocalFormData({});
+      setLocalDisplayValues({});
       setError("");
       setSuccess("");
     }, 2000);
@@ -203,7 +208,9 @@ const VincularImovelSection = ({ formData, displayValues, onChange, validation }
       {isModalOpen && (
         <Modal
           title="Imóvel Cadastrado com Sucesso"
-          description={`${formData.Categoria} em ${newPropertyName} com ${formData.AreaPrivativa}m² cadastrado com sucesso com o código ${newPropertyCode}. Ele agora está disponível na lista de imóveis do site.`}
+          description={`${localFormData.Categoria || "Imóvel"} em ${newPropertyName} com ${
+            localFormData.AreaPrivativa || "área não informada"
+          }m² cadastrado com sucesso com o código ${newPropertyCode}. Ele agora está disponível na lista de imóveis do site.`}
           buttonText="Ver no site"
           link={`/imovel-${newPropertyCode}/${slug}`}
           onClose={handleCloseModalAndReset}
@@ -212,9 +219,9 @@ const VincularImovelSection = ({ formData, displayValues, onChange, validation }
 
       <FieldGroup
         fields={getNamespacedFields()}
-        formData={getVinculadoFormData()}
-        displayValues={getVinculadoDisplayValues()}
-        onChange={onChange}
+        formData={localFormData}
+        displayValues={localDisplayValues}
+        onChange={handleLocalChange}
         validation={validation}
       />
 

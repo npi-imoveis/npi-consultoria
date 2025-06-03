@@ -22,6 +22,7 @@ export default function AdminImoveis() {
   const [filters, setFilters] = useState({});
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [codigoImovel, setCodigoImovel] = useState(null);
+  const [isFilteringManually, setIsFilteringManually] = useState(false);
   const [pagination, setPagination] = useState({
     totalItems: 0,
     totalPages: 1,
@@ -62,7 +63,7 @@ export default function AdminImoveis() {
     // eslint-disable-next-line
   }, []);
 
-  const loadImoveis = async (page = 1, search = "") => {
+  const loadImoveis = async (page = 1, search = "", customFilters = null) => {
     setIsLoading(true);
     try {
       if (search) {
@@ -90,8 +91,11 @@ export default function AdminImoveis() {
           });
         }
       } else {
+        // Usar filtros customizados ou filtros do state
+        const filtersToUse = customFilters || filters;
+
         // Construir os parâmetros de filtro para a API
-        const apiFilters = { ...filters };
+        const apiFilters = { ...filtersToUse };
 
         // Processar filtros de valor
         if (apiFilters.ValorMin) {
@@ -137,10 +141,14 @@ export default function AdminImoveis() {
   // Carregar imóveis quando a página mudar ou filtros mudarem, mas só se não houver busca livre salva
   useEffect(() => {
     const savedTerm = localStorage.getItem("admin_searchTerm");
-    if (!savedTerm) {
+    if (!savedTerm && !isFilteringManually) {
       loadImoveis(currentPage);
     }
-  }, [currentPage, filters]);
+    // Reset do flag após o useEffect
+    if (isFilteringManually) {
+      setIsFilteringManually(false);
+    }
+  }, [currentPage, filters, isFilteringManually]);
 
   // Função para lidar com a mudança de página
   const handlePageChange = (newPage) => {
@@ -159,6 +167,7 @@ export default function AdminImoveis() {
   const clearSearch = () => {
     setSearchTerm("");
     setCurrentPage(1);
+    setFilters({}); // Limpar filtros também
     loadImoveis(1, "");
     clearSearchState();
   };
@@ -184,9 +193,14 @@ export default function AdminImoveis() {
       }
     });
 
+    // Marcar que estamos filtrando manualmente
+    setIsFilteringManually(true);
+    // Atualizar os states
     setFilters(processedFilters);
     setCurrentPage(1);
-    loadImoveis(1);
+
+    // Carregar imóveis imediatamente com os novos filtros
+    loadImoveis(1, "", processedFilters);
   };
 
   // Função para navegar para a página de edição

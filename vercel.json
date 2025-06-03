@@ -14,7 +14,7 @@
       "source": "/imovel-106994/montparnasse",
       "destination": "/imovel-106991/montparnasse-vila-nova-conceicao",
       "permanent": true
-    },    
+    },
     {
       "source": "/imovel-107181/casa-na-rua-capricornio-vila-guiomar",
       "destination": "/imovel-107181/casa-a-venda-santo-andre",
@@ -395,7 +395,7 @@
       "destination": "/imovel-398/ilha-mariana",
       "permanent": true
     },
-   {
+    {
       "source": "/imovel-105975/edificio-saint-hilaire-le-grand",
       "destination": "/imovel-105975/edificio-saint-hilaire",
       "permanent": true
@@ -573,11 +573,6 @@
     {
       "source": "/imovel-107173/casa-na-rua-odilon-braga-santo-andre",
       "destination": "/imovel-107173/casa-vila-scarpelli-em-santo-andre",
-      "permanent": true
-    },
-    {
-      "source": "/imovel-106037/viso-moema-74m2",
-      "destination": "/imovel-106037/viso-moema-lavansica",
       "permanent": true
     },
     {
@@ -790,7 +785,7 @@
       "destination": "/imovel-5243/apartamento-apogeo-chacara-klabin",
       "permanent": true
     },
-   {
+    {
       "source": "/imovel-107133/clock-vila-romana",
       "destination": "/imovel-107133/edificio-clock-vila-romana",
       "permanent": true
@@ -805,7 +800,7 @@
       "destination": "/imovel-4824/cobertura-atmosfera-bosque-da-saude",
       "permanent": true
     },
-   {
+    {
       "source": "/imovel-694/sunrise-vila-mascote-cobertura",
       "destination": "/imovel-694/edificio-berrini-one",
       "permanent": true
@@ -820,7 +815,7 @@
       "destination": "/imovel-106728/edificio-shanti-apartamento-itaim-bibi",
       "permanent": true
     },
-   {
+    {
       "source": "/imovel-105717/ode-perdizes",
       "destination": "/imovel-105717/ode-perdizes-garden",
       "permanent": true
@@ -985,17 +980,17 @@
       "destination": "/imovel-980/vogue-moema",
       "permanent": true
     },
-  {
+    {
       "source": "/imovel-4756/face-vila-mariana",
       "destination": "/imovel-4756/edificio-face-vila-mariana",
       "permanent": true
     },
-   {
+    {
       "source": "/imovel-4788/maison-la-frontiere-vila-olimpia-156-m-3-200-000-00",
       "destination": "/imovel-4788/edificio-maison-la-frontiere",
       "permanent": true
     },
-   {
+    {
       "source": "/imovel-106373/arborea-itaim",
       "destination": "/imovel-106373/arborea-itaim-cobertura",
       "permanent": true
@@ -3230,7 +3225,7 @@
       "destination": "/imovel-198/edificio-jardin-des-tuileries",
       "permanent": true
     },
-   {
+    {
       "source": "/imovel-323/facebook.com/npiimoveis",
       "destination": "/imovel-323/le-premier-ibirapuera-parc",
       "permanent": true
@@ -3580,7 +3575,7 @@
       "destination": "/imovel-10002/modo-saude--democratas-571",
       "permanent": true
     },
-   {
+    {
       "source": "/imovel-107327/facebook.com/npiimoveis",
       "destination": "/imovel-107327/edificio-bandeirantes",
       "permanent": true
