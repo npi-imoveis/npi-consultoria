@@ -108,26 +108,21 @@ export default function FiltersImoveisAdmin({ onFilter }) {
   };
 
   const formatarArea = (valor) => {
-    if (valor === null || valor === undefined || valor === 0) return "";
-    return `${valor} m²`;
+    // Retornar apenas o número inteiro, sem formatação
+    return valor ? valor.toString() : "";
   };
 
   const converterAreaParaNumero = (areaFormatada) => {
     if (!areaFormatada || areaFormatada.trim() === "") return null;
-    try {
-      let areaLimpa = areaFormatada
-        .replace(/\s*m²?\s*/gi, "")
-        .replace(/m2/gi, "")
-        .trim();
-      // Converte vírgula para ponto (decimais)
-      areaLimpa = areaLimpa.replace(",", ".");
-      // Remove outros caracteres não numéricos exceto ponto
-      areaLimpa = areaLimpa.replace(/[^\d.]/g, "");
-      return areaLimpa === "" ? null : parseFloat(areaLimpa);
-    } catch (error) {
-      console.error(`Erro ao converter área "${areaFormatada}":`, error);
-      return null;
-    }
+
+    // Permitir apenas números inteiros (remover qualquer caractere não numérico)
+    const apenasNumeros = areaFormatada.replace(/[^\d]/g, "");
+
+    if (apenasNumeros === "") return null;
+
+    // Limitar a 4 dígitos máximo e converter para número
+    const numeroLimitado = apenasNumeros.slice(0, 4);
+    return parseInt(numeroLimitado, 10) || null;
   };
 
   // Filtrar bairros pela pesquisa
@@ -374,14 +369,22 @@ export default function FiltersImoveisAdmin({ onFilter }) {
               type="text"
               placeholder="Área Mínima"
               value={areaMin ? formatarArea(areaMin) : ""}
-              onChange={(e) => setAreaMin(converterAreaParaNumero(e.target.value))}
+              onChange={(e) => {
+                // Aplicar validação de números inteiros diretamente
+                const valor = e.target.value.replace(/[^\d]/g, "").slice(0, 4);
+                setAreaMin(valor ? parseInt(valor, 10) : null);
+              }}
               className="w-full text-xs rounded-lg border border-gray-300 bg-white p-2 focus:outline-none focus:ring-1 focus:ring-black"
             />
             <input
               type="text"
               placeholder="Área Máxima"
               value={areaMax ? formatarArea(areaMax) : ""}
-              onChange={(e) => setAreaMax(converterAreaParaNumero(e.target.value))}
+              onChange={(e) => {
+                // Aplicar validação de números inteiros diretamente
+                const valor = e.target.value.replace(/[^\d]/g, "").slice(0, 4);
+                setAreaMax(valor ? parseInt(valor, 10) : null);
+              }}
               className="w-full text-xs rounded-lg border border-gray-300 bg-white p-2 focus:outline-none focus:ring-1 focus:ring-black"
             />
           </div>

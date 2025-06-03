@@ -34,10 +34,24 @@ const VincularImovelSection = ({ formData, displayValues, onChange, validation }
   const handleLocalChange = (event) => {
     const { name, value } = event.target;
 
+    // Verificar se é um campo de área que precisa de validação especial
+    const isAreaField = name === "AreaPrivativa" || name === "AreaTotal";
+
+    let finalValue = value;
+
+    // Aplicar validação de números inteiros para campos de área
+    if (isAreaField) {
+      // Permitir apenas números inteiros (sem vírgulas, pontos, ou outros caracteres)
+      finalValue = value.replace(/[^\d]/g, "");
+
+      // Limitar a 4 dígitos máximo
+      finalValue = finalValue.slice(0, 4);
+    }
+
     // Atualizar o estado local
     setLocalFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: finalValue,
     }));
 
     // Se for um campo monetário, também atualizar o displayValue
@@ -45,7 +59,7 @@ const VincularImovelSection = ({ formData, displayValues, onChange, validation }
     if (field && field.isMonetary) {
       setLocalDisplayValues((prev) => ({
         ...prev,
-        [name]: value,
+        [name]: finalValue,
       }));
     }
   };

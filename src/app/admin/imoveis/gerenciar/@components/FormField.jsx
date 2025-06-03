@@ -17,6 +17,30 @@ const FormField = ({
 
   const elementId = id || name;
 
+  // Verificar se é um campo de área que deve aceitar apenas números inteiros
+  const isAreaField = name === "AreaPrivativa" || name === "AreaTotal";
+
+  // Handler especial para campos de área
+  const handleAreaChange = (event) => {
+    const { name, value } = event.target;
+
+    // Permitir apenas números inteiros (sem vírgulas, pontos, ou outros caracteres)
+    const apenasNumeros = value.replace(/[^\d]/g, "");
+
+    // Limitar a 4 dígitos máximo (999m² + 1 dígito extra para flexibilidade)
+    const numeroLimitado = apenasNumeros.slice(0, 4);
+
+    // Criar evento sintético com o valor limpo
+    const eventoLimpo = {
+      target: {
+        name,
+        value: numeroLimitado,
+      },
+    };
+
+    onChange(eventoLimpo);
+  };
+
   return (
     <div className={fullWidth ? "col-span-full" : ""}>
       <label htmlFor={elementId} className="block text-[10px] font-bold text-zinc-600 mb-1">
@@ -63,6 +87,20 @@ const FormField = ({
             isRequired && !isValid ? "border-red-300 bg-red-50" : ""
           }`}
           placeholder="R$ 0"
+        />
+      ) : isAreaField ? (
+        <input
+          type="text"
+          id={elementId}
+          name={name}
+          value={value || ""}
+          onChange={handleAreaChange}
+          className={`border px-4 py-2 text-zinc-700 w-full text-[10px] rounded-md focus:outline-none focus:ring-black focus:border-black ${
+            isRequired && !isValid ? "border-red-300 bg-red-50" : ""
+          } ${className || ""}`}
+          placeholder={isAreaField ? "Ex: 120" : placeholder || ""}
+          disabled={disabled}
+          readOnly={readOnly}
         />
       ) : (
         <input
