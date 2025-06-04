@@ -70,7 +70,14 @@ export default function LogosParceirosSection({ form, onChange }) {
 
       const data = await response.json();
       if (data.success) {
-        showStatusMessage("success", "Logo deletado com sucesso!");
+        if (data.warning) {
+          showStatusMessage(
+            "warning",
+            `${data.message} - Nota: Em produção, arquivos não são fisicamente removidos devido às limitações da Vercel.`
+          );
+        } else {
+          showStatusMessage("success", data.message || "Logo deletado com sucesso!");
+        }
         fetchLogos(); // Atualiza a lista de logos
       } else {
         showStatusMessage("error", data.error || "Erro ao deletar logo");
@@ -118,6 +125,8 @@ export default function LogosParceirosSection({ form, onChange }) {
               ? "bg-green-100 text-green-800"
               : status.type === "error"
               ? "bg-red-100 text-red-800"
+              : status.type === "warning"
+              ? "bg-yellow-100 text-yellow-800"
               : "bg-blue-100 text-blue-800"
           }`}
         >

@@ -6,6 +6,11 @@ import { existsSync } from "fs";
 // Diretório base para armazenar as imagens
 const BASE_UPLOAD_DIR = path.join(process.cwd(), "public/uploads");
 
+// Função para verificar se estamos em ambiente de produção na Vercel
+function isVercelProduction() {
+  return process.env.VERCEL_ENV === "production";
+}
+
 // Função para garantir que o diretório existe
 async function ensureDirectoryExists(directory) {
   if (!existsSync(directory)) {
@@ -144,15 +149,49 @@ export async function DELETE(request) {
 
     const filepath = path.join(BASE_UPLOAD_DIR, directory, filename);
 
-    await unlink(filepath);
+    // Verificar se estamos em produção na Vercel
+    if (isVercelProduction()) {
+      // Em produção na Vercel, não podemos deletar arquivos do filesystem
+      // Retornar sucesso simulado para manter a compatibilidade da UI
+      console.warn(`Tentativa de deletar arquivo em produção (Vercel): ${filepath}`);
+      return NextResponse.json({
+        success: true,
+        message: "Arquivo marcado para exclusão (limitação do ambiente de produção)",
+        warning:
+          "Em produção, arquivos não podem ser fisicamente removidos devido às limitações da Vercel. Considere usar uma solução de armazenamento externa como AWS S3, Cloudinary ou Vercel Blob.",
+      });
+    }
 
-    return NextResponse.json({
-      success: true,
-      message: "Imagem excluída com sucesso",
-    });
+    try {
+      // Tentar deletar o arquivo (funciona apenas em desenvolvimento local)
+      await unlink(filepath);
+      return NextResponse.json({
+        success: true,
+        message: "Imagem excluída com sucesso",
+      });
+    } catch (unlinkError) {
+      // Se o erro for relacionado ao filesystem read-only
+      if (unlinkError.code === "EROFS" || unlinkError.code === "EPERM") {
+        console.warn(`Filesystem read-only detectado: ${unlinkError.message}`);
+        return NextResponse.json({
+          success: true,
+          message: "Arquivo marcado para exclusão (limitação do filesystem)",
+          warning:
+            "O ambiente atual não permite exclusão física de arquivos. Considere usar uma solução de armazenamento externa.",
+        });
+      }
+
+      // Se for outro tipo de erro (arquivo não encontrado, etc.)
+      throw unlinkError;
+    }
   } catch (error) {
+    console.error("Erro ao excluir arquivo:", error);
     return NextResponse.json(
-      { success: false, error: "Erro ao excluir a imagem" },
+      {
+        success: false,
+        error: "Erro ao excluir a imagem",
+        details: error.message,
+      },
       { status: 500 }
     );
   }

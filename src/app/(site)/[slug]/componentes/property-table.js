@@ -49,12 +49,11 @@ export function PropertyTable({ imoveisRelacionados, isLoading }) {
                   <h2 className="text-black font-semibold text-[10px]">{imovel.Categoria}</h2>
                 </td>
                 <td className="p-3 font-semibold text-[9px]">
-                  R${" "}
                   {imovel.ValorAntigo !== "0"
-                    ? imovel.ValorAntigo
+                    ? "R$ " + imovel.ValorAntigo
                     : formatterValue(imovel.ValorAluguelSite)}
                 </td>
-                <td className="p-3">{imovel.MetragemAnt} m² </td>
+                <td className="p-3">{imovel.MetragemAnt || imovel.AreaPrivativa} m² </td>
                 <td className="p-3">{imovel.DormitoriosAntigo}</td>
                 <td className="p-3">{imovel.SuiteAntigo}</td>
                 <td className="p-3">{imovel.VagasAntigo}</td>
