@@ -23,9 +23,8 @@ export async function GET(request) {
   try {
     await connectToDatabase();
 
-    const filtro = {
-      $or: [{ ValorAntigo: { $nin: ["0", ""] } }, { ValorAluguelSite: { $nin: ["0", ""] } }],
-    };
+    // Removido filtro de valores - buscar todos os imóveis
+    const filtro = {};
 
     if (categoria) filtro.Categoria = categoria;
     if (cidade) filtro.Cidade = cidade;

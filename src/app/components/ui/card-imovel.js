@@ -181,7 +181,9 @@ export default function CardImovel({
           </h3>
         ) : (
           <h3 className="text-sm font-bold text-black mb-3 pt-2 truncate">
-            {ValorAntigo ? "R$ " + formatterMoney(ValorAntigo) : "Consultar Disponibilidade"}
+            {ValorAntigo !== "0"
+              ? "R$ " + formatterMoney(ValorAntigo)
+              : "Consultar Disponibilidade"}
           </h3>
         )}
 

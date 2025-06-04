@@ -25,14 +25,12 @@ export async function GET(request) {
 
     await connectToDatabase();
 
-    // Filtro para imóveis com ValorAntigo diferente de "0" e ""
-    const filtro = {
-      ValorAntigo: { $exists: true, $nin: ["0", ""] },
-    };
+    // Removido filtro de ValorAntigo - buscar todos os imóveis
+    const filtro = {};
 
     // Pipeline de agregação para garantir códigos únicos
     const imoveisAgregados = await Imovel.aggregate([
-      // Filtrar conforme os critérios iniciais
+      // Filtrar conforme os critérios iniciais (agora sem filtro de valor)
       { $match: filtro },
       // Agrupar por Codigo e manter apenas o documento mais recente
       {
