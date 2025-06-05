@@ -1,5 +1,26 @@
 {
   "redirects": [
+
+    {
+      "source": "/acapulco-guaruja-condominio",
+      "destination": "/condominio-jardim-acapulco",
+      "permanent": true
+    },
+    {
+      "source": "/casa-a-venda-condominio-acapulco",
+      "destination": "/condominio-jardim-acapulco",
+      "permanent": true
+    },
+    {
+      "source": "/casa-a-venda-jardim-acapulco-guaruja",
+      "destination": "/condominio-jardim-acapulco",
+      "permanent": true
+    },    
+    {
+      "source": "/residencial-acapulco-guaruja",
+      "destination": "/condominio-jardim-acapulco",
+      "permanent": true
+    },    
     {
       "source": "/imovel-107104/only-cidade-jardim-duqueza-de-goias-825",
       "destination": "/imovel-107104/apartamento-venda-cidade-jardim",
