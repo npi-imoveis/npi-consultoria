@@ -21,17 +21,13 @@ export async function GET(request) {
 
     const imovelReferencia = await Imovel.findOne({
       Codigo: id,
-      ValorAntigo: {
-        $nin: ["", null],
-        $exists: true,
-      },
     });
 
     if (!imovelReferencia) {
       return NextResponse.json(
         {
           status: 204,
-          error: "Imóvel de referência não encontrado ou sem valor antigo válido",
+          error: "Imóvel de referência não encontrado",
         },
         { status: 204 }
       );
@@ -52,11 +48,6 @@ export async function GET(request) {
     const imoveisMesmoEndereco = await Imovel.find({
       Endereco: imovelReferencia.Endereco,
       Numero: imovelReferencia.Numero,
-      $and: [
-        { ValorAntigo: { $exists: true } },
-        { ValorAntigo: { $ne: "" } },
-        { ValorAntigo: { $ne: null } },
-      ],
     });
 
     // Verificar se encontrou algum imóvel
@@ -64,7 +55,7 @@ export async function GET(request) {
       return NextResponse.json(
         {
           status: 404,
-          error: "Não foram encontrados imóveis no mesmo endereço com valor antigo válido",
+          error: "Não foram encontrados imóveis no mesmo endereço",
         },
         { status: 404 }
       );

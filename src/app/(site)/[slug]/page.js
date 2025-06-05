@@ -65,6 +65,10 @@ export default async function CondominioPage({ params }) {
   const condominio = response.data;
   const imoveisRelacionados = response.imoveisRelacionados;
 
+  console.log("Condominio", response);
+
+  console.log("Imoveis relacionados", imoveisRelacionados);
+
   const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`;
 
   function isValidValue(value) {

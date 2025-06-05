@@ -1,6 +1,5 @@
 import { connectToDatabase } from "@/app/lib/mongodb";
 import Imovel from "@/app/models/Imovel";
-import ImovelAtivo from "@/app/models/ImovelAtivo";
 import { NextResponse } from "next/server";
 
 export async function GET(request) {
@@ -32,18 +31,38 @@ export async function GET(request) {
       );
     }
 
-    const imoveisRelacionados = await ImovelAtivo.find({
+    // Verificar se o imóvel possui endereço e número definidos
+    if (!imovelReferencia.Endereco || !imovelReferencia.Numero) {
+      return NextResponse.json(
+        {
+          status: 400,
+          error: "O imóvel de referência não possui endereço ou número definidos",
+        },
+        { status: 400 }
+      );
+    }
+
+    // Buscar todos os imóveis com o mesmo endereço e número
+    const imoveisRelacionados = await Imovel.find({
       Endereco: imovelReferencia.Endereco,
       Numero: imovelReferencia.Numero,
-      _id: { $ne: imovelReferencia._id }, // Excluir o imóvel de referência
     }).sort({ Codigo: 1 });
 
-    const todosImoveis = [imovelReferencia, ...imoveisRelacionados];
+    // Verificar se encontrou algum imóvel
+    if (!imoveisRelacionados || imoveisRelacionados.length === 0) {
+      return NextResponse.json(
+        {
+          status: 404,
+          error: "Não foram encontrados imóveis no mesmo endereço",
+        },
+        { status: 404 }
+      );
+    }
 
     return NextResponse.json({
       status: 200,
       data: imovelReferencia,
-      imoveisRelacionados: todosImoveis,
+      imoveisRelacionados: imoveisRelacionados,
     });
   } catch (error) {
     console.error("Erro ao buscar imóvel por slug:", error);
