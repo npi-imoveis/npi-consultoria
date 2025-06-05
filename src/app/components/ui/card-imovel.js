@@ -54,6 +54,7 @@ export default function CardImovel({
   descricao,
   Empreendimento,
   BanheiroSocialQtd,
+  VagasAntigo,
   Vagas,
   Codigo,
   Foto,
@@ -63,6 +64,7 @@ export default function CardImovel({
   ValorAntigo,
   ValorAluguelSite,
   Numero,
+  DormitoriosAntigo,
   Dormitorios,
   Suites,
   AreaPrivativa,
@@ -195,13 +197,13 @@ export default function CardImovel({
           <li className="flex items-center space-x-2 overflow-hidden">
             <Bed className="w-4 h-4 md:w-5 md:h-5 text-gray-500 flex-shrink-0" />
             <span className="truncate">
-              {Dormitorios || 0} Dormitórios / {Suites || 0} Suítes
+              {DormitoriosAntigo || Dormitorios} Dormitórios / {Suites || 0} Suítes
             </span>
           </li>
 
           <li className="flex items-center space-x-2 overflow-hidden">
             <CarIcon className="w-4 h-4 md:w-5 md:h-5 text-gray-500 flex-shrink-0" />
-            <span className="truncate">{Vagas} Vagas</span>
+            <span className="truncate">{VagasAntigo || Vagas} Vagas</span>
           </li>
           <li className="flex items-center space-x-2 overflow-hidden border-t border-gray-200 pt-2">
             <BuildingOffice2Icon className="w-4 h-4 md:w-5 md:h-5 text-gray-500 flex-shrink-0" />
