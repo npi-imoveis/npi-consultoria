@@ -2,6 +2,11 @@
   "redirects": [
 
     {
+      "source": "/one-sixty-cyrela-by-yoo",
+      "destination": "/one-sixty-vila-olimpia",
+      "permanent": true
+    },
+    {
       "source": "/imovel-108005/residencial-acapulco-guaruja",
       "destination": "/imovel-108005/condominio-jardim-acapulco",
       "permanent": true
