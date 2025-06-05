@@ -509,3 +509,33 @@ export async function updateProprietario(id, dadosProprietario) {
     };
   }
 }
+
+export async function adicionarProprietario(id, dadosProprietario) {
+  try {
+    const response = await axiosClient.post(`/admin/proprietario?id=${id}`, dadosProprietario, {
+      timeout: 25000,
+    });
+
+    return {
+      success: response.data?.status === 201,
+      message: response.data?.message || "Proprietário criado com sucesso",
+      data: response.data?.data || null,
+    };
+  } catch (error) {
+    console.error(`Serviço: Erro ao criar proprietário ${id}:`, error);
+
+    if (error.code === "ERR_NETWORK") {
+      return {
+        success: false,
+        message: "Erro de conexão com o servidor. Tente novamente mais tarde.",
+        error: "Erro de conexão",
+      };
+    }
+
+    return {
+      success: false,
+      message: error.response?.data?.message || "Erro ao criar proprietário",
+      error: error.response?.data?.error || "Erro desconhecido",
+    };
+  }
+}

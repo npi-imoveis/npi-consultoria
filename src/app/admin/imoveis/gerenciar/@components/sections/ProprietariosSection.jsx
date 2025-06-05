@@ -1,4 +1,4 @@
-import { getProprietario, updateProprietario } from "@/app/admin/services";
+import { getProprietario, updateProprietario, adicionarProprietario } from "@/app/admin/services";
 import { useEffect, useState, useMemo } from "react";
 
 // Componente de campo de formulário reutilizável
@@ -96,12 +96,29 @@ export default function ProprietariosSection({ id }) {
   const [abaAtiva, setAbaAtiva] = useState(0);
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState(null);
+  const [proprietarioExistente, setProprietarioExistente] = useState(false);
 
   useEffect(() => {
     const fetchProprietarios = async () => {
       const response = await getProprietario(id);
-      if (response && response.data) {
-        setProprietarios(response.data);
+      if (response && response.success && response.data) {
+        // Verificar se os dados retornados não são apenas um objeto vazio ou null
+        const dadosValidos =
+          response.data &&
+          typeof response.data === "object" &&
+          Object.keys(response.data).length > 0 &&
+          Object.values(response.data).some(
+            (valor) => valor !== null && valor !== undefined && valor.toString().trim() !== ""
+          );
+
+        if (dadosValidos) {
+          setProprietarios(response.data);
+          setProprietarioExistente(true);
+        } else {
+          setProprietarioExistente(false);
+        }
+      } else {
+        setProprietarioExistente(false);
       }
     };
     fetchProprietarios();
@@ -125,23 +142,39 @@ export default function ProprietariosSection({ id }) {
     setProprietarios((prev) => ({ ...prev, [key]: value }));
   };
 
+  // Função para verificar se há dados válidos nos proprietários
+  const temDadosValidos = useMemo(() => {
+    return Object.values(proprietarios).some((valor) => valor && valor.toString().trim() !== "");
+  }, [proprietarios]);
+
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
     setLoading(true);
     setFeedback(null);
     try {
-      const result = await updateProprietario(id, proprietarios);
-      setFeedback({
-        type: "success",
-        message: result.success
-          ? result.message || "Dados atualizados com sucesso!"
-          : result.message || "Erro ao atualizar dados.",
-      });
-      if (!result.success) {
-        setFeedback({ type: "error", message: result.message || "Erro ao atualizar dados." });
+      let result;
+
+      // Decidir entre POST (criar) ou PUT (atualizar)
+      // Criar novo se: não existe proprietário OU existe mas os dados atuais são diferentes/novos
+      if (!proprietarioExistente) {
+        // Definitivamente criar novo proprietário
+        result = await adicionarProprietario(id, proprietarios);
+        if (result.success) {
+          setProprietarioExistente(true); // Agora existe
+        }
+      } else {
+        // Atualizar proprietário existente
+        result = await updateProprietario(id, proprietarios);
       }
+
+      setFeedback({
+        type: result.success ? "success" : "error",
+        message:
+          result.message ||
+          (result.success ? "Dados salvos com sucesso!" : "Erro ao salvar dados."),
+      });
     } catch (err) {
-      setFeedback({ type: "error", message: "Erro inesperado ao atualizar dados." });
+      setFeedback({ type: "error", message: "Erro inesperado ao salvar dados." });
     } finally {
       setLoading(false);
     }
@@ -168,7 +201,16 @@ export default function ProprietariosSection({ id }) {
       <Feedback feedback={feedback} />
 
       <div className="mb-6 border-b pb-4">
-        <h2 className="font-bold mb-2">Proprietário {abaAtiva + 1}</h2>
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="font-bold">Proprietário {abaAtiva + 1}</h2>
+          <span
+            className={`text-xs px-2 py-1 rounded ${
+              proprietarioExistente ? "bg-green-100 text-green-800" : "bg-blue-100 text-blue-800"
+            }`}
+          >
+            {proprietarioExistente ? "Existente" : "Novo"}
+          </span>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {CAMPOS_PROPRIETARIO.map(({ name, label, type, rows }) => (
             <FormField
