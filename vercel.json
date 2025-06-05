@@ -2,8 +2,18 @@
   "redirects": [
 
     {
+      "source": "/imovel-4919/one-sixty-vila-olimpia",
+      "destination": "/imovel-4919/one-sixty",
+      "permanent": true
+    },
+    {
+      "source": "/one-sixty-vila-olimpia",
+      "destination": "/one-sixty",
+      "permanent": true
+    },
+    {
       "source": "/one-sixty-cyrela-by-yoo",
-      "destination": "/one-sixty-vila-olimpia",
+      "destination": "/one-sixty",
       "permanent": true
     },
     {
