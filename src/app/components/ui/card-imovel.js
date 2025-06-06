@@ -124,6 +124,10 @@ export default function CardImovel({
   const urlFoto = fotoDestacada && fotoDestacada.Foto;
 
   const formatterMoney = (value) => {
+    // Verificar se o valor existe e é uma string
+    if (!value || typeof value !== "string") {
+      return "";
+    }
     return value.replace(/,\d{2}$/, "");
   };
 
