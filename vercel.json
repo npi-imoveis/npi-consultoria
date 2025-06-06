@@ -1,6 +1,12 @@
 {
   "redirects": [
 
+
+     {
+      "source": "/imovel-107082/grand-habitarte",
+      "destination": "/imovel-107082/grand-habitarte-venda",
+      "permanent": true
+    },
     {
       "source": "/grand-habitarte-brooklin",
       "destination": "/grand-habitarte",
