@@ -2,6 +2,11 @@
   "redirects": [
 
     {
+      "source": "/habitarte-2-brooklin",
+      "destination": "/habitarte-2",
+      "permanent": true
+    },
+    {
       "source": "/imovel-4919/one-sixty-vila-olimpia",
       "destination": "/imovel-4919/one-sixty",
       "permanent": true
