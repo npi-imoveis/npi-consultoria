@@ -13,22 +13,52 @@ import Contato from "./componentes/Contato";
 import { SimilarProperties } from "./componentes/similar-properties";
 import { getImovelById } from "@/app/services";
 import { WhatsappFloat } from "@/app/components/ui/whatsapp";
-import { Apartment as StructuredDataApartment } from "@/app/components/structured-data";
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 import { notFound } from "next/navigation";
 
 export async function generateMetadata({ params }) {
   const { id } = params;
-  // const response = await getCondominioPorSlug(slug);
   const response = await getImovelById(id);
-  // Acessando cookies no server component
-
   const condominio = response?.data;
+
+  if (!condominio) {
+    return {};
+  }
 
   const destaqueFotoObj = condominio.Foto?.find((f) => f.Destaque === "Sim");
   const destaqueFotoUrl = destaqueFotoObj?.Foto;
 
   const description = `${condominio.Empreendimento} em ${condominio.BairroComercial}, ${condominio.Cidade}. ${condominio.Categoria} com ${condominio.MetragemAnt}, ${condominio.DormitoriosAntigo} quartos, ${condominio.VagasAntigo} vagas. ${condominio.Situacao}.`;
+
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Apartment",
+    name: condominio.Empreendimento,
+    description,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: `${condominio.TipoEndereco} ${condominio.Endereco}, ${condominio.Numero}`,
+      addressLocality: condominio.BairroComercial,
+      addressRegion: condominio.Cidade,
+      addressCountry: "BR",
+    },
+    numberOfRooms: condominio.DormitoriosAntigo,
+    numberOfBathroomsTotal: condominio.BanheiroSocialQtd,
+    numberOfFullBathrooms: condominio.Suites,
+    floorSize: {
+      "@type": "QuantitativeValue",
+      value: condominio.MetragemAnt,
+      unitCode: "MTK",
+    },
+    offers: {
+      "@type": "Offer",
+      price: condominio.ValorAntigo || "Consulte",
+      priceCurrency: "BRL",
+      availability: "https://schema.org/InStock",
+    },
+    url: `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${condominio.Codigo}/${condominio.Slug}`,
+    image: condominio.Foto?.map((foto) => foto.Foto) || [],
+  };
 
   return {
     title: `${condominio.Empreendimento}, ${condominio.TipoEndereco} ${condominio.Endereco}, ${condominio.Numero}, ${condominio.BairroComercial}`,
@@ -50,16 +80,15 @@ export async function generateMetadata({ params }) {
       site: "@NPIImoveis",
       images: destaqueFotoUrl ? [destaqueFotoUrl] : [],
     },
+    other: {
+      "structured-data": `<script type="application/ld+json">${JSON.stringify(jsonLd)}</script>`,
+    },
   };
 }
 
 export default async function Imovel({ params }) {
-  const { id, slug } = params;
-  // const response = await getCondominioPorSlug(slug);
+  const { id } = params;
   const response = await getImovelById(id);
-  // Acessando cookies no server component
-
-  // const response = await getCondominioPorSlug(slug);
 
   if (!response?.data) {
     notFound();
@@ -70,22 +99,6 @@ export default async function Imovel({ params }) {
 
   return (
     <section className="w-full bg-white pb-32 pt-20">
-      <StructuredDataApartment
-        title={imovel.Empreendimento}
-        price={imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}
-        description={`${imovel.Categoria} à venda em ${imovel.BairroComercial}, ${imovel.Cidade}. ${
-          imovel.Empreendimento
-        }: ${imovel.DormitoriosAntigo} quartos, ${imovel.Suites} suítes, ${
-          imovel.BanheiroSocialQtd
-        } banheiros, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt}. ${
-          imovel.Situacao
-        }. Valor: ${imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}. ${
-          imovel.TipoEndereco
-        } ${imovel.Endereco}.`}
-        address={`${imovel.TipoEndereco} ${imovel.Endereco}, ${imovel.Numero}, ${imovel.BairroComercial}, ${imovel.Cidade}`}
-        url={currentUrl}
-        image={imovel.Foto}
-      />
       <ExitIntentModal condominio={imovel.Empreendimento} link={currentUrl} />
 
       <div className="w-full mx-auto">
@@ -103,7 +116,9 @@ export default async function Imovel({ params }) {
           {imovel.Video && Object.keys(imovel.Video).length > 0 && (
             <VideoCondominio imovel={imovel} />
           )}
-          {imovel.Tour360 && <TourVirtual link={imovel.Tour360} titulo={imovel.Empreendimento} />}
+          {imovel.Tour360 && (
+            <TourVirtual link={imovel.Tour360} titulo={imovel.Empreendimento} />
+          )}
           <SimilarProperties id={imovel.Codigo} />
           <LocalizacaoCondominio imovel={imovel} />
         </div>
@@ -116,8 +131,9 @@ export default async function Imovel({ params }) {
       <div className="container mx-auto px-4 md:px-0">
         <FAQImovel imovel={imovel} />
       </div>
+
       <WhatsappFloat
-        message={`Quero saber mais sobre o ${imovel.Empreendimento}, no bairro ${imovel.BairroComercial}, disponivel na pagina do Imóvel: ${currentUrl}`}
+        message={`Quero saber mais sobre o ${imovel.Empreendimento}, no bairro ${imovel.BairroComercial}, disponível na página do Imóvel: ${currentUrl}`}
       />
     </section>
   );
