@@ -2,6 +2,36 @@
   "redirects": [
 
     {
+      "source": "/imovel-106923/maison-madeleine-apartamento-vila-nova-5-suites",
+      "destination": "/imovel-106923/edificio-maison-madeleine",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-106531/condominio-adriatico-jardim-paulista",
+      "destination": "/imovel-106531/alameda-jau-1188",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-106872/condominio-doral-cerqueira-cesar",
+      "destination": "/imovel-106983/rua-haddock-lobo-1459",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-106983/edificio-altana",
+      "destination": "/imovel-106983/altana-vila-nova-conceicao",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-9419/carinas-156-moema",
+      "destination": "/imovel-9419/tempus-moema",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-106897/condominio-triumph-life-itaim-bibi",
+      "destination": "/imovel-106897/rua-bandeira-paulista-65",
+      "permanent": true
+    },
+    {
       "source": "/imovel-4319/",
       "destination": "/imovel-4319/rsvp-chacara-santo-antonio",
       "permanent": true
