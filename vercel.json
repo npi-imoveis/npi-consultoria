@@ -2,6 +2,56 @@
   "redirects": [
 
     {
+      "source": "/imovel-107383/reserva-granja-julieta-cobertura",
+      "destination": "/imovel-107383/rua-verbo-divino-1061",
+      "permanent": true
+    },
+     {
+      "source": "/imovel-106331/edificio-simone",
+      "destination": "/imovel-1116/rua-pedroso-alvarenga-401",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-1116/imovel-1116/domani-parque",
+      "destination": "/imovel-1116/domani-parque-ii-moema",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-1116/domani-parque-iii-moema",
+      "destination": "/imovel-1116/domani-parque-ii-moema",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-106302/condominio-residencial-pauliceia",
+      "destination": "/imovel-106302/condominio-residencial-pauliceia-cobertura",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-073/personale",
+      "destination": "/imovel-073/personale-campo-belo-cobertura",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-107036/condominio-west-village-brooklin",
+      "destination": "/imovel-107036/rua-luisiania-204",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-106688/details",
+      "destination": "/imovel-106688/details-moema-rua-araguari-409",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-106642/condominio-benedito-pinheiros",
+      "destination": "/imovel-106642/edificio-benedito-pinheiros",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-106850/grand-panamby-185-m²-2-suites",
+      "destination": "/imovel-106850/grand-panamby-venda",
+      "permanent": true
+    },
+    {
       "source": "/imovel-106896/condominio-piazza-san-marco-pinheiros",
       "destination": "/imovel-106896/edificio-piazza-san-marco",
       "permanent": true
