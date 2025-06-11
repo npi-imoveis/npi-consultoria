@@ -2,6 +2,31 @@
   "redirects": [
 
     {
+      "source": "/imovel-069/entretons",
+      "destination": "/imovel-069/entretons-campo-belo",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-106821/condominio-edificio-aquarelle-261-m",
+      "destination": "/imovel-106821/aquarelle-residencial",
+      "permanent": true
+    },
+    {
+      "source": "/condominio-rsvp-chacara-santo-antonio-250-m²",
+      "destination": "/apartamento-rsvp-chacara-santo-antonio",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-106720/rua-bandeira-paulista-272-itaim-bibi-sao-paulo-sp",
+      "destination": "/imovel-106720/rua-bandeira-paulista-272",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-106865/platinum-morumbi-220-00-m",
+      "destination": "/imovel-106865/apartamento-platinum-morumbi",
+      "permanent": true
+    },
+    {
       "source": "/imovel-3050/cyrela-essenza-moema",
       "destination": "/imovel-3050/edificio-bandeira-tower",
       "permanent": true
