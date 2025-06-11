@@ -3,7 +3,7 @@
 
     {
       "source": "/?ref=xranks",
-      "destination": "",
+      "destination": "/",
       "permanent": true
     },
     {
