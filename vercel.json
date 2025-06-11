@@ -1,7 +1,11 @@
 {
   "redirects": [
 
-
+    {
+      "source": "/cobertura-arbo-brooklin",
+      "destination": "/arbo-brooklin-casas-verticais",
+      "permanent": true
+    },
      {
       "source": "/imovel-107082/grand-habitarte",
       "destination": "/imovel-107082/grand-habitarte-venda",
