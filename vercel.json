@@ -2,6 +2,11 @@
   "redirects": [
 
     {
+      "source": "/?ref=xranks",
+      "destination": "",
+      "permanent": true
+    },
+    {
       "source": "/imovel-1986/essenza-moema-moema",
       "destination": "/imovel-1986/cyrela-essenza-moema",
       "permanent": true
