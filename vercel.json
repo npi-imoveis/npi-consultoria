@@ -2,6 +2,46 @@
   "redirects": [
 
     {
+      "source": "/imovel-068/grand-art-campo-belo",
+      "destination": "/imovel-068/grand-art-brooklin",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-4895/quadrilatero-vila-olimpia",
+      "destination": "/imovel-4895/quadrilatero-itaim",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-980/vogue",
+      "destination": "/imovel-980/vogue-moema",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-154/euro-ville-place-saint-germain-alto-da-boa-vista",
+      "destination": "/imovel-154/euro-ville-place-saint-germain",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-106717/condominio-mira",
+      "destination": "/imovel-106717/condominio-mira-bela-vista",
+      "permanent": true
+    },
+     {
+      "source": "/imovel-1749/cena-golf-club-residence-cobertura",
+      "destination": "/imovel-1749/cobertura-cena-golf-club-residence",
+      "permanent": true
+    }, 
+    {
+      "source": "/imovel-5277/haute-vila-mariana-rua-coronel-lisboa-600",
+      "destination": "/imovel-5277/haute-ibirapuera",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-5125/rio-sado-moema--irai-885",
+      "destination": "/imovel-5125/rio-sado-moema-irai-885",
+      "permanent": true
+    },
+    {
       "source": "/imovel-1841/habitarte-verde-brooklin",
       "destination": "/imovel-1841/habitarte-verde",
       "permanent": true
