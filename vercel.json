@@ -22,11 +22,6 @@
       "permanent": true
     },
     {
-      "source": "/?ref=xranks",
-      "destination": "/",
-      "permanent": true
-    },
-    {
       "source": "/imovel-2033/elizabeth-by-helbor-jardins",
       "destination": "/imovel-2033/elizabeth-by-helbor",
       "permanent": true
