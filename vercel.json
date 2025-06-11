@@ -1,7 +1,56 @@
 {
   "redirects": [
 
-    
+    {
+      "source": "/imovel-1986/essenza-moema-moema",
+      "destination": "/imovel-1986/cyrela-essenza-moema",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-1986/essenza-moema-moema",
+      "destination": "/imovel-1986/cyrela-essenza-moema",
+      "permanent": true
+    },
+    {
+      "source": "/?ref=xranks",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-106107/saffire-by-elie-saab-maison",
+      "destination": "/imovel-106107/saffire-ibirapuera-by-elie-saab",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-105948/moema-signature-by-you-inc",
+      "destination": "/imovel-105948/moema-signature-by-you",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-2033/elizabeth-jardins",
+      "destination": "/imovel-2033/elizabeth-by-helbor",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-2070/edificio-riverside-aluguel-rua-hungria",
+      "destination": "/imovel-2070/edificio-riverside-rua-hungria",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-5294/w-residences-sao-paulo-vila-olimpia",
+      "destination": "/imovel-5294/w-residences-sao-paulo",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-106044/casa-4-suites-alto-da-lapa-venda-e-locacao",
+      "destination": "/imovel-106044/venda-casa-alto-da-lapa",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-106002/arbitare-campo-belo",
+      "destination": "/imovel-106002/abitare-campo-belo",
+      "permanent": true
+    },
     {
       "source": "/imovel-106347/uirapuru-bela-cintra",
       "destination": "/imovel-106347/rua-bela-cintra-2060",
