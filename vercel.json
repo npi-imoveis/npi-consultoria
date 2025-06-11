@@ -2,6 +2,11 @@
   "redirects": [
 
     {
+      "source": "/imovel-1841/habitarte-verde-brooklin",
+      "destination": "/imovel-1841/habitarte-verde",
+      "permanent": true
+    },
+    {
       "source": "/imovel-106923/maison-madeleine-apartamento-vila-nova-5-suites",
       "destination": "/imovel-106923/edificio-maison-madeleine",
       "permanent": true
