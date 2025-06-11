@@ -2,6 +2,11 @@
   "redirects": [
 
     {
+      "source": "/imovel-106896/condominio-piazza-san-marco-pinheiros",
+      "destination": "/imovel-106896/edificio-piazza-san-marco",
+      "permanent": true
+    },
+    {
       "source": "/imovel-573/edificio-cenu-torre-norte",
       "destination": "/imovel-573/edificio-cenu",
       "permanent": true
@@ -17,8 +22,8 @@
       "permanent": true
     },
     {
-      "source": "/condominio-rsvp-chacara-santo-antonio-250-m²",
-      "destination": "/apartamento-rsvp-chacara-santo-antonio",
+      "source": "/imovel-107087/condominio-rsvp-chacara-santo-antonio-250-m²",
+      "destination": "/imovel-107087/apartamento-rsvp-chacara-santo-antonio",
       "permanent": true
     },
     {
