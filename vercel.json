@@ -1,11 +1,21 @@
 {
   "redirects": [
-
+      
     {
-      "source": "/?ref=xranks",
-      "destination": "/",
+      "source": "/imovel-107150/casa-na-rua-bastos-pereira",
+      "destination": "/imovel-107150/casa-a-venda-na-vila-nova-conceicao",
+      "permanent": true
+    },    
+    {
+      "source": "/imovel-1969/high",
+      "destination": "/imovel-1969/high-alto-da-lapa",
       "permanent": true
     },
+    {
+      "source": "/imovel-5204/cab-682-vila-clementino",
+      "destination": "/imovel-5204/trinity-vila-clementino",
+      "permanent": true
+    },    
     {
       "source": "/imovel-5204/cab-682-vila-clementino",
       "destination": "/imovel-5204/trinity-vila-clementino",
