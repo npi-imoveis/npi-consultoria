@@ -2,6 +2,11 @@
   "redirects": [
 
     {
+      "source": "/imovel-573/edificio-cenu-torre-norte",
+      "destination": "/imovel-573/edificio-cenu",
+      "permanent": true
+    },
+    {
       "source": "/imovel-069/entretons",
       "destination": "/imovel-069/entretons-campo-belo",
       "permanent": true
