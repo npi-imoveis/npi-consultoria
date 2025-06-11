@@ -2,8 +2,13 @@
   "redirects": [
 
     {
-      "source": "/imovel-452/atrium-residencial",
-      "destination": "/imovel-452/atrium-residencial-saude",
+      "source": "/?ref=xranks",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-5204/cab-682-vila-clementino",
+      "destination": "/imovel-5204/trinity-vila-clementino",
       "permanent": true
     },
     {
