@@ -2,6 +2,16 @@
   "redirects": [
 
     {
+      "source": "/imovel-4220/apartamento-4-quartos-vila-mariana-sao-paulo",
+      "destination": "/imovel-106850/high-parqu-aclimacao",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-106850/grand-panamby-185-m²-2-suites",
+      "destination": "/imovel-106850/grand-panamby-venda",
+      "permanent": true
+    },
+    {
       "source": "/rua-verbo-divino-1061",
       "destination": "/reserva-granja-julieta",
       "permanent": true
@@ -2975,12 +2985,7 @@
       "source": "/imovel-4180/new-parker-aclimacao",
       "destination": "/imovel-4180/edificio-olimpic-tower",
       "permanent": true
-    },
-    {
-      "source": "/imovel-106850/grand-panamby-185-m²-2-suites",
-      "destination": "/imovel-106850/grand-panamby-venda",
-      "permanent": true
-    },
+    },    
     {
       "source": "/imovel-106095/edge-itaim",
       "destination": "/imovel-106095/edge-itaim-preco",
