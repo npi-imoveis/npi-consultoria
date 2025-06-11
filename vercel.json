@@ -1,9 +1,50 @@
 {
   "redirects": [
 
+    
     {
-      "source": "/cobertura-arbo-brooklin",
-      "destination": "/arbo-brooklin-casas-verticais",
+      "source": "/imovel-106347/uirapuru-bela-cintra",
+      "destination": "/imovel-106347/rua-bela-cintra-2060",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-5199/b-long-ibirapuera-avenida-agami-330",
+      "destination": "/imovel-5199/b-long-ibirapuera",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-5292/agia-faria-lima-r-chipre-70",
+      "destination": "/imovel-5292/agia-faria-lima",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-5294/w-residences-sao-paulo-hotel-funchal-65",
+      "destination": "/imovel-5294/w-residences-sao-paulo",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-106095/the-edge-itaim",
+      "destination": "/imovel-106095/edge-itaim-preco",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-107092/apartamento-na-barao-do-triunfo",
+      "destination": "/imovel-107092/gio-tegra-campo-belo",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-5292/agia-faria-lima-itaim",
+      "destination": "/imovel-5292/agia-faria-lima",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-4919/cosmopolitan-santa-cecilia",
+      "destination": "/imovel-4919/one-sixty",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-1338/condominio-edificio-106-serido",
+      "destination": "/imovel-1338/106-serido",
       "permanent": true
     },
      {
