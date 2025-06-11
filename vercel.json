@@ -2,6 +2,11 @@
   "redirects": [
 
     {
+      "source": "/rua-verbo-divino-1061",
+      "destination": "/reserva-granja-julieta",
+      "permanent": true
+    },
+    {
       "source": "/imovel-1116/domani-parque-iii-moema",
       "destination": "/imovel-1116/domani-parque-ii-moema",
       "permanent": true
