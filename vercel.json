@@ -10,12 +10,7 @@
       "source": "/imovel-1986/essenza-moema-moema",
       "destination": "/imovel-1986/cyrela-essenza-moema",
       "permanent": true
-    },
-    {
-      "source": "/?ref=xranks",
-      "destination": "/",
-      "permanent": true
-    },
+    },    
     {
       "source": "/imovel-106107/saffire-by-elie-saab-maison",
       "destination": "/imovel-106107/saffire-ibirapuera-by-elie-saab",
