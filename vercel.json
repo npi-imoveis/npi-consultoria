@@ -2,6 +2,41 @@
   "redirects": [
 
     {
+      "source": "/imovel-452/atrium-residencial",
+      "destination": "/imovel-452/atrium-residencial-saude",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-452/atrium-residencial",
+      "destination": "/imovel-452/atrium-residencial-saude",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-107370/edificio-indaiatuba",
+      "destination": "/imovel-107370/rua-visconde-de-ouro-preto-147",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-1840/the-square-granja-julieta",
+      "destination": "/imovel-1840/villa-lobos-office-park-laje-comercial",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-3011/capital-center-vila-olimpia",
+      "destination": "/imovel-3011/edificio-capital-center",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-974/condominio-vila-nova-leopoldina-ii",
+      "destination": "/imovel-974/vila-nova-leopoldina-ii",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-1271/novamerica-michigan-residence-park",
+      "destination": "/imovel-1271/novamerica-michigan",
+      "permanent": true
+    },
+    {
       "source": "/imovel-068/grand-art-campo-belo",
       "destination": "/imovel-068/grand-art-brooklin",
       "permanent": true
