@@ -15,7 +15,7 @@ import { getImovelById } from "@/app/services";
 import { WhatsappFloat } from "@/app/components/ui/whatsapp";
 import { Apartment as StructuredDataApartment } from "@/app/components/structured-data";
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 export async function generateMetadata({ params }) {
   const { id } = params;
@@ -66,6 +66,13 @@ export default async function Imovel({ params }) {
   }
 
   const imovel = response.data;
+
+  const slugCorreto = imovel.Slug;
+
+  if (slug !== slugCorreto) {
+    redirect(`/imovel-${id}/${slugCorreto}`);
+  }
+
   const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
 
   return (
