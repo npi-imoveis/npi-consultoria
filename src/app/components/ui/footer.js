@@ -40,9 +40,9 @@ export function Footer() {
               className="flex items-center space-x-2 text-sm group hover:underline transition-colors py-2"
             >
               <PhoneIcon className="w-5 h-5" aria-hidden="true" />
-              <span className="group-hover:underline">(11) 2614-4414</span>
-              <p className="text-sm">Whatsapp: (11) 96915-2222</p>
+              <span className="group-hover:underline">(11) 2614-4414</span>              
             </a>
+              <p className="text-sm">Whatsapp: (11) 96915-2222</p>  
           </div>
 
           <div>
