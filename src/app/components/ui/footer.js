@@ -41,7 +41,7 @@ export function Footer() {
             >
               <PhoneIcon className="w-5 h-5" aria-hidden="true" />
               <span className="group-hover:underline">(11) 2614-4414</span>
-              <span className="group-hover:underline">(11) 96915-2222 (Whatsapp)</span>
+              <p className="text-sm">Whatsapp: (11) 96915-2222</p>
             </a>
           </div>
 
