@@ -1,7 +1,12 @@
 {
   "redirects": [
-
-        {
+    
+    {
+      "source": "/j-h-s-f-fasano-residences-cidade-jardim",
+      "destination": "/fasano-cidade-jardim",
+      "permanent": true
+    },
+    {
       "source": "/rua-sebastiao-cardoso-168",
       "destination": "/condominio-santorini-residencial-club",
       "permanent": true
