@@ -1,6 +1,21 @@
 {
   "redirects": [
-      
+
+        {
+      "source": "/rua-sebastiao-cardoso-168",
+      "destination": "/condominio-santorini-residencial-club",
+      "permanent": true
+    },
+    {
+      "source": "/imovel-108125/residencial-santorini-club",
+      "destination": "/imovel-108033/condominio-santorini-residencial-club",
+      "permanent": true
+    },
+    {
+      "source": "/condominio-residencial-santorini",
+      "destination": "/condominio-santorini-residencial-club",
+      "permanent": true
+    },
     {
       "source": "/imovel-107150/casa-na-rua-bastos-pereira",
       "destination": "/imovel-107150/casa-a-venda-na-vila-nova-conceicao",
