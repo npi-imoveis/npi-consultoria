@@ -255,17 +255,7 @@
       "source": "/imovel-3050/cyrela-essenza-moema",
       "destination": "/imovel-3050/edificio-bandeira-tower",
       "permanent": true
-    },
-    {
-      "source": "/imovel-2070/edificio-riverside-rua-hungria-aluguel",
-      "destination": "/imovel-2070/edificio-riverside-rua-hungria",
-      "permanent": true
-    },
-    {
-      "source": "/imovel-2070/art-deco-moema",
-      "destination": "/imovel-2070/edificio-riverside-rua-hungria-aluguel",
-      "permanent": true
-    },
+    },    
     {
       "source": "/imovel-5278/artisan-moema-lavandisca-515",
       "destination": "/imovel-5278/artisan-moema",
