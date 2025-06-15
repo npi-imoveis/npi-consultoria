@@ -23,7 +23,7 @@ export async function SobreHub({ sobre }) {
             </h1>
             <p className="text-lg mt-4 leading-relaxed">
               {sobre?.descricao ||
-                "O HUB de Imobiliárias Boutique de Alto Padrão é um novo e exclusivo modelo de negócios no mercado imobiliário, focado em imóveis de luxo, criado pela NPi Imóveis. O HUB é uma rede colaborativa que reúne imobiliárias especialistas em determinadas regiões, oferecendo uma estratégia inovadora para a captação de clientes de high ticket qualificados e redução de custos com marketing para imobiliárias do HUB."}
+                "O HUB de Imobiliárias Boutique de Alto Padrão é um novo e exclusivo modelo de negócios no mercado imobiliário, criado pela NPi Imóveis, focado em dar visibilidade aos imóveis das imobiliárias pertencentes a esse ecossistema, através do posicionamento orgânico na maior vitrine do mundo: o Google. O HUB é uma rede que reúne imobiliárias especialistas em alto padrão, focadas em determinadas regiões, que se beneficiam de uma estratégia inovadora para divulgação dos seus imóveis e captação de clientes de high ticket qualificados, com uma alta redução de custos de marketing com portais e redes sociais."}
             </p>
           </div>
         </div>
