@@ -53,14 +53,10 @@ export async function GET(request) {
         let valorStr = String(valor);
         // Remove símbolos de moeda e espaços
         valorStr = valorStr.replace(/[R$\s]/g, "");
+        // Remove TODOS os pontos (separadores de milhares no formato brasileiro)
+        valorStr = valorStr.replace(/\./g, "");
         // Converte vírgula para ponto (para decimais)
         valorStr = valorStr.replace(",", ".");
-        // Remove pontos que não sejam o separador decimal (milhares)
-        const parts = valorStr.split(".");
-        if (parts.length > 2) {
-          // Se há mais de um ponto, os primeiros são separadores de milhares
-          valorStr = parts.slice(0, -1).join("") + "." + parts[parts.length - 1];
-        }
         return parseFloat(valorStr) || 0;
       } catch (error) {
         console.error(`Erro ao converter preço "${valor}":`, error);

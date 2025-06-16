@@ -728,10 +728,10 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible }) {
       vagas: vagasSelecionadas,
 
       // Preços (valores atuais, mesmo que não alterados)
-      precoMin: precoMinFinal !== null ? (precoMinFinal * 100).toString() : null,
-      precoMax: precoMaxFinal !== null ? (precoMaxFinal * 100).toString() : null,
-      precoMinimo: precoMinFinal !== null ? (precoMinFinal * 100).toString() : null,
-      precoMaximo: precoMaxFinal !== null ? (precoMaxFinal * 100).toString() : null,
+      precoMin: precoMinFinal !== null ? precoMinFinal.toString() : null,
+      precoMax: precoMaxFinal !== null ? precoMaxFinal.toString() : null,
+      precoMinimo: precoMinFinal !== null ? precoMinFinal.toString() : null,
+      precoMaximo: precoMaxFinal !== null ? precoMaxFinal.toString() : null,
 
       // Áreas (valores atuais, mesmo que não alterados)
       areaMin: areaMinFinal ? areaMinFinal.toString() : "0",
