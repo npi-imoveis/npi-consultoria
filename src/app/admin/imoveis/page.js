@@ -365,7 +365,7 @@ export default function AdminImoveis() {
                     scope="col"
                     className="px-6 py-3 text-left text-[10px] font-bold  uppercase tracking-wider"
                   >
-                    Valor
+                    Valor (ValorAntigo)
                   </th>
                   <th
                     scope="col"
@@ -414,7 +414,7 @@ export default function AdminImoveis() {
                         {imovel.Categoria || "-"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700">
-                        {formatarValor(imovel.ValorAntigo || imovel.ValorAluguelSite)}
+                        {imovel.ValorAntigo}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap sticky right-0 bg-white">
                         <div className="flex items-center space-x-3">
