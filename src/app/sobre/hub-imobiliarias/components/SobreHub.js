@@ -23,7 +23,7 @@ export async function SobreHub({ sobre }) {
             </h1>
             <p className="text-lg mt-4 leading-relaxed">
               {sobre?.descricao ||
-                "O HUB de Imobiliárias Boutique de Alto Padrão é um novo e exclusivo modelo de negócios no mercado imobiliário, idealizado por Eduardo Lima, fundador da NPi Imóveis, com mais de 20 anos de experiência no mercado imobiliário. Após anos dependendo de portais para gerar clientes para sua empresa, Eduardo Lima uniu sua bagagem de tecnologia à sua vivência no setor imobiliário para construir uma nova lógica: não estar dentro dos portais, mas sim onde os portais estão, ou seja, na Primeira Página do Google. Buscando especialização em SEO desde 2010, a NPi se tornou conhecida e referência em SEO no mercado imobiliário de alto padrão em São Paulo, com mais de 5.000 posições orgânicas e resultados consistentes sem depender de mídia paga. Hoje a NPi é focada em dar visibilidade aos imóveis das imobiliárias pertencentes a esse ecossistema, através do posicionamento orgânico na maior vitrine do mundo: o Google."}
+                "O HUB de Imobiliárias Boutique de Alto Padrão é um novo e exclusivo modelo de negócios no mercado imobiliário, idealizado por Eduardo Lima, fundador da NPi Imóveis, com mais de 20 anos de experiência no mercado imobiliário. Após anos dependendo de portais para gerar clientes para sua empresa, e insatisfeito com a qualidade dos clientes dos portais, Eduardo Lima uniu sua bagagem de tecnologia à sua vivência no setor imobiliário para construir uma nova lógica: não estar dentro dos portais, mas sim onde os portais estão, ou seja, na Primeira Página do Google. Buscando especialização em SEO desde 2010, a NPi se tornou conhecida e referência em SEO no mercado imobiliário de alto padrão em São Paulo, com mais de 5.000 posições orgânicas e resultados consistentes sem depender de mídia paga. Hoje a NPi é focada em dar visibilidade aos imóveis das imobiliárias pertencentes a esse ecossistema, através do posicionamento orgânico na maior vitrine do mundo: o Google."}
             </p>
           </div>
         </div>
@@ -32,7 +32,7 @@ export async function SobreHub({ sobre }) {
         <div className="xl:w-[80%] sm:w-[85%] w-[90%] mx-auto flex flex-col-reverse md:flex-row lg:gap-4 gap-6 justify-center lg:items-stretch md:items-center mt-8">
           <div className="md:w-[50%] w-full dark:bg-gray-900 dark:text-gray-400 md:p-6 p-4 rounded-md">
             <h1 className="text-2xl uppercase font-semibold text-gray-900 dark:text-white">
-              {sobre?.titulo1 || " O futuro do mercado imobiliário começa na Primeira Página do Google"}
+              {sobre?.titulo1 || "O futuro do mercado imobiliário começa na Primeira Página do Google"}
             </h1>
             <p className="text-lg mt-4 leading-relaxed">
               {sobre?.descricao1 ||
