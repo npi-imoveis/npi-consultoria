@@ -1,6 +1,11 @@
 {
   "redirects": [
-    
+
+    {
+      "source": "/empreendimento-praca-henrique-monteiro",
+      "destination": "/praca-henrique-monteiro",
+      "permanent": true
+    },
     {
       "source": "/j-h-s-f-fasano-residences-cidade-jardim",
       "destination": "/fasano-cidade-jardim",
@@ -1474,16 +1479,6 @@
     {
       "source": "/imovel-4522/sala-comercial-parque-da-cidade-locacao",
       "destination": "/imovel-4522/parque-da-cidade-taruma-venda-e-locacao",
-      "permanent": true
-    },
-    {
-      "source": "/imovel-5326/praca-henrique-monteiro",
-      "destination": "/imovel-5326/empreendimento-praca-henrique-monteiro",
-      "permanent": true
-    },
-    {
-      "source": "/imovel-5326/praca-henrique-monteiro/",
-      "destination": "/imovel-5326/empreendimento-praca-henrique-monteiro",
       "permanent": true
     },
     {
