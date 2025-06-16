@@ -414,9 +414,7 @@ export default function AdminImoveis() {
                         {imovel.Categoria || "-"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700">
-                        {formatarValor(
-                          imovel.ValorVenda || imovel.ValorAluguelSite || imovel.Valor
-                        )}
+                        {formatarValor(imovel.ValorAntigo || imovel.ValorAluguelSite)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap sticky right-0 bg-white">
                         <div className="flex items-center space-x-3">
