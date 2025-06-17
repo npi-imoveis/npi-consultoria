@@ -3,9 +3,9 @@
 
     {
       "source": "/medplex",
-      "destination": "/thera-ibirapuera-apartaments",
+      "destination": "/thera-ibirapuera-by-yoo",
       "permanent": true
-    },
+    },    
     {
       "source": "/residencial-montblanc",
       "destination": "/montblanc-tatuape",
