@@ -1,6 +1,12 @@
 {
   "redirects": [
 
+    residencial-montblanc
+    {
+      "source": "/residencial-montblanc",
+      "destination": "/montblanc-tatuape",
+      "permanent": true
+    },
     {
       "source": "/empreendimento-praca-henrique-monteiro",
       "destination": "/praca-henrique-monteiro",
