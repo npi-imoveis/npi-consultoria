@@ -2,7 +2,7 @@
   "redirects": [
 
     {
-      "source": "/medeplex",
+      "source": "/medplex",
       "destination": "/thera-ibirapuera-apartaments",
       "permanent": true
     },
