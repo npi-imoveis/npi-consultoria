@@ -2,6 +2,11 @@
   "redirects": [
 
     {
+      "source": "/medeplex",
+      "destination": "/thera-ibirapuera-apartaments",
+      "permanent": true
+    },
+    {
       "source": "/residencial-montblanc",
       "destination": "/montblanc-tatuape",
       "permanent": true
