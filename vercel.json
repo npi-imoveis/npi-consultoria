@@ -1,6 +1,16 @@
 {
   "redirects": [
-
+     
+    {
+      "source": "/residencial-platinum",
+      "destination": "/malaga-analia-franco",
+      "permanent": true
+    },    
+    {
+      "source": "/residencial-malaga",
+      "destination": "/malaga-analia-franco",
+      "permanent": true
+    }, 
     {
       "source": "/edificio-tiffany",
       "destination": "/tiffany-analia-franco",
