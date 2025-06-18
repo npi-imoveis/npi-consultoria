@@ -1,6 +1,12 @@
 {
   "redirects": [
 
+    imovel-522985/edificio-apogeo
+    {
+      "source": "/imovel-522985/edificio-apogeo",
+      "destination": "/apogeo-chacara-klabin",
+      "permanent": true
+    }, 
     {
       "source": "/condominio-campo-de-toscana-vinhedo-enderecobarao-de-iguatemi",
       "destination": "/residencial-campo-de-toscana-vinhedo",
