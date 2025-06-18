@@ -1,6 +1,11 @@
 {
   "redirects": [
-     
+
+    {
+      "source": "/barao-de-iguatemi",
+      "destination": "/edificio-barao-de-iguatemi",
+      "permanent": true
+    },  
     {
       "source": "/residencial-platinum",
       "destination": "/platinum-morumbi",
