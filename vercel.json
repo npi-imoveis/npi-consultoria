@@ -2,6 +2,11 @@
   "redirects": [
 
     {
+      "source": "/condominio-campo-de-toscana-vinhedo-enderecobarao-de-iguatemi",
+      "destination": "/residencial-campo-de-toscana-vinhedo",
+      "permanent": true
+    }, 
+    {
       "source": "/barao-de-iguatemi",
       "destination": "/edificio-barao-de-iguatemi",
       "permanent": true
