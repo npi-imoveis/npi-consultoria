@@ -1,9 +1,11 @@
 import Image from "next/image";
+import CountUp from "react-countup";
 
 export async function SobreHub({ sobre }) {
   return (
     <section className="w-full mx-auto py-10 bg-gray-50 dark:bg-gray-900 dark:text-white">
       <div className="container mx-auto h-full flex flex-col items-center md:py-4 py-10">
+
         {/* Seção 1 */}
         <div className="xl:w-[80%] sm:w-[85%] w-[90%] mx-auto flex flex-col md:flex-row lg:gap-4 gap-6 justify-center lg:items-stretch md:items-center mt-4">
           <div className="md:w-[50%] w-full relative h-64 md:h-auto">
@@ -54,6 +56,28 @@ Cada imobiliária dentro do nosso HUB é cuidadosamente selecionada para atuar e
               className="md:rounded-t-lg rounded-sm"
               unoptimized
             />
+          </div>
+        </div>
+
+        {/* Seção de Números com Contador */}
+        <div className="w-full mt-12 text-center grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div>
+            <h2 className="text-4xl font-bold text-blue-600">
+              <CountUp end={5000} duration={2.5} separator="." />
+            </h2>
+            <p className="text-sm mt-2">Imóveis Vendidos</p>
+          </div>
+          <div>
+            <h2 className="text-4xl font-bold text-blue-600">
+              <CountUp end={20} duration={2.5} />
+            </h2>
+            <p className="text-sm mt-2">Imobiliárias Parceiras</p>
+          </div>
+          <div>
+            <h2 className="text-4xl font-bold text-blue-600">
+              <CountUp end={100} duration={2.5} />
+            </h2>
+            <p className="text-sm mt-2">Clientes Satisfeitos</p>
           </div>
         </div>
       </div>
