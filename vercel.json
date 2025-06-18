@@ -2,6 +2,11 @@
   "redirects": [
 
     {
+      "source": "/edificio-tiffany",
+      "destination": "/tiffany-analia-franco",
+      "permanent": true
+    }, 
+    {
       "source": "/medplex",
       "destination": "/thera-ibirapuera-by-yoo",
       "permanent": true
