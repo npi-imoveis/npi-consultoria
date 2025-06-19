@@ -1,6 +1,11 @@
 {
   "redirects": [
-    
+
+    {
+      "source": "/residencial-jequitibas",
+      "destination": "/portal-do-jequitiba-valinhos",
+      "permanent": true
+    }, 
     {
       "source": "/imovel-522985/edificio-apogeo",
       "destination": "/apogeo-chacara-klabin",
