@@ -19,33 +19,34 @@ import { notFound, redirect } from "next/navigation";
 
 export async function generateMetadata({ params }) {
   const { id } = params;
-  // const response = await getCondominioPorSlug(slug);
   const response = await getImovelById(id);
-  // Acessando cookies no server component
+  const imovel = response?.data;
 
-  const condominio = response?.data;
+  if (!imovel) return {};
 
-  const destaqueFotoObj = condominio.Foto?.find((f) => f.Destaque === "Sim");
-  const destaqueFotoUrl = destaqueFotoObj?.Foto;
+  const destaqueFotoObj = imovel.Foto?.find((f) => f.Destaque === "Sim");
+  const destaqueFotoUrl = destaqueFotoObj?.Foto || imovel.Foto?.[0]?.Foto || "";
 
-  const description = `${condominio.Empreendimento} em ${condominio.BairroComercial}, ${condominio.Cidade}. ${condominio.Categoria} com ${condominio.MetragemAnt}, ${condominio.DormitoriosAntigo} quartos, ${condominio.VagasAntigo} vagas. ${condominio.Situacao}.`;
+  const title = ${imovel.Empreendimento}, ${imovel.TipoEndereco} ${imovel.Endereco}, ${imovel.Numero}, ${imovel.BairroComercial};
+  const description = ${imovel.Empreendimento} em ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.Categoria} com ${imovel.MetragemAnt}, ${imovel.DormitoriosAntigo} quartos, ${imovel.VagasAntigo} vagas. ${imovel.Situacao}.;
+  const canonicalUrl = ${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug};
 
   return {
-    title: `${condominio.Empreendimento}, ${condominio.TipoEndereco} ${condominio.Endereco}, ${condominio.Numero}, ${condominio.BairroComercial}`,
+    title,
     description,
     alternates: {
-      canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${condominio.Codigo}/${condominio.Slug}`,
+      canonical: canonicalUrl,
     },
     openGraph: {
-      title: `Condomínio ${condominio.Empreendimento}`,
+      title,
       description,
-      url: `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${condominio.Codigo}/${condominio.Slug}`,
+      url: canonicalUrl,
       images: destaqueFotoUrl ? [{ url: destaqueFotoUrl }] : [],
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
-      title: `Condomínio ${condominio.Empreendimento}`,
+      title,
       description,
       site: "@NPIImoveis",
       images: destaqueFotoUrl ? [destaqueFotoUrl] : [],
@@ -55,46 +56,31 @@ export async function generateMetadata({ params }) {
 
 export default async function Imovel({ params }) {
   const { id, slug } = params;
-  // const response = await getCondominioPorSlug(slug);
   const response = await getImovelById(id);
-  // Acessando cookies no server component
 
-  // const response = await getCondominioPorSlug(slug);
-
-  if (!response?.data) {
-    notFound();
-  }
+  if (!response?.data) notFound();
 
   const imovel = response.data;
-
   const slugCorreto = imovel.Slug;
 
   if (slug !== slugCorreto) {
-    redirect(`/imovel-${id}/${slugCorreto}`);
+    redirect(/imovel-${id}/${slugCorreto});
   }
 
-  const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
+  const currentUrl = ${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug};
 
   return (
     <section className="w-full bg-white pb-32 pt-20">
       <StructuredDataApartment
         title={imovel.Empreendimento}
-        price={imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}
-        description={`${imovel.Categoria} à venda em ${imovel.BairroComercial}, ${imovel.Cidade}. ${
-          imovel.Empreendimento
-        }: ${imovel.DormitoriosAntigo} quartos, ${imovel.Suites} suítes, ${
-          imovel.BanheiroSocialQtd
-        } banheiros, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt}. ${
-          imovel.Situacao
-        }. Valor: ${imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}. ${
-          imovel.TipoEndereco
-        } ${imovel.Endereco}.`}
-        address={`${imovel.TipoEndereco} ${imovel.Endereco}, ${imovel.Numero}, ${imovel.BairroComercial}, ${imovel.Cidade}`}
+        price={imovel.ValorAntigo ? R$ ${imovel.ValorAntigo} : "Consulte"}
+        description={${imovel.Categoria} à venda em ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.Empreendimento}: ${imovel.DormitoriosAntigo} quartos, ${imovel.Suites} suítes, ${imovel.BanheiroSocialQtd} banheiros, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt}. ${imovel.Situacao}. Valor: ${imovel.ValorAntigo ? R$ ${imovel.ValorAntigo} : "Consulte"}. ${imovel.TipoEndereco} ${imovel.Endereco}.}
+        address={${imovel.TipoEndereco} ${imovel.Endereco}, ${imovel.Numero}, ${imovel.BairroComercial}, ${imovel.Cidade}}
         url={currentUrl}
         image={imovel.Foto}
       />
-      <ExitIntentModal condominio={imovel.Empreendimento} link={currentUrl} />
 
+      <ExitIntentModal condominio={imovel.Empreendimento} link={currentUrl} />
       <div className="w-full mx-auto">
         <ImageGallery imovel={imovel} />
       </div>
@@ -110,7 +96,9 @@ export default async function Imovel({ params }) {
           {imovel.Video && Object.keys(imovel.Video).length > 0 && (
             <VideoCondominio imovel={imovel} />
           )}
-          {imovel.Tour360 && <TourVirtual link={imovel.Tour360} titulo={imovel.Empreendimento} />}
+          {imovel.Tour360 && (
+            <TourVirtual link={imovel.Tour360} titulo={imovel.Empreendimento} />
+          )}
           <SimilarProperties id={imovel.Codigo} />
           <LocalizacaoCondominio imovel={imovel} />
         </div>
@@ -123,8 +111,9 @@ export default async function Imovel({ params }) {
       <div className="container mx-auto px-4 md:px-0">
         <FAQImovel imovel={imovel} />
       </div>
+
       <WhatsappFloat
-        message={`Quero saber mais sobre o ${imovel.Empreendimento}, no bairro ${imovel.BairroComercial}, disponivel na pagina do Imóvel: ${currentUrl}`}
+        message={Quero saber mais sobre o ${imovel.Empreendimento}, no bairro ${imovel.BairroComercial}, disponível na página do Imóvel: ${currentUrl}}
       />
     </section>
   );
