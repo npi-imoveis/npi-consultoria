@@ -18,9 +18,8 @@ import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 import { notFound, redirect } from "next/navigation";
 
 import { getImovelById } from "@/app/services";
-import { Metadata } from "next";
 
-export async function generateMetadata({ params }): Promise<Metadata> {
+export async function generateMetadata({ params }) {
   const { id } = params;
 
   const response = await getImovelById(id);
