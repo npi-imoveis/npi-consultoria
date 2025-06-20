@@ -34,7 +34,7 @@ export async function generateMetadata({ params }) {
   return {
     title: `Condomínio ${condominio.Empreendimento}, ${condominio.TipoEndereco} ${condominio.Endereco}, ${condominio.Numero}, ${condominio.BairroComercial}`,
     description,
-    **robots: "index, follow", // 👈 ADICIONE ESTA LINHA AQUI**
+    **robots: "index, follow",** // 👈 ADICIONE AQUI
     alternates: {
       canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`,
     },
