@@ -32,6 +32,7 @@ export async function generateMetadata({ params }) {
   const canonicalUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
 
   return {
+    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL),
     title,
     description,
     alternates: {
@@ -53,6 +54,7 @@ export async function generateMetadata({ params }) {
     },
   };
 }
+
 
 export default async function Imovel({ params }) {
   const { id, slug } = params;
