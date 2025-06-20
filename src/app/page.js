@@ -24,8 +24,8 @@ export const metadata = {
   title: "NPi Imóveis - HUB de Imobiliárias de Alto Padrão",
   description:
     "Somos um HUB de imobiliárias Boutique que atuam com venda de imóveis de alto padrão, apartamentos e casas de luxo.",
-  metadataBase: new URL(`${process.env.NEXT_PUBLIC_SITE_URL}`),
   robots: "index, follow",
+  metadataBase: new URL(`${process.env.NEXT_PUBLIC_SITE_URL}`),
   alternates: {
     canonical: "/",
     languages: {
