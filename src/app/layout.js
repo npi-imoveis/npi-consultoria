@@ -26,6 +26,7 @@ const ANALYTICS_ID = "G-405E52JFGM";
 export default function RootLayout({ children }) {
   return (
     <html lang="pt-BR">
+      <head /> {/* ← ESSENCIAL! Isso permite que <title> e <meta> sejam injetados no <head> */}
       <body className={`${oxanium.variable} ${michroma.variable} antialiased`}>
         <Script
           dangerouslySetInnerHTML={{
@@ -44,11 +45,11 @@ export default function RootLayout({ children }) {
         />
         <Script id="gtag-init" strategy="afterInteractive">
           {`
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          gtag('config', '${ANALYTICS_ID}');
-        `}
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', '${ANALYTICS_ID}');
+          `}
         </Script>
         <Organization />
         <WebSite />
