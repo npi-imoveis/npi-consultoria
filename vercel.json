@@ -2,6 +2,11 @@
   "redirects": [
 
     {
+      "source": "/the-frame-vila-nova",
+      "destination": "/the-frame-vila-nova-conceicao",
+      "permanent": true
+    },
+    {
       "source": "/ibi-ara",
       "destination": "/condominio-ibi-aram",
       "permanent": true
