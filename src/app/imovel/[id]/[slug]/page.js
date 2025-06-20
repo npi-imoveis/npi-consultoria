@@ -27,14 +27,22 @@ export async function generateMetadata({ params }) {
   const destaqueFotoObj = imovel.Foto?.find((f) => f.Destaque === "Sim");
   const destaqueFotoUrl = destaqueFotoObj?.Foto || imovel.Foto?.[0]?.Foto || "";
 
-  const title = `${imovel.Empreendimento}, ${imovel.TipoEndereco} ${imovel.Endereco} ${imovel.Numero}, ${imovel.BairroComercial}`;
-  const description = `${imovel.Empreendimento} em ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.Categoria} com ${imovel.MetragemAnt}, ${imovel.DormitoriosAntigo} quartos, ${imovel.VagasAntigo} vagas. ${imovel.Situacao}.`;
+  function ensureEnderecoNome(text, tipo, endereco) {
+    const enderecoCompleto = `${tipo} ${endereco}`.trim();
+    const regex = new RegExp(`${enderecoCompleto}`, "i");
+    return regex.test(text) ? text : `${text}, ${enderecoCompleto}`;
+  }
+
+  const rawTitle = ensureEnderecoNome(imovel.Empreendimento, imovel.TipoEndereco, imovel.Endereco);
+  const title = `${rawTitle} ${imovel.Numero}, ${imovel.BairroComercial}`;
+  const description = `${rawTitle} em ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.Categoria} com ${imovel.MetragemAnt}, ${imovel.DormitoriosAntigo} quartos, ${imovel.VagasAntigo} vagas. ${imovel.Situacao}.`;
+
   const canonicalUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
 
   return {
     title,
     description,
-    robots: "index, follow", // 👈 ESTA LINHA É FUNDAMENTAL
+    robots: "index, follow",
     alternates: {
       canonical: canonicalUrl,
     },
