@@ -29,24 +29,25 @@ export async function generateMetadata({ params }) {
   const destaqueFotoObj = condominio.Foto?.find((f) => f.Destaque === "Sim");
   const destaqueFotoUrl = destaqueFotoObj?.Foto;
 
-  const description = Condomínio ${condominio.Empreendimento} em ${condominio.BairroComercial}, ${condominio.Cidade}. ${condominio.Categoria} com ${condominio.MetragemAnt}, ${condominio.DormitoriosAntigo} quartos, ${condominio.VagasAntigo} vagas. ${condominio.Situacao}.;
+  const description = `Condomínio ${condominio.Empreendimento} em ${condominio.BairroComercial}, ${condominio.Cidade}. ${condominio.Categoria} com ${condominio.MetragemAnt}, ${condominio.DormitoriosAntigo} quartos, ${condominio.VagasAntigo} vagas. ${condominio.Situacao}.`;
 
   return {
-    title: Condomínio ${condominio.Empreendimento}, ${condominio.TipoEndereco} ${condominio.Endereco}, ${condominio.Numero}, ${condominio.BairroComercial},
+    title: `Condomínio ${condominio.Empreendimento}, ${condominio.TipoEndereco} ${condominio.Endereco}, ${condominio.Numero}, ${condominio.BairroComercial}`,
     description,
+    **robots: "index, follow", // 👈 ADICIONE ESTA LINHA AQUI**
     alternates: {
-      canonical: ${process.env.NEXT_PUBLIC_SITE_URL}/${slug},
+      canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`,
     },
     openGraph: {
-      title: Condomínio ${condominio.Empreendimento},
+      title: `Condomínio ${condominio.Empreendimento}`,
       description,
-      url: ${process.env.NEXT_PUBLIC_SITE_URL}/${slug},
+      url: `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`,
       images: destaqueFotoUrl ? [{ url: destaqueFotoUrl }] : [],
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
-      title: Condomínio ${condominio.Empreendimento},
+      title: `Condomínio ${condominio.Empreendimento}`,
       description,
       site: "@NPIImoveis",
       images: destaqueFotoUrl ? [destaqueFotoUrl] : [],
