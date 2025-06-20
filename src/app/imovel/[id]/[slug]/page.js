@@ -17,6 +17,19 @@ import { Apartment as StructuredDataApartment } from "@/app/components/structure
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 import { notFound, redirect } from "next/navigation";
 
+function montarEndereco(tipo, endereco) {
+  if (!tipo) return endereco;
+
+  const primeiraPalavraEndereco = endereco.trim().split(" ")[0].toLowerCase();
+  const tipoLimpo = tipo.trim().toLowerCase();
+
+  if (primeiraPalavraEndereco === tipoLimpo) {
+    return endereco.trim();
+  }
+
+  return `${tipo.trim()} ${endereco.trim()}`;
+}
+
 export async function generateMetadata({ params }) {
   const { id } = params;
   const response = await getImovelById(id);
@@ -24,19 +37,13 @@ export async function generateMetadata({ params }) {
 
   if (!imovel) return {};
 
+  const enderecoCompleto = montarEndereco(imovel.TipoEndereco, imovel.Endereco);
+
   const destaqueFotoObj = imovel.Foto?.find((f) => f.Destaque === "Sim");
   const destaqueFotoUrl = destaqueFotoObj?.Foto || imovel.Foto?.[0]?.Foto || "";
 
-  function ensureEnderecoNome(text, tipo, endereco) {
-    const enderecoCompleto = `${tipo} ${endereco}`.trim();
-    const regex = new RegExp(`${enderecoCompleto}`, "i");
-    return regex.test(text) ? text : `${text}, ${enderecoCompleto}`;
-  }
-
-  const rawTitle = ensureEnderecoNome(imovel.Empreendimento, imovel.TipoEndereco, imovel.Endereco);
-  const title = `${rawTitle} ${imovel.Numero}, ${imovel.BairroComercial}`;
-  const description = `${rawTitle} em ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.Categoria} com ${imovel.MetragemAnt}, ${imovel.DormitoriosAntigo} quartos, ${imovel.VagasAntigo} vagas. ${imovel.Situacao}.`;
-
+  const title = `${imovel.Empreendimento}, ${enderecoCompleto} ${imovel.Numero}, ${imovel.BairroComercial}`;
+  const description = `${imovel.Empreendimento} em ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.Categoria} com ${imovel.MetragemAnt}, ${imovel.DormitoriosAntigo} quartos, ${imovel.VagasAntigo} vagas. ${imovel.Situacao}.`;
   const canonicalUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
 
   return {
@@ -77,14 +84,15 @@ export default async function Imovel({ params }) {
   }
 
   const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
+  const enderecoCompleto = montarEndereco(imovel.TipoEndereco, imovel.Endereco);
 
   return (
     <section className="w-full bg-white pb-32 pt-20">
       <StructuredDataApartment
         title={imovel.Empreendimento}
         price={imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}
-        description={`${imovel.Categoria} à venda em ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.Empreendimento}: ${imovel.DormitoriosAntigo} quartos, ${imovel.Suites} suítes, ${imovel.BanheiroSocialQtd} banheiros, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt}. ${imovel.Situacao}. Valor: ${imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}. ${imovel.TipoEndereco} ${imovel.Endereco}.`}
-        address={`${imovel.TipoEndereco} ${imovel.Endereco} ${imovel.Numero}, ${imovel.BairroComercial}, ${imovel.Cidade}`}
+        description={`${imovel.Categoria} à venda em ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.Empreendimento}: ${imovel.DormitoriosAntigo} quartos, ${imovel.Suites} suítes, ${imovel.BanheiroSocialQtd} banheiros, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt}. ${imovel.Situacao}. Valor: ${imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}. ${enderecoCompleto}.`}
+        address={`${enderecoCompleto} ${imovel.Numero}, ${imovel.BairroComercial}, ${imovel.Cidade}`}
         url={currentUrl}
         image={imovel.Foto}
       />
