@@ -17,7 +17,6 @@ import { Apartment as StructuredDataApartment } from "@/app/components/structure
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 import { notFound, redirect } from "next/navigation";
 
-import { getImovelById } from "@/app/services";
 
 export async function generateMetadata({ params }) {
   const { id } = params;
