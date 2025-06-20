@@ -17,7 +17,6 @@ import { Apartment as StructuredDataApartment } from "@/app/components/structure
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 import { notFound, redirect } from "next/navigation";
 
-
 export async function generateMetadata({ params }) {
   const { id } = params;
 
@@ -57,21 +56,15 @@ export async function generateMetadata({ params }) {
   };
 }
 
-
 export default async function Imovel({ params }) {
   const { id, slug } = params;
-  // const response = await getCondominioPorSlug(slug);
   const response = await getImovelById(id);
-  // Acessando cookies no server component
-
-  // const response = await getCondominioPorSlug(slug);
 
   if (!response?.data) {
     notFound();
   }
 
   const imovel = response.data;
-
   const slugCorreto = imovel.Slug;
 
   if (slug !== slugCorreto) {
@@ -129,7 +122,7 @@ export default async function Imovel({ params }) {
         <FAQImovel imovel={imovel} />
       </div>
       <WhatsappFloat
-        message={`Quero saber mais sobre o ${imovel.Empreendimento}, no bairro ${imovel.BairroComercial}, disponivel na pagina do Imóvel: ${currentUrl}`}
+        message={`Quero saber mais sobre o ${imovel.Empreendimento}, no bairro ${imovel.BairroComercial}, disponível na página do Imóvel: ${currentUrl}`}
       />
     </section>
   );
