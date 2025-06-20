@@ -29,25 +29,24 @@ export async function generateMetadata({ params }) {
   const destaqueFotoObj = condominio.Foto?.find((f) => f.Destaque === "Sim");
   const destaqueFotoUrl = destaqueFotoObj?.Foto;
 
-  const description = `Condomínio ${condominio.Empreendimento} em ${condominio.BairroComercial}, ${condominio.Cidade}. ${condominio.Categoria} com ${condominio.MetragemAnt}, ${condominio.DormitoriosAntigo} quartos, ${condominio.VagasAntigo} vagas. ${condominio.Situacao}.`;
+  const description = Condomínio ${condominio.Empreendimento} em ${condominio.BairroComercial}, ${condominio.Cidade}. ${condominio.Categoria} com ${condominio.MetragemAnt}, ${condominio.DormitoriosAntigo} quartos, ${condominio.VagasAntigo} vagas. ${condominio.Situacao}.;
 
   return {
-    title: `Condomínio ${condominio.Empreendimento}, ${condominio.TipoEndereco} ${condominio.Endereco}, ${condominio.Numero}, ${condominio.BairroComercial}`,
+    title: Condomínio ${condominio.Empreendimento}, ${condominio.TipoEndereco} ${condominio.Endereco}, ${condominio.Numero}, ${condominio.BairroComercial},
     description,
-    **robots: "index, follow",** // 👈 ADICIONE AQUI
     alternates: {
-      canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`,
+      canonical: ${process.env.NEXT_PUBLIC_SITE_URL}/${slug},
     },
     openGraph: {
-      title: `Condomínio ${condominio.Empreendimento}`,
+      title: Condomínio ${condominio.Empreendimento},
       description,
-      url: `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`,
+      url: ${process.env.NEXT_PUBLIC_SITE_URL}/${slug},
       images: destaqueFotoUrl ? [{ url: destaqueFotoUrl }] : [],
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
-      title: `Condomínio ${condominio.Empreendimento}`,
+      title: Condomínio ${condominio.Empreendimento},
       description,
       site: "@NPIImoveis",
       images: destaqueFotoUrl ? [destaqueFotoUrl] : [],
@@ -70,7 +69,7 @@ export default async function CondominioPage({ params }) {
 
   console.log("Imoveis relacionados", imoveisRelacionados);
 
-  const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`;
+  const currentUrl = ${process.env.NEXT_PUBLIC_SITE_URL}/${slug};
 
   function isValidValue(value) {
     return value !== undefined && value !== null && value !== "0" && value !== "" && !value;
@@ -80,17 +79,17 @@ export default async function CondominioPage({ params }) {
     <section className="w-full bg-zinc-100 pb-10">
       <StructuredDataApartment
         title={condominio.Empreendimento}
-        price={condominio.ValorAntigo ? `R$ ${condominio.ValorAntigo}` : "Consulte"}
-        description={`${condominio.Categoria} à venda em ${condominio.BairroComercial}, ${
+        price={condominio.ValorAntigo ? R$ ${condominio.ValorAntigo} : "Consulte"}
+        description={${condominio.Categoria} à venda em ${condominio.BairroComercial}, ${
           condominio.Cidade
         }. ${condominio.Empreendimento}: ${condominio.DormitoriosAntigo} quartos, ${
           condominio.Suites
         } suítes, ${condominio.BanheiroSocialQtd} banheiros, ${condominio.VagasAntigo} vagas, ${
           condominio.MetragemAnt
         }. ${condominio.Situacao}. Valor: ${
-          condominio.ValorAntigo ? `R$ ${condominio.ValorAntigo}` : "Consulte"
-        }. ${condominio.TipoEndereco} ${condominio.Endereco}.`}
-        address={`${condominio.TipoEndereco} ${condominio.Endereco}, ${condominio.Numero}, ${condominio.BairroComercial}, ${condominio.Cidade}`}
+          condominio.ValorAntigo ? R$ ${condominio.ValorAntigo} : "Consulte"
+        }. ${condominio.TipoEndereco} ${condominio.Endereco}.}
+        address={${condominio.TipoEndereco} ${condominio.Endereco}, ${condominio.Numero}, ${condominio.BairroComercial}, ${condominio.Cidade}}
         url={currentUrl}
         image={condominio.Foto}
       />
@@ -105,7 +104,7 @@ export default async function CondominioPage({ params }) {
                 <span className="text-[10px]">Código:{condominio.Codigo}</span>
                 <Share
                   url={currentUrl}
-                  title={`Compartilhe o imóvel ${condominio.Empreendimento} em ${condominio.BairroComercial}`}
+                  title={Compartilhe o imóvel ${condominio.Empreendimento} em ${condominio.BairroComercial}}
                   variant="secondary"
                 />
               </div>
@@ -152,7 +151,7 @@ export default async function CondominioPage({ params }) {
                   </div>
                 )}
               </div>
-              <ScrollToImoveisButton text={`Mostrar imóveis (${imoveisRelacionados.length})`} />
+              <ScrollToImoveisButton text={Mostrar imóveis (${imoveisRelacionados.length})} />
             </div>
             <div className="relative w-full h-[230px] overflow-y-auto bg-white rounded-lg overflow-hidden p-4">
               {isValidValue(condominio.ValorVenda2) ||
@@ -188,7 +187,7 @@ export default async function CondominioPage({ params }) {
 
       <ExploreRegiao condominio={condominio} currentUrl={currentUrl} />
       <WhatsappFloat
-        message={`Quero saber mais sobre o ${condominio.Empreendimento}, no bairro ${condominio.BairroComercial}, disponivel na pagina de Condominio: ${currentUrl}`}
+        message={Quero saber mais sobre o ${condominio.Empreendimento}, no bairro ${condominio.BairroComercial}, disponivel na pagina de Condominio: ${currentUrl}}
       />
     </section>
   );
