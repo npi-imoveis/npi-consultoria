@@ -21,7 +21,7 @@ import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 import removePalavraCondominio from "@/app/utils/formatter-condominio";
 
 // adiciona somente se não tiver "condomínio" no nome
-function ensureCondominio(text: string) {
+function ensureCondominio(text) {
   return /condom[ií]nio/i.test(text) ? text : `Condomínio ${text}`;
 }
 
