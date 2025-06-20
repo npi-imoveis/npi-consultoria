@@ -76,7 +76,8 @@ export default async function CondominioPage({ params }) {
   const rawTitle = ensureCondominio(condominio.Empreendimento);
   const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`;
 
-  function isValidValue(value: any) {
+  function isValidValue(value) {
+
     // ajustada lógica: valor válido se for algo que não é vazio
     return value !== undefined && value !== null && value !== "" && value !== "0";
   }
