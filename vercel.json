@@ -2,6 +2,11 @@
   "redirects": [
 
     {
+      "source": "/ibi-ara",
+      "destination": "/condominio-ibi-aram",
+      "permanent": true
+    },
+    {
       "source": "/residencial-jequitibas",
       "destination": "/condominio-portal-jequitiba-valinhos",
       "permanent": true
