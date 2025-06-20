@@ -2,6 +2,16 @@
   "redirects": [
 
     {
+      "source": "/imovel-107855/residencial-azul",
+      "destination": "/imovel-107855/azul-idea-zarvos",
+      "permanent": true
+    },
+    {
+      "source": "/residencial-azul",
+      "destination": "/azul-idea-zarvos",
+      "permanent": true
+    },
+    {
       "source": "/the-frame-vila-nova",
       "destination": "/the-frame-vila-nova-conceicao",
       "permanent": true
