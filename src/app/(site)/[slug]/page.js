@@ -30,24 +30,21 @@ export async function generateMetadata({ params }) {
   const response = await getCondominioPorSlug(slug);
   const condominio = response?.data;
 
-  if (!condominio) return {};
-
+  const rawTitle = ensureCondominio(condominio.Empreendimento);
   const destaqueFotoObj = condominio.Foto?.find((f) => f.Destaque === "Sim");
   const destaqueFotoUrl = destaqueFotoObj?.Foto;
 
-  const rawTitle = ensureCondominio(condominio.Empreendimento);
-  const title = `${rawTitle}, ${condominio.TipoEndereco} ${condominio.Endereco}, ${condominio.Numero}, ${condominio.BairroComercial}`;
   const description = `${rawTitle} em ${condominio.BairroComercial}, ${condominio.Cidade}. ${condominio.Categoria} com ${condominio.MetragemAnt}, ${condominio.DormitoriosAntigo} quartos, ${condominio.VagasAntigo} vagas. ${condominio.Situacao}.`;
 
   return {
-    title,
+    title: `${rawTitle}, ${condominio.TipoEndereco} ${condominio.Endereco}, ${condominio.Numero}, ${condominio.BairroComercial}`,
     description,
     robots: "index, follow",
     alternates: {
       canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`,
     },
     openGraph: {
-      title,
+      title: rawTitle,
       description,
       url: `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`,
       images: destaqueFotoUrl ? [{ url: destaqueFotoUrl }] : [],
@@ -55,7 +52,7 @@ export async function generateMetadata({ params }) {
     },
     twitter: {
       card: "summary_large_image",
-      title,
+      title: rawTitle,
       description,
       site: "@NPIImoveis",
       images: destaqueFotoUrl ? [destaqueFotoUrl] : [],
