@@ -18,9 +18,7 @@ import ExploreRegiao from "./componentes/ExploreRegiao";
 import ScrollToImoveisButton from "./componentes/scroll-to-imovel-button";
 import { notFound } from "next/navigation";
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
-import removePalavraCondominio from "@/app/utils/formatter-condominio";
 
-// adiciona somente se não tiver "condomínio" no nome
 function ensureCondominio(text) {
   return /condom[ií]nio/i.test(text) ? text : `Condomínio ${text}`;
 }
@@ -63,19 +61,18 @@ export async function generateMetadata({ params }) {
 export default async function CondominioPage({ params }) {
   const { slug } = params;
   const response = await getCondominioPorSlug(slug);
-  const condominio = response?.data;
 
-  if (!condominio) {
+  if (!response.data) {
     notFound();
   }
 
+  const condominio = response.data;
   const imoveisRelacionados = response.imoveisRelacionados;
+
   const rawTitle = ensureCondominio(condominio.Empreendimento);
   const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`;
 
   function isValidValue(value) {
-
-    // ajustada lógica: valor válido se for algo que não é vazio
     return value !== undefined && value !== null && value !== "" && value !== "0";
   }
 
@@ -93,91 +90,82 @@ export default async function CondominioPage({ params }) {
       <ExitIntentModal condominio={rawTitle} link={currentUrl} />
 
       <div className="container mx-auto pt-20">
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="flex flex-col gap-4">
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 ">
+          <div className="flex flex-col gap-4 ">
             <div className="px-10 py-6 bg-white max-h-[400px] xl:max-h-[300px] rounded-lg flex-grow">
               <div className="flex justify-between">
-                <span className="text-[10px]">Código: {condominio.Codigo}</span>
+                <span className="text-[10px]">Código:{condominio.Codigo}</span>
                 <Share
                   url={currentUrl}
-                  title={`Compartilhe o ${rawTitle} em ${condominio.BairroComercial}`}
+                  title={`Compartilhe o imóvel ${rawTitle} em ${condominio.BairroComercial}`}
                   variant="secondary"
                 />
               </div>
 
               <h1 className="text-xl font-bold mt-2">{rawTitle}</h1>
               <span className="text-xs text-zinc-700 font-semibold">
-                {condominio.TipoEndereco} {condominio.Endereco}, {condominio.Numero},{" "}
-                {condominio.BairroComercial}, {condominio.Cidade}
+                {condominio.TipoEndereco} {condominio.Endereco}, {condominio.Numero}, {condominio.BairroComercial}, {condominio.Cidade}
               </span>
               <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-3 gap-3 mt-4 mb-8">
                 {condominio.ValorAluguelSite && (
                   <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
                     <h4 className="text-zinc-600 text-[10px] font-bold">Aluguel:</h4>
-                    <h2 className="text-black font-semibold text-[10px]">
-                      R$ {condominio.ValorAluguelSite}
-                    </h2>
+                    <h2 className="text-black font-semibold text-[10px]">R$ {condominio.ValorAluguelSite}</h2>
                   </div>
                 )}
+
                 <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
                   <h4 className="text-zinc-600 text-[10px] font-bold">Venda:</h4>
-                  <h2 className="text-black font-semibold text-[10px]">
-                    R$ {condominio.ValorAntigo}
-                  </h2>
+                  <h2 className="text-black font-semibold text-[10px]">R$ {condominio.ValorAntigo}</h2>
                 </div>
                 {condominio.ValorCondominio && (
                   <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
                     <h4 className="text-zinc-600 text-[10px] font-bold">Condomínio:</h4>
-                    <h2 className="text-black font-semibold text-[10px]">
-                      {formatterValue(condominio.ValorCondominio)}
-                    </h2>
+                    <h2 className="text-black font-semibold text-[10px]">{formatterValue(condominio.ValorCondominio)}</h2>
                   </div>
                 )}
                 {condominio.ValorIptu && (
                   <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
                     <h4 className="text-zinc-600 text-[10px] font-bold">IPTU:</h4>
-                    <h2 className="text-black font-semibold text-[10px]">
-                      {formatterValue(condominio.ValorIptu)}
-                    </h2>
+                    <h2 className="text-black font-semibold text-[10px]">{formatterValue(condominio.ValorIptu)}</h2>
                   </div>
                 )}
               </div>
               <ScrollToImoveisButton text={`Mostrar imóveis (${imoveisRelacionados.length})`} />
             </div>
-
-            <div className="relative w-full h-[230px] overflow-y-auto bg-white rounded-lg p-4">
-              {isValidValue(condominio.ValorVenda2) ||
-              isValidValue(condominio.ValorGarden) ||
-              isValidValue(condominio.ValorCobertura) ? (
+            <div className="relative w-full h-[230px] overflow-y-auto bg-white rounded-lg overflow-hidden p-4">
+              {isValidValue(condominio.ValorVenda2) || isValidValue(condominio.ValorGarden) || isValidValue(condominio.ValorCobertura) ? (
                 <PropertyTableOwner imovel={condominio} />
               ) : (
                 <PropertyTable imoveisRelacionados={imoveisRelacionados} />
               )}
             </div>
           </div>
-
           <div className="relative w-full min-h-[550px] overflow-hidden rounded-lg">
-            <CondominioGallery fotos={condominio.Foto} title={condominio.Empreendimento} />
+            <CondominioGallery fotos={condominio.Foto} title={rawTitle} />
           </div>
         </div>
       </div>
-
-      {imoveisRelacionados?.length > 0 && (
-        <section id="imoveis-relacionados">
+      {imoveisRelacionados && imoveisRelacionados.length > 0 && (
+        <div id="imoveis-relacionados">
           <ImoveisRelacionados imoveisRelacionados={imoveisRelacionados} />
-        </section>
+        </div>
       )}
-
       <SobreCondominio condominio={condominio} />
+
       {condominio.FichaTecnica && <FichaTecnica condominio={condominio} />}
       {condominio.DescricaoDiferenciais && <DiferenciaisCondominio condominio={condominio} />}
       {condominio.DestaquesLazer && <Lazer condominio={condominio} />}
-      {condominio.Video && <VideoCondominio condominio={condominio} />}
-      {condominio.Tour360 && <TourVirtual link={condominio.Tour360} titulo={rawTitle} />}
+      {condominio.Video && Object.keys(condominio.Video).length > 0 && (
+        <VideoCondominio condominio={condominio} />
+      )}
+      {condominio.Tour360 && (
+        <TourVirtual link={condominio.Tour360} titulo={rawTitle} />
+      )}
 
       <ExploreRegiao condominio={condominio} currentUrl={currentUrl} />
       <WhatsappFloat
-        message={`Quero saber mais sobre o ${rawTitle}, no bairro ${condominio.BairroComercial}, disponível na página do condomínio: ${currentUrl}`}
+        message={`Quero saber mais sobre o ${rawTitle}, no bairro ${condominio.BairroComercial}, disponível na página de Condomínio: ${currentUrl}`}
       />
     </section>
   );
