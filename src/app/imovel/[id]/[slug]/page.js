@@ -34,7 +34,7 @@ export async function generateMetadata({ params }) {
   return {
     title,
     description,
-    robots: "index, follow",
+    robots: "index, follow", // 👈 ESTA LINHA É FUNDAMENTAL
     alternates: {
       canonical: canonicalUrl,
     },
