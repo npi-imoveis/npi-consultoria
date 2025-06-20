@@ -21,9 +21,8 @@ import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 import removePalavraCondominio from "@/app/utils/formatter-condominio";
 
 export async function generateMetadata({ params }) {
-  const { slug } = await params;
+  const { slug } = params;
   const response = await getCondominioPorSlug(slug);
-
   const condominio = response?.data;
 
   const destaqueFotoObj = condominio.Foto?.find((f) => f.Destaque === "Sim");
@@ -56,41 +55,26 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function CondominioPage({ params }) {
-  const { slug } = await params;
+  const { slug } = params;
   const response = await getCondominioPorSlug(slug);
 
-  if (!response.data) {
-    notFound();
-  }
+  if (!response.data) notFound();
 
   const condominio = response.data;
   const imoveisRelacionados = response.imoveisRelacionados;
-
-  console.log("Condominio", response);
-
-  console.log("Imoveis relacionados", imoveisRelacionados);
-
-  const currentUrl = ${process.env.NEXT_PUBLIC_SITE_URL}/${slug};
+  const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`;
 
   function isValidValue(value) {
-    return value !== undefined && value !== null && value !== "0" && value !== "" && !value;
+    return value !== undefined && value !== null && value !== "0" && value !== "" && value;
   }
 
   return (
     <section className="w-full bg-zinc-100 pb-10">
       <StructuredDataApartment
         title={condominio.Empreendimento}
-        price={condominio.ValorAntigo ? R$ ${condominio.ValorAntigo} : "Consulte"}
-        description={${condominio.Categoria} à venda em ${condominio.BairroComercial}, ${
-          condominio.Cidade
-        }. ${condominio.Empreendimento}: ${condominio.DormitoriosAntigo} quartos, ${
-          condominio.Suites
-        } suítes, ${condominio.BanheiroSocialQtd} banheiros, ${condominio.VagasAntigo} vagas, ${
-          condominio.MetragemAnt
-        }. ${condominio.Situacao}. Valor: ${
-          condominio.ValorAntigo ? R$ ${condominio.ValorAntigo} : "Consulte"
-        }. ${condominio.TipoEndereco} ${condominio.Endereco}.}
-        address={${condominio.TipoEndereco} ${condominio.Endereco}, ${condominio.Numero}, ${condominio.BairroComercial}, ${condominio.Cidade}}
+        price={condominio.ValorAntigo ? `R$ ${condominio.ValorAntigo}` : "Consulte"}
+        description={`${condominio.Categoria} à venda em ${condominio.BairroComercial}, ${condominio.Cidade}. ${condominio.Empreendimento}: ${condominio.DormitoriosAntigo} quartos, ${condominio.Suites} suítes, ${condominio.BanheiroSocialQtd} banheiros, ${condominio.VagasAntigo} vagas, ${condominio.MetragemAnt}. ${condominio.Situacao}. Valor: ${condominio.ValorAntigo ? `R$ ${condominio.ValorAntigo}` : "Consulte"}. ${condominio.TipoEndereco} ${condominio.Endereco}.`}
+        address={`${condominio.TipoEndereco} ${condominio.Endereco}, ${condominio.Numero}, ${condominio.BairroComercial}, ${condominio.Cidade}`}
         url={currentUrl}
         image={condominio.Foto}
       />
@@ -105,59 +89,44 @@ export default async function CondominioPage({ params }) {
                 <span className="text-[10px]">Código:{condominio.Codigo}</span>
                 <Share
                   url={currentUrl}
-                  title={Compartilhe o imóvel ${condominio.Empreendimento} em ${condominio.BairroComercial}}
+                  title={`Compartilhe o imóvel ${condominio.Empreendimento} em ${condominio.BairroComercial}`}
                   variant="secondary"
                 />
               </div>
-
               <h1 className="text-xl font-bold mt-2">
-                Condomínio {removePalavraCondominio(condominio.Empreendimento)}{" "}
+                Condomínio {removePalavraCondominio(condominio.Empreendimento)}
               </h1>
               <span className="text-xs text-zinc-700 font-semibold">
-                {condominio.TipoEndereco} {condominio.Endereco}, {condominio.Numero},{" "}
-                {condominio.BairroComercial}, {condominio.Cidade}
+                {condominio.TipoEndereco} {condominio.Endereco}, {condominio.Numero}, {condominio.BairroComercial}, {condominio.Cidade}
               </span>
               <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-3 gap-3 mt-4 mb-8">
                 {condominio.ValorAluguelSite && (
                   <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
                     <h4 className="text-zinc-600 text-[10px] font-bold">Aluguel:</h4>
-                    <h2 className="text-black font-semibold text-[10px]">
-                      R$ {condominio.ValorAluguelSite}
-                    </h2>
+                    <h2 className="text-black font-semibold text-[10px]">R$ {condominio.ValorAluguelSite}</h2>
                   </div>
                 )}
-
                 <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
                   <h4 className="text-zinc-600 text-[10px] font-bold">Venda:</h4>
-                  <h2 className="text-black font-semibold text-[10px]">
-                    R$ {condominio.ValorAntigo}
-                  </h2>
+                  <h2 className="text-black font-semibold text-[10px]">R$ {condominio.ValorAntigo}</h2>
                 </div>
                 {condominio.ValorCondominio && (
                   <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
                     <h4 className="text-zinc-600 text-[10px] font-bold">Condomínio:</h4>
-                    <h2 className="text-black font-semibold text-[10px]">
-                      {/* formatterValue foi importado anteriormente mas não é usado aqui */}
-                      {formatterValue(condominio.ValorCondominio)}
-                    </h2>
+                    <h2 className="text-black font-semibold text-[10px]">{formatterValue(condominio.ValorCondominio)}</h2>
                   </div>
                 )}
                 {condominio.ValorIptu && (
                   <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
                     <h4 className="text-zinc-600 text-[10px] font-bold">IPTU:</h4>
-                    <h2 className="text-black font-semibold text-[10px]">
-                      {/* formatterValue foi importado anteriormente mas não é usado aqui */}
-                      {formatterValue(condominio.ValorIptu)}
-                    </h2>
+                    <h2 className="text-black font-semibold text-[10px]">{formatterValue(condominio.ValorIptu)}</h2>
                   </div>
                 )}
               </div>
-              <ScrollToImoveisButton text={Mostrar imóveis (${imoveisRelacionados.length})} />
+              <ScrollToImoveisButton text={`Mostrar imóveis (${imoveisRelacionados.length})`} />
             </div>
             <div className="relative w-full h-[230px] overflow-y-auto bg-white rounded-lg overflow-hidden p-4">
-              {isValidValue(condominio.ValorVenda2) ||
-              isValidValue(condominio.ValorGarden) ||
-              isValidValue(condominio.ValorCobertura) ? (
+              {isValidValue(condominio.ValorVenda2) || isValidValue(condominio.ValorGarden) || isValidValue(condominio.ValorCobertura) ? (
                 <PropertyTableOwner imovel={condominio} />
               ) : (
                 <PropertyTable imoveisRelacionados={imoveisRelacionados} />
@@ -169,26 +138,22 @@ export default async function CondominioPage({ params }) {
           </div>
         </div>
       </div>
+
       {imoveisRelacionados && imoveisRelacionados.length > 0 && (
         <div id="imoveis-relacionados">
           <ImoveisRelacionados imoveisRelacionados={imoveisRelacionados} />
         </div>
       )}
-      <SobreCondominio condominio={condominio} />
 
+      <SobreCondominio condominio={condominio} />
       {condominio.FichaTecnica && <FichaTecnica condominio={condominio} />}
       {condominio.DescricaoDiferenciais && <DiferenciaisCondominio condominio={condominio} />}
       {condominio.DestaquesLazer && <Lazer condominio={condominio} />}
-      {condominio.Video && Object.keys(condominio.Video).length > 0 && (
-        <VideoCondominio condominio={condominio} />
-      )}
-      {condominio.Tour360 && (
-        <TourVirtual link={condominio.Tour360} titulo={condominio.Empreendimento} />
-      )}
-
+      {condominio.Video && Object.keys(condominio.Video).length > 0 && <VideoCondominio condominio={condominio} />}
+      {condominio.Tour360 && <TourVirtual link={condominio.Tour360} titulo={condominio.Empreendimento} />}
       <ExploreRegiao condominio={condominio} currentUrl={currentUrl} />
       <WhatsappFloat
-        message={Quero saber mais sobre o ${condominio.Empreendimento}, no bairro ${condominio.BairroComercial}, disponivel na pagina de Condominio: ${currentUrl}}
+        message={`Quero saber mais sobre o ${condominio.Empreendimento}, no bairro ${condominio.BairroComercial}, disponível na página de Condomínio: ${currentUrl}`}
       />
     </section>
   );
