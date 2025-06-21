@@ -128,21 +128,6 @@ export const useImovelForm = () => {
     }
   }, [newImovelCode, formData.Codigo, isAutomacao]);
 
-  // Clonar imagens para evitar sobrescritas em imóveis de automação
-useEffect(() => {
-  if (isAutomacao && imovelSelecionado?.Foto?.length) {
-    const fotosClonadas = imovelSelecionado.Foto.map((foto) => ({
-      ...foto,
-      Codigo: Date.now().toString() + Math.random().toString(36).substr(2, 5),
-    }));
-
-    setFormData((prev) => ({
-      ...prev,
-      Foto: fotosClonadas,
-    }));
-  }
-}, [isAutomacao, imovelSelecionado]);
-
   // Ensure Slug is always generated from Empreendimento
   useEffect(() => {
     if (formData.Empreendimento || formData.TermoSeo) {
@@ -235,7 +220,7 @@ useEffect(() => {
   const fetchCoordinates = useCallback(
     async (address) => {
       try {
-        const searchQuery = `${address.logradouro}, ${address.bairro}, ${address.localidade} - ${address.uf}, ${address.cep}, Brasil`;
+        const searchQuery = ${address.logradouro}, ${address.bairro}, ${address.localidade} - ${address.uf}, ${address.cep}, Brasil;
         const results = await provider.search({ query: searchQuery });
 
         if (results && results.length > 0) {
@@ -261,7 +246,7 @@ useEffect(() => {
       if (cleanCep.length !== 8) return;
 
       try {
-        const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+        const response = await fetch(https://viacep.com.br/ws/${cleanCep}/json/);
         const data = await response.json();
 
         if (!data.erro) {
