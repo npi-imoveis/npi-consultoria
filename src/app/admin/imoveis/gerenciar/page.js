@@ -448,4 +448,9 @@ export default function GerenciarImovel() {
           type="file"
           accept="image/*"
           onChange={handleFileInputChange}
-          style={{
+          style={{ display: "none" }}
+      />
+    </div> {/* Fecha a div que envolve o formulário e o input de arquivo */}
+  </AuthCheck>
+);
+} // Fecha a função GerenciarImovel
