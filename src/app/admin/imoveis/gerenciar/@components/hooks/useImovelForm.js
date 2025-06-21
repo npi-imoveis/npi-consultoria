@@ -128,6 +128,21 @@ export const useImovelForm = () => {
     }
   }, [newImovelCode, formData.Codigo, isAutomacao]);
 
+  // Clonar imagens para evitar sobrescritas em imóveis de automação
+useEffect(() => {
+  if (isAutomacao && imovelSelecionado?.Foto?.length) {
+    const fotosClonadas = imovelSelecionado.Foto.map((foto) => ({
+      ...foto,
+      Codigo: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+    }));
+
+    setFormData((prev) => ({
+      ...prev,
+      Foto: fotosClonadas,
+    }));
+  }
+}, [isAutomacao, imovelSelecionado]);
+
   // Ensure Slug is always generated from Empreendimento
   useEffect(() => {
     if (formData.Empreendimento || formData.TermoSeo) {
