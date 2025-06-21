@@ -220,7 +220,7 @@ export const useImovelForm = () => {
   const fetchCoordinates = useCallback(
     async (address) => {
       try {
-        const searchQuery = ${address.logradouro}, ${address.bairro}, ${address.localidade} - ${address.uf}, ${address.cep}, Brasil;
+        const searchQuery = `${address.logradouro}, ${address.bairro}, ${address.localidade} - ${address.uf}, ${address.cep}, Brasil`;
         const results = await provider.search({ query: searchQuery });
 
         if (results && results.length > 0) {
@@ -246,7 +246,7 @@ export const useImovelForm = () => {
       if (cleanCep.length !== 8) return;
 
       try {
-        const response = await fetch(https://viacep.com.br/ws/${cleanCep}/json/);
+        const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
         const data = await response.json();
 
         if (!data.erro) {
