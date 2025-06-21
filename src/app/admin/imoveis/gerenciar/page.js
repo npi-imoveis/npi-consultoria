@@ -25,6 +25,207 @@ import ProprietariosSection from "./@components/sections/ProprietariosSection";
 import VincularImovelSection from "./@components/sections/VincularImovel";
 import { desativarImovel } from "@/app/services";
 
+// Importe dynamic do Next.js
+import dynamic from 'next/dynamic';
+
+// Crie um componente wrapper dinâmico para o conteúdo principal da página
+// Isso garante que o conteúdo dentro de ImovelGerenciarContent só será renderizado no cliente
+const ImovelGerenciarContent = dynamic(() => Promise.resolve(function ImovelGerenciarContent({
+  isModalOpen, setIsModalOpen, showProprietarios, setShowProprietarios,
+  showVincularImovel, setShowVincularImovel, isDesativando, setIsDesativando,
+  router, imovelSelecionado, mode, limparImovelSelecionado, isAutomacao,
+  formData, setFormData, displayValues, setDisplayValues, handleChange,
+  newImovelCode, fileInputRef, showImageModal, setShowImageModal, addImage,
+  addSingleImage, updateImage, removeImage, setImageAsHighlight, changeImagePosition,
+  validation, handleImagesUploaded, handleSubmit, isSaving, error, success,
+  setError, setSuccess, handleFileUpload, handleFileInputChange, getFormTitle,
+  handleCancel, toggleProprietarios, toggleVincularImovel, handleDesativarImovel,
+  title, description
+}) {
+  return (
+    <AuthCheck>
+      {showImageModal && (
+        <ImageUploadModal
+          title="Upload de Imagens"
+          onClose={() => setShowImageModal(false)}
+          onUploadComplete={handleImagesUploaded}
+        />
+      )}
+
+      {isModalOpen && (
+        <Modal
+          title={title()}
+          description={description()}
+          buttonText="Ver no site"
+          link={`/imovel-${formData.Codigo || newImovelCode}/${formData?.Slug}`}
+        />
+      )}
+
+      <div className="">
+        <FormHeader
+          title={getFormTitle()}
+          error={error}
+          success={success}
+          isAutomacao={isAutomacao}
+        />
+        <div className="flex justify-between gap-2 py-4">
+          {formData.Ativo === "Sim" && (
+            <button
+              onClick={handleDesativarImovel}
+              disabled={isDesativando || mode !== "edit"}
+              className={`border-2 bg-red-100 font-bold px-4 py-2 rounded-md min-w-[180px] ${
+                isDesativando
+                  ? "bg-red-300 text-red-500 cursor-not-allowed"
+                  : mode !== "edit"
+                  ? "bg-red-100 text-red-400 cursor-not-allowed border-red-200"
+                  : "text-red-700 hover:text-red-900 hover:border-red-400"
+              }`}
+            >
+              {isDesativando ? "Desativando..." : "Desativar Imóvel"}
+            </button>
+          )}
+          <div className="w-full flex justify-end gap-2">
+            <button
+              onClick={toggleProprietarios}
+              className={`font-bold px-4 py-2 rounded-md ${
+                showProprietarios
+                  ? "bg-[#8B6F48] text-white hover:bg-[#8B6F48]/40"
+                  : "bg-gray-200 text-gray-500 hover:bg-gray-300"
+              }`}
+            >
+              Proprietários
+            </button>
+
+            {/* Only show the Vincular Imóvel button in edit mode and if Automacao is true */}
+            {mode === "edit" && (
+              <button
+                onClick={toggleVincularImovel}
+                className={`font-bold px-4 py-2 rounded-md ${
+                  showVincularImovel
+                    ? "bg-[#8B6F48] text-white hover:bg-[#8B6F48]/40"
+                    : "bg-gray-200 text-gray-500 hover:bg-gray-300"
+                }`}
+              >
+                Duplicar Imóvel
+              </button>
+            )}
+          </div>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-8">
+          {showProprietarios && (
+            <ProprietariosSection id={formData.Codigo} key="proprietarios-section" />
+          )}
+          {showVincularImovel && (
+            <VincularImovelSection
+              formData={formData}
+              displayValues={displayValues}
+              onChange={handleChange}
+              validation={validation}
+              key="vincular-section"
+            />
+          )}
+
+          {/* Basic Info Section with updated Ativo field */}
+          <BasicInfoSection
+            formData={{
+              ...formData,
+              Ativo: formData.Ativo || "Sim",
+            }}
+            displayValues={displayValues}
+            onChange={handleChange}
+            validation={validation}
+            key="basic-info-section"
+          />
+
+          {/* Location Section */}
+          <LocationSection
+            formData={formData}
+            displayValues={displayValues}
+            onChange={handleChange}
+            validation={validation}
+            key="location-section"
+          />
+
+          {/* Features Section */}
+          <FeaturesSection
+            formData={formData}
+            displayValues={displayValues}
+            onChange={handleChange}
+            key="features-section"
+          />
+
+          {/* Values Section */}
+          <ValuesSection
+            formData={formData}
+            displayValues={displayValues}
+            onChange={handleChange}
+            key="values-section"
+          />
+
+          {/* Broker Section */}
+          <BrokerSection
+            formData={formData}
+            displayValues={displayValues}
+            onChange={handleChange}
+            key="broker-section"
+          />
+
+          {/* Description Section */}
+          <DescriptionSection
+            formData={formData}
+            displayValues={displayValues}
+            onChange={handleChange}
+            key="description-section"
+          />
+
+          {/* Media Section */}
+          <MediaSection
+            formData={formData}
+            displayValues={displayValues}
+            onChange={handleChange}
+            key="media-section"
+          />
+
+          {/* Images Section */}
+          <ImagesSection
+            formData={formData}
+            addSingleImage={addSingleImage}
+            showImageModal={addImage}
+            updateImage={updateImage}
+            removeImage={removeImage}
+            setImageAsHighlight={setImageAsHighlight}
+            changeImagePosition={changeImagePosition}
+            validation={validation}
+            key="images-section"
+          />
+          {error && (
+            <div className="bg-red-100 p-4 text-red-500 rounded-lg">
+              {error}: verifique se esse imóvel já esta cadastrado anteriormente.
+            </div>
+          )}
+
+          <FormFooter
+            isSaving={isSaving}
+            isValid={validation.isFormValid}
+            isEditMode={mode === "edit"}
+            onCancel={handleCancel}
+            key="form-footer"
+          />
+        </form>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          onChange={handleFileInputChange}
+          style={{ display: "none" }}
+        />
+      </div>
+    </AuthCheck>
+  );
+}), { ssr: false }); // MUITO IMPORTANTE: ssr: false aqui
+
 export default function GerenciarImovel() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showProprietarios, setShowProprietarios] = useState(false);
@@ -271,186 +472,21 @@ export default function GerenciarImovel() {
     return "";
   };
 
+  // Coleta todas as props que o ImovelGerenciarContent precisa
+  const contentProps = {
+    isModalOpen, setIsModalOpen, showProprietarios, setShowProprietarios,
+    showVincularImovel, setShowVincularImovel, isDesativando, setIsDesativando,
+    router, imovelSelecionado, mode, limparImovelSelecionado, isAutomacao,
+    formData, setFormData, displayValues, setDisplayValues, handleChange,
+    newImovelCode, fileInputRef, showImageModal, setShowImageModal, addImage,
+    addSingleImage, updateImage, removeImage, setImageAsHighlight, changeImagePosition,
+    validation, handleImagesUploaded, handleSubmit, isSaving, error, success,
+    setError, setSuccess, handleFileUpload, handleFileInputChange, getFormTitle,
+    handleCancel, toggleProprietarios, toggleVincularImovel, handleDesativarImovel,
+    title, description
+  };
+
   return (
-    <AuthCheck>
-      {showImageModal && (
-        <ImageUploadModal
-          title="Upload de Imagens"
-          onClose={() => setShowImageModal(false)}
-          onUploadComplete={handleImagesUploaded}
-        />
-      )}
-
-      {isModalOpen && (
-        <Modal
-          title={title()}
-          description={description()}
-          buttonText="Ver no site"
-          link={`/imovel-${formData.Codigo || newImovelCode}/${formData?.Slug}`}
-        />
-      )}
-
-      <div className="">
-        <FormHeader
-          title={getFormTitle()}
-          error={error}
-          success={success}
-          isAutomacao={isAutomacao}
-        />
-        <div className="flex justify-between gap-2 py-4">
-          {formData.Ativo === "Sim" && (
-            <button
-              onClick={handleDesativarImovel}
-              disabled={isDesativando || mode !== "edit"}
-              className={`border-2 bg-red-100 font-bold px-4 py-2 rounded-md min-w-[180px] ${
-                isDesativando
-                  ? "bg-red-300 text-red-500 cursor-not-allowed"
-                  : mode !== "edit"
-                  ? "bg-red-100 text-red-400 cursor-not-allowed border-red-200"
-                  : "text-red-700 hover:text-red-900 hover:border-red-400"
-              }`}
-            >
-              {isDesativando ? "Desativar Imóvel" : "Desativar Imóvel"}
-            </button>
-          )}
-          <div className="w-full flex justify-end gap-2">
-            <button
-              onClick={toggleProprietarios}
-              className={`font-bold px-4 py-2 rounded-md ${
-                showProprietarios
-                  ? "bg-[#8B6F48] text-white hover:bg-[#8B6F48]/40"
-                  : "bg-gray-200 text-gray-500 hover:bg-gray-300"
-              }`}
-            >
-              Proprietários
-            </button>
-
-            {/* Only show the Vincular Imóvel button in edit mode and if Automacao is true */}
-            {mode === "edit" && (
-              <button
-                onClick={toggleVincularImovel}
-                className={`font-bold px-4 py-2 rounded-md ${
-                  showVincularImovel
-                    ? "bg-[#8B6F48] text-white hover:bg-[#8B6F48]/40"
-                    : "bg-gray-200 text-gray-500 hover:bg-gray-300"
-                }`}
-              >
-                Duplicar Imóvel
-              </button>
-            )}
-          </div>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-8">
-          {showProprietarios && (
-            <ProprietariosSection id={formData.Codigo} key="proprietarios-section" />
-          )}
-          {showVincularImovel && (
-            <VincularImovelSection
-              formData={formData}
-              displayValues={displayValues}
-              onChange={handleChange}
-              validation={validation}
-              key="vincular-section"
-            />
-          )}
-
-          {/* Basic Info Section with updated Ativo field */}
-          <BasicInfoSection
-            formData={{
-              ...formData,
-              Ativo: formData.Ativo || "Sim",
-            }}
-            displayValues={displayValues}
-            onChange={handleChange}
-            validation={validation}
-            key="basic-info-section"
-          />
-
-          {/* Location Section */}
-          <LocationSection
-            formData={formData}
-            displayValues={displayValues}
-            onChange={handleChange}
-            validation={validation}
-            key="location-section"
-          />
-
-          {/* Features Section */}
-          <FeaturesSection
-            formData={formData}
-            displayValues={displayValues}
-            onChange={handleChange}
-            key="features-section"
-          />
-
-          {/* Values Section */}
-          <ValuesSection
-            formData={formData}
-            displayValues={displayValues}
-            onChange={handleChange}
-            key="values-section"
-          />
-
-          {/* Broker Section */}
-          <BrokerSection
-            formData={formData}
-            displayValues={displayValues}
-            onChange={handleChange}
-            key="broker-section"
-          />
-
-          {/* Description Section */}
-          <DescriptionSection
-            formData={formData}
-            displayValues={displayValues}
-            onChange={handleChange}
-            key="description-section"
-          />
-
-          {/* Media Section */}
-          <MediaSection
-            formData={formData}
-            displayValues={displayValues}
-            onChange={handleChange}
-            key="media-section"
-          />
-
-          {/* Images Section */}
-          <ImagesSection
-            formData={formData}
-            addSingleImage={addSingleImage}
-            showImageModal={addImage}
-            updateImage={updateImage}
-            removeImage={removeImage}
-            setImageAsHighlight={setImageAsHighlight}
-            changeImagePosition={changeImagePosition}
-            validation={validation}
-            key="images-section"
-          />
-          {error && (
-            <div className="bg-red-100 p-4 text-red-500 rounded-lg">
-              {error}: verifique se esse imóvel já esta cadastrado anteriormente.
-            </div>
-          )}
-
-          <FormFooter
-            isSaving={isSaving}
-            isValid={validation.isFormValid}
-            isEditMode={mode === "edit"}
-            onCancel={handleCancel}
-            key="form-footer"
-          />
-        </form>
-
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handleFileInputChange}
-          style={{ display: "none" }}
-      />
-    </div> {/* Fecha a div que envolve o formulário e o input de arquivo */}
-  </AuthCheck>
-);
-} // Fecha a função GerenciarImovel
+    <ImovelGerenciarContent {...contentProps} />
+  );
+}
