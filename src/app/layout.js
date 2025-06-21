@@ -22,17 +22,6 @@ const michroma = Michroma({
 const GTM_ID = "GTM-NN6HZC";
 const ANALYTICS_ID = "G-405E52JFGM";
 
-// ADICIONE ESTE BLOCO DE CÓDIGO
-export const metadata = {
-  title: "NPI Consultoria Imobiliária - Teste de Metadados",
-  description: "Esta é uma descrição de teste para verificar a renderização do head.",
-  robots: "noindex, nofollow", // Para garantir que não indexe este teste
-  // Você pode adicionar outras propriedades de metadados aqui se quiser testar
-  // openGraph: { ... },
-  // twitter: { ... },
-};
-// FIM DO BLOCO ADICIONADO
-
 export default function RootLayout({ children }) {
   return (
     <html lang="pt-BR">
