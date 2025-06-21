@@ -33,13 +33,13 @@ export async function generateMetadata({ params }) {
   return {
     title: `${condominio.Empreendimento}, ${condominio.TipoEndereco} ${condominio.Endereco} ${condominio.Numero}, ${condominio.BairroComercial}`,
     description,
+    robots: "index, follow",
     alternates: {
       canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${condominio.Codigo}/${condominio.Slug}`,
     },
     openGraph: {
       title: `Condomínio ${condominio.Empreendimento}`,
-      description,
-      robots: "index, follow",
+      description,      
       url: `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${condominio.Codigo}/${condominio.Slug}`,
       images: destaqueFotoUrl ? [{ url: destaqueFotoUrl }] : [],
       type: "website",
