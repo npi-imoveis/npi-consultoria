@@ -1,4 +1,4 @@
-"use client";
+ "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { formatterSlug } from "@/app/utils/formatter-slug";
