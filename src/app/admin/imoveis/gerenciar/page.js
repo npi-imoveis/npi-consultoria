@@ -224,8 +224,8 @@ export default function GerenciarImovel() {
       return;
     }
 
-    if (
-      !window.confirm(
+    // Adicionando a verificação para window
+    if (typeof window !== 'undefined' && !window.confirm(
         "Tem certeza que deseja desativar este imóvel? Ele será movido para a lista de imóveis inativos."
       )
     ) {
@@ -310,7 +310,7 @@ export default function GerenciarImovel() {
                   : "text-red-700 hover:text-red-900 hover:border-red-400"
               }`}
             >
-              {isDesativando ? "Desativando..." : "Desativar Imóvel"}
+              {isDesativando ? "Desativar Imóvel" : "Desativar Imóvel"}
             </button>
           )}
           <div className="w-full flex justify-end gap-2">
@@ -448,9 +448,4 @@ export default function GerenciarImovel() {
           type="file"
           accept="image/*"
           onChange={handleFileInputChange}
-          style={{ display: "none" }}
-        />
-      </div>
-    </AuthCheck>
-  );
-}
+          style={{
