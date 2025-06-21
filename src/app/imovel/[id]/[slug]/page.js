@@ -19,11 +19,34 @@ import { notFound, redirect } from "next/navigation";
 
 export async function generateMetadata({ params }) {
   const { id } = params;
-  // const response = await getCondominioPorSlug(slug);
   const response = await getImovelById(id);
-  // Acessando cookies no server component
-
   const condominio = response?.data;
+
+  // Adiciona uma verificação para garantir que 'condominio' não é nulo/indefinido
+  if (!condominio) {
+    // Retorna metadados padrão ou genéricos caso os dados do imóvel não sejam encontrados.
+    // Isso evita que a função falhe e garante que alguma informação de SEO seja fornecida.
+    return {
+      title: "NPI Consultoria Imobiliária - Imóveis de Qualidade",
+      description: "Encontre seu imóvel ideal com a NPI Consultoria. Especialistas em imóveis de alto padrão.",
+      robots: "noindex, nofollow", // Opcional: pode definir como noindex, nofollow se a página não deve ser indexada sem dados
+      alternates: {
+        canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${id}`,
+      },
+      openGraph: {
+        title: "NPI Consultoria Imobiliária",
+        description: "Encontre seu imóvel ideal com a NPI Consultoria.",
+        url: `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${id}`,
+        type: "website",
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: "NPI Consultoria Imobiliária",
+        description: "Encontre seu imóvel ideal com a NPI Consultoria.",
+        site: "@NPIImoveis",
+      },
+    };
+  }
 
   const destaqueFotoObj = condominio.Foto?.find((f) => f.Destaque === "Sim");
   const destaqueFotoUrl = destaqueFotoObj?.Foto;
@@ -35,14 +58,14 @@ export async function generateMetadata({ params }) {
     description,
     robots: "index, follow",
     alternates: {
-    canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${condominio.Codigo}/${condominio.Slug}`,
-    languages: {
-        "pt-BR": `/imovel-${condominio.Codigo}/${condominio.Slug}`,  
-       },
+      canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${condominio.Codigo}/${condominio.Slug}`,
+      languages: {
+        "pt-BR": `/imovel-${condominio.Codigo}/${condominio.Slug}`,
+      },
     },
     openGraph: {
       title: `Condomínio ${condominio.Empreendimento}`,
-      description,      
+      description,
       url: `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${condominio.Codigo}/${condominio.Slug}`,
       images: destaqueFotoUrl ? [{ url: destaqueFotoUrl }] : [],
       type: "website",
@@ -56,6 +79,7 @@ export async function generateMetadata({ params }) {
     },
   };
 }
+
 
 export default async function Imovel({ params }) {
   const { id, slug } = params;
