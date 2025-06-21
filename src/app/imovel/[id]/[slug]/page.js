@@ -1,3 +1,5 @@
+// app/imovel/[id]/[slug]/page.js
+
 import { ImageGallery } from "@/app/components/sections/image-gallery";
 import { FAQImovel } from "./componentes/FAQImovel";
 import DetalhesCondominio from "./componentes/DetalhesCondominio";
@@ -17,19 +19,22 @@ import { Apartment as StructuredDataApartment } from "@/app/components/structure
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 import { notFound, redirect } from "next/navigation";
 
+// A função generateMetadata deve ser um Server Component e rodar antes da página.
+// Ela é responsável por gerar as tags <title> e <meta> no <head> do HTML inicial.
 export async function generateMetadata({ params }) {
   const { id } = params;
-  const response = await getImovelById(id);
-  const condominio = response?.data;
+  let condominio = null;
 
-  // Adiciona uma verificação para garantir que 'condominio' não é nulo/indefinido
-  if (!condominio) {
-    // Retorna metadados padrão ou genéricos caso os dados do imóvel não sejam encontrados.
-    // Isso evita que a função falhe e garante que alguma informação de SEO seja fornecida.
+  try {
+    const response = await getImovelById(id);
+    condominio = response?.data;
+  } catch (error) {
+    console.error("Erro ao buscar dados do imóvel para metadados:", error);
+    // Em caso de erro na busca, retorne metadados genéricos para evitar falha total.
     return {
-      title: "NPI Consultoria Imobiliária - Imóveis de Qualidade",
+      title: "Imóvel - NPI Consultoria Imobiliária",
       description: "Encontre seu imóvel ideal com a NPI Consultoria. Especialistas em imóveis de alto padrão.",
-      robots: "noindex, nofollow", // Opcional: pode definir como noindex, nofollow se a página não deve ser indexada sem dados
+      robots: "noindex, nofollow", // Pode ser 'noindex, nofollow' se não houver dados válidos
       alternates: {
         canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${id}`,
       },
@@ -48,14 +53,40 @@ export async function generateMetadata({ params }) {
     };
   }
 
+  // Se o imóvel não for encontrado, o notFound() será chamado no componente da página,
+  // mas para os metadados, podemos retornar um fallback ou um noindex.
+  if (!condominio) {
+    return {
+      title: "Imóvel não encontrado - NPI Consultoria Imobiliária",
+      description: "A página do imóvel que você está procurando não foi encontrada.",
+      robots: "noindex, nofollow",
+      alternates: {
+        canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${id}`,
+      },
+      openGraph: {
+        title: "Imóvel não encontrado",
+        description: "A página do imóvel que você está procurando não foi encontrada.",
+        url: `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${id}`,
+        type: "website",
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: "Imóvel não encontrado",
+        description: "A página do imóvel que você está procurando não foi encontrada.",
+        site: "@NPIImoveis",
+      },
+    };
+  }
+
   const destaqueFotoObj = condominio.Foto?.find((f) => f.Destaque === "Sim");
   const destaqueFotoUrl = destaqueFotoObj?.Foto;
 
-  const description = `${condominio.Empreendimento} em ${condominio.BairroComercial}, ${condominio.Cidade}. ${condominio.Categoria} com ${condominio.MetragemAnt}, ${condominio.DormitoriosAntigo} quartos, ${condominio.VagasAntigo} vagas. ${condominio.Situacao}.`;
+  // Garante que a descrição não seja muito longa ou vazia
+  const description = `${condominio.Empreendimento || 'Imóvel'} em ${condominio.BairroComercial || 'localização desconhecida'}, ${condominio.Cidade || 'cidade desconhecida'}. ${condominio.Categoria || 'Imóvel'} com ${condominio.MetragemAnt || 'metragem não informada'}, ${condominio.DormitoriosAntigo || 'número de'} quartos, ${condominio.VagasAntigo || 'número de'} vagas. ${condominio.Situacao || ''}.`.trim();
 
   return {
     title: `${condominio.Empreendimento}, ${condominio.TipoEndereco} ${condominio.Endereco} ${condominio.Numero}, ${condominio.BairroComercial}`,
-    description,
+    description: description,
     robots: "index, follow",
     alternates: {
       canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${condominio.Codigo}/${condominio.Slug}`,
@@ -65,7 +96,7 @@ export async function generateMetadata({ params }) {
     },
     openGraph: {
       title: `Condomínio ${condominio.Empreendimento}`,
-      description,
+      description: description,
       url: `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${condominio.Codigo}/${condominio.Slug}`,
       images: destaqueFotoUrl ? [{ url: destaqueFotoUrl }] : [],
       type: "website",
@@ -73,24 +104,19 @@ export async function generateMetadata({ params }) {
     twitter: {
       card: "summary_large_image",
       title: `Condomínio ${condominio.Empreendimento}`,
-      description,
+      description: description,
       site: "@NPIImoveis",
       images: destaqueFotoUrl ? [destaqueFotoUrl] : [],
     },
   };
 }
 
-
 export default async function Imovel({ params }) {
   const { id, slug } = params;
-  // const response = await getCondominioPorSlug(slug);
   const response = await getImovelById(id);
-  // Acessando cookies no server component
-
-  // const response = await getCondominioPorSlug(slug);
 
   if (!response?.data) {
-    notFound();
+    notFound(); // Isso vai renderizar a página 404 do Next.js
   }
 
   const imovel = response.data;
@@ -105,6 +131,7 @@ export default async function Imovel({ params }) {
 
   return (
     <section className="w-full bg-white pb-32 pt-20">
+      {/* StructuredDataApartment deve ser um Client Component se precisar de dados do DOM ou interatividade */}
       <StructuredDataApartment
         title={imovel.Empreendimento}
         price={imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}
