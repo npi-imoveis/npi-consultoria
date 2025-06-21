@@ -22,14 +22,6 @@ export const useImovelForm = () => {
   const imovelSelecionado = useImovelStore((state) => state.imovelSelecionado);
   const isAutomacao = imovelSelecionado?.Automacao === true;
 
-  useEffect(() => {
-  if (isAutomacao && imovelSelecionado) {
-    const deepCloned = JSON.parse(JSON.stringify(imovelSelecionado)); // Clonagem profunda para evitar referência compartilhada
-    setFormData(deepCloned);
-  }
-}, [isAutomacao, imovelSelecionado]);
-
-
   const [formData, setFormData] = useState({
     Codigo: "",
     CodigoOriginal: "",
