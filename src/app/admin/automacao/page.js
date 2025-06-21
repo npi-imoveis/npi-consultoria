@@ -139,13 +139,14 @@ export default function AdminImoveis() {
     // Salvar o imóvel selecionado no store
     if (imovelSelecionado) {
       // Adicionar flag Automacao: true antes de salvar no store
-      const imovelComAutomacao = {
-        ...imovelSelecionado,
-        Automacao: true,
-        CodigoOriginal: imovelSelecionado.Codigo,
-      };
+     const imovelComAutomacao = JSON.parse(JSON.stringify({
+  ...imovelSelecionado,
+  Automacao: true,
+  CodigoOriginal: imovelSelecionado.Codigo,
+}));
 
-      setImovelSelecionado(imovelComAutomacao);
+setImovelSelecionado(imovelComAutomacao);
+
       router.push("/admin/imoveis/gerenciar");
     } else {
       console.error("Imóvel não encontrado na lista");
