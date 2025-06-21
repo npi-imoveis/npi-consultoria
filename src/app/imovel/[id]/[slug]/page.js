@@ -37,7 +37,8 @@ export async function generateMetadata({ params }) {
     alternates: {
     canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${condominio.Codigo}/${condominio.Slug}`,
     languages: {
-        "pt-BR": `/imovel-${condominio.Codigo}/${condominio.Slug}`,      
+        "pt-BR": `/imovel-${condominio.Codigo}/${condominio.Slug}`,  
+       },
     },
     openGraph: {
       title: `Condomínio ${condominio.Empreendimento}`,
