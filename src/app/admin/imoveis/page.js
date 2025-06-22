@@ -31,65 +31,51 @@ export default function AdminImoveis() {
   });
 
   // Função para salvar busca livre
-  const saveSearchState = (term, results) => {
+  const saveSearchState = (term, results, paginationData) => {
     localStorage.setItem("admin_searchTerm", term);
     localStorage.setItem("admin_searchResults", JSON.stringify(results));
+    localStorage.setItem("admin_searchPagination", JSON.stringify(paginationData)); // Salvar dados de paginação
   };
 
   // Função para limpar busca livre
   const clearSearchState = () => {
     localStorage.removeItem("admin_searchTerm");
     localStorage.removeItem("admin_searchResults");
+    localStorage.removeItem("admin_searchPagination"); // Limpar dados de paginação
   };
 
-  // Restaurar busca livre ao montar
-  useEffect(() => {
-    const savedTerm = localStorage.getItem("admin_searchTerm");
-    const savedResults = localStorage.getItem("admin_searchResults");
-    if (savedTerm && savedResults) {
-      setSearchTerm(savedTerm);
-      setImoveis(JSON.parse(savedResults));
-      setPagination({
-        totalItems: JSON.parse(savedResults).length,
-        totalPages: Math.ceil(JSON.parse(savedResults).length / 12),
-        currentPage: 1,
-        itemsPerPage: 12,
-      });
-      setIsLoading(false);
-      return;
-    }
-    // Só carrega todos se não houver busca livre salva
-    loadImoveis(currentPage);
-    // eslint-disable-next-line
-  }, []);
-
+  // Carregar imóveis e gerenciar estado de busca/filtros
   const loadImoveis = async (page = 1, search = "", customFilters = null) => {
     setIsLoading(true);
     try {
+      let responseData;
+      let newPaginationData;
+
       if (search) {
         // Usar o endpoint de busca com Atlas Search
         const response = await fetch(`/api/search/admin?q=${encodeURIComponent(search)}`);
         const data = await response.json();
 
         if (data && data.status === 200 && data.data) {
-          setImoveis(data.data);
-          saveSearchState(search, data.data);
-          setPagination({
+          responseData = data.data;
+          newPaginationData = {
             totalItems: data.data.length,
             totalPages: Math.ceil(data.data.length / 12),
-            currentPage: 1,
+            currentPage: page, // Usar a página atual da busca
             itemsPerPage: 12,
-          });
+          };
         } else {
-          setImoveis([]);
-          saveSearchState(search, []);
-          setPagination({
+          responseData = [];
+          newPaginationData = {
             totalItems: 0,
             totalPages: 1,
             currentPage: 1,
             itemsPerPage: 12,
-          });
+          };
         }
+        // Salvar o estado da busca livre
+        saveSearchState(search, responseData, newPaginationData);
+
       } else {
         // Usar filtros customizados ou filtros do state
         const filtersToUse = customFilters || filters;
@@ -109,21 +95,27 @@ export default function AdminImoveis() {
         // Se não tiver termo de busca, buscar todos os imóveis normalmente
         const response = await getImoveisDashboard(apiFilters, page, 12);
         if (response && response.data) {
-          setImoveis(response.data);
-          setPagination({
+          responseData = response.data;
+          newPaginationData = {
             ...response.paginacao,
             itemsPerPage: 12,
-          });
+          };
         } else {
-          setImoveis([]);
-          setPagination({
+          responseData = [];
+          newPaginationData = {
             totalItems: 0,
             totalPages: 1,
             currentPage: 1,
             itemsPerPage: 12,
-          });
+          };
         }
+        // Limpar o estado da busca livre se não for uma busca livre
+        clearSearchState();
       }
+
+      setImoveis(responseData);
+      setPagination(newPaginationData);
+
     } catch (error) {
       console.error("Erro ao carregar imóveis:", error);
       setImoveis([]);
@@ -138,17 +130,46 @@ export default function AdminImoveis() {
     }
   };
 
-  // Carregar imóveis quando a página mudar ou filtros mudarem, mas só se não houver busca livre salva
+  // Restaurar busca livre ao montar e carregar imóveis
   useEffect(() => {
     const savedTerm = localStorage.getItem("admin_searchTerm");
-    if (!savedTerm && !isFilteringManually) {
-      loadImoveis(currentPage);
+    const savedPagination = localStorage.getItem("admin_searchPagination");
+    let initialPage = 1;
+    let initialSearchTerm = "";
+
+    if (savedTerm) {
+      initialSearchTerm = savedTerm;
+      if (savedPagination) {
+        const parsedPagination = JSON.parse(savedPagination);
+        initialPage = parsedPagination.currentPage || 1;
+        setPagination(parsedPagination); // Define a paginação salva
+      }
+      setSearchTerm(initialSearchTerm); // Define o termo de busca salvo
     }
-    // Reset do flag após o useEffect
-    if (isFilteringManually) {
+    
+    // Sempre carrega os imóveis, seja com o termo salvo ou sem
+    loadImoveis(initialPage, initialSearchTerm);
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Dependência vazia para rodar apenas na montagem
+
+  // Carregar imóveis quando a página mudar ou filtros mudarem
+  useEffect(() => {
+    // Este useEffect agora lida apenas com mudanças de paginação ou filtros
+    // A busca inicial é feita no useEffect de montagem
+    if (isFilteringManually) { // Se for filtro manual, já foi tratado no handleFilterApply
       setIsFilteringManually(false);
+      return;
     }
-  }, [currentPage, filters, isFilteringManually]);
+    // Se não for busca livre (searchTerm vazio) e não for filtro manual, carrega com filtros
+    if (!searchTerm) {
+      loadImoveis(currentPage, "", filters);
+    } else {
+      // Se houver searchTerm, recarrega a busca livre para a página atual
+      loadImoveis(currentPage, searchTerm);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, filters]); // Adicione 'filters' como dependência
 
   // Função para lidar com a mudança de página
   const handlePageChange = (newPage) => {
@@ -160,7 +181,7 @@ export default function AdminImoveis() {
   const handleSearch = (e) => {
     e.preventDefault();
     setCurrentPage(1); // Resetar para a primeira página ao realizar nova busca
-    loadImoveis(1, searchTerm);
+    loadImoveis(1, searchTerm); // Inicia a busca com o termo atual
   };
 
   // Função para limpar a busca
@@ -168,8 +189,8 @@ export default function AdminImoveis() {
     setSearchTerm("");
     setCurrentPage(1);
     setFilters({}); // Limpar filtros também
-    loadImoveis(1, "");
-    clearSearchState();
+    clearSearchState(); // Limpar estado salvo
+    loadImoveis(1, ""); // Carregar todos os imóveis sem busca ou filtro
   };
 
   // Handler para os filtros
