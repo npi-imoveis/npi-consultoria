@@ -34,17 +34,17 @@ export default function AdminImoveis() {
   const saveSearchState = (term, results, paginationData) => {
     localStorage.setItem("admin_searchTerm", term);
     localStorage.setItem("admin_searchResults", JSON.stringify(results));
-    localStorage.setItem("admin_searchPagination", JSON.stringify(paginationData)); // Salvar dados de paginação
+    localStorage.setItem("admin_searchPagination", JSON.stringify(paginationData));
   };
 
   // Função para limpar busca livre
   const clearSearchState = () => {
     localStorage.removeItem("admin_searchTerm");
     localStorage.removeItem("admin_searchResults");
-    localStorage.removeItem("admin_searchPagination"); // Limpar dados de paginação
+    localStorage.removeItem("admin_searchPagination");
   };
 
-  // Carregar imóveis e gerenciar estado de busca/filtros
+  // loadImoveis function is already well-defined to handle search and filters
   const loadImoveis = async (page = 1, search = "", customFilters = null) => {
     setIsLoading(true);
     try {
@@ -52,7 +52,6 @@ export default function AdminImoveis() {
       let newPaginationData;
 
       if (search) {
-        // Usar o endpoint de busca com Atlas Search
         const response = await fetch(`/api/search/admin?q=${encodeURIComponent(search)}`);
         const data = await response.json();
 
@@ -61,7 +60,7 @@ export default function AdminImoveis() {
           newPaginationData = {
             totalItems: data.data.length,
             totalPages: Math.ceil(data.data.length / 12),
-            currentPage: page, // Usar a página atual da busca
+            currentPage: page,
             itemsPerPage: 12,
           };
         } else {
@@ -73,26 +72,20 @@ export default function AdminImoveis() {
             itemsPerPage: 12,
           };
         }
-        // Salvar o estado da busca livre
+        // Salvar o estado da busca livre APÓS a requisição da API
         saveSearchState(search, responseData, newPaginationData);
 
       } else {
-        // Usar filtros customizados ou filtros do state
         const filtersToUse = customFilters || filters;
-
-        // Construir os parâmetros de filtro para a API
         const apiFilters = { ...filtersToUse };
 
-        // Processar filtros de valor
         if (apiFilters.ValorMin) {
           apiFilters.ValorMin = apiFilters.ValorMin.toString();
         }
-
         if (apiFilters.ValorMax) {
           apiFilters.ValorMax = apiFilters.ValorMax.toString();
         }
 
-        // Se não tiver termo de busca, buscar todos os imóveis normalmente
         const response = await getImoveisDashboard(apiFilters, page, 12);
         if (response && response.data) {
           responseData = response.data;
@@ -130,46 +123,51 @@ export default function AdminImoveis() {
     }
   };
 
-  // Restaurar busca livre ao montar e carregar imóveis
+  // Initial load useEffect - Modificado para restaurar e depois revalidar
   useEffect(() => {
     const savedTerm = localStorage.getItem("admin_searchTerm");
+    const savedResults = localStorage.getItem("admin_searchResults");
     const savedPagination = localStorage.getItem("admin_searchPagination");
+    
     let initialPage = 1;
     let initialSearchTerm = "";
+    let initialImoveis = [];
+    let initialPagination = { totalItems: 0, totalPages: 1, currentPage: 1, itemsPerPage: 12 };
 
-    if (savedTerm) {
+    if (savedTerm && savedResults && savedPagination) {
       initialSearchTerm = savedTerm;
-      if (savedPagination) {
-        const parsedPagination = JSON.parse(savedPagination);
-        initialPage = parsedPagination.currentPage || 1;
-        setPagination(parsedPagination); // Define a paginação salva
-      }
-      setSearchTerm(initialSearchTerm); // Define o termo de busca salvo
+      initialImoveis = JSON.parse(savedResults);
+      initialPagination = JSON.parse(savedPagination);
+      initialPage = initialPagination.currentPage || 1;
+
+      // Exibe os dados do cache imediatamente para uma UX mais rápida
+      setSearchTerm(initialSearchTerm);
+      setImoveis(initialImoveis);
+      setPagination(initialPagination);
+      setIsLoading(true); // Mantém o loading para a requisição da API
     }
     
-    // Sempre carrega os imóveis, seja com o termo salvo ou sem
+    // Sempre chama loadImoveis para buscar dados frescos,
+    // seja com o termo salvo ou para carregar todos os imóveis
     loadImoveis(initialPage, initialSearchTerm);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Dependência vazia para rodar apenas na montagem
 
-  // Carregar imóveis quando a página mudar ou filtros mudarem
+  // useEffect for handling page changes or filter changes
   useEffect(() => {
-    // Este useEffect agora lida apenas com mudanças de paginação ou filtros
-    // A busca inicial é feita no useEffect de montagem
-    if (isFilteringManually) { // Se for filtro manual, já foi tratado no handleFilterApply
+    // This useEffect now handles subsequent changes to currentPage or filters
+    // The initial load is handled by the first useEffect
+    if (isFilteringManually) {
       setIsFilteringManually(false);
       return;
     }
-    // Se não for busca livre (searchTerm vazio) e não for filtro manual, carrega com filtros
-    if (!searchTerm) {
-      loadImoveis(currentPage, "", filters);
-    } else {
-      // Se houver searchTerm, recarrega a busca livre para a página atual
-      loadImoveis(currentPage, searchTerm);
-    }
+    // Se houver searchTerm, recarrega a busca livre para a página atual
+    // Se não houver searchTerm, carrega com filtros
+    loadImoveis(currentPage, searchTerm, filters);
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage, filters]); // Adicione 'filters' como dependência
+  }, [currentPage, filters, searchTerm]); // Adicione 'searchTerm' como dependência aqui
 
   // Função para lidar com a mudança de página
   const handlePageChange = (newPage) => {
@@ -181,7 +179,7 @@ export default function AdminImoveis() {
   const handleSearch = (e) => {
     e.preventDefault();
     setCurrentPage(1); // Resetar para a primeira página ao realizar nova busca
-    loadImoveis(1, searchTerm); // Inicia a busca com o termo atual
+    loadImoveis(1, searchTerm); // Trigger search with current term
   };
 
   // Função para limpar a busca
@@ -195,32 +193,22 @@ export default function AdminImoveis() {
 
   // Handler para os filtros
   const handleFilterApply = (newFilters) => {
-    // Transformar filtros para o formato esperado pela API
     const processedFilters = { ...newFilters };
 
-    // Limpar filtros vazios
     Object.keys(processedFilters).forEach((key) => {
-      // Remover arrays vazios
       if (Array.isArray(processedFilters[key]) && processedFilters[key].length === 0) {
         delete processedFilters[key];
-      }
-      // Remover strings vazias
-      else if (processedFilters[key] === "") {
+      } else if (processedFilters[key] === "") {
         delete processedFilters[key];
-      }
-      // Remover null ou undefined
-      else if (processedFilters[key] === null || processedFilters[key] === undefined) {
+      } else if (processedFilters[key] === null || processedFilters[key] === undefined) {
         delete processedFilters[key];
       }
     });
 
-    // Marcar que estamos filtrando manualmente
     setIsFilteringManually(true);
-    // Atualizar os states
     setFilters(processedFilters);
     setCurrentPage(1);
 
-    // Carregar imóveis imediatamente com os novos filtros
     loadImoveis(1, "", processedFilters);
   };
 
@@ -228,23 +216,15 @@ export default function AdminImoveis() {
   const handleEdit = async (imovelCodigo) => {
     setIsLoading(true);
     try {
-      // Get the imovel data by ID
       const response = await getImovelById(imovelCodigo);
 
       if (response && response.data) {
-        // Access the store's setImovelSelecionado function
         const setImovelSelecionado = useImovelStore.getState().setImovelSelecionado;
-
-        // Add the Automacao property to the imovel data
         const imovelWithAutomacao = {
           ...response.data,
           Automacao: false,
         };
-
-        // Set the imovel in the store
         setImovelSelecionado(imovelWithAutomacao);
-
-        // Redirect to the gerenciar page instead of the editar page
         router.push("/admin/imoveis/gerenciar");
       } else {
         console.error("Erro ao buscar imóvel:", response?.error || "Imóvel não encontrado");
@@ -261,15 +241,11 @@ export default function AdminImoveis() {
   // Função para formatar valores monetários
   const formatarValor = (valor) => {
     if (!valor) return "-";
-
-    // Verificar se o valor já é um número ou precisa ser convertido
     const valorNumerico =
       typeof valor === "number"
         ? valor
         : parseFloat(valor.replace(/[^\d.,]/g, "").replace(",", "."));
-
     if (isNaN(valorNumerico)) return "-";
-
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",
@@ -283,11 +259,11 @@ export default function AdminImoveis() {
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    loadImoveis(currentPage, searchTerm);
+    // After closing modal, re-load current page with current search/filters
+    loadImoveis(currentPage, searchTerm, filters);
   };
 
   const handleCadastrarNovoImovel = () => {
-    // Limpa o imóvel selecionado e define o modo para criação
     const limparImovelSelecionado = useImovelStore.getState().limparImovelSelecionado;
     limparImovelSelecionado();
     router.push("/admin/imoveis/gerenciar");
@@ -312,178 +288,4 @@ export default function AdminImoveis() {
             <h1 className="text-2xl font-bold text-gray-900">Gerenciamento de Imóveis</h1>
             <button
               onClick={handleCadastrarNovoImovel}
-              className="inline-flex items-center px-5 py-2 border border-transparent text-xs font-bold rounded-md shadow-xl text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
-            >
-              Cadastrar Novo Imóvel
-            </button>
-          </div>
-
-          {/* Barra de pesquisa */}
-          <div className="bg-white p-4 rounded-lg  mb-6">
-            <form onSubmit={handleSearch} className="flex items-center gap-2">
-              <div className="flex w-full items-center justify-center gap-2">
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Buscar por código, endereço, cidade ou condomínio..."
-                  className="w-full text-xs rounded-md border border-gray-300 bg-white p-2 focus:outline-none focus:ring-1 focus:ring-black"
-                />
-                <button
-                  type="submit"
-                  className="min-w-[200px] px-5 py-2 border border-transparent text-[10px] font-bold rounded-md shadow-sm text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
-                >
-                  Busca Livre
-                </button>
-                {searchTerm && (
-                  <button
-                    type="button"
-                    onClick={clearSearch}
-                    className="min-w-[200px] px-5 py-2 border border-transparent text-[10px] font-bold rounded-md shadow-sm text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
-                  >
-                    Limpar
-                  </button>
-                )}
-              </div>
-            </form>
-          </div>
-
-          <div>
-            <FiltersImoveisAdmin onFilter={handleFilterApply} />
-          </div>
-
-          {/* Tabela de imóveis */}
-          <div className="relative overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th
-                    scope="col"
-                    className="px-6 bg-gray-50 py-3 text-left text-[10px] font-bold  uppercase tracking-wider"
-                  >
-                    Código
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-[10px] font-bold  uppercase tracking-wider"
-                  >
-                    Ativo
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-[10px] font-bold  uppercase tracking-wider"
-                  >
-                    Empreendimento
-                  </th>
-
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-[10px] font-bold  uppercase tracking-wider"
-                  >
-                    Categoria
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-[10px] font-bold  uppercase tracking-wider"
-                  >
-                    Valor (ValorAntigo)
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-[10px] font-bold  uppercase tracking-wider sticky right-0 bg-gray-50"
-                  >
-                    Ações
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {isLoading ? (
-                  // Linha de carregamento
-                  Array(10)
-                    .fill(null)
-                    .map((_, index) => (
-                      <tr key={`loading-${index}`}>
-                        <td colSpan={5} className="w-full px-6 py-4 whitespace-nowrap">
-                          <div className="w-full animate-pulse flex space-x-4">
-                            <div className="h-4 w-full bg-gray-200 rounded "></div>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
-                ) : imoveis.length > 0 ? (
-                  // Dados dos imóveis
-                  imoveis.map((imovel) => (
-                    <tr key={imovel.Codigo || imovel._id} className="hover:bg-gray-50">
-                      <td className="px-6 bg-gray-50 py-4 whitespace-nowrap text-[10px] text-gray-900 font-bold">
-                        {imovel.Codigo || "-"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium ${
-                            imovel.Ativo === "Sim"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {imovel.Ativo || "-"}
-                        </span>
-                      </td>
-                      <td className="px-6 font-bold py-4 whitespace-nowrap text-[10px] text-zinc-700">
-                        {imovel.Empreendimento || "-"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700">
-                        {imovel.Categoria || "-"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700">
-                        {imovel.ValorAntigo}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap sticky right-0 bg-white">
-                        <div className="flex items-center space-x-3">
-                          <a
-                            href={`/imovel-${imovel.Codigo}/${imovel.Slug}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-black hover:text-gray-700 bg-gray-100 p-2 rounded-md"
-                            title="Ver no site"
-                          >
-                            <EyeIcon className="h-5 w-5" />
-                          </a>
-                          <button
-                            className="text-black hover:text-gray-700 bg-gray-100 p-2 rounded-md"
-                            title="Editar"
-                            onClick={() => handleEdit(imovel.Codigo)}
-                          >
-                            <PencilSquareIcon className="h-5 w-5" />
-                          </button>
-                          <button
-                            className="text-red-500 font-bold hover:text-red-400 bg-gray-100 p-2 rounded-md"
-                            title="Deletar Imóvel"
-                            onClick={() => handleDelete(imovel.Codigo)}
-                          >
-                            <TrashIcon className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  // Nenhum resultado
-                  <tr>
-                    <td colSpan={5} className="px-6 py-4 text-center text-[10px] text-gray-500">
-                      Nenhum imóvel encontrado
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Rodapé da tabela com paginação */}
-          <div className="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
-            <Pagination pagination={pagination} onPageChange={handlePageChange} />
-          </div>
-        </div>
-      </div>
-    </AuthCheck>
-  );
-}
+              className="inline-flex items-center px-5 py-
