@@ -158,7 +158,7 @@ export default function AdminImoveis() {
   useEffect(() => {
     // This useEffect now handles subsequent changes to currentPage or filters
     // The initial load is handled by the first useEffect
-    if (isFilteringManually) {
+    if (isFilteringManually) { // Se for filtro manual, já foi tratado no handleFilterApply
       setIsFilteringManually(false);
       return;
     }
@@ -288,4 +288,31 @@ export default function AdminImoveis() {
             <h1 className="text-2xl font-bold text-gray-900">Gerenciamento de Imóveis</h1>
             <button
               onClick={handleCadastrarNovoImovel}
-              className="inline-flex items-center px-5 py-
+              className="inline-flex items-center px-5 py-2 border border-transparent text-xs font-bold rounded-md shadow-xl text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
+            >
+              Cadastrar Novo Imóvel
+            </button>
+          </div>
+
+          {/* Barra de pesquisa */}
+          <div className="bg-white p-4 rounded-lg  mb-6">
+            <form onSubmit={handleSearch} className="flex items-center gap-2">
+              <div className="flex w-full items-center justify-center gap-2">
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Buscar por código, endereço, cidade ou condomínio..."
+                  className="w-full text-xs rounded-md border border-gray-300 bg-white p-2 focus:outline-none focus:ring-1 focus:ring-black"
+                />
+                <button
+                  type="submit"
+                  className="min-w-[200px] px-5 py-2 border border-transparent text-[10px] font-bold rounded-md shadow-sm text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
+                >
+                  Busca Livre
+                </button>
+                {searchTerm && (
+                  <button
+                    type="button"
+                    onClick={clearSearch}
+                    className="min-w-[200px] px-5 py-2 border border-transparent text-[10px] font-bold rounded-md shadow-sm text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:
