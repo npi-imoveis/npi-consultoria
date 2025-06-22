@@ -315,4 +315,151 @@ export default function AdminImoveis() {
                   <button
                     type="button"
                     onClick={clearSearch}
-                    className="min-w-[200px] px-5 py-2 border border-transparent text-[10px] font-bold rounded-md shadow-sm text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:
+                    className="min-w-[200px] px-5 py-2 border border-transparent text-[10px] font-bold rounded-md shadow-sm text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
+                  >
+                    Limpar
+                  </button>
+                )}
+              </div>
+            </form>
+          </div>
+
+          <div>
+            <FiltersImoveisAdmin onFilter={handleFilterApply} />
+          </div>
+
+          {/* Tabela de imóveis */}
+          <div className="relative overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th
+                    scope="col"
+                    className="px-6 bg-gray-50 py-3 text-left text-[10px] font-bold  uppercase tracking-wider"
+                  >
+                    Código
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-[10px] font-bold  uppercase tracking-wider"
+                  >
+                    Ativo
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-[10px] font-bold  uppercase tracking-wider"
+                  >
+                    Empreendimento
+                  </th>
+
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-[10px] font-bold  uppercase tracking-wider"
+                  >
+                    Categoria
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-[10px] font-bold  uppercase tracking-wider"
+                  >
+                    Valor (ValorAntigo)
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-4 text-left text-[10px] font-bold  uppercase tracking-wider sticky right-0 bg-gray-50"
+                  >
+                    Ações
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {isLoading ? (
+                  // Linha de carregamento
+                  Array(10)
+                    .fill(null)
+                    .map((_, index) => (
+                      <tr key={`loading-${index}`}>
+                        <td colSpan={5} className="w-full px-6 py-4 whitespace-nowrap">
+                          <div className="w-full animate-pulse flex space-x-4">
+                            <div className="h-4 w-full bg-gray-200 rounded "></div>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                ) : imoveis.length > 0 ? (
+                  // Dados dos imóveis
+                  imoveis.map((imovel) => (
+                    <tr key={imovel.Codigo || imovel._id} className="hover:bg-gray-50">
+                      <td className="px-6 bg-gray-50 py-4 whitespace-nowrap text-[10px] text-gray-900 font-bold">
+                        {imovel.Codigo || "-"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium ${
+                            imovel.Ativo === "Sim"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-red-100 text-red-800"
+                          }`}
+                        >
+                          {imovel.Ativo || "-"}
+                        </span>
+                      </td>
+                      <td className="px-6 font-bold py-4 whitespace-nowrap text-[10px] text-zinc-700">
+                        {imovel.Empreendimento || "-"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700">
+                        {imovel.Categoria || "-"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700">
+                        {imovel.ValorAntigo}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap sticky right-0 bg-white">
+                        <div className="flex items-center space-x-3">
+                          <a
+                            href={`/imovel-${imovel.Codigo}/${imovel.Slug}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-black hover:text-gray-700 bg-gray-100 p-2 rounded-md"
+                            title="Ver no site"
+                          >
+                            <EyeIcon className="h-5 w-5" />
+                          </a>
+                          <button
+                            className="text-black hover:text-gray-700 bg-gray-100 p-2 rounded-md"
+                            title="Editar"
+                            onClick={() => handleEdit(imovel.Codigo)}
+                          >
+                            <PencilSquareIcon className="h-5 w-5" />
+                          </button>
+                          <button
+                            className="text-red-500 font-bold hover:text-red-400 bg-gray-100 p-2 rounded-md"
+                            title="Deletar Imóvel"
+                            onClick={() => handleDelete(imovel.Codigo)}
+                          >
+                            <TrashIcon className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  // Nenhum resultado
+                  <tr>
+                    <td colSpan={5} className="px-6 py-4 text-center text-[10px] text-gray-500">
+                      Nenhum imóvel encontrado
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Rodapé da tabela com paginação */}
+          <div className="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
+            <Pagination pagination={pagination} onPageChange={handlePageChange} />
+          </div>
+        </div>
+      </div>
+    </AuthCheck>
+  );
+}
