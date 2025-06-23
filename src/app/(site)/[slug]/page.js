@@ -2,7 +2,7 @@
 import { getCondominioPorSlug } from "@/app/services";
 import { formatterValue } from "@/app/utils/formatter-value";
 import { Apartment as StructuredDataApartment } from "@/app/components/structured-data";
-import { Share } => "@/app/components/ui/share";
+import { Share } from "@/app/components/ui/share";
 import { PropertyTableOwner } from "./componentes/property-table-owner";
 import { WhatsappFloat } from "@/app/components/ui/whatsapp";
 import CondominioGallery from "./componentes/condominio-gallery";
