@@ -15,9 +15,9 @@ import Lazer from "./componentes/Lazer";
 import VideoCondominio from "./componentes/VideoCondominio";
 import TourVirtual from "./componentes/TourVirtual";
 import ExploreRegiao from "./componentes/ExploreRegiao";
-import ScrollToImoveisButton from "./componentes/scroll-to-imovel-button";
 import { notFound } from "next/navigation";
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
+import ScrollToImoveisButton from "./componentes/scroll-to-imovel-button"; // Certifique-se de que este import está correto
 
 function ensureCondominio(text) {
   return /condom[ií]nio/i.test(text) ? text : `Condomínio ${text}`;
@@ -27,6 +27,16 @@ export async function generateMetadata({ params }) {
   const { slug } = params;
   const response = await getCondominioPorSlug(slug);
   const condominio = response?.data;
+
+  // --- MODIFICAÇÃO AQUI: Verificar se condominio existe antes de acessar propriedades ---
+  if (!condominio) {
+    // Retorna metadados básicos ou vazios se o condomínio não for encontrado
+    return {
+      title: "Condomínio não encontrado",
+      description: "A página do condomínio que você procura não foi encontrada.",
+      robots: "noindex, nofollow", // Para evitar indexar páginas de erro
+    };
+  }
 
   const rawTitle = ensureCondominio(condominio.Empreendimento);
   const destaqueFotoObj = condominio.Foto?.find((f) => f.Destaque === "Sim");
@@ -62,6 +72,7 @@ export default async function CondominioPage({ params }) {
   const { slug } = params;
   const response = await getCondominioPorSlug(slug);
 
+  // --- MODIFICAÇÃO AQUI: A verificação notFound() já é suficiente ---
   if (!response.data) {
     notFound();
   }
@@ -117,7 +128,8 @@ export default async function CondominioPage({ params }) {
                 <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
                   <h4 className="text-zinc-600 text-[10px] font-bold">Venda:</h4>
                   <h2 className="text-black font-semibold text-[10px]">R$ {condominio.ValorAntigo}</h2>
-                </div>
+                  </div>
+                )}
                 {condominio.ValorCondominio && (
                   <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
                     <h4 className="text-zinc-600 text-[10px] font-bold">Condomínio:</h4>
