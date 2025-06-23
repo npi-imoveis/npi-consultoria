@@ -1,8 +1,8 @@
-import { Button } from "@/app/components/ui/button";
+ import { Button } from "@/app/components/ui/button";
 import { getCondominioPorSlug } from "@/app/services";
 import { formatterValue } from "@/app/utils/formatter-value";
 import { Apartment as StructuredDataApartment } from "@/app/components/structured-data";
-import { Share } from "@/app/components/ui/share";
+import { Share } => "@/app/components/ui/share";
 import { PropertyTableOwner } from "./componentes/property-table-owner";
 import { WhatsappFloat } from "@/app/components/ui/whatsapp";
 import CondominioGallery from "./componentes/condominio-gallery";
@@ -17,7 +17,7 @@ import TourVirtual from "./componentes/TourVirtual";
 import ExploreRegiao from "./componentes/ExploreRegiao";
 import { notFound } from "next/navigation";
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
-import ScrollToImoveisButton from "./componentes/scroll-to-imovel-button"; // Certifique-se de que este import está correto
+import ScrollToImoveisButton from "./componentes/scroll-to-imovel-button";
 
 function ensureCondominio(text) {
   return /condom[ií]nio/i.test(text) ? text : `Condomínio ${text}`;
@@ -28,13 +28,11 @@ export async function generateMetadata({ params }) {
   const response = await getCondominioPorSlug(slug);
   const condominio = response?.data;
 
-  // --- MODIFICAÇÃO AQUI: Verificar se condominio existe antes de acessar propriedades ---
   if (!condominio) {
-    // Retorna metadados básicos ou vazios se o condomínio não for encontrado
     return {
       title: "Condomínio não encontrado",
       description: "A página do condomínio que você procura não foi encontrada.",
-      robots: "noindex, nofollow", // Para evitar indexar páginas de erro
+      robots: "noindex, nofollow",
     };
   }
 
@@ -72,7 +70,6 @@ export default async function CondominioPage({ params }) {
   const { slug } = params;
   const response = await getCondominioPorSlug(slug);
 
-  // --- MODIFICAÇÃO AQUI: A verificação notFound() já é suficiente ---
   if (!response.data) {
     notFound();
   }
@@ -113,19 +110,25 @@ export default async function CondominioPage({ params }) {
                 />
               </div>
 
-              // ... código anterior ...
-
               <h1 className="text-xl font-bold mt-2">{rawTitle}</h1>
               <span className="text-xs text-zinc-700 font-semibold">
                 {condominio.TipoEndereco} {condominio.Endereco}, {condominio.Numero}, {condominio.BairroComercial}, {condominio.Cidade}
               </span>
               <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-3 gap-3 mt-4 mb-8">
-                {/* Removido o condicional aqui, pois o ValorAntigo sempre existirá */}
+                {condominio.ValorAluguelSite && (
+                  <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
+                    <h4 className="text-zinc-600 text-[10px] font-bold">Aluguel:</h4>
+                    <h2 className="text-black font-semibold text-[10px]">R$ {condominio.ValorAluguelSite}</h2>
+                  </div>
+                )}
+
+                {/* Este é o bloco do Valor de Venda. O erro estava aqui. */}
                 <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
                   <h4 className="text-zinc-600 text-[10px] font-bold">Venda:</h4>
                   <h2 className="text-black font-semibold text-[10px]">R$ {condominio.ValorAntigo}</h2>
                 </div>
-                {/* O condicional para ValorAluguelSite já está correto acima */}
+                {/* A linha 132 do erro anterior (onde estava o ')}') foi removida aqui. */}
+
                 {condominio.ValorCondominio && (
                   <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
                     <h4 className="text-zinc-600 text-[10px] font-bold">Condomínio:</h4>
