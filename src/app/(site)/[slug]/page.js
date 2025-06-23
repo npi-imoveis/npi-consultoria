@@ -113,23 +113,19 @@ export default async function CondominioPage({ params }) {
                 />
               </div>
 
+              // ... código anterior ...
+
               <h1 className="text-xl font-bold mt-2">{rawTitle}</h1>
               <span className="text-xs text-zinc-700 font-semibold">
                 {condominio.TipoEndereco} {condominio.Endereco}, {condominio.Numero}, {condominio.BairroComercial}, {condominio.Cidade}
               </span>
               <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-3 gap-3 mt-4 mb-8">
-                {condominio.ValorAluguelSite && (
-                  <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
-                    <h4 className="text-zinc-600 text-[10px] font-bold">Aluguel:</h4>
-                    <h2 className="text-black font-semibold text-[10px]">R$ {condominio.ValorAluguelSite}</h2>
-                  </div>
-                )}
-
+                {/* Removido o condicional aqui, pois o ValorAntigo sempre existirá */}
                 <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
                   <h4 className="text-zinc-600 text-[10px] font-bold">Venda:</h4>
                   <h2 className="text-black font-semibold text-[10px]">R$ {condominio.ValorAntigo}</h2>
-                  </div>
-                )}
+                </div>
+                {/* O condicional para ValorAluguelSite já está correto acima */}
                 {condominio.ValorCondominio && (
                   <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
                     <h4 className="text-zinc-600 text-[10px] font-bold">Condomínio:</h4>
