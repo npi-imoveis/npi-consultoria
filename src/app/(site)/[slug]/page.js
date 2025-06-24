@@ -33,8 +33,6 @@ export async function generateMetadata({ params }) {
       title: "Condomínio não encontrado",
       description: "A página do condomínio que você procura não foi encontrada.",
       robots: "noindex, nofollow",
-      alternates: {
-      canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`,
     };
   }
 
