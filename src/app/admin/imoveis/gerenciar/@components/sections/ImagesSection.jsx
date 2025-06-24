@@ -10,56 +10,187 @@ const ImagesSection = ({
   showImageModal,
   updateImage,
   removeImage,
+  removeAllImages, // Nova prop adicionada
   setImageAsHighlight,
   changeImagePosition,
   validation,
 }) => {
+  const handleAddImageUrl = () => {
+    const imageUrl = prompt("Digite a URL da imagem:");
+    if (imageUrl && imageUrl.trim() !== "") {
+      addSingleImage(imageUrl.trim());
+    }
+  };
+
+  const handleImageUpload = (codigo) => {
+    const fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept = "image/*";
+    fileInput.onchange = (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          updateImage(codigo, e.target.result);
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+    fileInput.click();
+  };
+
+  const handlePositionChange = (codigo, newPosition) => {
+    const position = parseInt(newPosition);
+    if (!isNaN(position) && position > 0 && position <= formData.Foto.length) {
+      changeImagePosition(codigo, position);
+    }
+  };
+
+  // Ordenar fotos por ordem
+  const sortedPhotos = formData.Foto
+    ? [...formData.Foto].sort((a, b) => {
+        const orderA = a.Ordem || formData.Foto.findIndex((p) => p.Codigo === a.Codigo) + 1;
+        const orderB = b.Ordem || formData.Foto.findIndex((p) => p.Codigo === b.Codigo) + 1;
+        return orderA - orderB;
+      })
+    : [];
+
   return (
-    <FormSection title="Fotos do Imóvel" highlight={validation?.photoCount < 5}>
+    <FormSection title="Imagens do Imóvel">
       <div className="space-y-4">
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <p className="text-sm font-medium text-blue-800">
-            Fotos cadastradas: {formData.Foto?.length || 0}
-          </p>
-          <p className="text-xs text-blue-600">Mínimo necessário: 5 fotos</p>
+        {/* Contador e botões de ação */}
+        <div className="flex justify-between items-center">
+          <div className="text-sm text-gray-600">
+            <span className="font-medium">
+              {validation.photoCount} de {validation.requiredPhotoCount} fotos obrigatórias
+            </span>
+            {validation.photoCount < validation.requiredPhotoCount && (
+              <span className="text-red-500 ml-2">
+                (Faltam {validation.requiredPhotoCount - validation.photoCount} fotos)
+              </span>
+            )}
+          </div>
+          
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={handleAddImageUrl}
+              className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+            >
+              Adicionar URL
+            </button>
+            <button
+              type="button"
+              onClick={showImageModal}
+              className="px-3 py-1 text-sm bg-black text-white rounded hover:bg-black/80"
+            >
+              Upload de Imagens
+            </button>
+            {/* Novo botão para excluir todas as fotos */}
+            {formData.Foto && formData.Foto.length > 0 && (
+              <button
+                type="button"
+                onClick={removeAllImages}
+                className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 font-medium"
+                title="Excluir todas as fotos (dupla confirmação)"
+              >
+                🗑️ Excluir Todas
+              </button>
+            )}
+          </div>
         </div>
 
-        <div className="flex flex-wrap gap-3">
-          <button type="button" onClick={() => {
-            const url = prompt("Digite a URL da imagem:");
-            if (url && url.trim()) addSingleImage(url.trim());
-          }} className="bg-green-600 text-white px-4 py-2 rounded-md">
-            🔗 Adicionar URL
-          </button>
-
-          <button type="button" onClick={showImageModal} className="bg-blue-600 text-white px-4 py-2 rounded-md">
-            📤 Upload de Imagens
-          </button>
-        </div>
-
-        {formData.Foto?.length > 0 ? (
+        {/* Grid de imagens */}
+        {sortedPhotos.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {formData.Foto.sort((a, b) => (a.Ordem || 0) - (b.Ordem || 0)).map((photo, i) => (
-              <div key={photo.Codigo} className="border rounded-lg">
-                <div className="relative h-48 w-full">
-                  <Image src={photo.Foto} alt={`Foto ${i + 1}`} fill style={{ objectFit: "cover" }} />
+            {sortedPhotos.map((photo, index) => (
+              <div key={photo.Codigo} className="border rounded-lg p-3 space-y-2">
+                {/* Imagem */}
+                <div className="relative h-48 w-full overflow-hidden rounded border">
+                  <Image
+                    src={photo.Foto}
+                    alt={`Foto ${index + 1}`}
+                    fill
+                    style={{ objectFit: "cover" }}
+                    className="rounded"
+                  />
+                  {photo.Destaque === "Sim" && (
+                    <div className="absolute top-2 left-2 bg-yellow-500 text-white px-2 py-1 rounded text-xs font-bold">
+                      DESTAQUE
+                    </div>
+                  )}
                 </div>
-                <div className="p-2 flex justify-between">
-                  <span>Foto {photo.Ordem || i + 1}</span>
-                  <div className="flex gap-1">
-                    <button onClick={() => setImageAsHighlight(photo.Codigo)}>⭐</button>
-                    <button onClick={() => {
-                      const nova = prompt("Nova URL:", photo.Foto);
-                      if (nova && nova !== photo.Foto) updateImage(photo.Codigo, nova);
-                    }}>✏️</button>
-                    <button onClick={() => removeImage(photo.Codigo)}>🗑️</button>
+
+                {/* Controles */}
+                <div className="space-y-2">
+                  {/* Posição e destaque */}
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <label className="block text-xs text-gray-600 mb-1">Posição</label>
+                      <select
+                        value={photo.Ordem || index + 1}
+                        onChange={(e) => handlePositionChange(photo.Codigo, e.target.value)}
+                        className="w-full px-2 py-1 text-sm border rounded"
+                      >
+                        {Array.from({ length: sortedPhotos.length }, (_, i) => (
+                          <option key={i + 1} value={i + 1}>
+                            {i + 1}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-xs text-gray-600 mb-1">Destaque</label>
+                      <button
+                        type="button"
+                        onClick={() => setImageAsHighlight(photo.Codigo)}
+                        className={`w-full px-2 py-1 text-sm rounded ${
+                          photo.Destaque === "Sim"
+                            ? "bg-yellow-500 text-white"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                        }`}
+                      >
+                        {photo.Destaque === "Sim" ? "★ Destaque" : "☆ Destacar"}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Botões de ação */}
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleImageUpload(photo.Codigo)}
+                      className="flex-1 px-2 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
+                    >
+                      Substituir
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeImage(photo.Codigo)}
+                      className="flex-1 px-2 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200"
+                    >
+                      Remover
+                    </button>
                   </div>
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <div className="text-center text-gray-400 py-8">Nenhuma foto cadastrada</div>
+          <div className="text-center py-8 text-gray-500">
+            <p>Nenhuma imagem adicionada ainda.</p>
+            <p className="text-sm">Use os botões acima para adicionar imagens.</p>
+          </div>
+        )}
+
+        {/* Aviso sobre fotos obrigatórias */}
+        {validation.photoCount < validation.requiredPhotoCount && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+            <p className="text-yellow-800 text-sm">
+              <strong>Atenção:</strong> São necessárias pelo menos {validation.requiredPhotoCount} fotos para
+              publicar o imóvel.
+            </p>
+          </div>
         )}
       </div>
     </FormSection>
@@ -67,3 +198,4 @@ const ImagesSection = ({
 };
 
 export default memo(ImagesSection);
+
