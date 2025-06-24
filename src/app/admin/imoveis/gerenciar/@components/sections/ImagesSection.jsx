@@ -17,147 +17,49 @@ const ImagesSection = ({
   return (
     <FormSection title="Fotos do Imóvel" highlight={validation?.photoCount < 5}>
       <div className="space-y-4">
-        {/* Informações sobre fotos */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-blue-800">
-                Fotos cadastradas: {formData.Foto?.length || 0}
-              </p>
-              <p className="text-xs text-blue-600">
-                Mínimo necessário: 5 fotos
-              </p>
-            </div>
-            {(formData.Foto?.length || 0) >= 5 && (
-              <div className="text-green-600">
-                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                  <path
-                    fillRule="evenodd"
-                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-                    clipRule="evenodd"
-                  />
-                </svg>
-              </div>
-            )}
-          </div>
+          <p className="text-sm font-medium text-blue-800">
+            Fotos cadastradas: {formData.Foto?.length || 0}
+          </p>
+          <p className="text-xs text-blue-600">Mínimo necessário: 5 fotos</p>
         </div>
 
-        {/* Botões de ação */}
         <div className="flex flex-wrap gap-3">
-          <button
-            type="button"
-            onClick={() => {
-              const url = prompt("Digite a URL da imagem:");
-              if (url && url.trim()) {
-                addSingleImage(url.trim());
-              }
-            }}
-            className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition duration-300 text-sm"
-          >
+          <button type="button" onClick={() => {
+            const url = prompt("Digite a URL da imagem:");
+            if (url && url.trim()) addSingleImage(url.trim());
+          }} className="bg-green-600 text-white px-4 py-2 rounded-md">
             🔗 Adicionar URL
           </button>
 
-          <button
-            type="button"
-            onClick={showImageModal}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-300 text-sm"
-          >
+          <button type="button" onClick={showImageModal} className="bg-blue-600 text-white px-4 py-2 rounded-md">
             📤 Upload de Imagens
           </button>
         </div>
 
-        {/* Lista de fotos */}
-        {formData.Foto && formData.Foto.length > 0 && (
+        {formData.Foto?.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {formData.Foto
-              .sort((a, b) => {
-                const orderA = a.Ordem || formData.Foto.findIndex((p) => p.Codigo === a.Codigo) + 1;
-                const orderB = b.Ordem || formData.Foto.findIndex((p) => p.Codigo === b.Codigo) + 1;
-                return orderA - orderB;
-              })
-              .map((photo, index) => (
-                <div key={photo.Codigo} className="relative group border rounded-lg overflow-hidden">
-                  <div className="relative h-48 w-full">
-                    <Image
-                      src={photo.Foto}
-                      alt={`Foto ${index + 1}`}
-                      fill
-                      style={{ objectFit: "cover" }}
-                      className="transition-transform duration-300 group-hover:scale-105"
-                    />
-                    {photo.Destaque === "Sim" && (
-                      <div className="absolute top-2 left-2 bg-yellow-500 text-white px-2 py-1 rounded text-xs font-bold">
-                        DESTAQUE
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="p-3 bg-white">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-700">
-                        Foto {photo.Ordem || index + 1}
-                      </span>
-                      <div className="flex gap-1">
-                        <button
-                          type="button"
-                          onClick={() => setImageAsHighlight(photo.Codigo)}
-                          className={`px-2 py-1 rounded text-xs ${
-                            photo.Destaque === "Sim"
-                              ? "bg-yellow-500 text-white"
-                              : "bg-gray-200 text-gray-700 hover:bg-yellow-500 hover:text-white"
-                          }`}
-                        >
-                          ⭐
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const newUrl = prompt("Nova URL da imagem:", photo.Foto);
-                            if (newUrl && newUrl.trim() && newUrl !== photo.Foto) {
-                              updateImage(photo.Codigo, newUrl.trim());
-                            }
-                          }}
-                          className="px-2 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600"
-                        >
-                          ✏️
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => removeImage(photo.Codigo)}
-                          className="px-2 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600"
-                        >
-                          🗑️
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-1">
-                      <select
-                        value={photo.Ordem || index + 1}
-                        onChange={(e) => changeImagePosition(photo.Codigo, parseInt(e.target.value))}
-                        className="text-xs border border-gray-300 rounded px-1 py-1 flex-1"
-                      >
-                        {Array.from({ length: formData.Foto.length }, (_, i) => (
-                          <option key={i + 1} value={i + 1}>
-                            Posição {i + 1}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+            {formData.Foto.sort((a, b) => (a.Ordem || 0) - (b.Ordem || 0)).map((photo, i) => (
+              <div key={photo.Codigo} className="border rounded-lg">
+                <div className="relative h-48 w-full">
+                  <Image src={photo.Foto} alt={`Foto ${i + 1}`} fill style={{ objectFit: "cover" }} />
+                </div>
+                <div className="p-2 flex justify-between">
+                  <span>Foto {photo.Ordem || i + 1}</span>
+                  <div className="flex gap-1">
+                    <button onClick={() => setImageAsHighlight(photo.Codigo)}>⭐</button>
+                    <button onClick={() => {
+                      const nova = prompt("Nova URL:", photo.Foto);
+                      if (nova && nova !== photo.Foto) updateImage(photo.Codigo, nova);
+                    }}>✏️</button>
+                    <button onClick={() => removeImage(photo.Codigo)}>🗑️</button>
                   </div>
                 </div>
-              ))}
+              </div>
+            ))}
           </div>
-        )}
-
-        {/* Mensagem quando não há fotos */}
-        {(!formData.Foto || formData.Foto.length === 0) && (
-          <div className="text-center py-8 border-2 border-dashed border-gray-300 rounded-lg">
-            <p className="text-gray-500 mb-4">Nenhuma foto cadastrada</p>
-            <p className="text-sm text-gray-400">
-              Use os botões acima para adicionar fotos ao imóvel
-            </p>
-          </div>
+        ) : (
+          <div className="text-center text-gray-400 py-8">Nenhuma foto cadastrada</div>
         )}
       </div>
     </FormSection>
@@ -165,4 +67,3 @@ const ImagesSection = ({
 };
 
 export default memo(ImagesSection);
-
