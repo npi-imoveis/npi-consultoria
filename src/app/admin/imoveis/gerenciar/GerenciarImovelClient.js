@@ -41,25 +41,27 @@ export default function GerenciarImovelClient() { // Renomeado para GerenciarImo
   // Check if Automacao is true in the selected property
   const isAutomacao = imovelSelecionado?.Automacao === true;
 
-  const {
-    formData,
-    setFormData,
-    displayValues,
-    setDisplayValues,
-    handleChange,
-    newImovelCode,
-    fileInputRef,
-    showImageModal,
-    setShowImageModal,
-    addImage,
-    addSingleImage,
-    updateImage,
-    removeImage,
-    setImageAsHighlight,
-    changeImagePosition,
-    validation,
-    handleImagesUploaded,
-  } = useImovelForm();
+      const {
+      formData,
+      setFormData,
+      displayValues,
+      setDisplayValues,
+      handleChange,
+      newImovelCode,
+      fileInputRef,
+      showImageModal,
+      setShowImageModal,
+      addImage,
+      addSingleImage,
+      updateImage,
+      removeImage,
+      removeAllImages, // <--- ADICIONE ESTA LINHA
+      setImageAsHighlight,
+      changeImagePosition,
+      validation,
+      handleImagesUploaded,
+    } = useImovelForm();
+
 
   const { handleSubmit, isSaving, error, success, setError, setSuccess } = useImovelSubmit(
     formData,
