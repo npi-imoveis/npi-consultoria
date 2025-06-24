@@ -537,8 +537,9 @@ export async function adicionarProprietario(id, dadosProprietario) {
       message: error.response?.data?.message || "Erro ao criar proprietário",
       error: error.response?.data?.error || "Erro desconhecido",
     };
-  }
-  export const getImovelById = async (codigo) => {
+  }  
+}
+export const getImovelById = async (codigo) => {
   try {
     const response = await axiosClient.get(`admin/imoveis/${codigo}`);
     return {
@@ -553,4 +554,3 @@ export async function adicionarProprietario(id, dadosProprietario) {
     };
   }
 };
-}
