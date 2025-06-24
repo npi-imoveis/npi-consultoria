@@ -8,7 +8,8 @@ import { formatAddress } from "@/app/utils/formatter-address";
 import { salvarLog } from "@/app/admin/services/log-service";
 import { getCurrentUserAndDate } from "@/app/utils/get-log";
 
-export const useImovelSubmit = (formData, setIsModalOpen, mode = "create") => {
+export const useImovelSubmit = (formData, setIsModalOpen, mode = "create", imovelId = null) => { // <--- MODIFIQUE ESTA LINHA
+
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -123,7 +124,7 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create") => {
 
         if (mode === "edit") {
           //Em modo de edição, chamar o serviço de atualização
-          result = await atualizarImovel(formData.Codigo, payload);
+          result = await atualizarImovel(imovelId, payload); // <--- MODIFIQUE ESTA LINHA
 
           try {
             const { user, timestamp } = await getCurrentUserAndDate();
