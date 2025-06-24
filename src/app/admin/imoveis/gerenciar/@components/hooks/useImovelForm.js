@@ -557,7 +557,7 @@ export const useImovelForm = () => {
     });
   };
 
-  return {
+    return {
     formData,
     setFormData,
     displayValues,
@@ -571,9 +571,9 @@ export const useImovelForm = () => {
     addSingleImage,
     updateImage,
     removeImage,
-    removeAllImages,
-    downloadAllPhotos, // Nova função adicionada
-    downloadingPhotos, // Estado do download
+    removeAllImages, // <--- CONFIRME QUE ESTÁ AQUI
+    downloadAllPhotos, // <--- CONFIRME QUE ESTÁ AQUI
+    downloadingPhotos, // <--- CONFIRME QUE ESTÁ AQUI
     setImageAsHighlight,
     changeImagePosition,
     validation,
