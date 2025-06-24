@@ -46,6 +46,12 @@ const nextConfig = {
         protocol: "https",
         hostname: "tresorresidence.com.br",
       },
+      {
+        protocol: "https",
+        hostname: "cdn.imoview.com.br",
+        pathname: "/**", // <--- ALTERE ESTA LINHA PARA COBRIR TODOS OS CAMINHOS
+      },
+
     ],
   },
 
