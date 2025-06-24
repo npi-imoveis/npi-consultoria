@@ -51,9 +51,23 @@ export default function AdminImoveis() {
       let responseData;
       let newPaginationData;
 
-      if (search) {
-        const response = await fetch(`/api/search/admin?q=${encodeURIComponent(search)}`);
-        const data = await response.json();
+     if (search) {
+  const response = await fetch(`/api/search/admin?q=${encodeURIComponent(search)}&page=${page}&limit=12`);
+  const data = await response.json();
+
+  if (data && data.status === 200 && data.data) {
+    responseData = data.data;
+    newPaginationData = data.pagination; // Usar a paginação da API
+  } else {
+    responseData = [];
+    newPaginationData = {
+      totalItems: 0,
+      totalPages: 1,
+      currentPage: 1,
+      itemsPerPage: 12,
+    };
+  }
+
 
         if (data && data.status === 200 && data.data) {
           responseData = data.data;
