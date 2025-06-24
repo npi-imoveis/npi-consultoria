@@ -1,4 +1,4 @@
- import { Button } from "@/app/components/ui/button";
+import { Button } from "@/app/components/ui/button";
 import { getCondominioPorSlug } from "@/app/services";
 import { formatterValue } from "@/app/utils/formatter-value";
 import { Apartment as StructuredDataApartment } from "@/app/components/structured-data";
