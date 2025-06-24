@@ -1,22 +1,5 @@
 "use client";
 
-const ImagesSection = ({ 
-  formData, 
-  addSingleImage, 
-  showImageModal, 
-  updateImage, 
-  removeImage, 
-  removeAllImages, // Receba a prop aqui
-  downloadAllPhotos, // Receba a prop aqui
-  downloadingPhotos, // Receba a prop aqui
-  setImageAsHighlight, 
-  changeImagePosition, 
-  validation 
-}) => {
-  console.log('ImagesSection props:', { removeAllImages, downloadAllPhotos, downloadingPhotos });
-  // ... restante do seu código
-};
-
 import { memo } from "react";
 import FormSection from "../FormSection";
 import Image from "next/image";
