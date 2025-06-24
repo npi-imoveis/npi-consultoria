@@ -4,15 +4,18 @@ import { memo } from "react";
 import FormSection from "../FormSection";
 import Image from "next/image";
 
-const ImagesSection = ({
-  formData,
-  addSingleImage,
-  showImageModal,
-  updateImage,
-  removeImage,
-  setImageAsHighlight,
-  changeImagePosition,
-  validation,
+<ImagesSection
+  formData={formData}
+  addSingleImage={addSingleImage}
+  showImageModal={addImage}
+  updateImage={updateImage}
+  removeImage={removeImage}
+  setImageAsHighlight={setImageAsHighlight}
+  changeImagePosition={changeImagePosition}
+  validation={validation}
+  key="images-section"
+/>
+
 }) => {
   
  // Função simplificada para excluir todas as fotos
