@@ -4,7 +4,6 @@ import Corretores from "@/app/models/Corretores";
 import Imovel from "@/app/models/Imovel";
 
 export async function GET(request) {
-  // Extract the id from URL query params
   const url = new URL(request.url);
   const id = url.searchParams.get("id");
 
@@ -12,6 +11,11 @@ export async function GET(request) {
 
   try {
     const corretor = await Corretores.findOne({ codigoD: id });
+
+    // --- MODIFICAÇÃO AQUI: Verificar se o corretor foi encontrado antes de acessar suas propriedades ---
+    if (!corretor) {
+      return NextResponse.json({ error: "Corretor não encontrado" }, { status: 404 }); // Retorna 404 se não encontrar
+    }
 
     // Extract Codigo values from imoveis_vinculados
     const codigosImoveis = corretor.imoveis_vinculados?.map((imovel) => imovel.Codigo) || [];
@@ -26,14 +30,17 @@ export async function GET(request) {
       status: 200,
       data: {
         corretor,
-        imoveis: imoveisVinculados || ["Pegadinha!"],
+        imoveis: imoveisVinculados || [], // Retorna array vazio se não houver imóveis vinculados
       },
     });
   } catch (error) {
     console.error("Erro ao buscar corretor:", error);
-    return NextResponse.json({ error: "Erro ao buscar informações do corretor" }, { status: 500 });
+    return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 }); // Erro genérico para outros problemas
   }
 }
+
+// Mantenha as funções DELETE, POST e PUT como estão no seu arquivo original.
+
 
 // ---------------------------------- //
 // ---------DELETAR CORRETOR --------//
