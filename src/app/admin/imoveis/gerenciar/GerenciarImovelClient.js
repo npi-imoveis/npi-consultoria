@@ -1,5 +1,4 @@
-// src/app/admin/imoveis/gerenciar/GerenciarImovelClient.js
-'use client'; // MUITO IMPORTANTE: Este componente é um Client Component
+"use client";
 
 import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -26,42 +25,39 @@ import ProprietariosSection from "./@components/sections/ProprietariosSection";
 import VincularImovelSection from "./@components/sections/VincularImovel";
 import { desativarImovel } from "@/app/services";
 
-export default function GerenciarImovelClient() { // Renomeado para GerenciarImovelClient
+export default function GerenciarImovelClient() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showProprietarios, setShowProprietarios] = useState(false);
   const [showVincularImovel, setShowVincularImovel] = useState(false);
   const [isDesativando, setIsDesativando] = useState(false);
+  const [downloadingPhotos, setDownloadingPhotos] = useState(false);
   const router = useRouter();
 
-  // Acessar o store para verificar se estamos em modo de edição
   const imovelSelecionado = useImovelStore((state) => state.imovelSelecionado);
   const mode = useImovelStore((state) => state.mode);
   const limparImovelSelecionado = useImovelStore((state) => state.limparImovelSelecionado);
-
-  // Check if Automacao is true in the selected property
   const isAutomacao = imovelSelecionado?.Automacao === true;
 
-      const {
-      formData,
-      setFormData,
-      displayValues,
-      setDisplayValues,
-      handleChange,
-      newImovelCode,
-      fileInputRef,
-      showImageModal,
-      setShowImageModal,
-      addImage,
-      addSingleImage,
-      updateImage,
-      removeImage,
-      removeAllImages, // <--- ADICIONE ESTA LINHA
-      setImageAsHighlight,
-      changeImagePosition,
-      validation,
-      handleImagesUploaded,
-    } = useImovelForm();
-
+  const {
+    formData,
+    setFormData,
+    displayValues,
+    setDisplayValues,
+    handleChange,
+    newImovelCode,
+    fileInputRef,
+    showImageModal,
+    setShowImageModal,
+    addImage,
+    addSingleImage,
+    updateImage,
+    removeImage,
+    removeAllImages,
+    setImageAsHighlight,
+    changeImagePosition,
+    validation,
+    handleImagesUploaded,
+  } = useImovelForm();
 
   const { handleSubmit, isSaving, error, success, setError, setSuccess } = useImovelSubmit(
     formData,
@@ -71,35 +67,55 @@ export default function GerenciarImovelClient() { // Renomeado para GerenciarImo
 
   const { handleFileUpload } = useImageUpload(updateImage, setSuccess, setError);
 
-  // Carregar dados do imóvel do store se estiver no modo de edição
+  const downloadAllPhotos = async () => {
+    if (!formData.Foto || formData.Foto.length === 0) {
+      setError('Não há fotos para baixar');
+      return;
+    }
+
+    setDownloadingPhotos(true);
+    setError('');
+    
+    try {
+      const downloadPromises = formData.Foto.map((photo, index) => {
+        return new Promise((resolve) => {
+          const link = document.createElement('a');
+          link.href = photo.Foto;
+          link.download = `imovel-${formData.Codigo || 'novo'}-${index + 1}.jpg`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          resolve();
+        });
+      });
+
+      await Promise.all(downloadPromises);
+      setSuccess(`Download de ${formData.Foto.length} fotos concluído`);
+    } catch (err) {
+      console.error('Erro ao baixar fotos:', err);
+      setError('Erro durante o download das fotos');
+    } finally {
+      setDownloadingPhotos(false);
+    }
+  };
+
   useEffect(() => {
     if (imovelSelecionado && mode === "edit") {
-      // Formatação de valores monetários para exibição
       const formatMonetaryDisplayValues = () => {
         const displayObj = {};
-
-        // Processar os valores monetários
         ["ValorAntigo", "ValorAluguelSite", "ValorCondominio", "ValorIptu"].forEach((field) => {
           if (imovelSelecionado[field]) {
-            // Converte para número
-            const value =
-              typeof imovelSelecionado[field] === "string"
-                ? imovelSelecionado[field].replace(/\D/g, "")
-                : imovelSelecionado[field];
-
-            // Formata como moeda
+            const value = typeof imovelSelecionado[field] === "string"
+              ? imovelSelecionado[field].replace(/\D/g, "")
+              : imovelSelecionado[field];
             displayObj[field] = formatarParaReal(value);
           }
         });
-
         return displayObj;
       };
 
-      // Processar dados de fotos para o formato correto
       const processPhotos = () => {
         if (!imovelSelecionado.Foto) return [];
-
-        // Se já for um array, usá-lo diretamente
         if (Array.isArray(imovelSelecionado.Foto)) {
           return imovelSelecionado.Foto.map((foto, index) => ({
             ...foto,
@@ -108,77 +124,56 @@ export default function GerenciarImovelClient() { // Renomeado para GerenciarImo
             Ordem: foto.Ordem || index + 1,
           }));
         }
-
-        // Se for um objeto, converter para array
         if (typeof imovelSelecionado.Foto === "object") {
-          return Object.keys(imovelSelecionado.Foto).map((key, index) => {
-            const foto = imovelSelecionado.Foto[key];
-            return {
-              ...foto,
-              Codigo: key,
-              Destaque: foto.Destaque || "Nao",
-              Ordem: foto.Ordem || index + 1,
-            };
-          });
+          return Object.keys(imovelSelecionado.Foto).map((key, index) => ({
+            ...imovelSelecionado.Foto[key],
+            Codigo: key,
+            Destaque: imovelSelecionado.Foto[key].Destaque || "Nao",
+            Ordem: imovelSelecionado.Foto[key].Ordem || index + 1,
+          }));
         }
-
         return [];
       };
 
-      // Processar dados de vídeo
       const processVideos = () => {
         if (!imovelSelecionado.Video) return {};
-
-        // Converte o array de vídeos para o formato de objeto usado no formulário
         const videosObj = {};
-
         if (Array.isArray(imovelSelecionado.Video)) {
           imovelSelecionado.Video.forEach((video) => {
             if (video.Codigo) {
-              videosObj[video.Codigo] = {
-                ...video,
-              };
+              videosObj[video.Codigo] = { ...video };
             }
           });
         }
-
         return videosObj;
       };
 
-      // Preenche o formData com os dados do imóvel
       setFormData({
         ...imovelSelecionado,
         Foto: processPhotos(),
         Video: processVideos(),
-        // Garante que o Slug seja gerado corretamente a partir do Empreendimento
         Slug: formatterSlug(imovelSelecionado.Empreendimento || ""),
       });
 
-      // Atualiza os valores de exibição formatados
       setDisplayValues(formatMonetaryDisplayValues());
     }
   }, [imovelSelecionado, mode, setFormData, setDisplayValues]);
 
-  // Limpar imóvel selecionado quando componente for desmontado
   useEffect(() => {
     return () => {
-      // Não limpamos ao desmontar para manter o imóvel no store
-      // para caso o usuário retorne à página
+      // Não limpamos ao desmontar para manter o estado
     };
   }, []);
 
-  // Handler for file input change
   const handleFileInputChange = (e) => {
     const files = e.target.files;
     if (files.length > 0) {
       const codigo = fileInputRef.current.getAttribute("data-codigo");
       handleFileUpload(codigo, files[0]);
-      // Limpar o input para permitir selecionar o mesmo arquivo novamente
       e.target.value = "";
     }
   };
 
-  // Determinar o título do formulário com base no modo
   const getFormTitle = () => {
     if (mode === "edit" && formData.Empreendimento) {
       return `Editar Imóvel: ${formData.Empreendimento}`;
@@ -186,27 +181,16 @@ export default function GerenciarImovelClient() { // Renomeado para GerenciarImo
     return "Cadastrar Novo Imóvel";
   };
 
-  // Cancelar edição e voltar para o modo de criação
-  // Importante: Esta função limpa o store antes de navegar para evitar
-  // que dados persistam indevidamente entre sessões
   const handleCancel = () => {
-    // Determinar para qual página redirecionar com base na propriedade Automacao
-    const redirectPath =
-      imovelSelecionado && imovelSelecionado.Automacao === false
-        ? "/admin/imoveis"
-        : "/admin/automacao";
-
-    // Limpar o imóvel selecionado e histórico no store
+    const redirectPath = imovelSelecionado && imovelSelecionado.Automacao === false
+      ? "/admin/imoveis"
+      : "/admin/automacao";
     limparImovelSelecionado();
-
-    // Redirecionar usando o Next.js router
     router.push(redirectPath);
   };
 
-  // Toggle functions with mutual exclusivity
   const toggleProprietarios = () => {
     setShowProprietarios(!showProprietarios);
-    // Close the other section if it's open
     if (!showProprietarios && showVincularImovel) {
       setShowVincularImovel(false);
     }
@@ -214,24 +198,20 @@ export default function GerenciarImovelClient() { // Renomeado para GerenciarImo
 
   const toggleVincularImovel = () => {
     setShowVincularImovel(!showVincularImovel);
-    // Close the other section if it's open
     if (!showVincularImovel && showProprietarios) {
       setShowProprietarios(false);
     }
   };
 
-  // Função para desativar o imóvel
   const handleDesativarImovel = async () => {
     if (!formData.Codigo) {
       setError("Não é possível desativar um imóvel sem código.");
       return;
     }
 
-    // Adicionando a verificação para window
     if (typeof window !== 'undefined' && !window.confirm(
         "Tem certeza que deseja desativar este imóvel? Ele será movido para a lista de imóveis inativos."
-      )
-    ) {
+      )) {
       return;
     }
 
@@ -265,12 +245,9 @@ export default function GerenciarImovelClient() { // Renomeado para GerenciarImo
   };
 
   const description = () => {
-    if (isAutomacao)
-      return `O imóvel ${formData?.Empreendimento} foi cadastrado com sucesso com o código ${newImovelCode}. Ele agora está disponível na lista de imóveis do site.`; // ou algum valor padrão
-    if (mode === "create")
-      return `O imóvel ${formData?.Empreendimento} foi cadastrado com sucesso com o código ${newImovelCode}. Ele agora está disponível na lista de imóveis do site.`;
-    if (mode === "edit")
-      return `O imóvel ${formData?.Empreendimento} com Código ${formData?.Codigo} foi atualizado com sucesso.`;
+    if (isAutomacao) return `O imóvel ${formData?.Empreendimento} foi cadastrado com sucesso com o código ${newImovelCode}.`;
+    if (mode === "create") return `O imóvel ${formData?.Empreendimento} foi cadastrado com sucesso com o código ${newImovelCode}.`;
+    if (mode === "edit") return `O imóvel ${formData?.Empreendimento} com Código ${formData?.Codigo} foi atualizado com sucesso.`;
     return "";
   };
 
@@ -328,7 +305,6 @@ export default function GerenciarImovelClient() { // Renomeado para GerenciarImo
               Proprietários
             </button>
 
-            {/* Only show the Vincular Imóvel button in edit mode and if Automacao is true */}
             {mode === "edit" && (
               <button
                 onClick={toggleVincularImovel}
@@ -358,19 +334,14 @@ export default function GerenciarImovelClient() { // Renomeado para GerenciarImo
             />
           )}
 
-          {/* Basic Info Section with updated Ativo field */}
           <BasicInfoSection
-            formData={{
-              ...formData,
-              Ativo: formData.Ativo || "Sim",
-            }}
+            formData={{ ...formData, Ativo: formData.Ativo || "Sim" }}
             displayValues={displayValues}
             onChange={handleChange}
             validation={validation}
             key="basic-info-section"
           />
 
-          {/* Location Section */}
           <LocationSection
             formData={formData}
             displayValues={displayValues}
@@ -379,7 +350,6 @@ export default function GerenciarImovelClient() { // Renomeado para GerenciarImo
             key="location-section"
           />
 
-          {/* Features Section */}
           <FeaturesSection
             formData={formData}
             displayValues={displayValues}
@@ -387,7 +357,6 @@ export default function GerenciarImovelClient() { // Renomeado para GerenciarImo
             key="features-section"
           />
 
-          {/* Values Section */}
           <ValuesSection
             formData={formData}
             displayValues={displayValues}
@@ -395,7 +364,6 @@ export default function GerenciarImovelClient() { // Renomeado para GerenciarImo
             key="values-section"
           />
 
-          {/* Broker Section */}
           <BrokerSection
             formData={formData}
             displayValues={displayValues}
@@ -403,7 +371,6 @@ export default function GerenciarImovelClient() { // Renomeado para GerenciarImo
             key="broker-section"
           />
 
-          {/* Description Section */}
           <DescriptionSection
             formData={formData}
             displayValues={displayValues}
@@ -411,7 +378,6 @@ export default function GerenciarImovelClient() { // Renomeado para GerenciarImo
             key="description-section"
           />
 
-          {/* Media Section */}
           <MediaSection
             formData={formData}
             displayValues={displayValues}
@@ -419,22 +385,20 @@ export default function GerenciarImovelClient() { // Renomeado para GerenciarImo
             key="media-section"
           />
 
-          {/* Images Section */}
           <ImagesSection
             formData={formData}
             addSingleImage={addSingleImage}
             showImageModal={addImage}
             updateImage={updateImage}
             removeImage={removeImage}
-            removeAllImages={removeAllImages} // <--- ESTA LINHA É CRÍTICA
-            downloadAllPhotos={downloadAllPhotos} // <--- ESTA LINHA É CRÍTICA
-            downloadingPhotos={downloadingPhotos} // <--- ESTA LINHA É CRÍTICA
+            removeAllImages={removeAllImages}
+            downloadAllPhotos={downloadAllPhotos}
+            downloadingPhotos={downloadingPhotos}
             setImageAsHighlight={setImageAsHighlight}
             changeImagePosition={changeImagePosition}
             validation={validation}
             key="images-section"
           />
-
 
           {error && (
             <div className="bg-red-100 p-4 text-red-500 rounded-lg">
