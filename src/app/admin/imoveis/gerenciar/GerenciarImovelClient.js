@@ -59,12 +59,13 @@ export default function GerenciarImovelClient() {
     handleImagesUploaded,
   } = useImovelForm();
 
-    const { handleSubmit, isSaving, error, success, setError, setSuccess } = useImovelSubmit(
+      const { handleSubmit, isSaving, error, success, setError, setSuccess } = useImovelSubmit(
     formData,
     setIsModalOpen,
     mode,
     imovelSelecionado?._id // <--- ADICIONE ESTA LINHA
   );
+
 
   const { handleFileUpload } = useImageUpload(updateImage, setSuccess, setError);
 
