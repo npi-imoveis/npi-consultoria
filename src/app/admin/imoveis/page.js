@@ -57,7 +57,12 @@ export default function AdminImoveis() {
 
         if (data && data.status === 200 && data.data) {
           responseData = data.data;
-          newPaginationData = data.pagination; // Usar a paginação da API
+          newPaginationData = {
+            totalItems: data.data.length,
+            totalPages: Math.ceil(data.data.length / 12),
+            currentPage: page,
+            itemsPerPage: 12,
+          };
         } else {
           responseData = [];
           newPaginationData = {
