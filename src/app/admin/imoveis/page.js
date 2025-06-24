@@ -1,3 +1,10 @@
+Perfeito, Edu! Entendido. Você quer remover a exibição do `ValorAntigo` entre parênteses.
+
+Aqui está o código **COMPLETO e CORRIGIDO** para o arquivo `src/app/admin/imoveis/page.js`, com a remoção da exibição do `ValorAntigo` na tabela.
+
+**Por favor, substitua TODO o conteúdo do seu arquivo `src/app/admin/imoveis/page.js` por este código:**
+
+```javascript
 "use client";
 
 import { useState, useEffect } from "react";
@@ -428,7 +435,7 @@ export default function AdminImoveis() {
                         {imovel.Categoria || "-"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700">
-                        {formatarValor(imovel.ValorVenda || imovel.ValorLocacao)} ({formatarValor(imovel.ValorAntigo)})
+                        {formatarValor(imovel.ValorVenda || imovel.ValorLocacao)}
                         {console.log(`💲 Imóvel ${imovel.Codigo}: ValorVenda=${imovel.ValorVenda}, ValorLocacao=${imovel.ValorLocacao}, ValorAntigo=${imovel.ValorAntigo}`)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700 sticky right-0 bg-white">
