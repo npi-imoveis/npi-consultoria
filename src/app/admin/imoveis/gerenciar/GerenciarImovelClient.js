@@ -417,22 +417,22 @@ export default function GerenciarImovelClient() { // Renomeado para GerenciarImo
             key="media-section"
           />
 
-          {/* Images Section */}
-          {/* Images Section */}
-<ImagesSection
-  formData={formData}
-  addSingleImage={addSingleImage}
-  showImageModal={addImage}
-  updateImage={updateImage}
-  removeImage={removeImage}
-  removeAllImages={removeAllImages}
-  downloadAllPhotos={downloadAllPhotos}
-  downloadingPhotos={downloadingPhotos}
-  setImageAsHighlight={setImageAsHighlight}
-  changeImagePosition={changeImagePosition}
-  validation={validation}
-  key="images-section"
-/>
+                    {/* Images Section */}
+          <ImagesSection
+            formData={formData}
+            addSingleImage={addSingleImage}
+            showImageModal={addImage}
+            updateImage={updateImage}
+            removeImage={removeImage}
+            removeAllImages={removeAllImages} // <--- ESTA LINHA É CRÍTICA
+            downloadAllPhotos={downloadAllPhotos} // <--- ESTA LINHA É CRÍTICA
+            downloadingPhotos={downloadingPhotos} // <--- ESTA LINHA É CRÍTICA
+            setImageAsHighlight={setImageAsHighlight}
+            changeImagePosition={changeImagePosition}
+            validation={validation}
+            key="images-section"
+          />
+
 
           {error && (
             <div className="bg-red-100 p-4 text-red-500 rounded-lg">
