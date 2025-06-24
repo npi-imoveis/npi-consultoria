@@ -289,7 +289,7 @@ export default function AdminImoveis() {
       return "-";
     }
 
-    return `${areaNumerico.toFixed(2).replace('.', ',')} m²`;
+    return `${Math.round(areaNumerico)} m²`;
   };
 
   const handleDelete = async (codigo) => {
