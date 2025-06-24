@@ -13,6 +13,7 @@ export const generateRandomCode = async () => {
 export const useImovelForm = () => {
   const provider = useRef(new OpenStreetMapProvider());
   const fileInputRef = useRef(null);
+  const codeGeneratedRef = useRef(false);
 
   const imovelSelecionado = useImovelStore((state) => state.imovelSelecionado);
   const isAutomacao = imovelSelecionado?.Automacao === true;
@@ -87,8 +88,21 @@ export const useImovelForm = () => {
   });
 
       // Generate random code on init only if in Automacao mode
-  useEffect(() => {
-    if (isAutomacao || (imovelSelecionado === null && !formData.Codigo)) {
+   useEffect(() => {
+    // Se for um imóvel de automação E o código ainda não foi gerado para esta sessão
+    if (isAutomacao && !codeGeneratedRef.current) {
+      const fetchCode = async () => {
+        const code = await generateRandomCode();
+        setNewImovelCode(code);
+        setFormData((prevData) => ({
+          ...prevData,
+          Codigo: code,
+        }));
+        codeGeneratedRef.current = true; // Marca que o código foi gerado
+      };
+      fetchCode();
+    } else if (imovelSelecionado === null && !formData.Codigo) {
+      // Lógica para criação de novo imóvel (não automação)
       const fetchCode = async () => {
         const code = await generateRandomCode();
         setNewImovelCode(code);
@@ -99,7 +113,13 @@ export const useImovelForm = () => {
       };
       fetchCode();
     }
-  }, [isAutomacao, formData.Codigo, imovelSelecionado]);
+  }, [isAutomacao, imovelSelecionado, formData.Codigo]);
+
+  // Reset codeGeneratedRef when imovelSelecionado changes (e.g., loading a different property)
+  useEffect(() => {
+    codeGeneratedRef.current = false;
+  }, [imovelSelecionado]);
+
 
   // Utilitários
   const maskDate = useCallback((value) => 
