@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { getImovelById } from "@/app/services";
 import AuthCheck from "../components/auth-check";
-import Pagination from "@/app/components/ui/pagination"; // Certifique-se que o caminho está correto
+import Pagination from "@/app/components/ui/pagination";
 import { useRouter } from "next/navigation";
 import { EyeIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 import useImovelStore from "../store/imovelStore";
@@ -27,7 +27,7 @@ export default function AdminImoveis() {
     totalItems: 0,
     totalPages: 1,
     currentPage: 1,
-    itemsPerPage: 30, // Alterado para 30
+    itemsPerPage: 30,
   });
 
   // Função para salvar busca livre
@@ -53,7 +53,7 @@ export default function AdminImoveis() {
       let newPaginationData;
 
       if (search) {
-        const response = await fetch(`/api/search/admin?q=${encodeURIComponent(search)}&page=${page}&limit=30`); // Alterado para 30
+        const response = await fetch(`/api/search/admin?q=${encodeURIComponent(search)}&page=${page}&limit=30`);
         const data = await response.json();
 
         if (data && data.status === 200 && data.data) {
@@ -67,7 +67,7 @@ export default function AdminImoveis() {
             totalItems: 0,
             totalPages: 1,
             currentPage: 1,
-            itemsPerPage: 30, // Alterado para 30
+            itemsPerPage: 30,
           };
         }
 
@@ -85,12 +85,12 @@ export default function AdminImoveis() {
           apiFilters.ValorMax = apiFilters.ValorMax.toString();
         }
 
-        const response = await getImoveisDashboard(apiFilters, page, 30); // Alterado para 30
+        const response = await getImoveisDashboard(apiFilters, page, 30);
         if (response && response.data) {
           responseData = response.data;
           newPaginationData = {
             ...response.paginacao,
-            itemsPerPage: 30, // Alterado para 30
+            itemsPerPage: 30,
           };
         } else {
           responseData = [];
@@ -98,7 +98,7 @@ export default function AdminImoveis() {
             totalItems: 0,
             totalPages: 1,
             currentPage: 1,
-            itemsPerPage: 30, // Alterado para 30
+            itemsPerPage: 30,
           };
         }
         // Limpar o estado da busca livre se não for uma busca livre
@@ -116,7 +116,7 @@ export default function AdminImoveis() {
         totalItems: 0,
         totalPages: 1,
         currentPage: 1,
-        itemsPerPage: 30, // Alterado para 30
+        itemsPerPage: 30,
       });
     } finally {
       setIsLoading(false);
@@ -133,7 +133,7 @@ export default function AdminImoveis() {
     let initialPage = 1;
     let initialSearchTerm = "";
     let initialImoveis = [];
-    let initialPagination = { totalItems: 0, totalPages: 1, currentPage: 1, itemsPerPage: 30 }; // Alterado para 30
+    let initialPagination = { totalItems: 0, totalPages: 1, currentPage: 1, itemsPerPage: 30 };
 
     if (savedTerm && savedResults && savedPagination) {
       initialSearchTerm = savedTerm;
@@ -239,35 +239,45 @@ export default function AdminImoveis() {
     }
   };
 
-  // Função para formatar valores monetários de forma mais robusta
+  // Função para formatar valores monetários - CORRIGIDA PARA FORMATO BRASILEIRO
   const formatarValor = (valor) => {
+    console.log("🔧 formatarValor chamado com:", valor, "tipo:", typeof valor);
+    
     if (valor === null || valor === undefined || valor === "") {
-      return "-"; // Retorna '-' para valores nulos, indefinidos ou vazios
+      console.log("🔧 formatarValor: valor vazio, retornando '-'");
+      return "-";
     }
 
     let valorNumerico;
     if (typeof valor === "number") {
       valorNumerico = valor;
+      console.log("🔧 formatarValor: valor é number:", valorNumerico);
     } else if (typeof valor === "string") {
-      // Tenta limpar a string para converter para número
-      const cleanedValue = valor.replace(/[^\d,.-]/g, "").replace(",", ".");
+      // CORREÇÃO CRÍTICA: Para formato brasileiro, remove TODOS os pontos primeiro
+      // e depois substitui vírgula por ponto para conversão
+      const cleanedValue = valor.replace(/\./g, '').replace(',', '.');
       valorNumerico = parseFloat(cleanedValue);
+      console.log("🔧 formatarValor: string processada:", valor, "→", cleanedValue, "→", valorNumerico);
     } else {
-      return "-"; // Retorna '-' para tipos de dados inesperados
+      console.log("🔧 formatarValor: tipo inesperado, retornando '-'");
+      return "-";
     }
 
     if (isNaN(valorNumerico)) {
-      return "-"; // Retorna '-' se a conversão para número falhar
+      console.log("🔧 formatarValor: NaN detectado, retornando '-'");
+      return "-";
     }
 
-    return new Intl.NumberFormat("pt-BR", {
+    const resultado = new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",
-      minimumFractionDigits: 2, // Garante duas casas decimais
-      maximumFractionDigits: 2, // Garante duas casas decimais
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     }).format(valorNumerico);
+    
+    console.log("🔧 formatarValor: resultado final:", resultado);
+    return resultado;
   };
-
 
   const handleDelete = async (codigo) => {
     setCodigoImovel(codigo);
@@ -428,8 +438,8 @@ export default function AdminImoveis() {
                         {imovel.Categoria || "-"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700">
-                        {formatarValor(imovel.ValorVenda || imovel.ValorLocacao)} ({formatarValor(imovel.ValorAntigo)}) {/* ValorAntigo restaurado */}
-                        {console.log(`💲 Imóvel ${imovel.Codigo}: ValorVenda=${imovel.ValorVenda}, ValorLocacao=${imovel.ValorLocacao}, ValorAntigo=${imovel.ValorAntigo}`)}
+                        {formatarValor(imovel.ValorAntigo)}
+                        {console.log(`💲 Imóvel ${imovel.Codigo}: ValorAntigo=${imovel.ValorAntigo}`)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700 sticky right-0 bg-white">
                         <div className="flex items-center space-x-3">
@@ -464,9 +474,10 @@ export default function AdminImoveis() {
           </div>
 
           {/* Paginação */}
-          {console.log("DEBUG PAGINATION: totalPages > 1 is", pagination.totalPages > 1, "pagination object:", pagination)} {/* NOVO LOG PARA DEBUG */}
+          {console.log("🔍 DEBUG PAGINATION: totalPages > 1 is", pagination.totalPages > 1, "pagination object:", pagination)}
           {pagination.totalPages > 1 && (
-            <div className="mt-6">
+            <div className="mt-6" style={{border: "2px solid red", padding: "10px", backgroundColor: "yellow"}}>
+              <p style={{color: "black", fontWeight: "bold"}}>PAGINAÇÃO DEVERIA APARECER AQUI!</p>
               <Pagination
                 currentPage={pagination.currentPage}
                 totalPages={pagination.totalPages}
@@ -481,3 +492,4 @@ export default function AdminImoveis() {
     </AuthCheck>
   );
 }
+
