@@ -86,10 +86,8 @@ export const useImovelForm = () => {
     fieldValidation: {},
   });
 
-    // Generate random code on init only if in Automacao mode or creating a new property
+      // Generate random code on init only if in Automacao mode
   useEffect(() => {
-    // Apenas gera um novo código se for um imóvel de automação
-    // OU se estivermos em modo de criação (ou seja, formData.Codigo ainda não foi definido)
     if (isAutomacao || (imovelSelecionado === null && !formData.Codigo)) {
       const fetchCode = async () => {
         const code = await generateRandomCode();
@@ -101,7 +99,7 @@ export const useImovelForm = () => {
       };
       fetchCode();
     }
-  }, [isAutomacao, formData.Codigo, imovelSelecionado]); // Adicione imovelSelecionado às dependências
+  }, [isAutomacao, formData.Codigo, imovelSelecionado]);
 
   // Utilitários
   const maskDate = useCallback((value) => 
