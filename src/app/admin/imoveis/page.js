@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { getImovelById } from "@/app/services";
 import AuthCheck from "../components/auth-check";
-import Pagination from "@/app/components/ui/pagination";
+import Pagination from "@/app/components/ui/pagination"; // Certifique-se que o caminho está correto
 import { useRouter } from "next/navigation";
 import { EyeIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 import useImovelStore from "../store/imovelStore";
@@ -27,7 +27,7 @@ export default function AdminImoveis() {
     totalItems: 0,
     totalPages: 1,
     currentPage: 1,
-    itemsPerPage: 12,
+    itemsPerPage: 30, // Alterado para 30
   });
 
   // Função para salvar busca livre
@@ -53,21 +53,21 @@ export default function AdminImoveis() {
       let newPaginationData;
 
       if (search) {
-        const response = await fetch(`/api/search/admin?q=${encodeURIComponent(search)}&page=${page}&limit=12`);
+        const response = await fetch(`/api/search/admin?q=${encodeURIComponent(search)}&page=${page}&limit=30`); // Alterado para 30
         const data = await response.json();
 
         if (data && data.status === 200 && data.data) {
           responseData = data.data;
-          newPaginationData = data.pagination; // <--- AGORA USAMOS A PAGINAÇÃO DA API!
-          console.log("📥 Dados da API de busca livre recebidos:", data); // Mantenha este, você pode expandir no console
-          console.log("📊 Paginação da API de busca livre (newPaginationData):", newPaginationData); // Mantenha este, você pode expandir no console
+          newPaginationData = data.pagination;
+          console.log("📥 Dados da API de busca livre recebidos:", data);
+          console.log("📊 Paginação da API de busca livre (newPaginationData):", newPaginationData);
         } else {
           responseData = [];
           newPaginationData = {
             totalItems: 0,
             totalPages: 1,
             currentPage: 1,
-            itemsPerPage: 12,
+            itemsPerPage: 30, // Alterado para 30
           };
         }
 
@@ -85,12 +85,12 @@ export default function AdminImoveis() {
           apiFilters.ValorMax = apiFilters.ValorMax.toString();
         }
 
-        const response = await getImoveisDashboard(apiFilters, page, 12);
+        const response = await getImoveisDashboard(apiFilters, page, 30); // Alterado para 30
         if (response && response.data) {
           responseData = response.data;
           newPaginationData = {
             ...response.paginacao,
-            itemsPerPage: 12,
+            itemsPerPage: 30, // Alterado para 30
           };
         } else {
           responseData = [];
@@ -98,7 +98,7 @@ export default function AdminImoveis() {
             totalItems: 0,
             totalPages: 1,
             currentPage: 1,
-            itemsPerPage: 12,
+            itemsPerPage: 30, // Alterado para 30
           };
         }
         // Limpar o estado da busca livre se não for uma busca livre
@@ -107,7 +107,7 @@ export default function AdminImoveis() {
 
       setImoveis(responseData);
       setPagination(newPaginationData);
-      console.log("✅ Estado de imóveis e paginação atualizado. Imóveis count:", responseData.length, "Paginação atual:", newPaginationData); // Adicionado count de imóveis
+      console.log("✅ Estado de imóveis e paginação atualizado. Imóveis count:", responseData.length, "Paginação atual:", newPaginationData);
 
     } catch (error) {
       console.error("Erro ao carregar imóveis:", error);
@@ -116,7 +116,7 @@ export default function AdminImoveis() {
         totalItems: 0,
         totalPages: 1,
         currentPage: 1,
-        itemsPerPage: 12,
+        itemsPerPage: 30, // Alterado para 30
       });
     } finally {
       setIsLoading(false);
@@ -133,7 +133,7 @@ export default function AdminImoveis() {
     let initialPage = 1;
     let initialSearchTerm = "";
     let initialImoveis = [];
-    let initialPagination = { totalItems: 0, totalPages: 1, currentPage: 1, itemsPerPage: 12 };
+    let initialPagination = { totalItems: 0, totalPages: 1, currentPage: 1, itemsPerPage: 30 }; // Alterado para 30
 
     if (savedTerm && savedResults && savedPagination) {
       initialSearchTerm = savedTerm;
@@ -428,7 +428,7 @@ export default function AdminImoveis() {
                         {imovel.Categoria || "-"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700">
-                        {formatarValor(imovel.ValorVenda || imovel.ValorLocacao)}
+                        {formatarValor(imovel.ValorVenda || imovel.ValorLocacao)} ({formatarValor(imovel.ValorAntigo)}) {/* ValorAntigo restaurado */}
                         {console.log(`💲 Imóvel ${imovel.Codigo}: ValorVenda=${imovel.ValorVenda}, ValorLocacao=${imovel.ValorLocacao}, ValorAntigo=${imovel.ValorAntigo}`)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700 sticky right-0 bg-white">
@@ -464,7 +464,7 @@ export default function AdminImoveis() {
           </div>
 
           {/* Paginação */}
-          {console.log("Condição de Paginação: pagination.totalPages =", pagination.totalPages, " > 1 é ", pagination.totalPages > 1)} {/* NOVO LOG */}
+          {console.log("DEBUG PAGINATION: totalPages > 1 is", pagination.totalPages > 1, "pagination object:", pagination)} {/* NOVO LOG PARA DEBUG */}
           {pagination.totalPages > 1 && (
             <div className="mt-6">
               <Pagination
