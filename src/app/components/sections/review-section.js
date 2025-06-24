@@ -1,7 +1,16 @@
 "use client";
-export async function ReviewSection({ stats }) {
+
+import CountUp from 'react-countup';
+import { useInView } from 'react-intersection-observer';
+
+export function ReviewSection({ stats }) {
+  const { ref, inView } = useInView({
+    triggerOnce: true,
+    threshold: 0.1,
+  });
+
   return (
-     <div className="bg-gradient-to-r from-black to-zinc-800 min-h-[600px] py-16  flex flex-col justify-center items-center">
+    <div ref={ref} className="bg-gradient-to-r from-black to-zinc-800 min-h-[600px] py-16 flex flex-col justify-center items-center">
       <div className="container mx-auto">
         <div className="mx-auto max-w-2xl lg:max-w-none">
           <div className="text-center space-y-4">
@@ -14,12 +23,23 @@ export async function ReviewSection({ stats }) {
             </p>
           </div>
 
-          <div className="mt-8 max-w-xl mx-auto flex flex-col bg-zinc-900  p-6 md:p-8 rounded-lg justify-center items-center">
+          <div className="mt-8 max-w-xl mx-auto flex flex-col bg-zinc-900 p-6 md:p-8 rounded-lg justify-center items-center">
             <dt className="text-sm font-semibold leading-6 text-gray-300">
               Posições na 1ª página do Google
             </dt>
             <dd className="order-first text-xl sm:text-4xl font-bold tracking-tight text-white">
-              <span>{stats?.position || "5.037"}</span>
+              <span>
+                {inView ? (
+                  <CountUp
+                    start={0}
+                    end={parseInt((stats?.position || "5037").replace(/\./g, ''))}
+                    duration={2.5}
+                    separator="."
+                  />
+                ) : (
+                  "0"
+                )}
+              </span>
             </dd>
           </div>
 
@@ -29,13 +49,35 @@ export async function ReviewSection({ stats }) {
                 Visualizações no Google
               </dt>
               <dd className="order-first text-xl sm:text-2xl font-semibold tracking-tight text-white">
-                <span>{stats?.views || "17.200.000"}</span>
+                <span>
+                  {inView ? (
+                    <CountUp
+                      start={0}
+                      end={parseInt((stats?.views || "17200000").replace(/\./g, ''))}
+                      duration={2.5}
+                      separator="."
+                    />
+                  ) : (
+                    "0"
+                  )}
+                </span>
               </dd>
             </div>
             <div className="flex flex-col bg-white/5 p-6 md:p-8 rounded-lg">
               <dt className="text-sm font-semibold leading-6 text-gray-300">Cliques no Site</dt>
               <dd className="order-first text-xl sm:text-2xl font-semibold tracking-tight text-white">
-                <span>{stats?.clicks || "274.000"}</span>
+                <span>
+                  {inView ? (
+                    <CountUp
+                      start={0}
+                      end={parseInt((stats?.clicks || "274000").replace(/\./g, ''))}
+                      duration={2.5}
+                      separator="."
+                    />
+                  ) : (
+                    "0"
+                  )}
+                </span>
               </dd>
             </div>
             <div className="flex flex-col bg-white/5 p-6 md:p-8 rounded-lg">
@@ -43,14 +85,35 @@ export async function ReviewSection({ stats }) {
                 Imobiliárias parceiras
               </dt>
               <dd className="order-first text-xl sm:text-2xl font-semibold tracking-tight text-white">
-                <span>{stats?.partners || "27"}</span>
+                <span>
+                  {inView ? (
+                    <CountUp
+                      start={0}
+                      end={parseInt(stats?.partners || "31")}
+                      duration={2.5}
+                    />
+                  ) : (
+                    "0"
+                  )}
+                </span>
               </dd>
             </div>
             <div className="flex flex-col bg-white/5 p-6 md:p-8 rounded-lg">
               <dt className="text-sm font-semibold leading-6 text-gray-300">Imóveis Cadastrados</dt>
               <dd className="order-first text-xl sm:text-2xl font-semibold tracking-tight text-white">
                 <span>
-                  <span>{stats?.properties || "6.137"}</span>
+                  <span>
+                    {inView ? (
+                      <CountUp
+                        start={0}
+                        end={parseInt((stats?.properties || "6137").replace(/\./g, ''))}
+                        duration={2.5}
+                        separator="."
+                      />
+                    ) : (
+                      "0"
+                    )}
+                  </span>
                 </span>
               </dd>
             </div>
