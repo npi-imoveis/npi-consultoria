@@ -3,7 +3,6 @@ import { atualizarCorretor, getImovelById } from "@/app/admin/services";
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 
-import { atualizarCorretor } from "@/app/admin/services";
 import { ArrowLeftIcon, ArrowPathIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 import AuthCheck from "@/app/admin/components/auth-check";
 import useImovelStore from "@/app/admin/store/imovelStore";
