@@ -1,12 +1,7 @@
+"use client";
 export async function ReviewSection({ stats }) {
-console.log('ReviewSection - stats recebido:', stats);
-console.log('ReviewSection - stats?.position:', stats?.position);
-console.log('ReviewSection - stats?.views:', stats?.views);
-console.log('ReviewSection - stats?.clicks:', stats?.clicks);
-console.log('ReviewSection - stats?.partners:', stats?.partners);
-console.log('ReviewSection - stats?.properties:', stats?.properties);
   return (
-    <div className="bg-gradient-to-r from-black to-zinc-800 min-h-[600px] py-16  flex flex-col justify-center items-center">
+     <div className="bg-gradient-to-r from-black to-zinc-800 min-h-[600px] py-16  flex flex-col justify-center items-center">
       <div className="container mx-auto">
         <div className="mx-auto max-w-2xl lg:max-w-none">
           <div className="text-center space-y-4">
