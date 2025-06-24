@@ -14,8 +14,7 @@ import { TrashIcon } from "lucide-react";
 
 export default function EditarCorretor({ params }) {
   const router = useRouter();
-  const unwrappedParams = use(params);
-  const id = unwrappedParams.id;
+  const id = params.id; 
   const isNewCorretor = id === "new";
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({});
