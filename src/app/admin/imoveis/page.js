@@ -46,7 +46,7 @@ export default function AdminImoveis() {
 
   // loadImoveis function is already well-defined to handle search and filters
   const loadImoveis = async (page = 1, search = "", customFilters = null) => {
-    console.log("🔍 loadImoveis chamado. Página:", page, "Busca:", search, "Filtros:", customFilters); // NOVO LOG
+    console.log("🔍 loadImoveis chamado. Página:", page, "Busca:", search, "Filtros:", customFilters);
     setIsLoading(true);
     try {
       let responseData;
@@ -59,8 +59,8 @@ export default function AdminImoveis() {
         if (data && data.status === 200 && data.data) {
           responseData = data.data;
           newPaginationData = data.pagination; // <--- AGORA USAMOS A PAGINAÇÃO DA API!
-          console.log("📥 Dados da API de busca livre recebidos:", data); // NOVO LOG
-          console.log("📊 Paginação da API de busca livre:", newPaginationData); // NOVO LOG
+          console.log("📥 Dados da API de busca livre recebidos:", data);
+          console.log("📊 Paginação da API de busca livre:", newPaginationData);
         } else {
           responseData = [];
           newPaginationData = {
@@ -107,7 +107,7 @@ export default function AdminImoveis() {
 
       setImoveis(responseData);
       setPagination(newPaginationData);
-      console.log("✅ Estado de imóveis e paginação atualizado. Paginação atual:", newPaginationData); // NOVO LOG
+      console.log("✅ Estado de imóveis e paginação atualizado. Paginação atual:", newPaginationData);
 
     } catch (error) {
       console.error("Erro ao carregar imóveis:", error);
@@ -120,7 +120,7 @@ export default function AdminImoveis() {
       });
     } finally {
       setIsLoading(false);
-      console.log("⏳ Carregamento finalizado."); // NOVO LOG
+      console.log("⏳ Carregamento finalizado.");
     }
   };
 
@@ -239,7 +239,6 @@ export default function AdminImoveis() {
     }
   };
 
-  // Função para formatar valores monetários
   // Função para formatar valores monetários de forma mais robusta
   const formatarValor = (valor) => {
     if (valor === null || valor === undefined || valor === "") {
@@ -264,6 +263,8 @@ export default function AdminImoveis() {
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",
+      minimumFractionDigits: 2, // Garante duas casas decimais
+      maximumFractionDigits: 2, // Garante duas casas decimais
     }).format(valorNumerico);
   };
 
@@ -427,8 +428,8 @@ export default function AdminImoveis() {
                         {imovel.Categoria || "-"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700">
-                        {formatarValor(imovel.Valor)} ({formatarValor(imovel.ValorAntigo)})
-                        {console.log(`💲 Imóvel ${imovel.Codigo}: Valor=${imovel.Valor}, ValorAntigo=${imovel.ValorAntigo}`)} {/* NOVO LOG */}
+                        {formatarValor(imovel.ValorVenda || imovel.ValorLocacao)} ({formatarValor(imovel.ValorAntigo)})
+                        {console.log(`💲 Imóvel ${imovel.Codigo}: ValorVenda=${imovel.ValorVenda}, ValorLocacao=${imovel.ValorLocacao}, ValorAntigo=${imovel.ValorAntigo}`)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700 sticky right-0 bg-white">
                         <div className="flex items-center space-x-3">
