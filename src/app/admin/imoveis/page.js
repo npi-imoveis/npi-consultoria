@@ -46,6 +46,7 @@ export default function AdminImoveis() {
 
   // loadImoveis function is already well-defined to handle search and filters
   const loadImoveis = async (page = 1, search = "", customFilters = null) => {
+    console.log("🔍 loadImoveis chamado. Página:", page, "Busca:", search, "Filtros:", customFilters); // NOVO LOG
     setIsLoading(true);
     try {
       let responseData;
@@ -56,17 +57,19 @@ export default function AdminImoveis() {
         const data = await response.json();
 
         if (data && data.status === 200 && data.data) {
-  responseData = data.data;
-  newPaginationData = data.pagination; // <--- AGORA USAMOS A PAGINAÇÃO DA API!
-} else {
-  responseData = [];
-  newPaginationData = {
-    totalItems: 0,
-    totalPages: 1,
-    currentPage: 1,
-    itemsPerPage: 12,
-  };
-}
+          responseData = data.data;
+          newPaginationData = data.pagination; // <--- AGORA USAMOS A PAGINAÇÃO DA API!
+          console.log("📥 Dados da API de busca livre recebidos:", data); // NOVO LOG
+          console.log("📊 Paginação da API de busca livre:", newPaginationData); // NOVO LOG
+        } else {
+          responseData = [];
+          newPaginationData = {
+            totalItems: 0,
+            totalPages: 1,
+            currentPage: 1,
+            itemsPerPage: 12,
+          };
+        }
 
         // Salvar o estado da busca livre APÓS a requisição da API
         saveSearchState(search, responseData, newPaginationData);
@@ -104,6 +107,7 @@ export default function AdminImoveis() {
 
       setImoveis(responseData);
       setPagination(newPaginationData);
+      console.log("✅ Estado de imóveis e paginação atualizado. Paginação atual:", newPaginationData); // NOVO LOG
 
     } catch (error) {
       console.error("Erro ao carregar imóveis:", error);
@@ -116,6 +120,7 @@ export default function AdminImoveis() {
       });
     } finally {
       setIsLoading(false);
+      console.log("⏳ Carregamento finalizado."); // NOVO LOG
     }
   };
 
@@ -423,6 +428,7 @@ export default function AdminImoveis() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700">
                         {formatarValor(imovel.Valor)} ({formatarValor(imovel.ValorAntigo)})
+                        {console.log(`💲 Imóvel ${imovel.Codigo}: Valor=${imovel.Valor}, ValorAntigo=${imovel.ValorAntigo}`)} {/* NOVO LOG */}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700 sticky right-0 bg-white">
                         <div className="flex items-center space-x-3">
