@@ -1,10 +1,3 @@
-Perfeito, Edu! Entendido. Você quer remover a exibição do `ValorAntigo` entre parênteses.
-
-Aqui está o código **COMPLETO e CORRIGIDO** para o arquivo `src/app/admin/imoveis/page.js`, com a remoção da exibição do `ValorAntigo` na tabela.
-
-**Por favor, substitua TODO o conteúdo do seu arquivo `src/app/admin/imoveis/page.js` por este código:**
-
-```javascript
 "use client";
 
 import { useState, useEffect } from "react";
@@ -66,8 +59,8 @@ export default function AdminImoveis() {
         if (data && data.status === 200 && data.data) {
           responseData = data.data;
           newPaginationData = data.pagination; // <--- AGORA USAMOS A PAGINAÇÃO DA API!
-          console.log("📥 Dados da API de busca livre recebidos:", data);
-          console.log("📊 Paginação da API de busca livre:", newPaginationData);
+          console.log("📥 Dados da API de busca livre recebidos:", data); // Mantenha este, você pode expandir no console
+          console.log("📊 Paginação da API de busca livre (newPaginationData):", newPaginationData); // Mantenha este, você pode expandir no console
         } else {
           responseData = [];
           newPaginationData = {
@@ -114,7 +107,7 @@ export default function AdminImoveis() {
 
       setImoveis(responseData);
       setPagination(newPaginationData);
-      console.log("✅ Estado de imóveis e paginação atualizado. Paginação atual:", newPaginationData);
+      console.log("✅ Estado de imóveis e paginação atualizado. Imóveis count:", responseData.length, "Paginação atual:", newPaginationData); // Adicionado count de imóveis
 
     } catch (error) {
       console.error("Erro ao carregar imóveis:", error);
@@ -471,6 +464,7 @@ export default function AdminImoveis() {
           </div>
 
           {/* Paginação */}
+          {console.log("Condição de Paginação: pagination.totalPages =", pagination.totalPages, " > 1 é ", pagination.totalPages > 1)} {/* NOVO LOG */}
           {pagination.totalPages > 1 && (
             <div className="mt-6">
               <Pagination
