@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { getImovelById } from "@/app/services";
 import AuthCheck from "../components/auth-check";
-import Pagination from "@/app/components/ui/pagination";
 import { useRouter } from "next/navigation";
 import { EyeIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 import useImovelStore from "../store/imovelStore";
@@ -310,6 +309,48 @@ export default function AdminImoveis() {
     router.push("/admin/imoveis/gerenciar");
   };
 
+  // Função para gerar números das páginas a serem exibidas
+  const getPageNumbers = () => {
+    const pages = [];
+    const totalPages = pagination.totalPages;
+    const currentPage = pagination.currentPage;
+    
+    if (totalPages <= 7) {
+      // Se há 7 páginas ou menos, mostra todas
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      // Lógica para mostrar páginas com reticências
+      if (currentPage <= 4) {
+        // Início: 1, 2, 3, 4, 5, ..., última
+        for (let i = 1; i <= 5; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      } else if (currentPage >= totalPages - 3) {
+        // Final: 1, ..., antepenúltima, penúltima, última
+        pages.push(1);
+        pages.push('...');
+        for (let i = totalPages - 4; i <= totalPages; i++) {
+          pages.push(i);
+        }
+      } else {
+        // Meio: 1, ..., atual-1, atual, atual+1, ..., última
+        pages.push(1);
+        pages.push('...');
+        for (let i = currentPage - 1; i <= currentPage + 1; i++) {
+          pages.push(i);
+        }
+        pages.push('...');
+        pages.push(totalPages);
+      }
+    }
+    
+    return pages;
+  };
+
   return (
     <AuthCheck>
       {isModalOpen && (
@@ -494,16 +535,107 @@ export default function AdminImoveis() {
             </table>
           </div>
 
-          {/* Paginação */}
+          {/* Paginação Inline Simples */}
           {pagination.totalPages > 1 && (
-            <div className="mt-6">
-              <Pagination
-                currentPage={pagination.currentPage}
-                totalPages={pagination.totalPages}
-                onPageChange={handlePageChange}
-                totalItems={pagination.totalItems}
-                itemsPerPage={pagination.itemsPerPage}
-              />
+            <div className="mt-6 flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
+              <div className="flex flex-1 justify-between sm:hidden">
+                {/* Mobile: Apenas Anterior/Próximo */}
+                <button
+                  onClick={() => handlePageChange(pagination.currentPage - 1)}
+                  disabled={pagination.currentPage === 1}
+                  className={`relative inline-flex items-center rounded-md border px-4 py-2 text-sm font-medium ${
+                    pagination.currentPage === 1
+                      ? 'border-gray-300 bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  Anterior
+                </button>
+                <button
+                  onClick={() => handlePageChange(pagination.currentPage + 1)}
+                  disabled={pagination.currentPage === pagination.totalPages}
+                  className={`relative ml-3 inline-flex items-center rounded-md border px-4 py-2 text-sm font-medium ${
+                    pagination.currentPage === pagination.totalPages
+                      ? 'border-gray-300 bg-gray-100 text-gray-400 cursor-not-allowed'
+                      : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  Próximo
+                </button>
+              </div>
+              
+              <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm text-gray-700">
+                    Mostrando{' '}
+                    <span className="font-medium">
+                      {(pagination.currentPage - 1) * pagination.itemsPerPage + 1}
+                    </span>{' '}
+                    até{' '}
+                    <span className="font-medium">
+                      {Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)}
+                    </span>{' '}
+                    de{' '}
+                    <span className="font-medium">{pagination.totalItems}</span> resultados
+                  </p>
+                </div>
+                
+                <div>
+                  <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                    {/* Botão Anterior */}
+                    <button
+                      onClick={() => handlePageChange(pagination.currentPage - 1)}
+                      disabled={pagination.currentPage === 1}
+                      className={`relative inline-flex items-center rounded-l-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 ${
+                        pagination.currentPage === 1 ? 'cursor-not-allowed' : 'hover:text-gray-600'
+                      }`}
+                    >
+                      <span className="sr-only">Anterior</span>
+                      <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fillRule="evenodd" d="M12.79 5.23a.75.75 0 01-.02 1.06L8.832 10l3.938 3.71a.75.75 0 11-1.04 1.08l-4.5-4.25a.75.75 0 010-1.08l4.5-4.25a.75.75 0 011.06.02z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+
+                    {/* Números das páginas */}
+                    {getPageNumbers().map((pageNumber, index) => (
+                      pageNumber === '...' ? (
+                        <span
+                          key={`ellipsis-${index}`}
+                          className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300 focus:outline-offset-0"
+                        >
+                          ...
+                        </span>
+                      ) : (
+                        <button
+                          key={pageNumber}
+                          onClick={() => handlePageChange(pageNumber)}
+                          className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 ${
+                            pageNumber === pagination.currentPage
+                              ? 'z-10 bg-black text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-black'
+                              : 'text-gray-900'
+                          }`}
+                        >
+                          {pageNumber}
+                        </button>
+                      )
+                    ))}
+
+                    {/* Botão Próximo */}
+                    <button
+                      onClick={() => handlePageChange(pagination.currentPage + 1)}
+                      disabled={pagination.currentPage === pagination.totalPages}
+                      className={`relative inline-flex items-center rounded-r-md px-2 py-2 text-gray-400 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0 ${
+                        pagination.currentPage === pagination.totalPages ? 'cursor-not-allowed' : 'hover:text-gray-600'
+                      }`}
+                    >
+                      <span className="sr-only">Próximo</span>
+                      <svg className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fillRule="evenodd" d="M7.21 14.77a.75.75 0 01.02-1.06L11.168 10 7.23 6.29a.75.75 0 111.04-1.08l4.5 4.25a.75.75 0 010 1.08l-4.5 4.25a.75.75 0 01-1.06-.02z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  </nav>
+                </div>
+              </div>
             </div>
           )}
         </div>
