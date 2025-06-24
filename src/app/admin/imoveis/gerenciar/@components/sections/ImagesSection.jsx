@@ -14,40 +14,6 @@ const ImagesSection = ({
   changeImagePosition,
   validation,
 }) => {
-  // Função simplificada para excluir todas as fotos
-  const handleRemoveAllImages = () => {
-    // Primeira confirmação
-    if (!window.confirm(
-      "⚠️ ATENÇÃO: Tem certeza que deseja excluir TODAS as fotos deste imóvel?"
-    )) {
-      return;
-    }
-
-    // Segunda confirmação
-    if (!window.confirm(
-      "🚨 CONFIRMAÇÃO FINAL: Esta ação é IRREVERSÍVEL! Todas as fotos serão permanentemente excluídas. Deseja continuar?"
-    )) {
-      return;
-    }
-
-    // Limpar todas as fotos usando setFormData diretamente
-    if (typeof setFormData !== 'undefined') {
-      setFormData((prevData) => ({
-        ...prevData,
-        Foto: [],
-      }));
-    } else {
-      // Fallback: remover uma por uma
-      if (formData.Foto && Array.isArray(formData.Foto)) {
-        formData.Foto.forEach((photo) => {
-          removeImage(photo.Codigo);
-        });
-      }
-    }
-
-    alert("✅ Todas as fotos foram excluídas com sucesso!");
-  };
-
   // Função simplificada para baixar todas as fotos (individualmente)
   const handleDownloadAllPhotos = async () => {
     if (!formData.Foto || formData.Foto.length === 0) {
@@ -179,24 +145,13 @@ const ImagesSection = ({
               📥 Baixar Todas
             </button>
           )}
-
-          {/* Botão Excluir Todas as Fotos */}
-          {formData.Foto && formData.Foto.length > 0 && (
-            <button
-              type="button"
-              onClick={handleRemoveAllImages}
-              className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 transition duration-300 text-sm"
-            >
-              🗑️ Excluir Todas
-            </button>
-          )}
         </div>
 
         {/* Dica informativa */}
         {formData.Foto && formData.Foto.length > 0 && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
             <p className="text-xs text-blue-700">
-              💡 <strong>Dica:</strong> O botão "Baixar Todas" fará o download individual de cada foto com nomes organizados (codigo_foto_01.jpg, codigo_foto_02.jpg, etc.). O botão "Excluir Todas" remove todas as fotos após dupla confirmação.
+              💡 <strong>Dica:</strong> O botão "Baixar Todas" fará o download individual de cada foto com nomes organizados (codigo_foto_01.jpg, codigo_foto_02.jpg, etc.).
             </p>
           </div>
         )}
