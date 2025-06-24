@@ -538,4 +538,19 @@ export async function adicionarProprietario(id, dadosProprietario) {
       error: error.response?.data?.error || "Erro desconhecido",
     };
   }
+  export const getImovelById = async (codigo) => {
+  try {
+    const response = await axiosClient.get(`admin/imoveis/${codigo}`);
+    return {
+      success: true,
+      data: response.data?.data || response.data
+    };
+  } catch (error) {
+    console.error("Erro ao buscar imóvel:", error);
+    return {
+      success: false,
+      error: error.response?.data?.message || error.message || "Erro ao buscar imóvel"
+    };
+  }
+};
 }
