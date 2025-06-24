@@ -56,22 +56,18 @@ export default function AdminImoveis() {
         const data = await response.json();
 
         if (data && data.status === 200 && data.data) {
-          responseData = data.data;
-          newPaginationData = {
-            totalItems: data.data.length,
-            totalPages: Math.ceil(data.data.length / 12),
-            currentPage: page,
-            itemsPerPage: 12,
-          };
-        } else {
-          responseData = [];
-          newPaginationData = {
-            totalItems: 0,
-            totalPages: 1,
-            currentPage: 1,
-            itemsPerPage: 12,
-          };
-        }
+  responseData = data.data;
+  newPaginationData = data.pagination; // <--- AGORA USAMOS A PAGINAÇÃO DA API!
+} else {
+  responseData = [];
+  newPaginationData = {
+    totalItems: 0,
+    totalPages: 1,
+    currentPage: 1,
+    itemsPerPage: 12,
+  };
+}
+
         // Salvar o estado da busca livre APÓS a requisição da API
         saveSearchState(search, responseData, newPaginationData);
 
