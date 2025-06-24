@@ -8,6 +8,10 @@ const nextConfig = {
       },
       {
         protocol: "https",
+        hostname: "d1988evaubdc7a.cloudfront.net",
+      },
+      {
+        protocol: "https",
         hostname: "npi-imoveis.s3.sa-east-1.amazonaws.com",
       },
       {
