@@ -235,18 +235,33 @@ export default function AdminImoveis() {
   };
 
   // Função para formatar valores monetários
+  // Função para formatar valores monetários de forma mais robusta
   const formatarValor = (valor) => {
-    if (!valor) return "-";
-    const valorNumerico =
-      typeof valor === "number"
-        ? valor
-        : parseFloat(valor.replace(/[^\d.,]/g, "").replace(",", "."));
-    if (isNaN(valorNumerico)) return "-";
+    if (valor === null || valor === undefined || valor === "") {
+      return "-"; // Retorna '-' para valores nulos, indefinidos ou vazios
+    }
+
+    let valorNumerico;
+    if (typeof valor === "number") {
+      valorNumerico = valor;
+    } else if (typeof valor === "string") {
+      // Tenta limpar a string para converter para número
+      const cleanedValue = valor.replace(/[^\d,.-]/g, "").replace(",", ".");
+      valorNumerico = parseFloat(cleanedValue);
+    } else {
+      return "-"; // Retorna '-' para tipos de dados inesperados
+    }
+
+    if (isNaN(valorNumerico)) {
+      return "-"; // Retorna '-' se a conversão para número falhar
+    }
+
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",
     }).format(valorNumerico);
   };
+
 
   const handleDelete = async (codigo) => {
     setCodigoImovel(codigo);
