@@ -11,8 +11,8 @@ export default function CondominioGallery({ fotos, second, title }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
-  // Reorganiza as imagens para que a foto em destaque seja a primeira
-  const images = fotos
+  // Processamento das imagens
+  const processedImages = fotos
     ? [...fotos].sort((a, b) => {
         if (a.Destaque === "Sim" && b.Destaque !== "Sim") return -1;
         if (a.Destaque !== "Sim" && b.Destaque === "Sim") return 1;
@@ -23,7 +23,8 @@ export default function CondominioGallery({ fotos, second, title }) {
       }))
     : [];
 
-  // Se a propriedade second for true e tiver pelo menos 2 imagens, coloca a segunda imagem como primeira
+  // Reorganização se second for true
+  const images = [...processedImages]; // Cria uma cópia
   if (second && images.length >= 2) {
     const secondImage = images[1];
     images.splice(1, 1);
@@ -33,6 +34,14 @@ export default function CondominioGallery({ fotos, second, title }) {
   if (!images || images.length === 0) {
     return null;
   }
+
+  // Atualiza o alt da imagem selecionada
+  const updatedImages = images.map((image, index) => ({
+    ...image,
+    alt: index === selectedIndex 
+      ? title || `Imagem ${selectedIndex + 1} de ${images.length} do condomínio`
+      : image.alt
+  }));
 
   const openModal = (index) => {
     setIsModalOpen(true);
@@ -44,17 +53,12 @@ export default function CondominioGallery({ fotos, second, title }) {
   };
 
   const goNext = () => {
-    setSelectedIndex((prev) => (prev + 1) % images.length);
+    setSelectedIndex((prev) => (prev + 1) % updatedImages.length);
   };
 
   const goPrev = () => {
-    setSelectedIndex((prev) => (prev - 1 + images.length) % images.length);
+    setSelectedIndex((prev) => (prev - 1 + updatedImages.length) % updatedImages.length);
   };
-
-  // Atualiza o alt da imagem selecionada
-  if (selectedIndex !== null && images[selectedIndex]) {
-    images[selectedIndex].alt = title || `Imagem ${selectedIndex + 1} de ${images.length} do condomínio`;
-  }
 
   return (
     <>
@@ -70,8 +74,9 @@ export default function CondominioGallery({ fotos, second, title }) {
           emulateTouch={true}
           thumbWidth={80}
           onClickItem={openModal}
+          selectedItem={selectedIndex}
           renderThumbs={(children) =>
-            images.map((image, index) => (
+            updatedImages.map((image, index) => (
               <div key={index} className="thumb">
                 <Image
                   src={image.src}
@@ -84,7 +89,7 @@ export default function CondominioGallery({ fotos, second, title }) {
             ))
           }
         >
-          {images.map((image, index) => (
+          {updatedImages.map((image, index) => (
             <div key={index} className="relative w-full h-[550px]">
               <Image
                 src={image.src}
@@ -98,7 +103,7 @@ export default function CondominioGallery({ fotos, second, title }) {
                 loading={index === 0 ? "eager" : "lazy"}
               />
               <span className="absolute top-2 right-2 bg-black text-white text-[12px] px-2 py-1 rounded z-10">
-                {index + 1} de {images.length}
+                {index + 1} de {updatedImages.length}
               </span>
             </div>
           ))}
@@ -122,8 +127,8 @@ export default function CondominioGallery({ fotos, second, title }) {
           <div className="flex items-center justify-center min-h-screen p-4 relative">
             <div className="relative max-w-full max-h-[80vh]">
               <Image
-                src={images[selectedIndex].src}
-                alt={images[selectedIndex].alt}
+                src={updatedImages[selectedIndex].src}
+                alt={updatedImages[selectedIndex].alt}
                 title={title}
                 width={1200}
                 height={800}
