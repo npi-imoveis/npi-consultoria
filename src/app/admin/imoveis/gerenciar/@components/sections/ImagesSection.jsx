@@ -14,76 +14,6 @@ const ImagesSection = ({
   changeImagePosition,
   validation,
 }) => {
-  // Função simplificada para baixar todas as fotos (individualmente)
-  const handleDownloadAllPhotos = async () => {
-    if (!formData.Foto || formData.Foto.length === 0) {
-      alert("Não há fotos para baixar!");
-      return;
-    }
-
-    // Confirmar ação
-    if (!window.confirm(
-      `Deseja baixar todas as ${formData.Foto.length} fotos? Elas serão baixadas individualmente.`
-    )) {
-      return;
-    }
-
-    try {
-      // Ordenar fotos por ordem
-      const sortedPhotos = [...formData.Foto].sort((a, b) => {
-        const orderA = a.Ordem || formData.Foto.findIndex((p) => p.Codigo === a.Codigo) + 1;
-        const orderB = b.Ordem || formData.Foto.findIndex((p) => p.Codigo === b.Codigo) + 1;
-        return orderA - orderB;
-      });
-
-      // Nome base para os arquivos
-      const imovelCode = formData.Codigo || "imovel";
-      
-      // Baixar cada foto individualmente
-      for (let i = 0; i < sortedPhotos.length; i++) {
-        const photo = sortedPhotos[i];
-        try {
-          const response = await fetch(photo.Foto);
-          if (response.ok) {
-            const blob = await response.blob();
-            
-            // Determinar extensão da imagem
-            const contentType = response.headers.get('content-type') || '';
-            let extension = '.jpg';
-            if (contentType.includes('png')) extension = '.png';
-            else if (contentType.includes('gif')) extension = '.gif';
-            else if (contentType.includes('webp')) extension = '.webp';
-
-            // Nome do arquivo: codigo_foto_01.jpg, codigo_foto_02.jpg, etc.
-            const photoNumber = String(i + 1).padStart(2, '0');
-            const fileName = `${imovelCode}_foto_${photoNumber}${extension}`;
-            
-            // Criar link de download
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = fileName;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(url);
-
-            // Pequena pausa entre downloads para não sobrecarregar
-            await new Promise(resolve => setTimeout(resolve, 500));
-          }
-        } catch (error) {
-          console.error(`Erro ao baixar foto ${i + 1}:`, error);
-        }
-      }
-
-      alert(`✅ Download concluído! ${sortedPhotos.length} fotos foram baixadas.`);
-      
-    } catch (error) {
-      console.error("Erro ao baixar fotos:", error);
-      alert("Erro ao baixar as fotos. Tente novamente.");
-    }
-  };
-
   return (
     <FormSection title="Fotos do Imóvel" highlight={validation?.photoCount < 5}>
       <div className="space-y-4">
@@ -134,27 +64,7 @@ const ImagesSection = ({
           >
             📤 Upload de Imagens
           </button>
-
-          {/* Botão Baixar Todas as Fotos */}
-          {formData.Foto && formData.Foto.length > 0 && (
-            <button
-              type="button"
-              onClick={handleDownloadAllPhotos}
-              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition duration-300 text-sm"
-            >
-              📥 Baixar Todas
-            </button>
-          )}
         </div>
-
-        {/* Dica informativa */}
-        {formData.Foto && formData.Foto.length > 0 && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-            <p className="text-xs text-blue-700">
-              💡 <strong>Dica:</strong> O botão "Baixar Todas" fará o download individual de cada foto com nomes organizados (codigo_foto_01.jpg, codigo_foto_02.jpg, etc.).
-            </p>
-          </div>
-        )}
 
         {/* Lista de fotos */}
         {formData.Foto && formData.Foto.length > 0 && (
