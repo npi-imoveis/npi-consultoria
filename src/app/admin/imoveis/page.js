@@ -411,8 +411,8 @@ export default function AdminImoveis() {
           </div>
 
           {/* Tabela de imóveis */}
-          <div className="relative overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
+          <div className="relative overflow-x-auto shadow-sm">
+            <table className="min-w-full divide-y divide-gray-200 table-fixed">
               <thead className="bg-gray-50">
                 <tr>
                   <th
@@ -447,7 +447,7 @@ export default function AdminImoveis() {
                   </th>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-[10px] font-bold  uppercase tracking-wider"
+                    className="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-wider min-w-[140px]"
                   >
                     Valor (ValorAntigo)
                   </th>
@@ -500,7 +500,7 @@ export default function AdminImoveis() {
                       <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700">
                         {formatarArea(imovel.AreaPrivativa)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700">
+                      <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700 min-w-[140px]">
                         {formatarValor(imovel.ValorAntigo)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700 sticky right-0 bg-white">
