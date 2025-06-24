@@ -1,5 +1,3 @@
- "use client";
-
 import { useState, useEffect, useRef, useCallback } from "react";
 import { formatterSlug } from "@/app/utils/formatter-slug";
 import { OpenStreetMapProvider } from "leaflet-geosearch";
@@ -98,106 +96,39 @@ export const useImovelForm = () => {
       const fetchCode = async () => {
         const code = await generateRandomCode();
         setNewImovelCode(code);
-        setFormData((prev) => {
-          if (prev.Codigo && prev.Codigo !== code) {
-            return prev;
-          }
-          return {
-            ...prev,
-            Codigo: code,
-          };
-        });
+        setFormData((prevData) => ({
+          ...prevData,
+          Codigo: code,
+        }));
       };
       fetchCode();
     }
-  }, [isAutomacao]);
+  }, [isAutomacao, formData.Codigo]);
 
-  useEffect(() => {
-    if (formData.CEP && formData.CEP.length >= 8) {
-      fetchAddressByCep(formData.CEP);
-    }
-  }, [formData.CEP]);
-
-  // Ensure formData.Codigo is always synced with newImovelCode
-  useEffect(() => {
-    if (isAutomacao && newImovelCode && (!formData.Codigo || formData.Codigo !== newImovelCode)) {
-      setFormData((prev) => ({
-        ...prev,
-        Codigo: newImovelCode,
-      }));
-    }
-  }, [newImovelCode, formData.Codigo, isAutomacao]);
-
-  // Ensure Slug is always generated from Empreendimento
-  useEffect(() => {
-    if (formData.Empreendimento || formData.TermoSeo) {
-      let slug;
-
-      if (isAutomacao && formData.TermoSeo) {
-        slug = formatterSlug(formData.TermoSeo);
-      } else {
-        slug = formatterSlug(formData.Empreendimento);
-      }
-      // Only update if the slug has actually changed
-      if (slug !== formData.Slug) {
-        setFormData((prev) => ({
-          ...prev,
-          Slug: slug,
-        }));
-      }
-    }
-  }, [formData.Empreendimento, formData.TermoSeo, formData.Slug]);
-
-  useEffect(() => {
-    const fetchCorretor = async () => {
-      try {
-        if (formData.Codigo && !isAutomacao) {
-          const response = await getCorretorById(formData.Codigo);
-          if (response.data) {
-            setFormData((prev) => ({
-              ...prev,
-              Corretor: response.data.nome,
-              EmailCorretor: response.data.email,
-              CelularCorretor: response.data.celular,
-            }));
-          } else {
-            setFormData((prev) => ({
-              ...prev,
-              Corretor: "",
-              EmailCorretor: "",
-              CelularCorretor: "",
-            }));
-          }
-        }
-      } catch (error) {
-        console.error("Erro ao buscar corretor:", error);
-      }
-    };
-
-    fetchCorretor();
-  }, [formData.Codigo]);
-
+  // Função para mascarar data no formato brasileiro
   const maskDateBR = useCallback((value) => {
-    // Remove tudo que não for número
-    let v = value.replace(/\D/g, "");
-    // Adiciona a barra após o dia
-    if (v.length > 2) v = v.replace(/^(\d{2})(\d)/, "$1/$2");
-    // Adiciona a barra após o mês
-    if (v.length > 5) v = v.replace(/^(\d{2})\/(\d{2})(\d)/, "$1/$2/$3");
-    // Limita a 10 caracteres (dd/mm/yyyy)
-    return v.slice(0, 10);
+    // Remove tudo que não é número
+    const numbers = value.replace(/\D/g, "");
+
+    // Aplica a máscara DD/MM/AAAA
+    if (numbers.length <= 2) {
+      return numbers;
+    } else if (numbers.length <= 4) {
+      return `${numbers.slice(0, 2)}/${numbers.slice(2)}`;
+    } else {
+      return `${numbers.slice(0, 2)}/${numbers.slice(2, 4)}/${numbers.slice(4, 8)}`;
+    }
   }, []);
 
   // Função para formatar valores monetários
   const formatarParaReal = useCallback((valor) => {
-    if (valor === null || valor === undefined || valor === "") return "";
+    if (!valor) return "";
 
-    // Remove qualquer caractere não numérico
-    const apenasNumeros = String(valor).replace(/\D/g, "");
-
-    // Converte para número e formata
     try {
-      const numero = parseInt(apenasNumeros, 10);
+      // Remove caracteres não numéricos
+      const numero = parseFloat(valor.toString().replace(/\D/g, ""));
+      if (isNaN(numero)) return "";
+
       return numero.toLocaleString("pt-BR", {
         style: "currency",
         currency: "BRL",
@@ -299,88 +230,104 @@ export const useImovelForm = () => {
           ...prevValues,
           [name]: formatarParaReal(valorNumerico),
         }));
+        return;
       }
-      // Tratamento especial para o campo de vídeo
-      else if (name === "Video.1.Video") {
+
+      // Tratamento especial para CEP
+      if (name === "CEP") {
         setFormData((prevData) => ({
           ...prevData,
-          Video: {
-            ...(prevData.Video || {}),
-            1: {
-              ...(prevData.Video?.[1] || {}),
-              Codigo: prevData.Video?.[1]?.Codigo || "1",
-              Destaque: prevData.Video?.[1]?.Destaque || "Nao",
-              Tipo: "youtube",
-              Video: value,
-              VideoCodigo: prevData.Video?.[1]?.VideoCodigo || "1",
-            },
-          },
+          [name]: value,
         }));
-      } else {
-        setFormData((prevData) => {
-          // Se o campo alterado for Empreendimento, gerar o slug automaticamente
-          if (name === "Empreendimento") {
-            return {
-              ...prevData,
-              [name]: value,
-              Slug: formatterSlug(value),
-            };
-          }
 
-          // Se o campo alterado for CEP, buscar o endereço
-          if (name === "CEP" && value.length >= 8) {
-            // Permite executar apenas quando tiver 8 ou mais caracteres
-            fetchAddressByCep(value);
-          }
-
-          return {
-            ...prevData,
-            [name]: value,
-          };
-        });
+        // Buscar endereço se CEP estiver completo
+        if (value.replace(/\D/g, "").length === 8) {
+          fetchAddressByCep(value);
+        }
+        return;
       }
+
+      // Tratamento especial para Empreendimento (gerar slug automaticamente)
+      if (name === "Empreendimento") {
+        setFormData((prevData) => ({
+          ...prevData,
+          [name]: value,
+          Slug: formatterSlug(value),
+        }));
+        return;
+      }
+
+      // Tratamento especial para IdCorretor
+      if (name === "IdCorretor") {
+        setFormData((prevData) => ({
+          ...prevData,
+          [name]: value,
+          Corretor: "",
+          EmailCorretor: "",
+          CelularCorretor: "",
+          Imobiliaria: "",
+        }));
+
+        // Buscar dados do corretor se ID for válido
+        if (value && value.trim() !== "") {
+          getCorretorById(value)
+            .then((corretor) => {
+              if (corretor) {
+                setFormData((prevData) => ({
+                  ...prevData,
+                  Corretor: corretor.Nome || "",
+                  EmailCorretor: corretor.Email || "",
+                  CelularCorretor: corretor.Celular || "",
+                  Imobiliaria: corretor.Imobiliaria || "",
+                }));
+              }
+            })
+            .catch((error) => {
+              console.error("Erro ao buscar corretor:", error);
+            });
+        }
+        return;
+      }
+
+      // Tratamento padrão para outros campos
+      setFormData((prevData) => ({
+        ...prevData,
+        [name]: value,
+      }));
     },
-    [extrairNumeros, formatarParaReal, fetchAddressByCep]
+    [maskDateBR, extrairNumeros, formatarParaReal, fetchAddressByCep]
   );
 
-  // Função para adicionar imagens via modal
+  // Função para adicionar uma nova imagem
   const addImage = useCallback(() => {
     setShowImageModal(true);
   }, []);
 
-  // Função para adicionar uma imagem manualmente
-  const addSingleImage = useCallback(() => {
-    const newImageCode = Date.now().toString(); // Gera um código único baseado no timestamp
-    setFormData((prevData) => {
-      const newPhoto = {
-        Codigo: newImageCode,
-        Destaque: "Nao",
-        Foto: "", // URL da imagem será adicionada pelo usuário
-        isUploading: false,
-        Ordem: Array.isArray(prevData.Foto) ? prevData.Foto.length + 1 : 1,
-      };
+  // Função para adicionar uma única imagem
+  const addSingleImage = useCallback((imageUrl) => {
+    if (!imageUrl || imageUrl.trim() === "") return;
 
-      // Handle both array and empty cases
-      const updatedFotos = Array.isArray(prevData.Foto) ? [...prevData.Foto, newPhoto] : [newPhoto];
+    const newImage = {
+      Codigo: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+      Foto: imageUrl.trim(),
+      Destaque: "Nao",
+      Ordem: (formData.Foto?.length || 0) + 1,
+    };
 
-      return {
-        ...prevData,
-        Foto: updatedFotos,
-      };
-    });
-  }, []);
+    setFormData((prevData) => ({
+      ...prevData,
+      Foto: Array.isArray(prevData.Foto) ? [...prevData.Foto, newImage] : [newImage],
+    }));
+  }, [formData.Foto]);
 
-  // Função para atualizar uma imagem específica
-  const updateImage = useCallback((codigo, field, value) => {
+  // Função para atualizar uma imagem existente
+  const updateImage = useCallback((codigo, newImageUrl) => {
     setFormData((prevData) => {
       if (!Array.isArray(prevData.Foto)) return prevData;
 
-      // Atualiza apenas a imagem com o Codigo correspondente
       const updatedFotos = prevData.Foto.map((photo) =>
-        photo.Codigo === codigo ? { ...photo, [field]: value } : photo
+        photo.Codigo === codigo ? { ...photo, Foto: newImageUrl } : photo
       );
-
-      console.log("Dados UpdatedFotos", updatedFotos);
 
       return {
         ...prevData,
@@ -391,12 +338,9 @@ export const useImovelForm = () => {
 
   // Função para remover uma imagem
   const removeImage = useCallback((codigo) => {
-    if (!window.confirm("Tem certeza que deseja remover esta imagem?")) return;
-
     setFormData((prevData) => {
       if (!Array.isArray(prevData.Foto)) return prevData;
 
-      // Filter out the photo with the given codigo
       const updatedFotos = prevData.Foto.filter((photo) => photo.Codigo !== codigo);
 
       // Update the order of remaining photos
@@ -410,6 +354,32 @@ export const useImovelForm = () => {
         Foto: reorderedFotos,
       };
     });
+  }, []);
+
+  // Função para excluir TODAS as imagens
+  const removeAllImages = useCallback(() => {
+    // Primeira confirmação
+    if (typeof window !== 'undefined' && !window.confirm(
+      "⚠️ ATENÇÃO: Tem certeza que deseja excluir TODAS as fotos deste imóvel?"
+    )) {
+      return;
+    }
+
+    // Segunda confirmação
+    if (typeof window !== 'undefined' && !window.confirm(
+      "🚨 CONFIRMAÇÃO FINAL: Esta ação é IRREVERSÍVEL! Todas as fotos serão permanentemente excluídas. Deseja continuar?"
+    )) {
+      return;
+    }
+
+    // Limpar todas as fotos
+    setFormData((prevData) => ({
+      ...prevData,
+      Foto: [],
+    }));
+
+    // Feedback visual (opcional - pode ser implementado com toast/notification)
+    console.log("✅ Todas as fotos foram excluídas com sucesso!");
   }, []);
 
   // Função para definir uma imagem como destaque
@@ -525,6 +495,7 @@ export const useImovelForm = () => {
     addSingleImage,
     updateImage,
     removeImage,
+    removeAllImages, // Nova função adicionada
     setImageAsHighlight,
     changeImagePosition,
     validation,
