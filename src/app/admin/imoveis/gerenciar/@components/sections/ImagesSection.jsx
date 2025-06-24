@@ -14,7 +14,8 @@ const ImagesSection = ({
   changeImagePosition,
   validation,
 }) => {
- / Função simplificada para excluir todas as fotos
+  
+ // Função simplificada para excluir todas as fotos
 const handleRemoveAllImages = () => {
   // Primeira confirmação
   if (!window.confirm(
