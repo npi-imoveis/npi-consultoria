@@ -51,32 +51,13 @@ export default function AdminImoveis() {
       let responseData;
       let newPaginationData;
 
-     if (search) {
-  const response = await fetch(`/api/search/admin?q=${encodeURIComponent(search)}&page=${page}&limit=12`);
-  const data = await response.json();
-
-  if (data && data.status === 200 && data.data) {
-    responseData = data.data;
-    newPaginationData = data.pagination; // Usar a paginação da API
-  } else {
-    responseData = [];
-    newPaginationData = {
-      totalItems: 0,
-      totalPages: 1,
-      currentPage: 1,
-      itemsPerPage: 12,
-    };
-  }
-
+      if (search) {
+        const response = await fetch(`/api/search/admin?q=${encodeURIComponent(search)}&page=${page}&limit=12`);
+        const data = await response.json();
 
         if (data && data.status === 200 && data.data) {
           responseData = data.data;
-          newPaginationData = {
-            totalItems: data.data.length,
-            totalPages: Math.ceil(data.data.length / 12),
-            currentPage: page,
-            itemsPerPage: 12,
-          };
+          newPaginationData = data.pagination; // Usar a paginação da API
         } else {
           responseData = [];
           newPaginationData = {
@@ -425,21 +406,12 @@ export default function AdminImoveis() {
                         {imovel.Categoria || "-"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700">
-                        {imovel.ValorAntigo}
+                        {formatarValor(imovel.Valor)} ({formatarValor(imovel.ValorAntigo)})
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap sticky right-0 bg-white">
+                      <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700 sticky right-0 bg-white">
                         <div className="flex items-center space-x-3">
-                          <a
-                            href={`/imovel-${imovel.Codigo}/${imovel.Slug}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-black hover:text-gray-700 bg-gray-100 p-2 rounded-md"
-                            title="Ver no site"
-                          >
-                            <EyeIcon className="h-5 w-5" />
-                          </a>
                           <button
-                            className="text-black hover:text-gray-700 bg-gray-100 p-2 rounded-md"
+                            className="text-black hover:text-indigo-900 bg-gray-100 p-2 rounded-md"
                             title="Editar"
                             onClick={() => handleEdit(imovel.Codigo)}
                           >
@@ -447,7 +419,7 @@ export default function AdminImoveis() {
                           </button>
                           <button
                             className="text-red-500 font-bold hover:text-red-400 bg-gray-100 p-2 rounded-md"
-                            title="Deletar Imóvel"
+                            title="Deletar"
                             onClick={() => handleDelete(imovel.Codigo)}
                           >
                             <TrashIcon className="h-4 w-4" />
@@ -457,10 +429,10 @@ export default function AdminImoveis() {
                     </tr>
                   ))
                 ) : (
-                  // Nenhum resultado
+                  // Nenhum resultado encontrado
                   <tr>
-                    <td colSpan={5} className="px-6 py-4 text-center text-[10px] text-gray-500">
-                      Nenhum imóvel encontrado
+                    <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                      Nenhum imóvel encontrado.
                     </td>
                   </tr>
                 )}
@@ -468,10 +440,18 @@ export default function AdminImoveis() {
             </table>
           </div>
 
-          {/* Rodapé da tabela com paginação */}
-          <div className="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
-            <Pagination pagination={pagination} onPageChange={handlePageChange} />
-          </div>
+          {/* Paginação */}
+          {pagination.totalPages > 1 && (
+            <div className="mt-6">
+              <Pagination
+                currentPage={pagination.currentPage}
+                totalPages={pagination.totalPages}
+                onPageChange={handlePageChange}
+                totalItems={pagination.totalItems}
+                itemsPerPage={pagination.itemsPerPage}
+              />
+            </div>
+          )}
         </div>
       </div>
     </AuthCheck>
