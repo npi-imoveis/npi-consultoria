@@ -1,239 +1,585 @@
-"use client";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { formatterSlug } from "@/app/utils/formatter-slug";
+import { OpenStreetMapProvider } from "leaflet-geosearch";
+import { REQUIRED_FIELDS } from "../FieldGroup";
+import useImovelStore from "@/app/admin/store/imovelStore";
+import { getCorretorById } from "@/app/admin/services/corretor";
+import { generateUniqueCode } from "@/app/utils/idgenerate";
 
-import { memo } from "react";
-import FormSection from "../FormSection";
-import Image from "next/image";
+// Export the generateRandomCode function so it can be reused
+export const generateRandomCode = async () => {
+  const code = await generateUniqueCode();
+  return code;
+};
 
-const ImagesSection = ({
-  formData,
-  addSingleImage,
-  showImageModal,
-  updateImage,
-  removeImage,
-  removeAllImages,
-  downloadAllPhotos, // Nova prop adicionada
-  downloadingPhotos, // Estado do download
-  setImageAsHighlight,
-  changeImagePosition,
-  validation,
-}) => {
-  const handleAddImageUrl = () => {
-    const imageUrl = prompt("Digite a URL da imagem:");
-    if (imageUrl && imageUrl.trim() !== "") {
-      addSingleImage(imageUrl.trim());
+export const useImovelForm = () => {
+  const provider = new OpenStreetMapProvider();
+  const fileInputRef = useRef(null);
+
+  // Access the store to check for Automacao flag
+  const imovelSelecionado = useImovelStore((state) => state.imovelSelecionado);
+  const isAutomacao = imovelSelecionado?.Automacao === true;
+
+  const [formData, setFormData] = useState({
+    Codigo: "",
+    CodigoOriginal: "",
+    Empreendimento: "",
+    TituloSite: "",
+    Categoria: "Apartamento",
+    Situacao: "PRONTO NOVO",
+    Status: "VENDA",
+    Slug: "",
+    Destacado: "Não",
+    Condominio: "Não",
+    CondominioDestaque: "Não",
+    Ativo: "Sim",
+    Construtora: "",
+    Endereco: "",
+    Numero: "",
+    Complemento: "",
+    Bairro: "",
+    BairroComercial: "",
+    Cidade: "",
+    UF: "",
+    CEP: "",
+    Latitude: "",
+    Longitude: "",
+    Regiao: "",
+    AreaPrivativa: "",
+    AreaTotal: "",
+    Dormitorios: "",
+    Suites: "",
+    BanheiroSocialQtd: "",
+    Vagas: "",
+    DataEntrega: "",
+    AnoConstrucao: "",
+    ValorAntigo: "",
+    ValorAluguelSite: "",
+    ValorCondominio: "",
+    ValorIptu: "",
+    DescricaoUnidades: "",
+    DescricaoDiferenciais: "",
+    DestaquesDiferenciais: "",
+    DestaquesLazer: "",
+    DestaquesLocalizacao: "",
+    FichaTecnica: "",
+    Tour360: "",
+    IdCorretor: "",
+    Corretor: "",
+    EmailCorretor: "",
+    CelularCorretor: "",
+    Imobiliaria: "",
+    Video: "",
+    Foto: [],
+  });
+
+  const [displayValues, setDisplayValues] = useState({
+    ValorAntigo: "",
+    ValorAluguelSite: "",
+    ValorCondominio: "",
+    ValorIptu: "",
+  });
+
+  const [newImovelCode, setNewImovelCode] = useState("");
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [downloadingPhotos, setDownloadingPhotos] = useState(false);
+
+  const [validation, setValidation] = useState({
+    isFormValid: false,
+    photoCount: 0,
+    requiredPhotoCount: 5,
+    fieldValidation: {},
+  });
+
+  // Generate random code on init only if in Automacao mode
+  useEffect(() => {
+    if (isAutomacao || !formData.Codigo) {
+      const fetchCode = async () => {
+        const code = await generateRandomCode();
+        setNewImovelCode(code);
+        setFormData((prevData) => ({
+          ...prevData,
+          Codigo: code,
+        }));
+      };
+      fetchCode();
     }
-  };
+  }, [isAutomacao, formData.Codigo]);
 
-  const handleImageUpload = (codigo) => {
-    const fileInput = document.createElement("input");
-    fileInput.type = "file";
-    fileInput.accept = "image/*";
-    fileInput.onchange = (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          updateImage(codigo, e.target.result);
-        };
-        reader.readAsDataURL(file);
+  // Função para mascarar data no formato brasileiro
+  const maskDateBR = useCallback((value) => {
+    // Remove tudo que não é número
+    const numbers = value.replace(/\D/g, "");
+
+    // Aplica a máscara DD/MM/AAAA
+    if (numbers.length <= 2) {
+      return numbers;
+    } else if (numbers.length <= 4) {
+      return `${numbers.slice(0, 2)}/${numbers.slice(2)}`;
+    } else {
+      return `${numbers.slice(0, 2)}/${numbers.slice(2, 4)}/${numbers.slice(4, 8)}`;
+    }
+  }, []);
+
+  // Função para formatar valores monetários
+  const formatarParaReal = useCallback((valor) => {
+    if (!valor) return "";
+
+    try {
+      // Remove caracteres não numéricos
+      const numero = parseFloat(valor.toString().replace(/\D/g, ""));
+      if (isNaN(numero)) return "";
+
+      return numero.toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      });
+    } catch (e) {
+      console.error("Erro ao formatar valor:", e);
+      return String(valor);
+    }
+  }, []);
+
+  // Função para extrair somente os números (remove formatação)
+  const extrairNumeros = useCallback((valorFormatado) => {
+    if (!valorFormatado) return "";
+    return valorFormatado.replace(/\D/g, "");
+  }, []);
+
+  // Função para buscar coordenadas usando OpenStreetMap
+  const fetchCoordinates = useCallback(
+    async (address) => {
+      try {
+        const searchQuery = `${address.logradouro}, ${address.bairro}, ${address.localidade} - ${address.uf}, ${address.cep}, Brasil`;
+        const results = await provider.search({ query: searchQuery });
+
+        if (results && results.length > 0) {
+          const { y: lat, x: lng } = results[0];
+          return { latitude: lat, longitude: lng };
+        }
+        return null;
+      } catch (error) {
+        console.error("Erro ao buscar coordenadas:", error);
+        return null;
       }
+    },
+    [provider]
+  );
+
+  // Função para buscar endereço pelo CEP
+  const fetchAddressByCep = useCallback(
+    async (cep) => {
+      // Remove caracteres não numéricos
+      const cleanCep = cep.replace(/\D/g, "");
+
+      // Verifica se o CEP tem 8 dígitos
+      if (cleanCep.length !== 8) return;
+
+      try {
+        const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+        const data = await response.json();
+
+        if (!data.erro) {
+          // Buscar coordenadas após obter o endereço
+          const coordinates = await fetchCoordinates(data);
+
+          setFormData((prevData) => ({
+            ...prevData,
+            Endereco: data.logradouro || prevData.Endereco,
+            Bairro: data.bairro || prevData.Bairro,
+            Cidade: data.localidade || prevData.Cidade,
+            UF: data.uf || prevData.UF,
+            Regiao: data.regiao || prevData.Regiao,
+            Latitude: coordinates?.latitude?.toString() || prevData.Latitude,
+            Longitude: coordinates?.longitude?.toString() || prevData.Longitude,
+          }));
+        }
+      } catch (error) {
+        console.error("Erro ao buscar CEP:", error);
+      }
+    },
+    [fetchCoordinates]
+  );
+
+  // Handle field changes
+  const handleChange = useCallback(
+    (e) => {
+      const { name, value } = e.target;
+
+      if (name === "DataEntrega") {
+        const maskedValue = maskDateBR(value);
+        setFormData((prevData) => ({
+          ...prevData,
+          [name]: maskedValue,
+        }));
+        return;
+      }
+
+      // Tratamento especial para campos monetários
+      if (["ValorAntigo", "ValorAluguelSite", "ValorCondominio", "ValorIptu"].includes(name)) {
+        // Armazena o valor não formatado no formData
+        const valorNumerico = extrairNumeros(value);
+        setFormData((prevData) => ({
+          ...prevData,
+          [name]: valorNumerico,
+        }));
+
+        // Atualiza o valor formatado para exibição
+        setDisplayValues((prevValues) => ({
+          ...prevValues,
+          [name]: formatarParaReal(valorNumerico),
+        }));
+        return;
+      }
+
+      // Tratamento especial para CEP
+      if (name === "CEP") {
+        setFormData((prevData) => ({
+          ...prevData,
+          [name]: value,
+        }));
+
+        // Buscar endereço se CEP estiver completo
+        if (value.replace(/\D/g, "").length === 8) {
+          fetchAddressByCep(value);
+        }
+        return;
+      }
+
+      // Tratamento especial para Empreendimento (gerar slug automaticamente)
+      if (name === "Empreendimento") {
+        setFormData((prevData) => ({
+          ...prevData,
+          [name]: value,
+          Slug: formatterSlug(value),
+        }));
+        return;
+      }
+
+      // Tratamento especial para IdCorretor
+      if (name === "IdCorretor") {
+        setFormData((prevData) => ({
+          ...prevData,
+          [name]: value,
+          Corretor: "",
+          EmailCorretor: "",
+          CelularCorretor: "",
+          Imobiliaria: "",
+        }));
+
+        // Buscar dados do corretor se ID for válido
+        if (value && value.trim() !== "") {
+          getCorretorById(value)
+            .then((corretor) => {
+              if (corretor) {
+                setFormData((prevData) => ({
+                  ...prevData,
+                  Corretor: corretor.Nome || "",
+                  EmailCorretor: corretor.Email || "",
+                  CelularCorretor: corretor.Celular || "",
+                  Imobiliaria: corretor.Imobiliaria || "",
+                }));
+              }
+            })
+            .catch((error) => {
+              console.error("Erro ao buscar corretor:", error);
+            });
+        }
+        return;
+      }
+
+      // Tratamento padrão para outros campos
+      setFormData((prevData) => ({
+        ...prevData,
+        [name]: value,
+      }));
+    },
+    [maskDateBR, extrairNumeros, formatarParaReal, fetchAddressByCep]
+  );
+
+  // Função para adicionar uma nova imagem
+  const addImage = useCallback(() => {
+    setShowImageModal(true);
+  }, []);
+
+  // Função para adicionar uma única imagem
+  const addSingleImage = useCallback((imageUrl) => {
+    if (!imageUrl || imageUrl.trim() === "") return;
+
+    const newImage = {
+      Codigo: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+      Foto: imageUrl.trim(),
+      Destaque: "Nao",
+      Ordem: (formData.Foto?.length || 0) + 1,
     };
-    fileInput.click();
-  };
 
-  const handlePositionChange = (codigo, newPosition) => {
-    const position = parseInt(newPosition);
-    if (!isNaN(position) && position > 0 && position <= formData.Foto.length) {
-      changeImagePosition(codigo, position);
+    setFormData((prevData) => ({
+      ...prevData,
+      Foto: Array.isArray(prevData.Foto) ? [...prevData.Foto, newImage] : [newImage],
+    }));
+  }, [formData.Foto]);
+
+  // Função para atualizar uma imagem existente
+  const updateImage = useCallback((codigo, newImageUrl) => {
+    setFormData((prevData) => {
+      if (!Array.isArray(prevData.Foto)) return prevData;
+
+      const updatedFotos = prevData.Foto.map((photo) =>
+        photo.Codigo === codigo ? { ...photo, Foto: newImageUrl } : photo
+      );
+
+      return {
+        ...prevData,
+        Foto: updatedFotos,
+      };
+    });
+  }, []);
+
+  // Função para remover uma imagem
+  const removeImage = useCallback((codigo) => {
+    setFormData((prevData) => {
+      if (!Array.isArray(prevData.Foto)) return prevData;
+
+      const updatedFotos = prevData.Foto.filter((photo) => photo.Codigo !== codigo);
+
+      // Update the order of remaining photos
+      const reorderedFotos = updatedFotos.map((photo, index) => ({
+        ...photo,
+        Ordem: index + 1,
+      }));
+
+      return {
+        ...prevData,
+        Foto: reorderedFotos,
+      };
+    });
+  }, []);
+
+  // Função para excluir TODAS as imagens
+  const removeAllImages = useCallback(() => {
+    // Primeira confirmação
+    if (typeof window !== 'undefined' && !window.confirm(
+      "⚠️ ATENÇÃO: Tem certeza que deseja excluir TODAS as fotos deste imóvel?"
+    )) {
+      return;
     }
-  };
 
-  // Ordenar fotos por ordem
-  const sortedPhotos = formData.Foto
-    ? [...formData.Foto].sort((a, b) => {
+    // Segunda confirmação
+    if (typeof window !== 'undefined' && !window.confirm(
+      "🚨 CONFIRMAÇÃO FINAL: Esta ação é IRREVERSÍVEL! Todas as fotos serão permanentemente excluídas. Deseja continuar?"
+    )) {
+      return;
+    }
+
+    // Limpar todas as fotos
+    setFormData((prevData) => ({
+      ...prevData,
+      Foto: [],
+    }));
+
+    // Feedback visual (opcional - pode ser implementado com toast/notification)
+    console.log("✅ Todas as fotos foram excluídas com sucesso!");
+  }, []);
+
+  // Função para baixar todas as fotos em ZIP
+  const downloadAllPhotos = useCallback(async () => {
+    if (!formData.Foto || formData.Foto.length === 0) {
+      alert("Não há fotos para baixar!");
+      return;
+    }
+
+    setDownloadingPhotos(true);
+
+    try {
+      // Importar JSZip dinamicamente
+      const JSZip = (await import('jszip')).default;
+      const zip = new JSZip();
+
+      // Ordenar fotos por ordem
+      const sortedPhotos = [...formData.Foto].sort((a, b) => {
         const orderA = a.Ordem || formData.Foto.findIndex((p) => p.Codigo === a.Codigo) + 1;
         const orderB = b.Ordem || formData.Foto.findIndex((p) => p.Codigo === b.Codigo) + 1;
         return orderA - orderB;
-      })
-    : [];
+      });
 
-  return (
-    <FormSection title="Imagens do Imóvel">
-      <div className="space-y-4">
-        {/* Contador e botões de ação */}
-        <div className="flex justify-between items-center">
-          <div className="text-sm text-gray-600">
-            <span className="font-medium">
-              {validation.photoCount} de {validation.requiredPhotoCount} fotos obrigatórias
-            </span>
-            {validation.photoCount < validation.requiredPhotoCount && (
-              <span className="text-red-500 ml-2">
-                (Faltam {validation.requiredPhotoCount - validation.photoCount} fotos)
-              </span>
-            )}
-          </div>
-          
-          <div className="flex gap-2 flex-wrap">
-            <button
-              type="button"
-              onClick={handleAddImageUrl}
-              className="px-3 py-1 text-sm bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
-            >
-              Adicionar URL
-            </button>
-            <button
-              type="button"
-              onClick={showImageModal}
-              className="px-3 py-1 text-sm bg-black text-white rounded hover:bg-black/80"
-            >
-              Upload de Imagens
-            </button>
+      // Nome base para o arquivo ZIP
+      const imovelCode = formData.Codigo || newImovelCode || "imovel";
+      const empreendimento = formData.Empreendimento ? `_${formData.Empreendimento.replace(/[^a-zA-Z0-9]/g, '_')}` : "";
+      const zipFileName = `${imovelCode}${empreendimento}_fotos.zip`;
+
+      // Baixar cada foto e adicionar ao ZIP
+      for (let i = 0; i < sortedPhotos.length; i++) {
+        const photo = sortedPhotos[i];
+        try {
+          const response = await fetch(photo.Foto);
+          if (response.ok) {
+            const blob = await response.blob();
             
-            {/* Botão para baixar todas as fotos */}
-            {formData.Foto && formData.Foto.length > 0 && (
-              <button
-                type="button"
-                onClick={downloadAllPhotos}
-                disabled={downloadingPhotos}
-                className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 font-medium disabled:bg-blue-400 disabled:cursor-not-allowed"
-                title="Baixar todas as fotos em um arquivo ZIP"
-              >
-                {downloadingPhotos ? (
-                  <>
-                    <span className="inline-block animate-spin mr-1">⏳</span>
-                    Baixando...
-                  </>
-                ) : (
-                  <>
-                    📥 Baixar Todas
-                  </>
-                )}
-              </button>
-            )}
+            // Determinar extensão da imagem
+            const contentType = response.headers.get('content-type') || '';
+            let extension = '.jpg';
+            if (contentType.includes('png')) extension = '.png';
+            else if (contentType.includes('gif')) extension = '.gif';
+            else if (contentType.includes('webp')) extension = '.webp';
+
+            // Nome do arquivo: codigo_foto_01.jpg, codigo_foto_02.jpg, etc.
+            const photoNumber = String(i + 1).padStart(2, '0');
+            const fileName = `${imovelCode}_foto_${photoNumber}${extension}`;
             
-            {/* Botão para excluir todas as fotos */}
-            {formData.Foto && formData.Foto.length > 0 && (
-              <button
-                type="button"
-                onClick={removeAllImages}
-                className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 font-medium"
-                title="Excluir todas as fotos (dupla confirmação)"
-              >
-                🗑️ Excluir Todas
-              </button>
-            )}
-          </div>
-        </div>
+            zip.file(fileName, blob);
+          }
+        } catch (error) {
+          console.error(`Erro ao baixar foto ${i + 1}:`, error);
+        }
+      }
 
-        {/* Grid de imagens */}
-        {sortedPhotos.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {sortedPhotos.map((photo, index) => (
-              <div key={photo.Codigo} className="border rounded-lg p-3 space-y-2">
-                {/* Imagem */}
-                <div className="relative h-48 w-full overflow-hidden rounded border">
-                  <Image
-                    src={photo.Foto}
-                    alt={`Foto ${index + 1}`}
-                    fill
-                    style={{ objectFit: "cover" }}
-                    className="rounded"
-                  />
-                  {photo.Destaque === "Sim" && (
-                    <div className="absolute top-2 left-2 bg-yellow-500 text-white px-2 py-1 rounded text-xs font-bold">
-                      DESTAQUE
-                    </div>
-                  )}
-                </div>
+      // Gerar e baixar o ZIP
+      const content = await zip.generateAsync({ type: "blob" });
+      
+      // Criar link de download
+      const url = window.URL.createObjectURL(content);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = zipFileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
 
-                {/* Controles */}
-                <div className="space-y-2">
-                  {/* Posição e destaque */}
-                  <div className="flex gap-2">
-                    <div className="flex-1">
-                      <label className="block text-xs text-gray-600 mb-1">Posição</label>
-                      <select
-                        value={photo.Ordem || index + 1}
-                        onChange={(e) => handlePositionChange(photo.Codigo, e.target.value)}
-                        className="w-full px-2 py-1 text-sm border rounded"
-                      >
-                        {Array.from({ length: sortedPhotos.length }, (_, i) => (
-                          <option key={i + 1} value={i + 1}>
-                            {i + 1}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="flex-1">
-                      <label className="block text-xs text-gray-600 mb-1">Destaque</label>
-                      <button
-                        type="button"
-                        onClick={() => setImageAsHighlight(photo.Codigo)}
-                        className={`w-full px-2 py-1 text-sm rounded ${
-                          photo.Destaque === "Sim"
-                            ? "bg-yellow-500 text-white"
-                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                        }`}
-                      >
-                        {photo.Destaque === "Sim" ? "★ Destaque" : "☆ Destacar"}
-                      </button>
-                    </div>
-                  </div>
+      console.log(`✅ Download concluído: ${zipFileName}`);
+      
+    } catch (error) {
+      console.error("Erro ao baixar fotos:", error);
+      alert("Erro ao baixar as fotos. Tente novamente.");
+    } finally {
+      setDownloadingPhotos(false);
+    }
+  }, [formData.Foto, formData.Codigo, formData.Empreendimento, newImovelCode]);
 
-                  {/* Botões de ação */}
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleImageUpload(photo.Codigo)}
-                      className="flex-1 px-2 py-1 text-sm bg-blue-100 text-blue-700 rounded hover:bg-blue-200"
-                    >
-                      Substituir
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => removeImage(photo.Codigo)}
-                      className="flex-1 px-2 py-1 text-sm bg-red-100 text-red-700 rounded hover:bg-red-200"
-                    >
-                      Remover
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-8 text-gray-500">
-            <p>Nenhuma imagem adicionada ainda.</p>
-            <p className="text-sm">Use os botões acima para adicionar imagens.</p>
-          </div>
-        )}
+  // Função para definir uma imagem como destaque
+  const setImageAsHighlight = useCallback((codigo) => {
+    setFormData((prevData) => {
+      if (!Array.isArray(prevData.Foto)) return prevData;
 
-        {/* Aviso sobre fotos obrigatórias */}
-        {validation.photoCount < validation.requiredPhotoCount && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-            <p className="text-yellow-800 text-sm">
-              <strong>Atenção:</strong> São necessárias pelo menos {validation.requiredPhotoCount} fotos para
-              publicar o imóvel.
-            </p>
-          </div>
-        )}
+      const updatedFotos = prevData.Foto.map((photo) => ({
+        ...photo,
+        Destaque: photo.Codigo === codigo ? "Sim" : "Nao",
+      }));
 
-        {/* Informações sobre o download */}
-        {formData.Foto && formData.Foto.length > 0 && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-            <p className="text-blue-800 text-sm">
-              <strong>💡 Dica:</strong> Use o botão "Baixar Todas" para fazer download de todas as fotos em um arquivo ZIP organizado.
-              {formData.Codigo && (
-                <span className="block mt-1">
-                  Arquivo será nomeado como: <code className="bg-blue-100 px-1 rounded">{formData.Codigo}_fotos.zip</code>
-                </span>
-              )}
-            </p>
-          </div>
-        )}
-      </div>
-    </FormSection>
-  );
+      return {
+        ...prevData,
+        Foto: updatedFotos,
+      };
+    });
+  }, []);
+
+  // Função para alterar a posição da imagem
+  const changeImagePosition = useCallback((codigo, newPosition) => {
+    setFormData((prevData) => {
+      if (!Array.isArray(prevData.Foto)) return prevData;
+
+      // Sort photos by their order
+      const sortedPhotos = [...prevData.Foto].sort((a, b) => {
+        const orderA = a.Ordem || prevData.Foto.findIndex((p) => p.Codigo === a.Codigo) + 1;
+        const orderB = b.Ordem || prevData.Foto.findIndex((p) => p.Codigo === b.Codigo) + 1;
+        return orderA - orderB;
+      });
+
+      // Find current index of the photo
+      const currentIndex = sortedPhotos.findIndex((photo) => photo.Codigo === codigo);
+      if (currentIndex === -1 || currentIndex === newPosition - 1) return prevData;
+
+      // Create a new array with the photo in the new position
+      const movedPhoto = sortedPhotos.splice(currentIndex, 1)[0];
+      sortedPhotos.splice(newPosition - 1, 0, movedPhoto);
+
+      // Update all orders
+      const reorderedPhotos = sortedPhotos.map((photo, index) => ({
+        ...photo,
+        Ordem: index + 1,
+      }));
+
+      return {
+        ...prevData,
+        Foto: reorderedPhotos,
+      };
+    });
+  }, []);
+
+  // Validate the form
+  useEffect(() => {
+    // Validate required fields
+    const fieldValidation = {};
+    let allFieldsValid = true;
+
+    REQUIRED_FIELDS.forEach((fieldName) => {
+      const isValid = formData[fieldName] && formData[fieldName].trim() !== "";
+      fieldValidation[fieldName] = isValid;
+      if (!isValid) allFieldsValid = false;
+    });
+
+    // Validate photos
+    const photoCount = formData.Foto ? formData.Foto.length : 0;
+    const hasEnoughPhotos = photoCount >= 5;
+
+    setValidation({
+      isFormValid: allFieldsValid && hasEnoughPhotos,
+      photoCount,
+      requiredPhotoCount: 5,
+      fieldValidation,
+    });
+  }, [formData]);
+
+  const handleImagesUploaded = (novasImagens) => {
+    if (!novasImagens || !Array.isArray(novasImagens) || novasImagens.length === 0) {
+      return; // Não fazer nada se não receber imagens
+    }
+
+    setFormData((prevData) => {
+      // Criar array existente ou vazio se não existir
+      const fotosExistentes = Array.isArray(prevData.Foto) ? [...prevData.Foto] : [];
+
+      // Para cada imagem nova, criar um objeto com estrutura correta
+      const novasFotos = novasImagens.map((image, index) => ({
+        Codigo: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+        Foto: image.Foto,
+        Destaque: "Nao",
+        Ordem: fotosExistentes.length + index + 1, // Garantir que fique após as existentes
+      }));
+
+      // Retornar state atualizado com ARRAY concatenado
+      return {
+        ...prevData,
+        Foto: [...fotosExistentes, ...novasFotos],
+      };
+    });
+  };
+
+  return {
+    formData,
+    setFormData,
+    displayValues,
+    setDisplayValues,
+    handleChange,
+    newImovelCode,
+    fileInputRef,
+    showImageModal,
+    setShowImageModal,
+    addImage,
+    addSingleImage,
+    updateImage,
+    removeImage,
+    removeAllImages,
+    downloadAllPhotos, // Nova função adicionada
+    downloadingPhotos, // Estado do download
+    setImageAsHighlight,
+    changeImagePosition,
+    validation,
+    generateRandomCode,
+    handleImagesUploaded,
+  };
 };
 
-export default memo(ImagesSection);
+export default useImovelForm;
