@@ -418,17 +418,22 @@ export default function GerenciarImovelClient() { // Renomeado para GerenciarImo
           />
 
           {/* Images Section */}
-          <ImagesSection
-            formData={formData}
-            addSingleImage={addSingleImage}
-            showImageModal={addImage}
-            updateImage={updateImage}
-            removeImage={removeImage}
-            setImageAsHighlight={setImageAsHighlight}
-            changeImagePosition={changeImagePosition}
-            validation={validation}
-            key="images-section"
-          />
+          {/* Images Section */}
+<ImagesSection
+  formData={formData}
+  addSingleImage={addSingleImage}
+  showImageModal={addImage}
+  updateImage={updateImage}
+  removeImage={removeImage}
+  removeAllImages={removeAllImages}
+  downloadAllPhotos={downloadAllPhotos}
+  downloadingPhotos={downloadingPhotos}
+  setImageAsHighlight={setImageAsHighlight}
+  changeImagePosition={changeImagePosition}
+  validation={validation}
+  key="images-section"
+/>
+
           {error && (
             <div className="bg-red-100 p-4 text-red-500 rounded-lg">
               {error}: verifique se esse imóvel já esta cadastrado anteriormente.
