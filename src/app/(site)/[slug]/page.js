@@ -43,28 +43,33 @@ export async function generateMetadata({ params }) {
   const description = `${rawTitle} em ${condominio.BairroComercial}, ${condominio.Cidade}. ${condominio.Categoria} com ${condominio.MetragemAnt}, ${condominio.DormitoriosAntigo} quartos, ${condominio.VagasAntigo} vagas. ${condominio.Situacao}.`;
 
   return {
-    title: `${rawTitle}, ${condominio.TipoEndereco} ${condominio.Endereco} ${condominio.Numero}, ${condominio.BairroComercial}`,
+  title: `${rawTitle}, ${condominio.TipoEndereco} ${condominio.Endereco} ${condominio.Numero}, ${condominio.BairroComercial}`,
+  description,
+  robots: "index, follow",
+  alternates: {
+    canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`,
+    languages: {
+      'pt-BR': `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`,
+      'en': `${process.env.NEXT_PUBLIC_SITE_URL}/en/${slug}`,      // Ajuste se usar outro path
+      'es': `${process.env.NEXT_PUBLIC_SITE_URL}/es/${slug}`,      // Opcional
+      'x-default': `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`
+    }
+  },
+  openGraph: {
+    title: rawTitle,
     description,
-    robots: "index, follow",
-    alternates: {
-      canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`,
-    },
-    openGraph: {
-      title: rawTitle,
-      description,
-      url: `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`,
-      images: destaqueFotoUrl ? [{ url: destaqueFotoUrl }] : [],
-      type: "website",
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: rawTitle,
-      description,
-      site: "@NPIImoveis",
-      images: destaqueFotoUrl ? [destaqueFotoUrl] : [],
-    },
-  };
-}
+    url: `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`,
+    images: destaqueFotoUrl ? [{ url: destaqueFotoUrl }] : [],
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: rawTitle,
+    description,
+    site: "@NPIImoveis",
+    images: destaqueFotoUrl ? [destaqueFotoUrl] : [],
+  },
+};
 
 export default async function CondominioPage({ params }) {
   const { slug } = params;
