@@ -10,7 +10,9 @@ const ImagesSection = ({
   showImageModal,
   updateImage,
   removeImage,
-  removeAllImages, // Nova prop adicionada
+  removeAllImages,
+  downloadAllPhotos, // Nova prop adicionada
+  downloadingPhotos, // Estado do download
   setImageAsHighlight,
   changeImagePosition,
   validation,
@@ -71,7 +73,7 @@ const ImagesSection = ({
             )}
           </div>
           
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <button
               type="button"
               onClick={handleAddImageUrl}
@@ -86,7 +88,30 @@ const ImagesSection = ({
             >
               Upload de Imagens
             </button>
-            {/* Novo botão para excluir todas as fotos */}
+            
+            {/* Botão para baixar todas as fotos */}
+            {formData.Foto && formData.Foto.length > 0 && (
+              <button
+                type="button"
+                onClick={downloadAllPhotos}
+                disabled={downloadingPhotos}
+                className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 font-medium disabled:bg-blue-400 disabled:cursor-not-allowed"
+                title="Baixar todas as fotos em um arquivo ZIP"
+              >
+                {downloadingPhotos ? (
+                  <>
+                    <span className="inline-block animate-spin mr-1">⏳</span>
+                    Baixando...
+                  </>
+                ) : (
+                  <>
+                    📥 Baixar Todas
+                  </>
+                )}
+              </button>
+            )}
+            
+            {/* Botão para excluir todas as fotos */}
             {formData.Foto && formData.Foto.length > 0 && (
               <button
                 type="button"
@@ -189,6 +214,20 @@ const ImagesSection = ({
             <p className="text-yellow-800 text-sm">
               <strong>Atenção:</strong> São necessárias pelo menos {validation.requiredPhotoCount} fotos para
               publicar o imóvel.
+            </p>
+          </div>
+        )}
+
+        {/* Informações sobre o download */}
+        {formData.Foto && formData.Foto.length > 0 && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+            <p className="text-blue-800 text-sm">
+              <strong>💡 Dica:</strong> Use o botão "Baixar Todas" para fazer download de todas as fotos em um arquivo ZIP organizado.
+              {formData.Codigo && (
+                <span className="block mt-1">
+                  Arquivo será nomeado como: <code className="bg-blue-100 px-1 rounded">{formData.Codigo}_fotos.zip</code>
+                </span>
+              )}
             </p>
           </div>
         )}
