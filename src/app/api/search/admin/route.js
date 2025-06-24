@@ -1,22 +1,27 @@
 import { connectToDatabase } from "@/app/lib/mongodb";
 import Imovel from "@/app/models/Imovel";
-
 import { NextResponse } from "next/server";
 
-// ADICIONE ESTA LINHA AQUI
-export const dynamic = 'force-dynamic'; // Garante que a rota seja sempre dinâmica e não cacheada
+export const dynamic = 'force-dynamic';
 
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const query = searchParams.get("q");
+    const page = parseInt(searchParams.get("page")) || 1;
+    const limit = parseInt(searchParams.get("limit")) || 12;
+    const skip = (page - 1) * limit;
 
     if (!query || query.trim() === "") {
-      // Retorna uma resposta vazia se a query estiver vazia
-      // Certifique-se de que esta resposta também não seja cacheada
       const emptyResponse = NextResponse.json({
         status: 200,
         data: [],
+        pagination: {
+          totalItems: 0,
+          totalPages: 0,
+          currentPage: 1,
+          itemsPerPage: limit,
+        }
       });
       emptyResponse.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
       emptyResponse.headers.set('Pragma', 'no-cache');
@@ -27,7 +32,28 @@ export async function GET(request) {
 
     await connectToDatabase();
 
-    // Utilizando o índice do Atlas Search com a consulta simplificada
+    // Primeiro, contar o total de resultados
+    const totalResults = await Imovel.aggregate([
+      {
+        $search: {
+          index: "imoveis",
+          text: {
+            query: query,
+            path: {
+              wildcard: "*",
+            },
+          },
+        },
+      },
+      {
+        $count: "total"
+      }
+    ]);
+
+    const totalItems = totalResults[0]?.total || 0;
+    const totalPages = Math.ceil(totalItems / limit);
+
+    // Depois, buscar os resultados paginados
     const resultado = await Imovel.aggregate([
       {
         $search: {
@@ -41,20 +67,28 @@ export async function GET(request) {
         },
       },
       {
-        $limit: 20,
+        $skip: skip,
+      },
+      {
+        $limit: limit,
       },
     ]);
 
     const response = NextResponse.json({
       status: 200,
       data: resultado,
+      pagination: {
+        totalItems,
+        totalPages,
+        currentPage: page,
+        itemsPerPage: limit,
+      }
     });
 
-    // Adicionar cabeçalhos para desabilitar o cache
     response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     response.headers.set('Pragma', 'no-cache');
     response.headers.set('Expires', '0');
-    response.headers.set('Surrogate-Control', 'no-store'); // Para CDNs como a Vercel
+    response.headers.set('Surrogate-Control', 'no-store');
 
     return response;
 
