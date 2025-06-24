@@ -241,42 +241,56 @@ export default function AdminImoveis() {
 
   // Função para formatar valores monetários - CORRIGIDA PARA FORMATO BRASILEIRO
   const formatarValor = (valor) => {
-    console.log("🔧 formatarValor chamado com:", valor, "tipo:", typeof valor);
-    
     if (valor === null || valor === undefined || valor === "") {
-      console.log("🔧 formatarValor: valor vazio, retornando '-'");
       return "-";
     }
 
     let valorNumerico;
     if (typeof valor === "number") {
       valorNumerico = valor;
-      console.log("🔧 formatarValor: valor é number:", valorNumerico);
     } else if (typeof valor === "string") {
       // CORREÇÃO CRÍTICA: Para formato brasileiro, remove TODOS os pontos primeiro
       // e depois substitui vírgula por ponto para conversão
       const cleanedValue = valor.replace(/\./g, '').replace(',', '.');
       valorNumerico = parseFloat(cleanedValue);
-      console.log("🔧 formatarValor: string processada:", valor, "→", cleanedValue, "→", valorNumerico);
     } else {
-      console.log("🔧 formatarValor: tipo inesperado, retornando '-'");
       return "-";
     }
 
     if (isNaN(valorNumerico)) {
-      console.log("🔧 formatarValor: NaN detectado, retornando '-'");
       return "-";
     }
 
-    const resultado = new Intl.NumberFormat("pt-BR", {
+    return new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(valorNumerico);
-    
-    console.log("🔧 formatarValor: resultado final:", resultado);
-    return resultado;
+  };
+
+  // Função para formatar área privativa
+  const formatarArea = (area) => {
+    if (area === null || area === undefined || area === "") {
+      return "-";
+    }
+
+    let areaNumerico;
+    if (typeof area === "number") {
+      areaNumerico = area;
+    } else if (typeof area === "string") {
+      // Remove caracteres não numéricos exceto vírgula e ponto
+      const cleanedValue = area.replace(/[^\d.,]/g, '').replace(',', '.');
+      areaNumerico = parseFloat(cleanedValue);
+    } else {
+      return "-";
+    }
+
+    if (isNaN(areaNumerico)) {
+      return "-";
+    }
+
+    return `${areaNumerico.toFixed(2).replace('.', ',')} m²`;
   };
 
   const handleDelete = async (codigo) => {
@@ -378,12 +392,17 @@ export default function AdminImoveis() {
                   >
                     Empreendimento
                   </th>
-
                   <th
                     scope="col"
                     className="px-6 py-3 text-left text-[10px] font-bold  uppercase tracking-wider"
                   >
                     Categoria
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-[10px] font-bold  uppercase tracking-wider"
+                  >
+                    Área Privativa
                   </th>
                   <th
                     scope="col"
@@ -406,7 +425,7 @@ export default function AdminImoveis() {
                     .fill(null)
                     .map((_, index) => (
                       <tr key={`loading-${index}`}>
-                        <td colSpan={5} className="w-full px-6 py-4 whitespace-nowrap">
+                        <td colSpan={7} className="w-full px-6 py-4 whitespace-nowrap">
                           <div className="w-full animate-pulse flex space-x-4">
                             <div className="h-4 w-full bg-gray-200 rounded "></div>
                           </div>
@@ -438,8 +457,10 @@ export default function AdminImoveis() {
                         {imovel.Categoria || "-"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700">
+                        {formatarArea(imovel.AreaPrivativa)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700">
                         {formatarValor(imovel.ValorAntigo)}
-                        {console.log(`💲 Imóvel ${imovel.Codigo}: ValorAntigo=${imovel.ValorAntigo}`)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700 sticky right-0 bg-white">
                         <div className="flex items-center space-x-3">
@@ -464,7 +485,7 @@ export default function AdminImoveis() {
                 ) : (
                   // Nenhum resultado encontrado
                   <tr>
-                    <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                    <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
                       Nenhum imóvel encontrado.
                     </td>
                   </tr>
@@ -474,10 +495,8 @@ export default function AdminImoveis() {
           </div>
 
           {/* Paginação */}
-          {console.log("🔍 DEBUG PAGINATION: totalPages > 1 is", pagination.totalPages > 1, "pagination object:", pagination)}
           {pagination.totalPages > 1 && (
-            <div className="mt-6" style={{border: "2px solid red", padding: "10px", backgroundColor: "yellow"}}>
-              <p style={{color: "black", fontWeight: "bold"}}>PAGINAÇÃO DEVERIA APARECER AQUI!</p>
+            <div className="mt-6">
               <Pagination
                 currentPage={pagination.currentPage}
                 totalPages={pagination.totalPages}
@@ -492,4 +511,3 @@ export default function AdminImoveis() {
     </AuthCheck>
   );
 }
-
