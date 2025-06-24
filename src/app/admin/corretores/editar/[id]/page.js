@@ -73,12 +73,19 @@ export default function EditarCorretor({ params }) {
   };
 
   const handleEdit = async (imovelCodigo) => {
+    console.log('🔍 handleEdit chamado com código:', imovelCodigo);
     setIsLoading(true);
     try {
+      console.log('📡 Chamando getImovelById com:', imovelCodigo);
+      
       // Get the imovel data by ID
       const response = await getImovelById(imovelCodigo);
+      
+      console.log('📥 Resposta da API getImovelById:', response);
 
       if (response && response.data) {
+        console.log('✅ Dados do imóvel encontrados:', response.data);
+        
         // Access the store's setImovelSelecionado function
         const setImovelSelecionado = useImovelStore.getState().setImovelSelecionado;
 
@@ -88,17 +95,27 @@ export default function EditarCorretor({ params }) {
           Automacao: false,
         };
 
+        console.log('🏠 Imóvel preparado para o store:', imovelWithAutomacao);
+
         // Set the imovel in the store
         setImovelSelecionado(imovelWithAutomacao);
 
+        console.log('🚀 Redirecionando para /admin/imoveis/gerenciar');
+        
         // Redirect to the gerenciar page instead of the editar page
         router.push("/admin/imoveis/gerenciar");
       } else {
-        console.error("Erro ao buscar imóvel:", response?.error || "Imóvel não encontrado");
+        console.error("❌ Erro ao buscar imóvel:", response?.error || "Imóvel não encontrado");
+        console.log('📊 Resposta completa:', response);
         alert("Erro ao buscar dados do imóvel. Tente novamente.");
       }
     } catch (error) {
-      console.error("Erro ao editar imóvel:", error);
+      console.error("💥 Erro ao editar imóvel:", error);
+      console.log('🔍 Detalhes do erro:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
       alert("Ocorreu um erro ao buscar os dados do imóvel.");
     } finally {
       setIsLoading(false);
@@ -493,3 +510,4 @@ export default function EditarCorretor({ params }) {
     </AuthCheck>
   );
 }
+
