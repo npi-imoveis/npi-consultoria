@@ -14,39 +14,33 @@ const ImagesSection = ({
   changeImagePosition,
   validation,
 }) => {
-  // Função simplificada para excluir todas as fotos
-  const handleRemoveAllImages = () => {
-    // Primeira confirmação
-    if (!window.confirm(
-      "⚠️ ATENÇÃO: Tem certeza que deseja excluir TODAS as fotos deste imóvel?"
-    )) {
-      return;
-    }
+ / Função simplificada para excluir todas as fotos
+const handleRemoveAllImages = () => {
+  // Primeira confirmação
+  if (!window.confirm(
+    "⚠️ ATENÇÃO: Tem certeza que deseja excluir TODAS as fotos deste imóvel?"
+  )) {
+    return;
+  }
 
-    // Segunda confirmação
-    if (!window.confirm(
-      "🚨 CONFIRMAÇÃO FINAL: Esta ação é IRREVERSÍVEL! Todas as fotos serão permanentemente excluídas. Deseja continuar?"
-    )) {
-      return;
-    }
+  // Segunda confirmação
+  if (!window.confirm(
+    "🚨 CONFIRMAÇÃO FINAL: Esta ação é IRREVERSÍVEL! Todas as fotos serão permanentemente excluídas. Deseja continuar?"
+  )) {
+    return;
+  }
 
-    // Limpar todas as fotos usando setFormData diretamente
-    if (typeof setFormData !== 'undefined') {
-      setFormData((prevData) => ({
-        ...prevData,
-        Foto: [],
-      }));
-    } else {
-      // Fallback: remover uma por uma
-      if (formData.Foto && Array.isArray(formData.Foto)) {
-        formData.Foto.forEach((photo) => {
-          removeImage(photo.Codigo);
-        });
-      }
-    }
+  // Remover todas as fotos uma por uma usando removeImage
+  if (formData.Foto && Array.isArray(formData.Foto)) {
+    // Criar uma cópia do array para evitar problemas de iteração
+    const fotosParaRemover = [...formData.Foto];
+    fotosParaRemover.forEach((photo) => {
+      removeImage(photo.Codigo);
+    });
+  }
 
-    alert("✅ Todas as fotos foram excluídas com sucesso!");
-  };
+  alert("✅ Todas as fotos foram excluídas com sucesso!");
+};
 
   // Função simplificada para baixar todas as fotos (individualmente)
   const handleDownloadAllPhotos = async () => {
