@@ -82,7 +82,6 @@ export const useImovelForm = () => {
 
   const [newImovelCode, setNewImovelCode] = useState("");
   const [showImageModal, setShowImageModal] = useState(false);
-  const [downloadingPhotos, setDownloadingPhotos] = useState(false);
 
   const [validation, setValidation] = useState({
     isFormValid: false,
@@ -357,107 +356,6 @@ export const useImovelForm = () => {
     });
   }, []);
 
-  // Função para excluir TODAS as imagens
-  const removeAllImages = useCallback(() => {
-    // Primeira confirmação
-    if (typeof window !== 'undefined' && !window.confirm(
-      "⚠️ ATENÇÃO: Tem certeza que deseja excluir TODAS as fotos deste imóvel?"
-    )) {
-      return;
-    }
-
-    // Segunda confirmação
-    if (typeof window !== 'undefined' && !window.confirm(
-      "🚨 CONFIRMAÇÃO FINAL: Esta ação é IRREVERSÍVEL! Todas as fotos serão permanentemente excluídas. Deseja continuar?"
-    )) {
-      return;
-    }
-
-    // Limpar todas as fotos
-    setFormData((prevData) => ({
-      ...prevData,
-      Foto: [],
-    }));
-
-    // Feedback visual (opcional - pode ser implementado com toast/notification)
-    console.log("✅ Todas as fotos foram excluídas com sucesso!");
-  }, []);
-
-  // Função para baixar todas as fotos em ZIP
-  const downloadAllPhotos = useCallback(async () => {
-    if (!formData.Foto || formData.Foto.length === 0) {
-      alert("Não há fotos para baixar!");
-      return;
-    }
-
-    setDownloadingPhotos(true);
-
-    try {
-      // Importar JSZip dinamicamente
-      const JSZip = (await import('jszip')).default;
-      const zip = new JSZip();
-
-      // Ordenar fotos por ordem
-      const sortedPhotos = [...formData.Foto].sort((a, b) => {
-        const orderA = a.Ordem || formData.Foto.findIndex((p) => p.Codigo === a.Codigo) + 1;
-        const orderB = b.Ordem || formData.Foto.findIndex((p) => p.Codigo === b.Codigo) + 1;
-        return orderA - orderB;
-      });
-
-      // Nome base para o arquivo ZIP
-      const imovelCode = formData.Codigo || newImovelCode || "imovel";
-      const empreendimento = formData.Empreendimento ? `_${formData.Empreendimento.replace(/[^a-zA-Z0-9]/g, '_')}` : "";
-      const zipFileName = `${imovelCode}${empreendimento}_fotos.zip`;
-
-      // Baixar cada foto e adicionar ao ZIP
-      for (let i = 0; i < sortedPhotos.length; i++) {
-        const photo = sortedPhotos[i];
-        try {
-          const response = await fetch(photo.Foto);
-          if (response.ok) {
-            const blob = await response.blob();
-            
-            // Determinar extensão da imagem
-            const contentType = response.headers.get('content-type') || '';
-            let extension = '.jpg';
-            if (contentType.includes('png')) extension = '.png';
-            else if (contentType.includes('gif')) extension = '.gif';
-            else if (contentType.includes('webp')) extension = '.webp';
-
-            // Nome do arquivo: codigo_foto_01.jpg, codigo_foto_02.jpg, etc.
-            const photoNumber = String(i + 1).padStart(2, '0');
-            const fileName = `${imovelCode}_foto_${photoNumber}${extension}`;
-            
-            zip.file(fileName, blob);
-          }
-        } catch (error) {
-          console.error(`Erro ao baixar foto ${i + 1}:`, error);
-        }
-      }
-
-      // Gerar e baixar o ZIP
-      const content = await zip.generateAsync({ type: "blob" });
-      
-      // Criar link de download
-      const url = window.URL.createObjectURL(content);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = zipFileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-
-      console.log(`✅ Download concluído: ${zipFileName}`);
-      
-    } catch (error) {
-      console.error("Erro ao baixar fotos:", error);
-      alert("Erro ao baixar as fotos. Tente novamente.");
-    } finally {
-      setDownloadingPhotos(false);
-    }
-  }, [formData.Foto, formData.Codigo, formData.Empreendimento, newImovelCode]);
-
   // Função para definir uma imagem como destaque
   const setImageAsHighlight = useCallback((codigo) => {
     setFormData((prevData) => {
@@ -521,7 +419,7 @@ export const useImovelForm = () => {
     });
 
     // Validate photos
-    const photoCount = formData.Foto ? formData.Foto.length : 0;
+    const photoCount = Array.isArray(formData.Foto) ? formData.Foto.length : 0;
     const hasEnoughPhotos = photoCount >= 5;
 
     setValidation({
@@ -532,6 +430,7 @@ export const useImovelForm = () => {
     });
   }, [formData]);
 
+  // Função para lidar com múltiplas imagens vindas do modal de upload
   const handleImagesUploaded = (novasImagens) => {
     if (!novasImagens || !Array.isArray(novasImagens) || novasImagens.length === 0) {
       return; // Não fazer nada se não receber imagens
@@ -557,7 +456,7 @@ export const useImovelForm = () => {
     });
   };
 
-    return {
+  return {
     formData,
     setFormData,
     displayValues,
@@ -571,9 +470,6 @@ export const useImovelForm = () => {
     addSingleImage,
     updateImage,
     removeImage,
-    removeAllImages, // <--- CONFIRME QUE ESTÁ AQUI
-    downloadAllPhotos, // <--- CONFIRME QUE ESTÁ AQUI
-    downloadingPhotos, // <--- CONFIRME QUE ESTÁ AQUI
     setImageAsHighlight,
     changeImagePosition,
     validation,
