@@ -417,7 +417,7 @@ export default function GerenciarImovelClient() { // Renomeado para GerenciarImo
             key="media-section"
           />
 
-                    {/* Images Section */}
+          {/* Images Section */}
           <ImagesSection
             formData={formData}
             addSingleImage={addSingleImage}
