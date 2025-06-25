@@ -23,7 +23,7 @@ export const generateRandomCode = async () => {
   return generateUniqueCode();
 };
 
-const MAX_MONETARY_VALUE = 999999999.99;
+const MAX_MONETARY_VALUE = 999999999;
 
 const INITIAL_FORM_DATA = {
   Codigo: "",
@@ -58,10 +58,10 @@ const INITIAL_FORM_DATA = {
   Vagas: "",
   DataEntrega: "",
   AnoConstrucao: "",
-  ValorAntigo: "0.00",
-  ValorAluguelSite: "0.00",
-  ValorCondominio: "0.00",
-  ValorIptu: "0.00",
+  ValorAntigo: "0",
+  ValorAluguelSite: "0",
+  ValorCondominio: "0",
+  ValorIptu: "0",
   DescricaoUnidades: "",
   DescricaoDiferenciais: "",
   DestaquesDiferenciais: "",
@@ -85,16 +85,15 @@ const INITIAL_FORM_DATA = {
 export const useImovelForm = () => {
   const provider = useRef(new OpenStreetMapProvider());
   const fileInputRef = useRef(null);
-  const codeGeneratedRef = useRef(false);
   const imovelSelecionado = useImovelStore((state) => state.imovelSelecionado);
   const isAutomacao = imovelSelecionado?.Automacao === true;
 
   const [formData, setFormData] = useState(INITIAL_FORM_DATA);
   const [displayValues, setDisplayValues] = useState({
-    ValorAntigo: "R$ 0,00",
-    ValorAluguelSite: "R$ 0,00",
-    ValorCondominio: "R$ 0,00",
-    ValorIptu: "R$ 0,00",
+    ValorAntigo: "R$ 0",
+    ValorAluguelSite: "R$ 0",
+    ValorCondominio: "R$ 0",
+    ValorIptu: "R$ 0",
   });
 
   const [newImovelCode, setNewImovelCode] = useState("");
@@ -106,68 +105,93 @@ export const useImovelForm = () => {
     fieldValidation: {},
   });
 
-  // Funções de formatação monetária
-// Substitua as funções de formatação monetária por estas:
+  // Funções de formatação monetária SEM decimais
+  const formatCurrency = useCallback((value) => {
+    const num = typeof value === 'string' 
+      ? parseInt(value.replace(/\D/g, ''), 10) 
+      : Math.floor(Number(value || 0));
 
-const formatCurrency = useCallback((value) => {
-  const num = typeof value === 'string' 
-    ? parseInt(value.replace(/\D/g, ''), 10) 
-    : Math.floor(Number(value || 0));
+    return isNaN(num) 
+      ? "R$ 0" 
+      : num.toLocaleString("pt-BR", { 
+          style: "currency", 
+          currency: "BRL",
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0
+        });
+  }, []);
 
-  return isNaN(num) 
-    ? "R$ 0" 
-    : num.toLocaleString("pt-BR", { 
-        style: "currency", 
-        currency: "BRL",
-        minimumFractionDigits: 0,  // Remove decimais
-        maximumFractionDigits: 0   // Remove decimais
-      });
-}, []);
+  const parseCurrency = useCallback((value) => {
+    const digitsOnly = (value?.toString() || "").replace(/\D/g, '');
+    const intValue = parseInt(digitsOnly || "0", 10);
+    const safeValue = Math.min(Math.max(intValue, 0), MAX_MONETARY_VALUE);
+    
+    return isNaN(safeValue) ? "0" : safeValue.toString();
+  }, []);
 
-const parseCurrency = useCallback((value) => {
-  const digitsOnly = (value?.toString() || "").replace(/\D/g, '');
-  const intValue = parseInt(digitsOnly || "0", 10);
-  const safeValue = Math.min(Math.max(intValue, 0), MAX_MONETARY_VALUE);
-  
-  return isNaN(safeValue) ? "0" : safeValue.toString(); // Retorna como string sem decimais
-}, []);
+  const formatCurrencyInput = useCallback((value) => {
+    const digitsOnly = (value?.toString() || "").replace(/\D/g, '');
+    const intValue = parseInt(digitsOnly || "0", 10);
+    
+    return intValue.toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    });
+  }, []);
 
-const formatCurrencyInput = useCallback((value) => {
-  const digitsOnly = (value?.toString() || "").replace(/\D/g, '');
-  const intValue = parseInt(digitsOnly || "0", 10);
-  
-  return intValue.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  });
-}, []);
+  // Inicialização do formulário
+  useEffect(() => {
+    const initializeForm = async () => {
+      try {
+        // Caso 1: Imóvel de automação (sempre gerar novo código)
+        if (isAutomacao) {
+          const newCode = await generateRandomCode();
+          setNewImovelCode(newCode);
+          setFormData(prev => ({
+            ...prev,
+            ...imovelSelecionado,
+            Codigo: newCode,
+            CodigoOriginal: ''
+          }));
+          return;
+        }
 
-// E atualize a inicialização dos displayValues no useEffect:
-setDisplayValues({
-  ValorAntigo: formatCurrencyInput(imovelSelecionado?.ValorAntigo?.toString() || "0"),
-  ValorAluguelSite: formatCurrencyInput(imovelSelecionado?.ValorAluguelSite?.toString() || "0"),
-  ValorCondominio: formatCurrencyInput(imovelSelecionado?.ValorCondominio?.toString() || "0"),
-  ValorIptu: formatCurrencyInput(imovelSelecionado?.ValorIptu?.toString() || "0")
-});
-      return;
-    }
+        // Caso 2: Edição de imóvel existente (manter código original)
+        if (imovelSelecionado?.Codigo && !isAutomacao) {
+          setFormData(prev => ({
+            ...prev,
+            ...imovelSelecionado,
+            CodigoOriginal: imovelSelecionado.Codigo
+          }));
+          
+          setDisplayValues({
+            ValorAntigo: formatCurrencyInput(imovelSelecionado.ValorAntigo?.toString() || "0"),
+            ValorAluguelSite: formatCurrencyInput(imovelSelecionado.ValorAluguelSite?.toString() || "0"),
+            ValorCondominio: formatCurrencyInput(imovelSelecionado.ValorCondominio?.toString() || "0"),
+            ValorIptu: formatCurrencyInput(imovelSelecionado.ValorIptu?.toString() || "0")
+          });
+          return;
+        }
 
-    // Caso 3: Novo imóvel (gerar novo código)
-    if (!imovelSelecionado) {
-      const newCode = await generateRandomCode();
-      setNewImovelCode(newCode);
-      setFormData(prev => ({
-        ...prev,
-        Codigo: newCode,
-        CodigoOriginal: newCode // Para novos, original = novo código
-      }));
-    }
-  };
+        // Caso 3: Novo imóvel (gerar novo código)
+        if (!imovelSelecionado) {
+          const newCode = await generateRandomCode();
+          setNewImovelCode(newCode);
+          setFormData(prev => ({
+            ...prev,
+            Codigo: newCode,
+            CodigoOriginal: newCode
+          }));
+        }
+      } catch (error) {
+        console.error("Erro ao inicializar formulário:", error);
+      }
+    };
 
-  initializeForm();
-}, [isAutomacao, imovelSelecionado?.Codigo]); // Dependências essenciais
+    initializeForm();
+  }, [isAutomacao, imovelSelecionado?.Codigo, formatCurrencyInput]);
 
   useEffect(() => {
     if (!formData.Codigo) return;
@@ -355,7 +379,7 @@ setDisplayValues({
     }
   }, [maskDate, fetchAddress, parseCurrency, formatCurrencyInput]);
 
-  // Funções de manipulação de imagens (mantidas iguais)
+  // Funções de manipulação de imagens
   const addImage = useCallback(() => setShowImageModal(true), []);
   
   const addSingleImage = useCallback((url) => {
