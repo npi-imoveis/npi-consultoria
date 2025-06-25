@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 
 export function ListCities() {
-  // Lista estática de cidades (original mantida)
+  // Lista estática de cidades
   const cidades = [
     "São Paulo",
     "Guarujá",
@@ -26,7 +26,7 @@ export function ListCities() {
   const aplicarFiltros = useFiltersStore((state) => state.aplicarFiltros);
   const limparFiltros = useFiltersStore((state) => state.limparFiltros);
 
-  // Função para gerar slugs (nova adição)
+  // Função para gerar slugs
   const gerarSlug = (texto) => {
     return texto
       .toLowerCase()
@@ -34,7 +34,6 @@ export function ListCities() {
       .replace(/\s+/g, "-");
   };
 
-  // Função de scroll (original mantida)
   const scroll = (direction) => {
     if (carouselRef.current) {
       const scrollAmount = 300;
@@ -42,29 +41,26 @@ export function ListCities() {
     }
   };
 
-  // Função de clique (modificada para URLs amigáveis)
+  // Função de clique com ajuste na finalidade
   const handleCidadeClick = (cidade, tipo) => {
     limparFiltros();
     setFilters({
-      finalidade: "VENDA",
+      finalidade: "Comprar", // AJUSTE AQUI ("Comprar" em vez de "VENDA")
       categoriaSelecionada: tipo,
       cidadeSelecionada: cidade,
       filtrosBasicosPreenchidos: true,
     });
-    aplicarFiltros(); // Original mantido
-    router.push(`/busca/comprar/${gerarSlug(tipo)}/${gerarSlug(cidade)}`); // Nova URL
+    aplicarFiltros();
+    router.push(`/busca/comprar/${gerarSlug(tipo)}/${gerarSlug(cidade)}`);
   };
 
-  // JSX original (100% mantido)
   return (
     <section className="bg-zinc-100 min-h-[500px] py-16 px-6 lg:px-0">
       <div className="container mx-auto">
-        {/* Título original */}
         <h2 className="text-lg sm:text-xl font-bold mb-6 uppercase text-center lg:text-left">
           Onde você quiser, tem um <br className="hidden sm:block" /> imóvel de luxo para você!
         </h2>
 
-        {/* Lista de cidades (original) */}
         <div
           ref={carouselRef}
           className="flex gap-6 overflow-x-auto scroll-smooth scrollbar-hide no-scrollbar pb-4"
@@ -88,7 +84,6 @@ export function ListCities() {
           ))}
         </div>
 
-        {/* Botões de navegação (original) */}
         <div className="flex justify-center items-center gap-4 mt-6">
           <button
             onClick={() => scroll("left")}
