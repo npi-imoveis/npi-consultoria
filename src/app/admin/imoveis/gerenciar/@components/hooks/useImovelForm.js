@@ -168,17 +168,7 @@ export const useImovelForm = () => {
   // Reset codeGeneratedRef when imovelSelecionado changes (e.g., loading a different property)
   useEffect(() => {
     codeGeneratedRef.current = false;
-  }, [imovelSelecionado]);
-
-    
-    const savedForm = localStorage.getItem('imovelFormDraft');
-    if (savedForm) {
-      try {
-        const parsed = JSON.parse(savedForm);
-        const formToLoad = newImovelCode 
-          ? { ...parsed, Codigo: newImovelCode }
-          : parsed;
-        setFormData(formToLoad);
+  }
         
         // Atualiza valores de exibição
         setDisplayValues({
