@@ -1,7 +1,0 @@
-"use client";
-// Importe seu componente de busca original se necessário
-import BuscaOriginal from "../page"; 
-
-export default function BuscaSlug() {
-  return <BuscaOriginal />;
-}
