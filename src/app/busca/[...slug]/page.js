@@ -1,17 +1,8 @@
-// src/app/busca/[...slug]/page.tsx
+// src/app/busca/[...slug]/page.js
 import { notFound } from 'next/navigation';
 
-interface PageProps {
-  params: {
-    slug: string[];
-  };
-  searchParams?: {
-    [key: string]: string | string[] | undefined;
-  };
-}
-
-export default function DynamicSearchPage({ params, searchParams }: PageProps) {
-  // Se não houver slug, redireciona para 404 (opcional)
+export default function DynamicSearchPage({ params, searchParams }) {
+  // Se não houver slug, redireciona para 404
   if (!params.slug || params.slug.length === 0) {
     return notFound();
   }
@@ -19,7 +10,7 @@ export default function DynamicSearchPage({ params, searchParams }: PageProps) {
   // Converte slug para string (ex: "categoria/produto")
   const slugPath = params.slug.join('/');
   
-  // Extrai parâmetros de query (ex: ?q=termo&page=2)
+  // Extrai parâmetros de query
   const searchQuery = searchParams?.q || '';
   const currentPage = searchParams?.page || '1';
 
@@ -49,7 +40,7 @@ export default function DynamicSearchPage({ params, searchParams }: PageProps) {
   );
 }
 
-// Opcional: Geração estática para slugs conhecidos (remova se não usar SSG)
+// Opcional: Geração estática para slugs conhecidos
 export async function generateStaticParams() {
   return [
     { slug: ['exemplo'] },
@@ -58,7 +49,7 @@ export async function generateStaticParams() {
 }
 
 // Opcional: Metadados dinâmicos
-export async function generateMetadata({ params }: PageProps) {
+export async function generateMetadata({ params }) {
   const slugPath = params.slug.join('/');
   return {
     title: `Busca: ${slugPath} | NPI Consultoria`,
