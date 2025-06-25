@@ -10,7 +10,6 @@ export const generateRandomCode = async () => {
   return generateUniqueCode();
 };
 
-// Objeto inicial do formulário para evitar repetição
 const INITIAL_FORM_DATA = {
   Codigo: "",
   CodigoOriginal: "",
@@ -98,7 +97,6 @@ export const useImovelForm = () => {
           setFormData((prev) => ({ ...prev, Codigo: code }));
         } catch (error) {
           console.error("Erro ao gerar código:", error);
-          // Fallback para um código aleatório simples
           const fallbackCode = `IMV-${Date.now().toString().slice(-6)}`;
           setNewImovelCode(fallbackCode);
           setFormData((prev) => ({ ...prev, Codigo: fallbackCode }));
@@ -129,7 +127,7 @@ export const useImovelForm = () => {
     return (value?.toString() || "").replace(/\D/g, "") || "";
   }, []);
 
-  // Busca de coordenadas com tratamento de erro melhorado
+  // Busca de coordenadas
   const fetchCoordinates = useCallback(async (address) => {
     if (!address || !address.logradouro || !address.bairro || !address.localidade || !address.uf) {
       return null;
@@ -148,7 +146,7 @@ export const useImovelForm = () => {
     }
   }, []);
 
-  // Busca por CEP com tratamento de erro melhorado
+  // Busca por CEP
   const fetchAddress = useCallback(async (cep) => {
     const cleanCep = (cep || "").replace(/\D/g, "");
     if (cleanCep.length !== 8) return;
@@ -175,7 +173,7 @@ export const useImovelForm = () => {
     }
   }, [fetchCoordinates]);
 
-  // Handler genérico de campos com validação melhorada
+  // Handler genérico de campos
   const handleChange = useCallback((e) => {
     if (!e || !e.target) return;
     
@@ -264,25 +262,25 @@ export const useImovelForm = () => {
     }
   }, [maskDate, formatCurrency, parseCurrency, fetchAddress]);
 
-  // Manipulação de imagens com validação melhorada
+  // Manipulação de imagens
   const addImage = useCallback(() => setShowImageModal(true), []);
   
-  cconst addSingleImage = useCallback((url) => {
-  if (!url?.trim()) return;
-  
-  setFormData(prev => ({
-    ...prev,
-    Foto: [
-      ...(Array.isArray(prev.Foto) ? prev.Foto : [],
-      {
-        Codigo: `img-${Date.now()}`,
-        Foto: url.trim(),
-        Destaque: "Nao",
-        Ordem: (Array.isArray(prev.Foto) ? prev.Foto.length + 1 : 1
-      }
-    ]
-  }));
-}, []);
+  const addSingleImage = useCallback((url) => {
+    if (!url?.trim()) return;
+    
+    setFormData(prev => ({
+      ...prev,
+      Foto: [
+        ...(Array.isArray(prev.Foto) ? prev.Foto : []),
+        {
+          Codigo: `img-${Date.now()}`,
+          Foto: url.trim(),
+          Destaque: "Nao",
+          Ordem: (Array.isArray(prev.Foto) ? prev.Foto.length + 1 : 1)
+        }
+      ]
+    }));
+  }, []);
 
   const updateImage = useCallback((codigo, newUrl) => {
     if (!codigo || !newUrl?.trim()) return;
@@ -375,7 +373,7 @@ export const useImovelForm = () => {
     });
   }, []);
 
-  // Validação do formulário mais robusta
+  // Validação do formulário
   useEffect(() => {
     const fieldValidation = {};
     let isValid = true;
