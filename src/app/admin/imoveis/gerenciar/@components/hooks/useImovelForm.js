@@ -5,10 +5,13 @@ import { REQUIRED_FIELDS } from "../FieldGroup";
 import useImovelStore from "@/app/admin/store/imovelStore";
 import { getCorretorById } from "@/app/admin/services/corretor";
 import { generateUniqueCode } from "@/app/utils/idgenerate";
+import debounce from "lodash.debounce";
 
 export const generateRandomCode = async () => {
   return generateUniqueCode();
 };
+
+const MAX_MONETARY_VALUE = 999999999.99;
 
 const INITIAL_FORM_DATA = {
   Codigo: "",
@@ -43,10 +46,10 @@ const INITIAL_FORM_DATA = {
   Vagas: "",
   DataEntrega: "",
   AnoConstrucao: "",
-  ValorAntigo: "",
-  ValorAluguelSite: "",
-  ValorCondominio: "",
-  ValorIptu: "",
+  ValorAntigo: "0.00",
+  ValorAluguelSite: "0.00",
+  ValorCondominio: "0.00",
+  ValorIptu: "0.00",
   DescricaoUnidades: "",
   DescricaoDiferenciais: "",
   DestaquesDiferenciais: "",
@@ -61,6 +64,10 @@ const INITIAL_FORM_DATA = {
   Imobiliaria: "",
   Video: {},
   Foto: [],
+  isLoadingCEP: false,
+  isLoadingCorretor: false,
+  cepError: null,
+  corretorError: null
 };
 
 export const useImovelForm = () => {
@@ -72,10 +79,10 @@ export const useImovelForm = () => {
 
   const [formData, setFormData] = useState(INITIAL_FORM_DATA);
   const [displayValues, setDisplayValues] = useState({
-    ValorAntigo: "",
-    ValorAluguelSite: "",
-    ValorCondominio: "",
-    ValorIptu: "",
+    ValorAntigo: "R$ 0,00",
+    ValorAluguelSite: "R$ 0,00",
+    ValorCondominio: "R$ 0,00",
+    ValorIptu: "R$ 0,00",
   });
 
   const [newImovelCode, setNewImovelCode] = useState("");
@@ -87,6 +94,38 @@ export const useImovelForm = () => {
     fieldValidation: {},
   });
 
+  // Funções de formatação monetária
+  const formatCurrency = useCallback((value) => {
+    const num = typeof value === 'string' 
+      ? parseFloat(value.replace(/[^\d,]/g, '').replace(',', '.')) 
+      : Number(value || 0);
+
+    return isNaN(num) 
+      ? "R$ 0,00" 
+      : num.toLocaleString("pt-BR", { 
+          style: "currency", 
+          currency: "BRL",
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
+  }, []);
+
+  const parseCurrency = useCallback((value) => {
+    const cleaned = (value?.toString() || "").replace(/[^\d,]/g, '');
+    const floatValue = parseFloat(cleaned.replace(',', '.'));
+    const safeValue = Math.min(Math.max(floatValue, 0), MAX_MONETARY_VALUE);
+    
+    return isNaN(safeValue) ? "0.00" : safeValue.toFixed(2);
+  }, []);
+
+  const formatCurrencyInput = useCallback((value) => {
+    const digitsOnly = value.replace(/\D/g, '');
+    const padded = digitsOnly.padStart(3, '0');
+    const withDecimal = `${padded.slice(0, -2)},${padded.slice(-2)}`;
+    return formatCurrency(withDecimal);
+  }, [formatCurrency]);
+
+  // Geração de código
   useEffect(() => {
     if (isAutomacao || !formData.Codigo) {
       const loadCode = async () => {
@@ -105,6 +144,43 @@ export const useImovelForm = () => {
     }
   }, [isAutomacao, formData.Codigo]);
 
+  // Persistência no LocalStorage
+  useEffect(() => {
+    if (imovelSelecionado) return;
+    
+    const savedForm = localStorage.getItem('imovelFormDraft');
+    if (savedForm) {
+      try {
+        const parsed = JSON.parse(savedForm);
+        const formToLoad = newImovelCode 
+          ? { ...parsed, Codigo: newImovelCode }
+          : parsed;
+        setFormData(formToLoad);
+        
+        // Atualiza valores de exibição
+        setDisplayValues({
+          ValorAntigo: formatCurrency(parsed.ValorAntigo || "0.00"),
+          ValorAluguelSite: formatCurrency(parsed.ValorAluguelSite || "0.00"),
+          ValorCondominio: formatCurrency(parsed.ValorCondominio || "0.00"),
+          ValorIptu: formatCurrency(parsed.ValorIptu || "0.00")
+        });
+      } catch (e) {
+        console.error("Erro ao recuperar rascunho:", e);
+      }
+    }
+  }, [imovelSelecionado, newImovelCode, formatCurrency]);
+
+  useEffect(() => {
+    if (!formData.Codigo) return;
+    
+    const timer = setTimeout(() => {
+      localStorage.setItem('imovelFormDraft', JSON.stringify(formData));
+    }, 500);
+    
+    return () => clearTimeout(timer);
+  }, [formData]);
+
+  // Funções auxiliares
   const maskDate = useCallback((value) => {
     if (!value) return "";
     return value
@@ -114,48 +190,47 @@ export const useImovelForm = () => {
       .replace(/^(\d{2})\/(\d{2})(\d)/, "$1/$2/$3");
   }, []);
 
-  const formatCurrency = useCallback((value) => {
-    const num = Number((value?.toString() || "").replace(/\D/g, "") || 0);
-    return isNaN(num) 
-      ? "R$ 0,00" 
-      : num.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-  }, []);
-
-  const parseCurrency = useCallback((value) => {
-    return (value?.toString() || "").replace(/\D/g, "") || "";
-  }, []);
-
-  const fetchCoordinates = useCallback(async (address) => {
-    if (!address || !address.logradouro || !address.bairro || !address.localidade || !address.uf) {
-      return null;
-    }
-
-    try {
-      const query = `${address.logradouro}, ${address.bairro}, ${address.localidade}, ${address.uf}`;
-      const results = await provider.current.search({ query });
-      return results[0] ? { 
-        latitude: results[0].y?.toString() || "", 
-        longitude: results[0].x?.toString() || "" 
-      } : null;
-    } catch (error) {
-      console.error("Erro ao buscar coordenadas:", error);
-      return null;
-    }
-  }, []);
+  const debouncedFetchCoordinates = useCallback(
+    debounce(async (address) => {
+      if (!address) return null;
+      
+      try {
+        const query = `${address.logradouro}, ${address.bairro}, ${address.localidade}, ${address.uf}`;
+        const results = await provider.current.search({ query });
+        return results[0] ? { 
+          latitude: results[0].y?.toString() || "", 
+          longitude: results[0].x?.toString() || "" 
+        } : null;
+      } catch (error) {
+        console.error("Erro ao buscar coordenadas:", error);
+        return null;
+      }
+    }, 500),
+    []
+  );
 
   const fetchAddress = useCallback(async (cep) => {
     const cleanCep = (cep || "").replace(/\D/g, "");
     if (cleanCep.length !== 8) return;
+
+    setFormData(prev => ({ ...prev, isLoadingCEP: true, cepError: null }));
 
     try {
       const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
       if (!response.ok) throw new Error("Erro na resposta da API");
       
       const data = await response.json();
-      if (data.erro) return;
+      if (data.erro) {
+        setFormData(prev => ({ 
+          ...prev, 
+          cepError: "CEP não encontrado",
+          isLoadingCEP: false 
+        }));
+        return;
+      }
 
-      const coords = await fetchCoordinates(data);
-      setFormData((prev) => ({
+      const coords = await debouncedFetchCoordinates(data);
+      setFormData(prev => ({
         ...prev,
         Endereco: data.logradouro || prev.Endereco,
         Bairro: data.bairro || prev.Bairro,
@@ -163,12 +238,20 @@ export const useImovelForm = () => {
         UF: data.uf || prev.UF,
         Latitude: coords?.latitude || prev.Latitude,
         Longitude: coords?.longitude || prev.Longitude,
+        isLoadingCEP: false,
+        cepError: null
       }));
     } catch (error) {
       console.error("Erro ao buscar endereço:", error);
+      setFormData(prev => ({ 
+        ...prev, 
+        cepError: "Falha ao consultar CEP",
+        isLoadingCEP: false 
+      }));
     }
-  }, [fetchCoordinates]);
+  }, [debouncedFetchCoordinates]);
 
+  // Handler principal
   const handleChange = useCallback((e) => {
     if (!e || !e.target) return;
     
@@ -178,39 +261,48 @@ export const useImovelForm = () => {
       return;
     }
 
+    const monetaryHandlers = {
+      ValorAntigo: () => {
+        const numericValue = parseCurrency(value);
+        setFormData(prev => ({ ...prev, [name]: numericValue }));
+        setDisplayValues(prev => ({ 
+          ...prev, 
+          [name]: formatCurrencyInput(value) 
+        }));
+      },
+      ValorAluguelSite: () => {
+        const numericValue = parseCurrency(value);
+        setFormData(prev => ({ ...prev, [name]: numericValue }));
+        setDisplayValues(prev => ({ 
+          ...prev, 
+          [name]: formatCurrencyInput(value) 
+        }));
+      },
+      ValorCondominio: () => {
+        const numericValue = parseCurrency(value);
+        setFormData(prev => ({ ...prev, [name]: numericValue }));
+        setDisplayValues(prev => ({ 
+          ...prev, 
+          [name]: formatCurrencyInput(value) 
+        }));
+      },
+      ValorIptu: () => {
+        const numericValue = parseCurrency(value);
+        setFormData(prev => ({ ...prev, [name]: numericValue }));
+        setDisplayValues(prev => ({ 
+          ...prev, 
+          [name]: formatCurrencyInput(value) 
+        }));
+      }
+    };
+
     const specialHandlers = {
       DataEntrega: () => setFormData(prev => ({ ...prev, [name]: maskDate(value) })),
-
-      ValorAntigo: () => {
-        const numeric = parseCurrency(value);
-        setFormData(prev => ({ ...prev, [name]: numeric }));
-        setDisplayValues(prev => ({ ...prev, [name]: formatCurrency(numeric) }));
-      },
-
-      ValorAluguelSite: () => {
-        const numeric = parseCurrency(value);
-        setFormData(prev => ({ ...prev, [name]: numeric }));
-        setDisplayValues(prev => ({ ...prev, [name]: formatCurrency(numeric) }));
-      },
-
-      ValorCondominio: () => {
-        const numeric = parseCurrency(value);
-        setFormData(prev => ({ ...prev, [name]: numeric }));
-        setDisplayValues(prev => ({ ...prev, [name]: formatCurrency(numeric) }));
-      },
-
-      ValorIptu: () => {
-        const numeric = parseCurrency(value);
-        setFormData(prev => ({ ...prev, [name]: numeric }));
-        setDisplayValues(prev => ({ ...prev, [name]: formatCurrency(numeric) }));
-      },
-
       CEP: () => {
         const formattedCEP = value.replace(/\D/g, "").slice(0, 8);
         setFormData(prev => ({ ...prev, [name]: formattedCEP }));
         if (formattedCEP.length === 8) fetchAddress(formattedCEP);
       },
-
       Empreendimento: () => {
         setFormData(prev => ({ 
           ...prev, 
@@ -218,7 +310,6 @@ export const useImovelForm = () => {
           Slug: formatterSlug(value) || prev.Slug 
         }));
       },
-
       IdCorretor: () => {
         setFormData(prev => ({
           ...prev,
@@ -227,6 +318,8 @@ export const useImovelForm = () => {
           EmailCorretor: "",
           CelularCorretor: "",
           Imobiliaria: "",
+          isLoadingCorretor: true,
+          corretorError: null
         }));
 
         if (value?.trim()) {
@@ -239,14 +332,21 @@ export const useImovelForm = () => {
                   EmailCorretor: corretor.Email || "",
                   CelularCorretor: corretor.Celular || "",
                   Imobiliaria: corretor.Imobiliaria || "",
+                  isLoadingCorretor: false
                 }));
               }
             })
             .catch(error => {
               console.error("Erro ao buscar corretor:", error);
+              setFormData(prev => ({
+                ...prev,
+                corretorError: "Corretor não encontrado",
+                isLoadingCorretor: false
+              }));
             });
         }
-      }
+      },
+      ...monetaryHandlers
     };
 
     if (specialHandlers[name]) {
@@ -254,8 +354,9 @@ export const useImovelForm = () => {
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
-  }, [maskDate, formatCurrency, parseCurrency, fetchAddress]);
+  }, [maskDate, fetchAddress, parseCurrency, formatCurrencyInput]);
 
+  // Funções de manipulação de imagens (mantidas iguais)
   const addImage = useCallback(() => setShowImageModal(true), []);
   
   const addSingleImage = useCallback((url) => {
@@ -366,6 +467,7 @@ export const useImovelForm = () => {
     });
   }, []);
 
+  // Validação do formulário
   useEffect(() => {
     const fieldValidation = {};
     let isValid = true;
@@ -396,6 +498,32 @@ export const useImovelForm = () => {
     }));
   }, [formData, validation.requiredPhotoCount]);
 
+  // Reset do formulário
+  const resetForm = useCallback((keepCode = false) => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('imovelFormDraft');
+    }
+    
+    setFormData(prev => ({
+      ...INITIAL_FORM_DATA,
+      Codigo: keepCode ? prev.Codigo : "",
+    }));
+    
+    setDisplayValues({
+      ValorAntigo: "R$ 0,00",
+      ValorAluguelSite: "R$ 0,00",
+      ValorCondominio: "R$ 0,00",
+      ValorIptu: "R$ 0,00",
+    });
+    
+    if (!keepCode) {
+      generateRandomCode().then(code => {
+        setNewImovelCode(code);
+        setFormData(prev => ({ ...prev, Codigo: code }));
+      });
+    }
+  }, []);
+
   return {
     formData,
     setFormData,
@@ -415,6 +543,10 @@ export const useImovelForm = () => {
     changeImagePosition,
     validation,
     handleImagesUploaded,
+    resetForm,
+    formatCurrency,
+    parseCurrency,
+    formatCurrencyInput
   };
 };
 
