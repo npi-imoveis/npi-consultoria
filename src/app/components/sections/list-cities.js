@@ -1,6 +1,7 @@
 "use client";
 import { getImoveisByFilters } from "@/app/services";
 import useFiltersStore from "@/app/store/filtrosStore";
+
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
@@ -26,14 +27,6 @@ export function ListCities() {
   const aplicarFiltros = useFiltersStore((state) => state.aplicarFiltros);
   const limparFiltros = useFiltersStore((state) => state.limparFiltros);
 
-  // Função para gerar slugs
-  const gerarSlug = (texto) => {
-    return texto
-      .toLowerCase()
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-      .replace(/\s+/g, "-");
-  };
-
   const scroll = (direction) => {
     if (carouselRef.current) {
       const scrollAmount = 300;
@@ -41,26 +34,27 @@ export function ListCities() {
     }
   };
 
-  // Função de clique com ajuste na finalidade
-  const handleCidadeClick = (cidade, tipo) => {
+  const handleCidadeClick = (cidade, categoria) => {
     limparFiltros();
     setFilters({
-      finalidade: "Comprar", // AJUSTE AQUI ("Comprar" em vez de "VENDA")
-      categoriaSelecionada: tipo,
+      finalidade: "VENDA",
+      categoriaSelecionada: categoria,
       cidadeSelecionada: cidade,
       filtrosBasicosPreenchidos: true,
     });
     aplicarFiltros();
-    router.push(`/busca/comprar/${gerarSlug(tipo)}/${gerarSlug(cidade)}`);
+    router.push("/busca");
   };
 
   return (
     <section className="bg-zinc-100 min-h-[500px] py-16 px-6 lg:px-0">
       <div className="container mx-auto">
+        {/* Título */}
         <h2 className="text-lg sm:text-xl font-bold mb-6 uppercase text-center lg:text-left">
           Onde você quiser, tem um <br className="hidden sm:block" /> imóvel de luxo para você!
         </h2>
 
+        {/* Lista de cidades - Estática */}
         <div
           ref={carouselRef}
           className="flex gap-6 overflow-x-auto scroll-smooth scrollbar-hide no-scrollbar pb-4"
@@ -84,6 +78,7 @@ export function ListCities() {
           ))}
         </div>
 
+        {/* Botões de navegação */}
         <div className="flex justify-center items-center gap-4 mt-6">
           <button
             onClick={() => scroll("left")}
