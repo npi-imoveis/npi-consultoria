@@ -10,6 +10,60 @@ export const generateRandomCode = async () => {
   return generateUniqueCode();
 };
 
+// Objeto inicial do formulário para evitar repetição
+const INITIAL_FORM_DATA = {
+  Codigo: "",
+  CodigoOriginal: "",
+  Empreendimento: "",
+  TituloSite: "",
+  Categoria: "Apartamento",
+  Situacao: "PRONTO NOVO",
+  Status: "VENDA",
+  Slug: "",
+  Destacado: "Não",
+  Condominio: "Não",
+  CondominioDestaque: "Não",
+  Ativo: "Sim",
+  Construtora: "",
+  Endereco: "",
+  Numero: "",
+  Complemento: "",
+  Bairro: "",
+  BairroComercial: "",
+  Cidade: "",
+  UF: "",
+  CEP: "",
+  Latitude: "",
+  Longitude: "",
+  Regiao: "",
+  AreaPrivativa: "",
+  AreaTotal: "",
+  Dormitorios: "",
+  Suites: "",
+  BanheiroSocialQtd: "",
+  Vagas: "",
+  DataEntrega: "",
+  AnoConstrucao: "",
+  ValorAntigo: "",
+  ValorAluguelSite: "",
+  ValorCondominio: "",
+  ValorIptu: "",
+  DescricaoUnidades: "",
+  DescricaoDiferenciais: "",
+  DestaquesDiferenciais: "",
+  DestaquesLazer: "",
+  DestaquesLocalizacao: "",
+  FichaTecnica: "",
+  Tour360: "",
+  IdCorretor: "",
+  Corretor: "",
+  EmailCorretor: "",
+  CelularCorretor: "",
+  Imobiliaria: "",
+  Video: {},
+  Foto: [],
+};
+
 export const useImovelForm = () => {
   const provider = useRef(new OpenStreetMapProvider());
   const fileInputRef = useRef(null);
@@ -17,59 +71,7 @@ export const useImovelForm = () => {
   const imovelSelecionado = useImovelStore((state) => state.imovelSelecionado);
   const isAutomacao = imovelSelecionado?.Automacao === true;
 
-  const [formData, setFormData] = useState({
-    Codigo: "",
-    CodigoOriginal: "",
-    Empreendimento: "",
-    TituloSite: "",
-    Categoria: "Apartamento",
-    Situacao: "PRONTO NOVO",
-    Status: "VENDA",
-    Slug: "",
-    Destacado: "Não",
-    Condominio: "Não",
-    CondominioDestaque: "Não",
-    Ativo: "Sim",
-    Construtora: "",
-    Endereco: "",
-    Numero: "",
-    Complemento: "",
-    Bairro: "",
-    BairroComercial: "",
-    Cidade: "",
-    UF: "",
-    CEP: "",
-    Latitude: "",
-    Longitude: "",
-    Regiao: "",
-    AreaPrivativa: "",
-    AreaTotal: "",
-    Dormitorios: "",
-    Suites: "",
-    BanheiroSocialQtd: "",
-    Vagas: "",
-    DataEntrega: "",
-    AnoConstrucao: "",
-    ValorAntigo: "",
-    ValorAluguelSite: "",
-    ValorCondominio: "",
-    ValorIptu: "",
-    DescricaoUnidades: "",
-    DescricaoDiferenciais: "",
-    DestaquesDiferenciais: "",
-    DestaquesLazer: "",
-    DestaquesLocalizacao: "",
-    FichaTecnica: "",
-    Tour360: "",
-    IdCorretor: "",
-    Corretor: "",
-    EmailCorretor: "",
-    CelularCorretor: "",
-    Imobiliaria: "",
-    Video: {},
-    Foto: [],
-  });
-
+  const [formData, setFormData] = useState(INITIAL_FORM_DATA);
   const [displayValues, setDisplayValues] = useState({
     ValorAntigo: "",
     ValorAluguelSite: "",
@@ -90,45 +92,71 @@ export const useImovelForm = () => {
   useEffect(() => {
     if (isAutomacao || !formData.Codigo) {
       const loadCode = async () => {
-        const code = await generateRandomCode();
-        setNewImovelCode(code);
-        setFormData((prev) => ({ ...prev, Codigo: code }));
+        try {
+          const code = await generateRandomCode();
+          setNewImovelCode(code);
+          setFormData((prev) => ({ ...prev, Codigo: code }));
+        } catch (error) {
+          console.error("Erro ao gerar código:", error);
+          // Fallback para um código aleatório simples
+          const fallbackCode = `IMV-${Date.now().toString().slice(-6)}`;
+          setNewImovelCode(fallbackCode);
+          setFormData((prev) => ({ ...prev, Codigo: fallbackCode }));
+        }
       };
       loadCode();
     }
   }, [isAutomacao, formData.Codigo]);
 
   // Utilitários
-  const maskDate = useCallback((value) => 
-    value.replace(/\D/g, "").replace(/^(\d{2})(\d)/, "$1/$2").replace(/^(\d{2})\/(\d{2})(\d)/, "$1/$2/$3"), []);
-
-  const formatCurrency = useCallback((value) => {
-    const num = Number(value?.toString().replace(/\D/g, "") || 0);
-    return num.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  const maskDate = useCallback((value) => {
+    if (!value) return "";
+    return value
+      .replace(/\D/g, "")
+      .slice(0, 8)
+      .replace(/^(\d{2})(\d)/, "$1/$2")
+      .replace(/^(\d{2})\/(\d{2})(\d)/, "$1/$2/$3");
   }, []);
 
-  const parseCurrency = useCallback((value) => 
-    value?.toString().replace(/\D/g, "") || "", []);
+  const formatCurrency = useCallback((value) => {
+    const num = Number((value?.toString() || "").replace(/\D/g, "") || 0);
+    return isNaN(num) 
+      ? "R$ 0,00" 
+      : num.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+  }, []);
 
-  // Busca de coordenadas
+  const parseCurrency = useCallback((value) => {
+    return (value?.toString() || "").replace(/\D/g, "") || "";
+  }, []);
+
+  // Busca de coordenadas com tratamento de erro melhorado
   const fetchCoordinates = useCallback(async (address) => {
+    if (!address || !address.logradouro || !address.bairro || !address.localidade || !address.uf) {
+      return null;
+    }
+
     try {
       const query = `${address.logradouro}, ${address.bairro}, ${address.localidade}, ${address.uf}`;
       const results = await provider.current.search({ query });
-      return results[0] ? { latitude: results[0].y, longitude: results[0].x } : null;
+      return results[0] ? { 
+        latitude: results[0].y?.toString() || "", 
+        longitude: results[0].x?.toString() || "" 
+      } : null;
     } catch (error) {
-      console.error("Erro nas coordenadas:", error);
+      console.error("Erro ao buscar coordenadas:", error);
       return null;
     }
   }, []);
 
-  // Busca por CEP
+  // Busca por CEP com tratamento de erro melhorado
   const fetchAddress = useCallback(async (cep) => {
-    const cleanCep = cep.replace(/\D/g, "");
+    const cleanCep = (cep || "").replace(/\D/g, "");
     if (cleanCep.length !== 8) return;
 
     try {
       const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+      if (!response.ok) throw new Error("Erro na resposta da API");
+      
       const data = await response.json();
       if (data.erro) return;
 
@@ -139,17 +167,23 @@ export const useImovelForm = () => {
         Bairro: data.bairro || prev.Bairro,
         Cidade: data.localidade || prev.Cidade,
         UF: data.uf || prev.UF,
-        Latitude: coords?.latitude?.toString() || prev.Latitude,
-        Longitude: coords?.longitude?.toString() || prev.Longitude,
+        Latitude: coords?.latitude || prev.Latitude,
+        Longitude: coords?.longitude || prev.Longitude,
       }));
     } catch (error) {
-      console.error("Erro no CEP:", error);
+      console.error("Erro ao buscar endereço:", error);
     }
   }, [fetchCoordinates]);
 
-  // Handler genérico de campos
+  // Handler genérico de campos com validação melhorada
   const handleChange = useCallback((e) => {
+    if (!e || !e.target) return;
+    
     const { name, value } = e.target;
+    if (!name || !INITIAL_FORM_DATA.hasOwnProperty(name)) {
+      console.warn(`Campo não reconhecido: ${name}`);
+      return;
+    }
 
     // Campos especiais
     const specialHandlers = {
@@ -180,12 +214,17 @@ export const useImovelForm = () => {
       },
 
       CEP: () => {
-        setFormData(prev => ({ ...prev, [name]: value }));
-        if (value.replace(/\D/g, "").length === 8) fetchAddress(value);
+        const formattedCEP = value.replace(/\D/g, "").slice(0, 8);
+        setFormData(prev => ({ ...prev, [name]: formattedCEP }));
+        if (formattedCEP.length === 8) fetchAddress(formattedCEP);
       },
 
       Empreendimento: () => {
-        setFormData(prev => ({ ...prev, [name]: value, Slug: formatterSlug(value) }));
+        setFormData(prev => ({ 
+          ...prev, 
+          [name]: value, 
+          Slug: formatterSlug(value) || prev.Slug 
+        }));
       },
 
       IdCorretor: () => {
@@ -199,7 +238,7 @@ export const useImovelForm = () => {
         }));
 
         if (value?.trim()) {
-          getCorretorById(value)
+          getCorretorById(value.trim())
             .then(corretor => {
               if (corretor) {
                 setFormData(prev => ({
@@ -211,7 +250,9 @@ export const useImovelForm = () => {
                 }));
               }
             })
-            .catch(console.error);
+            .catch(error => {
+              console.error("Erro ao buscar corretor:", error);
+            });
         }
       }
     };
@@ -223,7 +264,7 @@ export const useImovelForm = () => {
     }
   }, [maskDate, formatCurrency, parseCurrency, fetchAddress]);
 
-  // Manipulação de imagens
+  // Manipulação de imagens com validação melhorada
   const addImage = useCallback(() => setShowImageModal(true), []);
   
   const addSingleImage = useCallback((url) => {
@@ -232,32 +273,40 @@ export const useImovelForm = () => {
     setFormData(prev => ({
       ...prev,
       Foto: [
-        ...(prev.Foto || []),
+        ...(Array.isArray(prev.Foto) ? prev.Foto : []),
         {
           Codigo: `img-${Date.now()}`,
           Foto: url.trim(),
           Destaque: "Nao",
-          Ordem: (prev.Foto?.length || 0) + 1,
+          Ordem: ((Array.isArray(prev.Foto) ? prev.Foto.length : 0) + 1,
         }
       ]
     }));
   }, []);
 
   const updateImage = useCallback((codigo, newUrl) => {
+    if (!codigo || !newUrl?.trim()) return;
+    
     setFormData(prev => ({
       ...prev,
-      Foto: (prev.Foto || []).map(img => 
-        img.Codigo === codigo ? { ...img, Foto: newUrl } : img
-      )
+      Foto: (Array.isArray(prev.Foto) 
+        ? prev.Foto.map(img => 
+            img.Codigo === codigo ? { ...img, Foto: newUrl.trim() } : img
+          )
+        : []
     }));
   }, []);
 
   const removeImage = useCallback((codigo) => {
+    if (!codigo) return;
+    
     setFormData(prev => ({
       ...prev,
-      Foto: (prev.Foto || [])
-        .filter(img => img.Codigo !== codigo)
-        .map((img, i) => ({ ...img, Ordem: i + 1 }))
+      Foto: (Array.isArray(prev.Foto)
+        ? prev.Foto
+            .filter(img => img.Codigo !== codigo)
+            .map((img, i) => ({ ...img, Ordem: i + 1 }))
+        : []
     }));
   }, []);
 
@@ -270,16 +319,22 @@ export const useImovelForm = () => {
   }, []);
 
   const setImageAsHighlight = useCallback((codigo) => {
+    if (!codigo) return;
+    
     setFormData(prev => ({
       ...prev,
-      Foto: (prev.Foto || []).map(img => ({
-        ...img,
-        Destaque: img.Codigo === codigo ? "Sim" : "Nao"
-      }))
+      Foto: (Array.isArray(prev.Foto)
+        ? prev.Foto.map(img => ({
+            ...img,
+            Destaque: img.Codigo === codigo ? "Sim" : "Nao"
+          }))
+        : []
     }));
   }, []);
 
   const changeImagePosition = useCallback((codigo, newPos) => {
+    if (!codigo || !Number.isInteger(newPos) || newPos < 1) return;
+    
     setFormData(prev => {
       if (!Array.isArray(prev.Foto)) return prev;
       
@@ -288,7 +343,8 @@ export const useImovelForm = () => {
       if (currentIdx === -1) return prev;
 
       const [moved] = sorted.splice(currentIdx, 1);
-      sorted.splice(newPos - 1, 0, moved);
+      const adjustedPos = Math.min(Math.max(newPos, 1), sorted.length + 1);
+      sorted.splice(adjustedPos - 1, 0, moved);
       
       return {
         ...prev,
@@ -301,29 +357,40 @@ export const useImovelForm = () => {
     if (!Array.isArray(images)) return;
     
     setFormData(prev => {
-      const current = prev.Foto || [];
+      const current = Array.isArray(prev.Foto) ? prev.Foto : [];
       return {
         ...prev,
         Foto: [
           ...current,
-          ...images.map((img, idx) => ({
-            Codigo: `img-upload-${Date.now()}-${idx}`,
-            Foto: img.Foto || img.url,
-            Destaque: "Nao",
-            Ordem: current.length + idx + 1
-          }))
+          ...images
+            .filter(img => img?.Foto || img?.url)
+            .map((img, idx) => ({
+              Codigo: `img-upload-${Date.now()}-${idx}`,
+              Foto: img.Foto || img.url,
+              Destaque: "Nao",
+              Ordem: current.length + idx + 1
+            }))
         ]
       };
     });
   }, []);
 
-  // Validação do formulário
+  // Validação do formulário mais robusta
   useEffect(() => {
     const fieldValidation = {};
     let isValid = true;
 
     REQUIRED_FIELDS.forEach((field) => {
-      const valid = Boolean(formData[field]?.toString().trim());
+      if (!INITIAL_FORM_DATA.hasOwnProperty(field)) {
+        console.warn(`Campo obrigatório não encontrado: ${field}`);
+        return;
+      }
+      
+      const value = formData[field];
+      const valid = (typeof value === 'string' && value.trim() !== '') || 
+                    (typeof value === 'number' && !isNaN(value)) || 
+                    (Array.isArray(value) && value.length > 0);
+      
       fieldValidation[field] = valid;
       if (!valid) isValid = false;
     });
@@ -331,12 +398,12 @@ export const useImovelForm = () => {
     const photoCount = Array.isArray(formData.Foto) ? formData.Foto.length : 0;
     const hasEnoughPhotos = photoCount >= validation.requiredPhotoCount;
 
-    setValidation({
+    setValidation(prev => ({
+      ...prev,
       isFormValid: isValid && hasEnoughPhotos,
       photoCount,
-      requiredPhotoCount: 5,
       fieldValidation,
-    });
+    }));
   }, [formData, validation.requiredPhotoCount]);
 
   return {
