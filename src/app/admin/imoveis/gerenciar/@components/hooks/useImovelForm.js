@@ -1,9 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { toast } from "react-toastify";
-// Certifique-se que este import está correto e que a função existe em formatters.js
 import { formatarMoedaParaNumero } from "@/app/utils/formatter-number";
+import JSZip from "jszip"; // Importar JSZip
+import { saveAs } from "file-saver"; // Para salvar o arquivo
 
 const useImovelForm = (initialData = {}) => {
   const [formData, setFormData] = useState({
@@ -73,6 +74,10 @@ const useImovelForm = (initialData = {}) => {
     Foto: true,
   });
 
+  const fileInputRef = useRef(null);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [downloadingPhotos, setDownloadingPhotos] = useState(false); // Estado para controlar o download
+
   useEffect(() => {
     if (initialData && Object.keys(initialData).length > 0) {
       setFormData((prevData) => ({
@@ -133,6 +138,18 @@ const useImovelForm = (initialData = {}) => {
     }));
   };
 
+  const addImage = () => {
+    fileInputRef.current.click();
+  };
+
+  const handleImagesUploaded = (uploadedImages) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      Foto: [...prevData.Foto, ...uploadedImages],
+    }));
+    setShowImageModal(false);
+  };
+
   const addSingleImage = (newImage) => {
     setFormData((prevData) => ({
       ...prevData,
@@ -155,6 +172,18 @@ const useImovelForm = (initialData = {}) => {
     }));
   };
 
+  const removeAllImages = () => {
+    if (window.confirm("Tem certeza que deseja remover TODAS as fotos?")) {
+      if (window.confirm("Esta é uma ação irreversível. Confirme novamente para remover todas as fotos.")) {
+        setFormData((prevData) => ({
+          ...prevData,
+          Foto: [],
+        }));
+        toast.success("Todas as fotos foram removidas!");
+      }
+    }
+  };
+
   const setImageAsHighlight = (imageUrl) => {
     setFormData((prevData) => ({
       ...prevData,
@@ -173,6 +202,51 @@ const useImovelForm = (initialData = {}) => {
       newPhotos.splice(toIndex, 0, movedPhoto);
       return { ...prevData, Foto: newPhotos };
     });
+  };
+
+  const generateRandomCode = () => {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = '';
+    for (let i = 0; i < 8; i++) {
+      result += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    setFormData(prevData => ({ ...prevData, CodigoImovel: result }));
+  };
+
+  const downloadAllPhotos = async () => {
+    if (formData.Foto.length === 0) {
+      toast.info("Não há fotos para baixar.");
+      return;
+    }
+
+    setDownloadingPhotos(true);
+    const zip = new JSZip();
+    const folderName = formData.CodigoImovel ? `fotos_${formData.CodigoImovel}` : "fotos_imovel";
+    const imgFolder = zip.folder(folderName);
+
+    try {
+      for (let i = 0; i < formData.Foto.length; i++) {
+        const photo = formData.Foto[i];
+        const imageUrl = photo.Foto; // URL da imagem
+        const imageName = `${formData.CodigoImovel || "imovel"}_foto_${(i + 1).toString().padStart(2, '0')}.jpg`;
+
+        const response = await fetch(imageUrl);
+        if (!response.ok) {
+          throw new Error(`Erro ao baixar a imagem ${imageName}: ${response.statusText}`);
+        }
+        const blob = await response.blob();
+        imgFolder.file(imageName, blob);
+      }
+
+      const content = await zip.generateAsync({ type: "blob" });
+      saveAs(content, `${folderName}.zip`);
+      toast.success("Download das fotos concluído!");
+    } catch (error) {
+      console.error("Erro ao baixar ou compactar fotos:", error);
+      toast.error("Erro ao baixar as fotos. Tente novamente.");
+    } finally {
+      setDownloadingPhotos(false);
+    }
   };
 
   const validateForm = () => {
@@ -245,10 +319,19 @@ const useImovelForm = (initialData = {}) => {
     addSingleImage,
     updateImage,
     removeImage,
+    removeAllImages, // Adicionado
+    downloadAllPhotos, // Adicionado
+    downloadingPhotos, // Adicionado
     setImageAsHighlight,
     changeImagePosition,
     validateForm,
     validation,
+    generateRandomCode,
+    fileInputRef,
+    showImageModal,
+    setShowImageModal,
+    addImage,
+    handleImagesUploaded,
   };
 };
 
