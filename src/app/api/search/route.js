@@ -1,42 +1,52 @@
 import { connectToDatabase } from "@/app/lib/mongodb";
 import Imovel from "@/app/models/Imovel";
+
 import { NextResponse } from "next/server";
 
-export const dynamic = 'force-dynamic';
+// ADICIONE ESTA LINHA AQUI
+export const dynamic = 'force-dynamic'; // Garante que a rota seja sempre dinâmica e não cacheada
 
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
-    
-    // Parâmetros via slug (ex: /busca/comprar/apartamento/guaruja/enseada)
-    const finalidade = searchParams.get("finalidade");
-    const tipo = searchParams.get("tipo");
-    const cidade = searchParams.get("cidade");
-    const bairro = searchParams.get("bairro");
-    const empreendimento = searchParams.get("empreendimento");
-
-    // Parâmetro de busca livre (q)
     const query = searchParams.get("q");
+
+    if (!query || query.trim() === "") {
+      const emptyResponse = NextResponse.json({
+        status: 200,
+        data: [],
+      });
+      emptyResponse.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+      emptyResponse.headers.set('Pragma', 'no-cache');
+      emptyResponse.headers.set('Expires', '0');
+      emptyResponse.headers.set('Surrogate-Control', 'no-store');
+      return emptyResponse;
+    }
 
     await connectToDatabase();
 
-    // Filtro dinâmico para MongoDB
-    const filtro = {};
-    if (finalidade) filtro.finalidade = finalidade;
-    if (tipo) filtro.tipo = tipo;
-    if (cidade) filtro.cidade = cidade;
-    if (bairro) filtro.bairro = bairro;
-    if (empreendimento) filtro.empreendimento = empreendimento;
-    if (query) filtro.$text = { $search: query }; // Busca textual
-
-    const resultado = await Imovel.find(filtro).limit(20);
+    const resultado = await Imovel.aggregate([
+      {
+        $search: {
+          index: "imoveis",
+          text: {
+            query: query,
+            path: {
+              wildcard: "*",
+            },
+          },
+        },
+      },
+      {
+        $limit: 20,
+      },
+    ]);
 
     const response = NextResponse.json({
       status: 200,
       data: resultado,
     });
 
-    // Headers para evitar cache
     response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
     response.headers.set('Pragma', 'no-cache');
     response.headers.set('Expires', '0');
