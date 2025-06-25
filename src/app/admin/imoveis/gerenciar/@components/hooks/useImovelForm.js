@@ -137,24 +137,22 @@ export const useImovelForm = () => {
     return formatCurrency(withDecimal);
   }, [formatCurrency]);
 
-  // Geração de código
+    // Generate random code on init only if in Automacao mode or creating a new property
   useEffect(() => {
-    if (isAutomacao || !formData.Codigo) {
-      const loadCode = async () => {
-        try {
-          const code = await generateRandomCode();
-          setNewImovelCode(code);
-          setFormData((prev) => ({ ...prev, Codigo: code }));
-        } catch (error) {
-          console.error("Erro ao gerar código:", error);
-          const fallbackCode = `IMV-${Date.now().toString().slice(-6)}`;
-          setNewImovelCode(fallbackCode);
-          setFormData((prev) => ({ ...prev, Codigo: fallbackCode }));
-        }
+    // Apenas gera um novo código se for um imóvel de automação
+    // OU se estivermos em modo de criação (ou seja, formData.Codigo ainda não foi definido)
+    if (isAutomacao || (imovelSelecionado === null && !formData.Codigo)) {
+      const fetchCode = async () => {
+        const code = await generateRandomCode();
+        setNewImovelCode(code);
+        setFormData((prevData) => ({
+          ...prevData,
+          Codigo: code,
+        }));
       };
-      loadCode();
+      fetchCode();
     }
-  }, [isAutomacao, formData.Codigo]);
+  }, [isAutomacao, formData.Codigo, imovelSelecionado]); // Adicione imovelSelecionado às dependências
 
   // Persistência no LocalStorage
   useEffect(() => {
