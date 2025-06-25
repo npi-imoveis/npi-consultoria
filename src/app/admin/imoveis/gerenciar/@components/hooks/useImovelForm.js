@@ -5,7 +5,19 @@ import { REQUIRED_FIELDS } from "../FieldGroup";
 import useImovelStore from "@/app/admin/store/imovelStore";
 import { getCorretorById } from "@/app/admin/services/corretor";
 import { generateUniqueCode } from "@/app/utils/idgenerate";
-import debounce from "lodash.debounce";
+
+// Implementação alternativa do debounce
+const debounce = (func, wait) => {
+  let timeout;
+  return function executedFunction(...args) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+};
 
 export const generateRandomCode = async () => {
   return generateUniqueCode();
