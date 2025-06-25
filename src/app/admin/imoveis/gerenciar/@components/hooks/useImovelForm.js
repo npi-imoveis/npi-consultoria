@@ -85,7 +85,7 @@ const INITIAL_FORM_DATA = {
 export const useImovelForm = () => {
   const provider = useRef(new OpenStreetMapProvider());
   const fileInputRef = useRef(null);
-
+  const codeGeneratedRef = useRef(false);
   const imovelSelecionado = useImovelStore((state) => state.imovelSelecionado);
   const isAutomacao = imovelSelecionado?.Automacao === true;
 
@@ -138,10 +138,21 @@ export const useImovelForm = () => {
   }, [formatCurrency]);
 
     // Generate random code on init only if in Automacao mode or creating a new property
-  useEffect(() => {
-    // Apenas gera um novo código se for um imóvel de automação
-    // OU se estivermos em modo de criação (ou seja, formData.Codigo ainda não foi definido)
-    if (isAutomacao || (imovelSelecionado === null && !formData.Codigo)) {
+    useEffect(() => {
+    // Se for um imóvel de automação E o código ainda não foi gerado para esta sessão
+    if (isAutomacao && !codeGeneratedRef.current) {
+      const fetchCode = async () => {
+        const code = await generateRandomCode();
+        setNewImovelCode(code);
+        setFormData((prevData) => ({
+          ...prevData,
+          Codigo: code,
+        }));
+        codeGeneratedRef.current = true; // Marca que o código foi gerado
+      };
+      fetchCode();
+    } else if (imovelSelecionado === null && !formData.Codigo) {
+      // Lógica para criação de novo imóvel (não automação)
       const fetchCode = async () => {
         const code = await generateRandomCode();
         setNewImovelCode(code);
@@ -152,11 +163,13 @@ export const useImovelForm = () => {
       };
       fetchCode();
     }
-  }, [isAutomacao, formData.Codigo, imovelSelecionado]); // Adicione imovelSelecionado às dependências
+  }, [isAutomacao, imovelSelecionado, formData.Codigo]);
 
-  // Persistência no LocalStorage
+  // Reset codeGeneratedRef when imovelSelecionado changes (e.g., loading a different property)
   useEffect(() => {
-    if (imovelSelecionado) return;
+    codeGeneratedRef.current = false;
+  }, [imovelSelecionado]);
+
     
     const savedForm = localStorage.getItem('imovelFormDraft');
     if (savedForm) {
