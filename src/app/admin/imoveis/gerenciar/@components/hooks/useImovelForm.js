@@ -87,7 +87,6 @@ export const useImovelForm = () => {
     fieldValidation: {},
   });
 
-  // Geração de código ao iniciar
   useEffect(() => {
     if (isAutomacao || !formData.Codigo) {
       const loadCode = async () => {
@@ -106,7 +105,6 @@ export const useImovelForm = () => {
     }
   }, [isAutomacao, formData.Codigo]);
 
-  // Utilitários
   const maskDate = useCallback((value) => {
     if (!value) return "";
     return value
@@ -127,7 +125,6 @@ export const useImovelForm = () => {
     return (value?.toString() || "").replace(/\D/g, "") || "";
   }, []);
 
-  // Busca de coordenadas
   const fetchCoordinates = useCallback(async (address) => {
     if (!address || !address.logradouro || !address.bairro || !address.localidade || !address.uf) {
       return null;
@@ -146,7 +143,6 @@ export const useImovelForm = () => {
     }
   }, []);
 
-  // Busca por CEP
   const fetchAddress = useCallback(async (cep) => {
     const cleanCep = (cep || "").replace(/\D/g, "");
     if (cleanCep.length !== 8) return;
@@ -173,7 +169,6 @@ export const useImovelForm = () => {
     }
   }, [fetchCoordinates]);
 
-  // Handler genérico de campos
   const handleChange = useCallback((e) => {
     if (!e || !e.target) return;
     
@@ -183,7 +178,6 @@ export const useImovelForm = () => {
       return;
     }
 
-    // Campos especiais
     const specialHandlers = {
       DataEntrega: () => setFormData(prev => ({ ...prev, [name]: maskDate(value) })),
 
@@ -262,7 +256,6 @@ export const useImovelForm = () => {
     }
   }, [maskDate, formatCurrency, parseCurrency, fetchAddress]);
 
-  // Manipulação de imagens
   const addImage = useCallback(() => setShowImageModal(true), []);
   
   const addSingleImage = useCallback((url) => {
@@ -287,7 +280,7 @@ export const useImovelForm = () => {
     
     setFormData(prev => ({
       ...prev,
-      Foto: (Array.isArray(prev.Foto) 
+      Foto: Array.isArray(prev.Foto) 
         ? prev.Foto.map(img => 
             img.Codigo === codigo ? { ...img, Foto: newUrl.trim() } : img
           )
@@ -300,7 +293,7 @@ export const useImovelForm = () => {
     
     setFormData(prev => ({
       ...prev,
-      Foto: (Array.isArray(prev.Foto)
+      Foto: Array.isArray(prev.Foto)
         ? prev.Foto
             .filter(img => img.Codigo !== codigo)
             .map((img, i) => ({ ...img, Ordem: i + 1 }))
@@ -321,7 +314,7 @@ export const useImovelForm = () => {
     
     setFormData(prev => ({
       ...prev,
-      Foto: (Array.isArray(prev.Foto)
+      Foto: Array.isArray(prev.Foto)
         ? prev.Foto.map(img => ({
             ...img,
             Destaque: img.Codigo === codigo ? "Sim" : "Nao"
@@ -373,7 +366,6 @@ export const useImovelForm = () => {
     });
   }, []);
 
-  // Validação do formulário
   useEffect(() => {
     const fieldValidation = {};
     let isValid = true;
