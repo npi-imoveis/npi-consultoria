@@ -107,66 +107,50 @@ export const useImovelForm = () => {
   });
 
   // Funções de formatação monetária
-  const formatCurrency = useCallback((value) => {
-    const num = typeof value === 'string' 
-      ? parseFloat(value.replace(/[^\d,]/g, '').replace(',', '.')) 
-      : Number(value || 0);
+// Substitua as funções de formatação monetária por estas:
 
-    return isNaN(num) 
-      ? "R$ 0,00" 
-      : num.toLocaleString("pt-BR", { 
-          style: "currency", 
-          currency: "BRL",
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
-        });
-  }, []);
+const formatCurrency = useCallback((value) => {
+  const num = typeof value === 'string' 
+    ? parseInt(value.replace(/\D/g, ''), 10) 
+    : Math.floor(Number(value || 0));
 
-  const parseCurrency = useCallback((value) => {
-    const cleaned = (value?.toString() || "").replace(/[^\d,]/g, '');
-    const floatValue = parseFloat(cleaned.replace(',', '.'));
-    const safeValue = Math.min(Math.max(floatValue, 0), MAX_MONETARY_VALUE);
-    
-    return isNaN(safeValue) ? "0.00" : safeValue.toFixed(2);
-  }, []);
-
-  const formatCurrencyInput = useCallback((value) => {
-    const digitsOnly = value.replace(/\D/g, '');
-    const padded = digitsOnly.padStart(3, '0');
-    const withDecimal = `${padded.slice(0, -2)},${padded.slice(-2)}`;
-    return formatCurrency(withDecimal);
-  }, [formatCurrency]);
-
-// Generate random code on init
-useEffect(() => {
-  const initializeForm = async () => {
-    // Caso 1: Imóvel de automação (sempre gerar novo código)
-    if (isAutomacao) {
-      const newCode = await generateRandomCode();
-      setNewImovelCode(newCode);
-      setFormData(prev => ({
-        ...prev,
-        ...imovelSelecionado, // Mantém outros dados do imóvel
-        Codigo: newCode,       // Sobrescreve com novo código
-        CodigoOriginal: ''     // Não guarda código original (é automação)
-      }));
-      return;
-    }
-
-    // Caso 2: Edição de imóvel existente (manter código original)
-    if (imovelSelecionado?.Codigo && !isAutomacao) {
-      setFormData(prev => ({
-        ...prev,
-        ...imovelSelecionado,
-        CodigoOriginal: imovelSelecionado.Codigo // Guarda código original
-      }));
-      
-      setDisplayValues({
-        ValorAntigo: formatCurrency(imovelSelecionado.ValorAntigo || "0.00"),
-        ValorAluguelSite: formatCurrency(imovelSelecionado.ValorAluguelSite || "0.00"),
-        ValorCondominio: formatCurrency(imovelSelecionado.ValorCondominio || "0.00"),
-        ValorIptu: formatCurrency(imovelSelecionado.ValorIptu || "0.00")
+  return isNaN(num) 
+    ? "R$ 0" 
+    : num.toLocaleString("pt-BR", { 
+        style: "currency", 
+        currency: "BRL",
+        minimumFractionDigits: 0,  // Remove decimais
+        maximumFractionDigits: 0   // Remove decimais
       });
+}, []);
+
+const parseCurrency = useCallback((value) => {
+  const digitsOnly = (value?.toString() || "").replace(/\D/g, '');
+  const intValue = parseInt(digitsOnly || "0", 10);
+  const safeValue = Math.min(Math.max(intValue, 0), MAX_MONETARY_VALUE);
+  
+  return isNaN(safeValue) ? "0" : safeValue.toString(); // Retorna como string sem decimais
+}, []);
+
+const formatCurrencyInput = useCallback((value) => {
+  const digitsOnly = (value?.toString() || "").replace(/\D/g, '');
+  const intValue = parseInt(digitsOnly || "0", 10);
+  
+  return intValue.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  });
+}, []);
+
+// E atualize a inicialização dos displayValues no useEffect:
+setDisplayValues({
+  ValorAntigo: formatCurrencyInput(imovelSelecionado?.ValorAntigo?.toString() || "0"),
+  ValorAluguelSite: formatCurrencyInput(imovelSelecionado?.ValorAluguelSite?.toString() || "0"),
+  ValorCondominio: formatCurrencyInput(imovelSelecionado?.ValorCondominio?.toString() || "0"),
+  ValorIptu: formatCurrencyInput(imovelSelecionado?.ValorIptu?.toString() || "0")
+});
       return;
     }
 
