@@ -1,386 +1,254 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import { formatterSlug } from "@/app/utils/formatter-slug";
-import { OpenStreetMapProvider } from "leaflet-geosearch";
-import { REQUIRED_FIELDS } from "../FieldGroup";
-import useImovelStore from "@/app/admin/store/imovelStore";
-import { getCorretorById } from "@/app/admin/services/corretor";
-import { generateUniqueCode } from "@/app/utils/idgenerate";
+"use client";
 
-export const generateRandomCode = async () => {
-  return generateUniqueCode();
-};
+import { useState, useEffect } from "react";
+import { toast } from "react-toastify";
+// Certifique-se que este import está correto e que a função existe em formatters.js
+import { formatarMoedaParaNumero } from "@/app/admin/utils/formatters"; 
 
-export const useImovelForm = () => {
-  const provider = useRef(new OpenStreetMapProvider());
-  const fileInputRef = useRef(null);
-  const codeGeneratedRef = useRef(false);
-
-  const imovelSelecionado = useImovelStore((state) => state.imovelSelecionado);
-  const isAutomacao = imovelSelecionado?.Automacao === true;
-
+const useImovelForm = (initialData = {}) => {
   const [formData, setFormData] = useState({
-    Codigo: "",
-    CodigoOriginal: "",
-    Empreendimento: "",
-    TituloSite: "",
-    Categoria: "Apartamento",
-    Situacao: "PRONTO NOVO",
-    Status: "VENDA",
-    Slug: "",
-    Destacado: "Não",
-    Condominio: "Não",
-    CondominioDestaque: "Não",
-    Ativo: "Sim",
-    Construtora: "",
+    Titulo: "",
+    Descricao: "",
+    TipoImovel: "Apartamento",
+    Finalidade: "VENDA",
+    ValorVenda: 0, // Inicializado como número
+    ValorAluguel: 0, // Inicializado como número
+    ValorCondominio: 0, // Inicializado como número
+    ValorIPTU: 0, // Inicializado como número
+    AreaUtil: 0,
+    AreaTotal: 0,
+    Quartos: 0,
+    Suites: 0,
+    Banheiros: 0,
+    VagasGaragem: 0,
+    AnoConstrucao: "",
+    Status: "Disponivel",
     Endereco: "",
     Numero: "",
     Complemento: "",
     Bairro: "",
-    BairroComercial: "",
     Cidade: "",
-    UF: "",
+    Estado: "",
     CEP: "",
     Latitude: "",
     Longitude: "",
-    Regiao: "",
-    AreaPrivativa: "",
-    AreaTotal: "",
-    Dormitorios: "",
-    Suites: "",
-    BanheiroSocialQtd: "",
-    Vagas: "",
-    DataEntrega: "",
-    AnoConstrucao: "",
-    ValorAntigo: "",
-    ValorAluguelSite: "",
-    ValorCondominio: "",
-    ValorIptu: "",
-    DescricaoUnidades: "",
-    DescricaoDiferenciais: "",
-    DestaquesDiferenciais: "",
-    DestaquesLazer: "",
-    DestaquesLocalizacao: "",
-    FichaTecnica: "",
-    Tour360: "",
-    IdCorretor: "",
+    Destaque: "Nao",
+    Ativo: "Sim",
+    DataCadastro: new Date().toISOString().split("T")[0],
     Corretor: "",
-    EmailCorretor: "",
-    CelularCorretor: "",
     Imobiliaria: "",
-    Video: {},
+    Observacoes: "",
     Foto: [],
+    Caracteristicas: [],
+    Proximidades: [],
+    InformacoesAdicionais: [],
+    ...initialData,
   });
 
-  const [displayValues, setDisplayValues] = useState({
-    ValorAntigo: "",
-    ValorAluguelSite: "",
-    ValorCondominio: "",
-    ValorIptu: "",
-  });
-
-  const [newImovelCode, setNewImovelCode] = useState("");
-  const [showImageModal, setShowImageModal] = useState(false);
   const [validation, setValidation] = useState({
-    isFormValid: false,
-    photoCount: 0,
-    requiredPhotoCount: 5,
-    fieldValidation: {},
+    Titulo: true,
+    Descricao: true,
+    TipoImovel: true,
+    Finalidade: true,
+    ValorVenda: true,
+    ValorAluguel: true,
+    ValorCondominio: true,
+    ValorIPTU: true,
+    AreaUtil: true,
+    AreaTotal: true,
+    Quartos: true,
+    Suites: true,
+    Banheiros: true,
+    VagasGaragem: true,
+    AnoConstrucao: true,
+    Status: true,
+    Endereco: true,
+    Numero: true,
+    Bairro: true,
+    Cidade: true,
+    Estado: true,
+    CEP: true,
+    Corretor: true,
+    Imobiliaria: true,
+    Foto: true,
   });
 
-      // Generate random code on init only if in Automacao mode
-   useEffect(() => {
-    // Se for um imóvel de automação E o código ainda não foi gerado para esta sessão
-    if (isAutomacao && !codeGeneratedRef.current) {
-      const fetchCode = async () => {
-        const code = await generateRandomCode();
-        setNewImovelCode(code);
-        setFormData((prevData) => ({
-          ...prevData,
-          Codigo: code,
-        }));
-        codeGeneratedRef.current = true; // Marca que o código foi gerado
-      };
-      fetchCode();
-    } else if (imovelSelecionado === null && !formData.Codigo) {
-      // Lógica para criação de novo imóvel (não automação)
-      const fetchCode = async () => {
-        const code = await generateRandomCode();
-        setNewImovelCode(code);
-        setFormData((prevData) => ({
-          ...prevData,
-          Codigo: code,
-        }));
-      };
-      fetchCode();
-    }
-  }, [isAutomacao, imovelSelecionado, formData.Codigo]);
-
-  // Reset codeGeneratedRef when imovelSelecionado changes (e.g., loading a different property)
   useEffect(() => {
-    codeGeneratedRef.current = false;
-  }, [imovelSelecionado]);
-
-
-  // Utilitários
-  const maskDate = useCallback((value) => 
-    value.replace(/\D/g, "").replace(/^(\d{2})(\d)/, "$1/$2").replace(/^(\d{2})\/(\d{2})(\d)/, "$1/$2/$3"), []);
-
-  const formatCurrency = useCallback((value) => {
-    const num = Number(value?.toString().replace(/\D/g, "") || 0);
-    return num.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
-  }, []);
-
-  const parseCurrency = useCallback((value) => 
-    value?.toString().replace(/\D/g, "") || "", []);
-
-  // Busca de coordenadas
-  const fetchCoordinates = useCallback(async (address) => {
-    try {
-      const query = `${address.logradouro}, ${address.bairro}, ${address.localidade}, ${address.uf}`;
-      const results = await provider.current.search({ query });
-      return results[0] ? { latitude: results[0].y, longitude: results[0].x } : null;
-    } catch (error) {
-      console.error("Erro nas coordenadas:", error);
-      return null;
-    }
-  }, []);
-
-  // Busca por CEP
-  const fetchAddress = useCallback(async (cep) => {
-    const cleanCep = cep.replace(/\D/g, "");
-    if (cleanCep.length !== 8) return;
-
-    try {
-      const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
-      const data = await response.json();
-      if (data.erro) return;
-
-      const coords = await fetchCoordinates(data);
-      setFormData((prev) => ({
-        ...prev,
-        Endereco: data.logradouro || prev.Endereco,
-        Bairro: data.bairro || prev.Bairro,
-        Cidade: data.localidade || prev.Cidade,
-        UF: data.uf || prev.UF,
-        Latitude: coords?.latitude?.toString() || prev.Latitude,
-        Longitude: coords?.longitude?.toString() || prev.Longitude,
+    if (initialData && Object.keys(initialData).length > 0) {
+      setFormData((prevData) => ({
+        ...prevData,
+        ...initialData,
+        // Garante que os campos de valor sejam números ao carregar dados existentes
+        ValorVenda: formatarMoedaParaNumero(initialData.ValorVenda),
+        ValorAluguel: formatarMoedaParaNumero(initialData.ValorAluguel),
+        ValorCondominio: formatarMoedaParaNumero(initialData.ValorCondominio),
+        ValorIPTU: formatarMoedaParaNumero(initialData.ValorIPTU),
       }));
-    } catch (error) {
-      console.error("Erro no CEP:", error);
     }
-  }, [fetchCoordinates]);
+  }, [initialData]);
 
-  // Handler genérico de campos
-  const handleChange = useCallback((e) => {
-    const { name, value } = e.target;
+  const handleChange = (e) => {
+    const { name, value, type, checked } = e.target;
 
-    // Campos especiais
-    const specialHandlers = {
-      DataEntrega: () => setFormData(prev => ({ ...prev, [name]: maskDate(value) })),
-
-      ValorAntigo: () => {
-        const numeric = parseCurrency(value);
-        setFormData(prev => ({ ...prev, [name]: numeric }));
-        setDisplayValues(prev => ({ ...prev, [name]: formatCurrency(numeric) }));
-      },
-
-      ValorAluguelSite: () => {
-        const numeric = parseCurrency(value);
-        setFormData(prev => ({ ...prev, [name]: numeric }));
-        setDisplayValues(prev => ({ ...prev, [name]: formatCurrency(numeric) }));
-      },
-
-      ValorCondominio: () => {
-        const numeric = parseCurrency(value);
-        setFormData(prev => ({ ...prev, [name]: numeric }));
-        setDisplayValues(prev => ({ ...prev, [name]: formatCurrency(numeric) }));
-      },
-
-      ValorIptu: () => {
-        const numeric = parseCurrency(value);
-        setFormData(prev => ({ ...prev, [name]: numeric }));
-        setDisplayValues(prev => ({ ...prev, [name]: formatCurrency(numeric) }));
-      },
-
-      CEP: () => {
-        setFormData(prev => ({ ...prev, [name]: value }));
-        if (value.replace(/\D/g, "").length === 8) fetchAddress(value);
-      },
-
-      Empreendimento: () => {
-        setFormData(prev => ({ ...prev, [name]: value, Slug: formatterSlug(value) }));
-      },
-
-      IdCorretor: () => {
-        setFormData(prev => ({
-          ...prev,
-          [name]: value,
-          Corretor: "",
-          EmailCorretor: "",
-          CelularCorretor: "",
-          Imobiliaria: "",
-        }));
-
-        if (value?.trim()) {
-          getCorretorById(value)
-            .then(corretor => {
-              if (corretor) {
-                setFormData(prev => ({
-                  ...prev,
-                  Corretor: corretor.Nome || "",
-                  EmailCorretor: corretor.Email || "",
-                  CelularCorretor: corretor.Celular || "",
-                  Imobiliaria: corretor.Imobiliaria || "",
-                }));
-              }
-            })
-            .catch(console.error);
-        }
-      }
-    };
-
-    if (specialHandlers[name]) {
-      specialHandlers[name]();
+    // Lógica para campos de valor (moeda)
+    if (["ValorVenda", "ValorAluguel", "ValorCondominio", "ValorIPTU"].includes(name)) {
+      // Remove tudo que não for número ou vírgula, e depois substitui vírgula por ponto
+      const cleanedValue = value.replace(/[^0-9,]/g, "").replace(",", ".");
+      setFormData((prevData) => ({
+        ...prevData,
+        [name]: parseFloat(cleanedValue) || 0, // Converte para float, ou 0 se for inválido
+      }));
+    } else if (type === "checkbox") {
+      setFormData((prevData) => ({
+        ...prevData,
+        [name]: checked ? "Sim" : "Nao",
+      }));
     } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
+      setFormData((prevData) => ({
+        ...prevData,
+        [name]: value,
+      }));
     }
-  }, [maskDate, formatCurrency, parseCurrency, fetchAddress]);
+    setValidation((prev) => ({ ...prev, [name]: true }));
+  };
 
-  // Manipulação de imagens
-  const addImage = useCallback(() => setShowImageModal(true), []);
-  
-  const addSingleImage = useCallback((url) => {
-    if (!url?.trim()) return;
-    
-    setFormData(prev => ({
-      ...prev,
-      Foto: [
-        ...(prev.Foto || []),
-        {
-          Codigo: `img-${Date.now()}`,
-          Foto: url.trim(),
-          Destaque: "Nao",
-          Ordem: (prev.Foto?.length || 0) + 1,
-        }
-      ]
+  const handleCaracteristicaChange = (selectedOptions) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      Caracteristicas: selectedOptions.map((option) => option.value),
     }));
-  }, []);
+  };
 
-  const updateImage = useCallback((codigo, newUrl) => {
-    setFormData(prev => ({
-      ...prev,
-      Foto: (prev.Foto || []).map(img => 
-        img.Codigo === codigo ? { ...img, Foto: newUrl } : img
-      )
+  const handleProximidadeChange = (selectedOptions) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      Proximidades: selectedOptions.map((option) => option.value),
     }));
-  }, []);
+  };
 
-  const removeImage = useCallback((codigo) => {
-    setFormData(prev => ({
-      ...prev,
-      Foto: (prev.Foto || [])
-        .filter(img => img.Codigo !== codigo)
-        .map((img, i) => ({ ...img, Ordem: i + 1 }))
+  const handleInformacoesAdicionaisChange = (selectedOptions) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      InformacoesAdicionais: selectedOptions.map((option) => option.value),
     }));
-  }, []);
+  };
 
-  const removeAllImages = useCallback(() => {
-    if (typeof window === 'undefined') return;
-    if (!confirm("⚠️ Tem certeza que deseja remover TODAS as imagens?")) return;
-    if (!confirm("🚨 Esta ação é irreversível! Confirmar remoção total?")) return;
-    
-    setFormData(prev => ({ ...prev, Foto: [] }));
-  }, []);
-
-  const setImageAsHighlight = useCallback((codigo) => {
-    setFormData(prev => ({
-      ...prev,
-      Foto: (prev.Foto || []).map(img => ({
-        ...img,
-        Destaque: img.Codigo === codigo ? "Sim" : "Nao"
-      }))
+  const addSingleImage = (newImage) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      Foto: [...prevData.Foto, newImage],
     }));
-  }, []);
+  };
 
-  const changeImagePosition = useCallback((codigo, newPos) => {
-    setFormData(prev => {
-      if (!Array.isArray(prev.Foto)) return prev;
-      
-      const sorted = [...prev.Foto].sort((a, b) => (a.Ordem || 0) - (b.Ordem || 0));
-      const currentIdx = sorted.findIndex(img => img.Codigo === codigo);
-      if (currentIdx === -1) return prev;
-
-      const [moved] = sorted.splice(currentIdx, 1);
-      sorted.splice(newPos - 1, 0, moved);
-      
-      return {
-        ...prev,
-        Foto: sorted.map((img, idx) => ({ ...img, Ordem: idx + 1 }))
-      };
+  const updateImage = (index, updatedImage) => {
+    setFormData((prevData) => {
+      const newPhotos = [...prevData.Foto];
+      newPhotos[index] = updatedImage;
+      return { ...prevData, Foto: newPhotos };
     });
-  }, []);
+  };
 
-  const handleImagesUploaded = useCallback((images = []) => {
-    if (!Array.isArray(images)) return;
-    
-    setFormData(prev => {
-      const current = prev.Foto || [];
-      return {
-        ...prev,
-        Foto: [
-          ...current,
-          ...images.map((img, idx) => ({
-            Codigo: `img-upload-${Date.now()}-${idx}`,
-            Foto: img.Foto || img.url,
-            Destaque: "Nao",
-            Ordem: current.length + idx + 1
-          }))
-        ]
-      };
+  const removeImage = (imageUrlToRemove) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      Foto: prevData.Foto.filter((photo) => photo.Foto !== imageUrlToRemove),
+    }));
+  };
+
+  const setImageAsHighlight = (imageUrl) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      Foto: prevData.Foto.map((photo) =>
+        photo.Foto === imageUrl
+          ? { ...photo, Destaque: "Sim" }
+          : { ...photo, Destaque: "Nao" }
+      ),
+    }));
+  };
+
+  const changeImagePosition = (fromIndex, toIndex) => {
+    setFormData((prevData) => {
+      const newPhotos = [...prevData.Foto];
+      const [movedPhoto] = newPhotos.splice(fromIndex, 1);
+      newPhotos.splice(toIndex, 0, movedPhoto);
+      return { ...prevData, Foto: newPhotos };
     });
-  }, []);
+  };
 
-  // Validação do formulário
-  useEffect(() => {
-    const fieldValidation = {};
+  const validateForm = () => {
+    const newValidation = { ...validation };
     let isValid = true;
 
-    REQUIRED_FIELDS.forEach((field) => {
-      const valid = Boolean(formData[field]?.toString().trim());
-      fieldValidation[field] = valid;
-      if (!valid) isValid = false;
+    // Campos de texto obrigatórios
+    const requiredFields = [
+      "Titulo",
+      "Descricao",
+      "TipoImovel",
+      "Finalidade",
+      "Endereco",
+      "Numero",
+      "Bairro",
+      "Cidade",
+      "Estado",
+      "CEP",
+      "Corretor",
+      "Imobiliaria",
+    ];
+
+    requiredFields.forEach((field) => {
+      if (!formData[field] || String(formData[field]).trim() === "") {
+        newValidation[field] = false;
+        isValid = false;
+      }
     });
 
-    const photoCount = Array.isArray(formData.Foto) ? formData.Foto.length : 0;
-    const hasEnoughPhotos = photoCount >= validation.requiredPhotoCount;
+    // Campos numéricos obrigatórios (se aplicável, ajuste conforme sua regra de negócio)
+    const numericFields = [
+      "ValorVenda",
+      "ValorAluguel",
+      "ValorCondominio",
+      "ValorIPTU",
+      "AreaUtil",
+      "AreaTotal",
+      "Quartos",
+      "Suites",
+      "Banheiros",
+      "VagasGaragem",
+    ];
 
-    setValidation({
-      isFormValid: isValid && hasEnoughPhotos,
-      photoCount,
-      requiredPhotoCount: 5,
-      fieldValidation,
+    numericFields.forEach((field) => {
+      // Verifica se o campo é numérico e maior ou igual a zero (se for um campo de valor)
+      if (isNaN(formData[field]) || formData[field] < 0) {
+        newValidation[field] = false;
+        isValid = false;
+      }
     });
-  }, [formData, validation.requiredPhotoCount]);
+
+    // Validação de fotos (mínimo 5 fotos)
+    if (!formData.Foto || formData.Foto.length < 5) {
+      newValidation.Foto = false;
+      isValid = false;
+      toast.error("É necessário adicionar pelo menos 5 fotos.");
+    }
+
+    setValidation(newValidation);
+    return isValid;
+  };
 
   return {
     formData,
     setFormData,
-    displayValues,
-    setDisplayValues,
     handleChange,
-    newImovelCode,
-    fileInputRef,
-    showImageModal,
-    setShowImageModal,
-    addImage,
+    handleCaracteristicaChange,
+    handleProximidadeChange,
+    handleInformacoesAdicionaisChange,
     addSingleImage,
     updateImage,
     removeImage,
-    removeAllImages,
     setImageAsHighlight,
     changeImagePosition,
+    validateForm,
     validation,
-    handleImagesUploaded,
   };
 };
 
