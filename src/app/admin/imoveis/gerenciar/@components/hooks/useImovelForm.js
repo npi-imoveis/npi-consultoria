@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 // Certifique-se que este import está correto e que a função existe em formatters.js
-import { formatarMoedaParaNumero } from "@/app/admin/utils/formatters"; 
+import { formatarMoedaParaNumero } from "@/app/utils/formatter-number";
 
 const useImovelForm = (initialData = {}) => {
   const [formData, setFormData] = useState({
