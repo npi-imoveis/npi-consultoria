@@ -52,10 +52,3 @@ export function formatterNumber(valor) {
     maximumFractionDigits: 0,
   });
 }
-export const formatarMoedaParaNumero = (valor) => {
-  if (typeof valor === 'number') return valor; // Já é um número
-  if (typeof valor !== 'string') return 0; // Não é string nem número, retorna 0
-
-  // Remove R$, pontos de milhar e substitui vírgula por ponto decimal
-  return parseFloat(valor.replace(/[^0-9,]/g, '').replace(',', '.')) || 0;
-};
