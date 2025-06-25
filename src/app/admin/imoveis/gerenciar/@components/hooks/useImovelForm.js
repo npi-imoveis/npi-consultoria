@@ -137,51 +137,56 @@ export const useImovelForm = () => {
     return formatCurrency(withDecimal);
   }, [formatCurrency]);
 
-    // Generate random code on init only if in Automacao mode or creating a new property
-    useEffect(() => {
-    // Se for um imóvel de automação E o código ainda não foi gerado para esta sessão
-    if (isAutomacao && !codeGeneratedRef.current) {
-      const fetchCode = async () => {
-        const code = await generateRandomCode();
-        setNewImovelCode(code);
-        setFormData((prevData) => ({
-          ...prevData,
-          Codigo: code,
-        }));
-        codeGeneratedRef.current = true; // Marca que o código foi gerado
-      };
-      fetchCode();
-    } else if (imovelSelecionado === null && !formData.Codigo) {
-      // Lógica para criação de novo imóvel (não automação)
-      const fetchCode = async () => {
-        const code = await generateRandomCode();
-        setNewImovelCode(code);
-        setFormData((prevData) => ({
-          ...prevData,
-          Codigo: code,
-        }));
-      };
-      fetchCode();
-    }
-  }, [isAutomacao, imovelSelecionado, formData.Codigo]);
-
-  // Reset codeGeneratedRef when imovelSelecionado changes (e.g., loading a different property)
-  useEffect(() => {
-    codeGeneratedRef.current = false;
+   // Generate random code on init only if in Automacao mode or creating a new property
+useEffect(() => {
+  // Se for um imóvel de automação E o código ainda não foi gerado para esta sessão
+  if (isAutomacao && !codeGeneratedRef.current) {
+    const fetchCode = async () => {
+      const code = await generateRandomCode();
+      setNewImovelCode(code);
+      setFormData((prevData) => ({
+        ...prevData,
+        Codigo: code,
+      }));
+      codeGeneratedRef.current = true; // Marca que o código foi gerado
+    };
+    fetchCode();
+  } else if (imovelSelecionado === null && !formData.Codigo) {
+    // Lógica para criação de novo imóvel (não automação)
+    const fetchCode = async () => {
+      const code = await generateRandomCode();
+      setNewImovelCode(code);
+      setFormData((prevData) => ({
+        ...prevData,
+        Codigo: code,
+      }));
+    };
+    fetchCode();
   }
-        
-        // Atualiza valores de exibição
-        setDisplayValues({
-          ValorAntigo: formatCurrency(parsed.ValorAntigo || "0.00"),
-          ValorAluguelSite: formatCurrency(parsed.ValorAluguelSite || "0.00"),
-          ValorCondominio: formatCurrency(parsed.ValorCondominio || "0.00"),
-          ValorIptu: formatCurrency(parsed.ValorIptu || "0.00")
-        });
-      } catch (e) {
-        console.error("Erro ao recuperar rascunho:", e);
-      }
+
+  // Atualiza valores de exibição quando imovelSelecionado ou newImovelCode mudam
+  if (imovelSelecionado) {
+    try {
+      const parsed = {
+        ...imovelSelecionado,
+        ValorAntigo: imovelSelecionado.ValorAntigo || "0.00",
+        ValorAluguelSite: imovelSelecionado.ValorAluguelSite || "0.00",
+        ValorCondominio: imovelSelecionado.ValorCondominio || "0.00",
+        ValorIptu: imovelSelecionado.ValorIptu || "0.00"
+      };
+
+      setFormData(parsed);
+      setDisplayValues({
+        ValorAntigo: formatCurrency(parsed.ValorAntigo),
+        ValorAluguelSite: formatCurrency(parsed.ValorAluguelSite),
+        ValorCondominio: formatCurrency(parsed.ValorCondominio),
+        ValorIptu: formatCurrency(parsed.ValorIptu)
+      });
+    } catch (e) {
+      console.error("Erro ao recuperar rascunho:", e);
     }
-  }, [imovelSelecionado, newImovelCode, formatCurrency]);
+  }
+}, [isAutomacao, imovelSelecionado, newImovelCode, formatCurrency]);
 
   useEffect(() => {
     if (!formData.Codigo) return;
