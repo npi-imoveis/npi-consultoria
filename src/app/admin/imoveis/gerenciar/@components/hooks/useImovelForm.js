@@ -137,56 +137,53 @@ export const useImovelForm = () => {
     return formatCurrency(withDecimal);
   }, [formatCurrency]);
 
-   // Generate random code on init only if in Automacao mode or creating a new property
+// Generate random code on init
 useEffect(() => {
-  // Se for um imóvel de automação E o código ainda não foi gerado para esta sessão
-  if (isAutomacao && !codeGeneratedRef.current) {
-    const fetchCode = async () => {
-      const code = await generateRandomCode();
-      setNewImovelCode(code);
-      setFormData((prevData) => ({
-        ...prevData,
-        Codigo: code,
+  const initializeForm = async () => {
+    // Caso 1: Imóvel de automação (sempre gerar novo código)
+    if (isAutomacao) {
+      const newCode = await generateRandomCode();
+      setNewImovelCode(newCode);
+      setFormData(prev => ({
+        ...prev,
+        ...imovelSelecionado, // Mantém outros dados do imóvel
+        Codigo: newCode,       // Sobrescreve com novo código
+        CodigoOriginal: ''     // Não guarda código original (é automação)
       }));
-      codeGeneratedRef.current = true; // Marca que o código foi gerado
-    };
-    fetchCode();
-  } else if (imovelSelecionado === null && !formData.Codigo) {
-    // Lógica para criação de novo imóvel (não automação)
-    const fetchCode = async () => {
-      const code = await generateRandomCode();
-      setNewImovelCode(code);
-      setFormData((prevData) => ({
-        ...prevData,
-        Codigo: code,
-      }));
-    };
-    fetchCode();
-  }
-
-  // Atualiza valores de exibição quando imovelSelecionado ou newImovelCode mudam
-  if (imovelSelecionado) {
-    try {
-      const parsed = {
-        ...imovelSelecionado,
-        ValorAntigo: imovelSelecionado.ValorAntigo || "0.00",
-        ValorAluguelSite: imovelSelecionado.ValorAluguelSite || "0.00",
-        ValorCondominio: imovelSelecionado.ValorCondominio || "0.00",
-        ValorIptu: imovelSelecionado.ValorIptu || "0.00"
-      };
-
-      setFormData(parsed);
-      setDisplayValues({
-        ValorAntigo: formatCurrency(parsed.ValorAntigo),
-        ValorAluguelSite: formatCurrency(parsed.ValorAluguelSite),
-        ValorCondominio: formatCurrency(parsed.ValorCondominio),
-        ValorIptu: formatCurrency(parsed.ValorIptu)
-      });
-    } catch (e) {
-      console.error("Erro ao recuperar rascunho:", e);
+      return;
     }
-  }
-}, [isAutomacao, imovelSelecionado, newImovelCode, formatCurrency]);
+
+    // Caso 2: Edição de imóvel existente (manter código original)
+    if (imovelSelecionado?.Codigo && !isAutomacao) {
+      setFormData(prev => ({
+        ...prev,
+        ...imovelSelecionado,
+        CodigoOriginal: imovelSelecionado.Codigo // Guarda código original
+      }));
+      
+      setDisplayValues({
+        ValorAntigo: formatCurrency(imovelSelecionado.ValorAntigo || "0.00"),
+        ValorAluguelSite: formatCurrency(imovelSelecionado.ValorAluguelSite || "0.00"),
+        ValorCondominio: formatCurrency(imovelSelecionado.ValorCondominio || "0.00"),
+        ValorIptu: formatCurrency(imovelSelecionado.ValorIptu || "0.00")
+      });
+      return;
+    }
+
+    // Caso 3: Novo imóvel (gerar novo código)
+    if (!imovelSelecionado) {
+      const newCode = await generateRandomCode();
+      setNewImovelCode(newCode);
+      setFormData(prev => ({
+        ...prev,
+        Codigo: newCode,
+        CodigoOriginal: newCode // Para novos, original = novo código
+      }));
+    }
+  };
+
+  initializeForm();
+}, [isAutomacao, imovelSelecionado?.Codigo]); // Dependências essenciais
 
   useEffect(() => {
     if (!formData.Codigo) return;
