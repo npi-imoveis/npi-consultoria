@@ -1,13 +1,12 @@
 "use client";
 import { getImoveisByFilters } from "@/app/services";
 import useFiltersStore from "@/app/store/filtrosStore";
-
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 
 export function ListCities() {
-  // Lista estática de cidades
+  // Lista estática de cidades (original mantida)
   const cidades = [
     "São Paulo",
     "Guarujá",
@@ -27,6 +26,15 @@ export function ListCities() {
   const aplicarFiltros = useFiltersStore((state) => state.aplicarFiltros);
   const limparFiltros = useFiltersStore((state) => state.limparFiltros);
 
+  // Função para gerar slugs (nova adição)
+  const gerarSlug = (texto) => {
+    return texto
+      .toLowerCase()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, "-");
+  };
+
+  // Função de scroll (original mantida)
   const scroll = (direction) => {
     if (carouselRef.current) {
       const scrollAmount = 300;
@@ -34,27 +42,29 @@ export function ListCities() {
     }
   };
 
-  const handleCidadeClick = (cidade, categoria) => {
+  // Função de clique (modificada para URLs amigáveis)
+  const handleCidadeClick = (cidade, tipo) => {
     limparFiltros();
     setFilters({
       finalidade: "VENDA",
-      categoriaSelecionada: categoria,
+      categoriaSelecionada: tipo,
       cidadeSelecionada: cidade,
       filtrosBasicosPreenchidos: true,
     });
-    aplicarFiltros();
-    router.push("/busca");
+    aplicarFiltros(); // Original mantido
+    router.push(`/busca/comprar/${gerarSlug(tipo)}/${gerarSlug(cidade)}`); // Nova URL
   };
 
+  // JSX original (100% mantido)
   return (
     <section className="bg-zinc-100 min-h-[500px] py-16 px-6 lg:px-0">
       <div className="container mx-auto">
-        {/* Título */}
+        {/* Título original */}
         <h2 className="text-lg sm:text-xl font-bold mb-6 uppercase text-center lg:text-left">
           Onde você quiser, tem um <br className="hidden sm:block" /> imóvel de luxo para você!
         </h2>
 
-        {/* Lista de cidades - Estática */}
+        {/* Lista de cidades (original) */}
         <div
           ref={carouselRef}
           className="flex gap-6 overflow-x-auto scroll-smooth scrollbar-hide no-scrollbar pb-4"
@@ -78,7 +88,7 @@ export function ListCities() {
           ))}
         </div>
 
-        {/* Botões de navegação */}
+        {/* Botões de navegação (original) */}
         <div className="flex justify-center items-center gap-4 mt-6">
           <button
             onClick={() => scroll("left")}
