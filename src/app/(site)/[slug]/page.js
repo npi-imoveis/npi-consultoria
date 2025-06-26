@@ -39,20 +39,27 @@ export async function generateMetadata({ params }) {
   const rawTitle = ensureCondominio(condominio.Empreendimento);
   const destaqueFotoObj = condominio.Foto?.find((f) => f.Destaque === "Sim");
   const destaqueFotoUrl = destaqueFotoObj?.Foto;
+  const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`;
 
   const description = `${rawTitle} em ${condominio.BairroComercial}, ${condominio.Cidade}. ${condominio.Categoria} com ${condominio.MetragemAnt}, ${condominio.DormitoriosAntigo} quartos, ${condominio.VagasAntigo} vagas. ${condominio.Situacao}.`;
 
   return {
     title: `${rawTitle}, ${condominio.TipoEndereco} ${condominio.Endereco} ${condominio.Numero}, ${condominio.BairroComercial}`,
     description,
-    robots: "index, follow",
+    robots: {
+      index: true,
+      follow: true,
+    },
     alternates: {
-      canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`,
+      canonical: currentUrl,
+      languages: {
+        "pt-BR": currentUrl,
+      },
     },
     openGraph: {
       title: rawTitle,
       description,
-      url: `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`,
+      url: currentUrl,
       images: destaqueFotoUrl ? [{ url: destaqueFotoUrl }] : [],
       type: "website",
     },
@@ -65,6 +72,7 @@ export async function generateMetadata({ params }) {
     },
   };
 }
+
 
 export default async function CondominioPage({ params }) {
   const { slug } = params;
