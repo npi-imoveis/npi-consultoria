@@ -59,7 +59,7 @@ function Typewriter() {
   return (
     <h1 className="w-full h-full flex flex-col justify-end items-center text-xl font-bold text-zinc-400">
       <span className="text-sm font-normal text-white mb-1">
-        Uma nova experiência em 
+        Uma nova experiência em
       </span>
       <span>{text}</span>
     </h1>
