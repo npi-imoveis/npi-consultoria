@@ -19,10 +19,48 @@ import { Apartment as StructuredDataApartment } from "@/app/components/structure
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 import { notFound, redirect } from "next/navigation";
 
+// ✅ SEO DINÂMICO
 export async function generateMetadata({ params }) {
-  // ... (mantenha o código existente de generateMetadata)
+  const { id } = params;
+
+  try {
+    const response = await getImovelById(id);
+    const imovel = response?.data;
+
+    if (!imovel) return {};
+
+    const titulo = `${imovel.Empreendimento} - ${imovel.BairroComercial} - ${imovel.Cidade}`;
+    const descricao = `${imovel.Categoria} à venda com ${imovel.DormitoriosAntigo ?? 0} dormitórios, ${imovel.SuiteAntigo ?? 0} suítes, ${imovel.VagasAntigo ?? 0} vagas em ${imovel.BairroComercial}, ${imovel.Cidade}. Valor: R$ ${imovel.ValorAntigo || "sob consulta"}.`;
+    const canonical = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
+
+    return {
+      title: titulo,
+      description: descricao,
+      alternates: {
+        canonical,
+      },
+      openGraph: {
+        title: titulo,
+        description: descricao,
+        url: canonical,
+        type: "article",
+        images: [imovel.Foto],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: titulo,
+        description: descricao,
+        images: [imovel.Foto],
+      },
+    };
+  } catch (error) {
+    console.error("Erro ao gerar metadata do imóvel:", error);
+    return {};
+  }
 }
-export const revalidate = 0; // Desativa cache
+
+export const revalidate = 0;
+
 export default async function Imovel({ params }) {
   const { id, slug } = params;
   const response = await getImovelById(id);
@@ -31,26 +69,12 @@ export default async function Imovel({ params }) {
     notFound();
   }
 
-  // DEBUG: Log dos dados originais
-  console.log('DEBUG - Dados do Imóvel:', {
-    suites: response.data.Suites,
-    suiteAntigo: response.data.SuiteAntigo,
-    camposNumericos: {
-      dormitorios: response.data.DormitoriosAntigo,
-      vagas: response.data.VagasAntigo,
-      banheiros: response.data.BanheiroSocialQtd
-    }
-  });
-
-  // Padronização dos dados
   const imovel = {
     ...response.data,
-    // Garante que SuiteAntigo sempre terá valor
     SuiteAntigo: response.data.SuiteAntigo ?? response.data.Suites ?? 0,
-    // Fallback para outros campos numéricos
     DormitoriosAntigo: response.data.DormitoriosAntigo ?? 0,
     VagasAntigo: response.data.VagasAntigo ?? 0,
-    BanheiroSocialQtd: response.data.BanheiroSocialQtd ?? 0
+    BanheiroSocialQtd: response.data.BanheiroSocialQtd ?? 0,
   };
 
   const slugCorreto = imovel.Slug;
@@ -65,20 +89,12 @@ export default async function Imovel({ params }) {
       <StructuredDataApartment
         title={imovel.Empreendimento}
         price={imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}
-        description={`${imovel.Categoria} à venda em ${imovel.BairroComercial}, ${imovel.Cidade}. ${
-          imovel.Empreendimento
-        }: ${imovel.DormitoriosAntigo} quartos, ${imovel.SuiteAntigo} suítes, ${
-          imovel.BanheiroSocialQtd
-        } banheiros, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt}. ${
-          imovel.Situacao
-        }. Valor: ${imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}. ${
-          imovel.TipoEndereco
-        } ${imovel.Endereco}.`}
+        description={`${imovel.Categoria} à venda em ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.Empreendimento}: ${imovel.DormitoriosAntigo} quartos, ${imovel.SuiteAntigo} suítes, ${imovel.BanheiroSocialQtd} banheiros, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt}. ${imovel.Situacao}. Valor: ${imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}. ${imovel.TipoEndereco} ${imovel.Endereco}.`}
         address={`${imovel.TipoEndereco} ${imovel.Endereco}, ${imovel.Numero}, ${imovel.BairroComercial}, ${imovel.Cidade}`}
         url={currentUrl}
         image={imovel.Foto}
       />
-      
+
       <ExitIntentModal condominio={imovel.Empreendimento} link={currentUrl} />
 
       <div className="w-full mx-auto">
@@ -109,8 +125,9 @@ export default async function Imovel({ params }) {
       <div className="container mx-auto px-4 md:px-0">
         <FAQImovel imovel={imovel} />
       </div>
+
       <WhatsappFloat
-        message={`Quero saber mais sobre o ${imovel.Empreendimento}, no bairro ${imovel.BairroComercial}, disponivel na pagina do Imóvel: ${currentUrl}`}
+        message={`Quero saber mais sobre o ${imovel.Empreendimento}, no bairro ${imovel.BairroComercial}, disponível na página do Imóvel: ${currentUrl}`}
       />
     </section>
   );
