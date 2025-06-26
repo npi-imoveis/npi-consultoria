@@ -2,8 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { SearchHero } from "../ui/search-hero";
+import { usePathname } from "next/navigation";
 
 export function HeroSection() {
+  const pathname = usePathname();
+  const isHome = pathname === "/";
+
   return (
     <div className="relative h-screen w-full bg-black overflow-hidden">
       <video
@@ -19,11 +23,11 @@ export function HeroSection() {
       <div className="absolute top-0 left-0 w-full h-full bg-black/80"></div>
 
       <div className="relative flex flex-col items-center justify-end h-full text-center text-white pb-24">
-        <h1 className="text-white text-sm md:text-base font-medium mb-2 opacity-80">
-  Imóveis de Alto Padrão
-</h1>
-
-
+        {isHome && (
+          <h1 className="text-white text-sm md:text-base font-medium mb-2 opacity-80">
+            Imóveis de Alto Padrão
+          </h1>
+        )}
 
         <Typewriter />
 
@@ -60,7 +64,7 @@ function Typewriter() {
     }, typingSeed);
 
     return () => clearTimeout(timeout);
-  }, [charIndex, isDeleting, currentWordIndex, words]);
+  }, [charIndex, isDeleting, currentWordIndex]);
 
   return (
     <div className="w-full h-full flex flex-col justify-end items-center">
