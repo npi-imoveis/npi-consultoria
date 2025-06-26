@@ -57,11 +57,14 @@ function Typewriter() {
   }, [charIndex, isDeleting, currentWordIndex]);
 
   return (
-    <h1 className="w-full h-full flex flex-col justify-end items-center text-xl font-bold text-zinc-400">
+    <div className="w-full h-full flex flex-col justify-end items-center">
       <span className="text-sm font-normal text-white mb-1">
         Uma nova experiência em
       </span>
-      <span>{text}</span>
-    </h1>
+      <h1 className="text-xl h-8 font-bold text-zinc-400">
+        {text}
+      </h1>
+    </div>
   );
 }
+
