@@ -186,28 +186,43 @@ export async function getBairrosPorCidade(cidade, categoria) {
 // Função para buscar um imóvel pelo Codigo
 export async function getImovelById(codigo) {
   try {
-    // Garantir que estamos buscando pelo Codigo
+    console.log(`[DEBUG] Buscando imóvel ${codigo}...`); // Log 1 - Início da busca
+    
     const response = await axiosClient.get(`/imoveis/${codigo}`);
 
-    // Verificar se a resposta contém dados válidos
+    // Log completo da resposta
+    console.log('[DEBUG] Resposta completa da API:', {
+      status: response.status,
+      data: {
+        ...response.data,
+        // Mostra especificamente os campos de suítes
+        suitesDebug: {
+          Suites: response.data?.data?.Suites,
+          SuitesAntigo: response.data?.data?.SuitesAntigo,
+          // Outros campos relevantes
+          DormitoriosAntigo: response.data?.data?.DormitoriosAntigo,
+          VagasAntigo: response.data?.data?.VagasAntigo
+        }
+      }
+    });
+
     if (response && response.data) {
-      // Verificar se os dados estão em data.data
       if (response.data.data) {
         return response.data;
       } else {
+        console.warn('[DEBUG] Resposta sem data.data:', response.data);
         return { data: null, status: response.data.status };
       }
     } else {
-      console.error(`Serviço: Resposta vazia da API para imóvel ${codigo}`);
+      console.error(`[DEBUG] Resposta vazia para imóvel ${codigo}`);
       return { data: null, status: 404 };
     }
   } catch (error) {
-    console.error(`Serviço: Erro ao buscar imóvel ${codigo}:`, error);
-    return {
-      data: null,
-      status: error.response?.status || 500,
-      error: error.response?.data?.error || "Erro ao buscar imóvel",
-    };
+    console.error(`[DEBUG] Erro ao buscar imóvel ${codigo}:`, {
+      error: error.response?.data || error.message,
+      config: error.config
+    });
+    throw error;
   }
 }
 
