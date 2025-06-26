@@ -279,8 +279,12 @@ export const useImovelForm = () => {
   if (!e || !e.target) return;
   
   const { name, value } = e.target;
-  if (!name || !INITIAL_FORM_DATA.hasOwnProperty(name)) {
-    console.warn(`Campo não reconhecido: ${name}`);
+
+  // Tratamento específico para campos numéricos
+  const numericFields = ['Dormitorios', 'Suites', 'Vagas', 'BanheiroSocialQtd'];
+  if (numericFields.includes(name)) {
+    const numericValue = value.replace(/\D/g, '');
+    setFormData(prev => ({ ...prev, [name]: numericValue }));
     return;
   }
 
