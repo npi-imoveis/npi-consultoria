@@ -18,11 +18,11 @@ export default function DetalhesImovel({ imovel }) {
           </p>
         </div>
        <div className="flex flex-col bg-zinc-100 rounded-lg items-center px-4 py-2 text-xs min-w-[110px]">
-      <Bath size={24} aria-hidden="true" />
-      <p className="mt-1 font-medium">
-    {imovel.SuitesAntigo || 0} suíte{imovel.SuitesAntigo !== 1 ? "s" : ""}
-    </p>
-  </div>
+  <Bath size={24} aria-hidden="true" />
+  <p className="mt-1 font-medium">
+    {imovel.Suites || 0} suíte{imovel.Suites !== 1 ? "s" : ""}
+  </p>
+</div>
         <div className="flex flex-col bg-zinc-100 rounded-lg items-center px-4 py-2 text-xs min-w-[110px]">
           <ShowerHead size={24} aria-hidden="true" />
           <p className="mt-1 font-medium">
