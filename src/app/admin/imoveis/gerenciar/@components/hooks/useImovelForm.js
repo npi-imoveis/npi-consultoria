@@ -404,7 +404,7 @@ export const useImovelForm = () => {
   }));
 }, []);
 
-  cconst updateImage = useCallback((codigo, newUrl) => {
+  const updateImage = useCallback((codigo, newUrl) => {
   if (!codigo || !newUrl?.trim()) return;
   
   // Adicione a mesma limpeza de URL
