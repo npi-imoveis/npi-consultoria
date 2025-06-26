@@ -22,42 +22,52 @@ import { notFound, redirect } from "next/navigation";
 // ✅ SEO DINÂMICO
 export async function generateMetadata({ params }) {
   const { id } = params;
+  const response = await getImovelById(id);
 
-  try {
-    const response = await getImovelById(id);
-    const imovel = response?.data;
+  if (!response?.data) return {};
 
-    if (!imovel) return {};
+  const imovel = response.data;
+  const title = `${imovel.Empreendimento} - ${imovel.BairroComercial}, ${imovel.Cidade}`;
+  const description = `${imovel.Categoria} à venda no bairro ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.DormitoriosAntigo} dormitórios, ${imovel.SuiteAntigo} suítes, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt}. Valor: ${imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}.`;
 
-    const titulo = `${imovel.Empreendimento} - ${imovel.BairroComercial} - ${imovel.Cidade}`;
-    const descricao = `${imovel.Categoria} à venda com ${imovel.DormitoriosAntigo ?? 0} dormitórios, ${imovel.SuiteAntigo ?? 0} suítes, ${imovel.VagasAntigo ?? 0} vagas em ${imovel.BairroComercial}, ${imovel.Cidade}. Valor: R$ ${imovel.ValorAntigo || "sob consulta"}.`;
-    const canonical = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
+  const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
 
-    return {
-      title: titulo,
-      description: descricao,
-      alternates: {
-        canonical,
+  return {
+    title,
+    description,
+    alternates: {
+      canonical: currentUrl,
+    },
+    robots: {
+      index: true,
+      follow: true,
+    },
+    other: {
+      "robots": "index, follow",
+    },
+    openGraph: {
+      title,
+      description,
+      url: currentUrl,
+      images: [imovel.Foto],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [imovel.Foto],
+    },
+    // hreflang manual
+    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL),
+    alternates: {
+      canonical: currentUrl,
+      languages: {
+        "pt-BR": currentUrl,
       },
-      openGraph: {
-        title: titulo,
-        description: descricao,
-        url: canonical,
-        type: "article",
-        images: [imovel.Foto],
-      },
-      twitter: {
-        card: "summary_large_image",
-        title: titulo,
-        description: descricao,
-        images: [imovel.Foto],
-      },
-    };
-  } catch (error) {
-    console.error("Erro ao gerar metadata do imóvel:", error);
-    return {};
-  }
+    },
+  };
 }
+
 
 export const revalidate = 0;
 
