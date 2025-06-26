@@ -404,18 +404,21 @@ export const useImovelForm = () => {
   }));
 }, []);
 
-  const updateImage = useCallback((codigo, newUrl) => {
-    if (!codigo || !newUrl?.trim()) return;
-    
-    setFormData(prev => ({
-      ...prev,
-      Foto: Array.isArray(prev.Foto) 
-        ? prev.Foto.map(img => 
-            img.Codigo === codigo ? { ...img, Foto: newUrl.trim() } : img
-          )
-        : []
-    }));
-  }, []);
+  cconst updateImage = useCallback((codigo, newUrl) => {
+  if (!codigo || !newUrl?.trim()) return;
+  
+  // Adicione a mesma limpeza de URL
+  const cleanUrl = decodeURIComponent(newUrl.split('?')[0]).trim();
+
+  setFormData(prev => ({
+    ...prev,
+    Foto: Array.isArray(prev.Foto) 
+      ? prev.Foto.map(img => 
+          img.Codigo === codigo ? { ...img, Foto: cleanUrl } : img
+        )
+      : []
+  }));
+}, []);
 
   const removeImage = useCallback((codigo) => {
     if (!codigo) return;
