@@ -273,30 +273,32 @@ export const useImovelForm = () => {
       }));
     }
   }, [debouncedFetchCoordinates]);
-const numericHandlers = {
-    Dormitorios: (value) => {
-      const numericValue = value.replace(/\D/g, '');
-      setFormData(prev => ({ ...prev, Dormitorios: numericValue }));
-    },
-    Suites: (value) => {
-      const numericValue = value.replace(/\D/g, '');
-      setFormData(prev => ({ ...prev, Suites: numericValue }));
-    },
-    Vagas: (value) => {
-      const numericValue = value.replace(/\D/g, '');
-      setFormData(prev => ({ ...prev, Vagas: numericValue }));
-    }
-  };
 
   // O handleChange vem logo em seguida...
   const handleChange = useCallback((e) => {
-  if (!e || !e.target) return;
-  
-  const { name, value } = e.target;
-  if (!name || !INITIAL_FORM_DATA.hasOwnProperty(name)) {
-    console.warn(`Campo não reconhecido: ${name}`);
-    return;
-  }
+    if (!e || !e.target) return;
+    
+    const { name, value } = e.target;
+    if (!name || !INITIAL_FORM_DATA.hasOwnProperty(name)) {
+      console.warn(`Campo não reconhecido: ${name}`);
+      return;
+    }
+
+    // Mova os numericHandlers para dentro da função
+    const numericHandlers = {
+      Dormitorios: (val) => {
+        const numericValue = val.replace(/\D/g, '');
+        setFormData(prev => ({ ...prev, Dormitorios: numericValue }));
+      },
+      Suites: (val) => {
+        const numericValue = val.replace(/\D/g, '');
+        setFormData(prev => ({ ...prev, Suites: numericValue }));
+      },
+      Vagas: (val) => {
+        const numericValue = val.replace(/\D/g, '');
+        setFormData(prev => ({ ...prev, Vagas: numericValue }));
+      }
+    };
 
     const monetaryHandlers = {
       ValorAntigo: () => {
@@ -387,13 +389,13 @@ const numericHandlers = {
     };
 
     if (specialHandlers[name]) {
-    specialHandlers[name]();
-  } else if (numericHandlers[name]) {
-    numericHandlers[name](value); // Isso vai tratar Dormitorios/Suites/Vagas
-  } else {
-    setFormData(prev => ({ ...prev, [name]: value }));
-  }
-}, [maskDate, fetchAddress, parseCurrency, formatCurrencyInput]);
+      specialHandlers[name]();
+    } else if (numericHandlers[name]) {
+      numericHandlers[name](value);
+    } else {
+      setFormData(prev => ({ ...prev, [name]: value }));
+    }
+  }, [maskDate, fetchAddress, parseCurrency, formatCurrencyInput]);
 
   // Funções de manipulação de imagens
   const addImage = useCallback(() => setShowImageModal(true), []);
