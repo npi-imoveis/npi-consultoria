@@ -201,7 +201,7 @@ export async function getImovelById(codigo) {
       status: response.status,
       suitesAPI: {
         Suites: response.data?.data?.Suites,
-        SuitesAntigo: response.data?.data?.SuitesAntigo
+        SuiteAntigo: response.data?.data?.SuiteAntigo
       },
       outrosCampos: {
         Dormitorios: response.data?.data?.DormitoriosAntigo,
@@ -215,8 +215,8 @@ export async function getImovelById(codigo) {
       data: {
         ...response.data?.data,
         // Garante que ambos os campos terão o valor correto
-        Suites: response.data?.data?.SuitesAntigo || 0,
-        SuitesAntigo: response.data?.data?.SuitesAntigo || 0,
+        Suites: response.data?.data?.SuiteAntigo || 0,
+        SuiteAntigo: response.data?.data?.SuiteAntigo || 0,
         // Mantém outros campos numéricos
         Dormitorios: response.data?.data?.DormitoriosAntigo || 0,
         Vagas: response.data?.data?.VagasAntigo || 0
