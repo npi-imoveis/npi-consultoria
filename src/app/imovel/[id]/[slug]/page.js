@@ -137,7 +137,7 @@ export default async function Imovel({ params }) {
         price={imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}
         description={`${imovel.Categoria} à venda em ${imovel.BairroComercial}, ${imovel.Cidade}. ${
           imovel.Empreendimento
-        }: ${imovel.DormitoriosAntigo} quartos, ${imovel.Suites} suítes, ${
+        }: ${imovel.DormitoriosAntigo} quartos, ${imovel.SuitesAntigo} suítes, ${
           imovel.BanheiroSocialQtd
         } banheiros, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt}. ${
           imovel.Situacao
