@@ -273,7 +273,23 @@ export const useImovelForm = () => {
       }));
     }
   }, [debouncedFetchCoordinates]);
+const numericHandlers = {
+    Dormitorios: (value) => {
+      const numericValue = value.replace(/\D/g, '');
+      setFormData(prev => ({ ...prev, Dormitorios: numericValue }));
+    },
+    Suites: (value) => {
+      const numericValue = value.replace(/\D/g, '');
+      setFormData(prev => ({ ...prev, Suites: numericValue }));
+    },
+    Vagas: (value) => {
+      const numericValue = value.replace(/\D/g, '');
+      setFormData(prev => ({ ...prev, Vagas: numericValue }));
+    }
+  };
 
+  // O handleChange vem logo em seguida...
+  const handleChange = useCallback((e) => {
   // Handler principal
   const handleChange = useCallback((e) => {
     if (!e || !e.target) return;
