@@ -384,22 +384,38 @@ export const useImovelForm = () => {
   // Funções de manipulação de imagens
   const addImage = useCallback(() => setShowImageModal(true), []);
   
-  const addSingleImage = useCallback((url) => {
-    if (!url?.trim()) return;
-    
-    setFormData(prev => ({
-      ...prev,
-      Foto: [
-        ...(Array.isArray(prev.Foto) ? prev.Foto : []),
-        {
-          Codigo: `img-${Date.now()}`,
-          Foto: url.trim(),
-          Destaque: "Nao",
-          Ordem: (Array.isArray(prev.Foto) ? prev.Foto.length + 1 : 1)
-        }
-      ]
-    }));
-  }, []);
+  // ...código original permanece...
+
+const addSingleImage = useCallback((url) => {
+  if (!url?.trim()) return;
+
+  const cleanUrl = (() => {
+    try {
+      const parsed = new URL(url);
+      if (parsed.pathname.startsWith("/_next/image")) {
+        const innerUrl = parsed.searchParams.get("url");
+        return decodeURIComponent(innerUrl || url);
+      }
+      return url;
+    } catch {
+      return url;
+    }
+  })();
+
+  setFormData(prev => ({
+    ...prev,
+    Foto: [
+      ...(Array.isArray(prev.Foto) ? prev.Foto : []),
+      {
+        Codigo: `img-${Date.now()}`,
+        Foto: cleanUrl.trim(),
+        Destaque: "Nao",
+        Ordem: (Array.isArray(prev.Foto) ? prev.Foto.length + 1 : 1)
+      }
+    ]
+  }));
+}, []);
+
 
   const updateImage = useCallback((codigo, newUrl) => {
     if (!codigo || !newUrl?.trim()) return;
