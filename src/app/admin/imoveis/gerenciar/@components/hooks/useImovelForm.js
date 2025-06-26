@@ -385,21 +385,24 @@ export const useImovelForm = () => {
   const addImage = useCallback(() => setShowImageModal(true), []);
   
   const addSingleImage = useCallback((url) => {
-    if (!url?.trim()) return;
-    
-    setFormData(prev => ({
-      ...prev,
-      Foto: [
-        ...(Array.isArray(prev.Foto) ? prev.Foto : []),
-        {
-          Codigo: `img-${Date.now()}`,
-          Foto: url.trim(),
-          Destaque: "Nao",
-          Ordem: (Array.isArray(prev.Foto) ? prev.Foto.length + 1 : 1)
-        }
-      ]
-    }));
-  }, []);
+  if (!url?.trim()) return;
+  
+  // Nova linha para limpar a URL antes de adicionar
+  const cleanUrl = decodeURIComponent(url.split('?')[0]).trim();
+
+  setFormData(prev => ({
+    ...prev,
+    Foto: [
+      ...(Array.isArray(prev.Foto) ? prev.Foto : []),
+      {
+        Codigo: `img-${Date.now()}`,
+        Foto: cleanUrl, // Usa a URL limpa aqui
+        Destaque: "Nao",
+        Ordem: (Array.isArray(prev.Foto) ? prev.Foto.length + 1 : 1)
+      }
+    ]
+  }));
+}, []);
 
   const updateImage = useCallback((codigo, newUrl) => {
     if (!codigo || !newUrl?.trim()) return;
