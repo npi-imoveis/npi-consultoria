@@ -38,7 +38,7 @@ function Typewriter() {
 
   useEffect(() => {
     const currentWord = words[currentWordIndex];
-    const typingSeed = isDeleting ? 50 : 100;
+    const typingSpeed = isDeleting ? 50 : 100;
     const nextStep = isDeleting ? charIndex - 1 : charIndex + 1;
 
     const timeout = setTimeout(() => {
@@ -51,15 +51,17 @@ function Typewriter() {
         setIsDeleting(false);
         setCurrentWordIndex((prevIndex) => (prevIndex + 1) % words.length);
       }
-    }, typingSeed);
+    }, typingSpeed);
 
     return () => clearTimeout(timeout);
   }, [charIndex, isDeleting, currentWordIndex]);
 
   return (
-    <h1 className="w-full h-full flex flex-col justify-end items-center">
-      <span>Uma nova experiência em</span>
-      <span className="text-xl h-8 font-bold text-zinc-400">{text}</span>
+    <h1 className="w-full h-full flex flex-col justify-end items-center text-xl font-bold text-zinc-400">
+      <span className="text-sm font-normal text-white mb-1">
+        Uma nova experiência em
+      </span>
+      <span>{text}</span>
     </h1>
   );
 }
