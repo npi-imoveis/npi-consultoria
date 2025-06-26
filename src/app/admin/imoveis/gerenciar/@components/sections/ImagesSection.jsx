@@ -1,8 +1,10 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useState } from "react";
 import FormSection from "../FormSection";
 import Image from "next/image";
+import JSZip from "jszip";
+import { saveAs } from "file-saver";
 
 const ImagesSection = memo(({
   formData,
@@ -11,12 +13,35 @@ const ImagesSection = memo(({
   updateImage,
   removeImage,
   removeAllImages,
-  downloadAllPhotos,
-  downloadingPhotos,
   setImageAsHighlight,
   changeImagePosition,
   validation,
 }) => {
+  const [downloadingPhotos, setDownloadingPhotos] = useState(false);
+
+  const baixarTodasImagens = async (imagens = []) => {
+    if (!Array.isArray(imagens) || imagens.length === 0) return;
+
+    setDownloadingPhotos(true);
+    const zip = new JSZip();
+    const pasta = zip.folder("imagens");
+
+    for (const [i, img] of imagens.entries()) {
+      try {
+        const response = await fetch(img.Foto);
+        const blob = await response.blob();
+        const nome = `imagem-${i + 1}.jpg`;
+        pasta?.file(nome, blob);
+      } catch (err) {
+        console.error(`Erro ao baixar imagem ${i + 1}`, err);
+      }
+    }
+
+    const content = await zip.generateAsync({ type: "blob" });
+    saveAs(content, "imagens.zip");
+    setDownloadingPhotos(false);
+  };
+
   const handleAddImageUrl = () => {
     const imageUrl = prompt("Digite a URL da imagem:");
     if (imageUrl?.trim()) {
@@ -48,7 +73,6 @@ const ImagesSection = memo(({
     }
   };
 
-  // Ordenação otimizada com fallback para posição original
   const sortedPhotos = formData.Foto
     ? [...formData.Foto].sort((a, b) => {
         const orderA = a.Ordem || formData.Foto.indexOf(a) + 1;
@@ -60,7 +84,6 @@ const ImagesSection = memo(({
   return (
     <FormSection title="Imagens do Imóvel" className="mb-8">
       <div className="space-y-4">
-        {/* Barra de ações superior */}
         <div className="flex flex-wrap justify-between items-center gap-3">
           <div className="text-sm">
             <span className="font-medium text-gray-700">
@@ -72,7 +95,7 @@ const ImagesSection = memo(({
               </span>
             )}
           </div>
-          
+
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
@@ -88,12 +111,12 @@ const ImagesSection = memo(({
             >
               📤 Upload em Lote
             </button>
-            
+
             {sortedPhotos.length > 0 && (
               <>
                 <button
                   type="button"
-                  onClick={downloadAllPhotos}
+                  onClick={() => baixarTodasImagens(sortedPhotos)}
                   disabled={downloadingPhotos}
                   className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
                     downloadingPhotos
@@ -115,12 +138,10 @@ const ImagesSection = memo(({
           </div>
         </div>
 
-        {/* Grid de Imagens */}
         {sortedPhotos.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {sortedPhotos.map((photo, index) => (
               <div key={`${photo.Codigo}-${index}`} className="border rounded-lg overflow-hidden bg-white shadow-sm">
-                {/* Container da Imagem */}
                 <div className="relative aspect-video w-full">
                   <Image
                     src={photo.Foto}
@@ -136,7 +157,6 @@ const ImagesSection = memo(({
                   )}
                 </div>
 
-                {/* Controles */}
                 <div className="p-3 space-y-3">
                   <div className="flex gap-2">
                     <div className="flex-1">
@@ -158,8 +178,8 @@ const ImagesSection = memo(({
                       <button
                         onClick={() => setImageAsHighlight(photo.Codigo)}
                         className={`w-full p-1.5 text-sm rounded-md transition-colors ${
-                          photo.Destaque === "Sim" 
-                            ? "bg-yellow-500 text-white" 
+                          photo.Destaque === "Sim"
+                            ? "bg-yellow-500 text-white"
                             : "bg-gray-100 hover:bg-gray-200"
                         }`}
                       >
@@ -197,18 +217,4 @@ const ImagesSection = memo(({
           </div>
         )}
 
-        {/* Aviso de validação */}
-        {validation.photoCount < validation.requiredPhotoCount && (
-          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3">
-            <p className="text-yellow-700 text-sm">
-              ⚠️ Adicione pelo menos {validation.requiredPhotoCount} fotos para publicar
-            </p>
-          </div>
-        )}
-      </div>
-    </FormSection>
-  );
-});
-
-ImagesSection.displayName = "ImagesSection";
-export default ImagesSection;
+        {validation.photoCount < validation.requiredPhotoC
