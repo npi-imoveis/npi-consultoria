@@ -19,96 +19,8 @@ import { Apartment as StructuredDataApartment } from "@/app/components/structure
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 import { notFound, redirect } from "next/navigation";
 
-// A função generateMetadata deve ser um Server Component e rodar antes da página.
-// Ela é responsável por gerar as tags <title> e <meta> no <head> do HTML inicial.
 export async function generateMetadata({ params }) {
-  const { id } = params;
-  let condominio = null;
-
-  try {
-    const response = await getImovelById(id);
-    condominio = response?.data;
-  } catch (error) {
-    console.error("Erro ao buscar dados do imóvel para metadados:", error);
-    // Em caso de erro na busca, retorne metadados genéricos para evitar falha total.
-    return {
-      title: "Imóvel - NPI Consultoria Imobiliária",
-      description: "Encontre seu imóvel ideal com a NPI Consultoria. Especialistas em imóveis de alto padrão.",
-      robots: "noindex, nofollow", // Pode ser 'noindex, nofollow' se não houver dados válidos
-      alternates: {
-        canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${id}`,
-      },
-      openGraph: {
-        title: "NPI Consultoria Imobiliária",
-        description: "Encontre seu imóvel ideal com a NPI Consultoria.",
-        url: `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${id}`,
-        type: "website",
-      },
-      twitter: {
-        card: "summary_large_image",
-        title: "NPI Consultoria Imobiliária",
-        description: "Encontre seu imóvel ideal com a NPI Consultoria.",
-        site: "@NPIImoveis",
-      },
-    };
-  }
-
-  // Se o imóvel não for encontrado, o notFound() será chamado no componente da página,
-  // mas para os metadados, podemos retornar um fallback ou um noindex.
-  if (!condominio) {
-    return {
-      title: "Imóvel não encontrado - NPI Consultoria Imobiliária",
-      description: "A página do imóvel que você está procurando não foi encontrada.",
-      robots: "noindex, nofollow",
-      alternates: {
-        canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${id}`,
-      },
-      openGraph: {
-        title: "Imóvel não encontrado",
-        description: "A página do imóvel que você está procurando não foi encontrada.",
-        url: `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${id}`,
-        type: "website",
-      },
-      twitter: {
-        card: "summary_large_image",
-        title: "Imóvel não encontrado",
-        description: "A página do imóvel que você está procurando não foi encontrada.",
-        site: "@NPIImoveis",
-      },
-    };
-  }
-
-  const destaqueFotoObj = condominio.Foto?.find((f) => f.Destaque === "Sim");
-  const destaqueFotoUrl = destaqueFotoObj?.Foto;
-
-  // Garante que a descrição não seja muito longa ou vazia
-  const description = `${condominio.Empreendimento || 'Imóvel'} em ${condominio.BairroComercial || 'localização desconhecida'}, ${condominio.Cidade || 'cidade desconhecida'}. ${condominio.Categoria || 'Imóvel'} com ${condominio.MetragemAnt || 'metragem não informada'}, ${condominio.DormitoriosAntigo || 'número de'} quartos, ${condominio.VagasAntigo || 'número de'} vagas. ${condominio.Situacao || ''}.`.trim();
-
-  return {
-    title: `${condominio.Empreendimento}, ${condominio.TipoEndereco} ${condominio.Endereco} ${condominio.Numero}, ${condominio.BairroComercial}`,
-    description: description,
-    robots: "index, follow",
-    alternates: {
-      canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${condominio.Codigo}/${condominio.Slug}`,
-      languages: {
-        "pt-BR": `/imovel-${condominio.Codigo}/${condominio.Slug}`,
-      },
-    },
-    openGraph: {
-      title: `Condomínio ${condominio.Empreendimento}`,
-      description: description,
-      url: `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${condominio.Codigo}/${condominio.Slug}`,
-      images: destaqueFotoUrl ? [{ url: destaqueFotoUrl }] : [],
-      type: "website",
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: `Condomínio ${condominio.Empreendimento}`,
-      description: description,
-      site: "@NPIImoveis",
-      images: destaqueFotoUrl ? [destaqueFotoUrl] : [],
-    },
-  };
+  // ... (mantenha o código existente de generateMetadata)
 }
 
 export default async function Imovel({ params }) {
@@ -116,13 +28,32 @@ export default async function Imovel({ params }) {
   const response = await getImovelById(id);
 
   if (!response?.data) {
-    notFound(); // Isso vai renderizar a página 404 do Next.js
+    notFound();
   }
 
-  const imovel = response.data;
+  // DEBUG: Log dos dados originais
+  console.log('DEBUG - Dados do Imóvel:', {
+    suites: response.data.Suites,
+    suitesAntigo: response.data.SuitesAntigo,
+    camposNumericos: {
+      dormitorios: response.data.DormitoriosAntigo,
+      vagas: response.data.VagasAntigo,
+      banheiros: response.data.BanheiroSocialQtd
+    }
+  });
+
+  // Padronização dos dados
+  const imovel = {
+    ...response.data,
+    // Garante que SuitesAntigo sempre terá valor
+    SuitesAntigo: response.data.SuitesAntigo ?? response.data.Suites ?? 0,
+    // Fallback para outros campos numéricos
+    DormitoriosAntigo: response.data.DormitoriosAntigo ?? 0,
+    VagasAntigo: response.data.VagasAntigo ?? 0,
+    BanheiroSocialQtd: response.data.BanheiroSocialQtd ?? 0
+  };
 
   const slugCorreto = imovel.Slug;
-
   if (slug !== slugCorreto) {
     redirect(`/imovel-${id}/${slugCorreto}`);
   }
@@ -131,7 +62,6 @@ export default async function Imovel({ params }) {
 
   return (
     <section className="w-full bg-white pb-32 pt-20">
-      {/* StructuredDataApartment deve ser um Client Component se precisar de dados do DOM ou interatividade */}
       <StructuredDataApartment
         title={imovel.Empreendimento}
         price={imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}
@@ -148,6 +78,7 @@ export default async function Imovel({ params }) {
         url={currentUrl}
         image={imovel.Foto}
       />
+      
       <ExitIntentModal condominio={imovel.Empreendimento} link={currentUrl} />
 
       <div className="w-full mx-auto">
