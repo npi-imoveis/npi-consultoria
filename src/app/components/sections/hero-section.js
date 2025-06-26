@@ -19,9 +19,10 @@ export function HeroSection() {
       <div className="absolute top-0 left-0 w-full h-full bg-black/80"></div>
 
       <div className="relative flex flex-col items-center justify-end h-full text-center text-white pb-24">
-        <h1 className="text-3xl md:text-5xl font-extrabold mb-4">
-          Imóveis de Alto Padrão
-        </h1>
+        <h1 className="text-white text-xl md:text-3xl font-semibold tracking-tight mb-2 md:mb-4">
+  Imóveis de Alto Padrão
+</h1>
+
 
         <Typewriter />
 
