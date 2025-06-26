@@ -281,8 +281,8 @@ export const useImovelForm = () => {
   const { name, value } = e.target;
 
   // Tratamento específico para campos numéricos
-  const numericFields = ['Dormitorios', 'Suites', 'Vagas', 'BanheiroSocialQtd'];
-  if (numericFields.includes(name)) {
+    const numericFields = ['Dormitorios', 'Suites', 'Vagas', 'BanheiroSocialQtd'];
+    if (numericFields.includes(name)) {
     const numericValue = value.replace(/\D/g, '');
     setFormData(prev => ({ ...prev, [name]: numericValue }));
     return;
@@ -293,9 +293,6 @@ export const useImovelForm = () => {
     const numericValue = fieldValue.replace(/\D/g, '');
     setFormData(prev => ({ ...prev, [fieldName]: numericValue }));
   };
-
-  // Lista de campos numéricos
-  const numericFields = ['Dormitorios', 'Suites', 'Vagas'];
 
   // Verifica se é um campo numérico
   if (numericFields.includes(name)) {
