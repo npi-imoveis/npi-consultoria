@@ -42,9 +42,6 @@ export async function generateMetadata({ params }) {
       index: true,
       follow: true,
     },
-    other: {
-      "robots": "index, follow",
-    },
     openGraph: {
       title,
       description,
