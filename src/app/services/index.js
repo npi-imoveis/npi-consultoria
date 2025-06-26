@@ -183,26 +183,56 @@ export async function getBairrosPorCidade(cidade, categoria) {
   }
 }
 
-// Função para buscar um imóvel pelo Codigo com debug completo
+// src/app/services/index.js
+
+// Função para buscar um imóvel pelo Codigo com tratamento robusto
 export async function getImovelById(codigo) {
   try {
-    const response = await axiosClient.get(`/imoveis/${codigo}`);
+    console.log(`[DEBUG] Buscando imóvel ${codigo}...`);
     
-    // FORÇA USAR SuitesAntigo (valor do admin) EM TODOS OS CASOS
+    const response = await axiosClient.get(`/imoveis/${codigo}`, {
+      headers: {
+        'Cache-Control': 'no-cache' // Evita cache indesejado
+      }
+    });
+
+    // Log detalhado dos dados brutos recebidos
+    console.log('[DEBUG] Dados brutos da API:', {
+      status: response.status,
+      suitesAPI: {
+        Suites: response.data?.data?.Suites,
+        SuitesAntigo: response.data?.data?.SuitesAntigo
+      },
+      outrosCampos: {
+        Dormitorios: response.data?.data?.DormitoriosAntigo,
+        Vagas: response.data?.data?.VagasAntigo
+      }
+    });
+
+    // Padronização definitiva dos dados
     const dadosCorrigidos = {
       ...response.data,
       data: {
         ...response.data?.data,
-        Suites: response.data?.data?.SuitesAntigo || 0 // Sobrescreve Suites com SuitesAntigo
+        // Garante que ambos os campos terão o valor correto
+        Suites: response.data?.data?.SuitesAntigo || 0,
+        SuitesAntigo: response.data?.data?.SuitesAntigo || 0,
+        // Mantém outros campos numéricos
+        Dormitorios: response.data?.data?.DormitoriosAntigo || 0,
+        Vagas: response.data?.data?.VagasAntigo || 0
       }
     };
 
-    console.log('[DEBUG] Dados corrigidos:', dadosCorrigidos);
+    console.log('[DEBUG] Dados padronizados:', dadosCorrigidos);
     return dadosCorrigidos;
 
   } catch (error) {
-    console.error('Erro ao buscar imóvel:', error);
-    throw error;
+    console.error(`[ERRO] Falha ao buscar imóvel ${codigo}:`, {
+      mensagem: error.message,
+      resposta: error.response?.data,
+      endpoint: `/imoveis/${codigo}`
+    });
+    throw new Error(`Falha ao carregar imóvel: ${error.message}`);
   }
 }
 
