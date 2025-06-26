@@ -290,15 +290,13 @@ const numericHandlers = {
 
   // O handleChange vem logo em seguida...
   const handleChange = useCallback((e) => {
-  // Handler principal
-  const handleChange = useCallback((e) => {
-    if (!e || !e.target) return;
-    
-    const { name, value } = e.target;
-    if (!name || !INITIAL_FORM_DATA.hasOwnProperty(name)) {
-      console.warn(`Campo não reconhecido: ${name}`);
-      return;
-    }
+  if (!e || !e.target) return;
+  
+  const { name, value } = e.target;
+  if (!name || !INITIAL_FORM_DATA.hasOwnProperty(name)) {
+    console.warn(`Campo não reconhecido: ${name}`);
+    return;
+  }
 
     const monetaryHandlers = {
       ValorAntigo: () => {
@@ -389,11 +387,13 @@ const numericHandlers = {
     };
 
     if (specialHandlers[name]) {
-      specialHandlers[name]();
-    } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
-    }
-  }, [maskDate, fetchAddress, parseCurrency, formatCurrencyInput]);
+    specialHandlers[name]();
+  } else if (numericHandlers[name]) {
+    numericHandlers[name](value); // Isso vai tratar Dormitorios/Suites/Vagas
+  } else {
+    setFormData(prev => ({ ...prev, [name]: value }));
+  }
+}, [maskDate, fetchAddress, parseCurrency, formatCurrencyInput]);
 
   // Funções de manipulação de imagens
   const addImage = useCallback(() => setShowImageModal(true), []);
