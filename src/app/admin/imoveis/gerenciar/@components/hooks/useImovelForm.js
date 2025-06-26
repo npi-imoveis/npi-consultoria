@@ -276,127 +276,110 @@ export const useImovelForm = () => {
 
   // O handleChange vem logo em seguida...
   const handleChange = useCallback((e) => {
-    if (!e || !e.target) return;
-    
-    const { name, value } = e.target;
-    if (!name || !INITIAL_FORM_DATA.hasOwnProperty(name)) {
-      console.warn(`Campo não reconhecido: ${name}`);
-      return;
-    }
+  if (!e || !e.target) return;
+  
+  const { name, value } = e.target;
+  if (!name || !INITIAL_FORM_DATA.hasOwnProperty(name)) {
+    console.warn(`Campo não reconhecido: ${name}`);
+    return;
+  }
 
-    // Mova os numericHandlers para dentro da função
-    const numericHandlers = {
-      Dormitorios: (val) => {
-        const numericValue = val.replace(/\D/g, '');
-        setFormData(prev => ({ ...prev, Dormitorios: numericValue }));
-      },
-      Suites: (val) => {
-        const numericValue = val.replace(/\D/g, '');
-        setFormData(prev => ({ ...prev, Suites: numericValue }));
-      },
-      Vagas: (val) => {
-        const numericValue = val.replace(/\D/g, '');
-        setFormData(prev => ({ ...prev, Vagas: numericValue }));
-      }
-    };
+  // Handler específico para campos numéricos (Dormitórios, Suítes, Vagas)
+  const handleNumericField = (fieldName, fieldValue) => {
+    const numericValue = fieldValue.replace(/\D/g, '');
+    setFormData(prev => ({ ...prev, [fieldName]: numericValue }));
+  };
 
-    const monetaryHandlers = {
-      ValorAntigo: () => {
-        const numericValue = parseCurrency(value);
-        setFormData(prev => ({ ...prev, [name]: numericValue }));
-        setDisplayValues(prev => ({ 
-          ...prev, 
-          [name]: formatCurrencyInput(value) 
-        }));
-      },
-      ValorAluguelSite: () => {
-        const numericValue = parseCurrency(value);
-        setFormData(prev => ({ ...prev, [name]: numericValue }));
-        setDisplayValues(prev => ({ 
-          ...prev, 
-          [name]: formatCurrencyInput(value) 
-        }));
-      },
-      ValorCondominio: () => {
-        const numericValue = parseCurrency(value);
-        setFormData(prev => ({ ...prev, [name]: numericValue }));
-        setDisplayValues(prev => ({ 
-          ...prev, 
-          [name]: formatCurrencyInput(value) 
-        }));
-      },
-      ValorIptu: () => {
-        const numericValue = parseCurrency(value);
-        setFormData(prev => ({ ...prev, [name]: numericValue }));
-        setDisplayValues(prev => ({ 
-          ...prev, 
-          [name]: formatCurrencyInput(value) 
-        }));
-      }
-    };
+  // Lista de campos numéricos
+  const numericFields = ['Dormitorios', 'Suites', 'Vagas'];
 
-    const specialHandlers = {
-      DataEntrega: () => setFormData(prev => ({ ...prev, [name]: maskDate(value) })),
-      CEP: () => {
-        const formattedCEP = value.replace(/\D/g, "").slice(0, 8);
-        setFormData(prev => ({ ...prev, [name]: formattedCEP }));
-        if (formattedCEP.length === 8) fetchAddress(formattedCEP);
-      },
-      Empreendimento: () => {
-        setFormData(prev => ({ 
-          ...prev, 
-          [name]: value, 
-          Slug: formatterSlug(value) || prev.Slug 
-        }));
-      },
-      IdCorretor: () => {
-        setFormData(prev => ({
-          ...prev,
-          [name]: value,
-          Corretor: "",
-          EmailCorretor: "",
-          CelularCorretor: "",
-          Imobiliaria: "",
-          isLoadingCorretor: true,
-          corretorError: null
-        }));
+  // Verifica se é um campo numérico
+  if (numericFields.includes(name)) {
+    handleNumericField(name, value);
+    return; // Sai da função após processar
+  }
 
-        if (value?.trim()) {
-          getCorretorById(value.trim())
-            .then(corretor => {
-              if (corretor) {
-                setFormData(prev => ({
-                  ...prev,
-                  Corretor: corretor.Nome || "",
-                  EmailCorretor: corretor.Email || "",
-                  CelularCorretor: corretor.Celular || "",
-                  Imobiliaria: corretor.Imobiliaria || "",
-                  isLoadingCorretor: false
-                }));
-              }
-            })
-            .catch(error => {
-              console.error("Erro ao buscar corretor:", error);
+  // Handlers para campos monetários
+  const handleMonetaryField = (fieldName, fieldValue) => {
+    const numericValue = parseCurrency(fieldValue);
+    setFormData(prev => ({ ...prev, [fieldName]: numericValue }));
+    setDisplayValues(prev => ({ 
+      ...prev, 
+      [fieldName]: formatCurrencyInput(fieldValue) 
+    }));
+  };
+
+  // Campos monetários
+  const monetaryFields = ['ValorAntigo', 'ValorAluguelSite', 'ValorCondominio', 'ValorIptu'];
+
+  // Verifica se é um campo monetário
+  if (monetaryFields.includes(name)) {
+    handleMonetaryField(name, value);
+    return; // Sai da função após processar
+  }
+
+  // Handlers especiais
+  const specialHandlers = {
+    DataEntrega: () => setFormData(prev => ({ ...prev, [name]: maskDate(value) })),
+    CEP: () => {
+      const formattedCEP = value.replace(/\D/g, "").slice(0, 8);
+      setFormData(prev => ({ ...prev, [name]: formattedCEP }));
+      if (formattedCEP.length === 8) fetchAddress(formattedCEP);
+    },
+    Empreendimento: () => {
+      setFormData(prev => ({ 
+        ...prev, 
+        [name]: value, 
+        Slug: formatterSlug(value) || prev.Slug 
+      }));
+    },
+    IdCorretor: () => {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value,
+        Corretor: "",
+        EmailCorretor: "",
+        CelularCorretor: "",
+        Imobiliaria: "",
+        isLoadingCorretor: true,
+        corretorError: null
+      }));
+
+      if (value?.trim()) {
+        getCorretorById(value.trim())
+          .then(corretor => {
+            if (corretor) {
               setFormData(prev => ({
                 ...prev,
-                corretorError: "Corretor não encontrado",
+                Corretor: corretor.Nome || "",
+                EmailCorretor: corretor.Email || "",
+                CelularCorretor: corretor.Celular || "",
+                Imobiliaria: corretor.Imobiliaria || "",
                 isLoadingCorretor: false
               }));
-            });
-        }
-      },
-      ...monetaryHandlers
-    };
-
-    if (specialHandlers[name]) {
-      specialHandlers[name]();
-    } else if (numericHandlers[name]) {
-      numericHandlers[name](value);
-    } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
+            }
+          })
+          .catch(error => {
+            console.error("Erro ao buscar corretor:", error);
+            setFormData(prev => ({
+              ...prev,
+              corretorError: "Corretor não encontrado",
+              isLoadingCorretor: false
+            }));
+          });
+      }
     }
-  }, [maskDate, fetchAddress, parseCurrency, formatCurrencyInput]);
+  };
 
+  // Verifica se é um campo especial
+  if (specialHandlers[name]) {
+    specialHandlers[name]();
+    return; // Sai da função após processar
+  }
+
+  // Caso padrão para todos os outros campos
+  setFormData(prev => ({ ...prev, [name]: value }));
+}, [maskDate, fetchAddress, parseCurrency, formatCurrencyInput]);
   // Funções de manipulação de imagens
   const addImage = useCallback(() => setShowImageModal(true), []);
   
