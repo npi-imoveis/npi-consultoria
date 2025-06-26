@@ -2,8 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { SearchHero } from "../ui/search-hero";
+import { usePathname } from "next/navigation";
 
 export function HeroSection() {
+  const pathname = usePathname();
+  const isHome = pathname === "/";
+
   return (
     <div className="relative h-screen w-full bg-black overflow-hidden">
       <video
@@ -18,7 +22,16 @@ export function HeroSection() {
 
       <div className="absolute top-0 left-0 w-full h-full bg-black/80"></div>
 
-      <div className="relative flex flex-col items-center justify-end h-full text-center text-white pb-24">
+      {/* H1 abaixo do menu fixo */}
+      {isHome && (
+        <div className="absolute top-24 left-1/2 transform -translate-x-1/2 text-center z-20">
+          <h1 className="text-white text-2xl md:text-4xl font-bold">
+            Imóveis de Alto Padrão
+          </h1>
+        </div>
+      )}
+
+      <div className="relative flex flex-col items-center justify-end h-full text-center text-white pb-24 z-10">
         <Typewriter />
 
         <div className="mt-8">
@@ -30,7 +43,7 @@ export function HeroSection() {
 }
 
 function Typewriter() {
-  const words = ["Imóveis de Alto Padrão", "Sofisticação", "Elegância"];
+  const words = ["Alto Padrão", "Sofisticação", "Elegância"];
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [text, setText] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
@@ -38,7 +51,7 @@ function Typewriter() {
 
   useEffect(() => {
     const currentWord = words[currentWordIndex];
-    const typingSeed = isDeleting ? 50 : 100;
+    const typingSpeed = isDeleting ? 50 : 100;
     const nextStep = isDeleting ? charIndex - 1 : charIndex + 1;
 
     const timeout = setTimeout(() => {
@@ -51,15 +64,15 @@ function Typewriter() {
         setIsDeleting(false);
         setCurrentWordIndex((prevIndex) => (prevIndex + 1) % words.length);
       }
-    }, typingSeed);
+    }, typingSpeed);
 
     return () => clearTimeout(timeout);
   }, [charIndex, isDeleting, currentWordIndex]);
 
   return (
-    <h1 className="w-full h-full flex flex-col justify-end items-center">
+    <div className="w-full h-full flex flex-col justify-end items-center">
       <span>Uma nova experiência em</span>
       <span className="text-xl h-8 font-bold text-zinc-400">{text}</span>
-    </h1>
+    </div>
   );
 }
