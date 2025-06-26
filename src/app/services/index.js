@@ -183,44 +183,48 @@ export async function getBairrosPorCidade(cidade, categoria) {
   }
 }
 
-// Função para buscar um imóvel pelo Codigo
+// Função para buscar um imóvel pelo Codigo com debug completo
 export async function getImovelById(codigo) {
   try {
-    console.log(`[DEBUG] Buscando imóvel ${codigo}...`); // Log 1 - Início da busca
+    console.log(`[DEBUG] Iniciando busca pelo imóvel ${codigo}`);
     
     const response = await axiosClient.get(`/imoveis/${codigo}`);
-
+    
     // Log completo da resposta
-    console.log('[DEBUG] Resposta completa da API:', {
+    console.log('[DEBUG] Resposta completa:', {
       status: response.status,
       data: {
         ...response.data,
-        // Mostra especificamente os campos de suítes
-        suitesDebug: {
+        // Foco nos campos problemáticos
+        suitesData: {
           Suites: response.data?.data?.Suites,
           SuitesAntigo: response.data?.data?.SuitesAntigo,
-          // Outros campos relevantes
+          // Campos de referência que funcionam
           DormitoriosAntigo: response.data?.data?.DormitoriosAntigo,
           VagasAntigo: response.data?.data?.VagasAntigo
         }
       }
     });
 
-    if (response && response.data) {
-      if (response.data.data) {
-        return response.data;
-      } else {
-        console.warn('[DEBUG] Resposta sem data.data:', response.data);
-        return { data: null, status: response.data.status };
-      }
-    } else {
-      console.error(`[DEBUG] Resposta vazia para imóvel ${codigo}`);
-      return { data: null, status: 404 };
+    if (!response.data?.data) {
+      console.warn('[DEBUG] Dados do imóvel não encontrados');
+      return { data: null, status: response.status || 404 };
     }
+
+    // PADRÃO DE SAÍDA CORRIGIDO - Garante consistência
+    return {
+      ...response.data,
+      data: {
+        ...response.data.data,
+        // Força SuitesAntigo a ter valor (prioriza Suites se existir)
+        SuitesAntigo: response.data.data.Suites || response.data.data.SuitesAntigo || 0
+      }
+    };
+    
   } catch (error) {
     console.error(`[DEBUG] Erro ao buscar imóvel ${codigo}:`, {
       error: error.response?.data || error.message,
-      config: error.config
+      endpoint: `/imoveis/${codigo}`
     });
     throw error;
   }
