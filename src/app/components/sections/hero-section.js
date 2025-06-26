@@ -22,13 +22,16 @@ export function HeroSection() {
 
       <div className="absolute top-0 left-0 w-full h-full bg-black/80"></div>
 
-      <div className="relative flex flex-col items-center justify-end h-full text-center text-white pb-24">
-        {isHome && (
-          <h1 className="text-white text-sm md:text-base font-medium mb-2 opacity-80">
+      {/* H1 abaixo do menu fixo */}
+      {isHome && (
+        <div className="absolute top-24 left-1/2 transform -translate-x-1/2 text-center z-20">
+          <h1 className="text-white text-2xl md:text-4xl font-bold">
             Imóveis de Alto Padrão
           </h1>
-        )}
+        </div>
+      )}
 
+      <div className="relative flex flex-col items-center justify-end h-full text-center text-white pb-24 z-10">
         <Typewriter />
 
         <div className="mt-8">
@@ -48,7 +51,7 @@ function Typewriter() {
 
   useEffect(() => {
     const currentWord = words[currentWordIndex];
-    const typingSeed = isDeleting ? 50 : 100;
+    const typingSpeed = isDeleting ? 50 : 100;
     const nextStep = isDeleting ? charIndex - 1 : charIndex + 1;
 
     const timeout = setTimeout(() => {
@@ -61,7 +64,7 @@ function Typewriter() {
         setIsDeleting(false);
         setCurrentWordIndex((prevIndex) => (prevIndex + 1) % words.length);
       }
-    }, typingSeed);
+    }, typingSpeed);
 
     return () => clearTimeout(timeout);
   }, [charIndex, isDeleting, currentWordIndex]);
