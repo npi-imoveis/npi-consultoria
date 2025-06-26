@@ -26,11 +26,11 @@ export function HeroSection() {
       {isHome && (
         <div className="absolute top-24 left-1/2 transform -translate-x-1/2 text-center z-20">
           <h1
-  className="text-white text-base md:text-xl font-medium tracking-wide opacity-80 backdrop-blur-sm px-4 py-1 rounded-md animate-fade-in"
-  style={{ animationDelay: "0.6s", animationFillMode: "both" }}
+  className="text-white text-sm sm:text-base md:text-xl font-medium tracking-wide opacity-80 whitespace-nowrap text-center"
 >
   Imóveis de Alto Padrão
 </h1>
+
 
         </div>
       )}
