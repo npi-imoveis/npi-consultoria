@@ -90,12 +90,12 @@ const ImagesSection = memo(({
               {validation.photoCount}/{validation.requiredPhotoCount} fotos
             </span>
             {validation.photoCount < validation.requiredPhotoCount && (
-              <span className="text-red-500 ml-2">
-                (Mínimo {validation.requiredPhotoCount})
-              </span>
-            )}
-          </div>
-
+  <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3">
+    <p className="text-yellow-700 text-sm">
+      ⚠️ Adicione pelo menos {validation.requiredPhotoCount} fotos para publicar
+    </p>
+  </div>
+)}
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
