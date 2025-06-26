@@ -186,46 +186,22 @@ export async function getBairrosPorCidade(cidade, categoria) {
 // Função para buscar um imóvel pelo Codigo com debug completo
 export async function getImovelById(codigo) {
   try {
-    console.log(`[DEBUG] Iniciando busca pelo imóvel ${codigo}`);
-    
     const response = await axiosClient.get(`/imoveis/${codigo}`);
     
-    // Log completo da resposta
-    console.log('[DEBUG] Resposta completa:', {
-      status: response.status,
-      data: {
-        ...response.data,
-        // Foco nos campos problemáticos
-        suitesData: {
-          Suites: response.data?.data?.Suites,
-          SuitesAntigo: response.data?.data?.SuitesAntigo,
-          // Campos de referência que funcionam
-          DormitoriosAntigo: response.data?.data?.DormitoriosAntigo,
-          VagasAntigo: response.data?.data?.VagasAntigo
-        }
-      }
-    });
-
-    if (!response.data?.data) {
-      console.warn('[DEBUG] Dados do imóvel não encontrados');
-      return { data: null, status: response.status || 404 };
-    }
-
-    // PADRÃO DE SAÍDA CORRIGIDO - Garante consistência
-    return {
+    // FORÇA USAR SuitesAntigo (valor do admin) EM TODOS OS CASOS
+    const dadosCorrigidos = {
       ...response.data,
       data: {
-        ...response.data.data,
-        // Força SuitesAntigo a ter valor (prioriza Suites se existir)
-        SuitesAntigo: response.data.data.Suites || response.data.data.SuitesAntigo || 0
+        ...response.data?.data,
+        Suites: response.data?.data?.SuitesAntigo || 0 // Sobrescreve Suites com SuitesAntigo
       }
     };
-    
+
+    console.log('[DEBUG] Dados corrigidos:', dadosCorrigidos);
+    return dadosCorrigidos;
+
   } catch (error) {
-    console.error(`[DEBUG] Erro ao buscar imóvel ${codigo}:`, {
-      error: error.response?.data || error.message,
-      endpoint: `/imoveis/${codigo}`
-    });
+    console.error('Erro ao buscar imóvel:', error);
     throw error;
   }
 }
