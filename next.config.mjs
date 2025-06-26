@@ -48,6 +48,10 @@ const nextConfig = {
       },
       {
         protocol: "https",
+        hostname: "veranosaopaulo.com/",
+      },
+      {
+        protocol: "https",
         hostname: "cdn.imoview.com.br",
         pathname: "/**", // <--- ALTERE ESTA LINHA PARA COBRIR TODOS OS CAMINHOS
       },
