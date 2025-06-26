@@ -232,14 +232,14 @@ export const useImovelForm = () => {
     []
   );
 
-  const fetchAddress = useCallback(async (cep) => {
+    const fetchAddress = useCallback(async (cep) => {
     const cleanCep = (cep || "").replace(/\D/g, "");
     if (cleanCep.length !== 8) return;
 
     setFormData(prev => ({ ...prev, isLoadingCEP: true, cepError: null }));
 
     try {
-      const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+      const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/` );
       if (!response.ok) throw new Error("Erro na resposta da API");
       
       const data = await response.json();
@@ -253,6 +253,27 @@ export const useImovelForm = () => {
       }
 
       const coords = await debouncedFetchCoordinates(data);
+      setFormData(prev => ({
+        ...prev,
+        Endereco: data.logradouro || prev.Endereco,
+        Bairro: data.bairro || prev.Bairro,
+        Cidade: data.localidade || prev.Cidade,
+        UF: data.uf || prev.UF,
+        Latitude: coords?.latitude || prev.Latitude,
+        Longitude: coords?.longitude || prev.Longitude,
+        isLoadingCEP: false,
+        cepError: null
+      }));
+    } catch (error) {
+      console.error("Erro ao buscar endereço:", error); // <--- Esta linha estava faltando
+      setFormData(prev => ({ // <--- Esta linha estava faltando
+        ...prev, // <--- Esta linha estava faltando
+        cepError: "Falha ao consultar CEP", // <--- Esta linha estava faltando
+        isLoadingCEP: false // <--- Esta linha estava faltando
+      })); // <--- Esta linha estava faltando
+    } // <--- Esta chave estava faltando
+  }, [debouncedFetchCoordinates]); // <--- Este parêntese e colchetes estavam faltando
+
       setFormData(prev => ({
         ...prev,
         Endereco: data.logradouro || prev.Endereco,
