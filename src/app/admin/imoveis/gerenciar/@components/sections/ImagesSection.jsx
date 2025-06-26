@@ -20,27 +20,55 @@ const ImagesSection = memo(({
   const [downloadingPhotos, setDownloadingPhotos] = useState(false);
 
   const baixarTodasImagens = async (imagens = []) => {
-    if (!Array.isArray(imagens) || imagens.length === 0) return;
+  if (!Array.isArray(imagens) || imagens.length === 0) return;
 
-    setDownloadingPhotos(true);
-    const zip = new JSZip();
-    const pasta = zip.folder("imagens");
+  setDownloadingPhotos(true);
+  const zip = new JSZip();
+  const pasta = zip.folder("imagens");
 
-    for (const [i, img] of imagens.entries()) {
-      try {
-        const response = await fetch(img.Foto);
-        const blob = await response.blob();
-        const nome = `imagem-${i + 1}.jpg`;
-        pasta?.file(nome, blob);
-      } catch (err) {
-        console.error(`Erro ao baixar imagem ${i + 1}`, err);
+  for (const [i, img] of imagens.entries()) {
+    try {
+      // 1. Limpa URL duplicada
+      const cleanUrl = (() => {
+        try {
+          const parsed = new URL(img.Foto);
+          if (parsed.pathname.startsWith("/_next/image")) {
+            const inner = parsed.searchParams.get("url");
+            return decodeURIComponent(inner || img.Foto);
+          }
+          return img.Foto;
+        } catch {
+          return img.Foto;
+        }
+      })();
+
+      // 2. Faz o download
+      const response = await fetch(cleanUrl);
+      if (!response.ok) {
+        console.warn(`❌ Erro ao baixar imagem ${i + 1}: ${response.status} ${response.statusText}`);
+        continue;
       }
-    }
 
+      // 3. Adiciona no zip
+      const blob = await response.blob();
+      const nome = `imagem-${i + 1}.jpg`;
+      pasta?.file(nome, blob);
+    } catch (err) {
+      console.error(`❌ Erro crítico ao baixar imagem ${i + 1}:`, err);
+    }
+  }
+
+  try {
     const content = await zip.generateAsync({ type: "blob" });
     saveAs(content, "imagens.zip");
-    setDownloadingPhotos(false);
-  };
+    console.log("✅ Download concluído com sucesso.");
+  } catch (zipError) {
+    console.error("❌ Erro ao gerar zip:", zipError);
+  }
+
+  setDownloadingPhotos(false);
+};
+
 
   const handleAddImageUrl = () => {
     const imageUrl = prompt("Digite a URL da imagem:");
