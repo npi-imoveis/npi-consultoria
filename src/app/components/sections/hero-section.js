@@ -16,16 +16,13 @@ export function HeroSection() {
         preload="auto"
       ></video>
 
-      {/* Imagem de fundo */}
-      {/* <img
-        className="absolute top-0 left-0 w-full h-full object-cover"
-        src="/assets/images/imoveis/imovel.jpg" // Substitua pelo caminho da sua imagem
-        alt=""
-      /> */}
-
       <div className="absolute top-0 left-0 w-full h-full bg-black/80"></div>
 
       <div className="relative flex flex-col items-center justify-end h-full text-center text-white pb-24">
+        <h1 className="text-3xl md:text-5xl font-extrabold mb-4">
+          Imóveis de Alto Padrão
+        </h1>
+
         <Typewriter />
 
         <div className="mt-8">
@@ -45,7 +42,6 @@ function Typewriter() {
 
   useEffect(() => {
     const currentWord = words[currentWordIndex];
-
     const typingSeed = isDeleting ? 50 : 100;
     const nextStep = isDeleting ? charIndex - 1 : charIndex + 1;
 
@@ -60,6 +56,7 @@ function Typewriter() {
         setCurrentWordIndex((prevIndex) => (prevIndex + 1) % words.length);
       }
     }, typingSeed);
+
     return () => clearTimeout(timeout);
   }, [charIndex, isDeleting, currentWordIndex, words]);
 
