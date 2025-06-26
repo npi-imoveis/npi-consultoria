@@ -34,7 +34,7 @@ export default async function Imovel({ params }) {
   // DEBUG: Log dos dados originais
   console.log('DEBUG - Dados do Imóvel:', {
     suites: response.data.Suites,
-    suitesAntigo: response.data.SuitesAntigo,
+    suiteAntigo: response.data.SuiteAntigo,
     camposNumericos: {
       dormitorios: response.data.DormitoriosAntigo,
       vagas: response.data.VagasAntigo,
@@ -45,8 +45,8 @@ export default async function Imovel({ params }) {
   // Padronização dos dados
   const imovel = {
     ...response.data,
-    // Garante que SuitesAntigo sempre terá valor
-    SuitesAntigo: response.data.SuitesAntigo ?? response.data.Suites ?? 0,
+    // Garante que SuiteAntigo sempre terá valor
+    SuiteAntigo: response.data.SuiteAntigo ?? response.data.Suites ?? 0,
     // Fallback para outros campos numéricos
     DormitoriosAntigo: response.data.DormitoriosAntigo ?? 0,
     VagasAntigo: response.data.VagasAntigo ?? 0,
@@ -67,7 +67,7 @@ export default async function Imovel({ params }) {
         price={imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}
         description={`${imovel.Categoria} à venda em ${imovel.BairroComercial}, ${imovel.Cidade}. ${
           imovel.Empreendimento
-        }: ${imovel.DormitoriosAntigo} quartos, ${imovel.SuitesAntigo} suítes, ${
+        }: ${imovel.DormitoriosAntigo} quartos, ${imovel.SuiteAntigo} suítes, ${
           imovel.BanheiroSocialQtd
         } banheiros, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt}. ${
           imovel.Situacao
