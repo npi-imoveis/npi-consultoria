@@ -387,8 +387,16 @@ export const useImovelForm = () => {
   const addSingleImage = useCallback((url) => {
   if (!url?.trim()) return;
   
-  // Nova linha para limpar a URL antes de adicionar
-  const cleanUrl = decodeURIComponent(url.split('?')[0]).trim();
+  // Limpeza robusta da URL
+  let cleanUrl;
+  try {
+    cleanUrl = decodeURIComponent(url)
+      .split('?')[0]  // Remove query params
+      .trim()
+      .replace(/\s+/g, ''); // Remove todos os espaços
+  } catch {
+    cleanUrl = url.split('?')[0].trim(); // Fallback se decode falhar
+  }
 
   setFormData(prev => ({
     ...prev,
@@ -396,7 +404,7 @@ export const useImovelForm = () => {
       ...(Array.isArray(prev.Foto) ? prev.Foto : []),
       {
         Codigo: `img-${Date.now()}`,
-        Foto: cleanUrl, // Usa a URL limpa aqui
+        Foto: cleanUrl,
         Destaque: "Nao",
         Ordem: (Array.isArray(prev.Foto) ? prev.Foto.length + 1 : 1)
       }
@@ -407,8 +415,16 @@ export const useImovelForm = () => {
   const updateImage = useCallback((codigo, newUrl) => {
   if (!codigo || !newUrl?.trim()) return;
   
-  // Adicione a mesma limpeza de URL
-  const cleanUrl = decodeURIComponent(newUrl.split('?')[0]).trim();
+  // Mesma lógica de limpeza
+  let cleanUrl;
+  try {
+    cleanUrl = decodeURIComponent(newUrl)
+      .split('?')[0]
+      .trim()
+      .replace(/\s+/g, '');
+  } catch {
+    cleanUrl = newUrl.split('?')[0].trim();
+  }
 
   setFormData(prev => ({
     ...prev,
@@ -477,26 +493,39 @@ export const useImovelForm = () => {
   }, []);
 
   const handleImagesUploaded = useCallback((images = []) => {
-    if (!Array.isArray(images)) return;
-    
-    setFormData(prev => {
-      const current = Array.isArray(prev.Foto) ? prev.Foto : [];
-      return {
-        ...prev,
-        Foto: [
-          ...current,
-          ...images
-            .filter(img => img?.Foto || img?.url)
-            .map((img, idx) => ({
+  if (!Array.isArray(images)) return;
+  
+  setFormData(prev => {
+    const current = Array.isArray(prev.Foto) ? prev.Foto : [];
+    return {
+      ...prev,
+      Foto: [
+        ...current,
+        ...images
+          .filter(img => img?.Foto || img?.url)
+          .map((img, idx) => {
+            const imageUrl = img.Foto || img.url;
+            let cleanUrl;
+            try {
+              cleanUrl = decodeURIComponent(imageUrl)
+                .split('?')[0]
+                .trim()
+                .replace(/\s+/g, '');
+            } catch {
+              cleanUrl = imageUrl.split('?')[0].trim();
+            }
+            
+            return {
               Codigo: `img-upload-${Date.now()}-${idx}`,
-              Foto: img.Foto || img.url,
+              Foto: cleanUrl,
               Destaque: "Nao",
               Ordem: current.length + idx + 1
-            }))
-        ]
-      };
-    });
-  }, []);
+            };
+          })
+      ]
+    };
+  });
+}, []);
 
   // Validação do formulário
   useEffect(() => {
