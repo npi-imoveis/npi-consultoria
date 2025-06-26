@@ -232,14 +232,14 @@ export const useImovelForm = () => {
     []
   );
 
-    const fetchAddress = useCallback(async (cep) => {
+  const fetchAddress = useCallback(async (cep) => {
     const cleanCep = (cep || "").replace(/\D/g, "");
     if (cleanCep.length !== 8) return;
 
     setFormData(prev => ({ ...prev, isLoadingCEP: true, cepError: null }));
 
     try {
-      const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/` );
+      const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
       if (!response.ok) throw new Error("Erro na resposta da API");
       
       const data = await response.json();
@@ -265,29 +265,13 @@ export const useImovelForm = () => {
         cepError: null
       }));
     } catch (error) {
-      console.error("Erro ao buscar endereço:", error); // <--- Esta linha estava faltando
-      setFormData(prev => ({ // <--- Esta linha estava faltando
-        ...prev, // <--- Esta linha estava faltando
-        cepError: "Falha ao consultar CEP", // <--- Esta linha estava faltando
-        isLoadingCEP: false // <--- Esta linha estava faltando
-      })); // <--- Esta linha estava faltando
-    } // <--- Esta chave estava faltando
-  }, [debouncedFetchCoordinates]); // <--- Este parêntese e colchetes estavam faltando
-
-      setFormData(prev => ({
-        ...prev,
-        Endereco: data.logradouro || prev.Endereco,
-        Bairro: data.bairro || prev.Bairro,
-        Cidade: data.localidade || prev.Cidade,
-        UF: data.uf || prev.UF,
-        Latitude: coords?.latitude || prev.Latitude,
-        Longitude: coords?.longitude || prev.Longitude,
-        isLoadingCEP: false,
-        cepError: null
+      console.error("Erro ao buscar endereço:", error);
+      setFormData(prev => ({ 
+        ...prev, 
+        cepError: "Falha ao consultar CEP",
+        isLoadingCEP: false 
       }));
-    } catch (error) {
-
-
+    }
   }, [debouncedFetchCoordinates]);
 
   // O handleChange vem logo em seguida...
@@ -401,56 +385,34 @@ export const useImovelForm = () => {
   const addImage = useCallback(() => setShowImageModal(true), []);
   
   const addSingleImage = useCallback((url) => {
-  if (!url?.trim()) return;
-  
-  // Limpeza robusta da URL
-  let cleanUrl;
-  try {
-    cleanUrl = decodeURIComponent(url)
-      .split('?')[0]  // Remove query params
-      .trim()
-      .replace(/\s+/g, ''); // Remove todos os espaços
-  } catch {
-    cleanUrl = url.split('?')[0].trim(); // Fallback se decode falhar
-  }
-
-  setFormData(prev => ({
-    ...prev,
-    Foto: [
-      ...(Array.isArray(prev.Foto) ? prev.Foto : []),
-      {
-        Codigo: `img-${Date.now()}`,
-        Foto: cleanUrl,
-        Destaque: "Nao",
-        Ordem: (Array.isArray(prev.Foto) ? prev.Foto.length + 1 : 1)
-      }
-    ]
-  }));
-}, []);
+    if (!url?.trim()) return;
+    
+    setFormData(prev => ({
+      ...prev,
+      Foto: [
+        ...(Array.isArray(prev.Foto) ? prev.Foto : []),
+        {
+          Codigo: `img-${Date.now()}`,
+          Foto: url.trim(),
+          Destaque: "Nao",
+          Ordem: (Array.isArray(prev.Foto) ? prev.Foto.length + 1 : 1)
+        }
+      ]
+    }));
+  }, []);
 
   const updateImage = useCallback((codigo, newUrl) => {
-  if (!codigo || !newUrl?.trim()) return;
-  
-  // Mesma lógica de limpeza
-  let cleanUrl;
-  try {
-    cleanUrl = decodeURIComponent(newUrl)
-      .split('?')[0]
-      .trim()
-      .replace(/\s+/g, '');
-  } catch {
-    cleanUrl = newUrl.split('?')[0].trim();
-  }
-
-  setFormData(prev => ({
-    ...prev,
-    Foto: Array.isArray(prev.Foto) 
-      ? prev.Foto.map(img => 
-          img.Codigo === codigo ? { ...img, Foto: cleanUrl } : img
-        )
-      : []
-  }));
-}, []);
+    if (!codigo || !newUrl?.trim()) return;
+    
+    setFormData(prev => ({
+      ...prev,
+      Foto: Array.isArray(prev.Foto) 
+        ? prev.Foto.map(img => 
+            img.Codigo === codigo ? { ...img, Foto: newUrl.trim() } : img
+          )
+        : []
+    }));
+  }, []);
 
   const removeImage = useCallback((codigo) => {
     if (!codigo) return;
@@ -509,39 +471,26 @@ export const useImovelForm = () => {
   }, []);
 
   const handleImagesUploaded = useCallback((images = []) => {
-  if (!Array.isArray(images)) return;
-  
-  setFormData(prev => {
-    const current = Array.isArray(prev.Foto) ? prev.Foto : [];
-    return {
-      ...prev,
-      Foto: [
-        ...current,
-        ...images
-          .filter(img => img?.Foto || img?.url)
-          .map((img, idx) => {
-            const imageUrl = img.Foto || img.url;
-            let cleanUrl;
-            try {
-              cleanUrl = decodeURIComponent(imageUrl)
-                .split('?')[0]
-                .trim()
-                .replace(/\s+/g, '');
-            } catch {
-              cleanUrl = imageUrl.split('?')[0].trim();
-            }
-            
-            return {
+    if (!Array.isArray(images)) return;
+    
+    setFormData(prev => {
+      const current = Array.isArray(prev.Foto) ? prev.Foto : [];
+      return {
+        ...prev,
+        Foto: [
+          ...current,
+          ...images
+            .filter(img => img?.Foto || img?.url)
+            .map((img, idx) => ({
               Codigo: `img-upload-${Date.now()}-${idx}`,
-              Foto: cleanUrl,
+              Foto: img.Foto || img.url,
               Destaque: "Nao",
               Ordem: current.length + idx + 1
-            };
-          })
-      ]
-    };
-  });
-}, []);
+            }))
+        ]
+      };
+    });
+  }, []);
 
   // Validação do formulário
   useEffect(() => {
