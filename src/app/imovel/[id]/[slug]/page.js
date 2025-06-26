@@ -22,7 +22,7 @@ import { notFound, redirect } from "next/navigation";
 export async function generateMetadata({ params }) {
   // ... (mantenha o código existente de generateMetadata)
 }
-
+export const revalidate = 0; // Desativa cache
 export default async function Imovel({ params }) {
   const { id, slug } = params;
   const response = await getImovelById(id);
