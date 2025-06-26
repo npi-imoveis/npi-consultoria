@@ -1,16 +1,3 @@
-Boa tarde!
-
-O erro `400 (Bad Request)` que você está recebendo na requisição `_next/image` indica que a URL que está sendo passada para o componente de otimização de imagem do Next.js já é uma URL otimizada pelo Next.js, ou seja, está havendo um "aninhamento" de URLs de otimização.
-
-O Next.js espera que você forneça a URL **original** da imagem (por exemplo, a URL do S3), e ele mesmo se encarrega de transformá-la em uma URL otimizada (`_next/image?url=...`). Quando você passa uma URL que já é `_next/image?url=...` para ele, ele tenta otimizar novamente, resultando em uma URL inválida e no erro 400.
-
-A solução é garantir que, ao adicionar ou atualizar as fotos no seu `formData`, você esteja sempre armazenando a URL **original** da imagem, e não uma URL já processada pelo Next.js.
-
-Para isso, você pode criar uma função auxiliar que "desaninha" essas URLs, extraindo a URL original, e usá-la nas funções `addSingleImage`, `updateImage` e `handleImagesUploaded`.
-
-Aqui está a função e como aplicá-la ao seu código:
-
-```javascript
 import { useState, useEffect, useRef, useCallback } from "react";
 import { formatterSlug } from "@/app/utils/formatter-slug";
 import { OpenStreetMapProvider } from "leaflet-geosearch";
@@ -278,6 +265,7 @@ export const useImovelForm = () => {
         cepError: null
       }));
     } catch (error) {
+
 
   }, [debouncedFetchCoordinates]);
 
