@@ -4,9 +4,9 @@ import { NextResponse } from "next/server";
 export function middleware(request) {
   const { pathname } = request.nextUrl;
 
-  // 🔁 Caso 1: URL incompleta do tipo /imovel-12345/ → reescreve para /imovel/12345
+  // 🔁 Caso 1: URL incompleta do tipo /imovel-12345/ → reescreve para /imovel-12345
   if (pathname.match(/^\/imovel-(\d+)\/?$/)) {
-    const [, id] = pathname.match(/^\/imovel-(\d+)\/?$/);
+    const [, id] = pathname.match(/^\/imovel-${id}/${slug}`;
 
     const url = request.nextUrl.clone();
     url.pathname = `/imovel/${id}`;
