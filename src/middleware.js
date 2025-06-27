@@ -5,12 +5,19 @@ export function middleware(request) {
   const { pathname } = request.nextUrl;
 
   // NOVO: Trata URLs como /imovel-9507/ ou /imovel-9507 (sem slug)
-  // O objetivo é reescrever para o formato interno /imovel/[id]
+  // O objetivo é reescrever para o formato interno /imovel/[id]/[slug_temporario]
   // para que a página do imóvel possa lidar com o redirecionamento para o slug correto.
+  // Esta regra deve vir antes das outras para garantir que URLs sem slug sejam capturadas primeiro.
   if (pathname.match(/^\/imovel-(\d+)\/?$/)) {
     const [, id] = pathname.match(/^\/imovel-(\d+)\/?$/);
     const url = request.nextUrl.clone();
-    url.pathname = `/imovel/${id}`; // Reescreve para o caminho interno /imovel/[id]
+    // Reescreve para o caminho interno /imovel/[id]/[slug_temporario]
+    // O 'temp-slug-for-redirect' é um slug temporário.
+    // Sua página de imóvel (e.g., pages/imovel/[id]/[slug].js) deve ser capaz de:
+    // 1. Receber o 'id' e o 'slug' (que será 'temp-slug-for-redirect').
+    // 2. Ignorar 'temp-slug-for-redirect' e buscar o slug correto com base no 'id'.
+    // 3. Redirecionar o usuário para a URL com o slug correto (e.g., /imovel-9507/avenida-antonio-joaquim-de-moura-andrade-597).
+    url.pathname = `/imovel/${id}/temp-slug-for-redirect`;
     return NextResponse.rewrite(url);
   }
 
