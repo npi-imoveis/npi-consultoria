@@ -1,25 +1,33 @@
 // app/api/get-slug-by-id/route.js
 
 import { NextResponse } from 'next/server';
-import { getImovelById } from '@/app/services';
 
-export async function GET(req) {
-  const { searchParams } = new URL(req.url);
-  const id = searchParams.get('id');
+// Simulação de banco de dados - substitua pela sua lógica real
+const imoveis = {
+  '9507': { slug: 'avenida-antonio-joaquim-de-moura-andrade-597' },
+  // Adicione outros imóveis conforme necessário
+};
 
-  if (!id) {
-    return NextResponse.json({ error: 'ID not provided' }, { status: 400 });
-  }
+export async function GET(request, { params }) {
+  const { id } = params;
 
   try {
-    const response = await getImovelById(id);
-
-    if (response?.data?.Slug) {
-      return NextResponse.json({ slug: response.data.Slug });
+    // Verifica se o ID existe no "banco de dados"
+    if (imoveis[id]) {
+      return NextResponse.json({
+        id,
+        slug: imoveis[id].slug
+      });
     } else {
-      return NextResponse.json({ slug: null }, { status: 404 });
+      return NextResponse.json(
+        { error: 'Imóvel não encontrado' },
+        { status: 404 }
+      );
     }
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Erro ao buscar imóvel' },
+      { status: 500 }
+    );
   }
 }
