@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { connectToDatabase } from "@/app/lib/mongodb";
 import Imovel from "@/app/models/Imovel";
 import { NextResponse } from "next/server";
