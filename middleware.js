@@ -19,12 +19,12 @@ export async function middleware(request) {
       const slug = data.slug;
 
       if (slug) {
-        // Redireciona para a URL completa e funcional
+        // Redireciona para a URL NO PADRÃO CORRETO QUE O NEXT USA
         return NextResponse.redirect(`${origin}/imovel/${id}/${slug}`);
       }
     }
 
-    // Se não encontrar slug, redireciona para home ou página de erro amigável
+    // Se não encontrar slug, redireciona para home
     return NextResponse.redirect(origin);
   }
 
