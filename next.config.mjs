@@ -48,7 +48,11 @@ const nextConfig = {
       },
       {
         protocol: "https",
-        hostname: "veranosaopaulo.com/",
+        hostname: "veranosaopaulo.com",
+      },
+      {
+        protocol: "https",
+        hostname: "veranocampinas.com",
       },
       {
         protocol: "https",
