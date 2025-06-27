@@ -40,8 +40,7 @@ export function middleware(request) {
 
 export const config = {
   matcher: [
-    "/imovel-:id",             // captura /imovel-123
-    "/imovel-:id/:slug*",      // captura /imovel-123/slug
-    "/imovel/:id/:slug*",      // captura /imovel/123/slug
+    "/imovel-:id/:slug*",     // cobre /imovel-9507/ e /imovel-9507/slug
+    "/imovel/:id/:slug*",     // cobre /imovel/9507/slug
   ],
 };
