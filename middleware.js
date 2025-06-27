@@ -20,7 +20,7 @@ export async function middleware(request) {
 
       if (slug) {
         // Redireciona para a URL completa e funcional
-        return NextResponse.redirect(`${origin}/imovel-${id}/${slug}`);
+        return NextResponse.redirect(`${origin}/imovel/${id}/${slug}`);
       }
     }
 
