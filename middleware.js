@@ -1,4 +1,8 @@
 // middleware.js
+export function middleware(request) {
+  console.log("🧠 Middleware executado para:", request.nextUrl.pathname);
+  // ...
+}
 import { NextResponse } from "next/server";
 
 export function middleware(request) {
