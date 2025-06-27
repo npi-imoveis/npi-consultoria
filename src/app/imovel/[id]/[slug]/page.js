@@ -86,7 +86,7 @@ const imovel = {
 
 const slugCorreto = imovel.Slug;
 
-if (slug !== slugCorreto) {
+if (slug === "__" || slug !== slugCorreto) {
   redirect(`/imovel-${id}/${slugCorreto}`);
 }
 
