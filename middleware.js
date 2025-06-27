@@ -3,37 +3,56 @@ import { NextResponse } from 'next/server';
 export async function middleware(request) {
   const url = request.nextUrl;
   const pathname = url.pathname;
+  
+  // Log inicial para verificar se o middleware está sendo acionado
+  console.log('🛠️ Middleware executado para URL:', request.url);
+  console.log('🔍 Pathname analisado:', pathname);
 
-  // Verifica se é uma rota de imóvel sem slug (ex: /imovel-9507)
+  // Verifica se é uma rota de imóvel sem slug
   const imovelPattern = /^\/imovel-(\d+)(\/)?$/;
   const match = pathname.match(imovelPattern);
 
-  if (match && !match[2]) { // Se tem número mas não tem barra no final
+  if (match) {
+    console.log('✅ Padrão de imóvel identificado');
     const id = match[1];
+    const hasTrailingSlash = match[2];
     
-    try {
-      // Faz a chamada para a API interna para obter o slug completo
-      const apiUrl = new URL(`/api/get-slug-by-id/${id}`, request.url);
-      const response = await fetch(apiUrl);
-      
-      if (response.ok) {
-        const data = await response.json();
-        
-        if (data.slug) {
-          // Redireciona para a URL completa
-          return NextResponse.redirect(new URL(`/imovel-${id}/${data.slug}`, request.url));
+    console.log(`📌 ID extraído: ${id}`);
+    console.log(`🔗 Tem barra no final?: ${hasTrailingSlash ? 'Sim' : 'Não'}`);
+
+    if (!hasTrailingSlash) {
+      try {
+        const apiUrl = new URL(`/api/get-slug-by-id/${id}`, request.url);
+        console.log('🌐 Chamando API:', apiUrl.toString());
+
+        const response = await fetch(apiUrl);
+        console.log('📡 Status da resposta:', response.status);
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log('📦 Dados recebidos:', JSON.stringify(data));
+
+          if (data.slug) {
+            const destination = new URL(`/imovel-${id}/${data.slug}`, request.url);
+            console.log('↪️ Redirecionando para:', destination.toString());
+            return NextResponse.redirect(destination, 301); // 301 permanente para SEO
+          } else {
+            console.warn('⚠️ Slug não encontrado nos dados da API');
+          }
+        } else {
+          console.error('❌ Erro na resposta da API:', response.statusText);
         }
+      } catch (error) {
+        console.error('💥 Erro durante o fetch:', error.message);
       }
-    } catch (error) {
-      console.error('Error fetching slug:', error);
-      // Pode redirecionar para uma página genérica ou manter o 404
     }
+  } else {
+    console.log('➡️ Não é uma rota de imóvel, passando adiante');
   }
 
-  // Se não for uma rota de imóvel ou ocorrer erro, continua normalmente
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/imovel-:id*'], // Aplica apenas a rotas que começam com /imovel-
+  matcher: ['/imovel-:id*'],
 };
