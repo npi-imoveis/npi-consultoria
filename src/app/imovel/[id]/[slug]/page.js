@@ -86,9 +86,9 @@ const imovel = {
 
 const slugCorreto = imovel.Slug;
 
-if (slug === "__" || slug !== slugCorreto) {
-  redirect(`/imovel-${id}/${slugCorreto}`);
-}
+if (slug !== slugCorreto) {
+    redirect(`/imovel-${id}/${slugCorreto}`);
+  }  
 
   const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
 
