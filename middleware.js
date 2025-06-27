@@ -19,8 +19,8 @@ export async function middleware(request) {
       const slug = data.slug;
 
       if (slug) {
-        // Redireciona para a URL NO PADRÃO CORRETO QUE O NEXT USA
-        return NextResponse.redirect(`${origin}/imovel/${id}/${slug}`);
+        // ✅ Redireciona corretamente para /imovel-9507/{slug}
+        return NextResponse.redirect(`${origin}/imovel-${id}/${slug}`);
       }
     }
 
@@ -32,5 +32,5 @@ export async function middleware(request) {
 }
 
 export const config = {
-  matcher: ['/imovel-:path*'],
+  matcher: ['/imovel-*'], // continua correto
 };
