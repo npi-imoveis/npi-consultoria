@@ -9,11 +9,8 @@ import { useInView } from "react-intersection-observer";
 import useImovelStore from "@/app/store/imovelStore";
 import dynamic from 'next/dynamic';
 
-
-// Componente memoizado para o card de imóvel
 const MemoizedCardHome = memo(CardHome);
 
-// Componente memoizado para o botão de scroll
 const ScrollButton = memo(({ direction, onClick, children }) => (
   <button
     onClick={onClick}
@@ -26,7 +23,6 @@ const ScrollButton = memo(({ direction, onClick, children }) => (
 
 ScrollButton.displayName = "ScrollButton";
 
-// Componente virtualizado para cada cartão de imóvel
 const VirtualizedCard = memo(({ imovel, isVisible }) => {
   const { ref, inView } = useInView({
     threshold: 0.1,
@@ -49,20 +45,15 @@ VirtualizedCard.displayName = "VirtualizedCard";
 export function PropertyList() {
   const carouselRef = useRef(null);
   const { adicionarVariosImoveisCache } = useImovelStore();
-
-  // Controle local de visibilidade para otimização de renderização
   const [visibleRange, setVisibleRange] = useState({ start: 0, end: 3 });
 
-  // Utilize selector para evitar re-renderizações desnecessárias
   const imoveisDestaque = useDestaquesStore(state => state.imoveisDestaque);
   const isLoading = useDestaquesStore(state => state.isLoading);
   const error = useDestaquesStore(state => state.error);
   const fetchImoveisDestaque = useDestaquesStore(state => state.fetchImoveisDestaque);
 
-  // Cache em memória usando useMemo
   const cachedImoveisDestaque = useMemo(() => imoveisDestaque, [imoveisDestaque]);
 
-  // Função de scroll memoizada com atualização de visibilidade
   const scroll = useCallback((direction) => {
     if (carouselRef.current) {
       const scrollAmount = 350;
@@ -76,31 +67,26 @@ export function PropertyList() {
         behavior: 'smooth'
       });
 
-      // Atualiza quais cartões estão visíveis
       const itemWidth = 350;
       const startItem = Math.floor(newScroll / itemWidth);
       const visibleItems = Math.ceil(carouselRef.current.clientWidth / itemWidth);
 
       setVisibleRange({
         start: startItem,
-        end: startItem + visibleItems + 1 // +1 para pré-carregar o próximo
+        end: startItem + visibleItems + 1
       });
     }
   }, []);
 
-  // Carrega os dados apenas uma vez quando o componente monta
   useEffect(() => {
-    // Verifica se já temos dados em cache antes de fazer nova requisição
     if (imoveisDestaque.length === 0) {
       fetchImoveisDestaque().then(imoveis => {
-        // Armazena os dados obtidos no cache geral de imóveis
         if (imoveis && imoveis.length) {
           adicionarVariosImoveisCache(imoveis);
         }
       });
     }
 
-    // Configura a visibilidade inicial
     if (carouselRef.current) {
       const itemWidth = 350;
       const visibleItems = Math.ceil(carouselRef.current.clientWidth / itemWidth);
@@ -108,7 +94,6 @@ export function PropertyList() {
     }
   }, [fetchImoveisDestaque, imoveisDestaque.length, adicionarVariosImoveisCache]);
 
-  // Atualiza cartões visíveis quando o usuário scrollar manualmente
   useEffect(() => {
     const handleScroll = () => {
       if (carouselRef.current) {
@@ -136,14 +121,13 @@ export function PropertyList() {
       <div className="w-full bg-zinc-100 py-16">
         <div className="container mx-auto">
           <TitleSection
-          destaque
-          center
-          section="Destaque"
-          title="Imóveis de Alto Padrão"
-          description="Conheça os imóveis em destaque."
-          as="h2" // 👈 ISSO É O QUE GARANTE
+            destaque
+            center
+            section="Destaque"
+            title="Imóveis de Alto Padrão"
+            description="Conheça os imóveis em destaque."
+            as="h2"
           />
-
           <p className="text-red-500 text-center py-10">Erro: {error}</p>
         </div>
       </div>
@@ -158,12 +142,11 @@ export function PropertyList() {
           center
           section="Destaque"
           title="Imóveis de Alto Padrão"
-          description="Conheca os imóveis em destaque."
+          description="Conheça os imóveis em destaque."
+          as="h2"
         />
 
-        <ScrollButton direction="left" onClick={() => scroll("left")}>
-          <ChevronLeftIcon className="w-6 h-6" />
-        </ScrollButton>
+        <ScrollButton direction="left" onClick={() => scroll("left")}> <ChevronLeftIcon className="w-6 h-6" /> </ScrollButton>
 
         <div
           ref={carouselRef}
@@ -172,7 +155,6 @@ export function PropertyList() {
           aria-label="Lista de imóveis em destaque"
         >
           {isLoading ? (
-            // Skeleton loading state com placeholders mais leves
             Array.from({ length: 4 }).map((_, index) => (
               <div key={`skeleton-${index}`} className="animate-pulse">
                 <div className="w-[350px] h-[400px] bg-gray-200 rounded-lg"></div>
@@ -191,9 +173,7 @@ export function PropertyList() {
           )}
         </div>
 
-        <ScrollButton direction="right" onClick={() => scroll("right")}>
-          <ChevronRightIcon className="w-6 h-6" />
-        </ScrollButton>
+        <ScrollButton direction="right" onClick={() => scroll("right")}> <ChevronRightIcon className="w-6 h-6" /> </ScrollButton>
       </div>
     </section>
   );
