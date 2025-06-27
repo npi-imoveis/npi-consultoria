@@ -25,9 +25,10 @@ export function HeroSection() {
       {/* H1 abaixo do menu fixo */}
       {isHome && (
         <div className="absolute top-24 left-1/2 transform -translate-x-1/2 text-center z-20">
-          <h1 className="text-white text-sm sm:text-base md:text-xl font-medium tracking-wide opacity-80 whitespace-nowrap text-center">
+          <h1 className="text-white text-sm sm:text-base md:text-lg lg:text-base font-medium tracking-wide opacity-80 whitespace-nowrap text-center">
   Imóveis de Alto Padrão
 </h1>
+
         </div>
       )}
 
