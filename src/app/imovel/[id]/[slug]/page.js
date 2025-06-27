@@ -72,22 +72,23 @@ export default async function Imovel({ params }) {
   const { id, slug } = params;
   const response = await getImovelById(id);
 
-  if (!response?.data) {
-    notFound();
-  }
+if (!response?.data) {
+  notFound();
+}
 
-  const imovel = {
-    ...response.data,
-    SuiteAntigo: response.data.SuiteAntigo ?? response.data.Suites ?? 0,
-    DormitoriosAntigo: response.data.DormitoriosAntigo ?? 0,
-    VagasAntigo: response.data.VagasAntigo ?? 0,
-    BanheiroSocialQtd: response.data.BanheiroSocialQtd ?? 0,
-  };
+const imovel = {
+  ...response.data,
+  SuiteAntigo: response.data.SuiteAntigo ?? response.data.Suites ?? 0,
+  DormitoriosAntigo: response.data.DormitoriosAntigo ?? 0,
+  VagasAntigo: response.data.VagasAntigo ?? 0,
+  BanheiroSocialQtd: response.data.BanheiroSocialQtd ?? 0,
+};
 
-  const slugCorreto = imovel.Slug;
-  if (slug !== slugCorreto) {
-    redirect(`/imovel-${id}/${slugCorreto}`);
-  }
+const slugCorreto = imovel.Slug;
+
+if (slug !== slugCorreto) {
+  redirect(`/imovel-${id}/${slugCorreto}`);
+}
 
   const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
 
