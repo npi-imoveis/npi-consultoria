@@ -13,7 +13,7 @@ export function middleware(request) {
     const [, id] = pathname.match(/^\/imovel-(\d+)\/?$/);
 
     const url = request.nextUrl.clone();
-    url.pathname = `/imovel-${id}/__`;
+    url.pathname = `/imovel/${id}/__`;
 
     return NextResponse.rewrite(url);
   }
