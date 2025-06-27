@@ -1,7 +1,6 @@
 // middleware.js
 
 import { NextResponse } from 'next/server';
-import { NextRequest } from 'next/server';
 
 export function middleware(request) {
   const { pathname } = request.nextUrl;
@@ -11,9 +10,10 @@ export function middleware(request) {
 
   if (match) {
     const id = match[1];
+
     // Redireciona para a rota que cairá no app/imovel/[id]/[slug]/page.js
     // onde você já tem a lógica para buscar o slug correto e redirecionar automaticamente
-    return NextResponse.redirect(new URL(`/imovel/${id}/`, request.url));
+    return NextResponse.redirect(new URL(`/imovel/${id}/`, request.nextUrl.origin));
   }
 
   // Se não casar, segue normalmente
@@ -22,6 +22,6 @@ export function middleware(request) {
 
 export const config = {
   matcher: [
-    '/imovel-:path*'
+    '/imovel-:path*',
   ],
 };
