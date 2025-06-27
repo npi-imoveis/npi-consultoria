@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 export function middleware(request) {
   const { pathname } = request.nextUrl;
 
-  // ✅ Novo: Intercepta URLs do tipo /imovel-123/ (sem slug) e reescreve para /imovel-123/__
+  // ✅ 1. Intercepta /imovel-123/ (sem slug) → reescreve para /imovel-123/__
   if (pathname.match(/^\/imovel-(\d+)\/?$/)) {
     const [, id] = pathname.match(/^\/imovel-(\d+)\/?$/);
 
@@ -14,8 +14,7 @@ export function middleware(request) {
     return NextResponse.rewrite(url);
   }
 
-  // Verifica se a URL segue o padrão /imovel-:id/:slug
-  // Ex: /imovel-123/apartamento-centro
+  // ✅ 2. Intercepta /imovel-123/nome-do-imovel → reescreve internamente para /imovel/123/nome-do-imovel
   if (pathname.match(/^\/imovel-([^\/]+)\/(.+)$/)) {
     const [, id, slug] = pathname.match(/^\/imovel-([^\/]+)\/(.+)$/);
 
@@ -25,7 +24,7 @@ export function middleware(request) {
     return NextResponse.rewrite(url);
   }
 
-  // Se alguém acessar diretamente o formato /imovel/:id/:slug, redireciona para /imovel-:id/:slug
+  // ✅ 3. Intercepta /imovel/123/nome-do-imovel → redireciona para /imovel-123/nome-do-imovel
   if (pathname.match(/^\/imovel\/([^\/]+)\/(.+)$/)) {
     const [, id, slug] = pathname.match(/^\/imovel\/([^\/]+)\/(.+)$/);
 
@@ -35,16 +34,19 @@ export function middleware(request) {
     return NextResponse.redirect(url);
   }
 
+  // ✅ 4. Passa adiante se não for nenhuma das rotas acima
   return NextResponse.next();
 }
 
 export const config = {
   matcher: [
-    // Novo matcher para capturar /imovel-123/
+    // Captura URLs sem slug como /imovel-123/
     "/imovel-*/",
-    // Intercepta /imovel-123/nome-do-imovel
+
+    // Captura URLs completas como /imovel-123/slug-do-imovel
     "/imovel-:id/:slug*",
-    // Intercepta /imovel/123/nome-do-imovel
+
+    // Captura URLs antigas como /imovel/123/slug-do-imovel
     "/imovel/:id/:slug*",
   ],
 };
