@@ -1,4 +1,4 @@
-// src/app/api/get-slug-by-id/[id]/route.js
+// app/api/get-slug-by-id/[id]/route.js
 import { NextResponse } from 'next/server';
 
 export const dynamic = 'force-dynamic';
