@@ -1,56 +1,36 @@
-// middleware.js
 import { NextResponse } from 'next/server';
 
-// Cache simples em memória (opcional para URLs prioritárias)
-const CACHE_REDIRECTS = new Map([
-  ['9507', 'avenida-antonio-joaquim-de-moura-andrade-597'],
-  ['80867', 'edificio-searpa']
-  // Adicione outros IDs críticos
-]);
+export const config = {
+  matcher: ['/imovel-:id*'], // Captura todas as URLs /imovel-XXXX
+};
 
 export async function middleware(request) {
-  const url = request.nextUrl;
-  const path = url.pathname;
+  const { pathname, origin } = request.nextUrl;
+  const match = pathname.match(/^\/imovel-(\d+)\/?$/);
 
-  // Captura padrão /imovel-XXXX
-  const match = path.match(/^\/imovel-(\d+)(?:\/|$)/);
-  
-  if (!match) return NextResponse.next();
+  if (match) {
+    const id = match[1];
 
-  const id = match[1];
-  
-  // 1. Verifica cache de emergência
-  if (CACHE_REDIRECTS.has(id)) {
-    return NextResponse.redirect(
-      new URL(`/imovel-${id}/${CACHE_REDIRECTS.get(id)}`, url),
-      301
-    );
-  }
+    try {
+      const apiUrl = `${origin}/api/get-slug-by-id/${id}`;
+      const response = await fetch(apiUrl, { cache: 'no-store' });
 
-  // 2. Consulta API dinâmica
-  try {
-    const apiUrl = new URL(`/api/get-slug-by-id/${id}`, url.origin);
-    const response = await fetch(apiUrl, {
-      next: { revalidate: 3600 } // Cache de 1h
-    });
+      if (response.ok) {
+        const data = await response.json();
 
-    if (response.ok) {
-      const { slug } = await response.json();
-      if (slug) {
-        return NextResponse.redirect(
-          new URL(`/imovel-${id}/${slug}`, url),
-          301
-        );
+        if (data?.slug) {
+          // Redireciona para a URL correta
+          const redirectUrl = `${origin}/imovel-${id}/${data.slug}`;
+          return NextResponse.redirect(redirectUrl, 301);
+        }
       }
+    } catch (error) {
+      console.error(`Erro no middleware para ID ${id}:`, error);
     }
-  } catch (error) {
-    console.error(`Middleware error for ID ${id}:`, error);
+
+    // Se não encontrar slug, redireciona para a busca como fallback
+    return NextResponse.redirect(`${origin}/busca`, 302);
   }
 
-  // 3. Fallback para página de busca
-  return NextResponse.rewrite(new URL('/busca', url));
+  return NextResponse.next();
 }
-
-export const config = {
-  matcher: ['/imovel-:id*']
-};
