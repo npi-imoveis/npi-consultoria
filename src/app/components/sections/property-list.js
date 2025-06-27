@@ -136,12 +136,13 @@ export function PropertyList() {
       <div className="w-full bg-zinc-100 py-16">
         <div className="container mx-auto">
           <TitleSection
-            destaque
-            center
-            section="Destaque"
-            title="Imóveis de Alto Padrão"
-            description="Conheca os imóveis em destaque."
-          />
+          destaque
+         center
+         section="Destaque"
+         title="Imóveis de Alto Padrão"
+         description="Conheça os imóveis em destaque."
+         as="h2" // ✅ garante que será h2
+        />
           <p className="text-red-500 text-center py-10">Erro: {error}</p>
         </div>
       </div>
