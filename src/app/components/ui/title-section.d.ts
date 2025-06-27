@@ -1,5 +1,3 @@
-// app/components/ui/title-section.tsx
-
 import { ReactNode } from "react";
 
 export interface TitleSectionProps {
@@ -8,7 +6,7 @@ export interface TitleSectionProps {
   description?: string;
   button?: boolean;
   center?: boolean;
-  as?: "h1" | "h2" | "h3"; // define o tipo de heading
+  as?: "h1" | "h2" | "h3"; // nova prop
 }
 
 export function TitleSection({
@@ -17,7 +15,7 @@ export function TitleSection({
   description,
   button,
   center = false,
-  as = "h2", // padrão seguro para SEO
+  as = "h2", // por padrão será h2
 }: TitleSectionProps): ReactNode {
   const HeadingTag = as;
 
