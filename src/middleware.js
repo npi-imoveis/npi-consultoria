@@ -40,13 +40,8 @@ export function middleware(request) {
 
 export const config = {
   matcher: [
-    // Captura URLs sem slug como /imovel-123/
-    "/imovel-*/",
-
-    // Captura URLs completas como /imovel-123/slug-do-imovel
-    "/imovel-:id/:slug*",
-
-    // Captura URLs antigas como /imovel/123/slug-do-imovel
-    "/imovel/:id/:slug*",
+    "/imovel-:id",             // captura /imovel-123
+    "/imovel-:id/:slug*",      // captura /imovel-123/slug
+    "/imovel/:id/:slug*",      // captura /imovel/123/slug
   ],
 };
