@@ -1,42 +1,49 @@
-// app/api/get-slug-by-id/[id]/route.js
 import { NextResponse } from 'next/server';
 
-// Dados mockados (substitua pela sua conexão real com o banco de dados)
-const imoveis = {
-  '9507': { slug: 'avenida-antonio-joaquim-de-moura-andrade-597' },
-  '80867': { slug: 'edificio-searpa' }
-  // Adicione mais imóveis conforme necessário
-};
+// Configuração otimizada para Vercel
+export const dynamic = 'force-dynamic';
+export const revalidate = 3600; // 1 hora
 
-export async function GET(request, { params }) {
+export async function GET(_, { params }) {
   const { id } = params;
 
   try {
-    // Verifica se o ID existe nos dados
-    if (imoveis[id]) {
-      return NextResponse.json({
-        success: true,
-        id,
-        slug: imoveis[id].slug
-      }, {
-        headers: {
-          'Cache-Control': 'public, max-age=3600' // Cache de 1 hora
-        }
-      });
-    } else {
-      return NextResponse.json({
-        success: false,
-        error: 'Imóvel não encontrado'
-      }, { status: 404 });
+    // Substitua por sua consulta real ao banco de dados
+    const imovel = await findImovelById(id); // Sua função de busca
+    
+    if (!imovel?.slug) {
+      return NextResponse.json(
+        { error: 'Not found' },
+        { status: 404, headers: getCacheHeaders(60) }
+      );
     }
+
+    return NextResponse.json(
+      { id, slug: imovel.slug },
+      { headers: getCacheHeaders(3600) }
+    );
   } catch (error) {
-    return NextResponse.json({
-      success: false,
-      error: 'Erro no servidor'
-    }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal error' },
+      { status: 500, headers: getCacheHeaders(10) }
+    );
   }
 }
 
-// Configurações importantes para a Vercel
-export const runtime = 'edge';
-export const dynamic = 'force-dynamic';
+// Helper para headers de cache
+function getCacheHeaders(seconds) {
+  return {
+    'Cache-Control': `public, max-age=${seconds}, stale-while-revalidate=${seconds * 2}`,
+    'CDN-Cache-Control': `public, max-age=${seconds}`
+  };
+}
+
+// Mock - substitua pela sua busca real (Prisma/MySQL/etc)
+async function findImovelById(id) {
+  // Exemplo com dados fixos - na prática, consulte seu banco
+  const mockData = {
+    '9507': { slug: 'avenida-antonio-joaquim-de-moura-andrade-597' },
+    '80867': { slug: 'edificio-searpa' }
+  };
+  return mockData[id] || null;
+}
