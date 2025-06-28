@@ -1,44 +1,44 @@
-// middleware.js
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server'
 
-export function middleware(request) {
-  const { pathname } = request.nextUrl;
+// Banco de dados TEMPORÁRIO (substitua por API/Database depois)
+const SLUGS_POR_ID = {
+  "9507": "avenida-antonio-joaquim-de-moura-andrade-597", 
+  // Adicione TODOS os outros imóveis aqui:
+  "1234": "exemplo-de-slug",
+  "5678": "outro-imovel-slug"
+}
 
-  // Verifica se a URL segue o padrão /imovel-:id/:slug
-  // Ex: /imovel-123/apartamento-centro
-  if (pathname.match(/^\/imovel-([^\/]+)\/(.+)$/)) {
-    // Extrai o ID e o slug da URL
-    const [, id, slug] = pathname.match(/^\/imovel-([^\/]+)\/(.+)$/);
+export async function middleware(request) {
+  const url = request.nextUrl.clone()
+  const path = url.pathname
 
-    // Cria a nova URL interna para processamento
-    const url = request.nextUrl.clone();
-    url.pathname = `/imovel/${id}/${slug}`;
-
-    // Reescreve a URL internamente sem mudar a URL visível para o usuário
-    return NextResponse.rewrite(url);
+  // Captura /imovel-QUALQUER-NÚMERO (sem slug)
+  const match = path.match(/^\/imovel-(\d+)$/)
+  if (match) {
+    const id = match[1]
+    const slugCorreto = await getSlugPorId(id) // Função modificada
+    
+    if (slugCorreto) {
+      url.pathname = `/imovel-${id}/${slugCorreto}`
+      return NextResponse.redirect(url, 301)
+    }
   }
 
-  // Se alguém acessar diretamente o formato /imovel/:id/:slug, redireciona para /imovel-:id/:slug
-  if (pathname.match(/^\/imovel\/([^\/]+)\/(.+)$/)) {
-    // Extrai o ID e o slug da URL
-    const [, id, slug] = pathname.match(/^\/imovel\/([^\/]+)\/(.+)$/);
+  return NextResponse.next()
+}
 
-    // Cria a nova URL com o formato correto para exibição
-    const url = request.nextUrl.clone();
-    url.pathname = `/imovel-${id}/${slug}`;
-
-    // Redireciona para a URL no formato correto (visível para o usuário)
-    return NextResponse.redirect(url);
-  }
-
-  return NextResponse.next();
+// Função melhorada para buscar slugs (simule sua API aqui)
+async function getSlugPorId(id) {
+  // 1. Primeiro tenta no objeto estático
+  if (SLUGS_POR_ID[id]) return SLUGS_POR_ID[id]
+  
+  // 2. Se não encontrar, busca na API (descomente depois)
+  // const res = await fetch(`https://sua-api.com/imoveis/${id}/slug`)
+  // if (res.ok) return (await res.json()).slug
+  
+  return null // Caso não encontre
 }
 
 export const config = {
-  matcher: [
-    // Intercepta rotas como /imovel-123/nome-do-imovel
-    "/imovel-:id/:slug*",
-    // Também intercepta rotas como /imovel/123/nome-do-imovel para redirecionar
-    "/imovel/:id/:slug*",
-  ],
-};
+  matcher: '/imovel-:id(\d+)' // Captura TODOS os IDs numéricos
+}
