@@ -63,9 +63,8 @@ const nextConfig = {
     minimumCacheTTL: 60, // Cache de 60 segundos
   },
 
-  // Corrigido: Removido o experimental.middleware que estava dentro do objeto images
   experimental: {
-    // Configurações experimentais (se necessário)
+    middleware: true, // Habilita o uso de Middleware
   },
 
   typescript: {
@@ -81,5 +80,4 @@ const nextConfig = {
   output: "standalone", // Ou 'export' se estiver gerando static sites
 };
 
-// Corrigido: Usando module.exports em vez de export default
-module.exports = nextConfig;
+export default nextConfig;
