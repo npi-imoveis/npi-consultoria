@@ -59,7 +59,9 @@ const nextConfig = {
         hostname: "cdn.imoview.com.br",
         pathname: "/**", // <--- ALTERE ESTA LINHA PARA COBRIR TODOS OS CAMINHOS
       },
-
+      experimental: {
+  middleware: true
+      }
     ],
   },
 
