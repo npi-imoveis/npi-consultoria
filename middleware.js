@@ -1,33 +1,29 @@
-// middleware.js
 import { NextResponse } from "next/server";
 
 export function middleware(request) {
   const { pathname } = request.nextUrl;
 
-  // Verifica se a URL segue o padrão /imovel-:id/:slug
-  // Ex: /imovel-123/apartamento-centro
+  // ✅ 1. Reescreve /imovel-123/slug → /imovel/123/slug
   if (pathname.match(/^\/imovel-([^\/]+)\/(.+)$/)) {
-    // Extrai o ID e o slug da URL
     const [, id, slug] = pathname.match(/^\/imovel-([^\/]+)\/(.+)$/);
-
-    // Cria a nova URL interna para processamento
     const url = request.nextUrl.clone();
     url.pathname = `/imovel/${id}/${slug}`;
-
-    // Reescreve a URL internamente sem mudar a URL visível para o usuário
     return NextResponse.rewrite(url);
   }
 
-  // Se alguém acessar diretamente o formato /imovel/:id/:slug, redireciona para /imovel-:id/:slug
+  // ✅ 2. Redireciona /imovel/123/slug → /imovel-123/slug
   if (pathname.match(/^\/imovel\/([^\/]+)\/(.+)$/)) {
-    // Extrai o ID e o slug da URL
     const [, id, slug] = pathname.match(/^\/imovel\/([^\/]+)\/(.+)$/);
-
-    // Cria a nova URL com o formato correto para exibição
     const url = request.nextUrl.clone();
     url.pathname = `/imovel-${id}/${slug}`;
+    return NextResponse.redirect(url);
+  }
 
-    // Redireciona para a URL no formato correto (visível para o usuário)
+  // ✅ 3. Redireciona /imovel/123 → /imovel-123/__ (slug placeholder)
+  if (pathname.match(/^\/imovel\/([^\/]+)\/?$/)) {
+    const [, id] = pathname.match(/^\/imovel\/([^\/]+)\/?$/);
+    const url = request.nextUrl.clone();
+    url.pathname = `/imovel-${id}/__`;
     return NextResponse.redirect(url);
   }
 
@@ -36,9 +32,8 @@ export function middleware(request) {
 
 export const config = {
   matcher: [
-    // Intercepta rotas como /imovel-123/nome-do-imovel
     "/imovel-:id/:slug*",
-    // Também intercepta rotas como /imovel/123/nome-do-imovel para redirecionar
     "/imovel/:id/:slug*",
+    "/imovel/:id", // 👈 necessário para capturar /imovel/123
   ],
 };
