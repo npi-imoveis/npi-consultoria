@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Configurações de imagens (mantidas conforme seu original)
   images: {
     remotePatterns: [
       {
@@ -57,26 +58,36 @@ const nextConfig = {
       {
         protocol: "https",
         hostname: "cdn.imoview.com.br",
-        pathname: "/**", // <--- ALTERE ESTA LINHA PARA COBRIR TODOS OS CAMINHOS
+        pathname: "/**",
       },
-      experimental: {
-  middleware: true
-      }
     ],
   },
 
+  // Configurações experimentais (NOVO - essencial para middleware)
+  experimental: {
+    middleware: true,
+    serverActions: true
+  },
+
+  // Configuração do TypeScript (mantida conforme seu original)
   typescript: {
-    // ⚠️ Isso desativa a verificação de tipos durante o build
     ignoreBuildErrors: true,
   },
 
-  // Configurando comportamento de rotas não encontradas
+  // Configuração de redirecionamentos (mantida conforme seu original)
   async redirects() {
     return [];
   },
 
-  // Garantir que o Next.js gere a página 404 estática
-  output: "standalone", // Ou 'export' se estiver gerando static sites
+  // Configuração de output (mantida conforme seu original)
+  output: "standalone",
+  
+  // Habilitar logging para debug (NOVO - ajuda a identificar problemas)
+  logging: {
+    fetches: {
+      fullUrl: true,
+    },
+  },
 };
 
 export default nextConfig;
