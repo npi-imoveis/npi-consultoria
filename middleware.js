@@ -1,54 +1,36 @@
 // middleware.js
 import { NextResponse } from "next/server";
 
+// Dados FIXOS (substitua pelos seus IDs e slugs reais)
+const slugsPorId = {
+  "9507": "avenida-antonio-joaquim-de-moura-andrade-597",
+  // Adicione outros imóveis aqui no formato "ID": "slug-correto"
+};
+
 export async function middleware(request) {
   const { pathname } = request.nextUrl;
-
-  // 1. Captura URLs SEM slug (ex: /imovel-9507)
-  if (pathname.match(/^\/imovel-([^\/]+)$/)) {
-    const [, id] = pathname.match(/^\/imovel-([^\/]+)$/);
-    const slugCorreto = await getSlugPorId(id); // Implemente esta função!
-
+  
+  // 1. Redireciona /imovel-9507 → /imovel-9507/slug-correto
+  if (pathname.match(/^\/imovel-(\d+)$/)) {
+    const id = pathname.match(/^\/imovel-(\d+)$/)[1];
+    const slugCorreto = slugsPorId[id];
+    
     if (slugCorreto) {
-      const url = request.nextUrl.clone();
-      url.pathname = `/imovel-${id}/${slugCorreto}`;
-      return NextResponse.redirect(url, 301); // Use 301 para SEO
+      return NextResponse.redirect(
+        new URL(`/imovel-${id}/${slugCorreto}`, request.url),
+        301 // Redirecionamento permanente para SEO
+      );
     }
   }
 
-  // 2. Rotas com slug (mantenha seu código existente)
-  if (pathname.match(/^\/imovel-([^\/]+)\/(.+)$/)) {
-    const [, id, slug] = pathname.match(/^\/imovel-([^\/]+)\/(.+)$/);
-    const url = request.nextUrl.clone();
-    url.pathname = `/imovel/${id}/${slug}`;
-    return NextResponse.rewrite(url);
-  }
-
-  // 3. Redireciona /imovel/:id/:slug para /imovel-:id/:slug
-  if (pathname.match(/^\/imovel\/([^\/]+)\/(.+)$/)) {
-    const [, id, slug] = pathname.match(/^\/imovel\/([^\/]+)\/(.+)$/);
-    const url = request.nextUrl.clone();
-    url.pathname = `/imovel-${id}/${slug}`;
-    return NextResponse.redirect(url);
-  }
-
+  // 2. Mantenha suas regras existentes de rewrite/redirect
   return NextResponse.next();
 }
 
 export const config = {
   matcher: [
-    "/imovel-:id",          // ✅ Novo: captura /imovel-9507
-    "/imovel-:id/:slug*",   // Mantido
-    "/imovel/:id/:slug*"    // Mantido
-  ],
+    "/imovel-:id(\d+)",     // Captura /imovel-9507 (apenas números)
+    "/imovel-:id/:slug*",    // Suas rotas existentes
+    "/imovel/:id/:slug*"
+  ]
 };
-
-// Implementação exemplo (substitua pela sua lógica real)
-async function getSlugPorId(id) {
-  // Exemplo: buscar slug de uma API ou banco de dados
-  const slugs = {
-    "9507": "avenida-antonio-joaquim-de-moura-andrade-597",
-    // Adicione outros IDs e slugs conforme necessário
-  };
-  return slugs[id] || null;
-}
