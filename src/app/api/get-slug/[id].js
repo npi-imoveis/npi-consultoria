@@ -1,27 +1,32 @@
+// pages/api/get-slug/[id].js
+
+// Importe a mesma função de serviço que a sua página de imóvel usa
+import { getImovelById } from '@/app/services'; // ⬅️ Verifique se este caminho está correto!
+
 export default async function handler(req, res) {
   const { id } = req.query;
 
   if (!id) {
-    return res.status(400).json({ error: "ID do imóvel é obrigatório." });
+    return res.status(400).json({ error: 'ID do imóvel é obrigatório.' });
   }
 
   try {
-    // Simula a busca dos dados do imóvel (substitua pelo código real)
-    // <Adicionar sua lógica para consultar o banco ou CMS>
-    const imovel = {
-      Codigo: id,
-      Empreendimento: "Avenida Antônio Joaquim de Moura Andrade 597",
-      Slug: "avenida-antonio-joaquim-de-moura-andrade-597",
-    };
+    // Utilize a função que JÁ FUNCIONA para buscar o imóvel
+    const response = await getImovelById(id);
 
-    if (!imovel) {
-      return res.status(404).json({ error: "Imóvel não encontrado." });
+    // Se a função não retornar dados ou o slug estiver vazio
+    if (!response?.data || !response.data.Slug) {
+      // Retorna 404, pois o imóvel não foi encontrado ou não tem slug
+      return res.status(404).json({ error: 'Imóvel não encontrado ou sem slug.' });
     }
 
-    // Retorna apenas o slug
-    return res.status(200).json({ slug: imovel.Slug });
+    const slug = response.data.Slug;
+
+    // Retorna o slug com sucesso
+    return res.status(200).json({ slug });
+
   } catch (error) {
-    console.error("Erro ao buscar o slug:", error);
-    return res.status(500).json({ error: "Erro interno do servidor." });
+    console.error(`Erro ao processar a API get-slug para o ID ${id}:`, error);
+    return res.status(500).json({ error: 'Erro interno do servidor ao buscar o slug.' });
   }
 }
