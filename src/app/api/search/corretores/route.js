@@ -1,11 +1,15 @@
+export const dynamic = "force-dynamic"; // Força execução dinâmica
+
+import { NextResponse, NextRequest } from "next/server";
 import { connectToDatabase } from "@/app/lib/mongodb";
 import Corretores from "@/app/models/Corretores";
 import ImovelAtivo from "@/app/models/ImovelAtivo";
-import { NextResponse } from "next/server";
 
 export async function GET(request) {
   try {
-    const query = request.nextUrl.searchParams.get("q"); // ✅ Correção segura para App Router
+    // ✅ Força tipagem explícita para NextRequest para App Router
+    const req = request; // ou: request = request as NextRequest;
+    const query = req.nextUrl.searchParams.get("q");
 
     if (!query || query.trim() === "") {
       return NextResponse.json({
