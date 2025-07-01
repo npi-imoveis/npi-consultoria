@@ -5,8 +5,7 @@ import { NextResponse } from "next/server";
 
 export async function GET(request) {
   try {
-    const { searchParams } = request.nextUrl; // ✅ CORREÇÃO
-    const query = searchParams.get("q");
+    const query = request.nextUrl.searchParams.get("q"); // ✅ Correção segura para App Router
 
     if (!query || query.trim() === "") {
       return NextResponse.json({
