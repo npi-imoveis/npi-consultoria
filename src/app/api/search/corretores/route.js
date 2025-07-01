@@ -1,15 +1,14 @@
-export const dynamic = "force-dynamic"; // Força execução dinâmica
+export const dynamic = "force-dynamic"; // Garante execução dinâmica no App Router
 
-import { NextResponse, NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/app/lib/mongodb";
 import Corretores from "@/app/models/Corretores";
 import ImovelAtivo from "@/app/models/ImovelAtivo";
 
-export async function GET(request) {
+export async function GET(req) {
   try {
-    // ✅ Força tipagem explícita para NextRequest para App Router
-    const req = request; // ou: request = request as NextRequest;
-    const query = req.nextUrl.searchParams.get("q");
+    const { searchParams } = new URL(req.headers.get("x-url") || "http://localhost");
+    const query = searchParams.get("q");
 
     if (!query || query.trim() === "") {
       return NextResponse.json({
@@ -26,13 +25,13 @@ export async function GET(request) {
           index: "corretores",
           text: {
             query: query,
-            path: ["nome", "nomeCompleto", "email", "celular"]
-          }
-        }
+            path: ["nome", "nomeCompleto", "email", "celular"],
+          },
+        },
       },
       {
-        $limit: 20
-      }
+        $limit: 20,
+      },
     ]);
 
     return NextResponse.json({
