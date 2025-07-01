@@ -32,11 +32,6 @@ export async function generateMetadata({ params }) {
 
   const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
 
-  // ✅ Tratamento seguro da imagem (sem alterar estruturas existentes)
-  const ogImageUrl = imovel.Foto?.startsWith('http') 
-    ? imovel.Foto 
-    : `${process.env.NEXT_PUBLIC_SITE_URL}${imovel.Foto}`;
-
   return {
     title,
     description,
@@ -46,16 +41,12 @@ export async function generateMetadata({ params }) {
     robots: {
       index: true,
       follow: true,
-   },
+    },
     openGraph: {
       title,
       description,
       url: currentUrl,
-      images: [{ 
-        url: ogImageUrl,
-        width: 1200,
-        height: 630,
-        alt: title,
+      images: [imovel.Foto],
     },
     twitter: {
       card: "summary_large_image",
