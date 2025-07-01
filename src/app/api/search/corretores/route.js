@@ -5,7 +5,7 @@ import { NextResponse } from "next/server";
 
 export async function GET(request) {
   try {
-    const { searchParams } = request.nextUrl;
+    const { searchParams } = request.nextUrl; // ✅ CORREÇÃO
     const query = searchParams.get("q");
 
     if (!query || query.trim() === "") {
