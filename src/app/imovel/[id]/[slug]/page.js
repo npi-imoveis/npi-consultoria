@@ -31,31 +31,38 @@ export async function generateMetadata({ params }) {
   const description = `${imovel.Categoria} à venda no bairro ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.DormitoriosAntigo} dormitórios, ${imovel.SuiteAntigo} suítes, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt}. Valor: ${imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}.`;
 
   const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
+  const destaqueFotoUrl = typeof imovel.Foto === "string" ? imovel.Foto : imovel.Foto?.find?.((f) => f.Destaque === "Sim")?.Foto;
 
   return {
     title,
     description,
     alternates: {
       canonical: currentUrl,
+      languages: {
+        "pt-BR": currentUrl,
+      },
     },
     robots: {
       index: true,
-      follow: true,   
+      follow: true,
     },
     openGraph: {
-      title: `Condomínio ${condominio.Empreendimento}`,
+      title,
       description,
-      url: `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${condominio.Codigo}/${condominio.Slug}`,
+      url: currentUrl,
       images: destaqueFotoUrl ? [{ url: destaqueFotoUrl }] : [],
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
-      title: `Condomínio ${condominio.Empreendimento}`,
+      title,
       description,
       site: "@NPIImoveis",
       images: destaqueFotoUrl ? [destaqueFotoUrl] : [],
     },
+    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL),
+  };
+}
     // hreflang manual
     metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL),
     alternates: {
