@@ -43,10 +43,11 @@ export async function generateMetadata({ params }) {
       follow: true,
     },
     openGraph: {
-      title,
+      title: rawTitle,
       description,
       url: currentUrl,
-      images: [imovel.Foto],
+      images: destaqueFotoUrl ? [{ url: destaqueFotoUrl }] : [],
+      type: "website",
     },
     twitter: {
       card: "summary_large_image",
