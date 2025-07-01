@@ -1,14 +1,14 @@
-export const dynamic = "force-dynamic"; // Força execução dinâmica
+export const dynamic = "force-dynamic"; // Garante execução dinâmica
 
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { connectToDatabase } from "@/app/lib/mongodb";
 import Corretores from "@/app/models/Corretores";
 import ImovelAtivo from "@/app/models/ImovelAtivo";
 
 export async function GET(req) {
   try {
-    // ✅ Pega params manualmente evitando request.url e nextUrl
-    const query = req.nextUrl.searchParams.get("q");
+    const request = req; // Caso precise, adicione `as NextRequest`
+    const query = request.nextUrl.searchParams.get("q");
 
     if (!query || query.trim() === "") {
       return NextResponse.json({
