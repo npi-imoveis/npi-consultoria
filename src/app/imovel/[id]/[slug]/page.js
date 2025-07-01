@@ -38,8 +38,6 @@ export async function generateMetadata({ params }) {
     description,
     alternates: {
       canonical: currentUrl,
-      languages: {
-        "pt-BR": currentUrl,      
     },
     robots: {
       index: true,
@@ -59,9 +57,6 @@ export async function generateMetadata({ params }) {
       site: "@NPIImoveis",
       images: destaqueFotoUrl ? [destaqueFotoUrl] : [],
     },
-    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL),
-  };
-}
     // hreflang manual
     metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL),
     alternates: {
@@ -72,7 +67,6 @@ export async function generateMetadata({ params }) {
     },
   };
 }
-
 
 export const revalidate = 0;
 
