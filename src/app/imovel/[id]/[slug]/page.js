@@ -39,8 +39,7 @@ export async function generateMetadata({ params }) {
     alternates: {
       canonical: currentUrl,
       languages: {
-        "pt-BR": currentUrl,
-      },
+        "pt-BR": currentUrl,      
     },
     robots: {
       index: true,
