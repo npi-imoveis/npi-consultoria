@@ -1,4 +1,4 @@
-export const dynamic = "force-dynamic"; // Garante execução dinâmica
+export const dynamic = "force-dynamic";
 
 import { NextResponse, NextRequest } from "next/server";
 import { connectToDatabase } from "@/app/lib/mongodb";
@@ -7,7 +7,7 @@ import ImovelAtivo from "@/app/models/ImovelAtivo";
 
 export async function GET(req) {
   try {
-    const request = req; // Caso precise, adicione `as NextRequest`
+    const request = req; // Tipagem para NextRequest
     const query = request.nextUrl.searchParams.get("q");
 
     if (!query || query.trim() === "") {
@@ -19,20 +19,15 @@ export async function GET(req) {
 
     await connectToDatabase();
 
-    const resultado = await Corretores.aggregate([
-      {
-        $search: {
-          index: "corretores",
-          text: {
-            query: query,
-            path: ["nome", "nomeCompleto", "email", "celular"],
-          },
-        },
-      },
-      {
-        $limit: 20,
-      },
-    ]);
+    // Utilizando regex para busca funcional imediata
+    const resultado = await Corretores.find({
+      $or: [
+        { nome: { $regex: query, $options: "i" } },
+        { nomeCompleto: { $regex: query, $options: "i" } },
+        { email: { $regex: query, $options: "i" } },
+        { celular: { $regex: query, $options: "i" } },
+      ],
+    }).limit(20);
 
     return NextResponse.json({
       status: 200,
