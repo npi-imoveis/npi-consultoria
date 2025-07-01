@@ -1,7 +1,6 @@
 import { connectToDatabase } from "@/app/lib/mongodb";
 import Corretores from "@/app/models/Corretores";
 import ImovelAtivo from "@/app/models/ImovelAtivo";
-
 import { NextResponse } from "next/server";
 
 export async function GET(request) {
@@ -18,22 +17,19 @@ export async function GET(request) {
 
     await connectToDatabase();
 
-    // Utilizando o índice do Atlas Search com a consulta simplificada
     const resultado = await Corretores.aggregate([
       {
         $search: {
           index: "corretores",
           text: {
             query: query,
-            path: {
-              wildcard: "*",
-            },
-          },
-        },
+            path: ["nome", "nomeCompleto", "email", "celular"]
+          }
+        }
       },
       {
-        $limit: 20,
-      },
+        $limit: 20
+      }
     ]);
 
     return NextResponse.json({
