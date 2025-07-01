@@ -40,8 +40,7 @@ export async function generateMetadata({ params }) {
     },
     robots: {
       index: true,
-      follow: true,
-    },
+      follow: true,   
     },
     openGraph: {
       title: `Condomínio ${condominio.Empreendimento}`,
