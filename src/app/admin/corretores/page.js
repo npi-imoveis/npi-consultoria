@@ -29,6 +29,7 @@ export default function AdminCorretores() {
     setIsLoading(true);
     try {
       if (search) {
+        // Implementar busca de corretores quando necessário
         const response = await fetch(`/api/search/corretores?q=${encodeURIComponent(search)}`);
         const data = await response.json();
 
@@ -82,8 +83,10 @@ export default function AdminCorretores() {
   };
 
   useEffect(() => {
-    loadCorretores(currentPage, searchTerm);
-  }, [currentPage, searchTerm]);
+    if (!searchTerm) {
+      loadCorretores(currentPage);
+    }
+  }, [currentPage]);
 
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
@@ -93,11 +96,13 @@ export default function AdminCorretores() {
   const handleSearch = (e) => {
     e.preventDefault();
     setCurrentPage(1);
+    loadCorretores(1, searchTerm);
   };
 
   const clearSearch = () => {
     setSearchTerm("");
     setCurrentPage(1);
+    loadCorretores(1, "");
   };
 
   const handleEdit = (corretorId) => {
@@ -177,12 +182,42 @@ export default function AdminCorretores() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-[10px] font-bold tracking-wider capitalize">ID</th>
-                  <th scope="col" className="px-6 py-3 text-left text-[10px] font-bold tracking-wider capitalize">Nome</th>
-                  <th scope="col" className="px-6 py-3 text-left text-[10px] font-bold tracking-wider">Email</th>
-                  <th scope="col" className="px-6 py-3 text-left text-[10px] font-bold tracking-wider">Celular</th>
-                  <th scope="col" className="px-6 py-3 text-left text-[10px] font-bold tracking-wider">Imóveis</th>
-                  <th scope="col" className="px-6 py-3 text-left text-[10px] font-bold tracking-wider sticky right-0 bg-gray-50">Ações</th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-[10px] font-bold tracking-wider capitalize"
+                  >
+                    ID
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-[10px] font-bold tracking-wider capitalize"
+                  >
+                    Nome
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-[10px] font-bold tracking-wider"
+                  >
+                    Email
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-[10px] font-bold tracking-wider"
+                  >
+                    Celular
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-[10px] font-bold tracking-wider"
+                  >
+                    Imóveis
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-[10px] font-bold  tracking-wider sticky right-0 bg-gray-50"
+                  >
+                    Ações
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -201,11 +236,21 @@ export default function AdminCorretores() {
                 ) : corretores?.length > 0 ? (
                   corretores.map((corretor) => (
                     <tr key={corretor._id} className="hover:bg-gray-50">
-                      <td className="px-6 bg-gray-50 py-4 whitespace-nowrap text-[10px] text-gray-900 font-bold capitalize">{corretor.codigoD || "-"}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-[10px] text-gray-900 font-bold capitalize">{corretor.nomeCompleto || corretor.nome}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700">{corretor.email || "-"}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700">{corretor.celular || "-"}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700">{corretor.imoveis_vinculados?.length || "-"}</td>
+                      <td className="px-6 bg-gray-50 py-4 whitespace-nowrap text-[10px] text-gray-900 font-bold capitalize">
+                        {corretor.codigoD || "-"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-[10px] text-gray-900 font-bold capitalize">
+                        {corretor.nomeCompleto || corretor.nome}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700">
+                        {corretor.email || "-"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700">
+                        {corretor.celular || "-"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700">
+                        {corretor.imoveis_vinculados?.length || "-"}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap sticky right-0 bg-white">
                         <div className="flex items-center space-x-3">
                           <button
@@ -228,7 +273,9 @@ export default function AdminCorretores() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={5} className="px-6 py-4 text-center text-[10px] text-gray-500">Nenhum corretor encontrado</td>
+                    <td colSpan={5} className="px-6 py-4 text-center text-[10px] text-gray-500">
+                      Nenhum corretor encontrado
+                    </td>
                   </tr>
                 )}
               </tbody>
