@@ -1,4 +1,4 @@
-export const dynamic = "force-dynamic"; // Garante execução dinâmica no App Router
+export const dynamic = "force-dynamic"; // Força execução dinâmica
 
 import { NextResponse } from "next/server";
 import { connectToDatabase } from "@/app/lib/mongodb";
@@ -7,8 +7,8 @@ import ImovelAtivo from "@/app/models/ImovelAtivo";
 
 export async function GET(req) {
   try {
-    const { searchParams } = new URL(req.headers.get("x-url") || "http://localhost");
-    const query = searchParams.get("q");
+    // ✅ Pega params manualmente evitando request.url e nextUrl
+    const query = req.nextUrl.searchParams.get("q");
 
     if (!query || query.trim() === "") {
       return NextResponse.json({
