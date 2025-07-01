@@ -43,18 +43,17 @@ export async function generateMetadata({ params }) {
       follow: true,
     },
     openGraph: {
-      title: rawTitle,
-      description,
-      url: currentUrl,
-      images: destaqueFotoUrl ? [{ url: destaqueFotoUrl }] : [],
-      type: "website",
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      images: [imovel.Foto],
-    },
+  title,
+  description,
+  url: currentUrl,
+  images: imovel.Foto ? [{ url: imovel.Foto, width: 1200, height: 630 }] : [],
+  },
+  twitter: {
+  card: "summary_large_image",
+  title,
+  description,
+  images: imovel.Foto ? [imovel.Foto] : [],
+  },
     // hreflang manual
     metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL),
     alternates: {
