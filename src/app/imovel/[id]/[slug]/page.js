@@ -42,18 +42,21 @@ export async function generateMetadata({ params }) {
       index: true,
       follow: true,
     },
+    },
     openGraph: {
-  title,
-  description,
-  url: currentUrl,
-  images: imovel.Foto ? [{ url: imovel.Foto, width: 1200, height: 630 }] : [],
-  },
-  twitter: {
-  card: "summary_large_image",
-  title,
-  description,
-  images: imovel.Foto ? [imovel.Foto] : [],
-  },
+      title: `Condomínio ${condominio.Empreendimento}`,
+      description,
+      url: `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${condominio.Codigo}/${condominio.Slug}`,
+      images: destaqueFotoUrl ? [{ url: destaqueFotoUrl }] : [],
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `Condomínio ${condominio.Empreendimento}`,
+      description,
+      site: "@NPIImoveis",
+      images: destaqueFotoUrl ? [destaqueFotoUrl] : [],
+    },
     // hreflang manual
     metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL),
     alternates: {
