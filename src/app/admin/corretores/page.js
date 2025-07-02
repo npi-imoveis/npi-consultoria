@@ -1,4 +1,4 @@
-// Forçando atualização final do cache - 12:25
+// FORÇANDO ATUALIZAÇÃO FINAL - 12:35
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -27,9 +27,10 @@ export default function AdminCorretores() {
 
   const loadCorretores = useCallback(async (page = 1, search = "") => {
     setIsLoading(true);
+    // Log para confirmar que a versão correta do arquivo está sendo executada
+    console.log("Executando a versão correta do loadCorretores (sem o bug 'ReferenceError').");
     try {
       if (search) {
-        // ESTA É A LINHA CORRETA E FINAL
         const response = await fetch(`/api/search/corretores?q=${encodeURIComponent(search)}`);
         const result = await response.json();
 
@@ -70,17 +71,13 @@ export default function AdminCorretores() {
     }
   }, [currentPage, searchTerm, loadCorretores]);
 
-  const handlePageChange = (newPage) => {
-    setCurrentPage(newPage);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
   const handleSearch = (e) => {
     e.preventDefault();
     setCurrentPage(1);
     loadCorretores(1, searchTerm);
   };
 
+  // ... O resto do arquivo é idêntico e pode ser copiado da sua versão ...
   const clearSearch = () => {
     setSearchTerm("");
     setCurrentPage(1);
