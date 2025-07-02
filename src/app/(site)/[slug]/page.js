@@ -1,12 +1,13 @@
 /**
- * Página de condomínio e interceptação de URLs de imóvel sem slug.
- * Se o slug recebido for do tipo 'imovel-123', busca o imóvel pelo ID
- * e redireciona para a URL canônica com slug, resolvendo problemas de SEO.
- * Isso garante redirecionamento dinâmico e eficiente para milhares de URLs antigas.
+ * Página dinâmica para qualquer slug na raiz do site (ex: /imovel-123, /helbor-brooklin, etc).
+ * Se o slug for do tipo 'imovel-123', busca o imóvel pelo ID e redireciona para a URL canônica com slug.
+ * Se não, renderiza normalmente a página do condomínio.
+ * Isso garante redirecionamento dinâmico e eficiente para milhares de URLs antigas, sem precisar de redirects estáticos.
  */
 
-import { Button } from "@/app/components/ui/button";
+import { notFound, redirect } from "next/navigation";
 import { getCondominioPorSlug, getImovelById } from "@/app/services";
+import { Button } from "@/app/components/ui/button";
 import { formatterValue } from "@/app/utils/formatter-value";
 import { Apartment as StructuredDataApartment } from "@/app/components/structured-data";
 import { Share } from "@/app/components/ui/share";
@@ -21,8 +22,6 @@ import DiferenciaisCondominio from "./componentes/DiferenciaisCondominio";
 import Lazer from "./componentes/Lazer";
 import VideoCondominio from "./componentes/VideoCondominio";
 import TourVirtual from "./componentes/TourVirtual";
-import ExploreRegiao from "./componentes/ExploreRegiao";
-import { notFound, redirect } from "next/navigation";
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 import ScrollToImoveisButton from "./componentes/scroll-to-imovel-button";
 
@@ -32,9 +31,15 @@ function ensureCondominio(text) {
 
 export async function generateMetadata({ params }) {
   const { slug } = params;
+  // Se for imovel-123, não gera metadata de condomínio
+  if (typeof slug === "string" && /^imovel-(\d+)$/.test(slug)) {
+    return {
+      title: "Redirecionando...",
+      robots: "noindex, nofollow",
+    };
+  }
   const response = await getCondominioPorSlug(slug);
   const condominio = response?.data;
-
   if (!condominio) {
     return {
       title: "Condomínio não encontrado",
@@ -42,14 +47,11 @@ export async function generateMetadata({ params }) {
       robots: "noindex, nofollow",
     };
   }
-
   const rawTitle = ensureCondominio(condominio.Empreendimento);
   const destaqueFotoObj = condominio.Foto?.find((f) => f.Destaque === "Sim");
   const destaqueFotoUrl = destaqueFotoObj?.Foto;
   const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`;
-
   const description = `${rawTitle} em ${condominio.BairroComercial}, ${condominio.Cidade}. ${condominio.Categoria} com ${condominio.MetragemAnt}, ${condominio.DormitoriosAntigo} quartos, ${condominio.VagasAntigo} vagas. ${condominio.Situacao}.`;
-
   return {
     title: `${rawTitle}, ${condominio.TipoEndereco} ${condominio.Endereco} ${condominio.Numero}, ${condominio.BairroComercial}`,
     description,
@@ -80,45 +82,37 @@ export async function generateMetadata({ params }) {
   };
 }
 
-export default async function CondominioPage({ params }) {
+export default async function Page({ params }) {
   const { slug } = params;
 
   // --- REDIRECIONAMENTO DINÂMICO DE /imovel-123 PARA /imovel-123/slug-correto ---
-  // Se o slug for do tipo 'imovel-123', busca o imóvel pelo ID e redireciona para a URL canônica
   if (typeof slug === "string" && /^imovel-(\d+)$/.test(slug)) {
     const id = slug.match(/^imovel-(\d+)$/)[1];
     try {
       const response = await getImovelById(id);
       const imovel = response?.data;
       if (imovel && imovel.Slug) {
-        // Redireciona para a URL canônica do imóvel
         redirect(`/imovel-${id}/${imovel.Slug}`);
       } else {
-        // Se não encontrar, retorna 404
         notFound();
       }
     } catch (e) {
-      // Em caso de erro, retorna 404
       notFound();
     }
   }
 
+  // --- LÓGICA NORMAL DE CONDOMÍNIO ---
   const response = await getCondominioPorSlug(slug);
-
   if (!response.data) {
     notFound();
   }
-
   const condominio = response.data;
   const imoveisRelacionados = response.imoveisRelacionados;
-
   const rawTitle = ensureCondominio(condominio.Empreendimento);
   const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`;
-
   function isValidValue(value) {
     return value !== undefined && value !== null && value !== "" && value !== "0";
   }
-
   return (
     <section className="w-full bg-zinc-100 pb-10">
       <StructuredDataApartment
@@ -129,9 +123,7 @@ export default async function CondominioPage({ params }) {
         url={currentUrl}
         image={condominio.Foto}
       />
-
       <ExitIntentModal condominio={rawTitle} link={currentUrl} />
-
       <div className="container mx-auto pt-20">
         <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 ">
           <div className="flex flex-col gap-4 ">
@@ -144,7 +136,6 @@ export default async function CondominioPage({ params }) {
                   variant="secondary"
                 />
               </div>
-
               <h1 className="text-xl font-bold mt-2">{rawTitle}</h1>
               <span className="text-xs text-zinc-700 font-semibold">
                 {condominio.TipoEndereco} {condominio.Endereco}, {condominio.Numero}, {condominio.BairroComercial}, {condominio.Cidade}
@@ -156,12 +147,10 @@ export default async function CondominioPage({ params }) {
                     <h2 className="text-black font-semibold text-[10px]">R$ {condominio.ValorAluguelSite}</h2>
                   </div>
                 )}
-
                 <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
                   <h4 className="text-zinc-600 text-[10px] font-bold">Venda:</h4>
                   <h2 className="text-black font-semibold text-[10px]">R$ {condominio.ValorAntigo}</h2>
                 </div>
-
                 {condominio.ValorCondominio && (
                   <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
                     <h4 className="text-zinc-600 text-[10px] font-bold">Condomínio:</h4>
@@ -196,7 +185,6 @@ export default async function CondominioPage({ params }) {
         </div>
       )}
       <SobreCondominio condominio={condominio} />
-
       {condominio.FichaTecnica && <FichaTecnica condominio={condominio} />}
       {condominio.DescricaoDiferenciais && <DiferenciaisCondominio condominio={condominio} />}
       {condominio.DestaquesLazer && <Lazer condominio={condominio} />}
