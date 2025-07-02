@@ -22,14 +22,37 @@ export async function generateMetadata({ params }) {
   const response = await getImovelById(id);
   const imovel = response?.data;
 
-  // Garante que pegamos uma imagem válida
-  const primeiraFoto = Array.isArray(imovel.Foto) ? imovel.Foto[0] : null;
-  const imageUrl = primeiraFoto?.Foto || primeiraFoto?.url || '/default-image.jpg';
-  
-  // Garante URL absoluta para imagens
-  const absoluteImageUrl = imageUrl.startsWith('http') 
-    ? imageUrl 
-    : `${process.env.NEXT_PUBLIC_SITE_URL}${imageUrl}`;
+  // Debug: Verifica a estrutura completa das fotos
+  console.log('Estrutura completa das fotos:', JSON.stringify(imovel.Foto, null, 2));
+
+  // 1. Busca pela foto destacada (Destaque === "Sim")
+  let destaqueFotoUrl = null;
+  if (Array.isArray(imovel.Foto)) {
+    const destaqueFotoObj = imovel.Foto.find(f => 
+      String(f.Destaque).toLowerCase() === "sim"
+    );
+    destaqueFotoUrl = destaqueFotoObj?.Foto || destaqueFotoObj?.url || null;
+    
+    // 2. Fallback: Foto com Indice === 0
+    if (!destaqueFotoUrl) {
+      const primeiraFoto = imovel.Foto.find(f => f.Indice === 0);
+      destaqueFotoUrl = primeiraFoto?.Foto || primeiraFoto?.url || null;
+    }
+    
+    // 3. Fallback: Primeira foto do array
+    if (!destaqueFotoUrl && imovel.Foto.length > 0) {
+      destaqueFotoUrl = imovel.Foto[0]?.Foto || imovel.Foto[0]?.url || null;
+    }
+  }
+
+  // 4. Fallback final: Imagem padrão
+  const absoluteImageUrl = destaqueFotoUrl 
+    ? destaqueFotoUrl.startsWith('http') 
+      ? destaqueFotoUrl 
+      : `${process.env.NEXT_PUBLIC_SITE_URL}${destaqueFotoUrl}`
+    : `${process.env.NEXT_PUBLIC_SITE_URL}/default-imovel.jpg`;
+
+  console.log('Foto destaque selecionada:', absoluteImageUrl);
 
   const description = `${imovel.Empreendimento} em ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.Categoria} com ${imovel.MetragemAnt}, ${imovel.DormitoriosAntigo} quartos, ${imovel.VagasAntigo} vagas. ${imovel.Situacao}.`;
 
@@ -86,6 +109,30 @@ export default async function Imovel({ params }) {
 
   const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
 
+  // Repete a lógica de seleção de imagem para usar no WhatsApp
+  let destaqueFotoUrl = null;
+  if (Array.isArray(imovel.Foto)) {
+    const destaqueFotoObj = imovel.Foto.find(f => 
+      String(f.Destaque).toLowerCase() === "sim"
+    );
+    destaqueFotoUrl = destaqueFotoObj?.Foto || destaqueFotoObj?.url || null;
+    
+    if (!destaqueFotoUrl) {
+      const primeiraFoto = imovel.Foto.find(f => f.Indice === 0);
+      destaqueFotoUrl = primeiraFoto?.Foto || primeiraFoto?.url || null;
+    }
+    
+    if (!destaqueFotoUrl && imovel.Foto.length > 0) {
+      destaqueFotoUrl = imovel.Foto[0]?.Foto || imovel.Foto[0]?.url || null;
+    }
+  }
+
+  const whatsappImageUrl = destaqueFotoUrl 
+    ? destaqueFotoUrl.startsWith('http') 
+      ? destaqueFotoUrl 
+      : `${process.env.NEXT_PUBLIC_SITE_URL}${destaqueFotoUrl}`
+    : `${process.env.NEXT_PUBLIC_SITE_URL}/default-imovel.jpg`;
+
   return (
     <section className="w-full bg-white pb-32 pt-20">
       <StructuredDataApartment
@@ -97,7 +144,6 @@ export default async function Imovel({ params }) {
         image={imovel.Foto}
       />
       
-      {/* Restante do seu código permanece igual */}
       <ExitIntentModal condominio={imovel.Empreendimento} link={currentUrl} />
 
       <div className="w-full mx-auto">
@@ -130,6 +176,7 @@ export default async function Imovel({ params }) {
       </div>
       <WhatsappFloat
         message={`Quero saber mais sobre o ${imovel.Empreendimento}, no bairro ${imovel.BairroComercial}, disponivel na pagina do Imóvel: ${currentUrl}`}
+        imageUrl={whatsappImageUrl}
       />
     </section>
   );
