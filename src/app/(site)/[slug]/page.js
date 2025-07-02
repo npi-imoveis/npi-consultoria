@@ -90,9 +90,9 @@ export async function generateMetadata({ params }) {
 export default async function Page({ params }) {
   const { slug } = params;
 
-  // --- REDIRECIONAMENTO DINÂMICO DE /imovel-123 PARA /imovel-123/slug-correto ---
-  if (typeof slug === "string" && /^imovel-(\d+)$/.test(slug)) {
-    const id = slug.match(/^imovel-(\d+)$/)[1];
+  const slugValue = Array.isArray(slug) ? slug[0] : slug;
+  if (typeof slugValue === "string" && /^imovel-(\d+)$/.test(slugValue)) {
+    const id = slugValue.match(/^imovel-(\d+)$/)[1];
     try {
       const response = await getImovelById(id);
       const imovel = response?.data;
@@ -116,14 +116,14 @@ export default async function Page({ params }) {
   }
 
   // --- LÓGICA NORMAL DE CONDOMÍNIO ---
-  const response = await getCondominioPorSlug(slug);
+  const response = await getCondominioPorSlug(slugValue);
   if (!response.data) {
     notFound();
   }
   const condominio = response.data;
   const imoveisRelacionados = response.imoveisRelacionados;
   const rawTitle = ensureCondominio(condominio.Empreendimento);
-  const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`;
+  const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/${slugValue}`;
   function isValidValue(value) {
     return value !== undefined && value !== null && value !== "" && value !== "0";
   }
