@@ -88,37 +88,40 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function Page({ params }) {
-  const { slug } = params;
+  console.log("DEBUG: params recebido em [slug]/page.js", params);
 
-  const slugValue = Array.isArray(slug) ? slug[0] : slug;
+  // Suporte a slug como string ou array
+  const slugValue = Array.isArray(params.slug) ? params.slug[0] : params.slug;
+
+  // --- REDIRECIONAMENTO DINÂMICO DE /imovel-123 PARA /imovel-123/slug-correto ---
   if (typeof slugValue === "string" && /^imovel-(\d+)$/.test(slugValue)) {
     const id = slugValue.match(/^imovel-(\d+)$/)[1];
+    console.log("DEBUG: slug identificado como imovel antigo, id extraído:", id);
+
     try {
       const response = await getImovelById(id);
       const imovel = response?.data;
+      console.log("DEBUG: resultado da busca do imóvel por ID:", imovel);
+
       if (imovel && imovel.Slug) {
-        if (process.env.NODE_ENV !== "production") {
-          console.log(`Redirecionando /imovel-${id} para /imovel-${id}/${imovel.Slug}`);
-        }
-        redirect(`/imovel-${id}/${imovel.Slug}`);
+        const destino = `/imovel-${id}/${imovel.Slug}`;
+        console.log(`DEBUG: Redirecionando /imovel-${id} para ${destino}`);
+        return redirect(destino);
       } else {
-        if (process.env.NODE_ENV !== "production") {
-          console.log(`Imóvel não encontrado para ID: ${id}`);
-        }
-        notFound();
+        console.log(`DEBUG: Imóvel não encontrado para ID: ${id}, retornando 404`);
+        return notFound();
       }
     } catch (e) {
-      if (process.env.NODE_ENV !== "production") {
-        console.error(`Erro ao buscar imóvel ID ${id}:`, e);
-      }
-      notFound();
+      console.error(`DEBUG: Erro ao buscar imóvel ID ${id}:`, e);
+      return notFound();
     }
   }
 
   // --- LÓGICA NORMAL DE CONDOMÍNIO ---
   const response = await getCondominioPorSlug(slugValue);
   if (!response.data) {
-    notFound();
+    console.log("DEBUG: Condomínio não encontrado para slug:", slugValue);
+    return notFound();
   }
   const condominio = response.data;
   const imoveisRelacionados = response.imoveisRelacionados;
