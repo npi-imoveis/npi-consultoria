@@ -22,41 +22,39 @@ export async function generateMetadata({ params }) {
   const response = await getImovelById(id);
   const imovel = response?.data;
 
-  // Debug: Verifica a estrutura completa das fotos
-  console.log('Estrutura completa das fotos:', JSON.stringify(imovel.Foto, null, 2));
-
-  // 1. Busca pela foto destacada (Destaque === "Sim")
-  let destaqueFotoUrl = null;
-  if (Array.isArray(imovel.Foto)) {
-    const destaqueFotoObj = imovel.Foto.find(f => 
+  // 1. Busca otimizada por foto destaque
+  const getFeaturedImage = () => {
+    if (!Array.isArray(imovel.Foto)) return null;
+    
+    // Tenta encontrar por Destaque (case insensitive)
+    const featured = imovel.Foto.find(f => 
       String(f.Destaque).toLowerCase() === "sim"
     );
-    destaqueFotoUrl = destaqueFotoObj?.Foto || destaqueFotoObj?.url || null;
-    
-    // 2. Fallback: Foto com Indice === 0
-    if (!destaqueFotoUrl) {
-      const primeiraFoto = imovel.Foto.find(f => f.Indice === 0);
-      destaqueFotoUrl = primeiraFoto?.Foto || primeiraFoto?.url || null;
-    }
-    
-    // 3. Fallback: Primeira foto do array
-    if (!destaqueFotoUrl && imovel.Foto.length > 0) {
-      destaqueFotoUrl = imovel.Foto[0]?.Foto || imovel.Foto[0]?.url || null;
-    }
-  }
+    if (featured) return featured.Foto || featured.url;
 
-  // 4. Fallback final: Imagem padrão
-  const absoluteImageUrl = destaqueFotoUrl 
-    ? destaqueFotoUrl.startsWith('http') 
-      ? destaqueFotoUrl 
-      : `${process.env.NEXT_PUBLIC_SITE_URL}${destaqueFotoUrl}`
+    // Fallback 1: Foto com Indice 0
+    const primary = imovel.Foto.find(f => f.Indice === 0);
+    if (primary) return primary.Foto || primary.url;
+
+    // Fallback 2: Primeira foto válida
+    const firstValid = imovel.Foto.find(f => f.Foto || f.url);
+    return firstValid?.Foto || firstValid?.url;
+  };
+
+  const imagePath = getFeaturedImage();
+  const absoluteImageUrl = imagePath
+    ? imagePath.startsWith('http')
+      ? imagePath
+      : `${process.env.NEXT_PUBLIC_SITE_URL}${imagePath}`
     : `${process.env.NEXT_PUBLIC_SITE_URL}/default-imovel.jpg`;
 
-  console.log('Foto destaque selecionada:', absoluteImageUrl);
+  // Debug crucial
+  console.log('URL da imagem selecionada:', absoluteImageUrl);
+  console.log('Domínio da imagem:', new URL(absoluteImageUrl).hostname);
 
   const description = `${imovel.Empreendimento} em ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.Categoria} com ${imovel.MetragemAnt}, ${imovel.DormitoriosAntigo} quartos, ${imovel.VagasAntigo} vagas. ${imovel.Situacao}.`;
 
-  const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
+  const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`.replace(/\s+/g, '');
 
   return {
     title: `${imovel.Empreendimento}, ${imovel.TipoEndereco} ${imovel.Endereco} ${imovel.Numero}, ${imovel.BairroComercial}`,
@@ -88,6 +86,12 @@ export async function generateMetadata({ params }) {
       site: "@NPIImoveis",
       creator: "@NPIImoveis",
       images: [absoluteImageUrl],
+    },
+    // Adiciona meta tags adicionais para melhor compatibilidade
+    other: {
+      "og:image:secure_url": absoluteImageUrl,
+      "og:image:type": "image/jpeg",
+      "og:image:alt": `Imóvel ${imovel.Empreendimento}`,
     }
   };
 }
