@@ -20,14 +20,16 @@ import { notFound, redirect } from "next/navigation";
 export async function generateMetadata({ params }) {
   const { id } = params;
   const response = await getImovelById(id);
-  const imovel = response?.data; // Alterado de condominio para imovel para consistência
+  const imovel = response?.data;
 
-  // Debug remoto (ver logs na Vercel)
-  console.log('Estrutura do objeto imovel:', JSON.stringify(imovel, null, 2));
-
-  // Método mais robusto para pegar a imagem
+  // Garante que pegamos uma imagem válida
   const primeiraFoto = Array.isArray(imovel.Foto) ? imovel.Foto[0] : null;
-  const destaqueFotoUrl = primeiraFoto?.Foto || primeiraFoto?.url || null;
+  const imageUrl = primeiraFoto?.Foto || primeiraFoto?.url || '/default-image.jpg';
+  
+  // Garante URL absoluta para imagens
+  const absoluteImageUrl = imageUrl.startsWith('http') 
+    ? imageUrl 
+    : `${process.env.NEXT_PUBLIC_SITE_URL}${imageUrl}`;
 
   const description = `${imovel.Empreendimento} em ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.Categoria} com ${imovel.MetragemAnt}, ${imovel.DormitoriosAntigo} quartos, ${imovel.VagasAntigo} vagas. ${imovel.Situacao}.`;
 
@@ -36,7 +38,6 @@ export async function generateMetadata({ params }) {
   return {
     title: `${imovel.Empreendimento}, ${imovel.TipoEndereco} ${imovel.Endereco} ${imovel.Numero}, ${imovel.BairroComercial}`,
     description,
-    robots: "index, follow",
     metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL),
     alternates: {
       canonical: currentUrl,
@@ -46,22 +47,24 @@ export async function generateMetadata({ params }) {
     },
     openGraph: {
       title: `Imóvel ${imovel.Empreendimento}`,
-      description,      
+      description,
       url: currentUrl,
-      images: destaqueFotoUrl ? [{ 
-        url: destaqueFotoUrl,
+      images: [{
+        url: absoluteImageUrl,
         width: 1200,
         height: 630,
-        alt: `Imóvel ${imovel.Empreendimento}` 
-      }] : [],
+        alt: `Imóvel ${imovel.Empreendimento}`
+      }],
       type: "website",
+      siteName: "NPI Consultoria Imobiliária",
     },
     twitter: {
       card: "summary_large_image",
       title: `Imóvel ${imovel.Empreendimento}`,
       description,
       site: "@NPIImoveis",
-      images: destaqueFotoUrl ? [destaqueFotoUrl] : [],
+      creator: "@NPIImoveis",
+      images: [absoluteImageUrl],
     }
   };
 }
