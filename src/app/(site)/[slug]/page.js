@@ -1,4 +1,3 @@
-console.log("Entrou na página dinâmica [slug]", params);
 export const dynamic = "force-dynamic";
 
 /**
@@ -33,6 +32,7 @@ function ensureCondominio(text) {
 }
 
 export async function generateMetadata({ params }) {
+  console.log("Entrou na página dinâmica [slug]", params);
   const { slug } = params;
   if (typeof slug === "string" && /^imovel-(\d+)$/.test(slug)) {
     return {
