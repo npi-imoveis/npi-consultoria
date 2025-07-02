@@ -29,12 +29,12 @@ export default function AdminCorretores() {
     setIsLoading(true);
     try {
       if (search) {
-        const response = await fetch(`/api/search/corretores?q=${encodeURIComponent(search)}`);
+        // ALTERAÇÃO PRINCIPAL AQUI: Corrija a URL da API
+        const response = await fetch(`/api/admin/corretores?q=${encodeURIComponent(search)}`);
         const result = await response.json();
 
         if (result && result.status === 200 && result.data) {
           setCorretores(result.data);
-          // ALTERAÇÃO FEITA: Usando os dados de paginação da API
           setPagination(result.pagination || {
             totalItems: result.data.length,
             totalPages: 1,
