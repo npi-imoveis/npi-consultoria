@@ -1,3 +1,5 @@
+// Forçando a invalidação do cache da Vercel - 12:15
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
