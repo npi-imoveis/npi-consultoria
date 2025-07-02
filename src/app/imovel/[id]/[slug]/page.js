@@ -33,7 +33,7 @@ export async function generateMetadata({ params }) {
   const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
   const destaqueFotoUrl = destaqueFotoObj?.Foto;
   const rawTitle = ensureCondominio(condominio.Empreendimento);
-  const destaqueFotoObj = condominio.Foto?.find((f) => f.Destaque === "Sim");
+  const destaqueFotoObj = imovel.Foto?.find((f) => f.Destaque === "Sim");
   
 
   return {
