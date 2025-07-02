@@ -1,70 +1,35 @@
-import { connectToDatabase } from "@/app/lib/mongodb";
-import Corretores from "@/app/models/Corretores";
 import { NextResponse } from "next/server";
 
-// 1. Força a rota a ser dinâmica, corrigindo o erro de build.
 export const dynamic = "force-dynamic";
 
 export async function GET(request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    const query = searchParams.get("q");
+  const { searchParams } = new URL(request.url);
+  const query = searchParams.get("q");
 
-    if (!query || query.trim() === "") {
-      return NextResponse.json({
-        status: 200,
-        data: [],
-      });
-    }
+  // Log para sabermos que a API foi chamada
+  console.log(`API /api/search/corretores foi chamada com o termo: ${query}`);
 
-    await connectToDatabase();
-
-    // 2. Usa a configuração de busca correta para o seu índice do Atlas.
-    const resultado = await Corretores.aggregate([
-      {
-        $search: {
-          index: "corretores", // O nome do seu índice.
-          text: {
-            query: query,
-            path: "nome", // O campo correto para a busca.
-            fuzzy: {
-              maxEdits: 1,
-            },
-          },
-        },
-      },
-      {
-        $limit: 20,
-      },
-      {
-        $facet: {
-          metadata: [{ $count: "total" }],
-          data: [{ $limit: 20 }],
-        },
-      },
-    ]);
-
-    if (!resultado[0] || !resultado[0].data) {
-      return NextResponse.json({ status: 200, data: [], pagination: { totalItems: 0, totalPages: 1, currentPage: 1 } });
-    }
-
-    const data = resultado[0].data;
-    const totalItems = resultado[0].metadata[0] ? resultado[0].metadata[0].total : 0;
-
-    return NextResponse.json({
+  // Teste Fixo: Se buscar por "Rubens", retorna um dado fixo.
+  if (query && query.toLowerCase().includes("rubens")) {
+    const fakeData = {
       status: 200,
-      data: data,
-      pagination: {
-        totalItems,
-        totalPages: Math.ceil(totalItems / 20),
-        currentPage: 1,
-      },
-    });
-  } catch (error) {
-    console.error("Erro na busca (search/corretores):", error);
-    return NextResponse.json({
-      status: 500,
-      error: error.message || "Erro desconhecido",
-    });
+      data: [
+        {
+          _id: "FAKE_ID_123",
+          nome: "Rubens Santoro (API FUNCIONOU!)",
+          email: "api.funcionou@test.com",
+          celular: "11-99999-8888",
+          codigoD: "TESTE-102",
+        },
+      ],
+      pagination: { totalItems: 1, totalPages: 1, currentPage: 1 },
+    };
+    // Log do que estamos retornando
+    console.log("Retornando dados FAKES:", JSON.stringify(fakeData, null, 2));
+    return NextResponse.json(fakeData);
   }
+
+  // Se não for "Rubens", retorna vazio.
+  console.log("Termo não é 'Rubens', retornando array vazio.");
+  return NextResponse.json({ status: 200, data: [] });
 }
