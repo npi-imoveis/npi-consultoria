@@ -62,16 +62,14 @@ const nextConfig = {
     ],
     minimumCacheTTL: 60, // Cache de 60 segundos
   },
-   typescript: {
+  typescript: {
     ignoreBuildErrors: true, // Apenas para desenvolvimento
   },
-
   async redirects() {
     return [
       // Pode adicionar redirecionamentos manuais aqui se necessário
-    ]
+    ];
   },
-
   output: "standalone", // Ou 'export' se estiver gerando static sites
 };
 
