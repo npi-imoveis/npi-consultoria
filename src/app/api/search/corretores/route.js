@@ -1,35 +1,54 @@
+import { connectToDatabase } from "@/app/lib/mongodb";
+import Corretores from "@/app/models/Corretores";
 import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request) {
-  const { searchParams } = new URL(request.url);
-  const query = searchParams.get("q");
+  try {
+    const { searchParams } = new URL(request.url);
+    const query = searchParams.get("q");
 
-  // Log para sabermos que a API foi chamada
-  console.log(`API /api/search/corretores foi chamada com o termo: ${query}`);
+    if (!query || query.trim() === "") {
+      return NextResponse.json({ status: 200, data: [] });
+    }
 
-  // Teste Fixo: Se buscar por "Rubens", retorna um dado fixo.
-  if (query && query.toLowerCase().includes("rubens")) {
-    const fakeData = {
-      status: 200,
-      data: [
-        {
-          _id: "FAKE_ID_123",
-          nome: "Rubens Santoro (API FUNCIONOU!)",
-          email: "api.funcionou@test.com",
-          celular: "11-99999-8888",
-          codigoD: "TESTE-102",
+    await connectToDatabase();
+
+    const resultado = await Corretores.aggregate([
+      {
+        $search: {
+          index: "corretores",
+          text: {
+            query: query,
+            path: "nome",
+            fuzzy: { maxEdits: 1 },
+          },
         },
-      ],
-      pagination: { totalItems: 1, totalPages: 1, currentPage: 1 },
-    };
-    // Log do que estamos retornando
-    console.log("Retornando dados FAKES:", JSON.stringify(fakeData, null, 2));
-    return NextResponse.json(fakeData);
-  }
+      },
+      { $limit: 20 },
+      { $facet: { metadata: [{ $count: "total" }], data: [{ $limit: 20 }] } },
+    ]);
 
-  // Se não for "Rubens", retorna vazio.
-  console.log("Termo não é 'Rubens', retornando array vazio.");
-  return NextResponse.json({ status: 200, data: [] });
+    if (!resultado[0] || !resultado[0].data) {
+      return NextResponse.json({ status: 200, data: [], pagination: { totalItems: 0, totalPages: 1, currentPage: 1 } });
+    }
+
+    const data = resultado[0].data;
+    const totalItems = resultado[0].metadata[0] ? resultado[0].metadata[0].total : 0;
+
+    return NextResponse.json({
+      status: 200,
+      data: data,
+      pagination: {
+        totalItems,
+        totalPages: Math.ceil(totalItems / 20),
+        currentPage: 1,
+      },
+    });
+  } catch (error) {
+    console.error("Erro na busca (search/corretores):", error);
+    return NextResponse.json({ status: 500, error: error.message || "Erro desconhecido" });
+  }
 }
+  
