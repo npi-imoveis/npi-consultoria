@@ -1,4 +1,3 @@
-// /api/search/corretores/route.js - VERSÃO FINAL E CORRETA
 import { connectToDatabase } from "@/app/lib/mongodb";
 import Corretores from "@/app/models/Corretores";
 import { NextResponse } from "next/server";
@@ -14,46 +13,31 @@ export async function GET(request) {
 
     await connectToDatabase();
 
-    const resultado = await Corretores.aggregate([
-      {
-        $search: {
-          index: "corretores", // <-- VERIFIQUE SE ESTE NOME BATE COM O SEU ÍNDICE NO ATLAS
-          autocomplete: {
-            query: query,
-            path: "nomeCompleto", // <-- VERIFIQUE SE ESTE É O CAMPO CORRETO
-            fuzzy: {
-              maxEdits: 1,
-            },
-          },
-        },
-      },
-      {
-        $facet: {
-          metadata: [{ $count: "total" }],
-          data: [{ $limit: 20 }],
-        },
-      },
-    ]);
+    // --- CÓDIGO DE DIAGNÓSTICO ---
+    // Esta busca usa uma expressão regular (regex) para encontrar o nome.
+    // Não é a forma mais performática, mas não depende do Atlas Search e serve para testar.
+    const resultado = await Corretores.find({
+      nomeCompleto: { $regex: query, $options: "i" } // 'i' para ser case-insensitive
+    }).limit(20);
+    // --- FIM DO CÓDIGO DE DIAGNÓSTICO ---
 
-    // Prevenção de erro se a busca não retornar nada
-    if (!resultado[0] || !resultado[0].data) {
-        return NextResponse.json({ status: 200, data: [], pagination: { totalItems: 0, totalPages: 1, currentPage: 1 } });
-    }
+    // Se o campo for 'nome' em vez de 'nomeCompleto', use a linha abaixo:
+    // const resultado = await Corretores.find({ nome: { $regex: query, $options: "i" } }).limit(20);
 
-    const data = resultado[0].data;
-    const totalItems = resultado[0].metadata[0] ? resultado[0].metadata[0].total : 0;
+    const totalItems = resultado.length; // Simples contagem para este teste
 
     return NextResponse.json({
       status: 200,
-      data: data,
+      data: resultado,
       pagination: {
         totalItems,
         totalPages: Math.ceil(totalItems / 20),
         currentPage: 1,
       },
     });
+
   } catch (error) {
-    console.error("Erro na busca (Atlas Search):", error);
+    console.error("Erro na busca (diagnóstico):", error);
     return NextResponse.json({
       status: 500,
       error: error.message || "Erro desconhecido",
