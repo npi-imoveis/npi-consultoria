@@ -1,3 +1,10 @@
+/**
+ * Página de condomínio e interceptação de URLs de imóvel sem slug.
+ * Se o slug recebido for do tipo 'imovel-123', busca o imóvel pelo ID
+ * e redireciona para a URL canônica com slug, resolvendo problemas de SEO.
+ * Isso garante redirecionamento dinâmico e eficiente para milhares de URLs antigas.
+ */
+
 import { Button } from "@/app/components/ui/button";
 import { getCondominioPorSlug, getImovelById } from "@/app/services";
 import { formatterValue } from "@/app/utils/formatter-value";
@@ -76,19 +83,23 @@ export async function generateMetadata({ params }) {
 export default async function CondominioPage({ params }) {
   const { slug } = params;
 
-  // Detecta se o slug é do tipo 'imovel-123' (acesso direto sem slug)
-  const match = typeof slug === "string" && slug.match(/^imovel-(\d+)$/);
-  if (match) {
-    const id = match[1];
-    // Busca o imóvel pelo ID
-    const response = await getImovelById(id);
-    const imovel = response?.data;
-    if (imovel && imovel.Slug) {
-      // Redireciona para a URL canônica do imóvel
-      redirect(`/imovel-${id}/${imovel.Slug}`);
-    } else {
-      // Se não encontrar, redireciona para a home (ou pode usar notFound())
-      redirect("/");
+  // --- REDIRECIONAMENTO DINÂMICO DE /imovel-123 PARA /imovel-123/slug-correto ---
+  // Se o slug for do tipo 'imovel-123', busca o imóvel pelo ID e redireciona para a URL canônica
+  if (typeof slug === "string" && /^imovel-(\d+)$/.test(slug)) {
+    const id = slug.match(/^imovel-(\d+)$/)[1];
+    try {
+      const response = await getImovelById(id);
+      const imovel = response?.data;
+      if (imovel && imovel.Slug) {
+        // Redireciona para a URL canônica do imóvel
+        redirect(`/imovel-${id}/${imovel.Slug}`);
+      } else {
+        // Se não encontrar, retorna 404
+        notFound();
+      }
+    } catch (e) {
+      // Em caso de erro, retorna 404
+      notFound();
     }
   }
 
@@ -146,7 +157,6 @@ export default async function CondominioPage({ params }) {
                   </div>
                 )}
 
-                {/* Este é o bloco do Valor de Venda. O erro estava aqui. */}
                 <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
                   <h4 className="text-zinc-600 text-[10px] font-bold">Venda:</h4>
                   <h2 className="text-black font-semibold text-[10px]">R$ {condominio.ValorAntigo}</h2>
@@ -196,7 +206,6 @@ export default async function CondominioPage({ params }) {
       {condominio.Tour360 && (
         <TourVirtual link={condominio.Tour360} titulo={rawTitle} />
       )}
-      {/* ...restante do seu código de renderização... */}
     </section>
   );
 }
