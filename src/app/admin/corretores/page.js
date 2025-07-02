@@ -28,6 +28,9 @@ export default function AdminCorretores() {
     setIsLoading(true);
     try {
       if (search) {
+        // ==================================================================
+        // ESTA É A LINHA CORRIGIDA
+        // ==================================================================
         const response = await fetch(`/api/search/corretores?q=${encodeURIComponent(search)}`);
         const result = await response.json();
 
