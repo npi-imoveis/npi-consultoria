@@ -1,5 +1,4 @@
-// Forçando a invalidação do cache da Vercel - 12:15
-
+// Forçando atualização final do cache - 12:25
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -30,9 +29,7 @@ export default function AdminCorretores() {
     setIsLoading(true);
     try {
       if (search) {
-        // ==================================================================
-        // ESTA É A LINHA CORRIGIDA
-        // ==================================================================
+        // ESTA É A LINHA CORRETA E FINAL
         const response = await fetch(`/api/search/corretores?q=${encodeURIComponent(search)}`);
         const result = await response.json();
 
