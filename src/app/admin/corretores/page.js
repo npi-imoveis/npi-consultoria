@@ -24,43 +24,43 @@ export default function AdminCorretores() {
     itemsPerPage: 12,
   });
 
-  // Dentro do seu arquivo app/admin/corretores/page.js
-
-const loadCorretores = useCallback(async (page = 1, search = "") => {
+  const loadCorretores = useCallback(async (page = 1, search = "") => {
     setIsLoading(true);
     try {
       if (search) {
         const response = await fetch(`/api/search/corretores?q=${encodeURIComponent(search)}`);
-        
-        // Log da resposta crua
-        console.log("Resposta da API (bruta):", response);
-
         const result = await response.json();
 
-        // Log dos dados recebidos em formato JSON
-        console.log("Dados da API (JSON):", result);
-
         if (result && result.status === 200 && result.data) {
-          console.log("Dados OK, atualizando o estado.");
           setCorretores(result.data);
-          setPagination(result.pagination || { /* ... */ });
+          setPagination(result.pagination || {
+            totalItems: result.data.length,
+            totalPages: 1,
+            currentPage: 1,
+            itemsPerPage: 20,
+          });
         } else {
-          console.log("Dados não vieram como esperado, limpando a lista.");
           setCorretores([]);
-          setPagination({ /* ... */ });
+          setPagination({ totalItems: 0, totalPages: 1, currentPage: 1, itemsPerPage: 12 });
         }
       } else {
-        // ... (código para carregar todos os corretores, pode deixar como está)
+        const response = await getCorretores({}, page, 12);
+        if (response && response.corretores) {
+          setCorretores(response.corretores);
+          setPagination({ ...response.pagination, itemsPerPage: 12 });
+        } else {
+          setCorretores([]);
+          setPagination({ totalItems: 0, totalPages: 1, currentPage: 1, itemsPerPage: 12 });
+        }
       }
     } catch (error) {
-      console.error("ERRO CRÍTICO no fetch:", error);
+      console.error("Erro ao carregar corretores:", error);
+      setCorretores([]);
+      setPagination({ totalItems: 0, totalPages: 1, currentPage: 1, itemsPerPage: 20 });
     } finally {
       setIsLoading(false);
     }
   }, []);
-
-// O resto do seu arquivo continua igual...
-
 
   useEffect(() => {
     if (!searchTerm) {
@@ -99,7 +99,6 @@ const loadCorretores = useCallback(async (page = 1, search = "") => {
     loadCorretores(currentPage, searchTerm);
   };
 
-  // O restante do seu código JSX permanece o mesmo
   return (
     <AuthCheck>
       {isModalOpen && (
@@ -125,7 +124,6 @@ const loadCorretores = useCallback(async (page = 1, search = "") => {
             </button>
           </div>
 
-          {/* Barra de pesquisa */}
           <div className="bg-white p-4 rounded-lg mb-6">
             <form onSubmit={handleSearch} className="flex items-center gap-2">
               <div className="relative flex-grow">
@@ -158,112 +156,50 @@ const loadCorretores = useCallback(async (page = 1, search = "") => {
             </form>
           </div>
 
-          {/* Tabela de corretores */}
           <div className="relative overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-[10px] font-bold tracking-wider capitalize"
-                  >
-                    ID
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-[10px] font-bold tracking-wider capitalize"
-                  >
-                    Nome
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-[10px] font-bold tracking-wider"
-                  >
-                    Email
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-[10px] font-bold tracking-wider"
-                  >
-                    Celular
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-[10px] font-bold tracking-wider"
-                  >
-                    Imóveis
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-6 py-3 text-left text-[10px] font-bold  tracking-wider sticky right-0 bg-gray-50"
-                  >
-                    Ações
-                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-[10px] font-bold tracking-wider capitalize">ID</th>
+                  <th scope="col" className="px-6 py-3 text-left text-[10px] font-bold tracking-wider capitalize">Nome</th>
+                  <th scope="col" className="px-6 py-3 text-left text-[10px] font-bold tracking-wider">Email</th>
+                  <th scope="col" className="px-6 py-3 text-left text-[10px] font-bold tracking-wider">Celular</th>
+                  <th scope="col" className="px-6 py-3 text-left text-[10px] font-bold tracking-wider">Imóveis</th>
+                  <th scope="col" className="px-6 py-3 text-left text-[10px] font-bold tracking-wider sticky right-0 bg-gray-50">Ações</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {isLoading ? (
-                  Array(10)
-                    .fill(null)
-                    .map((_, index) => (
-                      <tr key={`loading-${index}`}>
-                        <td colSpan={6} className="px-6 py-4 whitespace-nowrap">
-                          <div className="animate-pulse flex space-x-4">
-                            <div className="h-4 bg-gray-200 rounded w-full"></div>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
+                  Array(10).fill(null).map((_, index) => (
+                    <tr key={`loading-${index}`}>
+                      <td colSpan={6} className="px-6 py-4 whitespace-nowrap">
+                        <div className="animate-pulse flex space-x-4"><div className="h-4 bg-gray-200 rounded w-full"></div></div>
+                      </td>
+                    </tr>
+                  ))
                 ) : corretores?.length > 0 ? (
                   corretores.map((corretor) => (
                     <tr key={corretor._id} className="hover:bg-gray-50">
-                      <td className="px-6 bg-gray-50 py-4 whitespace-nowrap text-[10px] text-gray-900 font-bold capitalize">
-                        {corretor.codigoD || "-"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-[10px] text-gray-900 font-bold capitalize">
-                        {corretor.nomeCompleto || corretor.nome}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700">
-                        {corretor.email || "-"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700">
-                        {corretor.celular || "-"}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700">
-                        {corretor.imoveis_vinculados?.length || "-"}
-                      </td>
+                      <td className="px-6 bg-gray-50 py-4 whitespace-nowrap text-[10px] text-gray-900 font-bold capitalize">{corretor.codigoD || "-"}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-[10px] text-gray-900 font-bold capitalize">{corretor.nomeCompleto || corretor.nome}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700">{corretor.email || "-"}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700">{corretor.celular || "-"}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700">{corretor.imoveis_vinculados?.length || "-"}</td>
                       <td className="px-6 py-4 whitespace-nowrap sticky right-0 bg-white">
                         <div className="flex items-center space-x-3">
-                          <button
-                            className="text-black font-bold hover:text-gray-700 bg-gray-100 p-2 rounded-md"
-                            title="Editar"
-                            onClick={() => handleEdit(corretor.codigoD)}
-                          >
-                            <PencilSquareIcon className="h-5 w-5" />
-                          </button>
-                          <button
-                            className="text-red-500 font-bold hover:text-red-400 bg-gray-100 p-2 rounded-md"
-                            title="Deletar Imóvel"
-                            onClick={() => handleDelete(corretor.codigoD)}
-                          >
-                            <TrashIcon className="h-4 w-4" />
-                          </button>
+                          <button className="text-black font-bold hover:text-gray-700 bg-gray-100 p-2 rounded-md" title="Editar" onClick={() => handleEdit(corretor.codigoD)}><PencilSquareIcon className="h-5 w-5" /></button>
+                          <button className="text-red-500 font-bold hover:text-red-400 bg-gray-100 p-2 rounded-md" title="Deletar Imóvel" onClick={() => handleDelete(corretor.codigoD)}><TrashIcon className="h-4 w-4" /></button>
                         </div>
                       </td>
                     </tr>
                   ))
                 ) : (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-4 text-center text-[10px] text-gray-500">
-                      Nenhum corretor encontrado
-                    </td>
-                  </tr>
+                  <tr><td colSpan={6} className="px-6 py-4 text-center text-[10px] text-gray-500">Nenhum corretor encontrado</td></tr>
                 )}
               </tbody>
             </table>
           </div>
 
-          {/* Rodapé da tabela com paginação */}
           <div className="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
             <Pagination pagination={pagination} onPageChange={handlePageChange} />
           </div>
