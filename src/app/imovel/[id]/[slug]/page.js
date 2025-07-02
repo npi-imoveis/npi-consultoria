@@ -1,5 +1,3 @@
-// app/imovel/[id]/[slug]/page.js
-
 import { ImageGallery } from "@/app/components/sections/image-gallery";
 import { FAQImovel } from "./componentes/FAQImovel";
 import DetalhesCondominio from "./componentes/DetalhesCondominio";
@@ -19,7 +17,6 @@ import { Apartment as StructuredDataApartment } from "@/app/components/structure
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 import { notFound, redirect } from "next/navigation";
 
-// ✅ SEO DINÂMICO
 export async function generateMetadata({ params }) {
   const { id } = params;
   // const response = await getCondominioPorSlug(slug);
@@ -36,12 +33,12 @@ export async function generateMetadata({ params }) {
   return {
     title: `${condominio.Empreendimento}, ${condominio.TipoEndereco} ${condominio.Endereco} ${condominio.Numero}, ${condominio.BairroComercial}`,
     description,
+    robots: "index, follow",
     alternates: {
-      canonical: currentUrl,
-    },
-    robots: {
-      index: true,
-      follow: true,
+    canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${condominio.Codigo}/${condominio.Slug}`,
+    languages: {
+        "pt-BR": `/imovel-${condominio.Codigo}/${condominio.Slug}`,  
+       },
     },
     openGraph: {
       title: `Condomínio ${condominio.Empreendimento}`,
@@ -57,6 +54,7 @@ export async function generateMetadata({ params }) {
       site: "@NPIImoveis",
       images: destaqueFotoUrl ? [destaqueFotoUrl] : [],
     },
+    },
      // hreflang manual
     metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL),
     alternates: {
@@ -64,33 +62,28 @@ export async function generateMetadata({ params }) {
       languages: {
         "pt-BR": currentUrl,
       },
-    },
   };
 }
 
-export const revalidate = 0;
-
 export default async function Imovel({ params }) {
   const { id, slug } = params;
+  // const response = await getCondominioPorSlug(slug);
   const response = await getImovelById(id);
+  // Acessando cookies no server component
 
-if (!response?.data) {
-  notFound();
-}
+  // const response = await getCondominioPorSlug(slug);
 
-const imovel = {
-  ...response.data,
-  SuiteAntigo: response.data.SuiteAntigo ?? response.data.Suites ?? 0,
-  DormitoriosAntigo: response.data.DormitoriosAntigo ?? 0,
-  VagasAntigo: response.data.VagasAntigo ?? 0,
-  BanheiroSocialQtd: response.data.BanheiroSocialQtd ?? 0,
-};
+  if (!response?.data) {
+    notFound();
+  }
 
-const slugCorreto = imovel.Slug;
+  const imovel = response.data;
 
-if (slug !== slugCorreto) {
+  const slugCorreto = imovel.Slug;
+
+  if (slug !== slugCorreto) {
     redirect(`/imovel-${id}/${slugCorreto}`);
-  }  
+  }
 
   const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
 
@@ -104,7 +97,6 @@ if (slug !== slugCorreto) {
         url={currentUrl}
         image={imovel.Foto}
       />
-
       <ExitIntentModal condominio={imovel.Empreendimento} link={currentUrl} />
 
       <div className="w-full mx-auto">
@@ -135,9 +127,8 @@ if (slug !== slugCorreto) {
       <div className="container mx-auto px-4 md:px-0">
         <FAQImovel imovel={imovel} />
       </div>
-
       <WhatsappFloat
-        message={`Quero saber mais sobre o ${imovel.Empreendimento}, no bairro ${imovel.BairroComercial}, disponível na página do Imóvel: ${currentUrl}`}
+        message={`Quero saber mais sobre o ${imovel.Empreendimento}, no bairro ${imovel.BairroComercial}, disponivel na pagina do Imóvel: ${currentUrl}`}
       />
     </section>
   );
