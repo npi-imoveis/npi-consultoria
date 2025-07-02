@@ -24,13 +24,14 @@ export default function AdminCorretores() {
     itemsPerPage: 12,
   });
 
-  // ALTERAÇÃO FEITA: Envolvi a função em useCallback para otimização e para usá-la no useEffect
   const loadCorretores = useCallback(async (page = 1, search = "") => {
     setIsLoading(true);
     try {
       if (search) {
-        // ALTERAÇÃO PRINCIPAL AQUI: Corrija a URL da API
-        const response = await fetch(`/api/admin/corretores?q=${encodeURIComponent(search)}`);
+        // ==================================================================
+        // CORREÇÃO FINAL ESTÁ AQUI: APONTANDO PARA A ROTA DE API CORRETA
+        // ==================================================================
+        const response = await fetch(`/api/search/corretores?q=${encodeURIComponent(search)}`);
         const result = await response.json();
 
         if (result && result.status === 200 && result.data) {
@@ -62,10 +63,8 @@ export default function AdminCorretores() {
     } finally {
       setIsLoading(false);
     }
-  }, []); // useCallback não precisa de dependências aqui pois as funções externas (getCorretores) são estáveis
+  }, []);
 
-  // ALTERAÇÃO FEITA: A lógica foi simplificada.
-  // Este useEffect agora só carrega os corretores na montagem inicial ou quando a página muda (sem busca).
   useEffect(() => {
     if (!searchTerm) {
       loadCorretores(currentPage);
@@ -79,14 +78,14 @@ export default function AdminCorretores() {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    setCurrentPage(1); // Reseta para a primeira página a cada nova busca
+    setCurrentPage(1);
     loadCorretores(1, searchTerm);
   };
 
   const clearSearch = () => {
     setSearchTerm("");
     setCurrentPage(1);
-    loadCorretores(1, ""); // Recarrega a lista principal
+    loadCorretores(1, "");
   };
 
   const handleEdit = (corretorId) => {
@@ -100,10 +99,10 @@ export default function AdminCorretores() {
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    // Recarrega os dados mantendo o estado atual da busca e paginação
     loadCorretores(currentPage, searchTerm);
   };
 
+  // O restante do seu código JSX permanece o mesmo
   return (
     <AuthCheck>
       {isModalOpen && (
