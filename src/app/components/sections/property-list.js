@@ -129,9 +129,6 @@ export function PropertyList() {
   <h2 className="text-2xl font-bold">Imóveis de Alto Padrão</h2>
 </TitleSection>
 
-  <h2 className="text-2xl font-bold">Imóveis de <span className="text-primary">Alto Padrão</span></h2>
-</TitleSection>
-
         <p className="text-red-500 text-center py-10">Erro: {error}</p>
       </div>
     </div>
