@@ -24,46 +24,43 @@ export default function AdminCorretores() {
     itemsPerPage: 12,
   });
 
-  const loadCorretores = useCallback(async (page = 1, search = "") => {
+  // Dentro do seu arquivo app/admin/corretores/page.js
+
+const loadCorretores = useCallback(async (page = 1, search = "") => {
     setIsLoading(true);
     try {
       if (search) {
-        // ==================================================================
-        // CORREÇÃO FINAL ESTÁ AQUI: APONTANDO PARA A ROTA DE API CORRETA
-        // ==================================================================
         const response = await fetch(`/api/search/corretores?q=${encodeURIComponent(search)}`);
+        
+        // Log da resposta crua
+        console.log("Resposta da API (bruta):", response);
+
         const result = await response.json();
 
+        // Log dos dados recebidos em formato JSON
+        console.log("Dados da API (JSON):", result);
+
         if (result && result.status === 200 && result.data) {
+          console.log("Dados OK, atualizando o estado.");
           setCorretores(result.data);
-          setPagination(result.pagination || {
-            totalItems: result.data.length,
-            totalPages: 1,
-            currentPage: 1,
-            itemsPerPage: 20,
-          });
+          setPagination(result.pagination || { /* ... */ });
         } else {
+          console.log("Dados não vieram como esperado, limpando a lista.");
           setCorretores([]);
-          setPagination({ totalItems: 0, totalPages: 1, currentPage: 1, itemsPerPage: 12 });
+          setPagination({ /* ... */ });
         }
       } else {
-        const response = await getCorretores({}, page, 12);
-        if (response && response.corretores) {
-          setCorretores(response.corretores);
-          setPagination({ ...response.pagination, itemsPerPage: 12 });
-        } else {
-          setCorretores([]);
-          setPagination({ totalItems: 0, totalPages: 1, currentPage: 1, itemsPerPage: 12 });
-        }
+        // ... (código para carregar todos os corretores, pode deixar como está)
       }
     } catch (error) {
-      console.error("Erro ao carregar corretores:", error);
-      setCorretores([]);
-      setPagination({ totalItems: 0, totalPages: 1, currentPage: 1, itemsPerPage: 20 });
+      console.error("ERRO CRÍTICO no fetch:", error);
     } finally {
       setIsLoading(false);
     }
   }, []);
+
+// O resto do seu arquivo continua igual...
+
 
   useEffect(() => {
     if (!searchTerm) {
