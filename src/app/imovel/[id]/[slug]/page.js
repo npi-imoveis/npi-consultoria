@@ -43,20 +43,20 @@ export async function generateMetadata({ params }) {
       index: true,
       follow: true,
     },
-    openGraph: {
-      title,
-      description,
-      url: currentUrl,
-      images: destaqueFotoUrl ? [{ url: destaqueFotoUrl }] : [],
-      type: "website",
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      site: "@NPIImoveis",
-      images: destaqueFotoUrl ? [destaqueFotoUrl] : [],
-    },
+   openGraph: {
+        title: "NPI Consultoria Imobiliária",
+        description: "Encontre seu imóvel ideal com a NPI Consultoria.",
+        url: `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${id}`,
+        type: "website",
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: "NPI Consultoria Imobiliária",
+        description: "Encontre seu imóvel ideal com a NPI Consultoria.",
+        site: "@NPIImoveis",
+      },
+    };
+  }
     // hreflang manual
     metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL),
     alternates: {
