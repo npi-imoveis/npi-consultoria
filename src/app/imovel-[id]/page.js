@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 // Este arquivo captura URLs antigas do tipo /imovel-123 (sem slug) e redireciona dinamicamente para a URL canônica /imovel-123/slug-do-imovel.
 // Isso garante que acessos antigos vindos do Google ou outros sites sejam corretamente redirecionados, resolvendo problemas de SEO e evitando 404.
 // Não remova este arquivo! Ele é fundamental para o roteamento dinâmico do Next.js quando existe a rota /imovel/[id]/[slug].
