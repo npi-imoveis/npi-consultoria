@@ -58,6 +58,7 @@ export async function generateMetadata({ params }) {
       images: destaqueFotoUrl ? [destaqueFotoUrl] : [],
     },
   };
+  }
     // hreflang manual
     metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL),
     alternates: {
