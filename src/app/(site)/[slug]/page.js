@@ -1,4 +1,5 @@
 export const dynamic = "force-dynamic";
+
 /**
  * Página dinâmica para qualquer slug na raiz do site (ex: /imovel-123, /helbor-brooklin, etc).
  * Se o slug for do tipo 'imovel-123', busca o imóvel pelo ID e redireciona para a URL canônica com slug.
@@ -6,8 +7,9 @@ export const dynamic = "force-dynamic";
  * Isso garante redirecionamento dinâmico e eficiente para milhares de URLs antigas, sem precisar de redirects estáticos.
  */
 
-import { Button } from "@/app/components/ui/button";
+import { notFound, redirect } from "next/navigation";
 import { getCondominioPorSlug, getImovelById } from "@/app/services";
+import { Button } from "@/app/components/ui/button";
 import { formatterValue } from "@/app/utils/formatter-value";
 import { Apartment as StructuredDataApartment } from "@/app/components/structured-data";
 import { Share } from "@/app/components/ui/share";
@@ -22,28 +24,24 @@ import DiferenciaisCondominio from "./componentes/DiferenciaisCondominio";
 import Lazer from "./componentes/Lazer";
 import VideoCondominio from "./componentes/VideoCondominio";
 import TourVirtual from "./componentes/TourVirtual";
-import ExploreRegiao from "./componentes/ExploreRegiao";
-import { notFound, redirect } from "next/navigation";
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 import ScrollToImoveisButton from "./componentes/scroll-to-imovel-button";
-
-// Este componente é responsável por capturar qualquer slug na raiz do site, incluindo URLs antigas do tipo /imovel-123.
-// Se o slug for do tipo "imovel-123", busca o imóvel pelo ID e redireciona para a URL canônica /imovel-123/slug-do-imovel.
-// Caso contrário, renderiza a página de condomínio normalmente.
 
 function ensureCondominio(text) {
   return /condom[ií]nio/i.test(text) ? text : `Condomínio ${text}`;
 }
 
 export async function generateMetadata({ params }) {
-  const { slug } = params;
-  if (typeof slug === "string" && /^imovel-(\d+)$/.test(slug)) {
+  // LOG ABSOLUTO PARA DEBUG
+  console.log("DEBUG ABSOLUTO: generateMetadata params =", JSON.stringify(params));
+  const slugValue = Array.isArray(params.slug) ? params.slug[0] : params.slug;
+  if (typeof slugValue === "string" && /^imovel-(\d+)$/.test(slugValue)) {
     return {
       title: "Redirecionando...",
       robots: "noindex, nofollow",
     };
   }
-  const response = await getCondominioPorSlug(slug);
+  const response = await getCondominioPorSlug(slugValue);
   const condominio = response?.data;
   if (!condominio) {
     return {
@@ -55,7 +53,7 @@ export async function generateMetadata({ params }) {
   const rawTitle = ensureCondominio(condominio.Empreendimento);
   const destaqueFotoObj = condominio.Foto?.find((f) => f.Destaque === "Sim");
   const destaqueFotoUrl = destaqueFotoObj?.Foto;
-  const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`;
+  const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/${slugValue}`;
   const description = `${rawTitle} em ${condominio.BairroComercial}, ${condominio.Cidade}. ${condominio.Categoria} com ${condominio.MetragemAnt}, ${condominio.DormitoriosAntigo} quartos, ${condominio.VagasAntigo} vagas. ${condominio.Situacao}.`;
   return {
     title: `${rawTitle}, ${condominio.TipoEndereco} ${condominio.Endereco} ${condominio.Numero}, ${condominio.BairroComercial}`,
@@ -88,37 +86,40 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function Page({ params }) {
+  // LOG ABSOLUTO PARA DEBUG
+  console.log("DEBUG ABSOLUTO: params =", JSON.stringify(params));
   const slugValue = Array.isArray(params.slug) ? params.slug[0] : params.slug;
-  console.log("DEBUG: params.slug =", params.slug, "slugValue =", slugValue);
+  console.log("DEBUG ABSOLUTO: slugValue =", slugValue, "typeof =", typeof slugValue);
 
-  // Redirecionamento para imóvel antigo
+  // --- REDIRECIONAMENTO DINÂMICO DE /imovel-123 PARA /imovel-123/slug-correto ---
   if (typeof slugValue === "string" && /^imovel-(\d+)$/.test(slugValue)) {
+    console.log("DEBUG ABSOLUTO: ENTROU NO IF DE REDIRECIONAMENTO");
     const id = slugValue.match(/^imovel-(\d+)$/)[1];
-    console.log("DEBUG: slug identificado como imovel antigo, id extraído:", id);
+    console.log("DEBUG ABSOLUTO: id extraído =", id);
 
     try {
       const response = await getImovelById(id);
       const imovel = response?.data;
-      console.log("DEBUG: resultado da busca do imóvel por ID:", imovel);
+      console.log("DEBUG ABSOLUTO: resultado da busca do imóvel por ID:", imovel);
 
       if (imovel && imovel.Slug) {
         const destino = `/imovel-${id}/${imovel.Slug}`;
-        console.log(`DEBUG: Redirecionando /imovel-${id} para ${destino}`);
+        console.log(`DEBUG ABSOLUTO: Redirecionando /imovel-${id} para ${destino}`);
         return redirect(destino);
       } else {
-        console.log(`DEBUG: Imóvel não encontrado para ID: ${id}, retornando 404`);
+        console.log(`DEBUG ABSOLUTO: Imóvel não encontrado para ID: ${id}, retornando 404`);
         return notFound();
       }
     } catch (e) {
-      console.error(`DEBUG: Erro ao buscar imóvel ID ${id}:`, e);
+      console.error(`DEBUG ABSOLUTO: Erro ao buscar imóvel ID ${id}:`, e);
       return notFound();
     }
   }
 
-  // Lógica normal de condomínio
+  // --- LÓGICA NORMAL DE CONDOMÍNIO ---
   const response = await getCondominioPorSlug(slugValue);
   if (!response.data) {
-    console.log("DEBUG: Condomínio não encontrado para slug:", slugValue);
+    console.log("DEBUG ABSOLUTO: Condomínio não encontrado para slug:", slugValue);
     return notFound();
   }
   const condominio = response.data;
@@ -209,10 +210,6 @@ export default async function Page({ params }) {
       {condominio.Tour360 && (
         <TourVirtual link={condominio.Tour360} titulo={rawTitle} />
       )}
-      <ExploreRegiao condominio={condominio} currentUrl={currentUrl} />
-      <WhatsappFloat
-        message={`Quero saber mais sobre o ${rawTitle}, no bairro ${condominio.BairroComercial}, disponível na página de Condomínio: ${currentUrl}`}
-      />
     </section>
   );
 }
