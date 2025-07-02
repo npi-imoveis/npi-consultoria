@@ -62,12 +62,7 @@ const nextConfig = {
     ],
     minimumCacheTTL: 60, // Cache de 60 segundos
   },
-
-  experimental: {
-    middleware: true, // Habilita o uso de Middleware
-  },
-
-  typescript: {
+   typescript: {
     ignoreBuildErrors: true, // Apenas para desenvolvimento
   },
 
