@@ -34,7 +34,7 @@ export async function generateMetadata({ params }) {
   const destaqueFotoUrl = typeof imovel.Foto === "string" ? imovel.Foto : imovel.Foto?.find?.((f) => f.Destaque === "Sim")?.Foto;
 
   return {
-    title,
+    title: `${rawTitle}, ${condominio.TipoEndereco} ${condominio.Endereco} ${condominio.Numero}, ${condominio.BairroComercial}`,
     description,
     alternates: {
       canonical: currentUrl,
@@ -44,15 +44,15 @@ export async function generateMetadata({ params }) {
       follow: true,
     },
    openGraph: {
-      title: `Condomínio ${condominio.Empreendimento}`,
+      title: rawTitle,
       description,
-      url: `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`,
+      url: currentUrl,
       images: destaqueFotoUrl ? [{ url: destaqueFotoUrl }] : [],
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
-      title: `Condomínio ${condominio.Empreendimento}`,
+      title: rawTitle,
       description,
       site: "@NPIImoveis",
       images: destaqueFotoUrl ? [destaqueFotoUrl] : [],
