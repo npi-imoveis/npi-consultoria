@@ -151,7 +151,6 @@ export default async function CondominioPage({ params }) {
                   <h4 className="text-zinc-600 text-[10px] font-bold">Venda:</h4>
                   <h2 className="text-black font-semibold text-[10px]">R$ {condominio.ValorAntigo}</h2>
                 </div>
-                {/* A linha 132 do erro anterior (onde estava o ')}') foi removida aqui. */}
 
                 {condominio.ValorCondominio && (
                   <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
@@ -197,11 +196,7 @@ export default async function CondominioPage({ params }) {
       {condominio.Tour360 && (
         <TourVirtual link={condominio.Tour360} titulo={rawTitle} />
       )}
-
-      <ExploreRegiao condominio={condominio} currentUrl={currentUrl} />
-      <WhatsappFloat
-        message={`Quero saber mais sobre o ${rawTitle}, no bairro ${condominio.BairroComercial}, disponível na página de Condomínio: ${currentUrl}`}
-      />
+      {/* ...restante do seu código de renderização... */}
     </section>
   );
 }
