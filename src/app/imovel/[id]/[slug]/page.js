@@ -22,22 +22,19 @@ import { notFound, redirect } from "next/navigation";
 // ✅ SEO DINÂMICO
 export async function generateMetadata({ params }) {
   const { id } = params;
+  // const response = await getCondominioPorSlug(slug);
   const response = await getImovelById(id);
+  // Acessando cookies no server component
 
-  if (!response?.data) return {};
+  const condominio = response?.data;
 
-  const imovel = response.data;
-  const title = `${imovel.Empreendimento} - ${imovel.BairroComercial}, ${imovel.Cidade}`;
-  const description = `${imovel.Categoria} à venda no bairro ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.DormitoriosAntigo} dormitórios, ${imovel.SuiteAntigo} suítes, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt}. Valor: ${imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}.`;
-
-  const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
+  const destaqueFotoObj = condominio.Foto?.find((f) => f.Destaque === "Sim");
   const destaqueFotoUrl = destaqueFotoObj?.Foto;
-  const rawTitle = ensureCondominio(condominio.Empreendimento);
-  const destaqueFotoObj = imovel.Foto?.find((f) => f.Destaque === "Sim");
-  
+
+  const description = `${condominio.Empreendimento} em ${condominio.BairroComercial}, ${condominio.Cidade}. ${condominio.Categoria} com ${condominio.MetragemAnt}, ${condominio.DormitoriosAntigo} quartos, ${condominio.VagasAntigo} vagas. ${condominio.Situacao}.`;
 
   return {
-    title: `${rawTitle}, ${condominio.TipoEndereco} ${condominio.Endereco} ${condominio.Numero}, ${condominio.BairroComercial}`,
+    title: `${condominio.Empreendimento}, ${condominio.TipoEndereco} ${condominio.Endereco} ${condominio.Numero}, ${condominio.BairroComercial}`,
     description,
     alternates: {
       canonical: currentUrl,
@@ -46,16 +43,16 @@ export async function generateMetadata({ params }) {
       index: true,
       follow: true,
     },
-   openGraph: {
-      title: rawTitle,
-      description,
-      url: currentUrl,
+    openGraph: {
+      title: `Condomínio ${condominio.Empreendimento}`,
+      description,      
+      url: `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${condominio.Codigo}/${condominio.Slug}`,
       images: destaqueFotoUrl ? [{ url: destaqueFotoUrl }] : [],
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
-      title: rawTitle,
+      title: `Condomínio ${condominio.Empreendimento}`,
       description,
       site: "@NPIImoveis",
       images: destaqueFotoUrl ? [destaqueFotoUrl] : [],
