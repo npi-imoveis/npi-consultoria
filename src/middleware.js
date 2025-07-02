@@ -12,6 +12,16 @@ const dynamicImport = (path) => import(path);
 export async function middleware(request) {
   const { pathname } = request.nextUrl;
 
+  // Se a URL for /imovel-123 (sem barra ou slug)
+  const match = pathname.match(/^\\/imovel-(\\d+)$/);
+  if (match) {
+    const id = match[1];
+    // Reescreve para /imovel/id (a página [id]/[slug] já faz o redirect para o slug correto)
+    const url = request.nextUrl.clone();
+    url.pathname = `/imovel/${id}/_`;
+    return NextResponse.rewrite(url);
+  }
+
   // Redireciona /imovel-:id (sem slug) para /imovel-:id/:slug
   const matchIdOnly = pathname.match(/^\/imovel-([^\/]+)$/);
   if (matchIdOnly) {
