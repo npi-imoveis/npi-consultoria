@@ -31,7 +31,10 @@ export async function generateMetadata({ params }) {
   const description = `${imovel.Categoria} à venda no bairro ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.DormitoriosAntigo} dormitórios, ${imovel.SuiteAntigo} suítes, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt}. Valor: ${imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}.`;
 
   const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
-  const destaqueFotoUrl = typeof imovel.Foto === "string" ? imovel.Foto : imovel.Foto?.find?.((f) => f.Destaque === "Sim")?.Foto;
+  const destaqueFotoUrl = destaqueFotoObj?.Foto;
+  const rawTitle = ensureCondominio(condominio.Empreendimento);
+  const destaqueFotoObj = condominio.Foto?.find((f) => f.Destaque === "Sim");
+  
 
   return {
     title: `${rawTitle}, ${condominio.TipoEndereco} ${condominio.Endereco} ${condominio.Numero}, ${condominio.BairroComercial}`,
