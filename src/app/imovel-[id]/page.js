@@ -2,12 +2,17 @@
 // Isso garante que acessos antigos vindos do Google ou outros sites sejam corretamente redirecionados, resolvendo problemas de SEO e evitando 404.
 // Não remova este arquivo! Ele é fundamental para o roteamento dinâmico do Next.js quando existe a rota /imovel/[id]/[slug].
 
+// src/app/imovel-[id]/page.js
+
+// ...comentário...
+
 import { redirect, notFound } from "next/navigation";
 import { getImovelById } from "@/app/services";
 
 export default async function Page({ params }) {
   // O Next.js envia o parâmetro como "imovel-123"
   const { id } = params;
+  if (!id || typeof id !== "string") return notFound(); // <-- CORREÇÃO AQUI
   const match = id.match(/^imovel-(\d+)$/);
   if (!match) return notFound();
   const imovelId = match[1];
