@@ -57,9 +57,7 @@ export async function generateMetadata({ params }) {
       site: "@NPIImoveis",
       images: destaqueFotoUrl ? [destaqueFotoUrl] : [],
     },
-  };
-  }
-    // hreflang manual
+     // hreflang manual
     metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL),
     alternates: {
       canonical: currentUrl,
