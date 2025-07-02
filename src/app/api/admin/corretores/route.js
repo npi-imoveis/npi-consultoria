@@ -1,75 +1,62 @@
+// /api/search/corretores/route.js - VERSÃO FINAL E CORRETA
 import { connectToDatabase } from "@/app/lib/mongodb";
 import Corretores from "@/app/models/Corretores";
 import { NextResponse } from "next/server";
 
 export async function GET(request) {
   try {
-    const url = new URL(request.url);
-    const id = url.searchParams.get("id");
+    const { searchParams } = new URL(request.url);
+    const query = searchParams.get("q");
+
+    if (!query || query.trim() === "") {
+      return NextResponse.json({ status: 200, data: [] });
+    }
 
     await connectToDatabase();
 
-    // Se tiver ID, busca corretor específico
-    if (id) {
-      const corretor = await Corretores.findOne({ codigoD: id });
-
-      return NextResponse.json({
-        status: 200,
-        data: corretor || null,
-      });
-    }
-
-    // Caso contrário, retorna lista paginada
-    const limit = parseInt(url.searchParams.get("limit") || "25", 10);
-    const page = parseInt(url.searchParams.get("page") || "1", 10);
-    const skip = (page - 1) * limit;
-
-    // Filtro para corretores não inativos
-    const filter = {};
-
-    const [totalItems, corretores] = await Promise.all([
-      Corretores.countDocuments(filter),
-      Corretores.find(filter).limit(limit).skip(skip),
+    const resultado = await Corretores.aggregate([
+      {
+        $search: {
+          index: "corretores", // <-- VERIFIQUE SE ESTE NOME BATE COM O SEU ÍNDICE NO ATLAS
+          autocomplete: {
+            query: query,
+            path: "nomeCompleto", // <-- VERIFIQUE SE ESTE É O CAMPO CORRETO
+            fuzzy: {
+              maxEdits: 1,
+            },
+          },
+        },
+      },
+      {
+        $facet: {
+          metadata: [{ $count: "total" }],
+          data: [{ $limit: 20 }],
+        },
+      },
     ]);
 
-    const totalPages = Math.ceil(totalItems / limit);
+    // Prevenção de erro se a busca não retornar nada
+    if (!resultado[0] || !resultado[0].data) {
+        return NextResponse.json({ status: 200, data: [], pagination: { totalItems: 0, totalPages: 1, currentPage: 1 } });
+    }
+
+    const data = resultado[0].data;
+    const totalItems = resultado[0].metadata[0] ? resultado[0].metadata[0].total : 0;
 
     return NextResponse.json({
       status: 200,
-      data: corretores,
-      paginacao: {
+      data: data,
+      pagination: {
         totalItems,
-        totalPages,
-        currentPage: page,
-        limit,
+        totalPages: Math.ceil(totalItems / 20),
+        currentPage: 1,
       },
     });
   } catch (error) {
-    console.error("Erro ao buscar corretores:", error);
-    return NextResponse.json({ error: "Erro ao buscar corretores" }, { status: 500 });
-  }
-}
-
-export async function PUT(request) {
-  try {
-    const data = await request.json();
-    const { id, ...updateData } = data;
-
-    await connectToDatabase();
-
-    const corretor = await Corretores.findOneAndUpdate({ codigoD: id }, updateData, { new: true });
-
-    if (!corretor) {
-      return NextResponse.json({ error: "Corretor não encontrado" }, { status: 404 });
-    }
-
+    console.error("Erro na busca (Atlas Search):", error);
     return NextResponse.json({
-      success: true,
-      message: "Corretor atualizado com sucesso",
-      data: corretor,
+      status: 500,
+      error: error.message || "Erro desconhecido",
     });
-  } catch (error) {
-    console.error("Erro ao atualizar corretor:", error);
-    return NextResponse.json({ error: "Erro ao atualizar corretor" }, { status: 500 });
   }
 }
