@@ -1,60 +1,86 @@
-[14:14:41.945] Running build in Washington, D.C., USA (East) – iad1
-[14:14:41.946] Build machine configuration: 4 cores, 8 GB
-[14:14:41.959] Cloning github.com/npi-imoveis/npi-consultoria (Branch: master, Commit: 36b8df4)
-[14:14:43.757] Cloning completed: 1.797s
-[14:14:46.119] Restored build cache from previous deployment (ErokjaMF3kNUNyVpopmWs7AnwfiP)
-[14:14:46.924] Running "vercel build"
-[14:14:47.368] Vercel CLI 43.3.0
-[14:14:47.757] Installing dependencies...
-[14:14:49.270] 
-[14:14:49.271] up to date in 1s
-[14:14:49.271] 
-[14:14:49.271] 67 packages are looking for funding
-[14:14:49.271]   run `npm fund` for details
-[14:14:49.303] Detected Next.js version: 14.2.3
-[14:14:49.309] Running "npm run build"
-[14:14:49.427] 
-[14:14:49.427] > npi-front@0.1.0 build
-[14:14:49.427] > next build
-[14:14:49.427] 
-[14:14:50.123]   ▲ Next.js 14.2.3
-[14:14:50.123] 
-[14:14:50.211]    Creating an optimized production build ...
-[14:14:50.951]  ⚠ Found lockfile missing swc dependencies, run next locally to automatically patch
-[14:14:56.096]  ⚠ Found lockfile missing swc dependencies, run next locally to automatically patch
-[14:14:57.177] Failed to compile.
-[14:14:57.178] 
-[14:14:57.178] ./src/middleware.js
-[14:14:57.178] Error: 
-[14:14:57.179]   [31mx[0m Unknown regular expression flags.
-[14:14:57.179]     ,-[[36;1;4m/vercel/path0/src/middleware.js[0m:13:1]
-[14:14:57.179]  [2m13[0m |   const { pathname } = request.nextUrl;
-[14:14:57.179]  [2m14[0m | 
-[14:14:57.179]  [2m15[0m |   // Se a URL for /imovel-123 (sem barra ou slug)
-[14:14:57.179]  [2m16[0m |   const match = pathname.match(/^\\/imovel-(\\d+)$/);
-[14:14:57.179]     : [31;1m                               ^^^^^^^^^^^[0m
-[14:14:57.179]  [2m17[0m |   if (match) {
-[14:14:57.179]  [2m18[0m |     const id = match[1];
-[14:14:57.179]  [2m19[0m |     // Reescreve para /imovel/id (a página [id]/[slug] já faz o redirect para o slug correto)
-[14:14:57.179]     `----
-[14:14:57.179] 
-[14:14:57.179]   [31mx[0m Expected unicode escape
-[14:14:57.179]     ,-[[36;1;4m/vercel/path0/src/middleware.js[0m:13:1]
-[14:14:57.179]  [2m13[0m |   const { pathname } = request.nextUrl;
-[14:14:57.179]  [2m14[0m | 
-[14:14:57.179]  [2m15[0m |   // Se a URL for /imovel-123 (sem barra ou slug)
-[14:14:57.179]  [2m16[0m |   const match = pathname.match(/^\\/imovel-(\\d+)$/);
-[14:14:57.179]     : [31;1m                                             ^[0m
-[14:14:57.179]  [2m17[0m |   if (match) {
-[14:14:57.180]  [2m18[0m |     const id = match[1];
-[14:14:57.180]  [2m19[0m |     // Reescreve para /imovel/id (a página [id]/[slug] já faz o redirect para o slug correto)
-[14:14:57.180]     `----
-[14:14:57.180] 
-[14:14:57.180] Caused by:
-[14:14:57.180]     Syntax Error
-[14:14:57.181] 
-[14:14:57.191] 
-[14:14:57.191] > Build failed because of webpack errors
-[14:14:57.219] Error: Command "npm run build" exited with 1
-[14:14:57.648] 
-[14:15:00.606] Exiting build container
+// middleware.js
+//
+// Este middleware intercepta requisições para rotas de imóveis e garante que URLs incompletas (ex: /imovel-123) sejam redirecionadas para a URL completa com slug (ex: /imovel-123/helbor-brooklin).
+// Isso é fundamental para SEO, pois milhares de URLs antigas sem slug estão indexadas no Google. O middleware busca o slug correto diretamente no MongoDB e faz o redirecionamento 301 para a URL canônica.
+// Também mantém as regras já existentes para normalização de rotas entre /imovel-:id/:slug e /imovel/:id/:slug.
+//
+import { NextResponse } from "next/server";
+
+// Importação dinâmica para evitar problemas de dependência no edge
+const dynamicImport = (path) => import(path);
+
+export async function middleware(request) {
+  const { pathname } = request.nextUrl;
+
+  // Se a URL for /imovel-123 (sem barra ou slug)
+  const match = pathname.match(/^\/imovel-(\d+)$/);
+  if (match) {
+    const id = match[1];
+    // Reescreve para /imovel/id (a página [id]/[slug] já faz o redirect para o slug correto)
+    const url = request.nextUrl.clone();
+    url.pathname = `/imovel/${id}/_`;
+    return NextResponse.rewrite(url);
+  }
+
+  // Redireciona /imovel-:id (sem slug) para /imovel-:id/:slug
+  const matchIdOnly = pathname.match(/^\/imovel-([^\/]+)$/);
+  if (matchIdOnly) {
+    const id = matchIdOnly[1];
+    try {
+      // Importa conexão e model dinamicamente
+      const { connectToDatabase } = await dynamicImport("@/app/lib/mongodb");
+      const ImovelAtivo = (await dynamicImport("@/app/models/ImovelAtivo")).default;
+      await connectToDatabase();
+      // Busca imóvel pelo campo Codigo
+      const imovel = await ImovelAtivo.findOne({ Codigo: id }).select("Slug slug").lean();
+      const slug = imovel?.Slug || imovel?.slug;
+      if (slug) {
+        const url = request.nextUrl.clone();
+        url.pathname = `/imovel-${id}/${slug}`;
+        return NextResponse.redirect(url, 301);
+      }
+    } catch (e) {
+      // Se der erro, segue fluxo normal (404)
+    }
+  }
+
+  // Verifica se a URL segue o padrão /imovel-:id/:slug
+  // Ex: /imovel-123/apartamento-centro
+  if (pathname.match(/^\/imovel-([^\/]+)\/(.+)$/)) {
+    // Extrai o ID e o slug da URL
+    const [, id, slug] = pathname.match(/^\/imovel-([^\/]+)\/(.+)$/);
+
+    // Cria a nova URL interna para processamento
+    const url = request.nextUrl.clone();
+    url.pathname = `/imovel/${id}/${slug}`;
+
+    // Reescreve a URL internamente sem mudar a URL visível para o usuário
+    return NextResponse.rewrite(url);
+  }
+
+  // Se alguém acessar diretamente o formato /imovel/:id/:slug, redireciona para /imovel-:id/:slug
+  if (pathname.match(/^\/imovel\/([^\/]+)\/(.+)$/)) {
+    // Extrai o ID e o slug da URL
+    const [, id, slug] = pathname.match(/^\/imovel\/([^\/]+)\/(.+)$/);
+
+    // Cria a nova URL com o formato correto para exibição
+    const url = request.nextUrl.clone();
+    url.pathname = `/imovel-${id}/${slug}`;
+
+    // Redireciona para a URL no formato correto (visível para o usuário)
+    return NextResponse.redirect(url);
+  }
+
+  return NextResponse.next();
+}
+
+export const config = {
+  matcher: [
+    // Intercepta rotas como /imovel-123/nome-do-imovel
+    "/imovel-:id/:slug*",
+    // Também intercepta rotas como /imovel/123/nome-do-imovel para redirecionar
+    "/imovel/:id/:slug*",
+    // Agora intercepta também rotas /imovel-:id (sem slug)
+    "/imovel-:id",
+  ],
+};
