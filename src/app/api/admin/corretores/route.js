@@ -2,8 +2,14 @@ import { connectToDatabase } from "@/app/lib/mongodb";
 import Corretores from "@/app/models/Corretores";
 import { NextResponse } from "next/server";
 
+// --- CORREÇÃO PRINCIPAL ---
+// Esta linha força a rota a ser sempre dinâmica, resolvendo o erro de "static rendering".
+export const dynamic = "force-dynamic";
+// --------------------------
+
 export async function GET(request) {
   try {
+    // Agora o Next.js permitirá o acesso a searchParams sem erro.
     const { searchParams } = new URL(request.url);
     const query = searchParams.get("q");
 
@@ -13,18 +19,15 @@ export async function GET(request) {
 
     await connectToDatabase();
 
-    // --- CÓDIGO DE DIAGNÓSTICO ---
-    // Esta busca usa uma expressão regular (regex) para encontrar o nome.
-    // Não é a forma mais performática, mas não depende do Atlas Search e serve para testar.
+    // --- CÓDIGO DE DIAGNÓSTICO (ainda usando regex para testar) ---
     const resultado = await Corretores.find({
       nomeCompleto: { $regex: query, $options: "i" } // 'i' para ser case-insensitive
     }).limit(20);
-    // --- FIM DO CÓDIGO DE DIAGNÓSTICO ---
 
-    // Se o campo for 'nome' em vez de 'nomeCompleto', use a linha abaixo:
+    // Se o campo for 'nome', use a linha abaixo e comente a de cima:
     // const resultado = await Corretores.find({ nome: { $regex: query, $options: "i" } }).limit(20);
 
-    const totalItems = resultado.length; // Simples contagem para este teste
+    const totalItems = resultado.length;
 
     return NextResponse.json({
       status: 200,
