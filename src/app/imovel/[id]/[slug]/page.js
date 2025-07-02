@@ -20,20 +20,23 @@ import { notFound, redirect } from "next/navigation";
 export async function generateMetadata({ params }) {
   const { id } = params;
   const response = await getImovelById(id);
-  const condominio = response?.data;
+  const imovel = response?.data; // Alterado de condominio para imovel para consistência
 
-  const destaqueFotoObj = condominio.Foto?.find((f) => f.Destaque === "Sim");
-  const destaqueFotoUrl = destaqueFotoObj?.Foto;
+  // Debug remoto (ver logs na Vercel)
+  console.log('Estrutura do objeto imovel:', JSON.stringify(imovel, null, 2));
 
-  const description = `${condominio.Empreendimento} em ${condominio.BairroComercial}, ${condominio.Cidade}. ${condominio.Categoria} com ${condominio.MetragemAnt}, ${condominio.DormitoriosAntigo} quartos, ${condominio.VagasAntigo} vagas. ${condominio.Situacao}.`;
+  // Método mais robusto para pegar a imagem
+  const primeiraFoto = Array.isArray(imovel.Foto) ? imovel.Foto[0] : null;
+  const destaqueFotoUrl = primeiraFoto?.Foto || primeiraFoto?.url || null;
 
-  const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${condominio.Codigo}/${condominio.Slug}`;
+  const description = `${imovel.Empreendimento} em ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.Categoria} com ${imovel.MetragemAnt}, ${imovel.DormitoriosAntigo} quartos, ${imovel.VagasAntigo} vagas. ${imovel.Situacao}.`;
+
+  const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
 
   return {
-    title: `${condominio.Empreendimento}, ${condominio.TipoEndereco} ${condominio.Endereco} ${condominio.Numero}, ${condominio.BairroComercial}`,
+    title: `${imovel.Empreendimento}, ${imovel.TipoEndereco} ${imovel.Endereco} ${imovel.Numero}, ${imovel.BairroComercial}`,
     description,
     robots: "index, follow",
-    // hreflang manual
     metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL),
     alternates: {
       canonical: currentUrl,
@@ -42,15 +45,20 @@ export async function generateMetadata({ params }) {
       },
     },
     openGraph: {
-      title: `Condomínio ${condominio.Empreendimento}`,
+      title: `Imóvel ${imovel.Empreendimento}`,
       description,      
       url: currentUrl,
-      images: destaqueFotoUrl ? [{ url: destaqueFotoUrl }] : [],
+      images: destaqueFotoUrl ? [{ 
+        url: destaqueFotoUrl,
+        width: 1200,
+        height: 630,
+        alt: `Imóvel ${imovel.Empreendimento}` 
+      }] : [],
       type: "website",
     },
     twitter: {
       card: "summary_large_image",
-      title: `Condomínio ${condominio.Empreendimento}`,
+      title: `Imóvel ${imovel.Empreendimento}`,
       description,
       site: "@NPIImoveis",
       images: destaqueFotoUrl ? [destaqueFotoUrl] : [],
@@ -67,7 +75,6 @@ export default async function Imovel({ params }) {
   }
 
   const imovel = response.data;
-
   const slugCorreto = imovel.Slug;
 
   if (slug !== slugCorreto) {
@@ -86,6 +93,8 @@ export default async function Imovel({ params }) {
         url={currentUrl}
         image={imovel.Foto}
       />
+      
+      {/* Restante do seu código permanece igual */}
       <ExitIntentModal condominio={imovel.Empreendimento} link={currentUrl} />
 
       <div className="w-full mx-auto">
