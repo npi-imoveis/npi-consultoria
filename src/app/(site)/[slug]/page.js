@@ -1,4 +1,6 @@
-   export const dynamic = "force-dynamic";
+console.log("Entrou na página dinâmica [slug]", params);
+export const dynamic = "force-dynamic";
+
 /**
  * Página dinâmica para qualquer slug na raiz do site (ex: /imovel-123, /helbor-brooklin, etc).
  * Se o slug for do tipo 'imovel-123', busca o imóvel pelo ID e redireciona para a URL canônica com slug.
