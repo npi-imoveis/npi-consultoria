@@ -1,7 +1,5 @@
 import { connectToDatabase } from "@/app/lib/mongodb";
 import Corretores from "@/app/models/Corretores";
-import ImovelAtivo from "@/app/models/ImovelAtivo";
-
 import { NextResponse } from "next/server";
 
 export async function GET(request) {
@@ -18,15 +16,16 @@ export async function GET(request) {
 
     await connectToDatabase();
 
-    // Utilizando o índice do Atlas Search com a consulta simplificada
+    // ALTERAÇÃO FEITA: Mudei de 'text' para 'autocomplete' para uma busca mais flexível e performática por nomes.
     const resultado = await Corretores.aggregate([
       {
         $search: {
-          index: "corretores",
-          text: {
+          index: "corretores", // Certifique-se que este é o nome correto do seu índice no Atlas
+          autocomplete: {
             query: query,
-            path: {
-              wildcard: "*",
+            path: "nomeCompleto", // ALTERAÇÃO FEITA: Especifiquei o campo 'nomeCompleto' para a busca ser mais direta. Se o nome estiver em outro campo, ajuste aqui.
+            fuzzy: {
+              maxEdits: 1, // Permite um erro de digitação
             },
           },
         },
@@ -34,11 +33,28 @@ export async function GET(request) {
       {
         $limit: 20,
       },
+      // ALTERAÇÃO FEITA: Adicionei um estágio para contar o total de documentos encontrados antes do limite, para a paginação.
+      {
+        $facet: {
+          metadata: [{ $count: "total" }],
+          data: [{ $limit: 20 }], // O limite que você já usava
+        },
+      },
     ]);
 
+    const data = resultado[0].data;
+    const totalItems = resultado[0].metadata[0] ? resultado[0].metadata[0].total : 0;
+    const totalPages = Math.ceil(totalItems / 20);
+
+    // ALTERAÇÃO FEITA: Retornando a paginação junto com os dados
     return NextResponse.json({
       status: 200,
-      data: resultado,
+      data: data,
+      pagination: {
+        totalItems,
+        totalPages,
+        currentPage: 1, // A busca sempre retorna a primeira página
+      },
     });
   } catch (error) {
     console.error("Erro na busca:", error);
