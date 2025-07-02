@@ -19,10 +19,7 @@ import { notFound, redirect } from "next/navigation";
 
 export async function generateMetadata({ params }) {
   const { id } = params;
-  // const response = await getCondominioPorSlug(slug);
   const response = await getImovelById(id);
-  // Acessando cookies no server component
-
   const condominio = response?.data;
 
   const destaqueFotoObj = condominio.Foto?.find((f) => f.Destaque === "Sim");
@@ -30,20 +27,23 @@ export async function generateMetadata({ params }) {
 
   const description = `${condominio.Empreendimento} em ${condominio.BairroComercial}, ${condominio.Cidade}. ${condominio.Categoria} com ${condominio.MetragemAnt}, ${condominio.DormitoriosAntigo} quartos, ${condominio.VagasAntigo} vagas. ${condominio.Situacao}.`;
 
+  const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${condominio.Codigo}/${condominio.Slug}`;
+
   return {
     title: `${condominio.Empreendimento}, ${condominio.TipoEndereco} ${condominio.Endereco} ${condominio.Numero}, ${condominio.BairroComercial}`,
     description,
     robots: "index, follow",
+    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL),
     alternates: {
-    canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${condominio.Codigo}/${condominio.Slug}`,
-    languages: {
-        "pt-BR": `/imovel-${condominio.Codigo}/${condominio.Slug}`,  
-       },
+      canonical: currentUrl,
+      languages: {
+        "pt-BR": currentUrl,
+      },
     },
     openGraph: {
       title: `Condomínio ${condominio.Empreendimento}`,
       description,      
-      url: `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${condominio.Codigo}/${condominio.Slug}`,
+      url: currentUrl,
       images: destaqueFotoUrl ? [{ url: destaqueFotoUrl }] : [],
       type: "website",
     },
@@ -53,8 +53,9 @@ export async function generateMetadata({ params }) {
       description,
       site: "@NPIImoveis",
       images: destaqueFotoUrl ? [destaqueFotoUrl] : [],
-    },
-    },
+    }
+  };
+}
      // hreflang manual
     metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL),
     alternates: {
