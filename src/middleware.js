@@ -1,74 +1,29 @@
 // middleware.js
 //
-// Este middleware intercepta requisições para rotas de imóveis e garante que URLs incompletas (ex: /imovel-123) sejam redirecionadas para a URL completa com slug (ex: /imovel-123/helbor-brooklin).
-// Isso é fundamental para SEO, pois milhares de URLs antigas sem slug estão indexadas no Google. O middleware busca o slug correto diretamente no MongoDB e faz o redirecionamento 301 para a URL canônica.
-// Também mantém as regras já existentes para normalização de rotas entre /imovel-:id/:slug e /imovel/:id/:slug.
+// Este middleware serve apenas para normalizar rotas de imóveis, garantindo que URLs como /imovel/123/slug sejam reescritas para /imovel-123/slug e vice-versa.
+// Não faz acesso ao banco de dados, apenas manipula a URL para manter o padrão canônico e evitar conteúdo duplicado.
 //
 import { NextResponse } from "next/server";
 
-// Importação dinâmica para evitar problemas de dependência no edge
-const dynamicImport = (path) => import(path);
-
-export async function middleware(request) {
+export function middleware(request) {
   const { pathname } = request.nextUrl;
 
-  // Se a URL for /imovel-123 (sem barra ou slug)
-  const match = pathname.match(/^\/imovel-(\d+)$/);
-  if (match) {
-    const id = match[1];
-    // Reescreve para /imovel/id (a página [id]/[slug] já faz o redirect para o slug correto)
-    const url = request.nextUrl.clone();
-    url.pathname = `/imovel/${id}/_`;
-    return NextResponse.rewrite(url);
-  }
-
-  // Redireciona /imovel-:id (sem slug) para /imovel-:id/:slug
-  const matchIdOnly = pathname.match(/^\/imovel-([^\/]+)$/);
-  if (matchIdOnly) {
-    const id = matchIdOnly[1];
-    try {
-      // Importa conexão e model dinamicamente
-      const { connectToDatabase } = await dynamicImport("@/app/lib/mongodb");
-      const ImovelAtivo = (await dynamicImport("@/app/models/ImovelAtivo")).default;
-      await connectToDatabase();
-      // Busca imóvel pelo campo Codigo
-      const imovel = await ImovelAtivo.findOne({ Codigo: id }).select("Slug slug").lean();
-      const slug = imovel?.Slug || imovel?.slug;
-      if (slug) {
-        const url = request.nextUrl.clone();
-        url.pathname = `/imovel-${id}/${slug}`;
-        return NextResponse.redirect(url, 301);
-      }
-    } catch (e) {
-      // Se der erro, segue fluxo normal (404)
-    }
-  }
-
-  // Verifica se a URL segue o padrão /imovel-:id/:slug
-  // Ex: /imovel-123/apartamento-centro
-  if (pathname.match(/^\/imovel-([^\/]+)\/(.+)$/)) {
-    // Extrai o ID e o slug da URL
-    const [, id, slug] = pathname.match(/^\/imovel-([^\/]+)\/(.+)$/);
-
-    // Cria a nova URL interna para processamento
+  // Reescreve /imovel-123/slug para /imovel/123/slug (rota interna)
+  const matchHifen = pathname.match(/^\/imovel-(\d+)\/(.+)$/);
+  if (matchHifen) {
+    const [, id, slug] = matchHifen;
     const url = request.nextUrl.clone();
     url.pathname = `/imovel/${id}/${slug}`;
-
-    // Reescreve a URL internamente sem mudar a URL visível para o usuário
     return NextResponse.rewrite(url);
   }
 
-  // Se alguém acessar diretamente o formato /imovel/:id/:slug, redireciona para /imovel-:id/:slug
-  if (pathname.match(/^\/imovel\/([^\/]+)\/(.+)$/)) {
-    // Extrai o ID e o slug da URL
-    const [, id, slug] = pathname.match(/^\/imovel\/([^\/]+)\/(.+)$/);
-
-    // Cria a nova URL com o formato correto para exibição
+  // Redireciona /imovel/123/slug para /imovel-123/slug (URL canônica)
+  const matchBarra = pathname.match(/^\/imovel\/(\d+)\/(.+)$/);
+  if (matchBarra) {
+    const [, id, slug] = matchBarra;
     const url = request.nextUrl.clone();
     url.pathname = `/imovel-${id}/${slug}`;
-
-    // Redireciona para a URL no formato correto (visível para o usuário)
-    return NextResponse.redirect(url);
+    return NextResponse.redirect(url, 308);
   }
 
   return NextResponse.next();
@@ -76,11 +31,7 @@ export async function middleware(request) {
 
 export const config = {
   matcher: [
-    // Intercepta rotas como /imovel-123/nome-do-imovel
     "/imovel-:id/:slug*",
-    // Também intercepta rotas como /imovel/123/nome-do-imovel para redirecionar
     "/imovel/:id/:slug*",
-    // Agora intercepta também rotas /imovel-:id (sem slug)
-    "/imovel-:id",
   ],
 };
