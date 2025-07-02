@@ -88,12 +88,10 @@ export async function generateMetadata({ params }) {
 }
 
 export default async function Page({ params }) {
-  console.log("DEBUG: params recebido em [slug]/page.js", params);
-
-  // Suporte a slug como string ou array
   const slugValue = Array.isArray(params.slug) ? params.slug[0] : params.slug;
+  console.log("DEBUG: params.slug =", params.slug, "slugValue =", slugValue);
 
-  // --- REDIRECIONAMENTO DINÂMICO DE /imovel-123 PARA /imovel-123/slug-correto ---
+  // Redirecionamento para imóvel antigo
   if (typeof slugValue === "string" && /^imovel-(\d+)$/.test(slugValue)) {
     const id = slugValue.match(/^imovel-(\d+)$/)[1];
     console.log("DEBUG: slug identificado como imovel antigo, id extraído:", id);
@@ -117,7 +115,7 @@ export default async function Page({ params }) {
     }
   }
 
-  // --- LÓGICA NORMAL DE CONDOMÍNIO ---
+  // Lógica normal de condomínio
   const response = await getCondominioPorSlug(slugValue);
   if (!response.data) {
     console.log("DEBUG: Condomínio não encontrado para slug:", slugValue);
