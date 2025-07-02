@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
-
+import { useState, useEffect, useCallback } from "react";
 import AuthCheck from "../components/auth-check";
 import Pagination from "@/app/components/ui/pagination";
 import { useRouter } from "next/navigation";
@@ -22,71 +21,56 @@ export default function AdminCorretores() {
     totalItems: 0,
     totalPages: 1,
     currentPage: 1,
-    itemsPerPage: 20,
+    itemsPerPage: 12,
   });
 
-  const loadCorretores = async (page = 1, search = "") => {
+  // ALTERAÇÃO FEITA: Envolvi a função em useCallback para otimização e para usá-la no useEffect
+  const loadCorretores = useCallback(async (page = 1, search = "") => {
     setIsLoading(true);
     try {
       if (search) {
-        // Implementar busca de corretores quando necessário
         const response = await fetch(`/api/search/corretores?q=${encodeURIComponent(search)}`);
-        const data = await response.json();
+        const result = await response.json();
 
-        if (data && data.status === 200 && data.data) {
-          setCorretores(data.data);
-          setPagination({
-            totalItems: data.data.length,
-            totalPages: Math.ceil(data.data.length / 12),
+        if (result && result.status === 200 && result.data) {
+          setCorretores(result.data);
+          // ALTERAÇÃO FEITA: Usando os dados de paginação da API
+          setPagination(result.pagination || {
+            totalItems: result.data.length,
+            totalPages: 1,
             currentPage: 1,
-            itemsPerPage: 12,
+            itemsPerPage: 20,
           });
         } else {
           setCorretores([]);
-          setPagination({
-            totalItems: 0,
-            totalPages: 1,
-            currentPage: 1,
-            itemsPerPage: 12,
-          });
+          setPagination({ totalItems: 0, totalPages: 1, currentPage: 1, itemsPerPage: 12 });
         }
       } else {
         const response = await getCorretores({}, page, 12);
         if (response && response.corretores) {
           setCorretores(response.corretores);
-          setPagination({
-            ...response.pagination,
-            itemsPerPage: 12,
-          });
+          setPagination({ ...response.pagination, itemsPerPage: 12 });
         } else {
           setCorretores([]);
-          setPagination({
-            totalItems: 0,
-            totalPages: 1,
-            currentPage: 1,
-            itemsPerPage: 12,
-          });
+          setPagination({ totalItems: 0, totalPages: 1, currentPage: 1, itemsPerPage: 12 });
         }
       }
     } catch (error) {
       console.error("Erro ao carregar corretores:", error);
       setCorretores([]);
-      setPagination({
-        totalItems: 0,
-        totalPages: 1,
-        currentPage: 1,
-        itemsPerPage: 20,
-      });
+      setPagination({ totalItems: 0, totalPages: 1, currentPage: 1, itemsPerPage: 20 });
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []); // useCallback não precisa de dependências aqui pois as funções externas (getCorretores) são estáveis
 
+  // ALTERAÇÃO FEITA: A lógica foi simplificada.
+  // Este useEffect agora só carrega os corretores na montagem inicial ou quando a página muda (sem busca).
   useEffect(() => {
     if (!searchTerm) {
       loadCorretores(currentPage);
     }
-  }, [currentPage]);
+  }, [currentPage, searchTerm, loadCorretores]);
 
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
@@ -95,14 +79,14 @@ export default function AdminCorretores() {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    setCurrentPage(1);
+    setCurrentPage(1); // Reseta para a primeira página a cada nova busca
     loadCorretores(1, searchTerm);
   };
 
   const clearSearch = () => {
     setSearchTerm("");
     setCurrentPage(1);
-    loadCorretores(1, "");
+    loadCorretores(1, ""); // Recarrega a lista principal
   };
 
   const handleEdit = (corretorId) => {
@@ -116,6 +100,7 @@ export default function AdminCorretores() {
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
+    // Recarrega os dados mantendo o estado atual da busca e paginação
     loadCorretores(currentPage, searchTerm);
   };
 
@@ -226,9 +211,9 @@ export default function AdminCorretores() {
                     .fill(null)
                     .map((_, index) => (
                       <tr key={`loading-${index}`}>
-                        <td colSpan={5} className="px-6 py-4 whitespace-nowrap">
+                        <td colSpan={6} className="px-6 py-4 whitespace-nowrap">
                           <div className="animate-pulse flex space-x-4">
-                            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                            <div className="h-4 bg-gray-200 rounded w-full"></div>
                           </div>
                         </td>
                       </tr>
@@ -273,7 +258,7 @@ export default function AdminCorretores() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={5} className="px-6 py-4 text-center text-[10px] text-gray-500">
+                    <td colSpan={6} className="px-6 py-4 text-center text-[10px] text-gray-500">
                       Nenhum corretor encontrado
                     </td>
                   </tr>
