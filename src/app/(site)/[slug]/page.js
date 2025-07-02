@@ -37,11 +37,8 @@ export async function generateMetadata({ params }) {
   console.log("DEBUG ABSOLUTO: typeof params.slug =", typeof params.slug, "valor =", params.slug);
   const slugValue = Array.isArray(params.slug) ? params.slug[0] : params.slug;
   console.log("DEBUG ABSOLUTO: slugValue =", slugValue, "typeof =", typeof slugValue);
- if (typeof slugValue === "string" && /^imovel-(\d+)$/.test(slugValue)) {
-    console.log("DEBUG ABSOLUTO: ENTROU NO IF DE REDIRECIONAMENTO");
-    // O Next.js envia o parâmetro como "imovel-123"
-   
   if (typeof slugValue === "string" && /^imovel-(\d+)$/.test(slugValue)) {
+    console.log("DEBUG ABSOLUTO: ENTROU NO IF DE REDIRECIONAMENTO");
     return {
       title: "Redirecionando...",
       robots: "noindex, nofollow",
@@ -95,7 +92,9 @@ export default async function Page({ params }) {
   // LOG ABSOLUTO PARA DEBUG
   console.log("DEBUG ABSOLUTO: params =", JSON.stringify(params));
   console.log("DEBUG ABSOLUTO: typeof params.slug =", typeof params.slug, "valor =", params.slug);
-  
+  const slugValue = Array.isArray(params.slug) ? params.slug[0] : params.slug;
+  console.log("DEBUG ABSOLUTO: slugValue =", slugValue, "typeof =", typeof slugValue);
+
   // --- REDIRECIONAMENTO DINÂMICO DE /imovel-123 PARA /imovel-123/slug-correto ---
   if (typeof slugValue === "string" && /^imovel-(\d+)$/.test(slugValue)) {
     console.log("DEBUG ABSOLUTO: ENTROU NO IF DE REDIRECIONAMENTO");
