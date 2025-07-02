@@ -1,5 +1,4 @@
 export const dynamic = "force-dynamic";
-
 /**
  * Página dinâmica para qualquer slug na raiz do site (ex: /imovel-123, /helbor-brooklin, etc).
  * Se o slug for do tipo 'imovel-123', busca o imóvel pelo ID e redireciona para a URL canônica com slug.
@@ -7,9 +6,8 @@ export const dynamic = "force-dynamic";
  * Isso garante redirecionamento dinâmico e eficiente para milhares de URLs antigas, sem precisar de redirects estáticos.
  */
 
-import { notFound, redirect } from "next/navigation";
-import { getCondominioPorSlug, getImovelById } from "@/app/services";
 import { Button } from "@/app/components/ui/button";
+import { getCondominioPorSlug, getImovelById } from "@/app/services";
 import { formatterValue } from "@/app/utils/formatter-value";
 import { Apartment as StructuredDataApartment } from "@/app/components/structured-data";
 import { Share } from "@/app/components/ui/share";
@@ -24,15 +22,20 @@ import DiferenciaisCondominio from "./componentes/DiferenciaisCondominio";
 import Lazer from "./componentes/Lazer";
 import VideoCondominio from "./componentes/VideoCondominio";
 import TourVirtual from "./componentes/TourVirtual";
+import ExploreRegiao from "./componentes/ExploreRegiao";
+import { notFound, redirect } from "next/navigation";
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 import ScrollToImoveisButton from "./componentes/scroll-to-imovel-button";
+
+// Este componente é responsável por capturar qualquer slug na raiz do site, incluindo URLs antigas do tipo /imovel-123.
+// Se o slug for do tipo "imovel-123", busca o imóvel pelo ID e redireciona para a URL canônica /imovel-123/slug-do-imovel.
+// Caso contrário, renderiza a página de condomínio normalmente.
 
 function ensureCondominio(text) {
   return /condom[ií]nio/i.test(text) ? text : `Condomínio ${text}`;
 }
 
 export async function generateMetadata({ params }) {
-  console.log("Entrou na página dinâmica [slug]", params);
   const { slug } = params;
   if (typeof slug === "string" && /^imovel-(\d+)$/.test(slug)) {
     return {
@@ -205,6 +208,10 @@ export default async function Page({ params }) {
       {condominio.Tour360 && (
         <TourVirtual link={condominio.Tour360} titulo={rawTitle} />
       )}
+      <ExploreRegiao condominio={condominio} currentUrl={currentUrl} />
+      <WhatsappFloat
+        message={`Quero saber mais sobre o ${rawTitle}, no bairro ${condominio.BairroComercial}, disponível na página de Condomínio: ${currentUrl}`}
+      />
     </section>
   );
 }
