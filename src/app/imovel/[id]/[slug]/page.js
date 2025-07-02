@@ -62,6 +62,7 @@ export async function generateMetadata({ params }) {
       languages: {
         "pt-BR": currentUrl,
       },
+    },
   };
 }
 
