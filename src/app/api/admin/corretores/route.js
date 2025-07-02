@@ -16,16 +16,16 @@ export async function GET(request) {
 
     await connectToDatabase();
 
-    // --- VERSÃO FINAL COM ATLAS SEARCH ---
+    // --- VERSÃO FINAL E CORRETA PARA O SEU ÍNDICE ---
     const resultado = await Corretores.aggregate([
       {
         $search: {
-          index: "corretores", // Use o nome do seu índice do Atlas Search. "corretores" ou "default" são comuns.
-          autocomplete: {
+          index: "corretores", // Nome do seu índice, que está CORRETO.
+          text: { // ALTERADO de "autocomplete" para "text" para funcionar com seu índice dinâmico.
             query: query,
-            path: "nome", // Corrigido para usar o campo "nome"
+            path: "nome", // Buscando especificamente no campo "nome".
             fuzzy: {
-              maxEdits: 1, // Permite um erro de digitação
+              maxEdits: 1,
             },
           },
         },
@@ -58,7 +58,7 @@ export async function GET(request) {
       },
     });
   } catch (error) {
-    console.error("Erro na busca (Atlas Search):", error);
+    console.error("Erro na busca (Atlas Search - text):", error);
     return NextResponse.json({
       status: 500,
       error: error.message || "Erro desconhecido",
