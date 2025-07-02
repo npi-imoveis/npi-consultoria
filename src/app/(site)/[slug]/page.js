@@ -1,5 +1,5 @@
 import { Button } from "@/app/components/ui/button";
-import { getCondominioPorSlug } from "@/app/services";
+import { getCondominioPorSlug, getImovelById } from "@/app/services";
 import { formatterValue } from "@/app/utils/formatter-value";
 import { Apartment as StructuredDataApartment } from "@/app/components/structured-data";
 import { Share } from "@/app/components/ui/share";
@@ -15,7 +15,7 @@ import Lazer from "./componentes/Lazer";
 import VideoCondominio from "./componentes/VideoCondominio";
 import TourVirtual from "./componentes/TourVirtual";
 import ExploreRegiao from "./componentes/ExploreRegiao";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 import ScrollToImoveisButton from "./componentes/scroll-to-imovel-button";
 
@@ -73,9 +73,25 @@ export async function generateMetadata({ params }) {
   };
 }
 
-
 export default async function CondominioPage({ params }) {
   const { slug } = params;
+
+  // Detecta se o slug é do tipo 'imovel-123' (acesso direto sem slug)
+  const match = typeof slug === "string" && slug.match(/^imovel-(\d+)$/);
+  if (match) {
+    const id = match[1];
+    // Busca o imóvel pelo ID
+    const response = await getImovelById(id);
+    const imovel = response?.data;
+    if (imovel && imovel.Slug) {
+      // Redireciona para a URL canônica do imóvel
+      redirect(`/imovel-${id}/${imovel.Slug}`);
+    } else {
+      // Se não encontrar, redireciona para a home (ou pode usar notFound())
+      redirect("/");
+    }
+  }
+
   const response = await getCondominioPorSlug(slug);
 
   if (!response.data) {
