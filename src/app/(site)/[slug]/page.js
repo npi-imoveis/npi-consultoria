@@ -31,7 +31,6 @@ function ensureCondominio(text) {
 
 export async function generateMetadata({ params }) {
   const { slug } = params;
-  // Se for imovel-123, não gera metadata de condomínio
   if (typeof slug === "string" && /^imovel-(\d+)$/.test(slug)) {
     return {
       title: "Redirecionando...",
@@ -92,11 +91,20 @@ export default async function Page({ params }) {
       const response = await getImovelById(id);
       const imovel = response?.data;
       if (imovel && imovel.Slug) {
+        if (process.env.NODE_ENV !== "production") {
+          console.log(`Redirecionando /imovel-${id} para /imovel-${id}/${imovel.Slug}`);
+        }
         redirect(`/imovel-${id}/${imovel.Slug}`);
       } else {
+        if (process.env.NODE_ENV !== "production") {
+          console.log(`Imóvel não encontrado para ID: ${id}`);
+        }
         notFound();
       }
     } catch (e) {
+      if (process.env.NODE_ENV !== "production") {
+        console.error(`Erro ao buscar imóvel ID ${id}:`, e);
+      }
       notFound();
     }
   }
