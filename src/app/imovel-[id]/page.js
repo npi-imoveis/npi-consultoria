@@ -12,7 +12,7 @@ import { getImovelById } from "@/app/services";
 export default async function Page({ params }) {
   // O Next.js envia o parâmetro como "imovel-123"
   const { id } = params;
-  if (!id || typeof id !== "string") return notFound(); // <-- CORREÇÃO AQUI
+  if (!id || typeof id !== "string") return notFound();
   const match = id.match(/^imovel-(\d+)$/);
   if (!match) return notFound();
   const imovelId = match[1];
