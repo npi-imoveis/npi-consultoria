@@ -1,8 +1,35 @@
 // middleware.js
+//
+// Este middleware intercepta requisições para rotas de imóveis e garante que URLs incompletas (ex: /imovel-123) sejam redirecionadas para a URL completa com slug (ex: /imovel-123/helbor-brooklin).
+// Isso é fundamental para SEO, pois milhares de URLs antigas sem slug estão indexadas no Google. O middleware busca o slug correto via API e faz o redirecionamento 301 para a URL canônica.
+// Também mantém as regras já existentes para normalização de rotas entre /imovel-:id/:slug e /imovel/:id/:slug.
+//
 import { NextResponse } from "next/server";
 
-export function middleware(request) {
+export async function middleware(request) {
   const { pathname } = request.nextUrl;
+
+  // Redireciona /imovel-:id (sem slug) para /imovel-:id/:slug
+  const matchIdOnly = pathname.match(/^\/imovel-([^\/]+)$/);
+  if (matchIdOnly) {
+    const id = matchIdOnly[1];
+    // Busca o slug via API interna
+    try {
+      const apiUrl = `${request.nextUrl.origin}/api/imoveis/${id}`;
+      const res = await fetch(apiUrl);
+      if (res.ok) {
+        const data = await res.json();
+        const slug = data?.Slug || data?.slug;
+        if (slug) {
+          const url = request.nextUrl.clone();
+          url.pathname = `/imovel-${id}/${slug}`;
+          return NextResponse.redirect(url, 301);
+        }
+      }
+    } catch (e) {
+      // Se der erro, segue fluxo normal (404)
+    }
+  }
 
   // Verifica se a URL segue o padrão /imovel-:id/:slug
   // Ex: /imovel-123/apartamento-centro
@@ -40,5 +67,7 @@ export const config = {
     "/imovel-:id/:slug*",
     // Também intercepta rotas como /imovel/123/nome-do-imovel para redirecionar
     "/imovel/:id/:slug*",
+    // Agora intercepta também rotas /imovel-:id (sem slug)
+    "/imovel-:id",
   ],
 };
