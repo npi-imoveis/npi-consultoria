@@ -11,7 +11,7 @@ export function TitleSection({ destaque, section, title, description, button, ce
           {section}
         </span>
         {destaque ? (
-          <h1 className="text-xl uppercase font-bold tracking-tight">{title}</h1>
+          <h2 className="text-xl uppercase font-bold tracking-tight">{title}</h2>
         ) : (
           <h2 className="text-xl uppercase font-bold tracking-tight">{title}</h2>
         )}
