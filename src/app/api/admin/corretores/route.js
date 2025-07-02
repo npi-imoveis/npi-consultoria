@@ -2,14 +2,11 @@ import { connectToDatabase } from "@/app/lib/mongodb";
 import Corretores from "@/app/models/Corretores";
 import { NextResponse } from "next/server";
 
-// --- CORREÇÃO PRINCIPAL ---
-// Esta linha força a rota a ser sempre dinâmica, resolvendo o erro de "static rendering".
+// Esta linha é essencial e deve ser mantida.
 export const dynamic = "force-dynamic";
-// --------------------------
 
 export async function GET(request) {
   try {
-    // Agora o Next.js permitirá o acesso a searchParams sem erro.
     const { searchParams } = new URL(request.url);
     const query = searchParams.get("q");
 
@@ -19,13 +16,12 @@ export async function GET(request) {
 
     await connectToDatabase();
 
-    // --- CÓDIGO DE DIAGNÓSTICO (ainda usando regex para testar) ---
+    // --- CORREÇÃO DO DIAGNÓSTICO ---
+    // Alterado de "nomeCompleto" para "nome" para corresponder ao seu banco de dados.
     const resultado = await Corretores.find({
-      nomeCompleto: { $regex: query, $options: "i" } // 'i' para ser case-insensitive
+      nome: { $regex: query, $options: "i" } // 'i' para ser case-insensitive
     }).limit(20);
-
-    // Se o campo for 'nome', use a linha abaixo e comente a de cima:
-    // const resultado = await Corretores.find({ nome: { $regex: query, $options: "i" } }).limit(20);
+    // --- FIM DA CORREÇÃO ---
 
     const totalItems = resultado.length;
 
@@ -40,7 +36,7 @@ export async function GET(request) {
     });
 
   } catch (error) {
-    console.error("Erro na busca (diagnóstico):", error);
+    console.error("Erro na busca (diagnóstico com campo 'nome'):", error);
     return NextResponse.json({
       status: 500,
       error: error.message || "Erro desconhecido",
