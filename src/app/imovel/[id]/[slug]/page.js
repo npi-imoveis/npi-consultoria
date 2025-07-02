@@ -46,7 +46,7 @@ export async function generateMetadata({ params }) {
    openGraph: {
       title: `Condomínio ${condominio.Empreendimento}`,
       description,
-      url: `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${condominio.Codigo}/${condominio.Slug}`,
+      url: `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`,
       images: destaqueFotoUrl ? [{ url: destaqueFotoUrl }] : [],
       type: "website",
     },
