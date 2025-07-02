@@ -117,22 +117,21 @@ export function PropertyList() {
   }, []);
 
   if (error) {
-    return (
-      <div className="w-full bg-zinc-100 py-16">
-        <div className="container mx-auto">
-          <TitleSection
-            destaque
-            center
-            section="Destaque"
-            title="Imóveis de Alto Padrão"
-            description="Conheça os imóveis em destaque."
-            as="h2"
-          />
-          <p className="text-red-500 text-center py-10">Erro: {error}</p>
-        </div>
+  return (
+    <div className="w-full bg-zinc-100 py-16">
+      <div className="container mx-auto">
+        <TitleSection
+          destaque
+          center
+          section="Destaque"
+          title="Imóveis de Alto Padrão"
+          description="Conheça os imóveis em destaque."
+        />
+        <p className="text-red-500 text-center py-10">Erro: {error}</p>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   return (
     <section className="w-full bg-zinc-100 py-16 relative">
