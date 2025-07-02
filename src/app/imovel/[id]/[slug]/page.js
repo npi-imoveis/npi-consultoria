@@ -56,24 +56,10 @@ export async function generateMetadata({ params }) {
     }
   };
 }
-     // hreflang manual
-    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL),
-    alternates: {
-      canonical: currentUrl,
-      languages: {
-        "pt-BR": currentUrl,
-      },
-    },
-  };
-}
 
 export default async function Imovel({ params }) {
   const { id, slug } = params;
-  // const response = await getCondominioPorSlug(slug);
   const response = await getImovelById(id);
-  // Acessando cookies no server component
-
-  // const response = await getCondominioPorSlug(slug);
 
   if (!response?.data) {
     notFound();
