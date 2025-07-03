@@ -32,11 +32,21 @@ export async function generateMetadata({ params }) {
 
   const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
 
+  // ✅ Aqui definimos as variáveis que estavam faltando
+  const destaqueFotoUrl = typeof imovel.Foto === "string"
+    ? imovel.Foto
+    : imovel.Foto?.find?.((f) => f.Destaque === "Sim")?.Foto;
+
+  const fallbackImage = `${process.env.NEXT_PUBLIC_SITE_URL}/default-thumbnail.jpg`;
+
   return {
     title,
     description,
     alternates: {
       canonical: currentUrl,
+      languages: {
+        "pt-BR": currentUrl,
+      },
     },
     robots: {
       index: true,
@@ -56,6 +66,9 @@ export async function generateMetadata({ params }) {
       site: "@NPIImoveis",
       images: [destaqueFotoUrl || fallbackImage],
     },
+    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL),
+  };
+}
     // hreflang manual
     metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL),
     alternates: {
