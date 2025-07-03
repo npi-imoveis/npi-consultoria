@@ -4,86 +4,43 @@ import { NextResponse } from "next/server";
 
 export async function GET(request) {
   try {
-    const url = new URL(request.url);
-    const slug = url.searchParams.get("slug");
-
-    if (!slug) {
-      return NextResponse.json(
-        {
-          status: 400,
-          error: "É necessário fornecer o SLUG do imóvel",
-        },
-        { status: 400 }
-      );
-    }
+    // Extrair o parâmetro limit da URL
+    const { searchParams } = new URL(request.url);
+    const limit = searchParams.get("limit") ? parseInt(searchParams.get("limit")) : null;
 
     await connectToDatabase();
 
-    // --- MODIFICAÇÃO AQUI: Buscar o imóvel de referência com Condominio: "Sim" ---
-    let imovelReferencia = await Imovel.findOne({
-      Slug: slug,
-      Condominio: "Sim" // <--- Adicionando a condição para o campo Condominio
-    });
+    // Buscar condomínios com situação "LANÇAMENTO"
+    let query = Imovel.find({ Situacao: "LANÇAMENTO" });
 
-    // Fallback: Se não encontrar com Condominio: "Sim", tenta encontrar apenas pelo Slug
-    // e pega o de menor código, como era a lógica anterior.
-    // Isso é importante para não quebrar páginas antigas ou casos onde o campo Condominio não está preenchido.
-    if (!imovelReferencia) {
-      console.warn(`Aviso: Imóvel principal para o slug ${slug} não encontrado com Condominio: "Sim". Tentando fallback com menor Codigo.`);
-      imovelReferencia = await Imovel.findOne({ Slug: slug }).sort({ Codigo: 1 });
+    // Aplicar limit se fornecido
+    if (limit && limit > 0) {
+      query = query.limit(limit);
     }
 
-    if (!imovelReferencia) {
-      return NextResponse.json(
-        {
-          status: 404,
-          error: "Imóvel de referência não encontrado",
-        },
-        { status: 404 }
-      );
-    }
+    // Executar a consulta
+    const condominios = await query;
 
-    // Verificar se o imóvel possui endereço e número definidos
-    if (!imovelReferencia.Endereco || !imovelReferencia.Numero) {
-      return NextResponse.json(
-        {
-          status: 400,
-          error: "O imóvel de referência não possui endereço ou número definidos",
-        },
-        { status: 400 }
-      );
-    }
-
-    // Buscar todos os imóveis com o mesmo endereço e número
-    const imoveisRelacionados = await Imovel.find({
-      Endereco: imovelReferencia.Endereco,
-      Numero: imovelReferencia.Numero,
-    }).sort({ Codigo: 1 });
-
-    // Verificar se encontrou algum imóvel
-    if (!imoveisRelacionados || imoveisRelacionados.length === 0) {
-      // Se não encontrar imóveis relacionados, ainda retorna o imóvel de referência
-      // mas com a lista de relacionados vazia.
+    // Verificar se encontrou algum condomínio
+    if (!condominios || condominios.length === 0) {
       return NextResponse.json({
         status: 200,
-        data: imovelReferencia,
-        imoveisRelacionados: [],
+        data: [],
       });
     }
 
+    // Log para depuração
+    condominios.forEach((cond, index) => {});
+
     return NextResponse.json({
       status: 200,
-      data: imovelReferencia,
-      imoveisRelacionados: imoveisRelacionados,
+      data: condominios,
     });
   } catch (error) {
-    console.error("Erro ao buscar imóvel por slug:", error);
-    return NextResponse.json(
-      {
-        status: 500,
-        error: error instanceof Error ? error.message : "Erro desconhecido",
-      },
-      { status: 500 }
-    );
+    console.error("Erro ao buscar condomínios na API:", error);
+    return NextResponse.json({
+      status: 500,
+      error: error instanceof Error ? error.message : "Erro desconhecido",
+    });
   }
 }
