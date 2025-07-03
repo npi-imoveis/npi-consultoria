@@ -45,8 +45,8 @@ export async function generateMetadata({ params }) {
     openGraph: {
       title,
       description,
-      url: currentUrl,
-      images: [imovel.Foto],
+      url: `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${condominio.Codigo}/${condominio.Slug}`,
+      images: destaqueFotoUrl ? [{ url: destaqueFotoUrl }] : [],
     },
     twitter: {
       card: "summary_large_image",
