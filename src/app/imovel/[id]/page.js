@@ -2,6 +2,9 @@
 import { getImovelById } from "@/app/services";
 import { redirect } from "next/navigation";
 
+// Força a página a ser dinâmica - evita tentativa de pré-renderização no build
+export const dynamic = 'force-dynamic';
+
 export default async function ImovelRedirect({ params }) {
   const { id } = params;
   
