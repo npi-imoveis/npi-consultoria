@@ -1,14 +1,5 @@
-export const dynamic = "force-dynamic";
-/**
- * Página dinâmica para qualquer slug na raiz do site (ex: /imovel-123, /helbor-brooklin, etc).
- * Se o slug for do tipo 'imovel-123', busca o imóvel pelo ID e redireciona para a URL canônica com slug.
- * Se não, renderiza normalmente a página do condomínio.
- * Isso garante redirecionamento dinâmico e eficiente para milhares de URLs antigas, sem precisar de redirects estáticos.
- */
-
-import { notFound, redirect } from "next/navigation";
-import { getCondominioPorSlug, getImovelById } from "@/app/services";
 import { Button } from "@/app/components/ui/button";
+import { getCondominioPorSlug } from "@/app/services";
 import { formatterValue } from "@/app/utils/formatter-value";
 import { Apartment as StructuredDataApartment } from "@/app/components/structured-data";
 import { Share } from "@/app/components/ui/share";
@@ -24,70 +15,36 @@ import Lazer from "./componentes/Lazer";
 import VideoCondominio from "./componentes/VideoCondominio";
 import TourVirtual from "./componentes/TourVirtual";
 import ExploreRegiao from "./componentes/ExploreRegiao";
-import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 import ScrollToImoveisButton from "./componentes/scroll-to-imovel-button";
+import { notFound } from "next/navigation";
+import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 
 function ensureCondominio(text) {
   return /condom[ií]nio/i.test(text) ? text : `Condomínio ${text}`;
 }
 
 export async function generateMetadata({ params }) {
-  // Normaliza slug para string
-  let slugValue = params.slug;
-  if (Array.isArray(slugValue)) slugValue = slugValue[0];
-
-  // Se for /imovel-<id>, busca o imóvel para redirecionamento
-  const matchImovel = typeof slugValue === "string" && slugValue.match(/^imovel-(\d+)$/);
-  if (matchImovel) {
-    const id = matchImovel[1];
-    const response = await getImovelById(id);
-    const imovel = response?.data;
-    if (!imovel) {
-      return {
-        title: "Imóvel não encontrado",
-        description: "A página do imóvel que você procura não foi encontrada.",
-        robots: "noindex, nofollow",
-      };
-    }
-    // Meta de redirecionamento
-    return {
-      title: "Redirecionando...",
-      robots: "noindex, nofollow",
-    };
-  }
-
-  // Caso contrário, meta de condomínio
-  const response = await getCondominioPorSlug(slugValue);
+  const { slug } = params;
+  const response = await getCondominioPorSlug(slug);
   const condominio = response?.data;
-  if (!condominio) {
-    return {
-      title: "Condomínio não encontrado",
-      description: "A página do condomínio que você procura não foi encontrada.",
-      robots: "noindex, nofollow",
-    };
-  }
+
   const rawTitle = ensureCondominio(condominio.Empreendimento);
   const destaqueFotoObj = condominio.Foto?.find((f) => f.Destaque === "Sim");
   const destaqueFotoUrl = destaqueFotoObj?.Foto;
-  const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/${slugValue}`;
+
   const description = `${rawTitle} em ${condominio.BairroComercial}, ${condominio.Cidade}. ${condominio.Categoria} com ${condominio.MetragemAnt}, ${condominio.DormitoriosAntigo} quartos, ${condominio.VagasAntigo} vagas. ${condominio.Situacao}.`;
+
   return {
     title: `${rawTitle}, ${condominio.TipoEndereco} ${condominio.Endereco} ${condominio.Numero}, ${condominio.BairroComercial}`,
     description,
-    robots: {
-      index: true,
-      follow: true,
-    },
+    robots: "index, follow",
     alternates: {
-      canonical: currentUrl,
-      languages: {
-        "pt-BR": currentUrl,
-      },
+      canonical: `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`,
     },
     openGraph: {
       title: rawTitle,
       description,
-      url: currentUrl,
+      url: `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`,
       images: destaqueFotoUrl ? [{ url: destaqueFotoUrl }] : [],
       type: "website",
     },
@@ -101,48 +58,37 @@ export async function generateMetadata({ params }) {
   };
 }
 
-export default async function Page({ params }) {
-  let slugValue = params.slug;
-  if (Array.isArray(slugValue)) slugValue = slugValue[0];
+export default async function CondominioPage({ params }) {
+  const { slug } = params;
+  const response = await getCondominioPorSlug(slug);
 
-  // --- REDIRECIONAMENTO DINÂMICO DE /imovel-123 PARA /imovel-123/slug-correto ---
-  const matchImovel = typeof slugValue === "string" && slugValue.match(/^imovel-(\d+)$/);
-  if (matchImovel) {
-    const id = matchImovel[1];
-    const response = await getImovelById(id);
-    const imovel = response?.data;
-    
-    if (imovel && imovel.Slug) {
-      const destino = `/imovel-${id}/${imovel.Slug}`;
-      return redirect(destino);
-    } else {
-      return notFound();
-    }
-  }
-
-  // --- LÓGICA NORMAL DE CONDOMÍNIO ---
-  const response = await getCondominioPorSlug(slugValue);
   if (!response.data) {
-    return notFound();
+    notFound();
   }
+
   const condominio = response.data;
   const imoveisRelacionados = response.imoveisRelacionados;
+
   const rawTitle = ensureCondominio(condominio.Empreendimento);
-  const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/${slugValue}`;
+  const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`;
+
   function isValidValue(value) {
     return value !== undefined && value !== null && value !== "" && value !== "0";
   }
+
   return (
     <section className="w-full bg-zinc-100 pb-10">
       <StructuredDataApartment
         title={rawTitle}
         price={condominio.ValorAntigo ? `R$ ${condominio.ValorAntigo}` : "Consulte"}
-        description={`${condominio.Categoria} à venda em ${condominio.BairroComercial}, ${condominio.Cidade}. ${rawTitle}: ${condominio.DormitoriosAntigo} quartos, ${condominio.SuiteAntigo} suítes, ${condominio.BanheiroSocialQtd} banheiros, ${condominio.VagasAntigo} vagas, ${condominio.MetragemAnt}. ${condominio.Situacao}. Valor: ${condominio.ValorAntigo ? `R$ ${condominio.ValorAntigo}` : "Consulte"}. ${condominio.TipoEndereco} ${condominio.Endereco}.`}
+        description={`${condominio.Categoria} à venda em ${condominio.BairroComercial}, ${condominio.Cidade}. ${rawTitle}: ${condominio.DormitoriosAntigo} quartos, ${condominio.Suites} suítes, ${condominio.BanheiroSocialQtd} banheiros, ${condominio.VagasAntigo} vagas, ${condominio.MetragemAnt}. ${condominio.Situacao}. Valor: ${condominio.ValorAntigo ? `R$ ${condominio.ValorAntigo}` : "Consulte"}. ${condominio.TipoEndereco} ${condominio.Endereco}.`}
         address={`${condominio.TipoEndereco} ${condominio.Endereco}, ${condominio.Numero}, ${condominio.BairroComercial}, ${condominio.Cidade}`}
         url={currentUrl}
         image={condominio.Foto}
       />
+
       <ExitIntentModal condominio={rawTitle} link={currentUrl} />
+
       <div className="container mx-auto pt-20">
         <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 ">
           <div className="flex flex-col gap-4 ">
@@ -155,6 +101,7 @@ export default async function Page({ params }) {
                   variant="secondary"
                 />
               </div>
+
               <h1 className="text-xl font-bold mt-2">{rawTitle}</h1>
               <span className="text-xs text-zinc-700 font-semibold">
                 {condominio.TipoEndereco} {condominio.Endereco}, {condominio.Numero}, {condominio.BairroComercial}, {condominio.Cidade}
@@ -166,6 +113,7 @@ export default async function Page({ params }) {
                     <h2 className="text-black font-semibold text-[10px]">R$ {condominio.ValorAluguelSite}</h2>
                   </div>
                 )}
+
                 <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
                   <h4 className="text-zinc-600 text-[10px] font-bold">Venda:</h4>
                   <h2 className="text-black font-semibold text-[10px]">R$ {condominio.ValorAntigo}</h2>
@@ -204,6 +152,7 @@ export default async function Page({ params }) {
         </div>
       )}
       <SobreCondominio condominio={condominio} />
+
       {condominio.FichaTecnica && <FichaTecnica condominio={condominio} />}
       {condominio.DescricaoDiferenciais && <DiferenciaisCondominio condominio={condominio} />}
       {condominio.DestaquesLazer && <Lazer condominio={condominio} />}
@@ -213,6 +162,7 @@ export default async function Page({ params }) {
       {condominio.Tour360 && (
         <TourVirtual link={condominio.Tour360} titulo={rawTitle} />
       )}
+
       <ExploreRegiao condominio={condominio} currentUrl={currentUrl} />
       <WhatsappFloat
         message={`Quero saber mais sobre o ${rawTitle}, no bairro ${condominio.BairroComercial}, disponível na página de Condomínio: ${currentUrl}`}
