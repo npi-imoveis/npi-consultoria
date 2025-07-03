@@ -31,8 +31,6 @@ export async function generateMetadata({ params }) {
   const description = `${imovel.Categoria} à venda no bairro ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.DormitoriosAntigo} dormitórios, ${imovel.SuiteAntigo} suítes, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt}. Valor: ${imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}.`;
 
   const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
-
-  // ✅ Aqui definimos as variáveis que estavam faltando
   const destaqueFotoUrl = typeof imovel.Foto === "string"
     ? imovel.Foto
     : imovel.Foto?.find?.((f) => f.Destaque === "Sim")?.Foto;
@@ -40,38 +38,8 @@ export async function generateMetadata({ params }) {
   const fallbackImage = `${process.env.NEXT_PUBLIC_SITE_URL}/default-thumbnail.jpg`;
 
   return {
-  title,
-  description,
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL),
-  alternates: {
-    canonical: currentUrl,
-    languages: {
-      "pt-BR": currentUrl,
-    },
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
-  openGraph: {
     title,
     description,
-    url: currentUrl,
-    images: [{ url: destaqueFotoUrl || fallbackImage }],
-    type: "website",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title,
-    description,
-    site: "@NPIImoveis",
-    images: [destaqueFotoUrl || fallbackImage],
-  },
-};
-    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL),
-  };
-}
-    // hreflang manual
     metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL),
     alternates: {
       canonical: currentUrl,
@@ -79,31 +47,50 @@ export async function generateMetadata({ params }) {
         "pt-BR": currentUrl,
       },
     },
+    robots: {
+      index: true,
+      follow: true,
+    },
+    openGraph: {
+      title,
+      description,
+      url: currentUrl,
+      images: [{ url: destaqueFotoUrl || fallbackImage }],
+      type: "website",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      site: "@NPIImoveis",
+      images: [destaqueFotoUrl || fallbackImage],
+    },
   };
 }
+
 export const revalidate = 0;
 
 export default async function Imovel({ params }) {
   const { id, slug } = params;
   const response = await getImovelById(id);
 
-if (!response?.data) {
-  notFound();
-}
+  if (!response?.data) {
+    notFound();
+  }
 
-const imovel = {
-  ...response.data,
-  SuiteAntigo: response.data.SuiteAntigo ?? response.data.Suites ?? 0,
-  DormitoriosAntigo: response.data.DormitoriosAntigo ?? 0,
-  VagasAntigo: response.data.VagasAntigo ?? 0,
-  BanheiroSocialQtd: response.data.BanheiroSocialQtd ?? 0,
-};
+  const imovel = {
+    ...response.data,
+    SuiteAntigo: response.data.SuiteAntigo ?? response.data.Suites ?? 0,
+    DormitoriosAntigo: response.data.DormitoriosAntigo ?? 0,
+    VagasAntigo: response.data.VagasAntigo ?? 0,
+    BanheiroSocialQtd: response.data.BanheiroSocialQtd ?? 0,
+  };
 
-const slugCorreto = imovel.Slug;
+  const slugCorreto = imovel.Slug;
 
-if (slug !== slugCorreto) {
+  if (slug !== slugCorreto) {
     redirect(`/imovel-${id}/${slugCorreto}`);
-  }  
+  }
 
   const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
 
