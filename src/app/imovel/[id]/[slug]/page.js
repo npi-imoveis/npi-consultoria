@@ -46,7 +46,7 @@ export async function generateMetadata({ params }) {
       title,
       description,
       url: currentUrl,
-      images: destaqueFotoUrl ? [destaqueFotoUrl] : [],
+      images: [{ url: destaqueFotoUrl || fallbackImage }],
       type: "website",
     },
     twitter: {
@@ -54,7 +54,7 @@ export async function generateMetadata({ params }) {
       title,
       description,
       site: "@NPIImoveis",
-      images: destaqueFotoUrl ? [destaqueFotoUrl] : [],
+      images: [destaqueFotoUrl || fallbackImage],
     },
     // hreflang manual
     metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL),
