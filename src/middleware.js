@@ -18,6 +18,20 @@ export function middleware(request) {
     return NextResponse.rewrite(url);
   }
 
+  // Intercepta URLs sem slug para redirecionar via página intermediária
+  // Ex: /imovel-123 (sem slug)
+  if (pathname.match(/^\/imovel-([^\/]+)$/)) {
+    // Extrai apenas o ID da URL
+    const [, id] = pathname.match(/^\/imovel-([^\/]+)$/);
+
+    // Cria a nova URL interna para a página intermediária
+    const url = request.nextUrl.clone();
+    url.pathname = `/imovel/${id}`;
+
+    // Reescreve para a página intermediária que fará o redirect
+    return NextResponse.rewrite(url);
+  }
+
   // Se alguém acessar diretamente o formato /imovel/:id/:slug, redireciona para /imovel-:id/:slug
   if (pathname.match(/^\/imovel\/([^\/]+)\/(.+)$/)) {
     // Extrai o ID e o slug da URL
@@ -40,5 +54,7 @@ export const config = {
     "/imovel-:id/:slug*",
     // Também intercepta rotas como /imovel/123/nome-do-imovel para redirecionar
     "/imovel/:id/:slug*",
+    // Intercepta URLs sem slug para redirecionar
+    "/imovel-:id*",
   ],
 };
