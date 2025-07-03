@@ -1,3 +1,5 @@
+// app/imovel/[id]/[slug]/page.js
+
 import { ImageGallery } from "@/app/components/sections/image-gallery";
 import { FAQImovel } from "./componentes/FAQImovel";
 import DetalhesCondominio from "./componentes/DetalhesCondominio";
@@ -17,48 +19,42 @@ import { Apartment as StructuredDataApartment } from "@/app/components/structure
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 import { notFound, redirect } from "next/navigation";
 
+// ✅ SEO DINÂMICO
 export async function generateMetadata({ params }) {
   const { id } = params;
   const response = await getImovelById(id);
-  const imovel = response?.data;
 
-  // 1. Busca otimizada por foto destaque
-  const getFeaturedImage = () => {
-    if (!Array.isArray(imovel.Foto)) return null;
-    
-    // Tenta encontrar por Destaque (case insensitive)
-    const featured = imovel.Foto.find(f => 
-      String(f.Destaque).toLowerCase() === "sim"
-    );
-    if (featured) return featured.Foto || featured.url;
+  if (!response?.data) return {};
 
-    // Fallback 1: Foto com Indice 0
-    const primary = imovel.Foto.find(f => f.Indice === 0);
-    if (primary) return primary.Foto || primary.url;
+  const imovel = response.data;
+  const title = `${imovel.Empreendimento} - ${imovel.BairroComercial}, ${imovel.Cidade}`;
+  const description = `${imovel.Categoria} à venda no bairro ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.DormitoriosAntigo} dormitórios, ${imovel.SuiteAntigo} suítes, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt}. Valor: ${imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}.`;
 
-    // Fallback 2: Primeira foto válida
-    const firstValid = imovel.Foto.find(f => f.Foto || f.url);
-    return firstValid?.Foto || firstValid?.url;
-  };
-
-  const imagePath = getFeaturedImage();
-  const absoluteImageUrl = imagePath
-    ? imagePath.startsWith('http')
-      ? imagePath
-      : `${process.env.NEXT_PUBLIC_SITE_URL}${imagePath}`
-    : `${process.env.NEXT_PUBLIC_SITE_URL}/default-imovel.jpg`;
-
-  // Debug crucial
-  console.log('URL da imagem selecionada:', absoluteImageUrl);
-  console.log('Domínio da imagem:', new URL(absoluteImageUrl).hostname);
-
-  const description = `${imovel.Empreendimento} em ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.Categoria} com ${imovel.MetragemAnt}, ${imovel.DormitoriosAntigo} quartos, ${imovel.VagasAntigo} vagas. ${imovel.Situacao}.`;
-
-  const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`.replace(/\s+/g, '');
+  const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
 
   return {
-    title: `${imovel.Empreendimento}, ${imovel.TipoEndereco} ${imovel.Endereco} ${imovel.Numero}, ${imovel.BairroComercial}`,
+    title,
     description,
+    alternates: {
+      canonical: currentUrl,
+    },
+    robots: {
+      index: true,
+      follow: true,
+    },
+    openGraph: {
+      title,
+      description,
+      url: currentUrl,
+      images: [imovel.Foto],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [imovel.Foto],
+    },
+    // hreflang manual
     metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL),
     alternates: {
       canonical: currentUrl,
@@ -66,76 +62,35 @@ export async function generateMetadata({ params }) {
         "pt-BR": currentUrl,
       },
     },
-    openGraph: {
-      title: `Imóvel ${imovel.Empreendimento}`,
-      description,
-      url: currentUrl,
-      images: [{
-        url: absoluteImageUrl,
-        width: 1200,
-        height: 630,
-        alt: `Imóvel ${imovel.Empreendimento}`
-      }],
-      type: "website",
-      siteName: "NPI Consultoria Imobiliária",
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: `Imóvel ${imovel.Empreendimento}`,
-      description,
-      site: "@NPIImoveis",
-      creator: "@NPIImoveis",
-      images: [absoluteImageUrl],
-    },
-    // Adiciona meta tags adicionais para melhor compatibilidade
-    other: {
-      "og:image:secure_url": absoluteImageUrl,
-      "og:image:type": "image/jpeg",
-      "og:image:alt": `Imóvel ${imovel.Empreendimento}`,
-    }
   };
 }
+
+
+export const revalidate = 0;
 
 export default async function Imovel({ params }) {
   const { id, slug } = params;
   const response = await getImovelById(id);
 
-  if (!response?.data) {
-    notFound();
-  }
+if (!response?.data) {
+  notFound();
+}
 
-  const imovel = response.data;
-  const slugCorreto = imovel.Slug;
+const imovel = {
+  ...response.data,
+  SuiteAntigo: response.data.SuiteAntigo ?? response.data.Suites ?? 0,
+  DormitoriosAntigo: response.data.DormitoriosAntigo ?? 0,
+  VagasAntigo: response.data.VagasAntigo ?? 0,
+  BanheiroSocialQtd: response.data.BanheiroSocialQtd ?? 0,
+};
 
-  if (slug !== slugCorreto) {
+const slugCorreto = imovel.Slug;
+
+if (slug !== slugCorreto) {
     redirect(`/imovel-${id}/${slugCorreto}`);
-  }
+  }  
 
   const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
-
-  // Repete a lógica de seleção de imagem para usar no WhatsApp
-  let destaqueFotoUrl = null;
-  if (Array.isArray(imovel.Foto)) {
-    const destaqueFotoObj = imovel.Foto.find(f => 
-      String(f.Destaque).toLowerCase() === "sim"
-    );
-    destaqueFotoUrl = destaqueFotoObj?.Foto || destaqueFotoObj?.url || null;
-    
-    if (!destaqueFotoUrl) {
-      const primeiraFoto = imovel.Foto.find(f => f.Indice === 0);
-      destaqueFotoUrl = primeiraFoto?.Foto || primeiraFoto?.url || null;
-    }
-    
-    if (!destaqueFotoUrl && imovel.Foto.length > 0) {
-      destaqueFotoUrl = imovel.Foto[0]?.Foto || imovel.Foto[0]?.url || null;
-    }
-  }
-
-  const whatsappImageUrl = destaqueFotoUrl 
-    ? destaqueFotoUrl.startsWith('http') 
-      ? destaqueFotoUrl 
-      : `${process.env.NEXT_PUBLIC_SITE_URL}${destaqueFotoUrl}`
-    : `${process.env.NEXT_PUBLIC_SITE_URL}/default-imovel.jpg`;
 
   return (
     <section className="w-full bg-white pb-32 pt-20">
@@ -147,7 +102,7 @@ export default async function Imovel({ params }) {
         url={currentUrl}
         image={imovel.Foto}
       />
-      
+
       <ExitIntentModal condominio={imovel.Empreendimento} link={currentUrl} />
 
       <div className="w-full mx-auto">
@@ -178,9 +133,9 @@ export default async function Imovel({ params }) {
       <div className="container mx-auto px-4 md:px-0">
         <FAQImovel imovel={imovel} />
       </div>
+
       <WhatsappFloat
-        message={`Quero saber mais sobre o ${imovel.Empreendimento}, no bairro ${imovel.BairroComercial}, disponivel na pagina do Imóvel: ${currentUrl}`}
-        imageUrl={whatsappImageUrl}
+        message={`Quero saber mais sobre o ${imovel.Empreendimento}, no bairro ${imovel.BairroComercial}, disponível na página do Imóvel: ${currentUrl}`}
       />
     </section>
   );
