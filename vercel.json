@@ -2,6 +2,11 @@
   "redirects": [
 
     {
+      "source": "/condominio-le-quartier",
+      "destination": "/residencial-le-quartier",
+      "permanent": true
+    },
+    {
       "source": "/imovel-107855/residencial-azul",
       "destination": "/imovel-107855/azul-idea-zarvos",
       "permanent": true
