@@ -46,7 +46,7 @@ export async function generateMetadata({ params }) {
       title,
       description,
       url: currentUrl,
-      images: destaqueFotoUrl ? [{ url: destaqueFotoUrl }] : [],
+      images: destaqueFotoUrl ? [ url: destaqueFotoUrl ] : [],
       type: "website",
     },
     twitter: {
