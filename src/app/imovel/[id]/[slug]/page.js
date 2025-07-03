@@ -45,14 +45,16 @@ export async function generateMetadata({ params }) {
     openGraph: {
       title,
       description,
-      url: `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${condominio.Codigo}/${condominio.Slug}`,
+      url: currentUrl,
       images: destaqueFotoUrl ? [{ url: destaqueFotoUrl }] : [],
+      type: "website",
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: [imovel.Foto],
+      site: "@NPIImoveis",
+      images: destaqueFotoUrl ? [destaqueFotoUrl] : [],
     },
     // hreflang manual
     metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL),
