@@ -4,10 +4,10 @@ import { NextResponse } from "next/server";
 
 export async function GET(request, { params }) {
   const { cidade } = params;
-  const url = new URL(request.url);
+  const { searchParams } = request.nextUrl;
 
   // Extrair parâmetro de categoria da query
-  const categoria = url.searchParams.get("categoria");
+  const categoria = searchParams.get("categoria");
 
   try {
     // Conectar ao banco de dados
