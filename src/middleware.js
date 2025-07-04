@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server';
-
-// Verifique se estes caminhos estão corretos para sua estrutura
-import dbConnect from '../lib/dbConnect';
-import Imovel from '../models/Imovel';
+import dbConnect from '@lib/dbConnect'; // Usando alias absoluto
+import Imovel from '@models/Imovel';    // Usando alias absoluto
 
 export async function middleware(request) {
   const url = request.nextUrl.clone();
