@@ -9,6 +9,11 @@ export async function GET(request) {
     const { searchParams } = request.nextUrl;
     const slug = searchParams.get("slug");
 
+    console.log(`[API-CONDOMINIOS-SLUG] ====== CHAMADA RECEBIDA ======`);
+    console.log(`[API-CONDOMINIOS-SLUG] Slug recebido: ${slug}`);
+    console.log(`[API-CONDOMINIOS-SLUG] User-Agent: ${request.headers.get('user-agent')?.substring(0, 50)}...`);
+    console.log(`[API-CONDOMINIOS-SLUG] Referrer: ${request.headers.get('referer') || 'N/A'}`);
+
     if (!slug) {
       return NextResponse.json(
         {
