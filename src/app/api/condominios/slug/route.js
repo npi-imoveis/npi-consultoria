@@ -2,13 +2,12 @@ import { connectToDatabase } from "@/app/lib/mongodb";
 import Imovel from "@/app/models/Imovel";
 import { NextResponse } from "next/server";
 
-// Força a rota a ser dinâmica - evita tentativa de pré-renderização no build
 export const dynamic = 'force-dynamic';
 
 export async function GET(request) {
   try {
-    const url = new URL(request.url);
-    const slug = url.searchParams.get("slug");
+    const { searchParams } = request.nextUrl;
+    const slug = searchParams.get("slug");
 
     if (!slug) {
       return NextResponse.json(
