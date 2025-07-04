@@ -25,6 +25,12 @@ function ensureCondominio(text) {
 
 export async function generateMetadata({ params }) {
   const { slug } = params;
+  
+  // Rejeitar URLs que sigam o padrão imovel-{id} - essas devem ser tratadas pelo middleware
+  if (slug.match(/^imovel-\d+$/)) {
+    return {};
+  }
+  
   const response = await getCondominioPorSlug(slug);
   const condominio = response?.data;
 
@@ -76,6 +82,12 @@ export async function generateMetadata({ params }) {
 
 export default async function CondominioPage({ params }) {
   const { slug } = params;
+  
+  // Rejeitar URLs que sigam o padrão imovel-{id} - essas devem ser tratadas pelo middleware
+  if (slug.match(/^imovel-\d+$/)) {
+    notFound();
+  }
+  
   const response = await getCondominioPorSlug(slug);
 
   if (!response.data) {
