@@ -15,9 +15,13 @@ export async function middleware(request) {
 
     try {
       // Busca o slug do imóvel no banco
-      const apiUrl = new URL(`/api/imoveis/${id}`, request.url);
+      const apiUrl = new URL(`/api/imoveis/${id}`, request.nextUrl.origin);
       console.log(`[MIDDLEWARE] Buscando dados em: ${apiUrl.toString()}`);
-      const response = await fetch(apiUrl.toString());
+      const response = await fetch(apiUrl.toString(), {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
       
       if (response.ok) {
         const data = await response.json();
@@ -46,6 +50,12 @@ export async function middleware(request) {
           url.pathname = `/imovel-${id}/${slugBasico}`;
           return NextResponse.redirect(url, 301); // Redirect permanente
         }
+      } else {
+        console.error(`[MIDDLEWARE] Erro na resposta da API: ${response.status}`);
+        // Em caso de erro na resposta, redireciona para slug genérico
+        const url = request.nextUrl.clone();
+        url.pathname = `/imovel-${id}/imovel`;
+        return NextResponse.redirect(url, 301);
       }
     } catch (error) {
       console.error('Erro ao buscar slug do imóvel:', error);
@@ -90,7 +100,8 @@ export async function middleware(request) {
 
 export const config = {
   matcher: [
-    // Intercepta todas as rotas exceto API, static files, etc.
-    "/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
+    // Intercepta apenas rotas de imóveis para evitar problemas com outras rotas
+    "/imovel-:path*",
+    "/imovel/:path*",
   ],
 };
