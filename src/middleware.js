@@ -17,10 +17,13 @@ export async function middleware(request) {
       // Busca o slug do imóvel no banco
       const apiUrl = new URL(`/api/imoveis/${id}`, request.nextUrl.origin);
       console.log(`[MIDDLEWARE] Buscando dados em: ${apiUrl.toString()}`);
+      
+      // Timeout mais agressivo para evitar problemas no Vercel
       const response = await fetch(apiUrl.toString(), {
         headers: {
           'Content-Type': 'application/json',
         },
+        signal: AbortSignal.timeout(5000), // 5 segundos timeout
       });
       
       if (response.ok) {
@@ -34,7 +37,7 @@ export async function middleware(request) {
           console.log(`[MIDDLEWARE] Redirecionando para: ${url.pathname}`);
           return NextResponse.redirect(url, 301); // Redirect permanente
         } else {
-          // Se não tem slug, gera um básico
+          // Se não tem slug, gera um básico baseado no nome do empreendimento
           const slugBasico = imovel?.Empreendimento 
             ? imovel.Empreendimento
                 .toLowerCase()
@@ -44,24 +47,27 @@ export async function middleware(request) {
                 .replace(/\s+/g, '-') // Substitui espaços por hífens
                 .replace(/-+/g, '-') // Remove hífens duplos
                 .replace(/^-|-$/g, '') // Remove hífens do início e fim
-            : 'imovel';
+            : `imovel-${id}`;
           
           const url = request.nextUrl.clone();
           url.pathname = `/imovel-${id}/${slugBasico}`;
+          console.log(`[MIDDLEWARE] Redirecionando para slug gerado: ${url.pathname}`);
           return NextResponse.redirect(url, 301); // Redirect permanente
         }
       } else {
-        console.error(`[MIDDLEWARE] Erro na resposta da API: ${response.status}`);
+        console.error(`[MIDDLEWARE] Erro na resposta da API: ${response.status} - ${response.statusText}`);
         // Em caso de erro na resposta, redireciona para slug genérico
         const url = request.nextUrl.clone();
-        url.pathname = `/imovel-${id}/imovel`;
+        url.pathname = `/imovel-${id}/imovel-${id}`;
+        console.log(`[MIDDLEWARE] Redirecionando para slug de erro: ${url.pathname}`);
         return NextResponse.redirect(url, 301);
       }
     } catch (error) {
       console.error('Erro ao buscar slug do imóvel:', error);
-      // Em caso de erro, redireciona para uma página de erro ou slug genérico
+      // Em caso de erro, redireciona para slug genérico baseado no ID
       const url = request.nextUrl.clone();
-      url.pathname = `/imovel-${id}/imovel`;
+      url.pathname = `/imovel-${id}/imovel-${id}`;
+      console.log(`[MIDDLEWARE] Redirecionando para slug de catch: ${url.pathname}`);
       return NextResponse.redirect(url, 301);
     }
   }

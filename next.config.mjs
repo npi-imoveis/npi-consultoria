@@ -77,6 +77,20 @@ const nextConfig = {
       // Pode adicionar redirecionamentos manuais aqui se necessário
     ];
   },
+  async rewrites() {
+    return {
+      beforeFiles: [
+        // Permite que o middleware seja executado antes dos redirecionamentos estáticos
+      ],
+      afterFiles: [
+        // Fallback para URLs de imóveis sem slug
+        {
+          source: '/imovel-:id',
+          destination: '/api/redirect/imovel/:id',
+        },
+      ],
+    };
+  },
   output: "standalone", // Ou 'export' se estiver gerando static sites
 };
 
