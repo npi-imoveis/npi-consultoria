@@ -3,9 +3,11 @@ import Imovel from "@/app/models/Imovel";
 
 import { NextResponse } from "next/server";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request) {
   try {
-    const url = new URL(request.url);
+    const { searchParams } = request.nextUrl;
 
     await connectToDatabase();
 
