@@ -7,11 +7,11 @@ import ImovelInativo from "@/app/models/ImovelInativo";
 
 export async function GET(request) {
   try {
-    const url = new URL(request.url);
+    const { searchParams } = request.nextUrl;
 
     // Parâmetros de paginação
-    const limit = parseInt(url.searchParams.get("limit") || "25", 10);
-    const page = parseInt(url.searchParams.get("page") || "1", 10);
+    const limit = parseInt(searchParams.get("limit") || "25", 10);
+    const page = parseInt(searchParams.get("page") || "1", 10);
     const skip = (page - 1) * limit;
 
     // Criar uma chave única para o cache baseada nos parâmetros
@@ -227,8 +227,8 @@ export async function POST(request) {
 
 export async function DELETE(request) {
   try {
-    const url = new URL(request.url);
-    const id = url.searchParams.get("id");
+    const { searchParams } = request.nextUrl;
+    const id = searchParams.get("id");
 
     await connectToDatabase();
 
