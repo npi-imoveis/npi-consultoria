@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'; // Garante que a rota seja sempre dinâm
 
 export async function GET(request) {
   try {
-    const { searchParams } = new URL(request.url);
+    const { searchParams } = request.nextUrl;
     const query = searchParams.get("q");
 
     if (!query || query.trim() === "") {
