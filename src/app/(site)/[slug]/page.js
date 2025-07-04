@@ -26,7 +26,8 @@ function ensureCondominio(text) {
 export async function generateMetadata({ params }) {
   const { slug } = params;
   
-  console.log(`[CONDOMINIO-META] Processando slug: ${slug}`);
+  // FORÇAR LOG NO CONSOLE
+  console.error(`[CONDOMINIO-META] =========== PROCESSANDO SLUG: ${slug} ===========`);
   
   // Detectar URLs que sigam o padrão imovel-{id} e redirecionar
   if (slug.match(/^imovel-(\d+)$/)) {
@@ -88,7 +89,8 @@ export async function generateMetadata({ params }) {
 export default async function CondominioPage({ params }) {
   const { slug } = params;
   
-  console.log(`[CONDOMINIO-PAGE] Processando slug: ${slug}`);
+  // FORÇAR LOG NO CONSOLE
+  console.error(`[CONDOMINIO-PAGE] =========== PROCESSANDO SLUG: ${slug} ===========`);
   
   // Detectar URLs que sigam o padrão imovel-{id} e redirecionar para API de redirecionamento
   if (slug.match(/^imovel-(\d+)$/)) {
