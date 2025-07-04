@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import dbConnect from '@lib/dbConnect'; // Usando alias absoluto
-import Imovel from '@models/Imovel';    // Usando alias absoluto
+import dbConnect from '../lib/dbConnect'; // Caminho corrigido: volta 1 nível (src/)
+import Imovel from '../models/Imovel';    // Caminho corrigido
 
 export async function middleware(request) {
   const url = request.nextUrl.clone();
@@ -35,7 +35,7 @@ export async function middleware(request) {
 }
 
 export const config = {
-  runtime: 'nodejs',
+  runtime: 'nodejs', // Mantenha isso para usar Mongoose
   matcher: [
     '/imovel-:id(\\d+)',
     '/imovel-:id(\\d+)/',
