@@ -1,20 +1,29 @@
 import { NextResponse } from 'next/server';
-import dbConnect from '../lib/dbConnect'; // Caminho corrigido: volta 1 nível (src/)
-import Imovel from '../models/Imovel';    // Caminho corrigido
+
+// Importe usando caminhos absolutos baseados na raiz do projeto
+import dbConnect from '@/lib/dbConnect';
+import Imovel from '@/models/Imovel';
 
 export async function middleware(request) {
   const url = request.nextUrl.clone();
   const { pathname, origin, searchParams } = url;
 
+  console.log(`Middleware processing: ${pathname}`);
+
   const imovelPattern = /^\/imovel-(\d+)(?:\/?)$/i;
   const match = pathname.match(imovelPattern);
   
-  if (!match) return NextResponse.next();
+  if (!match) {
+    return NextResponse.next();
+  }
 
   const id = match[1];
+  console.log(`Processing imovel ID: ${id}`);
 
   try {
     await dbConnect();
+    console.log(`Database connected, searching for imovel ${id}`);
+    
     const imovel = await Imovel.findOne(
       { Codigo: parseInt(id) },
       { Slug: 1, _id: 0 }
@@ -22,7 +31,11 @@ export async function middleware(request) {
 
     if (imovel?.Slug) {
       const newUrl = new URL(`/imovel-${id}/${imovel.Slug}`, origin);
-      searchParams.forEach((value, key) => newUrl.searchParams.append(key, value));
+      searchParams.forEach((value, key) => {
+        newUrl.searchParams.append(key, value);
+      });
+      
+      console.log(`Redirecting to: ${newUrl.toString()}`);
       return NextResponse.redirect(newUrl, 301);
     }
   } catch (error) {
@@ -30,12 +43,15 @@ export async function middleware(request) {
   }
 
   const buscaUrl = new URL('/busca', origin);
-  searchParams.forEach((value, key) => buscaUrl.searchParams.append(key, value));
+  searchParams.forEach((value, key) => {
+    buscaUrl.searchParams.append(key, value);
+  });
+  
   return NextResponse.redirect(buscaUrl, 302);
 }
 
 export const config = {
-  runtime: 'nodejs', // Mantenha isso para usar Mongoose
+  runtime: 'nodejs',
   matcher: [
     '/imovel-:id(\\d+)',
     '/imovel-:id(\\d+)/',
