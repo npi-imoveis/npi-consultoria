@@ -4,7 +4,7 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '**.npiconsultoria.com.br', // Permite todos subdomínios
+        hostname: '**.npiconsultoria.com.br',
       },
       {
         protocol: "https",
@@ -64,39 +64,38 @@ const nextConfig = {
         pathname: "/**",
       },
     ],
-    // Configuração importante para otimização
     formats: ['image/avif', 'image/webp'],
     deviceSizes: [640, 750, 828, 1080, 1200],
-    minimumCacheTTL: 60, // Cache de 60 segundos
+    minimumCacheTTL: 60,
   },
   typescript: {
-    ignoreBuildErrors: true, // Apenas para desenvolvimento
+    ignoreBuildErrors: true,
   },
-  async redirects() {
+  // REMOVIDOS todos os redirects/rewrites que conflitam com o middleware
+  // O middleware agora terá prioridade absoluta
+  async headers() {
     return [
-      // Redirecionamento para URLs de imóveis sem slug
       {
-        source: '/imovel-:id(\\d+)',
-        destination: '/api/redirect/imovel/:id',
-        permanent: false
+        source: '/:path*',
+        headers: [
+          {
+            key: 'X-DNS-Prefetch-Control',
+            value: 'on'
+          }
+        ],
       },
     ];
   },
-  async rewrites() {
-    return {
-      beforeFiles: [
-        // Permite que o middleware seja executado antes dos redirecionamentos estáticos
-      ],
-      afterFiles: [
-        // Fallback para URLs de imóveis sem slug
-        {
-          source: '/imovel-:id',
-          destination: '/api/redirect/imovel/:id',
-        },
-      ],
-    };
+  experimental: {
+    // Otimizações para o middleware
+    middlewarePrefetch: 'strict',
+    incrementalCacheHandlerPath: './cache-handler.js',
   },
-  output: "standalone", // Ou 'export' se estiver gerando static sites
+  // Configuração para garantir que o middleware execute primeiro
+  skipMiddlewareUrlNormalize: true,
+  skipTrailingSlashRedirect: true,
+  
+  output: "standalone",
 };
 
 export default nextConfig;
