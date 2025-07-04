@@ -4,8 +4,8 @@ import { NextResponse } from "next/server";
 
 export async function GET(request) {
   try {
-    const url = new URL(request.url);
-    const id = url.searchParams.get("id");
+    const { searchParams } = request.nextUrl;
+    const id = searchParams.get("id");
 
     await connectToDatabase();
 
@@ -27,8 +27,8 @@ export async function GET(request) {
 
 export async function PUT(request) {
   try {
-    const url = new URL(request.url);
-    const id = url.searchParams.get("id");
+    const { searchParams } = request.nextUrl;
+    const id = searchParams.get("id");
     const updateData = await request.json();
 
     await connectToDatabase();
@@ -78,8 +78,8 @@ export async function PUT(request) {
 
 export async function POST(request) {
   try {
-    const url = new URL(request.url);
-    const id = url.searchParams.get("id");
+    const { searchParams } = request.nextUrl;
+    const id = searchParams.get("id");
     const dadosProprietario = await request.json();
 
     await connectToDatabase();
