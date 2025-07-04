@@ -4,20 +4,20 @@ import { NextResponse } from "next/server";
 
 export async function GET(request, { params }) {
   const { id } = params;
-  const url = new URL(request.url);
+  const { searchParams } = request.nextUrl;
 
   // Extrair os parâmetros da query
-  const categoria = url.searchParams.get("categoria");
-  const cidade = url.searchParams.get("cidade");
+  const categoria = searchParams.get("categoria");
+  const cidade = searchParams.get("cidade");
   // Obter múltiplos bairros da query
-  const bairros = url.searchParams.getAll("bairros");
-  const quartos = url.searchParams.get("quartos");
-  const banheiros = url.searchParams.get("banheiros");
-  const vagas = url.searchParams.get("vagas");
+  const bairros = searchParams.getAll("bairros");
+  const quartos = searchParams.get("quartos");
+  const banheiros = searchParams.get("banheiros");
+  const vagas = searchParams.get("vagas");
 
   // Parâmetros de paginação
-  const limit = parseInt(url.searchParams.get("limit") || "12", 10);
-  const page = parseInt(url.searchParams.get("page") || "1", 10);
+  const limit = parseInt(searchParams.get("limit") || "12", 10);
+  const page = parseInt(searchParams.get("page") || "1", 10);
   const skip = (page - 1) * limit;
 
   try {
