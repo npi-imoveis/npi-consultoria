@@ -4,114 +4,46 @@ import { NextResponse } from "next/server";
 export async function middleware(request) {
   const { pathname } = request.nextUrl;
   
-  // Debug logging para produção
-  console.log(`[MIDDLEWARE] ============ INICIANDO ============`);
-  console.log(`[MIDDLEWARE] Processando: ${pathname}`);
-  console.log(`[MIDDLEWARE] User-Agent: ${request.headers.get('user-agent')?.substring(0, 50)}...`);
+  console.log(`[MIDDLEWARE] Processando: ${pathname}`); // Mantenha os logs para debug
 
-  // Verifica se a URL segue o padrão /imovel-:id (SEM slug)
-  // Ex: /imovel-123 -> deve redirecionar para /imovel-123/slug
-  if (pathname.match(/^\/imovel-([^\/]+)$/)) {
-    const [, id] = pathname.match(/^\/imovel-([^\/]+)$/);
-    console.log(`[MIDDLEWARE] URL sem slug detectada: ${pathname}, ID: ${id}`);
+  // 1. TRATA URLs com o prefixo '/imovel-' (com ou sem slug)
+  // Exemplos: /imovel-9507, /imovel-9507/, /imovel-9507/nome-do-imovel
+  // Objetivo: Reescrever internamente para o formato /imovel/[id]/[slug]
+  // Se o slug estiver ausente, um slug temporário será usado.
+  if (pathname.match(/^\/imovel-(\d+)(?:\/(.*))?$/)) { // Regex ajustada para capturar opcionalmente o slug
+    const [, id, slug] = pathname.match(/^\/imovel-(\d+)(?:\/(.*))?$/);
+    console.log(`[MIDDLEWARE] URL de imóvel detectada: ${pathname}, ID: ${id}, Slug (original): ${slug}`);
 
-    try {
-      // Busca o slug do imóvel no banco
-      const apiUrl = new URL(`/api/imoveis/${id}`, request.nextUrl.origin);
-      console.log(`[MIDDLEWARE] Buscando dados em: ${apiUrl.toString()}`);
-      
-      // Timeout mais agressivo para evitar problemas no Vercel
-      const response = await fetch(apiUrl.toString(), {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        signal: AbortSignal.timeout(5000), // 5 segundos timeout
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        const imovel = data.data;
-        
-        if (imovel?.Slug) {
-          // Redireciona para a URL com slug
-          const url = request.nextUrl.clone();
-          url.pathname = `/imovel-${id}/${imovel.Slug}`;
-          console.log(`[MIDDLEWARE] Redirecionando para: ${url.pathname}`);
-          return NextResponse.redirect(url, 301); // Redirect permanente
-        } else {
-          // Se não tem slug, gera um básico baseado no nome do empreendimento
-          const slugBasico = imovel?.Empreendimento 
-            ? imovel.Empreendimento
-                .toLowerCase()
-                .normalize('NFD')
-                .replace(/[\u0300-\u036f]/g, '') // Remove acentos
-                .replace(/[^a-z0-9\s-]/g, '') // Remove caracteres especiais
-                .replace(/\s+/g, '-') // Substitui espaços por hífens
-                .replace(/-+/g, '-') // Remove hífens duplos
-                .replace(/^-|-$/g, '') // Remove hífens do início e fim
-            : `imovel-${id}`;
-          
-          const url = request.nextUrl.clone();
-          url.pathname = `/imovel-${id}/${slugBasico}`;
-          console.log(`[MIDDLEWARE] Redirecionando para slug gerado: ${url.pathname}`);
-          return NextResponse.redirect(url, 301); // Redirect permanente
-        }
-      } else {
-        console.error(`[MIDDLEWARE] Erro na resposta da API: ${response.status} - ${response.statusText}`);
-        // Em caso de erro na resposta, redireciona para slug genérico
-        const url = request.nextUrl.clone();
-        url.pathname = `/imovel-${id}/imovel-${id}`;
-        console.log(`[MIDDLEWARE] Redirecionando para slug de erro: ${url.pathname}`);
-        return NextResponse.redirect(url, 301);
-      }
-    } catch (error) {
-      console.error('Erro ao buscar slug do imóvel:', error);
-      // Em caso de erro, redireciona para slug genérico baseado no ID
-      const url = request.nextUrl.clone();
-      url.pathname = `/imovel-${id}/imovel-${id}`;
-      console.log(`[MIDDLEWARE] Redirecionando para slug de catch: ${url.pathname}`);
-      return NextResponse.redirect(url, 301);
-    }
-  }
+    // Se a URL original tinha um slug, usa ele.
+    // Caso contrário (URL como /imovel-9507 ou /imovel-9507/), usa um slug temporário.
+    const targetSlug = slug || 'temp-slug-for-redirect'; // Use um slug temporário se não houver
 
-  // Verifica se a URL segue o padrão /imovel-:id/:slug (COM slug)
-  // Ex: /imovel-123/apartamento-centro
-  if (pathname.match(/^\/imovel-([^\/]+)\/(.+)$/)) {
-    // Extrai o ID e o slug da URL
-    const [, id, slug] = pathname.match(/^\/imovel-([^\/]+)\/(.+)$/);
-    console.log(`[MIDDLEWARE] URL com slug detectada: ${pathname}, ID: ${id}, Slug: ${slug}`);
-
-    // Cria a nova URL interna para processamento
     const url = request.nextUrl.clone();
-    url.pathname = `/imovel/${id}/${slug}`;
-    console.log(`[MIDDLEWARE] Reescrevendo para: ${url.pathname}`);
-
-    // Reescreve a URL internamente sem mudar a URL visível para o usuário
+    url.pathname = `/imovel/${id}/${targetSlug}`; // Reescreve para o caminho interno /imovel/[id]/[slug]
+    
+    console.log(`[MIDDLEWARE] Reescrevendo para rota interna: ${url.pathname}`);
     return NextResponse.rewrite(url);
   }
 
-  // Se alguém acessar diretamente o formato /imovel/:id/:slug, redireciona para /imovel-:id/:slug
-  if (pathname.match(/^\/imovel\/([^\/]+)\/(.+)$/)) {
-    // Extrai o ID e o slug da URL
-    const [, id, slug] = pathname.match(/^\/imovel\/([^\/]+)\/(.+)$/);
-
-    // Cria a nova URL com o formato correto para exibição
+  // 2. TRATA URLs no formato antigo '/imovel/:id/:slug'
+  // Exemplo: /imovel/123/nome-do-imovel
+  // Objetivo: Redirecionar para o novo formato '/imovel-:id/:slug' (visível para o usuário)
+  if (pathname.match(/^\/imovel\/(\d+)\/(.+)$/)) {
+    const [, id, slug] = pathname.match(/^\/imovel\/(\d+)\/(.+)$/);
     const url = request.nextUrl.clone();
     url.pathname = `/imovel-${id}/${slug}`;
-
-    // Redireciona para a URL no formato correto (visível para o usuário)
+    
+    console.log(`[MIDDLEWARE] Redirecionando formato antigo para: ${url.pathname}`);
     return NextResponse.redirect(url, 301);
   }
 
-  console.log(`[MIDDLEWARE] ============ FINALIZANDO ============`);
   console.log(`[MIDDLEWARE] Nenhuma regra aplicada, passando adiante: ${pathname}`);
   return NextResponse.next();
 }
 
 export const config = {
   matcher: [
-    // Intercepta apenas rotas de imóveis para evitar problemas com outras rotas
-    "/imovel-:path*",
-    "/imovel/:path*",
+    "/imovel-:path*", // Captura /imovel-ID e /imovel-ID/slug
+    "/imovel/:path*", // Captura /imovel/ID e /imovel/ID/slug
   ],
 };
