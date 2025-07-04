@@ -24,6 +24,18 @@ export async function GET(request) {
       );
     }
 
+    // Detectar e rejeitar slugs no formato imovel-{id}
+    if (slug.match(/^imovel-\d+$/)) {
+      console.log(`[API-CONDOMINIOS-SLUG] Rejeitando slug de imóvel: ${slug}`);
+      return NextResponse.json(
+        {
+          status: 404,
+          error: "Slug de imóvel detectado - não é um slug de condomínio",
+        },
+        { status: 404 }
+      );
+    }
+
     await connectToDatabase();
 
     // --- MODIFICAÇÃO AQUI: Buscar o imóvel de referência com Condominio: "Sim" ---
