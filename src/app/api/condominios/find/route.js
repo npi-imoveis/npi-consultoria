@@ -9,6 +9,10 @@ export async function GET(request) {
     const { searchParams } = request.nextUrl;
     const id = searchParams.get("id");
 
+    console.error(`[API-CONDOMINIOS-FIND] ====== CHAMADA RECEBIDA ======`);
+    console.error(`[API-CONDOMINIOS-FIND] ID recebido: ${id}`);
+    console.error(`[API-CONDOMINIOS-FIND] Referrer: ${request.headers.get('referer') || 'N/A'}`);
+
     if (!id) {
       return NextResponse.json(
         {
