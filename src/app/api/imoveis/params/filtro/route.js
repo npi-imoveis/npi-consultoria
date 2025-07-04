@@ -3,21 +3,21 @@ import Imovel from "@/app/models/Imovel";
 import { NextResponse } from "next/server";
 
 export async function GET(request) {
-  const url = new URL(request.url);
-  const categoria = url.searchParams.get("categoria");
-  const cidade = url.searchParams.get("cidade");
-  const bairros = url.searchParams.getAll("bairros");
-  const finalidade = url.searchParams.get("finalidade");
-  const quartos = url.searchParams.get("quartos");
-  const banheiros = url.searchParams.get("banheiros");
-  const vagas = url.searchParams.get("vagas");
-  const precoMinimo = url.searchParams.get("precoMinimo");
-  const precoMaximo = url.searchParams.get("precoMaximo");
-  const areaMinima = url.searchParams.get("areaMinima");
-  const areaMaxima = url.searchParams.get("areaMaxima");
+  const { searchParams } = request.nextUrl;
+  const categoria = searchParams.get("categoria");
+  const cidade = searchParams.get("cidade");
+  const bairros = searchParams.getAll("bairros");
+  const finalidade = searchParams.get("finalidade");
+  const quartos = searchParams.get("quartos");
+  const banheiros = searchParams.get("banheiros");
+  const vagas = searchParams.get("vagas");
+  const precoMinimo = searchParams.get("precoMinimo");
+  const precoMaximo = searchParams.get("precoMaximo");
+  const areaMinima = searchParams.get("areaMinima");
+  const areaMaxima = searchParams.get("areaMaxima");
 
-  const limit = parseInt(url.searchParams.get("limit") || "12", 10);
-  const page = parseInt(url.searchParams.get("page") || "1", 10);
+  const limit = parseInt(searchParams.get("limit") || "12", 10);
+  const page = parseInt(searchParams.get("page") || "1", 10);
   const skip = (page - 1) * limit;
 
   try {
