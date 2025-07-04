@@ -4,8 +4,8 @@ import Corretores from "@/app/models/Corretores";
 import Imovel from "@/app/models/Imovel";
 
 export async function GET(request) {
-  const url = new URL(request.url);
-  const id = url.searchParams.get("id");
+  const { searchParams } = request.nextUrl;
+  const id = searchParams.get("id");
 
   await connectToDatabase();
 
@@ -47,8 +47,8 @@ export async function GET(request) {
 // ---------------------------------- //
 
 export async function DELETE(request) {
-  const url = new URL(request.url);
-  const id = url.searchParams.get("id");
+  const { searchParams } = request.nextUrl;
+  const id = searchParams.get("id");
 
   try {
     await connectToDatabase();
@@ -97,8 +97,8 @@ export async function POST(request) {
 
 export async function PUT(request) {
   try {
-    const url = new URL(request.url);
-    const id = url.searchParams.get("id");
+    const { searchParams } = request.nextUrl;
+    const id = searchParams.get("id");
     const data = await request.json();
 
     if (!id) {
