@@ -72,24 +72,27 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true, // Apenas para desenvolvimento
   },
-  async redirects( ) {
+  async redirects() {
     return [
-      // Esta seção está vazia para evitar conflitos com o middleware
-      // que agora é responsável por lidar com os redirecionamentos de imóveis.
+      // Redirecionamento para URLs de imóveis sem slug
+      {
+        source: '/imovel-:id(\\d+)',
+        destination: '/api/redirect/imovel/:id',
+        permanent: false
+      },
     ];
   },
   async rewrites() {
     return {
       beforeFiles: [
         // Permite que o middleware seja executado antes dos redirecionamentos estáticos
-        // (Esta seção pode ser usada para rewrites que precisam de alta precedência,
-        // mas para o seu caso, o middleware já está lidando com a reescrita interna).
       ],
       afterFiles: [
-        // Esta seção está vazia ou contém apenas rewrites que não conflitam
-        // com as rotas de imóvel ou o middleware.
-        // A regra anterior para '/imovel-:id' foi removida para evitar redundância
-        // e possível conflito com o middleware.
+        // Fallback para URLs de imóveis sem slug
+        {
+          source: '/imovel-:id',
+          destination: '/api/redirect/imovel/:id',
+        },
       ],
     };
   },
