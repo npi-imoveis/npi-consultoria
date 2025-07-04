@@ -3,20 +3,22 @@ import Imovel from "@/app/models/Imovel";
 import { NextResponse } from "next/server";
 import cache from "@/app/lib/cache";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request) {
   try {
-    const url = new URL(request.url);
+    const { searchParams } = request.nextUrl;
 
-    const limit = parseInt(url.searchParams.get("limit") || "25", 10);
-    const page = parseInt(url.searchParams.get("page") || "1", 10);
+    const limit = parseInt(searchParams.get("limit") || "25", 10);
+    const page = parseInt(searchParams.get("page") || "1", 10);
     const skip = (page - 1) * limit;
 
     const filtro = {};
-    const allKeys = Array.from(url.searchParams.keys());
+    const allKeys = Array.from(searchParams.keys());
 
     allKeys.forEach((key) => {
       if (!["limit", "page"].includes(key)) {
-        const values = url.searchParams.getAll(key);
+        const values = searchParams.getAll(key);
         const normalizedKey = key.endsWith("[]") ? key.replace("[]", "") : key;
 
         if (values.length > 1) {
