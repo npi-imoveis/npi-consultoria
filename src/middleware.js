@@ -5,7 +5,9 @@ export async function middleware(request) {
   const { pathname } = request.nextUrl;
   
   // Debug logging para produção
+  console.log(`[MIDDLEWARE] ============ INICIANDO ============`);
   console.log(`[MIDDLEWARE] Processando: ${pathname}`);
+  console.log(`[MIDDLEWARE] User-Agent: ${request.headers.get('user-agent')?.substring(0, 50)}...`);
 
   // Verifica se a URL segue o padrão /imovel-:id (SEM slug)
   // Ex: /imovel-123 -> deve redirecionar para /imovel-123/slug
@@ -101,6 +103,8 @@ export async function middleware(request) {
     return NextResponse.redirect(url, 301);
   }
 
+  console.log(`[MIDDLEWARE] ============ FINALIZANDO ============`);
+  console.log(`[MIDDLEWARE] Nenhuma regra aplicada, passando adiante: ${pathname}`);
   return NextResponse.next();
 }
 

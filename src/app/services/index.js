@@ -432,6 +432,7 @@ export async function getCondominiosPorImovel(id) {
 
 export async function getCondominioPorSlug(slug) {
   try {
+    console.log(`[SERVICE] getCondominioPorSlug chamado com slug: ${slug}`);
     const response = await axiosClient.get(`/condominios/slug?slug=${slug}`);
 
     // Check different response data structures and handle each case

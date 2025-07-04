@@ -26,12 +26,16 @@ function ensureCondominio(text) {
 export async function generateMetadata({ params }) {
   const { slug } = params;
   
+  console.log(`[CONDOMINIO-META] Processando slug: ${slug}`);
+  
   // Detectar URLs que sigam o padrão imovel-{id} e redirecionar
   if (slug.match(/^imovel-(\d+)$/)) {
     const id = slug.match(/^imovel-(\d+)$/)[1];
+    console.log(`[CONDOMINIO-META] Detectado padrão imovel-ID: ${slug}, redirecionando para ID: ${id}`);
     redirect(`/api/redirect/imovel/${id}`);
   }
   
+  console.log(`[CONDOMINIO-META] Chamando getCondominioPorSlug para: ${slug}`);
   const response = await getCondominioPorSlug(slug);
   const condominio = response?.data;
 
@@ -84,12 +88,16 @@ export async function generateMetadata({ params }) {
 export default async function CondominioPage({ params }) {
   const { slug } = params;
   
+  console.log(`[CONDOMINIO-PAGE] Processando slug: ${slug}`);
+  
   // Detectar URLs que sigam o padrão imovel-{id} e redirecionar para API de redirecionamento
   if (slug.match(/^imovel-(\d+)$/)) {
     const id = slug.match(/^imovel-(\d+)$/)[1];
+    console.log(`[CONDOMINIO-PAGE] Detectado padrão imovel-ID: ${slug}, redirecionando para ID: ${id}`);
     redirect(`/api/redirect/imovel/${id}`);
   }
   
+  console.log(`[CONDOMINIO-PAGE] Chamando getCondominioPorSlug para: ${slug}`);
   const response = await getCondominioPorSlug(slug);
 
   if (!response.data) {
