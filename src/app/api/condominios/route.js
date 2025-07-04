@@ -2,10 +2,12 @@ import { connectToDatabase } from "@/app/lib/mongodb";
 import Imovel from "@/app/models/Imovel";
 import { NextResponse } from "next/server";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request) {
   try {
     // Extrair o parâmetro limit da URL
-    const { searchParams } = new URL(request.url);
+    const { searchParams } = request.nextUrl;
     const limit = searchParams.get("limit") ? parseInt(searchParams.get("limit")) : null;
 
     await connectToDatabase();
