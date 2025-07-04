@@ -5,9 +5,9 @@ import { connectToDatabase } from "@/app/lib/mongodb";
 
 export async function POST(request) {
   try {
-    const url = new URL(request.url);
-    const id_corretor = url.searchParams.get("id_corretor");
-    const id_imovel = url.searchParams.get("id_imovel");
+    const { searchParams } = request.nextUrl;
+    const id_corretor = searchParams.get("id_corretor");
+    const id_imovel = searchParams.get("id_imovel");
 
     if (!id_corretor || !id_imovel) {
       return NextResponse.json(
@@ -52,9 +52,9 @@ export async function POST(request) {
 
 export async function PUT(request) {
   try {
-    const url = new URL(request.url);
-    const id_corretor = url.searchParams.get("id_corretor");
-    const id_imovel = url.searchParams.get("id_imovel");
+    const { searchParams } = request.nextUrl;
+    const id_corretor = searchParams.get("id_corretor");
+    const id_imovel = searchParams.get("id_imovel");
 
     if (!id_corretor || !id_imovel) {
       return NextResponse.json(
