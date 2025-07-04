@@ -1,24 +1,26 @@
+// src/app/(site)/condominio/[slug]/page.js
 
 import { Button } from "@/app/components/ui/button";
 import { getCondominioPorSlug } from "@/app/services";
 import { formatterValue } from "@/app/utils/formatter-value";
 import { Apartment as StructuredDataApartment } from "@/app/components/structured-data";
 import { Share } from "@/app/components/ui/share";
-import { PropertyTableOwner } from "./componentes/property-table-owner";
+// CORRIGIDO: Adicionado '../' para os caminhos relativos dos componentes
+import { PropertyTableOwner } from "../componentes/property-table-owner";
 import { WhatsappFloat } from "@/app/components/ui/whatsapp";
-import CondominioGallery from "./componentes/condominio-gallery";
-import { PropertyTable } from "./componentes/property-table";
-import { ImoveisRelacionados } from "./componentes/related-properties";
-import SobreCondominio from "./componentes/SobreCondominio";
-import FichaTecnica from "./componentes/FichaTecnica";
-import DiferenciaisCondominio from "./componentes/DiferenciaisCondominio";
-import Lazer from "./componentes/Lazer";
-import VideoCondominio from "./componentes/VideoCondominio";
-import TourVirtual from "./componentes/TourVirtual";
-import ExploreRegiao from "./componentes/ExploreRegiao";
+import CondominioGallery from "../componentes/condominio-gallery";
+import { PropertyTable } from "../componentes/property-table";
+import { ImoveisRelacionados } from "../componentes/related-properties";
+import SobreCondominio from "../componentes/SobreCondominio";
+import FichaTecnica from "../componentes/FichaTecnica";
+import DiferenciaisCondominio from "../componentes/DiferenciaisCondominio";
+import Lazer from "../componentes/Lazer";
+import VideoCondominio from "../componentes/VideoCondominio";
+import TourVirtual from "../componentes/TourVirtual";
+import ExploreRegiao from "../componentes/ExploreRegiao";
 import { notFound, redirect } from "next/navigation";
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
-import ScrollToImoveisButton from "./componentes/scroll-to-imovel-button";
+import ScrollToImoveisButton from "../componentes/scroll-to-imovel-button"; // CORRIGIDO
 
 function ensureCondominio(text) {
   return /condom[ií]nio/i.test(text) ? text : `Condomínio ${text}`;
@@ -87,8 +89,13 @@ export async function generateMetadata({ params }) {
 export default async function CondominioPage({ params }) {
   const { slug } = params;
   
-  // URLs imovel-{id} agora são interceptadas pelo next.config.mjs
-  // Esta página só deve processar slugs de condomínios reais
+  // IMPORTANTE: Se esta página for a única para condomínios,
+  // e você ainda tem a rota (site)/[slug]/page.js,
+  // esta verificação é CRÍTICA para evitar que ela processe URLs de imóvel.
+  // Se o middleware não redirecionou, esta página deve dar notFound para imovel-ID.
+  if (slug.match(/^imovel-(\d+)$/)) {
+    notFound(); // Garante que URLs como /imovel-123 não sejam tratadas como condomínios
+  }
   
   const response = await getCondominioPorSlug(slug);
 
