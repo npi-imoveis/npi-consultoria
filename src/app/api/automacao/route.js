@@ -3,13 +3,15 @@ import Review from "@/app/models/Review";
 
 import { NextResponse } from "next/server";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request) {
   try {
-    const url = new URL(request.url);
+    const { searchParams } = request.nextUrl;
 
     // Parâmetros de paginação
-    const limit = parseInt(url.searchParams.get("limit") || "25", 10);
-    const page = parseInt(url.searchParams.get("page") || "1", 10);
+    const limit = parseInt(searchParams.get("limit") || "25", 10);
+    const page = parseInt(searchParams.get("page") || "1", 10);
     const skip = (page - 1) * limit;
 
     await connectToDatabase();
