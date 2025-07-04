@@ -3,7 +3,7 @@ import Imovel from "../../models/Imovel";
 import { NextResponse } from "next/server";
 
 export async function GET(request) {
-  const { searchParams } = new URL(request.url);
+  const { searchParams } = request.nextUrl;
   const codigo = searchParams.get("codigo");
   if (!codigo) {
     return NextResponse.json({ error: "Código não informado" }, { status: 400 });
