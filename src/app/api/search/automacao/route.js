@@ -3,9 +3,11 @@ import Review from "@/app/models/Review";
 
 import { NextResponse } from "next/server";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request) {
   try {
-    const { searchParams } = new URL(request.url);
+    const { searchParams } = request.nextUrl;
     const query = searchParams.get("q");
 
     if (!query || query.trim() === "") {
