@@ -15,7 +15,7 @@ import Lazer from "./componentes/Lazer";
 import VideoCondominio from "./componentes/VideoCondominio";
 import TourVirtual from "./componentes/TourVirtual";
 import ExploreRegiao from "./componentes/ExploreRegiao";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 import ScrollToImoveisButton from "./componentes/scroll-to-imovel-button";
 
@@ -26,9 +26,10 @@ function ensureCondominio(text) {
 export async function generateMetadata({ params }) {
   const { slug } = params;
   
-  // Rejeitar URLs que sigam o padrão imovel-{id} - essas devem ser tratadas pelo middleware
-  if (slug.match(/^imovel-\d+$/)) {
-    return {};
+  // Detectar URLs que sigam o padrão imovel-{id} e redirecionar
+  if (slug.match(/^imovel-(\d+)$/)) {
+    const id = slug.match(/^imovel-(\d+)$/)[1];
+    redirect(`/api/redirect/imovel/${id}`);
   }
   
   const response = await getCondominioPorSlug(slug);
@@ -83,9 +84,10 @@ export async function generateMetadata({ params }) {
 export default async function CondominioPage({ params }) {
   const { slug } = params;
   
-  // Rejeitar URLs que sigam o padrão imovel-{id} - essas devem ser tratadas pelo middleware
-  if (slug.match(/^imovel-\d+$/)) {
-    notFound();
+  // Detectar URLs que sigam o padrão imovel-{id} e redirecionar para API de redirecionamento
+  if (slug.match(/^imovel-(\d+)$/)) {
+    const id = slug.match(/^imovel-(\d+)$/)[1];
+    redirect(`/api/redirect/imovel/${id}`);
   }
   
   const response = await getCondominioPorSlug(slug);
