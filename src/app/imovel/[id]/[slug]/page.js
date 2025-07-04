@@ -22,6 +22,10 @@ import { notFound, redirect } from "next/navigation";
 // ✅ SEO DINÂMICO
 export async function generateMetadata({ params }) {
   const { id } = params;
+  
+  // FORÇAR LOG NO CONSOLE
+  console.error(`[IMOVEL-META] =========== PROCESSANDO ID: ${id} ===========`);
+  
   const response = await getImovelById(id);
 
   if (!response?.data) return {};
@@ -70,6 +74,10 @@ export const revalidate = 0;
 
 export default async function Imovel({ params }) {
   const { id, slug } = params;
+  
+  // FORÇAR LOG NO CONSOLE
+  console.error(`[IMOVEL-PAGE] =========== PROCESSANDO ID: ${id}, SLUG: ${slug} ===========`);
+  
   const response = await getImovelById(id);
 
 if (!response?.data) {
