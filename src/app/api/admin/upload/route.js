@@ -34,7 +34,7 @@ function validateDirectory(dir) {
 // GET - Lista todas as imagens
 export async function GET(request) {
   try {
-    const { searchParams } = new URL(request.url);
+    const { searchParams } = request.nextUrl;
     const directory = searchParams.get("directory");
 
     if (!directory || !validateDirectory(directory)) {
@@ -129,7 +129,7 @@ export async function POST(request) {
 // DELETE - Remove uma imagem específica
 export async function DELETE(request) {
   try {
-    const { searchParams } = new URL(request.url);
+    const { searchParams } = request.nextUrl;
     const filename = searchParams.get("filename");
     const directory = searchParams.get("directory");
 
