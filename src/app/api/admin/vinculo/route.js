@@ -3,10 +3,12 @@ import Cdimag from "@/app/models/Cdimag";
 import Corretores from "@/app/models/Corretores";
 import { NextResponse } from "next/server";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request) {
   try {
-    const url = new URL(request.url);
-    const id = url.searchParams.get("id");
+    const { searchParams } = request.nextUrl;
+    const id = searchParams.get("id");
 
     if (!id) {
       return NextResponse.json(
