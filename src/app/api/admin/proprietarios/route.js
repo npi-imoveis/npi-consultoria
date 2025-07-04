@@ -2,10 +2,12 @@ import { connectToDatabase } from "@/app/lib/mongodb";
 import Proprietarios from "@/app/models/Proprietarios";
 import { NextResponse } from "next/server";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request) {
     try {
-        const url = new URL(request.url);
-        const id = url.searchParams.get("id");
+        const { searchParams } = request.nextUrl;
+        const id = searchParams.get("id");
 
         await connectToDatabase();
 
@@ -19,8 +21,8 @@ export async function GET(request) {
         }
 
         // Caso contrário, retorna lista paginada
-        const limit = parseInt(url.searchParams.get("limit") || "25", 10);
-        const page = parseInt(url.searchParams.get("page") || "1", 10);
+        const limit = parseInt(searchParams.get("limit") || "25", 10);
+        const page = parseInt(searchParams.get("page") || "1", 10);
         const skip = (page - 1) * limit;
 
         // Buscar todos os proprietários sem filtro
