@@ -2,14 +2,16 @@ import { connectToDatabase } from "@/app/lib/mongodb";
 import Imovel from "@/app/models/Imovel";
 import { NextResponse } from "next/server";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request) {
   try {
     // Conectar ao banco de dados
     await connectToDatabase();
 
     // Obter o parâmetro cidade da URL
-    const url = new URL(request.url);
-    const cidade = url.searchParams.get("cidade");
+    const { searchParams } = request.nextUrl;
+    const cidade = searchParams.get("cidade");
 
     // Definir a condição de busca
     let condition = {};
