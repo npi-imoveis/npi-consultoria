@@ -86,12 +86,8 @@ export async function generateMetadata({ params }) {
 export default async function CondominioPage({ params }) {
   const { slug } = params;
   
-  // PRIMEIRA COISA: Detectar e redirecionar padrão imovel-{id}
-  if (slug.match(/^imovel-(\d+)$/)) {
-    const id = slug.match(/^imovel-(\d+)$/)[1];
-    // Tentar redirecionamento direto para a página do imóvel
-    redirect(`/imovel-${id}/imovel-${id}`);
-  }
+  // URLs imovel-{id} agora são interceptadas pelo next.config.mjs
+  // Esta página só deve processar slugs de condomínios reais
   
   const response = await getCondominioPorSlug(slug);
 

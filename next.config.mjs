@@ -74,7 +74,12 @@ const nextConfig = {
   },
   async redirects() {
     return [
-      // Pode adicionar redirecionamentos manuais aqui se necessário
+      // Redirecionamento para URLs de imóveis sem slug
+      {
+        source: '/imovel-:id(\\d+)',
+        destination: '/api/redirect/imovel/:id',
+        permanent: false
+      },
     ];
   },
   async rewrites() {
