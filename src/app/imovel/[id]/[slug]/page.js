@@ -19,7 +19,7 @@ import { Apartment as StructuredDataApartment } from "@/app/components/structure
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 import { notFound, redirect } from "next/navigation";
 
-// ✅ SEO DINÂMICO
+// ✅ SEO DINÂMICO COM CORREÇÕES PARA WHATSAPP
 export async function generateMetadata({ params }) {
   const { id } = params;
   
@@ -36,6 +36,11 @@ export async function generateMetadata({ params }) {
 
   const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
 
+  // 🔧 GARANTIR QUE A IMAGEM SEJA UMA URL COMPLETA E VÁLIDA
+  const imageUrl = imovel.Foto?.startsWith('http') 
+    ? imovel.Foto 
+    : `${process.env.NEXT_PUBLIC_SITE_URL}${imovel.Foto?.startsWith('/') ? '' : '/'}${imovel.Foto}`;
+
   return {
     title,
     description,
@@ -46,17 +51,48 @@ export async function generateMetadata({ params }) {
       index: true,
       follow: true,
     },
+    // 🎯 OPEN GRAPH OTIMIZADO PARA WHATSAPP
     openGraph: {
       title,
       description,
       url: currentUrl,
-      images: [imovel.Foto],
+      siteName: "NPI Imobiliária", // Adicione o nome do seu site
+      type: "website",
+      locale: "pt_BR",
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: `${imovel.Empreendimento} - ${imovel.BairroComercial}`,
+          type: "image/jpeg"
+        }
+      ],
     },
+    // 🐦 TWITTER CARDS
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: [imovel.Foto],
+      images: [imageUrl],
+      creator: "@npiimobiliaria", // Substitua pelo seu Twitter
+    },
+    // 📱 META TAGS ESPECÍFICAS PARA WHATSAPP
+    other: {
+      // WhatsApp usa essas tags específicas
+      "og:image:secure_url": imageUrl,
+      "og:image:type": "image/jpeg",
+      "og:image:width": "1200",
+      "og:image:height": "630",
+      "og:image:alt": `${imovel.Empreendimento} - ${imovel.BairroComercial}`,
+      
+      // Tags adicionais para melhor compartilhamento
+      "article:author": "NPI Imobiliária",
+      "og:updated_time": new Date().toISOString(),
+      
+      // Meta tags para validação
+      "robots": "index, follow",
+      "googlebot": "index, follow",
     },
     // hreflang manual
     metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL),
@@ -69,7 +105,6 @@ export async function generateMetadata({ params }) {
   };
 }
 
-
 export const revalidate = 0;
 
 export default async function Imovel({ params }) {
@@ -80,21 +115,21 @@ export default async function Imovel({ params }) {
   
   const response = await getImovelById(id);
 
-if (!response?.data) {
-  notFound();
-}
+  if (!response?.data) {
+    notFound();
+  }
 
-const imovel = {
-  ...response.data,
-  SuiteAntigo: response.data.SuiteAntigo ?? response.data.Suites ?? 0,
-  DormitoriosAntigo: response.data.DormitoriosAntigo ?? 0,
-  VagasAntigo: response.data.VagasAntigo ?? 0,
-  BanheiroSocialQtd: response.data.BanheiroSocialQtd ?? 0,
-};
+  const imovel = {
+    ...response.data,
+    SuiteAntigo: response.data.SuiteAntigo ?? response.data.Suites ?? 0,
+    DormitoriosAntigo: response.data.DormitoriosAntigo ?? 0,
+    VagasAntigo: response.data.VagasAntigo ?? 0,
+    BanheiroSocialQtd: response.data.BanheiroSocialQtd ?? 0,
+  };
 
-const slugCorreto = imovel.Slug;
+  const slugCorreto = imovel.Slug;
 
-if (slug !== slugCorreto) {
+  if (slug !== slugCorreto) {
     redirect(`/imovel-${id}/${slugCorreto}`);
   }  
 
