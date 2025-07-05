@@ -16,11 +16,11 @@ import { SimilarProperties } from "./componentes/similar-properties";
 import { getImovelById } from "@/app/services";
 import { WhatsappFloat } from "@/app/components/ui/whatsapp";
 import { Apartment as StructuredDataApartment } from "@/app/components/structured-data";
-import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
+import ExitIntentModal from "./componentes/ui/exit-intent-modal";
 import { notFound, redirect } from "next/navigation";
 
-// ✅ METADATA PARA NEXT.JS 14.2.3
-export async function generateMetadata({ params }, parent) {
+// ✅ METADATA CORRIGIDA - VERSÃO FINAL
+export async function generateMetadata({ params }) {
   const { id } = params;
   
   console.error(`[IMOVEL-META] =========== PROCESSANDO ID: ${id} ===========`);
@@ -42,34 +42,46 @@ export async function generateMetadata({ params }, parent) {
     const description = `${imovel.Categoria} à venda no bairro ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.DormitoriosAntigo || 0} dormitórios, ${imovel.SuiteAntigo || 0} suítes, ${imovel.VagasAntigo || 0} vagas, ${imovel.MetragemAnt || 'Metragem a consultar'}. Valor: ${imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}.`;
     
     // URLs
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://npiconsultoria.com.br';
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.npiconsultoria.com.br';
     const currentUrl = `${siteUrl}/imovel-${imovel.Codigo}/${imovel.Slug}`;
     
-    // Imagem - validação robusta
+    // 🔥 CORREÇÃO CRÍTICA DA IMAGEM
     let imageUrl = '';
-    if (imovel.Foto) {
-      if (imovel.Foto.startsWith('http://') || imovel.Foto.startsWith('https://')) {
-        imageUrl = imovel.Foto;
-      } else if (imovel.Foto.startsWith('/')) {
-        imageUrl = `${siteUrl}${imovel.Foto}`;
-      } else {
-        imageUrl = `${siteUrl}/${imovel.Foto}`;
+    if (imovel.Foto && Array.isArray(imovel.Foto) && imovel.Foto.length > 0) {
+      // Se for array, pega a primeira imagem
+      const primeiraFoto = imovel.Foto[0];
+      if (primeiraFoto && primeiraFoto.Foto) {
+        imageUrl = primeiraFoto.Foto;
       }
-    } else {
-      // Imagem padrão se não houver foto
-      imageUrl = `${siteUrl}/images/default-property.jpg`;
+    } else if (imovel.Foto && typeof imovel.Foto === 'string') {
+      // Se for string direta
+      imageUrl = imovel.Foto;
+    }
+    
+    // Garantir URL absoluta
+    if (imageUrl && !imageUrl.startsWith('http')) {
+      if (imageUrl.startsWith('/')) {
+        imageUrl = `${siteUrl}${imageUrl}`;
+      } else {
+        imageUrl = `${siteUrl}/${imageUrl}`;
+      }
+    }
+    
+    // Fallback se não tiver imagem
+    if (!imageUrl) {
+      imageUrl = `${siteUrl}/assets/images/default-property.jpg`;
     }
 
-    console.error(`[IMOVEL-META] Image URL: ${imageUrl}`);
+    console.error(`[IMOVEL-META] Image URL Final: ${imageUrl}`);
 
     return {
       title,
       description,
       
-      // Meta tags básicas
-      keywords: `${imovel.Categoria}, ${imovel.BairroComercial}, ${imovel.Cidade}, ${imovel.Empreendimento}, imóvel, venda`,
+      // 🎯 METADATABASE OBRIGATÓRIO NO NEXT 14
+      metadataBase: new URL(siteUrl),
       
-      // Open Graph para WhatsApp, Facebook, etc.
+      // 🔥 FORÇAR OPEN GRAPH COM ESTRUTURA SIMPLES
       openGraph: {
         title,
         description,
@@ -77,62 +89,49 @@ export async function generateMetadata({ params }, parent) {
         siteName: 'NPI Imobiliária',
         locale: 'pt_BR',
         type: 'website',
-        images: [
-          {
-            url: imageUrl,
-            width: 1200,
-            height: 630,
-            alt: `${imovel.Empreendimento} - ${imovel.BairroComercial}`,
-            type: 'image/jpeg',
-          }
-        ],
+        images: imageUrl, // ⚡ MUDANÇA: usar string simples em vez de array
       },
       
-      // Twitter Cards
+      // 🐦 TWITTER CARDS
       twitter: {
         card: 'summary_large_image',
         title,
         description,
-        images: [imageUrl],
-        creator: '@npiimobiliaria',
+        images: imageUrl, // ⚡ MUDANÇA: usar string simples
       },
+      
+      // 🚀 FORÇAR META TAGS CRÍTICAS VIA OTHER
+      other: {
+        // ⚡ TAGS MAIS IMPORTANTES PARA WHATSAPP
+        'og:image': imageUrl,
+        'og:image:secure_url': imageUrl,
+        'og:image:width': '1200',
+        'og:image:height': '630',
+        'og:image:alt': title,
+        'og:type': 'website',
+        'og:site_name': 'NPI Imobiliária',
+        'og:locale': 'pt_BR',
+        
+        // Twitter específico
+        'twitter:image': imageUrl,
+        'twitter:image:alt': title,
+        
+        // Meta tags adicionais
+        'property="og:updated_time"': new Date().toISOString(),
+      },
+      
+      // Meta tags básicas
+      keywords: `${imovel.Categoria}, ${imovel.BairroComercial}, ${imovel.Cidade}, ${imovel.Empreendimento}, imóvel, venda`,
       
       // Robots
       robots: {
         index: true,
         follow: true,
-        googleBot: {
-          index: true,
-          follow: true,
-          'max-video-preview': -1,
-          'max-image-preview': 'large',
-          'max-snippet': -1,
-        },
       },
       
       // Canonical URL
       alternates: {
         canonical: currentUrl,
-      },
-      
-      // Metadata Base (IMPORTANTE no Next 14)
-      metadataBase: new URL(siteUrl),
-      
-      // Outras meta tags importantes
-      other: {
-        'og:image:secure_url': imageUrl,
-        'og:image:type': 'image/jpeg',
-        'og:image:width': '1200',
-        'og:image:height': '630',
-        'og:updated_time': new Date().toISOString(),
-        
-        // Meta tags específicas para o Brasil
-        'geo.region': `BR-${imovel.Estado || 'SP'}`,
-        'geo.placename': `${imovel.Cidade}, ${imovel.Estado || 'SP'}`,
-        
-        // Schema.org básico
-        'article:author': 'NPI Imobiliária',
-        'article:publisher': 'NPI Imobiliária',
       },
     };
     
@@ -172,7 +171,7 @@ export default async function Imovel({ params }) {
     redirect(`/imovel-${id}/${slugCorreto}`);
   }  
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://npiconsultoria.com.br';
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.npiconsultoria.com.br';
   const currentUrl = `${siteUrl}/imovel-${imovel.Codigo}/${imovel.Slug}`;
 
   return (
