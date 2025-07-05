@@ -74,35 +74,20 @@ export async function middleware(request) {
     }
   }
 
-  // 🔥 CORREÇÃO CRÍTICA: Verifica se a URL segue o padrão /imovel-:id/:slug (COM slug)
+  // Verifica se a URL segue o padrão /imovel-:id/:slug (COM slug)
   // Ex: /imovel-123/apartamento-centro
   if (pathname.match(/^\/imovel-([^\/]+)\/(.+)$/)) {
     // Extrai o ID e o slug da URL
     const [, id, slug] = pathname.match(/^\/imovel-([^\/]+)\/(.+)$/);
     console.log(`[MIDDLEWARE] URL com slug detectada: ${pathname}, ID: ${id}, Slug: ${slug}`);
 
-    // 🎯 CORREÇÃO: Preservar headers originais para meta tags
-    const response = NextResponse.next();
-    
-    // 📍 ADICIONAR HEADERS PARA PRESERVAR META TAGS
-    response.headers.set('x-pathname', pathname);
-    response.headers.set('x-imovel-id', id);
-    response.headers.set('x-imovel-slug', slug);
-    
-    // 🔧 REWRITE SEM PERDER CONTEXTO
+    // Cria a nova URL interna para processamento
     const url = request.nextUrl.clone();
     url.pathname = `/imovel/${id}/${slug}`;
     console.log(`[MIDDLEWARE] Reescrevendo para: ${url.pathname}`);
 
-    // ⚡ MUDANÇA: Usar NextResponse.rewrite com headers preservados
-    const rewriteResponse = NextResponse.rewrite(url);
-    
-    // Copiar headers importantes
-    rewriteResponse.headers.set('x-pathname', pathname);
-    rewriteResponse.headers.set('x-imovel-id', id);
-    rewriteResponse.headers.set('x-imovel-slug', slug);
-    
-    return rewriteResponse;
+    // Reescreve a URL internamente sem mudar a URL visível para o usuário
+    return NextResponse.rewrite(url);
   }
 
   // Se alguém acessar diretamente o formato /imovel/:id/:slug, redireciona para /imovel-:id/:slug
