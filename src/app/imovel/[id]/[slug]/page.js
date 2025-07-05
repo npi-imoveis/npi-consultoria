@@ -19,7 +19,25 @@ import { Apartment as StructuredDataApartment } from "@/app/components/structure
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 import { notFound, redirect } from "next/navigation";
 
-// ✅ METADATA SIMPLIFICADA - FOCO NA OG:IMAGE
+// 🔧 FUNÇÃO AUXILIAR PARA GARANTIR URL ABSOLUTA
+function getAbsoluteUrl(path) {
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.npiconsultoria.com.br';
+  
+  // Se já é uma URL absoluta, retorna como está
+  if (path && path.startsWith('http')) {
+    return path;
+  }
+  
+  // Se não tem path, retorna URL padrão
+  if (!path) {
+    return `${baseUrl}/assets/images/default-property.jpg`;
+  }
+  
+  // Constrói URL absoluta
+  return path.startsWith('/') ? `${baseUrl}${path}` : `${baseUrl}/${path}`;
+}
+
+// ✅ METADATA OTIMIZADA COM GARANTIA DE OG:IMAGE
 export async function generateMetadata({ params }) {
   const { id } = params;
   
@@ -43,28 +61,28 @@ export async function generateMetadata({ params }) {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.npiconsultoria.com.br';
     const currentUrl = `${siteUrl}/imovel-${imovel.Codigo}/${imovel.Slug}`;
     
-    // 🔥 EXTRAÇÃO SIMPLES DA IMAGEM
+    // 🔥 EXTRAÇÃO DA IMAGEM COM GARANTIA DE URL ABSOLUTA
     let imageUrl = '';
+    
+    // Tenta pegar a primeira foto
     if (imovel.Foto && Array.isArray(imovel.Foto) && imovel.Foto.length > 0) {
-      imageUrl = imovel.Foto[0].Foto;
+      const primeiraFoto = imovel.Foto[0];
+      imageUrl = primeiraFoto.Foto || primeiraFoto.url || primeiraFoto;
     }
     
-    // Garantir URL absoluta
-    if (imageUrl && !imageUrl.startsWith('http')) {
-      imageUrl = imageUrl.startsWith('/') ? `${siteUrl}${imageUrl}` : `${siteUrl}/${imageUrl}`;
-    }
+    // Garante URL absoluta
+    imageUrl = getAbsoluteUrl(imageUrl);
     
-    // Fallback
-    if (!imageUrl) {
-      imageUrl = `${siteUrl}/assets/images/default-property.jpg`;
-    }
+    // Log para debug (remova em produção)
+    console.log('[METADATA] Image URL:', imageUrl);
+    console.log('[METADATA] Current URL:', currentUrl);
 
     return {
       title,
       description,
       metadataBase: new URL(siteUrl),
       
-      // 🎯 OPEN GRAPH ULTRA SIMPLES
+      // 🎯 OPEN GRAPH COM ARRAY DE IMAGENS CORRETO
       openGraph: {
         title,
         description,
@@ -72,45 +90,93 @@ export async function generateMetadata({ params }) {
         siteName: 'NPI Imobiliária',
         locale: 'pt_BR',
         type: 'website',
-        // 🔥 APENAS A URL DA IMAGEM - SEM ARRAY COMPLEXO
-        images: imageUrl,
+        images: [
+          {
+            url: imageUrl,
+            width: 1200,
+            height: 630,
+            alt: title,
+            type: 'image/jpeg',
+          }
+        ],
       },
       
-      // 🐦 TWITTER CARDS SIMPLES
+      // 🐦 TWITTER CARDS COM ARRAY
       twitter: {
         card: 'summary_large_image',
         title,
         description,
-        images: imageUrl,
+        images: [imageUrl],
+        site: '@npiconsultoria',
+        creator: '@npiconsultoria',
       },
       
-      // 🚀 FORÇAR OG:IMAGE VIA OTHER (BACKUP)
+      // 🚀 OUTROS METADADOS
       other: {
         'og:image': imageUrl,
+        'og:image:secure_url': imageUrl,
         'og:image:width': '1200',
         'og:image:height': '630',
         'og:image:alt': title,
+        'og:image:type': 'image/jpeg',
+        'twitter:image': imageUrl,
+        'twitter:image:alt': title,
       },
       
       robots: {
         index: true,
         follow: true,
+        googleBot: {
+          index: true,
+          follow: true,
+          'max-video-preview': -1,
+          'max-image-preview': 'large',
+          'max-snippet': -1,
+        },
       },
       
       alternates: {
         canonical: currentUrl,
       },
+      
+      // 🆕 VIEWPORT E TEMA
+      viewport: 'width=device-width, initial-scale=1',
+      themeColor: '#ffffff',
+      
+      // 🆕 VERIFICAÇÃO DO SITE
+      verification: {
+        google: process.env.NEXT_PUBLIC_GOOGLE_VERIFICATION,
+        yandex: process.env.NEXT_PUBLIC_YANDEX_VERIFICATION,
+      },
     };
     
   } catch (error) {
     console.error('[METADATA ERROR]:', error);
+    
+    // Retorna metadata básica com imagem padrão em caso de erro
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.npiconsultoria.com.br';
+    const defaultImage = `${siteUrl}/assets/images/default-property.jpg`;
+    
     return {
       title: 'Erro ao carregar imóvel',
       description: 'Ocorreu um erro ao carregar as informações do imóvel.',
+      openGraph: {
+        title: 'Erro ao carregar imóvel',
+        description: 'Ocorreu um erro ao carregar as informações do imóvel.',
+        images: [
+          {
+            url: defaultImage,
+            width: 1200,
+            height: 630,
+          }
+        ],
+      },
     };
   }
 }
 
+// 🆕 FORCE DYNAMIC PARA GARANTIR GERAÇÃO CORRETA
+export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export default async function Imovel({ params }) {
