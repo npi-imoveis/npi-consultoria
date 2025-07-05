@@ -18,8 +18,13 @@ import { WhatsappFloat } from "@/app/components/ui/whatsapp";
 import { Apartment as StructuredDataApartment } from "@/app/components/structured-data";
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 import { notFound, redirect } from "next/navigation";
+import { headers } from "next/headers";
 
-// 🔧 FUNÇÃO AUXILIAR PARA GARANTIR URL ABSOLUTA
+// 🔥 FORÇA RENDERIZAÇÃO DINÂMICA PARA GARANTIR METADATA
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
+// 🛠️ FUNÇÃO AUXILIAR PARA CONSTRUIR URL ABSOLUTA
 function getAbsoluteUrl(path) {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.npiconsultoria.com.br';
   
@@ -28,13 +33,23 @@ function getAbsoluteUrl(path) {
     return path;
   }
   
-  // Se não tem path, retorna URL padrão
-  if (!path) {
-    return `${baseUrl}/assets/images/default-property.jpg`;
+  // Durante desenvolvimento/build, tenta pegar do header
+  if (process.env.NODE_ENV === 'development' || !baseUrl.includes('npiconsultoria')) {
+    try {
+      const headersList = headers();
+      const host = headersList.get('host');
+      if (host) {
+        const protocol = headersList.get('x-forwarded-proto') || 'https';
+        return `${protocol}://${host}${path}`;
+      }
+    } catch (e) {
+      // Fallback silencioso
+    }
   }
   
-  // Constrói URL absoluta
-  return path.startsWith('/') ? `${baseUrl}${path}` : `${baseUrl}/${path}`;
+  // Garante que o path comece com /
+  const normalizedPath = path?.startsWith('/') ? path : `/${path || ''}`;
+  return `${baseUrl}${normalizedPath}`;
 }
 
 // ✅ METADATA OTIMIZADA COM GARANTIA DE OG:IMAGE
@@ -42,9 +57,12 @@ export async function generateMetadata({ params }) {
   const { id } = params;
   
   try {
+    console.log('[METADATA] Iniciando geração para imóvel:', id);
+    
     const response = await getImovelById(id);
     
     if (!response?.data) {
+      console.log('[METADATA] Imóvel não encontrado:', id);
       return {
         title: 'Imóvel não encontrado',
         description: 'Este imóvel não está mais disponível.',
@@ -61,35 +79,47 @@ export async function generateMetadata({ params }) {
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.npiconsultoria.com.br';
     const currentUrl = `${siteUrl}/imovel-${imovel.Codigo}/${imovel.Slug}`;
     
-    // 🔥 EXTRAÇÃO DA IMAGEM COM GARANTIA DE URL ABSOLUTA
+    // 🔥 EXTRAÇÃO E PROCESSAMENTO DA IMAGEM COM MÚLTIPLAS VALIDAÇÕES
     let imageUrl = '';
     
-    // Tenta pegar a primeira foto
+    // Tenta extrair a primeira foto
     if (imovel.Foto && Array.isArray(imovel.Foto) && imovel.Foto.length > 0) {
-      const primeiraFoto = imovel.Foto[0];
-      imageUrl = primeiraFoto.Foto || primeiraFoto.url || primeiraFoto;
+      // Procura pela primeira foto válida
+      for (const foto of imovel.Foto) {
+        if (foto && foto.Foto) {
+          imageUrl = foto.Foto;
+          break;
+        }
+      }
     }
     
-    // Garante URL absoluta
-    imageUrl = getAbsoluteUrl(imageUrl);
+    // Log para debug
+    console.log('[METADATA] Imagem original:', imageUrl);
     
-    // Log para debug (remova em produção)
-    console.log('[METADATA] Image URL:', imageUrl);
-    console.log('[METADATA] Current URL:', currentUrl);
+    // Garante URL absoluta usando a função helper
+    if (imageUrl) {
+      imageUrl = getAbsoluteUrl(imageUrl);
+    } else {
+      // Fallback para imagem padrão
+      imageUrl = getAbsoluteUrl('/assets/images/default-property.jpg');
+    }
+    
+    console.log('[METADATA] Imagem final (absoluta):', imageUrl);
 
-    return {
+    // 🎯 RETORNO OTIMIZADO DA METADATA
+    const metadata = {
       title,
       description,
       metadataBase: new URL(siteUrl),
       
-      // 🎯 OPEN GRAPH COM ARRAY DE IMAGENS CORRETO
+      // 🔥 OPEN GRAPH SIMPLIFICADO AO MÁXIMO
       openGraph: {
-        title,
-        description,
+        type: 'website',
+        locale: 'pt_BR',
         url: currentUrl,
         siteName: 'NPI Imobiliária',
-        locale: 'pt_BR',
-        type: 'website',
+        title,
+        description,
         images: [
           {
             url: imageUrl,
@@ -101,84 +131,57 @@ export async function generateMetadata({ params }) {
         ],
       },
       
-      // 🐦 TWITTER CARDS COM ARRAY
+      // 🐦 TWITTER CARDS
       twitter: {
         card: 'summary_large_image',
+        site: '@npiconsultoria',
+        creator: '@npiconsultoria',
         title,
         description,
         images: [imageUrl],
-        site: '@npiconsultoria',
-        creator: '@npiconsultoria',
       },
       
-      // 🚀 OUTROS METADADOS
-      other: {
-        'og:image': imageUrl,
-        'og:image:secure_url': imageUrl,
-        'og:image:width': '1200',
-        'og:image:height': '630',
-        'og:image:alt': title,
-        'og:image:type': 'image/jpeg',
-        'twitter:image': imageUrl,
-        'twitter:image:alt': title,
-      },
-      
+      // 📱 OUTROS METADADOS
       robots: {
         index: true,
         follow: true,
-        googleBot: {
-          index: true,
-          follow: true,
-          'max-video-preview': -1,
-          'max-image-preview': 'large',
-          'max-snippet': -1,
-        },
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+        'max-video-preview': -1,
       },
       
       alternates: {
         canonical: currentUrl,
       },
       
-      // 🆕 VIEWPORT E TEMA
-      viewport: 'width=device-width, initial-scale=1',
-      themeColor: '#ffffff',
-      
-      // 🆕 VERIFICAÇÃO DO SITE
-      verification: {
-        google: process.env.NEXT_PUBLIC_GOOGLE_VERIFICATION,
-        yandex: process.env.NEXT_PUBLIC_YANDEX_VERIFICATION,
+      // 🔧 METADADOS ADICIONAIS
+      other: {
+        'og:image:secure_url': imageUrl,
+        'og:updated_time': new Date().toISOString(),
       },
     };
     
+    console.log('[METADATA] Gerada com sucesso para:', imovel.Codigo);
+    return metadata;
+    
   } catch (error) {
-    console.error('[METADATA ERROR]:', error);
+    console.error('[METADATA ERROR] Erro completo:', error);
+    console.error('[METADATA ERROR] Stack:', error.stack);
     
-    // Retorna metadata básica com imagem padrão em caso de erro
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.npiconsultoria.com.br';
-    const defaultImage = `${siteUrl}/assets/images/default-property.jpg`;
-    
+    // Retorna metadata mínima em caso de erro
     return {
       title: 'Erro ao carregar imóvel',
       description: 'Ocorreu um erro ao carregar as informações do imóvel.',
       openGraph: {
         title: 'Erro ao carregar imóvel',
         description: 'Ocorreu um erro ao carregar as informações do imóvel.',
-        images: [
-          {
-            url: defaultImage,
-            width: 1200,
-            height: 630,
-          }
-        ],
+        images: [getAbsoluteUrl('/assets/images/default-property.jpg')],
       },
     };
   }
 }
 
-// 🆕 FORCE DYNAMIC PARA GARANTIR GERAÇÃO CORRETA
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-
+// 🏠 COMPONENTE DA PÁGINA (mantido exatamente como estava)
 export default async function Imovel({ params }) {
   const { id, slug } = params;
   
