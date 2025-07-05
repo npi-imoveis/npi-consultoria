@@ -16,7 +16,7 @@ import { SimilarProperties } from "./componentes/similar-properties";
 import { getImovelById } from "@/app/services";
 import { WhatsappFloat } from "@/app/components/ui/whatsapp";
 import { Apartment as StructuredDataApartment } from "@/app/components/structured-data";
-import ExitIntentModal from "./componentes/ui/exit-intent-modal";
+import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 import { notFound, redirect } from "next/navigation";
 
 // ✅ METADATA CORRIGIDA - VERSÃO FINAL
