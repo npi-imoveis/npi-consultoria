@@ -19,16 +19,22 @@ import { Apartment as StructuredDataApartment } from "@/app/components/structure
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 import { notFound, redirect } from "next/navigation";
 
-// ✅ METADATA CORRIGIDA - VERSÃO FINAL
+// ✅ METADATA COM DEBUG MÁXIMO
 export async function generateMetadata({ params }) {
   const { id } = params;
   
-  console.error(`[IMOVEL-META] =========== PROCESSANDO ID: ${id} ===========`);
+  console.error(`🔥 [DEBUG-META] ================ INÍCIO ================`);
+  console.error(`🔥 [DEBUG-META] Processando ID: ${id}`);
+  console.error(`🔥 [DEBUG-META] Params completo:`, JSON.stringify(params));
   
   try {
     const response = await getImovelById(id);
     
+    console.error(`🔥 [DEBUG-META] Response status:`, response ? 'OK' : 'NULL');
+    console.error(`🔥 [DEBUG-META] Response.data exists:`, !!response?.data);
+    
     if (!response?.data) {
+      console.error(`🔥 [DEBUG-META] ❌ Sem dados para o ID: ${id}`);
       return {
         title: 'Imóvel não encontrado',
         description: 'Este imóvel não está mais disponível.',
@@ -37,26 +43,51 @@ export async function generateMetadata({ params }) {
 
     const imovel = response.data;
     
+    console.error(`🔥 [DEBUG-META] Empreendimento:`, imovel.Empreendimento);
+    console.error(`🔥 [DEBUG-META] Foto é array:`, Array.isArray(imovel.Foto));
+    console.error(`🔥 [DEBUG-META] Foto length:`, imovel.Foto?.length);
+    console.error(`🔥 [DEBUG-META] Primeira foto:`, imovel.Foto?.[0]?.Foto);
+    
     // Dados básicos
     const title = `${imovel.Empreendimento} - ${imovel.BairroComercial}, ${imovel.Cidade}`;
     const description = `${imovel.Categoria} à venda no bairro ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.DormitoriosAntigo || 0} dormitórios, ${imovel.SuiteAntigo || 0} suítes, ${imovel.VagasAntigo || 0} vagas, ${imovel.MetragemAnt || 'Metragem a consultar'}. Valor: ${imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}.`;
+    
+    console.error(`🔥 [DEBUG-META] Title:`, title);
+    console.error(`🔥 [DEBUG-META] Description length:`, description.length);
     
     // URLs
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.npiconsultoria.com.br';
     const currentUrl = `${siteUrl}/imovel-${imovel.Codigo}/${imovel.Slug}`;
     
-    // 🔥 CORREÇÃO CRÍTICA DA IMAGEM
+    console.error(`🔥 [DEBUG-META] Site URL:`, siteUrl);
+    console.error(`🔥 [DEBUG-META] Current URL:`, currentUrl);
+    
+    // 🔥 ANÁLISE DETALHADA DA IMAGEM
     let imageUrl = '';
+    
+    console.error(`🔥 [DEBUG-META] === ANÁLISE DA IMAGEM ===`);
+    console.error(`🔥 [DEBUG-META] Tipo do imovel.Foto:`, typeof imovel.Foto);
+    console.error(`🔥 [DEBUG-META] É array:`, Array.isArray(imovel.Foto));
+    
     if (imovel.Foto && Array.isArray(imovel.Foto) && imovel.Foto.length > 0) {
-      // Se for array, pega a primeira imagem
+      console.error(`🔥 [DEBUG-META] ✅ Array com ${imovel.Foto.length} fotos`);
       const primeiraFoto = imovel.Foto[0];
+      console.error(`🔥 [DEBUG-META] Primeira foto objeto:`, JSON.stringify(primeiraFoto, null, 2));
+      
       if (primeiraFoto && primeiraFoto.Foto) {
         imageUrl = primeiraFoto.Foto;
+        console.error(`🔥 [DEBUG-META] ✅ URL extraída do array:`, imageUrl);
+      } else {
+        console.error(`🔥 [DEBUG-META] ❌ Primeira foto não tem propriedade Foto`);
       }
     } else if (imovel.Foto && typeof imovel.Foto === 'string') {
-      // Se for string direta
+      console.error(`🔥 [DEBUG-META] ✅ String direta`);
       imageUrl = imovel.Foto;
+    } else {
+      console.error(`🔥 [DEBUG-META] ❌ Foto inválida ou inexistente`);
     }
+    
+    console.error(`🔥 [DEBUG-META] Image URL antes da validação:`, imageUrl);
     
     // Garantir URL absoluta
     if (imageUrl && !imageUrl.startsWith('http')) {
@@ -65,23 +96,25 @@ export async function generateMetadata({ params }) {
       } else {
         imageUrl = `${siteUrl}/${imageUrl}`;
       }
+      console.error(`🔥 [DEBUG-META] URL convertida para absoluta:`, imageUrl);
     }
     
     // Fallback se não tiver imagem
     if (!imageUrl) {
       imageUrl = `${siteUrl}/assets/images/default-property.jpg`;
+      console.error(`🔥 [DEBUG-META] ⚠️ Usando fallback:`, imageUrl);
     }
 
-    console.error(`[IMOVEL-META] Image URL Final: ${imageUrl}`);
+    console.error(`🔥 [DEBUG-META] 🎯 IMAGE URL FINAL:`, imageUrl);
 
-    return {
+    const metadata = {
       title,
       description,
       
       // 🎯 METADATABASE OBRIGATÓRIO NO NEXT 14
       metadataBase: new URL(siteUrl),
       
-      // 🔥 FORÇAR OPEN GRAPH COM ESTRUTURA SIMPLES
+      // 🔥 OPEN GRAPH SIMPLES
       openGraph: {
         title,
         description,
@@ -89,7 +122,14 @@ export async function generateMetadata({ params }) {
         siteName: 'NPI Imobiliária',
         locale: 'pt_BR',
         type: 'website',
-        images: imageUrl, // ⚡ MUDANÇA: usar string simples em vez de array
+        images: [
+          {
+            url: imageUrl,
+            width: 1200,
+            height: 630,
+            alt: title,
+          }
+        ],
       },
       
       // 🐦 TWITTER CARDS
@@ -97,27 +137,7 @@ export async function generateMetadata({ params }) {
         card: 'summary_large_image',
         title,
         description,
-        images: imageUrl, // ⚡ MUDANÇA: usar string simples
-      },
-      
-      // 🚀 FORÇAR META TAGS CRÍTICAS VIA OTHER
-      other: {
-        // ⚡ TAGS MAIS IMPORTANTES PARA WHATSAPP
-        'og:image': imageUrl,
-        'og:image:secure_url': imageUrl,
-        'og:image:width': '1200',
-        'og:image:height': '630',
-        'og:image:alt': title,
-        'og:type': 'website',
-        'og:site_name': 'NPI Imobiliária',
-        'og:locale': 'pt_BR',
-        
-        // Twitter específico
-        'twitter:image': imageUrl,
-        'twitter:image:alt': title,
-        
-        // Meta tags adicionais
-        'property="og:updated_time"': new Date().toISOString(),
+        images: [imageUrl],
       },
       
       // Meta tags básicas
@@ -135,8 +155,15 @@ export async function generateMetadata({ params }) {
       },
     };
     
+    console.error(`🔥 [DEBUG-META] === METADATA FINAL ===`);
+    console.error(`🔥 [DEBUG-META] OpenGraph images:`, JSON.stringify(metadata.openGraph.images, null, 2));
+    console.error(`🔥 [DEBUG-META] Twitter images:`, JSON.stringify(metadata.twitter.images, null, 2));
+    console.error(`🔥 [DEBUG-META] ================ FIM ================`);
+    
+    return metadata;
+    
   } catch (error) {
-    console.error('[IMOVEL-META] Erro ao gerar metadata:', error);
+    console.error('🔥 [DEBUG-META] ❌ ERRO:', error);
     return {
       title: 'Erro ao carregar imóvel',
       description: 'Ocorreu um erro ao carregar as informações do imóvel.',
@@ -149,7 +176,8 @@ export const revalidate = 0;
 export default async function Imovel({ params }) {
   const { id, slug } = params;
   
-  console.error(`[IMOVEL-PAGE] =========== PROCESSANDO ID: ${id}, SLUG: ${slug} ===========`);
+  console.error(`🔥 [DEBUG-PAGE] =========== RENDERIZANDO PÁGINA ===========`);
+  console.error(`🔥 [DEBUG-PAGE] ID: ${id}, Slug: ${slug}`);
   
   const response = await getImovelById(id);
 
