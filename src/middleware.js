@@ -1,59 +1,47 @@
 import { NextResponse } from 'next/server';
 
-// Importe usando caminhos absolutos baseados na raiz do projeto
-import dbConnect from '@/lib/dbConnect';
-import Imovel from '@/models/Imovel';
-
-export async function middleware(request) {
-  const url = request.nextUrl.clone();
-  const { pathname, origin, searchParams } = url;
-
-  console.log(`Middleware processing: ${pathname}`);
-
-  const imovelPattern = /^\/imovel-(\d+)(?:\/?)$/i;
-  const match = pathname.match(imovelPattern);
-  
-  if (!match) {
-    return NextResponse.next();
-  }
-
-  const id = match[1];
-  console.log(`Processing imovel ID: ${id}`);
-
-  try {
-    await dbConnect();
-    console.log(`Database connected, searching for imovel ${id}`);
-    
-    const imovel = await Imovel.findOne(
-      { Codigo: parseInt(id) },
-      { Slug: 1, _id: 0 }
-    ).lean();
-
-    if (imovel?.Slug) {
-      const newUrl = new URL(`/imovel-${id}/${imovel.Slug}`, origin);
-      searchParams.forEach((value, key) => {
-        newUrl.searchParams.append(key, value);
-      });
-      
-      console.log(`Redirecting to: ${newUrl.toString()}`);
-      return NextResponse.redirect(newUrl, 301);
-    }
-  } catch (error) {
-    console.error(`Error processing imovel ${id}:`, error);
-  }
-
-  const buscaUrl = new URL('/busca', origin);
-  searchParams.forEach((value, key) => {
-    buscaUrl.searchParams.append(key, value);
-  });
-  
-  return NextResponse.redirect(buscaUrl, 302);
-}
-
+// Middleware rodará no Edge Runtime (mais rápido)
 export const config = {
-  runtime: 'nodejs',
+  runtime: 'edge',
   matcher: [
     '/imovel-:id(\\d+)',
     '/imovel-:id(\\d+)/',
   ],
 };
+
+// Função para buscar o slug da API (substitui o Mongoose)
+async function fetchSlugFromAPI(id) {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/imovel/${id}/slug`);
+    if (!response.ok) throw new Error('Slug not found');
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching slug:', error);
+    return null;
+  }
+}
+
+export default async function middleware(request) {
+  const url = request.nextUrl.clone();
+  const { pathname, origin, searchParams } = url;
+
+  const imovelPattern = /^\/imovel-(\d+)(?:\/?)$/i;
+  const match = pathname.match(imovelPattern);
+  
+  if (!match) return NextResponse.next();
+
+  const id = match[1];
+
+  // Busca o slug da API em vez de usar Mongoose diretamente
+  const { slug } = await fetchSlugFromAPI(id);
+
+  if (slug) {
+    const newUrl = new URL(`/imovel-${id}/${slug}`, origin);
+    searchParams.forEach((value, key) => newUrl.searchParams.append(key, value));
+    return NextResponse.redirect(newUrl, 301);
+  }
+
+  const buscaUrl = new URL('/busca', origin);
+  searchParams.forEach((value, key) => buscaUrl.searchParams.append(key, value));
+  return NextResponse.redirect(buscaUrl, 302);
+}
