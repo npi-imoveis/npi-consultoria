@@ -98,6 +98,15 @@ export default function AdminCorretores() {
     loadCorretores(currentPage, searchTerm);
   };
 
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    if (!searchTerm) {
+      loadCorretores(page);
+    } else {
+      loadCorretores(page, searchTerm);
+    }
+  };
+
   return (
     <AuthCheck>
       {isModalOpen && (
