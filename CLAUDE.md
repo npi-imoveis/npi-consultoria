@@ -219,3 +219,8 @@ const imageUrl = Array.isArray(imovel.Foto) && imovel.Foto.length > 0
 ---
 
 **Last Updated**: July 2025 - After major routing fixes and admin panel improvements
+
+## Development Branch Setup
+- ✅ Branch `dev` created for development work
+- ✅ Vercel Preview environments automatically configured  
+- ✅ Production remains on `master` branch
