@@ -71,6 +71,11 @@ export default function AdminCorretores() {
     }
   }, [currentPage, searchTerm, loadCorretores]);
 
+  // Carrega corretores na primeira vez que a página abre
+  useEffect(() => {
+    loadCorretores(1);
+  }, []);
+
   const handleSearch = (e) => {
     e.preventDefault();
     setCurrentPage(1);

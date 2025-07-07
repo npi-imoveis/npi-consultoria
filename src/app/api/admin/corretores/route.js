@@ -9,12 +9,32 @@ export async function GET(request) {
   try {
     const { searchParams } = request.nextUrl;
     const query = searchParams.get("q");
-
-    if (!query || query.trim() === "") {
-      return NextResponse.json({ status: 200, data: [] });
-    }
+    const page = parseInt(searchParams.get("page")) || 1;
+    const limit = parseInt(searchParams.get("limit")) || 12;
 
     await connectToDatabase();
+
+    // Se não há query, listar todos os corretores
+    if (!query || query.trim() === "") {
+      const skip = (page - 1) * limit;
+      
+      const [corretores, totalItems] = await Promise.all([
+        Corretores.find({}).skip(skip).limit(limit).lean(),
+        Corretores.countDocuments({})
+      ]);
+
+
+      return NextResponse.json({
+        status: 200,
+        corretores: corretores,
+        pagination: {
+          totalItems,
+          totalPages: Math.ceil(totalItems / limit),
+          currentPage: page,
+          itemsPerPage: limit
+        }
+      });
+    }
 
     // --- VERSÃO FINAL E CORRETA PARA O SEU ÍNDICE ---
     const resultado = await Corretores.aggregate([
