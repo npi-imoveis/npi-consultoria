@@ -57,12 +57,15 @@ export async function generateMetadata({ params }) {
       title,
       description,
       url: currentUrl,
+      type: "website",
+      siteName: "NPI Consultoria",
       images: [
         {
           url: imageUrl,
           width: 1200,
           height: 630,
           alt: title,
+          type: "image/jpeg",
         }
       ],
     },
@@ -70,7 +73,14 @@ export async function generateMetadata({ params }) {
       card: "summary_large_image",
       title,
       description,
-      images: [imageUrl],
+      site: "@NPIImoveis",
+      creator: "@NPIImoveis",
+      images: [
+        {
+          url: imageUrl,
+          alt: title,
+        }
+      ],
     },
     // hreflang manual
     metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL),

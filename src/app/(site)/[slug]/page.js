@@ -66,6 +66,7 @@ export async function generateMetadata({ params }) {
   return {
     title: `${rawTitle}, ${condominio.TipoEndereco} ${condominio.Endereco} ${condominio.Numero}, ${condominio.BairroComercial}`,
     description,
+    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL),
     robots: {
       index: true,
       follow: true,
@@ -80,22 +81,30 @@ export async function generateMetadata({ params }) {
       title: rawTitle,
       description,
       url: currentUrl,
+      type: "website",
+      siteName: "NPI Consultoria",
       images: [
         {
           url: destaqueFotoUrl,
           width: 1200,
           height: 630,
           alt: rawTitle,
+          type: "image/jpeg",
         }
       ],
-      type: "website",
     },
     twitter: {
       card: "summary_large_image",
       title: rawTitle,
       description,
       site: "@NPIImoveis",
-      images: [destaqueFotoUrl],
+      creator: "@NPIImoveis",
+      images: [
+        {
+          url: destaqueFotoUrl,
+          alt: rawTitle,
+        }
+      ],
     },
   };
 }
