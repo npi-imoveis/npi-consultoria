@@ -8,14 +8,18 @@ import { getDashboard } from "../services/dashboard";
 import { formatterNumber } from "@/app/utils/formatter-number";
 
 export default async function AdminDashboard() {
-  const { corretores } = await getCorretores({}, 1, 20);
+  const corretoresResponse = await getCorretores({}, 1, 20);
   const { data: users } = await getUsuarios();
 
   const dashboard = await getDashboard();
 
+  // Verificar se corretores existe e é um array
+  const corretores = corretoresResponse?.corretores || [];
+  
   // Sort corretores by the number of linked properties in descending order
   const sortedCorretores = [...corretores]
-    .sort((a, b) => b.imoveis_vinculados.length - a.imoveis_vinculados.length)
+    .filter(corretor => corretor?.imoveis_vinculados) // Filtrar apenas com propriedade válida
+    .sort((a, b) => (b.imoveis_vinculados?.length || 0) - (a.imoveis_vinculados?.length || 0))
     .slice(0, 10);
 
   return (
@@ -75,7 +79,7 @@ export default async function AdminDashboard() {
                   </div>
                   <div>
                     <h3 className="text-xs font-bold text-right">
-                      {parceiro.imoveis_vinculados.length}
+                      {parceiro.imoveis_vinculados?.length || 0}
                     </h3>
                   </div>
                 </Link>
