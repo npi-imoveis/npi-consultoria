@@ -35,6 +35,13 @@ export async function generateMetadata({ params }) {
   const description = `${imovel.Categoria} à venda no bairro ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.DormitoriosAntigo} dormitórios, ${imovel.SuiteAntigo} suítes, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt}. Valor: ${imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}.`;
 
   const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
+  
+  // Corrigir imagem - imovel.Foto é array, pegar primeira imagem
+  const imageUrl = Array.isArray(imovel.Foto) && imovel.Foto.length > 0 
+    ? (imovel.Foto[0].Foto || imovel.Foto[0].FotoPequena || imovel.Foto[0])
+    : imovel.Foto || `${process.env.NEXT_PUBLIC_SITE_URL}/og-image.png`;
+
+  console.error(`[IMOVEL-META] Image URL: ${imageUrl}`);
 
   return {
     title,
@@ -50,13 +57,20 @@ export async function generateMetadata({ params }) {
       title,
       description,
       url: currentUrl,
-      images: [imovel.Foto],
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: title,
+        }
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: [imovel.Foto],
+      images: [imageUrl],
     },
     // hreflang manual
     metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL),
