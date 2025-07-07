@@ -75,10 +75,18 @@ export const revalidate = 0;
 export default async function Imovel({ params }) {
   const { id, slug } = params;
   
-  // FORÇAR LOG NO CONSOLE
-  console.error(`[IMOVEL-PAGE] =========== PROCESSANDO ID: ${id}, SLUG: ${slug} ===========`);
+  console.log(`🏠 [IMOVEL-PAGE] =================== INÍCIO ===================`);
+  console.log(`🏠 [IMOVEL-PAGE] Processando ID: ${id}, SLUG: ${slug}`);
+  console.log(`🏠 [IMOVEL-PAGE] Params completos:`, params);
   
+  console.log(`🏠 [IMOVEL-PAGE] 📞 Chamando getImovelById(${id})`);
   const response = await getImovelById(id);
+  
+  console.log(`🏠 [IMOVEL-PAGE] 📞 Response:`, { 
+    success: !!response?.data, 
+    codigo: response?.data?.Codigo,
+    empreendimento: response?.data?.Empreendimento?.substring(0, 30)
+  });
 
 if (!response?.data) {
   notFound();

@@ -74,12 +74,12 @@ const nextConfig = {
   },
   async redirects() {
     return [
-      // Redirecionamento para URLs de imóveis sem slug
+      // Fallback dinâmico para URLs de imóveis (deixe como última opção)
       {
         source: '/imovel-:id(\\d+)',
-        destination: '/api/redirect/imovel/:id',
-        permanent: false
-      },
+        destination: '/api/resolve-imovel-redirect/:id',
+        permanent: false,
+      }
     ];
   },
   async rewrites() {
