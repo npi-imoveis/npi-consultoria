@@ -74,28 +74,10 @@ const nextConfig = {
   },
   async redirects() {
     return [
-      // Fallback dinâmico para URLs de imóveis (deixe como última opção)
-      {
-        source: '/imovel-:id(\\d+)',
-        destination: '/api/resolve-imovel-redirect/:id',
-        permanent: false,
-      }
+      // Redirects removidos - middleware gerencia as rotas de imóveis
     ];
   },
-  async rewrites() {
-    return {
-      beforeFiles: [
-        // Permite que o middleware seja executado antes dos redirecionamentos estáticos
-      ],
-      afterFiles: [
-        // Fallback para URLs de imóveis sem slug
-        {
-          source: '/imovel-:id',
-          destination: '/api/redirect/imovel/:id',
-        },
-      ],
-    };
-  },
+  // Rewrites removidos - middleware gerencia tudo
   output: "standalone", // Ou 'export' se estiver gerando static sites
 };
 
