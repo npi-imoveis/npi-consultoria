@@ -9,7 +9,7 @@ const formatarHtml = (htmlString ) => {
     // e que apontam para domínios de redes sociais específicos.
     // Isso garante que eles se tornem URLs absolutas.
     formatted = formatted.replace(
-        /href=["'](?!https?:\/\/ )(instagram\.com|facebook\.com|youtube\.com|linkedin\.com|twitter\.com|tiktok\.com)([^"']*)["']/g,
+        /href=["'](?!https?:\/\/)(instagram\.com|facebook\.com|youtube\.com|linkedin\.com|twitter\.com|tiktok\.com)([^"']*)["']/g,
         'href="https://$1$2"'
      );
 
