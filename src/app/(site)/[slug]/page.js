@@ -46,9 +46,20 @@ export async function generateMetadata({ params }) {
   }
 
   const rawTitle = ensureCondominio(condominio.Empreendimento);
+  
+  // Corrigir extração da imagem - buscar foto destacada ou primeira disponível
   const destaqueFotoObj = condominio.Foto?.find((f) => f.Destaque === "Sim");
-  const destaqueFotoUrl = destaqueFotoObj?.Foto;
+  const primeiraFoto = Array.isArray(condominio.Foto) && condominio.Foto.length > 0 ? condominio.Foto[0] : null;
+  
+  const destaqueFotoUrl = destaqueFotoObj?.Foto || 
+                         destaqueFotoObj?.FotoPequena || 
+                         primeiraFoto?.Foto || 
+                         primeiraFoto?.FotoPequena ||
+                         `${process.env.NEXT_PUBLIC_SITE_URL}/og-image.png`;
+  
   const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`;
+
+  console.error(`[CONDOMINIO-META] Image URL: ${destaqueFotoUrl}`);
 
   const description = `${rawTitle} em ${condominio.BairroComercial}, ${condominio.Cidade}. ${condominio.Categoria} com ${condominio.MetragemAnt}, ${condominio.DormitoriosAntigo} quartos, ${condominio.VagasAntigo} vagas. ${condominio.Situacao}.`;
 
@@ -69,7 +80,14 @@ export async function generateMetadata({ params }) {
       title: rawTitle,
       description,
       url: currentUrl,
-      images: destaqueFotoUrl ? [{ url: destaqueFotoUrl }] : [],
+      images: [
+        {
+          url: destaqueFotoUrl,
+          width: 1200,
+          height: 630,
+          alt: rawTitle,
+        }
+      ],
       type: "website",
     },
     twitter: {
@@ -77,7 +95,7 @@ export async function generateMetadata({ params }) {
       title: rawTitle,
       description,
       site: "@NPIImoveis",
-      images: destaqueFotoUrl ? [destaqueFotoUrl] : [],
+      images: [destaqueFotoUrl],
     },
   };
 }
