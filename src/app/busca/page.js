@@ -49,21 +49,7 @@ export default function BuscaImoveis() {
   // Obter o contador de atualizações de filtros do store
   const atualizacoesFiltros = useFiltersStore((state) => state.atualizacoesFiltros);
 
-  useEffect(() => {
-    document.title = "NPi Imóveis - Busca de Imóveis de Alto Padrão";
-
-    const metaDesc = document.querySelector("meta[name='description']");
-    if (metaDesc) {
-      metaDesc.setAttribute("content", "Encontre imóveis de alto padrão perfeito para você");
-    } else {
-      const meta = document.createElement("meta");
-      meta.name = "description";
-      meta.content = "Encontre imóveis de alto padrão perfeito para você";
-      document.head.appendChild(meta);
-    }
-  }, []);
-
-  // Efeito para marcar quando estamos no navegador
+   // Efeito para marcar quando estamos no navegador
   useEffect(() => {
     setIsBrowser(true);
   }, []);
