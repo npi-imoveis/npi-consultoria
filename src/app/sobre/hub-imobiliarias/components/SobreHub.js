@@ -18,9 +18,9 @@ export async function SobreHub({ sobre }) {
           </div>
 
           <div className="md:w-[50%] w-full dark:bg-gray-900 dark:text-gray-400 md:p-6 p-4 rounded-md">
-            <h1 className="text-2xl uppercase font-semibold text-gray-900 dark:text-white">
+            <h2 className="text-2xl uppercase font-semibold text-gray-900 dark:text-white">
               {sobre?.titulo || "O que somos"}
-            </h1>
+            </h2>
             <p className="text-lg mt-4 leading-relaxed whitespace-pre-line">
               {sobre?.descricao ||
                 `O HUB de Imobiliárias Boutique de Alto Padrão é um novo e exclusivo modelo de negócios no mercado imobiliário, idealizado por Eduardo Lima, fundador da NPi Imóveis, com mais de 20 anos de experiência no mercado imobiliário. 
