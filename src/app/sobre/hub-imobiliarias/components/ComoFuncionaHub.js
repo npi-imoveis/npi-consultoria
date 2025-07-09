@@ -19,7 +19,7 @@ export async function ComoFuncionaHub({ howto }) {
       <div className="relative z-10 container mx-auto px-6 flex flex-col lg:flex-row items-start gap-12">
         {/* Título e botão */}
         <div className="lg:w-1/3">
-          <h1 className="text-xl uppercase font-semibold leading-snug">Como funciona o HUB</h1>
+          <h2 className="text-xl uppercase font-semibold leading-snug">Como funciona o HUB</h2>
           <button className="mt-8 bg-white text-black font-medium py-2 px-4 rounded-md shadow-md flex items-center gap-2">
             Faça parte
             <svg
@@ -41,7 +41,7 @@ export async function ComoFuncionaHub({ howto }) {
         <div className="lg:w-2/3 space-y-8">
           {howto.map((item, index) => (
             <div key={index} className="bg-black/40 p-6 rounded-md shadow-lg">
-              <h1 className="text-xl uppercase font-semibold mb-2">{item.title}</h1>
+              <h3 className="text-xl uppercase font-semibold mb-2">{item.title}</h3>
               <p className="text-lg leading-relaxed text-gray-300">{item.description}</p>
             </div>
           ))}
