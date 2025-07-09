@@ -8,7 +8,7 @@ import { getContentSite } from "@/app/services";
 
 export const metadata = {
   title: "Hub de Imobiliárias Boutique de Alto Padrão | NPi Imóveis",
-  description: "Descubra o Hub Imobiliárias da NPi: plataforma exclusiva que conecta imobiliárias boutique de alto padrão, oferecendo soluções inovadoras e resultados excepcionais no mercado imobiliário de luxo.",
+  description: "Conheça o Hub Imobiliárias Boutique de Alto Padrão da NPi: plataforma exclusiva que conecta imobiliárias de alto padrão a clientes qualificados pronto para compra.",
   keywords: "hub imobiliárias, imobiliárias boutique, alto padrão, mercado imobiliário de luxo, NPi Imóveis, plataforma imobiliária, conexão imobiliárias",
   authors: [{ name: "NPi Imóveis" }],
   creator: "NPi Imóveis",
