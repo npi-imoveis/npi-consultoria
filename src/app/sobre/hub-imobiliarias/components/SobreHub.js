@@ -34,9 +34,9 @@ Hoje a NPi é focada em dar visibilidade aos imóveis das imobiliárias pertence
         {/* Seção 2 */}
         <div className="xl:w-[80%] sm:w-[85%] w-[90%] mx-auto flex flex-col-reverse md:flex-row lg:gap-4 gap-6 justify-center lg:items-stretch md:items-center mt-8">
           <div className="md:w-[50%] w-full dark:bg-gray-900 dark:text-gray-400 md:p-6 p-4 rounded-md">
-            <h1 className="text-2xl uppercase font-semibold text-gray-900 dark:text-white">
+            <h2 className="text-2xl uppercase font-semibold text-gray-900 dark:text-white">
               {sobre?.titulo1 || "O futuro do mercado imobiliário começa na Primeira Página do Google"}
-            </h1>
+            </h2>
             <p className="text-lg mt-4 leading-relaxed whitespace-pre-line">
               {sobre?.descricao1 ||
                 `O Hub da NPi conecta imobiliárias boutique de alto padrão a clientes de high ticket qualificados com intenção real de compra, através de um ecossistema digital escalável. 
