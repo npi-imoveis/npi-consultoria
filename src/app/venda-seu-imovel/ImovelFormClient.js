@@ -261,9 +261,9 @@ export default function ImovelFormClient() {
     <div className="container mx-auto px-4 py-16">
       {/* ✅ ÚNICO H1 + CONTEÚDO SEO */}
       <div className="mb-8 text-center">
-        <h1 className="text-4xl font-bold text-gray-800 mb-4">
-          Venda ou Alugue seu Imóvel com Avaliação Gratuita
-        </h1>
+        <h2 className="text-4xl font-bold text-gray-800 mb-4">
+          Cadastre seu Imóvel Gratuitamente no HUB da NPi
+        </h2>
         <p className="text-lg text-gray-600 max-w-3xl mx-auto">
           <strong>Cadastre gratuitamente</strong> seu apartamento de alto padrão, casa em condomínio, casa, ou laje comercial para venda ou locação. 
           Seu imóvel será divulgado para todos as empresas do HUB e posicionado na maior vitrine do mundo, o GOOGLE.
