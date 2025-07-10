@@ -18,7 +18,7 @@ import { Apartment as StructuredDataApartment } from "@/app/components/structure
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 import { notFound, redirect } from "next/navigation";
 
-// Função utilitária para converter data brasileira para ISO
+// Função utilitária CORRIGIDA para converter data brasileira para ISO
 function convertBrazilianDateToISO(brazilianDate, imovelData) {
   // Tentar múltiplos campos de data
   const possibleDateFields = [
@@ -38,8 +38,11 @@ function convertBrazilianDateToISO(brazilianDate, imovelData) {
     }
   }
   
+  // ✅ FALLBACK: Se não encontrar data válida, usar data atual
   if (!workingDate) {
-    return new Date().toISOString();
+    const currentDate = new Date();
+    console.log(`[DATE-CONVERT] ⚠️  Usando data atual como fallback: ${currentDate.toISOString()}`);
+    return currentDate.toISOString();
   }
   
   try {
@@ -59,6 +62,7 @@ function convertBrazilianDateToISO(brazilianDate, imovelData) {
       );
       
       if (!isNaN(date.getTime())) {
+        console.log(`[DATE-CONVERT] ✅ Formato brasileiro convertido: ${date.toISOString()}`);
         return date.toISOString();
       }
     }
@@ -66,12 +70,19 @@ function convertBrazilianDateToISO(brazilianDate, imovelData) {
     // Formato 2: Tentar parse direto
     const date = new Date(workingDate);
     if (!isNaN(date.getTime())) {
+      console.log(`[DATE-CONVERT] ✅ Parse direto: ${date.toISOString()}`);
       return date.toISOString();
     }
     
-    return new Date().toISOString();
+    // ✅ Se chegou aqui, usar data atual
+    const fallbackDate = new Date();
+    console.log(`[DATE-CONVERT] ⚠️  Fallback para data atual: ${fallbackDate.toISOString()}`);
+    return fallbackDate.toISOString();
+    
   } catch (error) {
-    return new Date().toISOString();
+    console.error(`[DATE-CONVERT] ❌ Erro na conversão:`, error);
+    const errorFallbackDate = new Date();
+    return errorFallbackDate.toISOString();
   }
 }
 
@@ -94,9 +105,24 @@ export async function generateMetadata({ params }) {
     }
 
     const imovel = response.data;
-    const modifiedDate = convertBrazilianDateToISO(imovel.DataHoraAtualizacao, imovel);
     
-    console.error(`[IMOVEL-META] Modified Date: ${modifiedDate}`);
+    // ✅ GARANTIR DATA VÁLIDA
+    let modifiedDate;
+    try {
+      modifiedDate = convertBrazilianDateToISO(imovel.DataHoraAtualizacao, imovel);
+      
+      // ✅ VALIDAÇÃO EXTRA: Verificar se a data é realmente válida
+      const testDate = new Date(modifiedDate);
+      if (isNaN(testDate.getTime())) {
+        console.error(`[IMOVEL-META] ❌ Data inválida gerada, usando fallback`);
+        modifiedDate = new Date().toISOString();
+      }
+    } catch (error) {
+      console.error(`[IMOVEL-META] ❌ Erro na conversão de data:`, error);
+      modifiedDate = new Date().toISOString();
+    }
+    
+    console.error(`[IMOVEL-META] ✅ Data final válida: ${modifiedDate}`);
     
     const title = `${imovel.Empreendimento} - ${imovel.BairroComercial}, ${imovel.Cidade}`;
     const description = `${imovel.Categoria} à venda no bairro ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.DormitoriosAntigo} dormitórios, ${imovel.SuiteAntigo} suítes, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt}. Valor: ${imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}.`;
