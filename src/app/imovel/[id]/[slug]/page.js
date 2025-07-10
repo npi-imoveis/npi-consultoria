@@ -1,6 +1,5 @@
 // app/imovel/[id]/[slug]/page.js
-import Head from 'next/head';
-
+import { Metadata } from 'next';
 import { ImageGallery } from "@/app/components/sections/image-gallery";
 import { FAQImovel } from "./componentes/FAQImovel";
 import DetalhesCondominio from "./componentes/DetalhesCondominio";
@@ -20,28 +19,37 @@ import { Apartment as StructuredDataApartment } from "@/app/components/structure
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 import { notFound, redirect } from "next/navigation";
 
-// ✅ SEO DINÂMICO
-export async function generateMetadata({ params }) {
-  const { id } = params;
-  
-  console.error(`[IMOVEL-META] =========== PROCESSANDO ID: ${id} ===========`);
-  
-  const response = await getImovelById(id);
-  if (!response?.data) return {};
-  const imovel = response.data;
-  
-  // ✅ FUNÇÃO PARA CONVERTER DATA BRASILEIRA PARA ISO
-  const convertBrazilianDateToISO = (brazilianDate) => {
+// Componente para meta tags específicas que o Ahrefs precisa detectar
+function DateMetaTags({ modifiedDate }) {
+  return (
+    <>
+      <meta property="article:modified_time" content={modifiedDate} />
+      <meta property="article:published_time" content={modifiedDate} />
+      <meta property="og:updated_time" content={modifiedDate} />
+      <meta name="last-modified" content={modifiedDate} />
+    </>
+  );
+}
+
+// Utilitários centralizados
+const utils = {
+  /**
+   * Converte data brasileira para formato ISO
+   * @param {string} brazilianDate - Data no formato "DD/MM/AAAA, HH:MM:SS"
+   * @returns {string} Data no formato ISO
+   */
+  convertBrazilianDateToISO: (brazilianDate) => {
     if (!brazilianDate) {
       console.error('[DATE] Data não fornecida, usando fallback');
-      return '2025-01-10T14:30:00Z';
+      return new Date().toISOString(); // Usar data atual como fallback
     }
     
     console.error('[DATE] Data original:', brazilianDate);
     
     try {
-      // "26/06/2025, 17:12:39" -> "2025-06-26T17:12:39Z"
       const [datePart, timePart] = brazilianDate.split(', ');
+      if (!datePart || !timePart) throw new Error('Formato de data inválido');
+      
       const [day, month, year] = datePart.split('/');
       const [hours, minutes, seconds] = timePart.split(':');
       
@@ -54,199 +62,279 @@ export async function generateMetadata({ params }) {
         parseInt(seconds)
       );
       
-      if (!isNaN(date.getTime())) {
-        const isoString = date.toISOString();
-        console.error('[DATE] Data convertida:', isoString);
-        return isoString;
-      } else {
+      if (isNaN(date.getTime())) {
         throw new Error('Data inválida após conversão');
       }
+      
+      const isoString = date.toISOString();
+      console.error('[DATE] Data convertida:', isoString);
+      return isoString;
     } catch (error) {
       console.error('[DATE] Erro ao converter:', error.message);
-      return '2025-01-10T14:30:00Z'; // Fallback
+      return new Date().toISOString(); // Fallback
     }
-  };
-  
-  const title = `${imovel.Empreendimento} - ${imovel.BairroComercial}, ${imovel.Cidade}`;
-  const description = `${imovel.Categoria} à venda no bairro ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.DormitoriosAntigo} dormitórios, ${imovel.SuiteAntigo} suítes, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt}. Valor: ${imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}.`;
-  const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
-  
-  const imageUrl = Array.isArray(imovel.Foto) && imovel.Foto.length > 0 
-    ? (imovel.Foto[0].Foto || imovel.Foto[0].FotoPequena || imovel.Foto[0])
-    : imovel.Foto || `${process.env.NEXT_PUBLIC_SITE_URL}/og-image.png`;
-  
-  console.error(`[IMOVEL-META] Image URL: ${imageUrl}`);
-  
-  // ✅ CONVERTER DATA REAL DO BANCO
-  const realModifiedDate = convertBrazilianDateToISO(imovel.DataHoraAtualizacao);
-  
-  return {
-    title,
-    description,
-    alternates: {
-      canonical: currentUrl,
-    },
-    robots: {
-      index: true,
-      follow: true,
-    },
-    openGraph: {
-      title,
-      description,
-      url: currentUrl,
-      type: "website",
-      siteName: "NPI Consultoria",
-      publishedTime: realModifiedDate, // ✅ Data real convertida
-      modifiedTime: realModifiedDate,  // ✅ Data real convertida
-      images: [
-        {
-          url: imageUrl,
-          width: 1200,
-          height: 630,
-          alt: title,
-          type: "image/jpeg",
-        }
-      ],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      site: "@NPIImoveis",
-      creator: "@NPIImoveis",
-      images: [
-        {
-          url: imageUrl,
-          alt: title,
-        }
-      ],
-    },
-    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL),
-    alternates: {
-      canonical: currentUrl,
-      languages: {
-        "pt-BR": currentUrl,
-      },
-    },
-    other: {
-      'article:modified_time': realModifiedDate, // ✅ Data real convertida
-    },
-  };
-}
+  },
 
-export const revalidate = 0;
+  /**
+   * Gera URL da imagem principal
+   * @param {Object|Array|string} foto - Dados da foto
+   * @returns {string} URL da imagem
+   */
+  getMainImageUrl: (foto) => {
+    if (Array.isArray(foto) && foto.length > 0) {
+      return foto[0].Foto || foto[0].FotoPequena || foto[0];
+    }
+    if (typeof foto === 'string') {
+      return foto;
+    }
+    return `${process.env.NEXT_PUBLIC_SITE_URL}/og-image.png`;
+  },
 
-// ✅ FUNÇÃO PARA CONVERTER DATA (COMPONENTE)
-const convertBrazilianDateToISO = (brazilianDate) => {
-  if (!brazilianDate) return '2025-01-10T14:30:00Z';
-  
-  try {
-    const [datePart, timePart] = brazilianDate.split(', ');
-    const [day, month, year] = datePart.split('/');
-    const [hours, minutes, seconds] = timePart.split(':');
-    
-    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hours), parseInt(minutes), parseInt(seconds));
-    return date.toISOString();
-  } catch (error) {
-    console.error('Erro ao converter data:', error);
-    return '2025-01-10T14:30:00Z';
+  /**
+   * Gera URL canônica do imóvel
+   * @param {string|number} codigo - Código do imóvel
+   * @param {string} slug - Slug do imóvel
+   * @returns {string} URL canônica
+   */
+  getCanonicalUrl: (codigo, slug) => 
+    `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${codigo}/${slug}`,
+
+  /**
+   * Gera descrição SEO do imóvel
+   * @param {Object} imovel - Dados do imóvel
+   * @returns {string} Descrição formatada
+   */
+  generateSEODescription: (imovel) => {
+    const valor = imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte";
+    return `${imovel.Categoria} à venda no bairro ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.DormitoriosAntigo} dormitórios, ${imovel.SuiteAntigo} suítes, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt}. Valor: ${valor}.`;
   }
 };
 
-export default async function Imovel({ params }) {
+// Configuração de revalidação
+export const revalidate = 0;
+
+/**
+ * Geração dinâmica de metadados SEO
+ */
+export async function generateMetadata({ params }) {
+  const { id } = params;
+  
+  console.error(`[IMOVEL-META] =========== PROCESSANDO ID: ${id} ===========`);
+  
+  try {
+    const response = await getImovelById(id);
+    if (!response?.data) {
+      return {
+        title: 'Imóvel não encontrado - NPI Consultoria',
+        description: 'O imóvel solicitado não foi encontrado.',
+      };
+    }
+
+    const imovel = {
+      ...response.data,
+      SuiteAntigo: response.data.SuiteAntigo ?? response.data.Suites ?? 0,
+      DormitoriosAntigo: response.data.DormitoriosAntigo ?? 0,
+      VagasAntigo: response.data.VagasAntigo ?? 0,
+      BanheiroSocialQtd: response.data.BanheiroSocialQtd ?? 0,
+    };
+    const modifiedDate = utils.convertBrazilianDateToISO(imovel.DataHoraAtualizacao);
+    const canonicalUrl = utils.getCanonicalUrl(imovel.Codigo, imovel.Slug);
+    const imageUrl = utils.getMainImageUrl(imovel.Foto);
+    
+    console.error(`[IMOVEL-META] Image URL: ${imageUrl}`);
+    console.error(`[IMOVEL-META] Modified Date: ${modifiedDate}`);
+    
+    const title = `${imovel.Empreendimento} - ${imovel.BairroComercial}, ${imovel.Cidade}`;
+    const description = utils.generateSEODescription(imovel);
+
+    return {
+      title,
+      description,
+      alternates: {
+        canonical: canonicalUrl,
+        languages: {
+          "pt-BR": canonicalUrl,
+        },
+      },
+      robots: {
+        index: true,
+        follow: true,
+        googleBot: {
+          index: true,
+          follow: true,
+          'max-video-preview': -1,
+          'max-image-preview': 'large',
+          'max-snippet': -1,
+        },
+      },
+      openGraph: {
+        title,
+        description,
+        url: canonicalUrl,
+        type: "website",
+        siteName: "NPI Consultoria",
+        publishedTime: modifiedDate, // ✅ Data real convertida
+        modifiedTime: modifiedDate,  // ✅ Data real convertida
+        images: [
+          {
+            url: imageUrl,
+            width: 1200,
+            height: 630,
+            alt: title,
+            type: "image/jpeg",
+          }
+        ],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title,
+        description,
+        site: "@NPIImoveis",
+        creator: "@NPIImoveis",
+        images: [
+          {
+            url: imageUrl,
+            alt: title,
+          }
+        ],
+      },
+      // ✅ MANTENDO TODAS AS META TAGS IMPORTANTES PARA AHREFS
+      other: {
+        'article:modified_time': modifiedDate,
+        'article:published_time': modifiedDate,
+        'og:updated_time': modifiedDate,
+        'last-modified': modifiedDate,
+      },
+    };
+  } catch (error) {
+    console.error('Erro ao gerar metadata:', error);
+    return {
+      title: 'Erro - NPI Consultoria',
+      description: 'Ocorreu um erro ao carregar as informações do imóvel.',
+    };
+  }
+}
+
+/**
+ * Componente principal da página do imóvel
+ */
+export default async function ImovelPage({ params }) {
   const { id, slug } = params;
   
   console.log(`🏠 [IMOVEL-PAGE] =================== INÍCIO ===================`);
   console.log(`🏠 [IMOVEL-PAGE] Processando ID: ${id}, SLUG: ${slug}`);
   console.log(`🏠 [IMOVEL-PAGE] Params completos:`, params);
   
-  console.log(`🏠 [IMOVEL-PAGE] 📞 Chamando getImovelById(${id})`);
-  const response = await getImovelById(id);
-  
-  console.log(`🏠 [IMOVEL-PAGE] 📞 Response:`, { 
-    success: !!response?.data, 
-    codigo: response?.data?.Codigo,
-    empreendimento: response?.data?.Empreendimento?.substring(0, 30)
-  });
+  try {
+    console.log(`🏠 [IMOVEL-PAGE] 📞 Chamando getImovelById(${id})`);
+    const response = await getImovelById(id);
+    
+    console.log(`🏠 [IMOVEL-PAGE] 📞 Response:`, { 
+      success: !!response?.data, 
+      codigo: response?.data?.Codigo,
+      empreendimento: response?.data?.Empreendimento?.substring(0, 30)
+    });
+    
+    if (!response?.data) {
+      notFound();
+    }
 
-  if (!response?.data) {
+    // Normalizar dados (mantendo exatamente como estava)
+    const imovel = {
+      ...response.data,
+      SuiteAntigo: response.data.SuiteAntigo ?? response.data.Suites ?? 0,
+      DormitoriosAntigo: response.data.DormitoriosAntigo ?? 0,
+      VagasAntigo: response.data.VagasAntigo ?? 0,
+      BanheiroSocialQtd: response.data.BanheiroSocialQtd ?? 0,
+    };
+
+    const slugCorreto = imovel.Slug;
+
+    // Verificar e redirecionar se slug estiver incorreto
+    if (slug !== slugCorreto) {
+      redirect(`/imovel-${id}/${slugCorreto}`);
+    }
+
+    // Preparar dados para renderização
+    const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
+    
+    // ✅ CONVERTER DATA AQUI NO COMPONENTE (mantendo como estava)
+    const modifiedDate = utils.convertBrazilianDateToISO(imovel.DataHoraAtualizacao);
+    console.log('🔍 Data convertida no componente:', modifiedDate);
+
+    return (
+      <>
+        {/* ✅ META TAGS ESPECÍFICAS PARA AHREFS DETECTAR */}
+        <DateMetaTags modifiedDate={modifiedDate} />
+        
+        <main className="w-full bg-white pb-32 pt-20">
+          {/* Dados estruturados para SEO */}
+          <StructuredDataApartment
+            title={imovel.Empreendimento}
+            price={imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}
+            description={`${imovel.Categoria} à venda em ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.Empreendimento}: ${imovel.DormitoriosAntigo} quartos, ${imovel.SuiteAntigo} suítes, ${imovel.BanheiroSocialQtd} banheiros, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt}. ${imovel.Situacao}. Valor: ${imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}. ${imovel.TipoEndereco} ${imovel.Endereco}.`}
+            address={`${imovel.TipoEndereco} ${imovel.Endereco}, ${imovel.Numero}, ${imovel.BairroComercial}, ${imovel.Cidade}`}
+            url={currentUrl}
+            image={imovel.Foto}
+          />
+
+          {/* Modal de exit intent */}
+          <ExitIntentModal 
+            condominio={imovel.Empreendimento} 
+            link={currentUrl} 
+          />
+
+          {/* Galeria de imagens */}
+          <div className="w-full mx-auto">
+            <ImageGallery imovel={imovel} />
+          </div>
+
+          {/* Conteúdo principal */}
+          <div className="container mx-auto gap-4 mt-3 px-4 md:px-0 flex flex-col lg:flex-row">
+            {/* Coluna principal de conteúdo */}
+            <div className="w-full lg:w-[65%]">
+              <TituloImovel imovel={imovel} currentUrl={currentUrl} />
+              <DetalhesImovel imovel={imovel} />
+              <DescricaoImovel imovel={imovel} />
+              <FichaTecnica imovel={imovel} />
+              <DetalhesCondominio imovel={imovel} />
+              <Lazer imovel={imovel} />
+              
+              {/* Renderização condicional mantida exatamente como estava */}
+              {imovel.Video && Object.keys(imovel.Video).length > 0 && (
+                <VideoCondominio imovel={imovel} />
+              )}
+              {imovel.Tour360 && (
+                <TourVirtual 
+                  link={imovel.Tour360} 
+                  titulo={imovel.Empreendimento} 
+                />
+              )}
+              
+              <SimilarProperties id={imovel.Codigo} />
+              <LocalizacaoCondominio imovel={imovel} />
+            </div>
+
+            {/* Sidebar de contato */}
+            <div className="w-full lg:w-[35%] h-fit lg:sticky lg:top-24 order-first lg:order-last mb-6 lg:mb-0">
+              <Contato imovel={imovel} currentUrl={currentUrl} />
+            </div>
+          </div>
+
+          {/* FAQ */}
+          <div className="container mx-auto px-4 md:px-0">
+            <FAQImovel imovel={imovel} />
+          </div>
+
+          {/* WhatsApp float - mantendo mensagem exatamente como estava */}
+          <WhatsappFloat
+            message={`Quero saber mais sobre o ${imovel.Empreendimento}, no bairro ${imovel.BairroComercial}, disponível na página do Imóvel: ${currentUrl}`}
+          />
+        </main>
+      </>
+    );
+  } catch (error) {
+    console.error('Erro na página do imóvel:', error);
     notFound();
   }
-
-  const imovel = {
-    ...response.data,
-    SuiteAntigo: response.data.SuiteAntigo ?? response.data.Suites ?? 0,
-    DormitoriosAntigo: response.data.DormitoriosAntigo ?? 0,
-    VagasAntigo: response.data.VagasAntigo ?? 0,
-    BanheiroSocialQtd: response.data.BanheiroSocialQtd ?? 0,
-  };
-
-  const slugCorreto = imovel.Slug;
-
-  if (slug !== slugCorreto) {
-    redirect(`/imovel-${id}/${slugCorreto}`);
-  }  
-
-  const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
-  
-  // ✅ CONVERTER DATA AQUI NO COMPONENTE
-  const modifiedDate = convertBrazilianDateToISO(imovel.DataHoraAtualizacao);
-  console.log('🔍 Data convertida no componente:', modifiedDate);
-
-  return (
-    <>
-      {/* ✅ HEAD COM META TAGS CUSTOMIZADAS */}
-      <Head>
-        <meta property="article:modified_time" content={modifiedDate} />
-        <meta property="article:published_time" content={modifiedDate} />
-        <meta property="og:updated_time" content={modifiedDate} />
-      </Head>
-      
-      <section className="w-full bg-white pb-32 pt-20">
-        <StructuredDataApartment
-          title={imovel.Empreendimento}
-          price={imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}
-          description={`${imovel.Categoria} à venda em ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.Empreendimento}: ${imovel.DormitoriosAntigo} quartos, ${imovel.SuiteAntigo} suítes, ${imovel.BanheiroSocialQtd} banheiros, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt}. ${imovel.Situacao}. Valor: ${imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}. ${imovel.TipoEndereco} ${imovel.Endereco}.`}
-          address={`${imovel.TipoEndereco} ${imovel.Endereco}, ${imovel.Numero}, ${imovel.BairroComercial}, ${imovel.Cidade}`}
-          url={currentUrl}
-          image={imovel.Foto}
-        />
-
-        <ExitIntentModal condominio={imovel.Empreendimento} link={currentUrl} />
-
-        <div className="w-full mx-auto">
-          <ImageGallery imovel={imovel} />
-        </div>
-
-        <div className="container mx-auto gap-4 mt-3 px-4 md:px-0 flex flex-col lg:flex-row">
-          <div className="w-full lg:w-[65%]">
-            <TituloImovel imovel={imovel} currentUrl={currentUrl} />
-            <DetalhesImovel imovel={imovel} />
-            <DescricaoImovel imovel={imovel} />
-            <FichaTecnica imovel={imovel} />
-            <DetalhesCondominio imovel={imovel} />
-            <Lazer imovel={imovel} />
-            {imovel.Video && Object.keys(imovel.Video).length > 0 && (
-              <VideoCondominio imovel={imovel} />
-            )}
-            {imovel.Tour360 && <TourVirtual link={imovel.Tour360} titulo={imovel.Empreendimento} />}
-            <SimilarProperties id={imovel.Codigo} />
-            <LocalizacaoCondominio imovel={imovel} />
-          </div>
-
-          <div className="w-full lg:w-[35%] h-fit lg:sticky lg:top-24 order-first lg:order-last mb-6 lg:mb-0">
-            <Contato imovel={imovel} currentUrl={currentUrl} />
-          </div>
-        </div>
-
-        <div className="container mx-auto px-4 md:px-0">
-          <FAQImovel imovel={imovel} />
-        </div>
-
-        <WhatsappFloat
-          message={`Quero saber mais sobre o ${imovel.Empreendimento}, no bairro ${imovel.BairroComercial}, disponível na página do Imóvel: ${currentUrl}`}
-        />
-      </section>
-    </>
-  );
 }
