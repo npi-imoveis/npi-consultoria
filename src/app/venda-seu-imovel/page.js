@@ -1,14 +1,64 @@
-// app/venda-seu-imovel/components/ImovelFormClient.js
+// app/venda-seu-imovel/page.js
 "use client";
 
 import React, { useState, useRef } from "react";
-import { HeaderPage } from "../../components/ui/header-page";
-import { Footer } from "../../components/ui/footer";
+import { HeaderPage } from "../components/ui/header-page";
+import { Footer } from "../components/ui/footer";
 import Image from "next/image";
-import { getImageUploadMetadata, uploadToS3 } from "../../utils/s3-upload";
+import { getImageUploadMetadata, uploadToS3 } from "../utils/s3-upload";
 import { PhotoIcon, XCircleIcon } from "@heroicons/react/24/outline";
+import Head from "next/head";
 
-export default function ImovelFormClient() {
+// ✅ DADOS ESTRUTURADOS PARA SEO
+function StructuredDataService() {
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Service",
+        "@id": `${process.env.NEXT_PUBLIC_SITE_URL}/venda-seu-imovel#service`,
+        "name": "Cadastro de Imóvel para Venda ou Locação",
+        "description": "Serviço gratuito de cadastro de imóveis para venda ou locação com assessoria completa e avaliação profissional.",
+        "provider": {
+          "@type": "Organization",
+          "name": "NPI Consultoria",
+          "url": `${process.env.NEXT_PUBLIC_SITE_URL}`,
+        },
+        "serviceType": "Consultoria Imobiliária",
+        "areaServed": {
+          "@type": "Place",
+          "name": "São Paulo, Brasil"
+        }
+      },
+      {
+        "@type": "WebPage",
+        "@id": `${process.env.NEXT_PUBLIC_SITE_URL}/venda-seu-imovel`,
+        "url": `${process.env.NEXT_PUBLIC_SITE_URL}/venda-seu-imovel`,
+        "name": "Venda ou Alugue seu Imóvel | NPI Consultoria",
+        "description": "Cadastre gratuitamente seu imóvel para venda ou locação com a NPI Consultoria.",
+        "isPartOf": {
+          "@type": "WebSite",
+          "@id": `${process.env.NEXT_PUBLIC_SITE_URL}#website`
+        },
+        "primaryImageOfPage": {
+          "@type": "ImageObject",
+          "url": `${process.env.NEXT_PUBLIC_SITE_URL}/assets/images/imoveis/02.jpg`
+        },
+        "datePublished": new Date().toISOString(),
+        "dateModified": new Date().toISOString()
+      }
+    ]
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+    />
+  );
+}
+
+export default function ImovelForm() {
   const [formState, setFormState] = useState("form"); // estados: "form", "loading", "success"
   const [formData, setFormData] = useState({
     nome: "",
@@ -262,6 +312,49 @@ export default function ImovelFormClient() {
 
   return (
     <section>
+      {/* ✅ META TAGS SEO OTIMIZADAS */}
+      <Head>
+        <title>Venda ou Alugue seu Imóvel | Cadastro Grátis | NPI Consultoria</title>
+        <meta 
+          name="description" 
+          content="Cadastre gratuitamente seu imóvel para venda ou locação. Assessoria completa, avaliação profissional e marketing digital. Venda seu apartamento ou casa com facilidade e segurança." 
+        />
+        <meta 
+          name="keywords" 
+          content="vender imóvel, alugar imóvel, cadastro imóvel, avaliação gratuita, consultoria imobiliária, venda apartamento, locação casa" 
+        />
+        <link rel="canonical" href={`${process.env.NEXT_PUBLIC_SITE_URL}/venda-seu-imovel`} />
+        <meta name="robots" content="index, follow" />
+        
+        {/* OpenGraph */}
+        <meta property="og:title" content="Venda ou Alugue seu Imóvel com a NPI Consultoria" />
+        <meta property="og:description" content="Cadastre gratuitamente seu imóvel para venda ou locação. Assessoria completa e avaliação profissional." />
+        <meta property="og:url" content={`${process.env.NEXT_PUBLIC_SITE_URL}/venda-seu-imovel`} />
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="NPI Consultoria" />
+        <meta property="og:image" content={`${process.env.NEXT_PUBLIC_SITE_URL}/assets/images/imoveis/02.jpg`} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+        <meta property="og:image:alt" content="Cadastre seu imóvel para venda ou locação com a NPI Consultoria" />
+        
+        {/* Twitter */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="Venda ou Alugue seu Imóvel | NPI Consultoria" />
+        <meta name="twitter:description" content="Cadastre gratuitamente seu imóvel para venda ou locação. Assessoria completa e avaliação profissional." />
+        <meta name="twitter:site" content="@NPIImoveis" />
+        <meta name="twitter:creator" content="@NPIImoveis" />
+        <meta name="twitter:image" content={`${process.env.NEXT_PUBLIC_SITE_URL}/assets/images/imoveis/02.jpg`} />
+        
+        {/* Datas */}
+        <meta name="article:published_time" content={new Date().toISOString()} />
+        <meta name="article:modified_time" content={new Date().toISOString()} />
+        <meta name="last-modified" content={new Date().toISOString()} />
+        <meta name="date" content={new Date().toISOString()} />
+      </Head>
+
+      {/* ✅ DADOS ESTRUTURADOS */}
+      <StructuredDataService />
+
       <HeaderPage
         title="Cadastre seu imóvel para venda ou locação gratuitamente"
         description="Formulário completo e seguro para cadastro do seu imóvel. Nossa equipe especializada fará a avaliação e cuidará de todo o processo de venda ou locação."
