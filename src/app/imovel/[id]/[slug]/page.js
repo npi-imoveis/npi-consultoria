@@ -95,7 +95,7 @@ export async function generateMetadata({ params }) {
     'article:modified_time': imovel.DataHoraAtualizacao,
   },
 };
-
+}
 export const revalidate = 0;
 
 export default async function Imovel({ params }) {
