@@ -8,6 +8,7 @@ export async function SobreHub({ sobre }) {
         <div className="xl:w-[80%] sm:w-[85%] w-[90%] mx-auto flex flex-col md:flex-row lg:gap-4 gap-6 justify-center lg:items-stretch md:items-center mt-4">
           <div className="md:w-[50%] w-full relative h-64 md:h-auto">
             <Image
+               title="O que somos - Hub de Imobiliárias Boutique de Alto Padrão"
               src="/assets/images/home.jpg"
               alt="Imagem do HUB"
               layout="fill"
@@ -48,6 +49,7 @@ Cada imobiliária dentro do nosso HUB é cuidadosamente selecionada para atuar e
 
           <div className="md:w-[50%] w-full relative h-64 md:h-auto">
             <Image
+              title="Setorização - O futuro do mercado imobiliário" 
               src="/assets/images/setorizacao.jpg"
               alt="Imagem do HUB"
               layout="fill"
