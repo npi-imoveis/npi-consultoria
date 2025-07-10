@@ -42,6 +42,14 @@ export async function generateMetadata({ params }) {
     : imovel.Foto || `${process.env.NEXT_PUBLIC_SITE_URL}/og-image.png`;
 
   console.error(`[IMOVEL-META] Image URL: ${imageUrl}`);
+  console.log('🔍 DEBUG - Verificando datas:');
+  console.log('DataHoraAtualizacao:', imovel.DataHoraAtualizacao);
+  console.log('DataAtualizacao:', imovel.DataAtualizacao);
+  console.log('UpdatedAt:', imovel.UpdatedAt);
+  console.log('Todas as propriedades com "data":', 
+    Object.keys(imovel).filter(key => 
+      key.toLowerCase().includes('data') || 
+      key.toLowerCase().includes('updated')
 
  return {
   title,
