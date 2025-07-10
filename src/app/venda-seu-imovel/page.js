@@ -6,7 +6,7 @@ import ImovelFormClient from "./ImovelFormClient";
 // ✅ METADATA SEO (IGUAL AO HUB QUE FUNCIONOU)
 export const metadata = {
   title: "Venda ou Alugue seu Imóvel | Avaliação Gratuita | NPI Consultoria",
-  description: "Cadastre gratuitamente seu imóvel para venda ou locação. Avaliação profissional, fotografia inclusa, marketing em +20 portais imobiliários. Agende sua avaliação.",
+  description: "Cadastre gratuitamente seu imóvel para venda ou locação no HUB DE IMOBILIÁRIAS BOUTOQUE DE ALTO PADRÃO, dando visiibilidade e ele na maior vitrine do mundo, o GOOGLE.",
   keywords: "vender imóvel São Paulo, alugar imóvel, avaliação imóvel gratuita, consultoria imobiliária, venda apartamento, locação casa, corretora imóveis",
   authors: [{ name: "NPI Consultoria" }],
   creator: "NPI Consultoria", 
@@ -28,13 +28,13 @@ export const metadata = {
     url: "https://www.npiconsultoria.com.br/venda-seu-imovel",
     siteName: "NPI Consultoria",
     title: "Venda ou Alugue seu Imóvel com Assessoria Completa | NPI Consultoria",
-    description: "Cadastre gratuitamente seu imóvel para venda ou locação. Avaliação profissional, marketing em múltiplos portais e acompanhamento completo até a venda.",
+    description: "Cadastre gratuitamente seu imóvel para venda ou locação no HUB DE IMOBILIÁRIAS BOUTOQUE DE ALTO PADRÃO, dando visiibilidade e ele na maior vitrine do mundo, o GOOGLE.",
     images: [
       {
         url: "https://www.npiconsultoria.com.br/assets/images/imoveis/02.jpg",
         width: 1200,
         height: 630,
-        alt: "Venda ou alugue seu imóvel com a NPI Consultoria - Avaliação gratuita",
+        alt: "Venda ou alugue seu imóvel com o HUB da NPI",
         type: "image/jpeg",
       }
     ],
@@ -43,8 +43,8 @@ export const metadata = {
     card: "summary_large_image",
     site: "@NPIImoveis",
     creator: "@NPIImoveis",
-    title: "Venda ou Alugue seu Imóvel | Avaliação Gratuita | NPI Consultoria",
-    description: "Cadastre gratuitamente seu imóvel. Avaliação profissional, marketing em +20 portais. 10+ anos de experiência no mercado imobiliário.",
+    title: "Venda ou Alugue seu Imóvel com o HUB DE IMOBILIÁRIAS BOUTIQUE DE ALTO PADRÃO | NPi",
+    description: "Cadastre gratuitamente seu imóvel para venda ou locação no HUB DE IMOBILIÁRIAS BOUTOQUE DE ALTO PADRÃO, dando visiibilidade e ele na maior vitrine do mundo, o GOOGLE.",
     images: ["https://www.npiconsultoria.com.br/assets/images/imoveis/02.jpg"],
   },
   alternates: {
@@ -66,8 +66,8 @@ export const metadata = {
 const structuredData = {
   "@context": "https://schema.org",
   "@type": "WebPage",
-  name: "Venda ou Alugue seu Imóvel com Avaliação Gratuita",
-  description: "Cadastre gratuitamente seu imóvel para venda ou locação. Avaliação profissional, fotografia inclusa, marketing em +20 portais imobiliários.",
+  name: "Venda ou Alugue seu Imóvel com o HUB da NPi",
+  description: "Cadastre gratuitamente seu imóvel para venda ou locação no HUB DE IMOBILIÁRIAS BOUTOQUE DE ALTO PADRÃO, dando visiibilidade e ele na maior vitrine do mundo, o GOOGLE.",
   url: "https://www.npiconsultoria.com.br/venda-seu-imovel",
   mainEntity: {
     "@type": "RealEstateAgent",
@@ -142,7 +142,7 @@ export default async function ImovelFormPage() {
       <section>
         <HeaderPage
           title="Venda ou alugue seu imóvel com assessoria completa"
-          description="Cadastre gratuitamente seu imóvel e receba avaliação profissional, marketing em múltiplos portais."
+          description="Cadastre gratuitamente seu imóvel."
           image="/assets/images/imoveis/02.jpg"
         />
         
