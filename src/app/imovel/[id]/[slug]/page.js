@@ -136,6 +136,8 @@ export async function generateMetadata({ params }) {
             type: "image/jpeg",
           }
         ],
+        // ✅ Meta tags OpenGraph adicionais
+        updated_time: modifiedDate,
       },
       twitter: {
         card: "summary_large_image",
