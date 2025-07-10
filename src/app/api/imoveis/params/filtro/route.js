@@ -36,7 +36,16 @@ export async function GET(request) {
       });
     }
 
-    filtro["FinalidadeStatus." + finalidade] = true;
+    // Mapeamento correto: finalidade -> Status do banco
+    const statusMap = {
+      'Comprar': 'VENDA',
+      'Alugar': 'ALUGUEL'
+    };
+    
+    const statusFiltro = statusMap[finalidade];
+    if (statusFiltro) {
+      filtro.Status = statusFiltro;
+    }
 
     if (bairros && bairros.length > 0) {
       filtro.BairroComercial = { $in: bairros };

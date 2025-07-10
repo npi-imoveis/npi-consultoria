@@ -18,6 +18,8 @@ import { getImoveis, searchImoveis } from "../services";
 import useFiltersStore from "../store/filtrosStore";
 import useFavoritosStore from "../store/favoritosStore";
 import useImovelStore from "../store/imovelStore";
+import { gerarTituloSeoFriendly, gerarDescricaoSeoFriendly } from "../utils/url-slugs";
+// import { useSeoUrls } from "../hooks/useSeoUrls"; // DESABILITADO: não usar redirecionamento automático
 
 export default function BuscaImoveis() {
   const [imoveis, setImoveis] = useState([]); // Estado inicial como array
@@ -32,6 +34,9 @@ export default function BuscaImoveis() {
 
   // Acessando funções do store de imóveis
   const adicionarVariosImoveisCache = useImovelStore((state) => state.adicionarVariosImoveisCache);
+
+  // Hook para URLs SEO-friendly - DESABILITADO
+  // const { navegarComFiltros, podeUsarUrlSeoFriendly } = useSeoUrls();
 
   // Estado para controlar a visualização de mapa ou lista
   const [mostrandoMapa, setMostrandoMapa] = useState(false);
@@ -49,10 +54,85 @@ export default function BuscaImoveis() {
   // Obter o contador de atualizações de filtros do store
   const atualizacoesFiltros = useFiltersStore((state) => state.atualizacoesFiltros);
 
+  // Função para atualizar título dinâmico
+  const updateDynamicTitle = (totalItems = null) => {
+    const filtrosAtuais = useFiltersStore.getState();
+    
+    // Verificar se há filtros aplicados para gerar título dinâmico
+    if (filtrosAtuais.cidadeSelecionada || filtrosAtuais.categoriaSelecionada || filtrosAtuais.finalidade) {
+      const tituloSeo = gerarTituloSeoFriendly(filtrosAtuais, null); // Removido totalItems
+      document.title = tituloSeo;
+      console.log('🔍 [BUSCA] Título dinâmico atualizado:', tituloSeo);
+    } else {
+      // Título padrão quando não há filtros específicos
+      const tituloDefault = 'Busca de Imóveis | NPi Imóveis';
+      document.title = tituloDefault;
+      console.log('🔍 [BUSCA] Título padrão aplicado:', tituloDefault);
+    }
+  };
+
    // Efeito para marcar quando estamos no navegador
   useEffect(() => {
     setIsBrowser(true);
   }, []);
+
+  // Efeito para carregar filtros dos parâmetros da URL (URLs amigáveis)
+  useEffect(() => {
+    if (!isBrowser) return;
+    
+    const searchParams = new URLSearchParams(window.location.search);
+    const cidade = searchParams.get('cidade');
+    const finalidade = searchParams.get('finalidade');
+    const categoria = searchParams.get('categoria');
+    const bairros = searchParams.get('bairros');
+    const quartos = searchParams.get('quartos');
+    const precoMin = searchParams.get('precoMin');
+    const precoMax = searchParams.get('precoMax');
+    
+    // Se há parâmetros de filtros na URL, aplicá-los
+    if (cidade || finalidade || categoria || bairros || quartos || precoMin || precoMax) {
+      console.log('🔍 [BUSCA] Carregando filtros dos parâmetros da URL:', {
+        cidade, finalidade, categoria, bairros, quartos, precoMin, precoMax
+      });
+      
+      const filtrosStore = useFiltersStore.getState();
+      
+      // Preparar filtros para aplicar
+      const filtrosParaAplicar = {};
+      
+      if (cidade) filtrosParaAplicar.cidadeSelecionada = cidade;
+      if (finalidade) filtrosParaAplicar.finalidade = finalidade;
+      if (categoria) filtrosParaAplicar.categoriaSelecionada = categoria;
+      if (bairros) {
+        const bairrosArray = bairros.split(',').map(b => b.trim()).filter(b => b.length > 0);
+        filtrosParaAplicar.bairrosSelecionados = bairrosArray;
+      }
+      if (quartos) filtrosParaAplicar.quartos = parseInt(quartos);
+      if (precoMin) filtrosParaAplicar.precoMin = parseFloat(precoMin);
+      if (precoMax) filtrosParaAplicar.precoMax = parseFloat(precoMax);
+      
+      // Aplicar filtros no store
+      filtrosStore.setFilters(filtrosParaAplicar);
+      filtrosStore.aplicarFiltros();
+      
+      // Gerar título dinâmico baseado nos filtros aplicados
+      setTimeout(() => {
+        updateDynamicTitle();
+      }, 100);
+    }
+  }, [isBrowser]);
+
+  // Efeito para atualizar título quando filtros são aplicados manualmente
+  useEffect(() => {
+    if (!isBrowser) return;
+    
+    // Verificar se há filtros aplicados
+    const filtrosAtuais = useFiltersStore.getState();
+    if (filtrosAtuais.filtrosAplicados) {
+      console.log('🔍 [BUSCA] Filtros aplicados detectados, atualizando título...');
+      updateDynamicTitle();
+    }
+  }, [atualizacoesFiltros, isBrowser]);
 
   // Estados para paginação
   const [currentPage, setCurrentPage] = useState(1);
@@ -225,6 +305,9 @@ export default function BuscaImoveis() {
           limit: Number(response.pagination.itemsPerPage) || 12,
         };
         setPagination(validPagination);
+        
+        // Atualizar título dinâmico com o número de imóveis encontrados
+        updateDynamicTitle(validPagination.totalItems);
       }
     } catch (error) {
       console.error("Erro ao buscar imóveis:", error);
@@ -270,6 +353,9 @@ export default function BuscaImoveis() {
   const handleSearch = async (term) => {
     // Limpar qualquer filtro aplicado anteriormente
     useFiltersStore.getState().limparFiltros();
+    
+    // Atualizar título após limpar filtros
+    updateDynamicTitle();
 
     if (!term || term.trim() === "") {
       // Se não houver termo de busca, voltar para a busca normal
@@ -478,6 +564,16 @@ export default function BuscaImoveis() {
     if (mostrandoFavoritos) {
       setMostrandoFavoritos(false);
     }
+
+    // DESABILITADO: Redirecionamento automático para URL SEO-friendly
+    // Mantém o usuário na página de busca normal (/busca) com todos os filtros
+    // const filtrosAtuais = useFiltersStore.getState();
+    // if (podeUsarUrlSeoFriendly(filtrosAtuais)) {
+    //   console.log('Aplicando filtros com URL SEO-friendly');
+    //   setTimeout(() => {
+    //     navegarComFiltros(filtrosAtuais);
+    //   }, 100); // Pequeno delay para garantir que o store foi atualizado
+    // }
   };
 
   return (

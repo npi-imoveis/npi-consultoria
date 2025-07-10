@@ -9,7 +9,154 @@ export async function middleware(request) {
   console.log(`🔍 [MIDDLEWARE] Processando: ${pathname}`);
   console.log(`🔍 [MIDDLEWARE] Origin: ${origin}`);
 
-  // 1. Match EXATO para URLs quebradas
+  // 1. Verificar se é URL SEO-friendly (/buscar/cidade/finalidade/categoria)
+  const seoMatch = pathname.match(/^\/buscar\/([^\/]+)\/([^\/]+)\/([^\/]+)(.*)$/);
+  
+  if (seoMatch) {
+    const [, cidade, finalidade, categoria, restPath] = seoMatch;
+    
+    // Lista de cidades válidas (adicione mais conforme necessário)
+    const cidadesValidas = ['sao-paulo', 'rio-de-janeiro', 'belo-horizonte', 'brasilia', 'salvador', 'fortaleza', 'curitiba', 'recife', 'porto-alegre', 'manaus', 'campinas', 'santo-andre'];
+    const finalidadesValidas = ['compra', 'venda', 'aluguel'];
+    const categoriasValidas = ['apartamentos', 'casas', 'coberturas', 'studios', 'terrenos', 'salas'];
+    
+    if (cidadesValidas.includes(cidade) && finalidadesValidas.includes(finalidade) && categoriasValidas.includes(categoria)) {
+      console.log(`🔍 [MIDDLEWARE] ✅ URL SEO-friendly detectada: /buscar/${cidade}/${finalidade}/${categoria}${restPath}`);
+      
+      // Converter parâmetros de URL para filtros
+      const parametrosUrl = { cidade, finalidade, categoria };
+      
+      // Processar parâmetros extras se existirem
+      if (restPath && restPath.length > 1) {
+        const params = restPath.substring(1).split('/').filter(p => p.length > 0);
+        
+        params.forEach((param, index) => {
+          if (param.includes('+')) {
+            // Múltiplos bairros
+            parametrosUrl.bairros = param;
+          } else if (param.includes('-quarto')) {
+            // Quartos
+            parametrosUrl.quartos = param;
+          } else if (param.includes('mil') || param.includes('ate-') || param.includes('acima-')) {
+            // Preço
+            parametrosUrl.preco = param;
+          } else if (index === 0 && !param.includes('-quarto') && !param.includes('mil')) {
+            // Primeiro parâmetro provavelmente é bairro único
+            parametrosUrl.bairros = param;
+          }
+        });
+      }
+      
+      // Converter parâmetros URL para filtros diretamente (sem import)
+      const filtros = {
+        cidadeSelecionada: '',
+        finalidade: '',
+        categoriaSelecionada: '',
+        bairrosSelecionados: [],
+        quartos: null,
+        precoMin: null,
+        precoMax: null
+      };
+
+      // Mapeamentos de conversão
+      const MAPEAMENTO_CIDADES = {
+        'sao-paulo': 'São Paulo',
+        'rio-de-janeiro': 'Rio de Janeiro', 
+        'belo-horizonte': 'Belo Horizonte',
+        'brasilia': 'Brasília',
+        'salvador': 'Salvador',
+        'fortaleza': 'Fortaleza',
+        'curitiba': 'Curitiba',
+        'recife': 'Recife',
+        'porto-alegre': 'Porto Alegre',
+        'manaus': 'Manaus',
+        'campinas': 'Campinas',
+        'santo-andre': 'Santo André'
+      };
+
+      const MAPEAMENTO_CATEGORIAS = {
+        'apartamentos': 'Apartamento',
+        'casas': 'Casa',
+        'coberturas': 'Cobertura',
+        'studios': 'Studio',
+        'terrenos': 'Terreno',
+        'salas': 'Sala'
+      };
+
+      const MAPEAMENTO_FINALIDADES = {
+        'compra': 'Comprar',
+        'venda': 'Comprar',
+        'aluguel': 'Alugar'
+      };
+
+      // Converter parâmetros básicos
+      filtros.cidadeSelecionada = MAPEAMENTO_CIDADES[parametrosUrl.cidade] || parametrosUrl.cidade;
+      filtros.finalidade = MAPEAMENTO_FINALIDADES[parametrosUrl.finalidade] || parametrosUrl.finalidade;
+      filtros.categoriaSelecionada = MAPEAMENTO_CATEGORIAS[parametrosUrl.categoria] || parametrosUrl.categoria;
+
+      // Converter bairros se existirem
+      if (parametrosUrl.bairros) {
+        filtros.bairrosSelecionados = parametrosUrl.bairros.split('+').map(bairroSlug => {
+          return bairroSlug
+            .split('-')
+            .map(palavra => palavra.charAt(0).toUpperCase() + palavra.slice(1))
+            .join(' ');
+        });
+      }
+
+      // Converter quartos se existir
+      if (parametrosUrl.quartos) {
+        if (parametrosUrl.quartos === '1-quarto') {
+          filtros.quartos = 1;
+        } else {
+          const match = parametrosUrl.quartos.match(/^(\d+)-quartos$/);
+          if (match) filtros.quartos = parseInt(match[1]);
+        }
+      }
+
+      // Converter preços se existir
+      if (parametrosUrl.preco) {
+        const converterValor = (valorStr) => {
+          if (valorStr.includes('mi')) {
+            return parseFloat(valorStr.replace('mi', '')) * 1000000;
+          } else if (valorStr.includes('mil')) {
+            return parseFloat(valorStr.replace('mil', '')) * 1000;
+          }
+          return parseFloat(valorStr);
+        };
+        
+        if (parametrosUrl.preco.startsWith('ate-')) {
+          const valor = parametrosUrl.preco.replace('ate-', '');
+          filtros.precoMax = converterValor(valor);
+        } else if (parametrosUrl.preco.startsWith('acima-')) {
+          const valor = parametrosUrl.preco.replace('acima-', '');
+          filtros.precoMin = converterValor(valor);
+        } else if (parametrosUrl.preco.includes('-')) {
+          const [minStr, maxStr] = parametrosUrl.preco.split('-');
+          filtros.precoMin = converterValor(minStr);
+          filtros.precoMax = converterValor(maxStr);
+        }
+      }
+      
+      // Construir URL de redirecionamento para /busca
+      const redirectUrl = new URL('/busca', request.url);
+      
+      if (filtros.cidadeSelecionada) redirectUrl.searchParams.set('cidade', filtros.cidadeSelecionada);
+      if (filtros.finalidade) redirectUrl.searchParams.set('finalidade', filtros.finalidade);
+      if (filtros.categoriaSelecionada) redirectUrl.searchParams.set('categoria', filtros.categoriaSelecionada);
+      if (filtros.bairrosSelecionados && filtros.bairrosSelecionados.length > 0) {
+        redirectUrl.searchParams.set('bairros', filtros.bairrosSelecionados.join(','));
+      }
+      if (filtros.quartos) redirectUrl.searchParams.set('quartos', filtros.quartos.toString());
+      if (filtros.precoMin) redirectUrl.searchParams.set('precoMin', filtros.precoMin.toString());
+      if (filtros.precoMax) redirectUrl.searchParams.set('precoMax', filtros.precoMax.toString());
+      
+      console.log(`🔍 [MIDDLEWARE] ➡️ Redirecionando para: ${redirectUrl.toString()}`);
+      return NextResponse.redirect(redirectUrl);
+    }
+  }
+
+  // 2. Match EXATO para URLs quebradas de imóveis
   const match = pathname.match(/^\/imovel-(\d+)\/?$/);
   
   if (!match) {
@@ -95,5 +242,6 @@ export const config = {
     '/imovel-:id(\\d+)',           // /imovel-1715
     '/imovel-:id(\\d+)/',          // /imovel-1715/
     '/imovel-:id(\\d+)/:slug*',    // /imovel-1715/helbor-brooklin
+    '/buscar/:cidade/:finalidade/:categoria*', // URLs SEO-friendly
   ],
 };
