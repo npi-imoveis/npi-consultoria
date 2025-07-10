@@ -576,25 +576,57 @@ export default function BuscaImoveis() {
   // Função para construir o texto dos filtros aplicados para exibir na página
   const construirTextoFiltros = () => {
     const filtrosAtuais = useFiltersStore.getState();
-    const filtros = [];
-
-    if (filtrosAtuais.cidadeSelecionada) {
-      filtros.push(filtrosAtuais.cidadeSelecionada);
+    
+    // Padrão: "20 apartamentos à venda em moema"
+    let texto = '';
+    
+    // Quantidade de imóveis encontrados
+    const quantidade = pagination.totalItems || 0;
+    texto += `${quantidade}`;
+    
+    // Categoria no plural
+    if (filtrosAtuais.categoriaSelecionada) {
+      const categoriaPluralMap = {
+        'Apartamento': 'apartamentos',
+        'Casa': 'casas',
+        'Casa Comercial': 'casas comerciais',
+        'Casa em Condominio': 'casas em condomínio',
+        'Cobertura': 'coberturas',
+        'Flat': 'flats',
+        'Garden': 'gardens',
+        'Loft': 'lofts',
+        'Loja': 'lojas',
+        'Prédio Comercial': 'prédios comerciais',
+        'Sala Comercial': 'salas comerciais',
+        'Sobrado': 'sobrados',
+        'Terreno': 'terrenos'
+      };
+      const categoriaPlural = categoriaPluralMap[filtrosAtuais.categoriaSelecionada] || 'imóveis';
+      texto += ` ${categoriaPlural}`;
+    } else {
+      texto += ' imóveis';
     }
-
+    
+    // Finalidade
+    if (filtrosAtuais.finalidade) {
+      const finalidadeTexto = filtrosAtuais.finalidade === 'Comprar' ? 'à venda' : 'para alugar';
+      texto += ` ${finalidadeTexto}`;
+    }
+    
+    // Localização (bairro ou cidade)
     if (filtrosAtuais.bairrosSelecionados && filtrosAtuais.bairrosSelecionados.length > 0) {
       if (filtrosAtuais.bairrosSelecionados.length === 1) {
-        filtros.push(filtrosAtuais.bairrosSelecionados[0]);
+        texto += ` em ${filtrosAtuais.bairrosSelecionados[0]}`;
+      } else if (filtrosAtuais.bairrosSelecionados.length <= 3) {
+        texto += ` em ${filtrosAtuais.bairrosSelecionados.join(', ')}`;
       } else {
-        filtros.push(`${filtrosAtuais.bairrosSelecionados.length} bairros`);
+        texto += ` em ${filtrosAtuais.bairrosSelecionados.slice(0, 2).join(', ')} e mais ${filtrosAtuais.bairrosSelecionados.length - 2} bairros`;
       }
+    } else if (filtrosAtuais.cidadeSelecionada) {
+      texto += ` em ${filtrosAtuais.cidadeSelecionada}`;
     }
 
-    if (filtrosAtuais.categoriaSelecionada) {
-      filtros.push(filtrosAtuais.categoriaSelecionada);
-    }
-
-    return filtros.join(" - ");
+    return texto || 'Busca de imóveis';
   };
 
   // Função para lidar com a mudança de ordenação

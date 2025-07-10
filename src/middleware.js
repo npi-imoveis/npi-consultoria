@@ -19,7 +19,11 @@ export async function middleware(request) {
     // Buscar cidades válidas do banco de dados
     const cidadesValidas = getCityValidSlugsSync();
     const finalidadesValidas = ['compra', 'venda', 'aluguel'];
-    const categoriasValidas = ['apartamentos', 'casas', 'coberturas', 'studios', 'terrenos', 'salas'];
+    const categoriasValidas = [
+      'apartamentos', 'casas', 'casas-comerciais', 'casas-em-condominio', 
+      'coberturas', 'flats', 'gardens', 'lofts', 'lojas', 
+      'predios-comerciais', 'salas-comerciais', 'sobrados', 'terrenos'
+    ];
     
     if (cidadesValidas.includes(cidade) && finalidadesValidas.includes(finalidade) && categoriasValidas.includes(categoria)) {
       console.log(`🔍 [MIDDLEWARE] ✅ URL SEO-friendly detectada: /buscar/${finalidade}/${categoria}/${cidade}${restPath}`);
@@ -64,10 +68,17 @@ export async function middleware(request) {
       const MAPEAMENTO_CATEGORIAS = {
         'apartamentos': 'Apartamento',
         'casas': 'Casa',
+        'casas-comerciais': 'Casa Comercial',
+        'casas-em-condominio': 'Casa em Condominio',
         'coberturas': 'Cobertura',
-        'studios': 'Studio',
-        'terrenos': 'Terreno',
-        'salas': 'Sala'
+        'flats': 'Flat',
+        'gardens': 'Garden',
+        'lofts': 'Loft',
+        'lojas': 'Loja',
+        'predios-comerciais': 'Prédio Comercial',
+        'salas-comerciais': 'Sala Comercial',
+        'sobrados': 'Sobrado',
+        'terrenos': 'Terreno'
       };
 
       const MAPEAMENTO_FINALIDADES = {

@@ -83,10 +83,17 @@ const getFallbackCityMapping = () => {
 const MAPEAMENTO_CATEGORIAS = {
   'apartamentos': 'Apartamento',
   'casas': 'Casa',
+  'casas-comerciais': 'Casa Comercial',
+  'casas-em-condominio': 'Casa em Condominio',
   'coberturas': 'Cobertura',
-  'studios': 'Studio',
-  'terrenos': 'Terreno',
-  'salas': 'Sala'
+  'flats': 'Flat',
+  'gardens': 'Garden',
+  'lofts': 'Loft',
+  'lojas': 'Loja',
+  'predios-comerciais': 'Prédio Comercial',
+  'salas-comerciais': 'Sala Comercial',
+  'sobrados': 'Sobrado',
+  'terrenos': 'Terreno'
 };
 
 const MAPEAMENTO_FINALIDADES = {
@@ -326,11 +333,18 @@ export const gerarTituloSeoFriendly = (filtros, totalItems = null) => {
   // Categoria no plural
   const categoriaPluralMap = {
     'Apartamento': 'Apartamentos',
-    'Casa': 'Casas', 
+    'Casa': 'Casas',
+    'Casa Comercial': 'Casas Comerciais',
+    'Casa em Condominio': 'Casas em Condominio',
     'Cobertura': 'Coberturas',
-    'Studio': 'Studios',
-    'Terreno': 'Terrenos',
-    'Sala': 'Salas'
+    'Flat': 'Flats',
+    'Garden': 'Gardens',
+    'Loft': 'Lofts',
+    'Loja': 'Lojas',
+    'Prédio Comercial': 'Prédios Comerciais',
+    'Sala Comercial': 'Salas Comerciais',
+    'Sobrado': 'Sobrados',
+    'Terreno': 'Terrenos'
   };
   const categoriaPlural = categoriaPluralMap[categoriaSelecionada] || categoriaSelecionada;
   
