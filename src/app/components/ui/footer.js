@@ -104,11 +104,11 @@ export function Footer() {
           <p className="font-semibold">Boutique de Alto Padrão</p>
           <div className="mt-4 flex justify-center md:justify-end">
             <Image
-            src="/assets/images/bg-hub.png"
-            alt="Logo Hub de Imobiliárias Boutique de Alto Padrão da NPi"
-            title="Logo Hub de Imobiliárias Boutique de Alto Padrão da NPi"
-            width={...}
-            height={...}
+              src="/assets/images/bg-hub.png"
+              alt="Logo Hub de Imobiliárias Boutique de Alto Padrão da NPi"
+              title="Logo Hub de Imobiliárias Boutique de Alto Padrão da NPi"
+              width={120}
+              height={120}
             />
           </div>
         </div>
