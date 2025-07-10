@@ -133,7 +133,25 @@ export async function generateMetadata({ params }) {
     },
   };
 }
+
 export const revalidate = 0;
+
+// ✅ FUNÇÃO PARA CONVERTER DATA (COMPONENTE)
+const convertBrazilianDateToISO = (brazilianDate) => {
+  if (!brazilianDate) return '2025-01-10T14:30:00Z';
+  
+  try {
+    const [datePart, timePart] = brazilianDate.split(', ');
+    const [day, month, year] = datePart.split('/');
+    const [hours, minutes, seconds] = timePart.split(':');
+    
+    const date = new Date(parseInt(year), parseInt(month) - 1, parseInt(day), parseInt(hours), parseInt(minutes), parseInt(seconds));
+    return date.toISOString();
+  } catch (error) {
+    console.error('Erro ao converter data:', error);
+    return '2025-01-10T14:30:00Z';
+  }
+};
 
 export default async function Imovel({ params }) {
   const { id, slug } = params;
@@ -151,77 +169,84 @@ export default async function Imovel({ params }) {
     empreendimento: response?.data?.Empreendimento?.substring(0, 30)
   });
 
-if (!response?.data) {
-  notFound();
-}
+  if (!response?.data) {
+    notFound();
+  }
 
-const imovel = {
-  ...response.data,
-  SuiteAntigo: response.data.SuiteAntigo ?? response.data.Suites ?? 0,
-  DormitoriosAntigo: response.data.DormitoriosAntigo ?? 0,
-  VagasAntigo: response.data.VagasAntigo ?? 0,
-  BanheiroSocialQtd: response.data.BanheiroSocialQtd ?? 0,
-};
+  const imovel = {
+    ...response.data,
+    SuiteAntigo: response.data.SuiteAntigo ?? response.data.Suites ?? 0,
+    DormitoriosAntigo: response.data.DormitoriosAntigo ?? 0,
+    VagasAntigo: response.data.VagasAntigo ?? 0,
+    BanheiroSocialQtd: response.data.BanheiroSocialQtd ?? 0,
+  };
 
-const slugCorreto = imovel.Slug;
+  const slugCorreto = imovel.Slug;
 
-if (slug !== slugCorreto) {
+  if (slug !== slugCorreto) {
     redirect(`/imovel-${id}/${slugCorreto}`);
   }  
 
   const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
+  
+  // ✅ CONVERTER DATA AQUI NO COMPONENTE
+  const modifiedDate = convertBrazilianDateToISO(imovel.DataHoraAtualizacao);
+  console.log('🔍 Data convertida no componente:', modifiedDate);
 
   return (
     <>
-    <Head>
-      <meta property="article:modified_time" content={modifiedDate} />
-      <meta property="article:published_time" content={modifiedDate} />
-      <meta property="og:updated_time" content={modifiedDate} />
-    </Head>
-    <section className="w-full bg-white pb-32 pt-20">
-      <StructuredDataApartment
-        title={imovel.Empreendimento}
-        price={imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}
-        description={`${imovel.Categoria} à venda em ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.Empreendimento}: ${imovel.DormitoriosAntigo} quartos, ${imovel.SuiteAntigo} suítes, ${imovel.BanheiroSocialQtd} banheiros, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt}. ${imovel.Situacao}. Valor: ${imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}. ${imovel.TipoEndereco} ${imovel.Endereco}.`}
-        address={`${imovel.TipoEndereco} ${imovel.Endereco}, ${imovel.Numero}, ${imovel.BairroComercial}, ${imovel.Cidade}`}
-        url={currentUrl}
-        image={imovel.Foto}
-      />
+      {/* ✅ HEAD COM META TAGS CUSTOMIZADAS */}
+      <Head>
+        <meta property="article:modified_time" content={modifiedDate} />
+        <meta property="article:published_time" content={modifiedDate} />
+        <meta property="og:updated_time" content={modifiedDate} />
+      </Head>
+      
+      <section className="w-full bg-white pb-32 pt-20">
+        <StructuredDataApartment
+          title={imovel.Empreendimento}
+          price={imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}
+          description={`${imovel.Categoria} à venda em ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.Empreendimento}: ${imovel.DormitoriosAntigo} quartos, ${imovel.SuiteAntigo} suítes, ${imovel.BanheiroSocialQtd} banheiros, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt}. ${imovel.Situacao}. Valor: ${imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}. ${imovel.TipoEndereco} ${imovel.Endereco}.`}
+          address={`${imovel.TipoEndereco} ${imovel.Endereco}, ${imovel.Numero}, ${imovel.BairroComercial}, ${imovel.Cidade}`}
+          url={currentUrl}
+          image={imovel.Foto}
+        />
 
-      <ExitIntentModal condominio={imovel.Empreendimento} link={currentUrl} />
+        <ExitIntentModal condominio={imovel.Empreendimento} link={currentUrl} />
 
-      <div className="w-full mx-auto">
-        <ImageGallery imovel={imovel} />
-      </div>
-
-      <div className="container mx-auto gap-4 mt-3 px-4 md:px-0 flex flex-col lg:flex-row">
-        <div className="w-full lg:w-[65%]">
-          <TituloImovel imovel={imovel} currentUrl={currentUrl} />
-          <DetalhesImovel imovel={imovel} />
-          <DescricaoImovel imovel={imovel} />
-          <FichaTecnica imovel={imovel} />
-          <DetalhesCondominio imovel={imovel} />
-          <Lazer imovel={imovel} />
-          {imovel.Video && Object.keys(imovel.Video).length > 0 && (
-            <VideoCondominio imovel={imovel} />
-          )}
-          {imovel.Tour360 && <TourVirtual link={imovel.Tour360} titulo={imovel.Empreendimento} />}
-          <SimilarProperties id={imovel.Codigo} />
-          <LocalizacaoCondominio imovel={imovel} />
+        <div className="w-full mx-auto">
+          <ImageGallery imovel={imovel} />
         </div>
 
-        <div className="w-full lg:w-[35%] h-fit lg:sticky lg:top-24 order-first lg:order-last mb-6 lg:mb-0">
-          <Contato imovel={imovel} currentUrl={currentUrl} />
+        <div className="container mx-auto gap-4 mt-3 px-4 md:px-0 flex flex-col lg:flex-row">
+          <div className="w-full lg:w-[65%]">
+            <TituloImovel imovel={imovel} currentUrl={currentUrl} />
+            <DetalhesImovel imovel={imovel} />
+            <DescricaoImovel imovel={imovel} />
+            <FichaTecnica imovel={imovel} />
+            <DetalhesCondominio imovel={imovel} />
+            <Lazer imovel={imovel} />
+            {imovel.Video && Object.keys(imovel.Video).length > 0 && (
+              <VideoCondominio imovel={imovel} />
+            )}
+            {imovel.Tour360 && <TourVirtual link={imovel.Tour360} titulo={imovel.Empreendimento} />}
+            <SimilarProperties id={imovel.Codigo} />
+            <LocalizacaoCondominio imovel={imovel} />
+          </div>
+
+          <div className="w-full lg:w-[35%] h-fit lg:sticky lg:top-24 order-first lg:order-last mb-6 lg:mb-0">
+            <Contato imovel={imovel} currentUrl={currentUrl} />
+          </div>
         </div>
-      </div>
 
-      <div className="container mx-auto px-4 md:px-0">
-        <FAQImovel imovel={imovel} />
-      </div>
+        <div className="container mx-auto px-4 md:px-0">
+          <FAQImovel imovel={imovel} />
+        </div>
 
-      <WhatsappFloat
-        message={`Quero saber mais sobre o ${imovel.Empreendimento}, no bairro ${imovel.BairroComercial}, disponível na página do Imóvel: ${currentUrl}`}
-      />
-    </section>
+        <WhatsappFloat
+          message={`Quero saber mais sobre o ${imovel.Empreendimento}, no bairro ${imovel.BairroComercial}, disponível na página do Imóvel: ${currentUrl}`}
+        />
+      </section>
+    </>
   );
 }
