@@ -115,7 +115,9 @@ export async function generateMetadata({ params }) {
     // ✅ Data de atualização para SEO - COM CONVERSÃO
     other: {
       ...(modifiedDate && {
-        'article:modified_time': modifiedDate,
+        other: {
+  'article:modified_time': '2025-01-10T14:30:00Z', // Data fixa para teste
+},
       }),
     },
   };
