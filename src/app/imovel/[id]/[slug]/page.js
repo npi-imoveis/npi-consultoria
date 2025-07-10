@@ -23,7 +23,6 @@ import { notFound, redirect } from "next/navigation";
 export async function generateMetadata({ params }) {
   const { id } = params;
   
-  // FORÇAR LOG NO CONSOLE
   console.error(`[IMOVEL-META] =========== PROCESSANDO ID: ${id} ===========`);
   
   const response = await getImovelById(id);
@@ -31,78 +30,84 @@ export async function generateMetadata({ params }) {
   if (!response?.data) return {};
 
   const imovel = response.data;
+  
+  // ✅ DEBUG COMPLETO - SINTAXE CORRIGIDA
+  console.log('🔍 DEBUG - Verificando datas:');
+  console.log('DataHoraAtualizacao:', imovel.DataHoraAtualizacao);
+  console.log('DataAtualizacao:', imovel.DataAtualizacao);
+  console.log('UpdatedAt:', imovel.UpdatedAt);
+  
+  // ✅ BUSCAR TODAS AS PROPRIEDADES COM DATA
+  const dataProperties = Object.keys(imovel).filter(key => 
+    key.toLowerCase().includes('data') || 
+    key.toLowerCase().includes('updated')
+  );
+  console.log('Propriedades com data/updated:', dataProperties);
+  
   const title = `${imovel.Empreendimento} - ${imovel.BairroComercial}, ${imovel.Cidade}`;
   const description = `${imovel.Categoria} à venda no bairro ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.DormitoriosAntigo} dormitórios, ${imovel.SuiteAntigo} suítes, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt}. Valor: ${imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}.`;
 
   const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
   
-  // Corrigir imagem - imovel.Foto é array, pegar primeira imagem
   const imageUrl = Array.isArray(imovel.Foto) && imovel.Foto.length > 0 
     ? (imovel.Foto[0].Foto || imovel.Foto[0].FotoPequena || imovel.Foto[0])
     : imovel.Foto || `${process.env.NEXT_PUBLIC_SITE_URL}/og-image.png`;
 
   console.error(`[IMOVEL-META] Image URL: ${imageUrl}`);
-  console.log('🔍 DEBUG - Verificando datas:');
-  console.log('DataHoraAtualizacao:', imovel.DataHoraAtualizacao);
-  console.log('DataAtualizacao:', imovel.DataAtualizacao);
-  console.log('UpdatedAt:', imovel.UpdatedAt);
-  console.log('Todas as propriedades com "data":', 
-    Object.keys(imovel).filter(key => 
-      key.toLowerCase().includes('data') || 
-      key.toLowerCase().includes('updated')
 
- return {
-  title,
-  description,
-  alternates: {
-    canonical: currentUrl,
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
-  openGraph: {
+  return {
     title,
     description,
-    url: currentUrl,
-    type: "website",
-    siteName: "NPI Consultoria",
-    images: [
-      {
-        url: imageUrl,
-        width: 1200,
-        height: 630,
-        alt: title,
-        type: "image/jpeg",
-      }
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title,
-    description,
-    site: "@NPIImoveis",
-    creator: "@NPIImoveis",
-    images: [
-      {
-        url: imageUrl,
-        alt: title,
-      }
-    ],
-  },
-  // hreflang manual
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL),
-  alternates: {
-    canonical: currentUrl,
-    languages: {
-      "pt-BR": currentUrl,
+    alternates: {
+      canonical: currentUrl,
     },
-  },
-  // ✅ Data de atualização para SEO
-  other: {
-    'article:modified_time': imovel.DataHoraAtualizacao,
-  },
-};
+    robots: {
+      index: true,
+      follow: true,
+    },
+    openGraph: {
+      title,
+      description,
+      url: currentUrl,
+      type: "website",
+      siteName: "NPI Consultoria",
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: title,
+          type: "image/jpeg",
+        }
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      site: "@NPIImoveis",
+      creator: "@NPIImoveis",
+      images: [
+        {
+          url: imageUrl,
+          alt: title,
+        }
+      ],
+    },
+    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL),
+    alternates: {
+      canonical: currentUrl,
+      languages: {
+        "pt-BR": currentUrl,
+      },
+    },
+    // ✅ Data de atualização para SEO - COM VERIFICAÇÃO
+    other: {
+      ...(imovel.DataHoraAtualizacao && {
+        'article:modified_time': imovel.DataHoraAtualizacao,
+      }),
+    },
+  };
 }
 export const revalidate = 0;
 
