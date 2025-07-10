@@ -37,6 +37,7 @@ export default function LocalizacaoCondominio({ imovel }) {
             <Image
               src="/assets/images/map-default.jpg"
               alt={`Localização de ${imovel.Empreendimento}`}
+              title={`Localização do ${condominio.Nome || "condomínio"}`}  
               fill
               className="object-cover"
               priority
