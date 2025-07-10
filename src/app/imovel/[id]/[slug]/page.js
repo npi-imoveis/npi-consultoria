@@ -43,56 +43,58 @@ export async function generateMetadata({ params }) {
 
   console.error(`[IMOVEL-META] Image URL: ${imageUrl}`);
 
-  return {
+ return {
+  title,
+  description,
+  alternates: {
+    canonical: currentUrl,
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  openGraph: {
     title,
     description,
-    alternates: {
-      canonical: currentUrl,
+    url: currentUrl,
+    type: "website",
+    siteName: "NPI Consultoria",
+    images: [
+      {
+        url: imageUrl,
+        width: 1200,
+        height: 630,
+        alt: title,
+        type: "image/jpeg",
+      }
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title,
+    description,
+    site: "@NPIImoveis",
+    creator: "@NPIImoveis",
+    images: [
+      {
+        url: imageUrl,
+        alt: title,
+      }
+    ],
+  },
+  // hreflang manual
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL),
+  alternates: {
+    canonical: currentUrl,
+    languages: {
+      "pt-BR": currentUrl,
     },
-    robots: {
-      index: true,
-      follow: true,
-    },
-    openGraph: {
-      title,
-      description,
-      url: currentUrl,
-      type: "website",
-      siteName: "NPI Consultoria",
-      images: [
-        {
-          url: imageUrl,
-          width: 1200,
-          height: 630,
-          alt: title,
-          type: "image/jpeg",
-        }
-      ],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      site: "@NPIImoveis",
-      creator: "@NPIImoveis",
-      images: [
-        {
-          url: imageUrl,
-          alt: title,
-        }
-      ],
-    },
-    // hreflang manual
-    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL),
-    alternates: {
-      canonical: currentUrl,
-      languages: {
-        "pt-BR": currentUrl,
-      },
-    },
-  };
-}
-
+  },
+  // ✅ Data de atualização para SEO
+  other: {
+    'article:modified_time': imovel.DataHoraAtualizacao,
+  },
+};
 
 export const revalidate = 0;
 
