@@ -31,18 +31,24 @@ export async function generateMetadata({ params }) {
 
   const imovel = response.data;
   
-  // ✅ DEBUG COMPLETO - SINTAXE CORRIGIDA
-  console.log('🔍 DEBUG - Verificando datas:');
-  console.log('DataHoraAtualizacao:', imovel.DataHoraAtualizacao);
-  console.log('DataAtualizacao:', imovel.DataAtualizacao);
-  console.log('UpdatedAt:', imovel.UpdatedAt);
-  
-  // ✅ BUSCAR TODAS AS PROPRIEDADES COM DATA
-  const dataProperties = Object.keys(imovel).filter(key => 
-    key.toLowerCase().includes('data') || 
-    key.toLowerCase().includes('updated')
-  );
-  console.log('Propriedades com data/updated:', dataProperties);
+  // ✅ FUNÇÃO PARA CONVERTER DATA BRASILEIRA PARA ISO
+  const convertBrazilianDateToISO = (brazilianDate) => {
+    if (!brazilianDate) return null;
+    
+    try {
+      // "26/06/2025, 17:12:39" -> "2025-06-26T17:12:39Z"
+      const [datePart, timePart] = brazilianDate.split(', ');
+      const [day, month, year] = datePart.split('/');
+      const [hours, minutes, seconds] = timePart.split(':');
+      
+      // Criar objeto Date e converter para ISO
+      const date = new Date(year, month - 1, day, hours, minutes, seconds);
+      return date.toISOString();
+    } catch (error) {
+      console.error('Erro ao converter data:', error);
+      return null;
+    }
+  };
   
   const title = `${imovel.Empreendimento} - ${imovel.BairroComercial}, ${imovel.Cidade}`;
   const description = `${imovel.Categoria} à venda no bairro ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.DormitoriosAntigo} dormitórios, ${imovel.SuiteAntigo} suítes, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt}. Valor: ${imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}.`;
@@ -54,6 +60,11 @@ export async function generateMetadata({ params }) {
     : imovel.Foto || `${process.env.NEXT_PUBLIC_SITE_URL}/og-image.png`;
 
   console.error(`[IMOVEL-META] Image URL: ${imageUrl}`);
+  
+  // ✅ CONVERTER DATA PARA ISO
+  const modifiedDate = convertBrazilianDateToISO(imovel.DataHoraAtualizacao);
+  console.error(`[IMOVEL-META] Data original: ${imovel.DataHoraAtualizacao}`);
+  console.error(`[IMOVEL-META] Data convertida: ${modifiedDate}`);
 
   return {
     title,
@@ -101,10 +112,10 @@ export async function generateMetadata({ params }) {
         "pt-BR": currentUrl,
       },
     },
-    // ✅ Data de atualização para SEO - COM VERIFICAÇÃO
+    // ✅ Data de atualização para SEO - COM CONVERSÃO
     other: {
-      ...(imovel.DataHoraAtualizacao && {
-        'article:modified_time': imovel.DataHoraAtualizacao,
+      ...(modifiedDate && {
+        'article:modified_time': modifiedDate,
       }),
     },
   };
