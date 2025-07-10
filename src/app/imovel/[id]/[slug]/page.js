@@ -31,25 +31,6 @@ export async function generateMetadata({ params }) {
 
   const imovel = response.data;
   
-  // ✅ FUNÇÃO PARA CONVERTER DATA BRASILEIRA PARA ISO
-  const convertBrazilianDateToISO = (brazilianDate) => {
-    if (!brazilianDate) return null;
-    
-    try {
-      // "26/06/2025, 17:12:39" -> "2025-06-26T17:12:39Z"
-      const [datePart, timePart] = brazilianDate.split(', ');
-      const [day, month, year] = datePart.split('/');
-      const [hours, minutes, seconds] = timePart.split(':');
-      
-      // Criar objeto Date e converter para ISO
-      const date = new Date(year, month - 1, day, hours, minutes, seconds);
-      return date.toISOString();
-    } catch (error) {
-      console.error('Erro ao converter data:', error);
-      return null;
-    }
-  };
-  
   const title = `${imovel.Empreendimento} - ${imovel.BairroComercial}, ${imovel.Cidade}`;
   const description = `${imovel.Categoria} à venda no bairro ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.DormitoriosAntigo} dormitórios, ${imovel.SuiteAntigo} suítes, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt}. Valor: ${imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}.`;
 
@@ -60,64 +41,55 @@ export async function generateMetadata({ params }) {
     : imovel.Foto || `${process.env.NEXT_PUBLIC_SITE_URL}/og-image.png`;
 
   console.error(`[IMOVEL-META] Image URL: ${imageUrl}`);
-  
-  // ✅ CONVERTER DATA PARA ISO
-  const modifiedDate = convertBrazilianDateToISO(imovel.DataHoraAtualizacao);
-  console.error(`[IMOVEL-META] Data original: ${imovel.DataHoraAtualizacao}`);
-  console.error(`[IMOVEL-META] Data convertida: ${modifiedDate}`);
 
   return {
-  title,
-  description,
-  alternates: {
-    canonical: currentUrl,
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
-  openGraph: {
     title,
     description,
-    url: currentUrl,
-    type: "website",
-    siteName: "NPI Consultoria",
-    images: [
-      {
-        url: imageUrl,
-        width: 1200,
-        height: 630,
-        alt: title,
-        type: "image/jpeg",
-      }
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title,
-    description,
-    site: "@NPIImoveis",
-    creator: "@NPIImoveis",
-    images: [
-      {
-        url: imageUrl,
-        alt: title,
-      }
-    ],
-  },
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL),
-  alternates: {
-    canonical: currentUrl,
-    languages: {
-      "pt-BR": currentUrl,
+    alternates: {
+      canonical: currentUrl,
     },
-  },
-  // ✅ ESTRUTURA CORRETA
-  other: {
-    'article:modified_time': '2025-01-10T14:30:00Z', // Data fixa para teste
-  },
-};
-      }),
+    robots: {
+      index: true,
+      follow: true,
+    },
+    openGraph: {
+      title,
+      description,
+      url: currentUrl,
+      type: "website",
+      siteName: "NPI Consultoria",
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: title,
+          type: "image/jpeg",
+        }
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      site: "@NPIImoveis",
+      creator: "@NPIImoveis",
+      images: [
+        {
+          url: imageUrl,
+          alt: title,
+        }
+      ],
+    },
+    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL),
+    alternates: {
+      canonical: currentUrl,
+      languages: {
+        "pt-BR": currentUrl,
+      },
+    },
+    other: {
+      'article:modified_time': '2025-01-10T14:30:00Z',
     },
   };
 }
