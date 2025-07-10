@@ -1,4 +1,4 @@
-// app/venda-seu-imovel/page.js
+// app/venda-seu-imovel/VendaSeuImovelClient.js
 "use client";
 
 import React, { useState, useRef } from "react";
@@ -7,59 +7,9 @@ import { Footer } from "../components/ui/footer";
 import Image from "next/image";
 import { getImageUploadMetadata, uploadToS3 } from "../utils/s3-upload";
 import { PhotoIcon, XCircleIcon } from "@heroicons/react/24/outline";
-import Head from "next/head";
 
-// ✅ DADOS ESTRUTURADOS PARA SEO
-function StructuredDataService() {
-  const structuredData = {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "Service",
-        "@id": `${process.env.NEXT_PUBLIC_SITE_URL}/venda-seu-imovel#service`,
-        "name": "Cadastro de Imóvel para Venda ou Locação",
-        "description": "Serviço gratuito de cadastro de imóveis para venda ou locação com assessoria completa e avaliação profissional.",
-        "provider": {
-          "@type": "Organization",
-          "name": "NPI Consultoria",
-          "url": `${process.env.NEXT_PUBLIC_SITE_URL}`,
-        },
-        "serviceType": "Consultoria Imobiliária",
-        "areaServed": {
-          "@type": "Place",
-          "name": "São Paulo, Brasil"
-        }
-      },
-      {
-        "@type": "WebPage",
-        "@id": `${process.env.NEXT_PUBLIC_SITE_URL}/venda-seu-imovel`,
-        "url": `${process.env.NEXT_PUBLIC_SITE_URL}/venda-seu-imovel`,
-        "name": "Venda ou Alugue seu Imóvel | NPI Consultoria",
-        "description": "Cadastre gratuitamente seu imóvel para venda ou locação com a NPI Consultoria.",
-        "isPartOf": {
-          "@type": "WebSite",
-          "@id": `${process.env.NEXT_PUBLIC_SITE_URL}#website`
-        },
-        "primaryImageOfPage": {
-          "@type": "ImageObject",
-          "url": `${process.env.NEXT_PUBLIC_SITE_URL}/assets/images/imoveis/02.jpg`
-        },
-        "datePublished": new Date().toISOString(),
-        "dateModified": new Date().toISOString()
-      }
-    ]
-  };
-
-  return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
-    />
-  );
-}
-
-export default function ImovelForm() {
-  const [formState, setFormState] = useState("form"); // estados: "form", "loading", "success"
+export default function VendaSeuImovelClient() {
+  const [formState, setFormState] = useState("form");
   const [formData, setFormData] = useState({
     nome: "",
     email: "",
@@ -78,7 +28,6 @@ export default function ImovelForm() {
     valorIptu: "",
     descricao: "",
   });
-  // Estado para gerenciar as imagens temporárias
   const [imagensTemporarias, setImagensTemporarias] = useState([]);
   const [errors, setErrors] = useState({
     nome: false,
@@ -100,7 +49,6 @@ export default function ImovelForm() {
   });
   const fileInputRef = useRef(null);
 
-  // Função para formatar número de telefone
   const formatarTelefone = (valor) => {
     const numerosApenas = valor.replace(/\D/g, "");
     const numeroLimitado = numerosApenas.slice(0, 11);
@@ -110,9 +58,7 @@ export default function ImovelForm() {
     } else if (numeroLimitado.length <= 7) {
       return `(${numeroLimitado.slice(0, 2)}) ${numeroLimitado.slice(2)}`;
     } else {
-      return `(${numeroLimitado.slice(0, 2)}) ${numeroLimitado.slice(2, 7)}-${numeroLimitado.slice(
-        7
-      )}`;
+      return `(${numeroLimitado.slice(0, 2)}) ${numeroLimitado.slice(2, 7)}-${numeroLimitado.slice(7)}`;
     }
   };
 
@@ -168,32 +114,26 @@ export default function ImovelForm() {
     return !Object.values(novosErros).some((erro) => erro);
   };
 
-  // Função para lidar com a adição de imagens
   const handleAddImages = (files) => {
     if (!files || files.length === 0) return;
 
-    // Converter FileList para array e criar URLs temporárias
     const novasImagens = Array.from(files).map((file, index) => ({
       file,
       previewUrl: URL.createObjectURL(file),
       id: Date.now() + Math.random().toString(36).substring(2, 9),
       isUploading: false,
-      altText: `Foto ${index + 1} do imóvel cadastrado para venda ou locação`, // ✅ ALT TEXT SEO
     }));
 
     setImagensTemporarias((prev) => [...prev, ...novasImagens]);
-    // Limpar erro de imagens se existir
     if (errors.imagens) {
       setErrors((prev) => ({ ...prev, imagens: false }));
     }
   };
 
-  // Função para remover imagem da lista
   const removerImagem = (id) => {
     setImagensTemporarias((prev) => prev.filter((img) => img.id !== id));
   };
 
-  // Função para lidar com arquivos arrastados
   const handleDragOver = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -207,16 +147,13 @@ export default function ImovelForm() {
     }
   };
 
-  // Função para selecionar arquivos via input
   const handleFileInputChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
       handleAddImages(e.target.files);
-      // Limpar o input para permitir selecionar os mesmos arquivos novamente
       e.target.value = "";
     }
   };
 
-  // Função para fazer upload das imagens para o S3
   const uploadImages = async () => {
     try {
       const uploadPromises = imagensTemporarias.map(async (imagem) => {
@@ -244,7 +181,6 @@ export default function ImovelForm() {
       setFormState("loading");
 
       try {
-        // Fazer upload das imagens para o S3
         const imageUrls = await uploadImages();
 
         import("@emailjs/browser").then((emailjs) => {
@@ -275,7 +211,6 @@ export default function ImovelForm() {
             )
             .then(() => {
               setFormState("success");
-              // Limpar o formulário após o sucesso
               setFormData({
                 nome: "",
                 email: "",
@@ -311,440 +246,420 @@ export default function ImovelForm() {
   };
 
   return (
-    <section>
-      {/* ✅ META TAGS SEO OTIMIZADAS */}
-      <Head>
-        <title>Venda ou Alugue seu Imóvel | Cadastro Grátis | NPI Consultoria</title>
-        <meta 
-          name="description" 
-          content="Cadastre gratuitamente seu imóvel para venda ou locação. Assessoria completa, avaliação profissional e marketing digital. Venda seu apartamento ou casa com facilidade e segurança." 
-        />
-        <meta 
-          name="keywords" 
-          content="vender imóvel, alugar imóvel, cadastro imóvel, avaliação gratuita, consultoria imobiliária, venda apartamento, locação casa" 
-        />
-        <link rel="canonical" href={`${process.env.NEXT_PUBLIC_SITE_URL}/venda-seu-imovel`} />
-        <meta name="robots" content="index, follow" />
-        
-        {/* OpenGraph */}
-        <meta property="og:title" content="Venda ou Alugue seu Imóvel com a NPI Consultoria" />
-        <meta property="og:description" content="Cadastre gratuitamente seu imóvel para venda ou locação. Assessoria completa e avaliação profissional." />
-        <meta property="og:url" content={`${process.env.NEXT_PUBLIC_SITE_URL}/venda-seu-imovel`} />
-        <meta property="og:type" content="website" />
-        <meta property="og:site_name" content="NPI Consultoria" />
-        <meta property="og:image" content={`${process.env.NEXT_PUBLIC_SITE_URL}/assets/images/imoveis/02.jpg`} />
-        <meta property="og:image:width" content="1200" />
-        <meta property="og:image:height" content="630" />
-        <meta property="og:image:alt" content="Cadastre seu imóvel para venda ou locação com a NPI Consultoria" />
-        
-        {/* Twitter */}
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Venda ou Alugue seu Imóvel | NPI Consultoria" />
-        <meta name="twitter:description" content="Cadastre gratuitamente seu imóvel para venda ou locação. Assessoria completa e avaliação profissional." />
-        <meta name="twitter:site" content="@NPIImoveis" />
-        <meta name="twitter:creator" content="@NPIImoveis" />
-        <meta name="twitter:image" content={`${process.env.NEXT_PUBLIC_SITE_URL}/assets/images/imoveis/02.jpg`} />
-        
-        {/* Datas */}
-        <meta name="article:published_time" content={new Date().toISOString()} />
-        <meta name="article:modified_time" content={new Date().toISOString()} />
-        <meta name="last-modified" content={new Date().toISOString()} />
-        <meta name="date" content={new Date().toISOString()} />
-      </Head>
-
-      {/* ✅ DADOS ESTRUTURADOS */}
-      <StructuredDataService />
-
+    <>
       <HeaderPage
-        title="Cadastre seu imóvel para venda ou locação gratuitamente"
-        description="Formulário completo e seguro para cadastro do seu imóvel. Nossa equipe especializada fará a avaliação e cuidará de todo o processo de venda ou locação."
+        title="Venda ou alugue seu imóvel com assessoria completa"
+        description="Cadastre gratuitamente seu imóvel e receba avaliação profissional, marketing em múltiplos portais e acompanhamento até a venda."
         image="/assets/images/imoveis/02.jpg"
       />
       
-      <div className="container mx-auto px-4 py-16">
-        {/* ✅ CONTEÚDO SEO ADICIONAL */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-4">
-            Venda ou Alugue seu Imóvel com Segurança
+      <main className="container mx-auto px-4 py-16">
+        {/* ✅ ÚNICO H1 NA PÁGINA */}
+        <header className="mb-12 text-center">
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+            Venda ou Alugue seu Imóvel com Avaliação Gratuita
           </h1>
-          <div className="prose max-w-none text-gray-600">
-            <p className="text-lg mb-4">
-              Cadastre gratuitamente seu <strong>apartamento, casa ou imóvel comercial</strong> para venda ou locação. 
-              Nossa equipe especializada oferece <strong>avaliação gratuita</strong>, fotografia profissional, 
-              marketing digital avançado e acompanhamento completo durante todo o processo.
-            </p>
-            <p className="mb-4">
-              A NPI Consultoria possui mais de <strong>10 anos de experiência</strong> no mercado imobiliário, 
-              com centenas de negócios realizados. Oferecemos <strong>assessoria jurídica</strong>, 
-              <strong>estratégias de precificação</strong> e <strong>marketing em múltiplas plataformas</strong> 
-              para garantir a melhor exposição do seu imóvel.
-            </p>
-            <div className="bg-blue-50 p-4 rounded-lg mb-6">
-              <h2 className="text-xl font-semibold text-blue-800 mb-2">
-                Por que escolher a NPI Consultoria?
-              </h2>
-              <ul className="list-disc list-inside text-blue-700 space-y-1">
-                <li>Avaliação de mercado precisa e gratuita</li>
-                <li>Fotografia profissional inclusa</li>
-                <li>Marketing digital em todas as principais plataformas</li>
-                <li>Acompanhamento jurídico completo</li>
-                <li>Negociação especializada</li>
-                <li>Suporte até a conclusão do negócio</li>
-              </ul>
+          <p className="text-xl text-gray-700 max-w-3xl mx-auto leading-relaxed">
+            <strong>Cadastre gratuitamente</strong> seu apartamento, casa ou imóvel comercial. 
+            Nossa equipe especializada oferece <strong>avaliação profissional</strong>, 
+            marketing em mais de 20 portais e <strong>acompanhamento completo</strong> até a venda ou locação.
+          </p>
+        </header>
+
+        {/* ✅ SEÇÃO DE BENEFÍCIOS */}
+        <section className="mb-12">
+          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-2xl p-8">
+            <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
+              Por que escolher a NPI Consultoria?
+            </h2>
+            <div className="grid md:grid-cols-3 gap-6">
+              <div className="text-center">
+                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl">🏠</span>
+                </div>
+                <h3 className="font-semibold text-gray-800 mb-2">Avaliação Gratuita</h3>
+                <p className="text-gray-600 text-sm">Análise de mercado precisa por corretor especializado</p>
+              </div>
+              <div className="text-center">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl">📸</span>
+                </div>
+                <h3 className="font-semibold text-gray-800 mb-2">Marketing Completo</h3>
+                <p className="text-gray-600 text-sm">Fotografia profissional e anúncios em +20 portais</p>
+              </div>
+              <div className="text-center">
+                <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl">🤝</span>
+                </div>
+                <h3 className="font-semibold text-gray-800 mb-2">Suporte Completo</h3>
+                <p className="text-gray-600 text-sm">Acompanhamento jurídico e negociação especializada</p>
+              </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        <p className="py-4 bg-yellow-50 px-4 rounded-lg mb-6">
-          <strong>💡 Dicas importantes:</strong> Fotos na posição horizontal com todas as luzes acesas, 
-          incluindo fotos de todos os ambientes, área de lazer e fachada, valorizam significativamente 
-          o anúncio do seu imóvel e atraem mais interessados.
-        </p>
+        {/* ✅ DICAS DE FOTOGRAFIA */}
+        <aside className="mb-8">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+            <h2 className="text-lg font-semibold text-yellow-800 mb-3 flex items-center">
+              <span className="mr-2">💡</span>
+              Dicas para fotos que vendem mais
+            </h2>
+            <ul className="text-yellow-700 space-y-2 text-sm">
+              <li>• <strong>Fotos horizontais</strong> com todas as luzes acesas durante o dia</li>
+              <li>• <strong>Inclua todos os ambientes:</strong> sala, quartos, cozinha, banheiros</li>
+              <li>• <strong>Fotografe áreas extras:</strong> sacada, área de lazer, fachada do prédio</li>
+              <li>• <strong>Organize o ambiente:</strong> evite objetos pessoais e desarrumação</li>
+              <li>• <strong>Destaque diferenciais:</strong> vista, acabamentos, armários planejados</li>
+            </ul>
+          </div>
+        </aside>
 
         {formState === "form" && (
-          <>
-            <div className="mb-6">
-              <h2 className="text-2xl font-semibold text-gray-800 mb-3">
-                Preencha os dados do seu imóvel
+          <section>
+            <div className="mb-8">
+              <h2 className="text-2xl font-bold text-gray-800 mb-3">
+                Cadastre seu imóvel gratuitamente
               </h2>
               <p className="text-gray-600">
-                Todos os campos marcados com * são obrigatórios. 
-                Quanto mais informações você fornecer, melhor será nossa avaliação.
+                Preencha as informações abaixo. Quanto mais detalhes você fornecer, 
+                melhor será nossa avaliação e estratégia de venda ou locação.
               </p>
             </div>
             
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label htmlFor="nome" className="block text-sm font-medium text-gray-700 mb-1">
-                  Nome completo
-                </label>
-                <input
-                  id="nome"
-                  className={`border rounded py-2 px-3 w-full ${errors.nome ? "border-red-500" : ""}`}
-                  placeholder="Seu nome completo*"
-                  type="text"
-                  name="nome"
-                  value={formData.nome}
-                  onChange={handleInputChange}
-                  required
-                />
-                {errors.nome && (
-                  <p className="text-red-500 text-xs mt-1">Por favor, informe seu nome completo</p>
-                )}
-              </div>
+            <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+              {/* ✅ DADOS PESSOAIS */}
+              <fieldset className="sm:col-span-3">
+                <legend className="text-lg font-semibold text-gray-800 mb-4">Seus dados de contato</legend>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label htmlFor="nome" className="block text-sm font-medium text-gray-700 mb-1">
+                      Nome completo *
+                    </label>
+                    <input
+                      id="nome"
+                      className={`border rounded-lg py-3 px-4 w-full ${errors.nome ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                      placeholder="Seu nome completo"
+                      type="text"
+                      name="nome"
+                      value={formData.nome}
+                      onChange={handleInputChange}
+                      required
+                    />
+                    {errors.nome && (
+                      <p className="text-red-500 text-xs mt-1">Por favor, informe seu nome completo</p>
+                    )}
+                  </div>
 
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                  E-mail
-                </label>
-                <input
-                  id="email"
-                  className={`border rounded py-2 px-3 w-full ${
-                    errors.email ? "border-red-500" : ""
-                  }`}
-                  placeholder="seu@email.com*"
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  required
-                />
-                {errors.email && (
-                  <p className="text-red-500 text-xs mt-1">Por favor, informe um e-mail válido</p>
-                )}
-              </div>
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                      E-mail *
+                    </label>
+                    <input
+                      id="email"
+                      className={`border rounded-lg py-3 px-4 w-full ${errors.email ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                      placeholder="seu@email.com"
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      required
+                    />
+                    {errors.email && (
+                      <p className="text-red-500 text-xs mt-1">Por favor, informe um e-mail válido</p>
+                    )}
+                  </div>
 
-              <div>
-                <label htmlFor="telefone" className="block text-sm font-medium text-gray-700 mb-1">
-                  Telefone
-                </label>
-                <input
-                  id="telefone"
-                  className={`border rounded py-2 px-3 w-full ${
-                    errors.telefone ? "border-red-500" : ""
-                  }`}
-                  placeholder="(11) 99999-9999*"
-                  type="tel"
-                  name="telefone"
-                  value={formData.telefone}
-                  onChange={handleInputChange}
-                  required
-                />
-                {errors.telefone && (
-                  <p className="text-red-500 text-xs mt-1">
-                    Por favor, informe um telefone válido com DDD
-                  </p>
-                )}
-              </div>
+                  <div>
+                    <label htmlFor="telefone" className="block text-sm font-medium text-gray-700 mb-1">
+                      Telefone *
+                    </label>
+                    <input
+                      id="telefone"
+                      className={`border rounded-lg py-3 px-4 w-full ${errors.telefone ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                      placeholder="(11) 99999-9999"
+                      type="tel"
+                      name="telefone"
+                      value={formData.telefone}
+                      onChange={handleInputChange}
+                      required
+                    />
+                    {errors.telefone && (
+                      <p className="text-red-500 text-xs mt-1">
+                        Por favor, informe um telefone válido com DDD
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </fieldset>
 
-              <div>
-                <label htmlFor="tipoImovel" className="block text-sm font-medium text-gray-700 mb-1">
-                  Tipo de imóvel
-                </label>
-                <select
-                  id="tipoImovel"
-                  className={`border rounded py-2 px-3 w-full bg-white ${
-                    errors.tipoImovel ? "border-red-500" : ""
-                  }`}
-                  name="tipoImovel"
-                  value={formData.tipoImovel}
-                  onChange={handleInputChange}
-                  required
-                >
-                  <option value="">Selecione o tipo*</option>
-                  <option>Apartamento</option>
-                  <option>Casa</option>
-                  <option>Terreno</option>
-                  <option>Cobertura</option>
-                  <option>Sobrado</option>
-                  <option>Kitnet/Studio</option>
-                </select>
-                {errors.tipoImovel && (
-                  <p className="text-red-500 text-xs mt-1">Por favor, selecione o tipo de imóvel</p>
-                )}
-              </div>
+              {/* ✅ DADOS DO IMÓVEL */}
+              <fieldset className="sm:col-span-3">
+                <legend className="text-lg font-semibold text-gray-800 mb-4">Informações do imóvel</legend>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label htmlFor="tipoImovel" className="block text-sm font-medium text-gray-700 mb-1">
+                      Tipo de imóvel *
+                    </label>
+                    <select
+                      id="tipoImovel"
+                      className={`border rounded-lg py-3 px-4 w-full bg-white ${errors.tipoImovel ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                      name="tipoImovel"
+                      value={formData.tipoImovel}
+                      onChange={handleInputChange}
+                      required
+                    >
+                      <option value="">Selecione o tipo</option>
+                      <option>Apartamento</option>
+                      <option>Casa</option>
+                      <option>Terreno</option>
+                      <option>Cobertura</option>
+                      <option>Sobrado</option>
+                      <option>Kitnet/Studio</option>
+                      <option>Loft</option>
+                      <option>Comercial</option>
+                    </select>
+                    {errors.tipoImovel && (
+                      <p className="text-red-500 text-xs mt-1">Por favor, selecione o tipo de imóvel</p>
+                    )}
+                  </div>
 
-              <div>
-                <label htmlFor="acao" className="block text-sm font-medium text-gray-700 mb-1">
-                  Objetivo
-                </label>
-                <select
-                  id="acao"
-                  className={`border rounded py-2 px-3 w-full bg-white ${
-                    errors.acao ? "border-red-500" : ""
-                  }`}
-                  name="acao"
-                  value={formData.acao}
-                  onChange={handleInputChange}
-                  required
-                >
-                  <option value="">O que deseja fazer?*</option>
-                  <option>Venda</option>
-                  <option>Locação</option>
-                  <option>Venda ou Locação</option>
-                </select>
-                {errors.acao && (
-                  <p className="text-red-500 text-xs mt-1">Por favor, selecione a ação desejada</p>
-                )}
-              </div>
+                  <div>
+                    <label htmlFor="acao" className="block text-sm font-medium text-gray-700 mb-1">
+                      O que deseja fazer? *
+                    </label>
+                    <select
+                      id="acao"
+                      className={`border rounded-lg py-3 px-4 w-full bg-white ${errors.acao ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                      name="acao"
+                      value={formData.acao}
+                      onChange={handleInputChange}
+                      required
+                    >
+                      <option value="">Selecione a ação</option>
+                      <option>Venda</option>
+                      <option>Locação</option>
+                      <option>Venda ou Locação</option>
+                    </select>
+                    {errors.acao && (
+                      <p className="text-red-500 text-xs mt-1">Por favor, selecione a ação desejada</p>
+                    )}
+                  </div>
 
-              <div>
-                <label htmlFor="cep" className="block text-sm font-medium text-gray-700 mb-1">
-                  CEP
-                </label>
-                <input
-                  id="cep"
-                  className={`border rounded py-2 px-3 w-full ${errors.cep ? "border-red-500" : ""}`}
-                  placeholder="00000-000*"
-                  type="text"
-                  name="cep"
-                  value={formData.cep}
-                  onChange={handleInputChange}
-                  required
-                />
-                {errors.cep && <p className="text-red-500 text-xs mt-1">Por favor, informe o CEP</p>}
-              </div>
+                  <div>
+                    <label htmlFor="cep" className="block text-sm font-medium text-gray-700 mb-1">
+                      CEP *
+                    </label>
+                    <input
+                      id="cep"
+                      className={`border rounded-lg py-3 px-4 w-full ${errors.cep ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                      placeholder="00000-000"
+                      type="text"
+                      name="cep"
+                      value={formData.cep}
+                      onChange={handleInputChange}
+                      required
+                    />
+                    {errors.cep && <p className="text-red-500 text-xs mt-1">Por favor, informe o CEP</p>}
+                  </div>
+                </div>
+              </fieldset>
 
-              <div>
-                <label htmlFor="endereco" className="block text-sm font-medium text-gray-700 mb-1">
-                  Endereço
-                </label>
-                <input
-                  id="endereco"
-                  className={`border rounded py-2 px-3 w-full ${
-                    errors.endereco ? "border-red-500" : ""
-                  }`}
-                  placeholder="Rua, avenida...*"
-                  type="text"
-                  name="endereco"
-                  value={formData.endereco}
-                  onChange={handleInputChange}
-                  required
-                />
-                {errors.endereco && (
-                  <p className="text-red-500 text-xs mt-1">Por favor, informe o endereço</p>
-                )}
-              </div>
+              {/* ✅ ENDEREÇO */}
+              <fieldset className="sm:col-span-3">
+                <legend className="text-lg font-semibold text-gray-800 mb-4">Endereço completo</legend>
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                  <div className="sm:col-span-2">
+                    <label htmlFor="endereco" className="block text-sm font-medium text-gray-700 mb-1">
+                      Logradouro *
+                    </label>
+                    <input
+                      id="endereco"
+                      className={`border rounded-lg py-3 px-4 w-full ${errors.endereco ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                      placeholder="Rua, avenida, praça..."
+                      type="text"
+                      name="endereco"
+                      value={formData.endereco}
+                      onChange={handleInputChange}
+                      required
+                    />
+                    {errors.endereco && (
+                      <p className="text-red-500 text-xs mt-1">Por favor, informe o endereço</p>
+                    )}
+                  </div>
 
-              <div>
-                <label htmlFor="numero" className="block text-sm font-medium text-gray-700 mb-1">
-                  Número
-                </label>
-                <input
-                  id="numero"
-                  className={`border rounded py-2 px-3 w-full ${
-                    errors.numero ? "border-red-500" : ""
-                  }`}
-                  placeholder="Número*"
-                  type="text"
-                  name="numero"
-                  value={formData.numero}
-                  onChange={handleInputChange}
-                  required
-                />
-                {errors.numero && (
-                  <p className="text-red-500 text-xs mt-1">Por favor, informe o número</p>
-                )}
-              </div>
+                  <div>
+                    <label htmlFor="numero" className="block text-sm font-medium text-gray-700 mb-1">
+                      Número *
+                    </label>
+                    <input
+                      id="numero"
+                      className={`border rounded-lg py-3 px-4 w-full ${errors.numero ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                      placeholder="123"
+                      type="text"
+                      name="numero"
+                      value={formData.numero}
+                      onChange={handleInputChange}
+                      required
+                    />
+                    {errors.numero && (
+                      <p className="text-red-500 text-xs mt-1">Por favor, informe o número</p>
+                    )}
+                  </div>
 
-              <div>
-                <label htmlFor="complemento" className="block text-sm font-medium text-gray-700 mb-1">
-                  Complemento
-                </label>
-                <input
-                  id="complemento"
-                  className="border rounded py-2 px-3 w-full"
-                  placeholder="Apto, bloco... (opcional)"
-                  type="text"
-                  name="complemento"
-                  value={formData.complemento}
-                  onChange={handleInputChange}
-                />
-              </div>
+                  <div>
+                    <label htmlFor="complemento" className="block text-sm font-medium text-gray-700 mb-1">
+                      Complemento
+                    </label>
+                    <input
+                      id="complemento"
+                      className="border rounded-lg py-3 px-4 w-full border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      placeholder="Apto 12B (opcional)"
+                      type="text"
+                      name="complemento"
+                      value={formData.complemento}
+                      onChange={handleInputChange}
+                    />
+                  </div>
 
-              <div>
-                <label htmlFor="bairro" className="block text-sm font-medium text-gray-700 mb-1">
-                  Bairro
-                </label>
-                <input
-                  id="bairro"
-                  className={`border rounded py-2 px-3 w-full ${
-                    errors.bairro ? "border-red-500" : ""
-                  }`}
-                  placeholder="Nome do bairro*"
-                  type="text"
-                  name="bairro"
-                  value={formData.bairro}
-                  onChange={handleInputChange}
-                  required
-                />
-                {errors.bairro && (
-                  <p className="text-red-500 text-xs mt-1">Por favor, informe o bairro</p>
-                )}
-              </div>
+                  <div>
+                    <label htmlFor="bairro" className="block text-sm font-medium text-gray-700 mb-1">
+                      Bairro *
+                    </label>
+                    <input
+                      id="bairro"
+                      className={`border rounded-lg py-3 px-4 w-full ${errors.bairro ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                      placeholder="Nome do bairro"
+                      type="text"
+                      name="bairro"
+                      value={formData.bairro}
+                      onChange={handleInputChange}
+                      required
+                    />
+                    {errors.bairro && (
+                      <p className="text-red-500 text-xs mt-1">Por favor, informe o bairro</p>
+                    )}
+                  </div>
 
-              <div>
-                <label htmlFor="cidade" className="block text-sm font-medium text-gray-700 mb-1">
-                  Cidade
-                </label>
-                <input
-                  id="cidade"
-                  className={`border rounded py-2 px-3 w-full ${
-                    errors.cidade ? "border-red-500" : ""
-                  }`}
-                  placeholder="Nome da cidade*"
-                  type="text"
-                  name="cidade"
-                  value={formData.cidade}
-                  onChange={handleInputChange}
-                  required
-                />
-                {errors.cidade && (
-                  <p className="text-red-500 text-xs mt-1">Por favor, informe a cidade</p>
-                )}
-              </div>
+                  <div>
+                    <label htmlFor="cidade" className="block text-sm font-medium text-gray-700 mb-1">
+                      Cidade *
+                    </label>
+                    <input
+                      id="cidade"
+                      className={`border rounded-lg py-3 px-4 w-full ${errors.cidade ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                      placeholder="Nome da cidade"
+                      type="text"
+                      name="cidade"
+                      value={formData.cidade}
+                      onChange={handleInputChange}
+                      required
+                    />
+                    {errors.cidade && (
+                      <p className="text-red-500 text-xs mt-1">Por favor, informe a cidade</p>
+                    )}
+                  </div>
 
-              <div>
-                <label htmlFor="estado" className="block text-sm font-medium text-gray-700 mb-1">
-                  Estado
-                </label>
-                <select
-                  id="estado"
-                  className={`border rounded py-2 px-3 w-full bg-white ${
-                    errors.estado ? "border-red-500" : ""
-                  }`}
-                  name="estado"
-                  value={formData.estado}
-                  onChange={handleInputChange}
-                  required
-                >
-                  <option value="">Selecione o estado*</option>
-                  <option>São Paulo</option>
-                  <option>Rio de Janeiro</option>
-                  <option>Minas Gerais</option>
-                  <option>Outro Estado</option>
-                </select>
-                {errors.estado && (
-                  <p className="text-red-500 text-xs mt-1">Por favor, selecione o estado</p>
-                )}
-              </div>
+                  <div>
+                    <label htmlFor="estado" className="block text-sm font-medium text-gray-700 mb-1">
+                      Estado *
+                    </label>
+                    <select
+                      id="estado"
+                      className={`border rounded-lg py-3 px-4 w-full bg-white ${errors.estado ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                      name="estado"
+                      value={formData.estado}
+                      onChange={handleInputChange}
+                      required
+                    >
+                      <option value="">Selecione</option>
+                      <option>São Paulo</option>
+                      <option>Rio de Janeiro</option>
+                      <option>Minas Gerais</option>
+                      <option>Outro Estado</option>
+                    </select>
+                    {errors.estado && (
+                      <p className="text-red-500 text-xs mt-1">Por favor, selecione o estado</p>
+                    )}
+                  </div>
+                </div>
+              </fieldset>
 
-              <div>
-                <label htmlFor="valorImovel" className="block text-sm font-medium text-gray-700 mb-1">
-                  Valor do imóvel
-                </label>
-                <input
-                  id="valorImovel"
-                  className={`border rounded py-2 px-3 w-full ${
-                    errors.valorImovel ? "border-red-500" : ""
-                  }`}
-                  placeholder="Valor desejado (R$)*"
-                  type="number"
-                  name="valorImovel"
-                  value={formData.valorImovel}
-                  onChange={handleInputChange}
-                  required
-                />
-                {errors.valorImovel && (
-                  <p className="text-red-500 text-xs mt-1">Por favor, informe o valor do imóvel</p>
-                )}
-              </div>
+              {/* ✅ VALORES */}
+              <fieldset className="sm:col-span-3">
+                <legend className="text-lg font-semibold text-gray-800 mb-4">Valores do imóvel</legend>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label htmlFor="valorImovel" className="block text-sm font-medium text-gray-700 mb-1">
+                      Valor desejado (R$) *
+                    </label>
+                    <input
+                      id="valorImovel"
+                      className={`border rounded-lg py-3 px-4 w-full ${errors.valorImovel ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                      placeholder="500000"
+                      type="number"
+                      name="valorImovel"
+                      value={formData.valorImovel}
+                      onChange={handleInputChange}
+                      required
+                    />
+                    {errors.valorImovel && (
+                      <p className="text-red-500 text-xs mt-1">Por favor, informe o valor do imóvel</p>
+                    )}
+                  </div>
 
-              <div>
-                <label htmlFor="valorCondominio" className="block text-sm font-medium text-gray-700 mb-1">
-                  Valor do condomínio
-                </label>
-                <input
-                  id="valorCondominio"
-                  className={`border rounded py-2 px-3 w-full ${
-                    errors.valorCondominio ? "border-red-500" : ""
-                  }`}
-                  placeholder="Valor mensal (R$)*"
-                  type="number"
-                  name="valorCondominio"
-                  value={formData.valorCondominio}
-                  onChange={handleInputChange}
-                  required
-                />
-                {errors.valorCondominio && (
-                  <p className="text-red-500 text-xs mt-1">
-                    Por favor, informe o valor do condomínio
-                  </p>
-                )}
-              </div>
+                  <div>
+                    <label htmlFor="valorCondominio" className="block text-sm font-medium text-gray-700 mb-1">
+                      Condomínio mensal (R$) *
+                    </label>
+                    <input
+                      id="valorCondominio"
+                      className={`border rounded-lg py-3 px-4 w-full ${errors.valorCondominio ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                      placeholder="800"
+                      type="number"
+                      name="valorCondominio"
+                      value={formData.valorCondominio}
+                      onChange={handleInputChange}
+                      required
+                    />
+                    {errors.valorCondominio && (
+                      <p className="text-red-500 text-xs mt-1">
+                        Por favor, informe o valor do condomínio
+                      </p>
+                    )}
+                  </div>
 
-              <div>
-                <label htmlFor="valorIptu" className="block text-sm font-medium text-gray-700 mb-1">
-                  Valor do IPTU
-                </label>
-                <input
-                  id="valorIptu"
-                  className={`border rounded py-2 px-3 w-full ${
-                    errors.valorIptu ? "border-red-500" : ""
-                  }`}
-                  placeholder="Valor anual (R$)*"
-                  type="number"
-                  name="valorIptu"
-                  value={formData.valorIptu}
-                  onChange={handleInputChange}
-                  required
-                />
-                {errors.valorIptu && (
-                  <p className="text-red-500 text-xs mt-1">Por favor, informe o valor do IPTU</p>
-                )}
-              </div>
+                  <div>
+                    <label htmlFor="valorIptu" className="block text-sm font-medium text-gray-700 mb-1">
+                      IPTU anual (R$) *
+                    </label>
+                    <input
+                      id="valorIptu"
+                      className={`border rounded-lg py-3 px-4 w-full ${errors.valorIptu ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                      placeholder="2500"
+                      type="number"
+                      name="valorIptu"
+                      value={formData.valorIptu}
+                      onChange={handleInputChange}
+                      required
+                    />
+                    {errors.valorIptu && (
+                      <p className="text-red-500 text-xs mt-1">Por favor, informe o valor do IPTU</p>
+                    )}
+                  </div>
+                </div>
+              </fieldset>
 
+              {/* ✅ DESCRIÇÃO */}
               <div className="sm:col-span-3">
                 <label htmlFor="descricao" className="block text-sm font-medium text-gray-700 mb-1">
-                  Descrição detalhada do imóvel
+                  Descrição completa do imóvel *
                 </label>
                 <textarea
                   id="descricao"
-                  className={`border rounded py-2 px-3 w-full ${
-                    errors.descricao ? "border-red-500" : ""
-                  }`}
-                  placeholder="Descreva seu imóvel com o máximo de detalhes: número de quartos, banheiros, vagas, área, diferenciais, reformas, proximidade a comércios, transporte público, etc.*"
-                  rows={4}
+                  className={`border rounded-lg py-3 px-4 w-full ${errors.descricao ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+                  placeholder="Descreva detalhadamente: número de quartos, banheiros, vagas, área aproximada, diferenciais (sacada, churrasqueira, armários), reformas recentes, proximidade a comércios, transporte público, etc."
+                  rows={5}
                   name="descricao"
                   value={formData.descricao}
                   onChange={handleInputChange}
@@ -757,181 +672,197 @@ export default function ImovelForm() {
                 )}
               </div>
 
+              {/* ✅ UPLOAD DE FOTOS */}
               <div className="sm:col-span-3">
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                  Fotos do imóvel
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                  Fotos do imóvel *
                 </h3>
-                <div className="w-full mx-auto py-4">
-                  <div className="mb-4 bg-blue-50 p-4 rounded-lg">
-                    <p className="text-sm text-blue-800 font-medium mb-2">
-                      📸 Dicas para fotos que vendem:
-                    </p>
-                    <ul className="text-sm text-blue-700 space-y-1">
-                      <li>• Fotos horizontais com todas as luzes acesas</li>
-                      <li>• Inclua todos os ambientes: sala, quartos, cozinha, banheiros</li>
-                      <li>• Fotografe área de lazer, fachada e vista da sacada</li>
-                      <li>• Evite objetos pessoais nas fotos</li>
-                      <li>• Tire fotos durante o dia para melhor iluminação</li>
-                    </ul>
-                  </div>
-
-                  <div
-                    className={`border-2 border-dashed ${
-                      errors.imagens ? "border-red-500" : "border-gray-300"
-                    } rounded-md p-6 flex flex-col items-center justify-center text-center`}
-                    onDragOver={handleDragOver}
-                    onDrop={handleDrop}
+                
+                <div
+                  className={`border-2 border-dashed ${
+                    errors.imagens ? "border-red-500" : "border-gray-300"
+                  } rounded-xl p-8 flex flex-col items-center justify-center text-center hover:border-blue-400 transition-colors`}
+                  onDragOver={handleDragOver}
+                  onDrop={handleDrop}
+                >
+                  <PhotoIcon className="h-16 w-16 text-gray-400 mb-4" />
+                  <h4 className="text-xl font-medium text-gray-700 mb-2">Adicione as fotos do seu imóvel</h4>
+                  <p className="text-gray-500 mb-4">Arraste e solte as fotos aqui ou clique para selecionar</p>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="bg-[#8B6F48] text-white py-3 px-6 rounded-lg font-medium hover:bg-[#7a5f3a] transition-colors"
                   >
-                    <PhotoIcon className="h-12 w-12 text-gray-400 mb-2" />
-                    <p className="text-gray-600 font-medium">Arraste e solte as fotos aqui</p>
-                    <p className="text-gray-500 my-2">ou</p>
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="bg-[#8B6F48] text-white py-2 px-4 rounded font-medium hover:bg-[#7a5f3a] transition-colors"
-                    >
-                      Escolher arquivos
-                    </button>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={handleFileInputChange}
-                      style={{ display: "none" }}
-                    />
-                    {errors.imagens && (
-                      <p className="text-red-500 text-xs mt-2">
-                        Por favor, adicione pelo menos uma imagem do imóvel
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Visualização das imagens selecionadas */}
-                  {imagensTemporarias.length > 0 && (
-                    <div className="mt-6">
-                      <h4 className="text-md font-medium text-gray-700 mb-4">
-                        Imagens selecionadas ({imagensTemporarias.length})
-                      </h4>
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {imagensTemporarias.map((imagem, index) => (
-                          <div
-                            key={imagem.id}
-                            className="relative group bg-gray-100 rounded-md overflow-hidden"
-                          >
-                            <div className="relative h-40 w-full">
-                              <Image
-                                src={imagem.previewUrl}
-                                alt={`Foto ${index + 1} do imóvel para venda ou locação`} // ✅ ALT TEXT SEO
-                                fill
-                                style={{ objectFit: "contain" }}
-                                loading="lazy"
-                              />
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => removerImagem(imagem.id)}
-                              className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 opacity-80 hover:opacity-100"
-                              aria-label={`Remover foto ${index + 1}`}
-                            >
-                              <XCircleIcon className="h-5 w-5" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
+                    Escolher fotos
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleFileInputChange}
+                    className="hidden"
+                  />
+                  {errors.imagens && (
+                    <p className="text-red-500 text-sm mt-3">
+                      Por favor, adicione pelo menos uma foto do imóvel
+                    </p>
                   )}
                 </div>
+
+                {/* ✅ PREVIEW DAS IMAGENS */}
+                {imagensTemporarias.length > 0 && (
+                  <div className="mt-6">
+                    <h4 className="font-medium text-gray-700 mb-4">
+                      Fotos selecionadas ({imagensTemporarias.length})
+                    </h4>
+                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                      {imagensTemporarias.map((imagem, index) => (
+                        <div
+                          key={imagem.id}
+                          className="relative group bg-gray-100 rounded-lg overflow-hidden aspect-square"
+                        >
+                          <Image
+                            src={imagem.previewUrl}
+                            alt={`Foto ${index + 1} do imóvel`}
+                            fill
+                            className="object-cover"
+                            loading="lazy"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removerImagem(imagem.id)}
+                            className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                            aria-label={`Remover foto ${index + 1}`}
+                          >
+                            <XCircleIcon className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
-              <div className="sm:col-span-3">
+              {/* ✅ BOTÃO DE ENVIO */}
+              <div className="sm:col-span-3 pt-4">
                 <button
                   type="submit"
-                  className="w-full bg-[#8B6F48] text-white py-3 rounded font-semibold hover:bg-[#7a5f3a] transition-colors text-lg"
+                  className="w-full bg-gradient-to-r from-[#8B6F48] to-[#7a5f3a] text-white py-4 rounded-xl font-semibold text-lg hover:from-[#7a5f3a] hover:to-[#6b5230] transition-all transform hover:scale-[1.02] shadow-lg"
                 >
                   🏠 Cadastrar meu imóvel gratuitamente
                 </button>
-                <p className="text-xs text-gray-500 mt-2 text-center">
-                  Ao cadastrar, você aceita que nossa equipe entre em contato para agendar uma avaliação gratuita.
+                <p className="text-sm text-gray-500 mt-3 text-center">
+                  Ao cadastrar, você autoriza nossa equipe a entrar em contato para agendar uma <strong>avaliação gratuita</strong>.
                 </p>
               </div>
             </form>
-          </>
+          </section>
         )}
 
         {formState === "loading" && (
-          <div
-            className="flex flex-col items-center justify-center mt-8 h-40"
-            aria-live="polite"
-            aria-busy="true"
-          >
-            <div
-              className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#8B6F48]"
-              role="status"
-            >
-              <span className="sr-only">Enviando dados do imóvel...</span>
-            </div>
-            <p className="mt-4 text-gray-600">Processando informações do seu imóvel...</p>
+          <div className="flex flex-col items-center justify-center py-16" aria-live="polite">
+            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-[#8B6F48] mb-6"></div>
+            <h2 className="text-xl font-semibold text-gray-700 mb-2">Processando seu cadastro...</h2>
+            <p className="text-gray-600">Enviando informações e fotos do seu imóvel</p>
           </div>
         )}
 
         {formState === "success" && (
-          <div className="flex flex-col items-center justify-center mt-8 h-40" aria-live="polite">
-            <div className="text-center bg-green-50 p-8 rounded-lg">
-              <p className="text-2xl font-bold text-green-700 mb-2">
-                ✅ Imóvel cadastrado com sucesso!
+          <div className="text-center py-16" aria-live="polite">
+            <div className="bg-green-50 rounded-2xl p-8 max-w-2xl mx-auto">
+              <div className="text-6xl mb-4">✅</div>
+              <h2 className="text-3xl font-bold text-green-700 mb-4">
+                Imóvel cadastrado com sucesso!
+              </h2>
+              <p className="text-lg text-gray-700 mb-4">
+                Recebemos todas as informações e fotos do seu imóvel.
               </p>
-              <p className="text-gray-700 mb-4">
-                Recebemos todas as informações do seu imóvel.
-              </p>
-              <p className="text-sm text-gray-600">
-                Nossa equipe especializada entrará em contato em até 24 horas para agendar 
-                uma <strong>avaliação gratuita</strong> e iniciar o processo de venda ou locação.
+              <p className="text-gray-600">
+                Nossa equipe especializada entrará em contato em até <strong>24 horas</strong> para agendar 
+                uma avaliação gratuita e iniciar o processo de comercialização.
               </p>
             </div>
           </div>
         )}
 
-        {/* ✅ CONTEÚDO SEO ADICIONAL INFERIOR */}
-        <div className="mt-16 border-t pt-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">
-            Sobre nossos serviços de venda e locação
+        {/* ✅ SEÇÃO INFORMATIVA ADICIONAL */}
+        <section className="mt-20 border-t pt-16">
+          <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">
+            Como funciona nosso processo
           </h2>
-          <div className="grid md:grid-cols-2 gap-8 text-gray-600">
+          <div className="grid md:grid-cols-2 gap-12">
             <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">Processo de Venda</h3>
-              <p className="mb-3">
+              <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <span className="bg-blue-100 text-blue-600 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold mr-3">1</span>
+                Processo de Venda
+              </h3>
+              <p className="text-gray-600 mb-4">
                 Nossa metodologia comprovada inclui análise de mercado, definição de preço estratégico,
                 marketing multicanal e negociação especializada. Cuidamos de toda a documentação
                 e acompanhamos o processo até a escritura.
               </p>
-              <ul className="text-sm space-y-1">
-                <li>• Avaliação gratuita por corretor especializado</li>
-                <li>• Fotografia profissional e tour virtual</li>
-                <li>• Anúncios em +20 portais imobiliários</li>
-                <li>• Marketing nas redes sociais</li>
-                <li>• Acompanhamento jurídico</li>
+              <ul className="text-gray-600 space-y-2">
+                <li className="flex items-start">
+                  <span className="text-green-500 mr-2">✓</span>
+                  Avaliação gratuita por corretor CRECI
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-500 mr-2">✓</span>
+                  Fotografia profissional e tour virtual
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-500 mr-2">✓</span>
+                  Anúncios em mais de 20 portais imobiliários
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-500 mr-2">✓</span>
+                  Marketing nas redes sociais
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-500 mr-2">✓</span>
+                  Acompanhamento jurídico completo
+                </li>
               </ul>
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-800 mb-2">Processo de Locação</h3>
-              <p className="mb-3">
-                Especializados em locação residencial e comercial, oferecemos análise de inquilinos,
-                contratos seguros e gestão completa da locação. Garantimos tranquilidade para
-                proprietários e locatários.
+              <h3 className="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+                <span className="bg-purple-100 text-purple-600 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold mr-3">2</span>
+                Processo de Locação
+              </h3>
+              <p className="text-gray-600 mb-4">
+                Especializados em locação residencial e comercial, oferecemos análise criteriosa de inquilinos,
+                contratos seguros e gestão completa da locação. Garantimos tranquilidade total para
+                proprietários e segurança jurídica.
               </p>
-              <ul className="text-sm space-y-1">
-                <li>• Análise criteriosa de inquilinos</li>
-                <li>• Contratos com garantias adequadas</li>
-                <li>• Gestão de pagamentos e vistoria</li>
-                <li>• Suporte jurídico especializado</li>
-                <li>• Relatórios mensais para proprietários</li>
+              <ul className="text-gray-600 space-y-2">
+                <li className="flex items-start">
+                  <span className="text-green-500 mr-2">✓</span>
+                  Análise criteriosa de inquilinos
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-500 mr-2">✓</span>
+                  Contratos com garantias adequadas
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-500 mr-2">✓</span>
+                  Gestão de pagamentos e vistorias
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-500 mr-2">✓</span>
+                  Suporte jurídico especializado
+                </li>
+                <li className="flex items-start">
+                  <span className="text-green-500 mr-2">✓</span>
+                  Relatórios mensais para proprietários
+                </li>
               </ul>
             </div>
           </div>
-        </div>
-      </div>
+        </section>
+      </main>
+      
       <Footer />
-    </section>
+    </>
   );
 }
