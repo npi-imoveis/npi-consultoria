@@ -34,6 +34,7 @@ export default function ExploreRegiao({ condominio, currentUrl }) {
               <Image
                 src="/assets/images/map-default.jpg"
                 alt={`Localização do ${condominio.Nome || "condomínio"}`}
+                title={`Localização do ${condominio.Nome || "condomínio"}`}  
                 fill
                 className="object-cover"
                 priority
