@@ -26,22 +26,59 @@ export async function generateMetadata({ params }) {
   console.error(`[IMOVEL-META] =========== PROCESSANDO ID: ${id} ===========`);
   
   const response = await getImovelById(id);
-
   if (!response?.data) return {};
-
   const imovel = response.data;
+  
+  // ✅ FUNÇÃO PARA CONVERTER DATA BRASILEIRA PARA ISO
+  const convertBrazilianDateToISO = (brazilianDate) => {
+    if (!brazilianDate) {
+      console.error('[DATE] Data não fornecida, usando fallback');
+      return '2025-01-10T14:30:00Z';
+    }
+    
+    console.error('[DATE] Data original:', brazilianDate);
+    
+    try {
+      // "26/06/2025, 17:12:39" -> "2025-06-26T17:12:39Z"
+      const [datePart, timePart] = brazilianDate.split(', ');
+      const [day, month, year] = datePart.split('/');
+      const [hours, minutes, seconds] = timePart.split(':');
+      
+      const date = new Date(
+        parseInt(year), 
+        parseInt(month) - 1, 
+        parseInt(day), 
+        parseInt(hours), 
+        parseInt(minutes), 
+        parseInt(seconds)
+      );
+      
+      if (!isNaN(date.getTime())) {
+        const isoString = date.toISOString();
+        console.error('[DATE] Data convertida:', isoString);
+        return isoString;
+      } else {
+        throw new Error('Data inválida após conversão');
+      }
+    } catch (error) {
+      console.error('[DATE] Erro ao converter:', error.message);
+      return '2025-01-10T14:30:00Z'; // Fallback
+    }
+  };
   
   const title = `${imovel.Empreendimento} - ${imovel.BairroComercial}, ${imovel.Cidade}`;
   const description = `${imovel.Categoria} à venda no bairro ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.DormitoriosAntigo} dormitórios, ${imovel.SuiteAntigo} suítes, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt}. Valor: ${imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}.`;
-
   const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
   
   const imageUrl = Array.isArray(imovel.Foto) && imovel.Foto.length > 0 
     ? (imovel.Foto[0].Foto || imovel.Foto[0].FotoPequena || imovel.Foto[0])
     : imovel.Foto || `${process.env.NEXT_PUBLIC_SITE_URL}/og-image.png`;
-
+  
   console.error(`[IMOVEL-META] Image URL: ${imageUrl}`);
-
+  
+  // ✅ CONVERTER DATA REAL DO BANCO
+  const realModifiedDate = convertBrazilianDateToISO(imovel.DataHoraAtualizacao);
+  
   return {
     title,
     description,
@@ -58,8 +95,8 @@ export async function generateMetadata({ params }) {
       url: currentUrl,
       type: "website",
       siteName: "NPI Consultoria",
-      publishedTime: '2025-01-10T14:30:00Z', // ← Teste
-      modifiedTime: '2025-01-10T14:30:00Z',
+      publishedTime: realModifiedDate, // ✅ Data real convertida
+      modifiedTime: realModifiedDate,  // ✅ Data real convertida
       images: [
         {
           url: imageUrl,
@@ -91,7 +128,7 @@ export async function generateMetadata({ params }) {
       },
     },
     other: {
-      'article:modified_time': '2025-01-10T14:30:00Z',
+      'article:modified_time': realModifiedDate, // ✅ Data real convertida
     },
   };
 }
