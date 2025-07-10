@@ -18,18 +18,6 @@ import { Apartment as StructuredDataApartment } from "@/app/components/structure
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 import { notFound, redirect } from "next/navigation";
 
-// Componente para meta tags específicas que o Ahrefs precisa detectar
-function DateMetaTags({ modifiedDate }) {
-  return (
-    <>
-      <meta property="article:modified_time" content={modifiedDate} />
-      <meta property="article:published_time" content={modifiedDate} />
-      <meta property="og:updated_time" content={modifiedDate} />
-      <meta name="last-modified" content={modifiedDate} />
-    </>
-  );
-}
-
 // Utilitários centralizados
 const utils = {
   /**
@@ -266,6 +254,9 @@ export async function generateMetadata({ params }) {
         'article:published_time': modifiedDate,
         'og:updated_time': modifiedDate,
         'last-modified': modifiedDate,
+        'date': modifiedDate,
+        'DC.date.modified': modifiedDate,
+        'DC.date.created': modifiedDate,
       },
     };
   } catch (error) {
