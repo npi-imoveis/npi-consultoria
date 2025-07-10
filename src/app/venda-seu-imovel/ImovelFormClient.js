@@ -265,9 +265,8 @@ export default function ImovelFormClient() {
           Venda ou Alugue seu Imóvel com Avaliação Gratuita
         </h1>
         <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-          <strong>Cadastre gratuitamente</strong> seu apartamento, casa ou imóvel comercial para venda ou locação. 
-          Nossa equipe especializada oferece <strong>avaliação profissional</strong>, fotografia inclusa, 
-          marketing em mais de 20 portais imobiliários e <strong>acompanhamento completo</strong> até a venda.
+          <strong>Cadastre gratuitamente</strong> seu apartamento de alto padrão, casa em condomínio, casa, ou laje comercial para venda ou locação. 
+          Seu imóvel será divulgado para todos as empresas do HUB e posicionado na maior vitrine do mundo, o GOOGLE.
         </p>
       </div>
 
@@ -278,16 +277,16 @@ export default function ImovelFormClient() {
         </h2>
         <div className="grid md:grid-cols-3 gap-4 text-blue-700">
           <div>
-            <h3 className="font-semibold mb-1">Avaliação Gratuita</h3>
-            <p className="text-sm">Análise de mercado precisa por corretor CRECI</p>
+            <h3 className="font-semibold mb-1">Exposição estratégica para seu imóvel</h3>
+            <p className="text-sm">Somos especializados em posicionamento no Google, acelerando a comercialização do seu imóvel</p>
           </div>
           <div>
             <h3 className="font-semibold mb-1">Marketing Completo</h3>
-            <p className="text-sm">Fotografia profissional + anúncios em +20 portais</p>
+            <p className="text-sm">Divulgamos seu imóvel em todo nosso ecossistema de imobiliárias Boutique de Alto Padrão</p>
           </div>
           <div>
             <h3 className="font-semibold mb-1">Suporte Total</h3>
-            <p className="text-sm">Acompanhamento jurídico e negociação especializada</p>
+            <p className="text-sm">Acompanhamento jurídico e negociação especializada de nossos profissionais</p>
           </div>
         </div>
       </div>
