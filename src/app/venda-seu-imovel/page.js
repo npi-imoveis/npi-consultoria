@@ -248,8 +248,8 @@ export default function VendaSeuImovelClient() {
   return (
     <>
       <HeaderPage
-        title="Cadastre Gratuitamente seu imóvel no Hub DE imobiliárias Boutique de Alto Padrão | NPi"
-        description="Cadastre gratuitamente seu imóvel em nosso HUB e tenha a melhor visibilidade no Google e em todas imobiliárias de alto padrão do HUB"
+        title="Venda ou alugue seu imóvel com assessoria completa"
+        description="Cadastre gratuitamente seu imóvel e receba avaliação profissional, marketing em múltiplos portais e acompanhamento até a venda."
         image="/assets/images/imoveis/02.jpg"
       />
       
@@ -257,10 +257,13 @@ export default function VendaSeuImovelClient() {
         {/* ✅ ÚNICO H1 NA PÁGINA */}
         <header className="mb-12 text-center">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-            Cadastre gratuitamente seu imóvel no HUB de Imobiliárias de Alto Padrão
+            Venda ou Alugue seu Imóvel com Avaliação Gratuita
           </h1>
           <p className="text-xl text-gray-700 max-w-3xl mx-auto leading-relaxed">
-            <strong>Cadastre gratuitamente</strong> seu apartamento, laje comercial, casa em condomínio, casa ou imóvel comercial. 
+            <strong>Cadastre gratuitamente</strong> seu apartamento, casa ou imóvel comercial. 
+            Nossa equipe especializada oferece <strong>avaliação profissional</strong>, 
+            marketing em mais de 20 portais e <strong>acompanhamento completo</strong> até a venda ou locação.
+          </p>
         </header>
 
         {/* ✅ SEÇÃO DE BENEFÍCIOS */}
@@ -320,7 +323,7 @@ export default function VendaSeuImovelClient() {
               </h2>
               <p className="text-gray-600">
                 Preencha as informações abaixo. Quanto mais detalhes você fornecer, 
-                melhor será a velocidade de comercialização do seu imóvel.
+                melhor será nossa avaliação e estratégia de venda ou locação.
               </p>
             </div>
             
