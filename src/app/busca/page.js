@@ -18,8 +18,8 @@ import { getImoveis, searchImoveis } from "../services";
 import useFiltersStore from "../store/filtrosStore";
 import useFavoritosStore from "../store/favoritosStore";
 import useImovelStore from "../store/imovelStore";
-import { gerarTituloSeoFriendly, gerarDescricaoSeoFriendly } from "../utils/url-slugs";
-// import { useSeoUrls } from "../hooks/useSeoUrls"; // DESABILITADO: não usar redirecionamento automático
+import { gerarTituloSeoFriendly, gerarDescricaoSeoFriendly, gerarUrlSeoFriendly } from "../utils/url-slugs";
+import { useRouter } from "next/navigation";
 
 export default function BuscaImoveis() {
   const [imoveis, setImoveis] = useState([]); // Estado inicial como array
@@ -35,8 +35,8 @@ export default function BuscaImoveis() {
   // Acessando funções do store de imóveis
   const adicionarVariosImoveisCache = useImovelStore((state) => state.adicionarVariosImoveisCache);
 
-  // Hook para URLs SEO-friendly - DESABILITADO
-  // const { navegarComFiltros, podeUsarUrlSeoFriendly } = useSeoUrls();
+  // Router para atualizar URL
+  const router = useRouter();
 
   // Estado para controlar a visualização de mapa ou lista
   const [mostrandoMapa, setMostrandoMapa] = useState(false);
@@ -58,6 +58,12 @@ export default function BuscaImoveis() {
   const updateDynamicTitle = (totalItems = null) => {
     const filtrosAtuais = useFiltersStore.getState();
     
+    console.log('🔍 [BUSCA] Debug filtros para título:', {
+      cidadeSelecionada: filtrosAtuais.cidadeSelecionada,
+      finalidade: filtrosAtuais.finalidade,
+      categoriaSelecionada: filtrosAtuais.categoriaSelecionada
+    });
+    
     // Verificar se há filtros aplicados para gerar título dinâmico
     if (filtrosAtuais.cidadeSelecionada || filtrosAtuais.categoriaSelecionada || filtrosAtuais.finalidade) {
       const tituloSeo = gerarTituloSeoFriendly(filtrosAtuais, null); // Removido totalItems
@@ -68,6 +74,18 @@ export default function BuscaImoveis() {
       const tituloDefault = 'Busca de Imóveis | NPi Imóveis';
       document.title = tituloDefault;
       console.log('🔍 [BUSCA] Título padrão aplicado:', tituloDefault);
+    }
+  };
+
+  // Função para atualizar URL quando filtros mudam
+  const updateUrlFromFilters = () => {
+    const filtrosAtuais = useFiltersStore.getState();
+    
+    // Verificar se os filtros básicos estão preenchidos para URL amigável
+    if (filtrosAtuais.cidadeSelecionada && filtrosAtuais.finalidade && filtrosAtuais.categoriaSelecionada) {
+      const urlAmigavel = gerarUrlSeoFriendly(filtrosAtuais);
+      console.log('🔍 [BUSCA] Atualizando URL para:', urlAmigavel);
+      router.replace(urlAmigavel, { scroll: false });
     }
   };
 
@@ -122,15 +140,18 @@ export default function BuscaImoveis() {
     }
   }, [isBrowser]);
 
-  // Efeito para atualizar título quando filtros são aplicados manualmente
+  // Efeito para atualizar título e URL quando filtros são aplicados manualmente
   useEffect(() => {
     if (!isBrowser) return;
     
     // Verificar se há filtros aplicados
     const filtrosAtuais = useFiltersStore.getState();
     if (filtrosAtuais.filtrosAplicados) {
-      console.log('🔍 [BUSCA] Filtros aplicados detectados, atualizando título...');
+      console.log('🔍 [BUSCA] Filtros aplicados detectados, atualizando título e URL...');
       updateDynamicTitle();
+      
+      // Sempre atualizar URL quando filtros mudam
+      updateUrlFromFilters();
     }
   }, [atualizacoesFiltros, isBrowser]);
 

@@ -682,7 +682,7 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible }) {
 
   // Handler para finalidade
   const handleFinalidadeChange = (e) => {
-    const novaFinalidade = e.target.value === "comprar" ? "VENDA" : "ALUGUEL";
+    const novaFinalidade = e.target.value === "comprar" ? "Comprar" : "Alugar";
     setFinalidade(novaFinalidade);
   };
 
@@ -827,7 +827,7 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible }) {
             </span>
             <select
               className="w-full rounded-md border border-gray-300 bg-white text-xs p-2 focus:outline-none focus:ring-1 focus:ring-black"
-              value={finalidade === "VENDA" ? "comprar" : finalidade === "ALUGUEL" ? "alugar" : ""}
+              value={finalidade === "Comprar" ? "comprar" : finalidade === "Alugar" ? "alugar" : ""}
               onChange={handleFinalidadeChange}
             >
               <option value="">Selecione a finalidade</option>
