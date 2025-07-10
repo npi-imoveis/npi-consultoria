@@ -1,5 +1,4 @@
 // app/imovel/[id]/[slug]/page.js
-import { Metadata } from 'next';
 import { ImageGallery } from "@/app/components/sections/image-gallery";
 import { FAQImovel } from "./componentes/FAQImovel";
 import DetalhesCondominio from "./componentes/DetalhesCondominio";
