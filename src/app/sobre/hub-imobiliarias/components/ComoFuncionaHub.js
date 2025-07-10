@@ -6,12 +6,13 @@ export async function ComoFuncionaHub({ howto }) {
       {/* Background escurecido */}
       <div className="absolute inset-0">
         <Image
-          src="/assets/images/meet.jpg" // Substitua pelo caminho correto da sua imagem
-          alt="Background"
-          layout="fill"
-          objectFit="cover"
-          className="opacity-50"
-        />
+  src="/assets/images/meet.jpg"
+  alt="Background"
+  title="Como funciona o HUB - Reunião de imobiliárias"
+  layout="fill"
+  objectFit="cover"
+  className="opacity-50"
+/>
         <div className="absolute inset-0 bg-black opacity-60"></div>
       </div>
 
