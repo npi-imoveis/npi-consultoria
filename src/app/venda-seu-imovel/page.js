@@ -5,8 +5,8 @@ import ImovelFormClient from "./ImovelFormClient";
 
 // ✅ METADATA SEO (IGUAL AO HUB QUE FUNCIONOU)
 export const metadata = {
-  title: "Cadastre seu Imóvel no HUB de Imobiliárias de Alto Padrão da NPi",
-  description: "Cadastre gratuitamente seu imóvel para venda ou locação no HUB DE IMOBILIÁRIAS BOUTOQUE DE ALTO PADRÃO, dando visibilidade e ele na maior vitrine do mundo, o GOOGLE.",
+  title: "Cadastre seu Imóvel no HUB de Imobiliárias da NPi",
+  description: "Cadastre gratuitamente seu imóvel no HUB DE IMOBILIÁRIAS BOUTOQUE DE ALTO PADRÃO, dando visibilidade e ele na maior vitrine do mundo, o GOOGLE.",
   keywords: "vender imóvel São Paulo, alugar imóvel, avaliação imóvel gratuita, consultoria imobiliária, venda apartamento, locação casa, corretora imóveis",
   authors: [{ name: "NPI Consultoria" }],
   creator: "NPI Consultoria", 
