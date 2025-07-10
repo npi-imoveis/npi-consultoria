@@ -5,7 +5,7 @@ import ImovelFormClient from "./ImovelFormClient";
 
 // ✅ METADATA SEO (IGUAL AO HUB QUE FUNCIONOU)
 export const metadata = {
-  title: "Venda ou Alugue seu Imóvel | Avaliação Gratuita | NPI Consultoria",
+  title: "Venda ou Alugue seu Imóvel com o HUB da NPi",
   description: "Cadastre gratuitamente seu imóvel para venda ou locação no HUB DE IMOBILIÁRIAS BOUTOQUE DE ALTO PADRÃO, dando visiibilidade e ele na maior vitrine do mundo, o GOOGLE.",
   keywords: "vender imóvel São Paulo, alugar imóvel, avaliação imóvel gratuita, consultoria imobiliária, venda apartamento, locação casa, corretora imóveis",
   authors: [{ name: "NPI Consultoria" }],
@@ -27,7 +27,7 @@ export const metadata = {
     locale: "pt_BR",
     url: "https://www.npiconsultoria.com.br/venda-seu-imovel",
     siteName: "NPI Consultoria",
-    title: "Venda ou Alugue seu Imóvel com Assessoria Completa | NPI Consultoria",
+    title: "Venda ou Alugue seu Imóvel com o HUB da NPI",
     description: "Cadastre gratuitamente seu imóvel para venda ou locação no HUB DE IMOBILIÁRIAS BOUTOQUE DE ALTO PADRÃO, dando visiibilidade e ele na maior vitrine do mundo, o GOOGLE.",
     images: [
       {
@@ -141,8 +141,8 @@ export default async function ImovelFormPage() {
       
       <section>
         <HeaderPage
-          title="Venda ou alugue seu imóvel com assessoria completa"
-          description="Cadastre gratuitamente seu imóvel."
+          title="Venda ou alugue seu imóvel com o HUB da NPi"
+          description="Cadastre gratuitamente seu imóvel para venda ou locação no HUB DE IMOBILIÁRIAS BOUTOQUE DE ALTO PADRÃO, dando visiibilidade e ele na maior vitrine do mundo, o GOOGLE.."
           image="/assets/images/imoveis/02.jpg"
         />
         
