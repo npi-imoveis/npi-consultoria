@@ -37,9 +37,15 @@ export function Header({ effect = true }) {
       `}
     >
       {/* Logo */}
-      <Link href="/">
-        <Image src="/assets/images/logo_light.png" height={100} width={100} alt="logo" />
-      </Link>
+     <Link href="/">
+   <Image 
+    title="NPi Imóveis - Hub de Imobiliárias Boutique de Alto Padrão"
+    src="/assets/images/logo_light.png" 
+    height={100} 
+    width={100} 
+    alt="logo" 
+     />
+     </Link>
 
       {/* Ícone do menu mobile */}
       <button
