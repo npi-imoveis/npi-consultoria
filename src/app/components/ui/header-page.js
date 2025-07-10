@@ -21,6 +21,7 @@ export function HeaderPage({ title, description, image }) {
       {/* Fundo com imagem e efeito de overlay escuro */}
       <div className="absolute inset-0">
         <Image
+         title="Hub de Imobiliárias Boutique de Alto Padrão"
           src={image}
           layout="fill"
           objectFit="cover"
