@@ -277,7 +277,7 @@ export default function ImovelFormClient() {
         </h2>
         <div className="grid md:grid-cols-3 gap-4 text-blue-700">
           <div>
-            <h3 className="font-semibold mb-1">Exposição estratégica para seu imóvel</h3>
+            <h3 className="font-semibold mb-1">Exposição estratégica do seu imóvel</h3>
             <p className="text-sm">Somos especializados em posicionamento no Google, acelerando a comercialização do seu imóvel</p>
           </div>
           <div>
