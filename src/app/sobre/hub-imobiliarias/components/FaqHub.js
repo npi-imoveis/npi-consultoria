@@ -33,6 +33,7 @@ export async function FaqHub({ faqs }) {
           {/* Image */}
           <div className="w-full lg:w-1/2">
             <img
+              title="FAQ - Perguntas frequentes sobre o HUB"
               src="/assets/images/faq-about.jpg"
               alt="FAQ"
               className="w-full h-auto rounded-xl object-cover"
