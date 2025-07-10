@@ -58,6 +58,8 @@ export async function generateMetadata({ params }) {
       url: currentUrl,
       type: "website",
       siteName: "NPI Consultoria",
+      publishedTime: '2025-01-10T14:30:00Z', // ← Teste
+      modifiedTime: '2025-01-10T14:30:00Z'
       images: [
         {
           url: imageUrl,
