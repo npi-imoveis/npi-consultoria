@@ -32,15 +32,21 @@ export function WhatsappFloat({ message }) {
     }
   };
 
-  return (
-    <div className="fixed bottom-5 right-5 z-[9999]">
-      <a
-        href="#"
-        onClick={handleWhatsAppClick}
-        className="cursor-pointer"
-      >
-        <Image src="/assets/images/whatsapp.png" height={48} width={48} alt="Fale conosco pelo WhatsApp" unoptimized />
-      </a>
-    </div>
-  );
-}
+ return (
+  <div className="fixed bottom-5 right-5 z-[9999]">
+    
+      href="#"
+      onClick={handleWhatsAppClick}
+      className="cursor-pointer"
+    >
+      <Image 
+        src="/assets/images/whatsapp.png" 
+        height={48} 
+        width={48} 
+        alt="Fale conosco pelo WhatsApp" 
+        title="Fale conosco pelo WhatsApp - NPi Imóveis"
+        unoptimized 
+      />
+    </a>
+  </div>
+);
