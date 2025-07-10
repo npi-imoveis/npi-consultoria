@@ -1,4 +1,5 @@
 // app/imovel/[id]/[slug]/page.js
+import Head from 'next/head';
 
 import { ImageGallery } from "@/app/components/sections/image-gallery";
 import { FAQImovel } from "./componentes/FAQImovel";
@@ -171,6 +172,12 @@ if (slug !== slugCorreto) {
   const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
 
   return (
+    <>
+    <Head>
+      <meta property="article:modified_time" content={modifiedDate} />
+      <meta property="article:published_time" content={modifiedDate} />
+      <meta property="og:updated_time" content={modifiedDate} />
+    </Head>
     <section className="w-full bg-white pb-32 pt-20">
       <StructuredDataApartment
         title={imovel.Empreendimento}
