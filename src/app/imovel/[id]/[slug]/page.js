@@ -287,6 +287,9 @@ export default async function ImovelPage({ params }) {
   console.log(`🏠 [IMOVEL-PAGE] Processando ID: ${id}, SLUG: ${slug}`);
   console.log(`🏠 [IMOVEL-PAGE] Params completos:`, params);
   
+  // ✅ TESTE SIMPLES PRIMEIRO
+  console.log('🔥 FUNÇÃO DE DEBUG INICIADA - SE VÊ ISSO, O CÓDIGO ESTÁ RODANDO');
+  
   try {
     console.log(`🏠 [IMOVEL-PAGE] 📞 Chamando getImovelById(${id})`);
     const response = await getImovelById(id);
@@ -322,6 +325,22 @@ export default async function ImovelPage({ params }) {
       <>
         {/* ✅ META TAGS ESPECÍFICAS PARA AHREFS DETECTAR */}
         <DateMetaTags modifiedDate={modifiedDate} />
+        
+        {/* 🔍 DEBUG SCRIPT PARA RODAR NO CLIENTE */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              console.log('🔥 DEBUG CLIENT-SIDE - Data do imóvel: ${modifiedDate}');
+              console.log('📊 Dados do imóvel para debug:', ${JSON.stringify({
+                Codigo: imovel.Codigo,
+                Empreendimento: imovel.Empreendimento,
+                DataHoraAtualizacao: imovel.DataHoraAtualizacao,
+                DataAtualizacao: imovel.DataAtualizacao,
+                DataCadastro: imovel.DataCadastro
+              })});
+            `
+          }}
+        />
         
         <main className="w-full bg-white pb-32 pt-20">
           {/* Dados estruturados para SEO */}
