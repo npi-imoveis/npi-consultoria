@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import cache from "@/app/lib/cache";
 import ImovelAtivo from "@/app/models/ImovelAtivo";
 import ImovelInativo from "@/app/models/ImovelInativo";
+import { onPropertyChange } from "@/app/utils/city-sync-helper";
 
 export async function GET(request) {
   try {
@@ -201,6 +202,12 @@ export async function POST(request) {
       }
     });
 
+    // Triggerar sincronização de cidades se houver cidade no imóvel
+    if (dadosImovel.Cidade) {
+      const operation = imovelExistente ? 'update' : 'create';
+      onPropertyChange(dadosImovel, operation, 'api');
+    }
+
     return NextResponse.json(
       {
         status: 200,
@@ -232,9 +239,17 @@ export async function DELETE(request) {
 
     await connectToDatabase();
 
+    // Buscar o imóvel antes de deletar para triggerar sincronização
+    const imovelParaDeletar = await Imovel.findOne({ Codigo: id });
+
     await Imovel.deleteOne({ Codigo: id });
     await ImovelAtivo.deleteOne({ Codigo: id });
     await ImovelInativo.deleteOne({ Codigo: id });
+
+    // Triggerar sincronização se o imóvel tinha cidade
+    if (imovelParaDeletar?.Cidade) {
+      onPropertyChange(imovelParaDeletar, 'delete', 'api');
+    }
 
     return NextResponse.json({ success: true, message: "Imóvel deletado com sucesso" });
   } catch (error) {
@@ -326,6 +341,11 @@ export async function PUT(request) {
         cache.del(key);
       }
     });
+
+    // Triggerar sincronização de cidades se houver cidade no imóvel
+    if (dadosImovel.Cidade) {
+      onPropertyChange(dadosImovel, 'update', 'api');
+    }
 
     return NextResponse.json(
       {

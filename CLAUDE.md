@@ -52,6 +52,32 @@ vercel env ls            # List environment variables
 - ✅ Middleware now handles all property route logic
 - ✅ Works consistently on both Vercel and local development
 
+### SEO-Friendly Search URLs
+**MAJOR UPDATE (July 2025)**: Implemented complete SEO-friendly URL system for property search:
+
+#### Search URLs (Google-indexed):
+- **Old**: `/busca?cidade=São+Paulo&finalidade=Comprar&categoria=Apartamento`
+- **New**: `/buscar/venda/apartamentos/sao-paulo` ✅
+
+#### URL Structure:
+- Pattern: `/buscar/{finalidade}/{categoria}/{cidade}/{bairro}`
+- Examples:
+  - `/buscar/venda/apartamentos/sao-paulo`
+  - `/buscar/aluguel/casas/campinas`
+  - `/buscar/venda/apartamentos/sao-paulo/vila-mariana`
+
+#### Dynamic City Management:
+- ✅ **45 cities** automatically migrated from property database
+- ✅ **Auto-sync system** creates new cities when properties are added
+- ✅ **Database-driven** slug mapping (no hardcoded lists)
+- ✅ **Real-time updates** when filters are applied manually
+
+#### Implementation:
+- ✅ Middleware rewrites SEO URLs to internal search page
+- ✅ Dynamic titles: "Apartamentos à venda - São Paulo | NPi Imóveis"
+- ✅ URL updates when filters change
+- ✅ Automatic city detection and creation
+
 ### Meta Tags & SEO
 **Recently implemented og:image fixes**:
 - ✅ Property pages: Extract image from `imovel.Foto` array (first image)
@@ -168,6 +194,31 @@ const imageUrl = Array.isArray(imovel.Foto) && imovel.Foto.length > 0
 - `GET /api/condominios/slug` - Get condominium by slug
 - `GET /api/search/*` - Various search endpoints
 
+### City Management APIs:
+- `GET /api/cities` - List all cities with pagination and filters
+- `POST /api/cities` - Create new city
+- `GET/PUT/DELETE /api/cities/{id}` - CRUD operations for individual cities
+- `GET /api/cities/slugs` - Get slug mapping for URL conversion
+- `POST /api/cities/migrate` - **Migrate cities from property database**
+- `GET/POST /api/cities/auto-sync` - Automatic synchronization system
+- `GET /api/admin/cities` - Admin interface for city management
+- `GET/POST /api/admin/cities/stats` - City statistics and counter updates
+
+### City Migration Commands:
+```bash
+# Complete city migration (run once after deployment)
+curl -X POST http://localhost:3000/api/cities/migrate
+
+# Force automatic sync (if needed)
+curl -X POST http://localhost:3000/api/cities/auto-sync
+
+# Check current city mapping
+curl http://localhost:3000/api/cities/slugs
+
+# View all cities
+curl http://localhost:3000/api/cities
+```
+
 ### Response Structure:
 ```javascript
 // Typical API response:
@@ -204,11 +255,14 @@ const imageUrl = Array.isArray(imovel.Foto) && imovel.Foto.length > 0
 
 ## Recent Major Changes (July 2025)
 
-1. **Fixed URL Routing**: Resolved middleware vs next.config.mjs conflicts
-2. **Admin Panel**: Firebase credentials, pagination, null safety  
-3. **SEO Meta Tags**: og:image working for properties and condominiums
-4. **Social Sharing**: Enhanced OpenGraph and Twitter Cards
-5. **Build Stability**: Fixed array operations and undefined checks
+1. **SEO-Friendly Search URLs**: Complete implementation of `/buscar/venda/apartamentos/sao-paulo` format
+2. **Dynamic City Management**: Database-driven city system with auto-sync (45+ cities)
+3. **Fixed URL Routing**: Resolved middleware vs next.config.mjs conflicts
+4. **Admin Panel**: Firebase credentials, pagination, null safety  
+5. **SEO Meta Tags**: og:image working for properties and condominiums
+6. **Social Sharing**: Enhanced OpenGraph and Twitter Cards
+7. **Build Stability**: Fixed array operations and undefined checks
+8. **Automatic City Sync**: Real-time city detection and creation system
 
 ## Performance Notes
 - Images optimized via Next.js Image component

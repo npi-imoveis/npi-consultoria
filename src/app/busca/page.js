@@ -81,11 +81,38 @@ export default function BuscaImoveis() {
   const updateUrlFromFilters = () => {
     const filtrosAtuais = useFiltersStore.getState();
     
+    console.log('🔍 [BUSCA] Atualizando URL com filtros:', {
+      cidadeSelecionada: filtrosAtuais.cidadeSelecionada,
+      finalidade: filtrosAtuais.finalidade,
+      categoriaSelecionada: filtrosAtuais.categoriaSelecionada,
+      bairrosSelecionados: filtrosAtuais.bairrosSelecionados,
+      quartos: filtrosAtuais.quartos
+    });
+    
     // Verificar se os filtros básicos estão preenchidos para URL amigável
     if (filtrosAtuais.cidadeSelecionada && filtrosAtuais.finalidade && filtrosAtuais.categoriaSelecionada) {
       const urlAmigavel = gerarUrlSeoFriendly(filtrosAtuais);
       console.log('🔍 [BUSCA] Atualizando URL para:', urlAmigavel);
-      router.replace(urlAmigavel, { scroll: false });
+      
+      // Usar router.push para atualizar a URL e manter o histórico
+      router.push(urlAmigavel, { scroll: false });
+    } else {
+      console.log('🔍 [BUSCA] Filtros básicos não estão completos, mantendo /busca');
+      
+      // Se não tem filtros completos, construir URL com query params
+      const params = new URLSearchParams();
+      if (filtrosAtuais.cidadeSelecionada) params.set('cidade', filtrosAtuais.cidadeSelecionada);
+      if (filtrosAtuais.finalidade) params.set('finalidade', filtrosAtuais.finalidade);
+      if (filtrosAtuais.categoriaSelecionada) params.set('categoria', filtrosAtuais.categoriaSelecionada);
+      if (filtrosAtuais.bairrosSelecionados && filtrosAtuais.bairrosSelecionados.length > 0) {
+        params.set('bairros', filtrosAtuais.bairrosSelecionados.join(','));
+      }
+      if (filtrosAtuais.quartos) params.set('quartos', filtrosAtuais.quartos);
+      if (filtrosAtuais.precoMin) params.set('precoMin', filtrosAtuais.precoMin);
+      if (filtrosAtuais.precoMax) params.set('precoMax', filtrosAtuais.precoMax);
+      
+      const urlComParams = params.toString() ? `/busca?${params.toString()}` : '/busca';
+      router.push(urlComParams, { scroll: false });
     }
   };
 
@@ -150,8 +177,10 @@ export default function BuscaImoveis() {
       console.log('🔍 [BUSCA] Filtros aplicados detectados, atualizando título e URL...');
       updateDynamicTitle();
       
-      // Sempre atualizar URL quando filtros mudam
-      updateUrlFromFilters();
+      // Usar setTimeout para garantir que a store foi atualizada
+      setTimeout(() => {
+        updateUrlFromFilters();
+      }, 50);
     }
   }, [atualizacoesFiltros, isBrowser]);
 

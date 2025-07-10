@@ -1,19 +1,83 @@
 // src/app/utils/url-slugs.js
 
-// Mapeamentos para conversão de slugs
-const MAPEAMENTO_CIDADES = {
-  'sao-paulo': 'São Paulo',
-  'rio-de-janeiro': 'Rio de Janeiro',
-  'belo-horizonte': 'Belo Horizonte',
-  'brasilia': 'Brasília',
-  'salvador': 'Salvador',
-  'fortaleza': 'Fortaleza',
-  'curitiba': 'Curitiba',
-  'recife': 'Recife',
-  'porto-alegre': 'Porto Alegre',
-  'manaus': 'Manaus',
-  'campinas': 'Campinas',
-  'santo-andre': 'Santo André'
+// Cache para mapeamentos de cidades (será populado dinamicamente)
+let MAPEAMENTO_CIDADES_CACHE = null;
+let CACHE_TIMESTAMP = null;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
+
+// Função para buscar mapeamento de cidades do banco de dados
+export const getCitySlugMapping = async () => {
+  // Check cache first
+  if (MAPEAMENTO_CIDADES_CACHE && CACHE_TIMESTAMP && (Date.now() - CACHE_TIMESTAMP) < CACHE_DURATION) {
+    return MAPEAMENTO_CIDADES_CACHE;
+  }
+  
+  try {
+    // Try to fetch from API
+    const response = await fetch('/api/cities/slugs');
+    if (response.ok) {
+      const data = await response.json();
+      MAPEAMENTO_CIDADES_CACHE = data.data;
+      CACHE_TIMESTAMP = Date.now();
+      return MAPEAMENTO_CIDADES_CACHE;
+    }
+  } catch (error) {
+    console.warn('Erro ao buscar mapeamento de cidades da API, usando fallback:', error);
+  }
+  
+  // Fallback para casos onde a API não está disponível (SSR, etc)
+  return getFallbackCityMapping();
+};
+
+// Fallback mapping for when API is not available
+const getFallbackCityMapping = () => {
+  return {
+    'arraial-dajuda-porto-seguro': 'Arraial DAjuda (Porto Seguro)',
+    'atibaia': 'Atibaia',
+    'balneario-camboriu': 'Balneário Camboriú',
+    'barueri': 'Barueri',
+    'belo-horizonte': 'Belo Horizonte',
+    'bertioga': 'Bertioga',
+    'braganca-paulista': 'Bragança Paulista',
+    'cabreuva': 'Cabreúva',
+    'campinas': 'Campinas',
+    'cacapava': 'Caçapava',
+    'cotia': 'Cotia',
+    'diadema': 'Diadema',
+    'elias-fausto': 'Elias Fausto',
+    'gramado': 'Gramado',
+    'guaruja': 'Guarujá',
+    'guarulhos': 'Guarulhos',
+    'hortolandia': 'Hortolândia',
+    'indaiatuba': 'Indaiatuba',
+    'itajai': 'Itajaí',
+    'itapema': 'Itapema',
+    'itaquaquecetuba': 'Itaquaquecetuba',
+    'itatiba': 'Itatiba',
+    'itu': 'Itu',
+    'itupeva': 'Itupeva',
+    'jacarei': 'Jacareí',
+    'jundiai': 'Jundiaí',
+    'louveira': 'Louveira',
+    'osasco': 'Osasco',
+    'paraty': 'Paraty',
+    'paulinia': 'Paulínia',
+    'piracicaba': 'Piracicaba',
+    'porto-feliz': 'Porto Feliz',
+    'porto-seguro': 'Porto Seguro',
+    'ribeirao-pires': 'Ribeirão Pires',
+    'santana-de-parnaiba': 'Santana de Parnaíba',
+    'santo-andre': 'Santo André',
+    'santos': 'Santos',
+    'sao-bernardo-do-campo': 'São Bernardo do Campo',
+    'sao-caetano-do-sul': 'São Caetano do Sul',
+    'sao-jose-dos-campos': 'São José dos Campos',
+    'sao-miguel-dos-milagres': 'São Miguel dos Milagres',
+    'sao-paulo': 'São Paulo',
+    'valinhos': 'Valinhos',
+    'vila-mariana': 'Vila Mariana',
+    'vinhedo': 'Vinhedo'
+  };
 };
 
 const MAPEAMENTO_CATEGORIAS = {
@@ -109,9 +173,32 @@ export const gerarSlugPreco = (precoMin, precoMax) => {
 };
 
 // Funções para converter slugs (da URL para valor)
-export const converterSlugCidade = (slug) => {
+export const converterSlugCidade = async (slug) => {
   if (!slug) return '';
-  return MAPEAMENTO_CIDADES[slug] || slug;
+  
+  const mapeamento = await getCitySlugMapping();
+  return mapeamento[slug] || slug;
+};
+
+// Versão síncrona para uso quando não é possível usar async
+export const converterSlugCidadeSync = (slug) => {
+  if (!slug) return '';
+  
+  // Use cache if available, otherwise fallback
+  const mapeamento = MAPEAMENTO_CIDADES_CACHE || getFallbackCityMapping();
+  return mapeamento[slug] || slug;
+};
+
+// Função para obter todas as cidades válidas (slugs)
+export const getCityValidSlugs = async () => {
+  const mapeamento = await getCitySlugMapping();
+  return Object.keys(mapeamento);
+};
+
+// Versão síncrona para obter cidades válidas
+export const getCityValidSlugsSync = () => {
+  const mapeamento = MAPEAMENTO_CIDADES_CACHE || getFallbackCityMapping();
+  return Object.keys(mapeamento);
 };
 
 export const converterSlugCategoria = (slug) => {
@@ -192,9 +279,9 @@ export const gerarUrlSeoFriendly = (filtros) => {
   
   const slugs = [
     'buscar', // Prefixo para evitar conflitos de rota
-    gerarSlugCidade(cidadeSelecionada),
     gerarSlugFinalidade(finalidade),
-    gerarSlugCategoria(categoriaSelecionada)
+    gerarSlugCategoria(categoriaSelecionada),
+    gerarSlugCidade(cidadeSelecionada)
   ];
   
   // Adicionar bairros se existirem
@@ -385,15 +472,15 @@ export const gerarKeywordsSeoFriendly = (filtros) => {
 
 // Função para converter URL SEO-friendly de volta para filtros
 export const converterUrlParaFiltros = (params) => {
-  const { cidade, finalidade, categoria, bairros, quartos, preco } = params;
+  const { finalidade, categoria, cidade, bairros, quartos, preco } = params;
   
   console.log('🔍 [URL-SLUGS] =================== CONVERSÃO DE SLUGS ===================');
   console.log('🔍 [URL-SLUGS] Parâmetros recebidos:', params);
   
   console.log('🔍 [URL-SLUGS] Conversões individuais:');
-  console.log('🔍 [URL-SLUGS] - Cidade:', cidade, '->', converterSlugCidade(cidade));
   console.log('🔍 [URL-SLUGS] - Finalidade:', finalidade, '->', converterSlugFinalidade(finalidade));
   console.log('🔍 [URL-SLUGS] - Categoria:', categoria, '->', converterSlugCategoria(categoria));
+  console.log('🔍 [URL-SLUGS] - Cidade:', cidade, '->', converterSlugCidade(cidade));
   
   const filtros = {
     cidadeSelecionada: converterSlugCidade(cidade) || '',

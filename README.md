@@ -1,36 +1,231 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# NPi Consultoria - Real Estate Platform
 
-## Getting Started
+A modern Next.js 14 real estate website with advanced SEO-friendly URLs and dynamic city management.
 
-First, run the development server:
+## 🏠 Project Overview
 
+NPi Consultoria is a comprehensive real estate platform built with:
+
+- **Next.js 14** with App Router
+- **MongoDB** with Mongoose ODM  
+- **Tailwind CSS** for styling
+- **Firebase Admin SDK** for authentication
+- **AWS S3** for file storage
+- **Vercel** for deployment
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Node.js 18+
+- MongoDB connection
+- Environment variables configured
+
+### Installation
+
+1. **Clone and install:**
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <repository>
+cd npi-consultoria
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. **Environment setup:**
+```bash
+# Copy environment variables from Vercel
+vercel env pull .env.local
+```
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+3. **Start development server:**
+```bash
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. **Initial city migration (run once):**
+```bash
+curl -X POST http://localhost:3000/api/cities/migrate
+```
 
-## Learn More
+## 🔗 SEO-Friendly URLs
 
-To learn more about Next.js, take a look at the following resources:
+### Search URLs
+Transform complex query parameters into clean, SEO-optimized URLs:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **Before**: `/busca?cidade=São+Paulo&finalidade=Comprar&categoria=Apartamento`
+- **After**: `/buscar/venda/apartamentos/sao-paulo` ✅
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### URL Structure
+```
+/buscar/{finalidade}/{categoria}/{cidade}/{bairro}
+```
 
-## Deploy on Vercel
+**Examples:**
+- `/buscar/venda/apartamentos/sao-paulo`
+- `/buscar/aluguel/casas/campinas`  
+- `/buscar/venda/apartamentos/sao-paulo/vila-mariana`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Dynamic Features
+- ✅ **Real-time URL updates** when filters change
+- ✅ **Dynamic page titles**: "Apartamentos à venda - São Paulo | NPi Imóveis"
+- ✅ **Auto-sync cities** from property database
+- ✅ **45+ cities** automatically managed
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 🛠 API Endpoints
+
+### Property Search
+- `GET /busca` - Main search page (internal)
+- `GET /buscar/{finalidade}/{categoria}/{cidade}` - SEO-friendly URLs
+
+### City Management
+```bash
+# Migration and sync
+POST /api/cities/migrate          # Migrate cities from properties
+POST /api/cities/auto-sync        # Force automatic sync
+
+# City data
+GET /api/cities                   # List all cities
+GET /api/cities/slugs             # Get slug mappings
+POST /api/cities                  # Create new city
+
+# Admin
+GET /api/admin/cities             # Admin interface
+GET /api/admin/cities/stats       # Statistics
+```
+
+### Property Management
+- `GET /api/imoveis` - List properties
+- `POST /api/imoveis` - Create/update property (triggers city sync)
+- `PUT /api/imoveis` - Update property
+- `DELETE /api/imoveis` - Delete property
+
+## 🏗 Architecture
+
+### Database Models
+- **Imovel** - Main property collection
+- **City** - Dynamic city management with slugs
+- **ImovelAtivo/ImovelInativo** - Status-based collections
+
+### Key Systems
+1. **URL Rewriting Middleware** - Converts SEO URLs to internal routes
+2. **Auto-Sync System** - Automatically creates cities from new properties
+3. **Dynamic Slug Generation** - Converts "São Paulo" → "sao-paulo"
+4. **Cache Management** - 5-minute cache for optimal performance
+
+### Directory Structure
+```
+src/app/
+├── api/
+│   ├── cities/              # City management APIs
+│   │   ├── migrate/         # Migration endpoint
+│   │   ├── auto-sync/       # Auto-sync system
+│   │   └── slugs/           # Slug mapping
+│   ├── imoveis/             # Property APIs
+│   └── webhooks/            # Sync webhooks
+├── models/
+│   ├── City.js              # City model
+│   └── Imovel.ts            # Property model
+├── utils/
+│   ├── url-slugs.js         # URL conversion utilities
+│   └── city-sync-helper.js  # Sync automation
+├── busca/                   # Search page
+└── middleware.js            # URL rewriting logic
+```
+
+## 🔧 Development
+
+### Common Commands
+```bash
+npm run dev                 # Development server
+npm run build              # Production build
+npm run lint               # ESLint checking
+vercel --prod              # Deploy to production
+```
+
+### Testing URLs
+```bash
+# Test SEO-friendly URLs
+curl http://localhost:3000/buscar/venda/apartamentos/sao-paulo
+curl http://localhost:3000/buscar/aluguel/casas/campinas
+
+# Check city sync status
+curl http://localhost:3000/api/cities/auto-sync
+
+# View city mappings  
+curl http://localhost:3000/api/cities/slugs
+```
+
+### Migration Commands
+```bash
+# Run complete city migration
+curl -X POST http://localhost:3000/api/cities/migrate
+
+# Force sync if needed
+curl -X POST http://localhost:3000/api/cities/auto-sync -d '{"force":true}' -H "Content-Type: application/json"
+
+# Update property counts
+curl -X POST http://localhost:3000/api/admin/cities/stats
+```
+
+## 🚀 Deployment
+
+### Vercel Setup
+1. Connect repository to Vercel
+2. Configure environment variables
+3. Deploy to production
+4. Run city migration on first deployment
+
+### Environment Variables
+```bash
+MONGODB_URI=mongodb+srv://...
+FIREBASE_PROJECT_ID=npi-imoveis  
+FIREBASE_CLIENT_EMAIL=firebase-adminsdk-...
+FIREBASE_PRIVATE_KEY=-----BEGIN PRIVATE KEY-----...
+AWS_ACCESS_KEY_ID=...
+AWS_SECRET_ACCESS_KEY=...
+NEXT_PUBLIC_SITE_URL=https://www.npiconsultoria.com.br
+```
+
+## 📊 Features
+
+### SEO Optimization
+- ✅ Clean, readable URLs
+- ✅ Dynamic meta tags and titles
+- ✅ OpenGraph and Twitter Cards
+- ✅ Structured data for search engines
+
+### Performance
+- ✅ Server-side rendering with Next.js 14
+- ✅ Intelligent caching system
+- ✅ Image optimization
+- ✅ Database query optimization
+
+### Admin Features
+- ✅ Property management interface
+- ✅ City management and statistics
+- ✅ Automated sync monitoring
+- ✅ Real estate agent management
+
+## 🔄 Auto-Sync System
+
+The platform automatically detects and creates new cities when properties are added:
+
+1. **Property created/updated** → Triggers webhook
+2. **Webhook calls auto-sync** → Checks for new cities  
+3. **Auto-sync creates cities** → Generates slugs automatically
+4. **URLs work immediately** → No manual intervention needed
+
+## 📝 Recent Updates (July 2025)
+
+- ✅ Complete SEO-friendly URL system implementation
+- ✅ Dynamic city management with 45+ cities
+- ✅ Automatic synchronization system
+- ✅ Real-time URL updates
+- ✅ Enhanced middleware performance
+- ✅ Database-driven slug mapping
+
+## 📞 Support
+
+For technical questions or deployment assistance, refer to the `CLAUDE.md` file for detailed implementation notes and troubleshooting guides.
+
+---
+
+**NPi Consultoria** - Negociação Personalizada de Imóveis | CRECI: 22013-J

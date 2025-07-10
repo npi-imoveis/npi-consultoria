@@ -1,5 +1,6 @@
 // middleware.js
 import { NextResponse } from "next/server";
+import { getCityValidSlugsSync, converterSlugCidadeSync } from "@/app/utils/url-slugs";
 
 export async function middleware(request) {
   const url = request.nextUrl.clone();
@@ -9,22 +10,22 @@ export async function middleware(request) {
   console.log(`🔍 [MIDDLEWARE] Processando: ${pathname}`);
   console.log(`🔍 [MIDDLEWARE] Origin: ${origin}`);
 
-  // 1. Verificar se é URL SEO-friendly (/buscar/cidade/finalidade/categoria)
+  // 1. Verificar se é URL SEO-friendly (/buscar/finalidade/categoria/cidade/bairro)
   const seoMatch = pathname.match(/^\/buscar\/([^\/]+)\/([^\/]+)\/([^\/]+)(.*)$/);
   
   if (seoMatch) {
-    const [, cidade, finalidade, categoria, restPath] = seoMatch;
+    const [, finalidade, categoria, cidade, restPath] = seoMatch;
     
-    // Lista de cidades válidas (adicione mais conforme necessário)
-    const cidadesValidas = ['sao-paulo', 'rio-de-janeiro', 'belo-horizonte', 'brasilia', 'salvador', 'fortaleza', 'curitiba', 'recife', 'porto-alegre', 'manaus', 'campinas', 'santo-andre'];
+    // Buscar cidades válidas do banco de dados
+    const cidadesValidas = getCityValidSlugsSync();
     const finalidadesValidas = ['compra', 'venda', 'aluguel'];
     const categoriasValidas = ['apartamentos', 'casas', 'coberturas', 'studios', 'terrenos', 'salas'];
     
     if (cidadesValidas.includes(cidade) && finalidadesValidas.includes(finalidade) && categoriasValidas.includes(categoria)) {
-      console.log(`🔍 [MIDDLEWARE] ✅ URL SEO-friendly detectada: /buscar/${cidade}/${finalidade}/${categoria}${restPath}`);
+      console.log(`🔍 [MIDDLEWARE] ✅ URL SEO-friendly detectada: /buscar/${finalidade}/${categoria}/${cidade}${restPath}`);
       
       // Converter parâmetros de URL para filtros
-      const parametrosUrl = { cidade, finalidade, categoria };
+      const parametrosUrl = { finalidade, categoria, cidade };
       
       // Processar parâmetros extras se existirem
       if (restPath && restPath.length > 1) {
@@ -58,21 +59,7 @@ export async function middleware(request) {
         precoMax: null
       };
 
-      // Mapeamentos de conversão
-      const MAPEAMENTO_CIDADES = {
-        'sao-paulo': 'São Paulo',
-        'rio-de-janeiro': 'Rio de Janeiro', 
-        'belo-horizonte': 'Belo Horizonte',
-        'brasilia': 'Brasília',
-        'salvador': 'Salvador',
-        'fortaleza': 'Fortaleza',
-        'curitiba': 'Curitiba',
-        'recife': 'Recife',
-        'porto-alegre': 'Porto Alegre',
-        'manaus': 'Manaus',
-        'campinas': 'Campinas',
-        'santo-andre': 'Santo André'
-      };
+      // Mapeamentos de conversão usando banco de dados
 
       const MAPEAMENTO_CATEGORIAS = {
         'apartamentos': 'Apartamento',
@@ -90,7 +77,7 @@ export async function middleware(request) {
       };
 
       // Converter parâmetros básicos
-      filtros.cidadeSelecionada = MAPEAMENTO_CIDADES[parametrosUrl.cidade] || parametrosUrl.cidade;
+      filtros.cidadeSelecionada = converterSlugCidadeSync(parametrosUrl.cidade);
       filtros.finalidade = MAPEAMENTO_FINALIDADES[parametrosUrl.finalidade] || parametrosUrl.finalidade;
       filtros.categoriaSelecionada = MAPEAMENTO_CATEGORIAS[parametrosUrl.categoria] || parametrosUrl.categoria;
 
@@ -138,21 +125,21 @@ export async function middleware(request) {
         }
       }
       
-      // Construir URL de redirecionamento para /busca
-      const redirectUrl = new URL('/busca', request.url);
+      // Construir URL de rewrite para /busca (mantém URL amigável)
+      const rewriteUrl = new URL('/busca', request.url);
       
-      if (filtros.cidadeSelecionada) redirectUrl.searchParams.set('cidade', filtros.cidadeSelecionada);
-      if (filtros.finalidade) redirectUrl.searchParams.set('finalidade', filtros.finalidade);
-      if (filtros.categoriaSelecionada) redirectUrl.searchParams.set('categoria', filtros.categoriaSelecionada);
+      if (filtros.cidadeSelecionada) rewriteUrl.searchParams.set('cidade', filtros.cidadeSelecionada);
+      if (filtros.finalidade) rewriteUrl.searchParams.set('finalidade', filtros.finalidade);
+      if (filtros.categoriaSelecionada) rewriteUrl.searchParams.set('categoria', filtros.categoriaSelecionada);
       if (filtros.bairrosSelecionados && filtros.bairrosSelecionados.length > 0) {
-        redirectUrl.searchParams.set('bairros', filtros.bairrosSelecionados.join(','));
+        rewriteUrl.searchParams.set('bairros', filtros.bairrosSelecionados.join(','));
       }
-      if (filtros.quartos) redirectUrl.searchParams.set('quartos', filtros.quartos.toString());
-      if (filtros.precoMin) redirectUrl.searchParams.set('precoMin', filtros.precoMin.toString());
-      if (filtros.precoMax) redirectUrl.searchParams.set('precoMax', filtros.precoMax.toString());
+      if (filtros.quartos) rewriteUrl.searchParams.set('quartos', filtros.quartos.toString());
+      if (filtros.precoMin) rewriteUrl.searchParams.set('precoMin', filtros.precoMin.toString());
+      if (filtros.precoMax) rewriteUrl.searchParams.set('precoMax', filtros.precoMax.toString());
       
-      console.log(`🔍 [MIDDLEWARE] ➡️ Redirecionando para: ${redirectUrl.toString()}`);
-      return NextResponse.redirect(redirectUrl);
+      console.log(`🔍 [MIDDLEWARE] ⚡ Rewrite para: ${rewriteUrl.toString()}`);
+      return NextResponse.rewrite(rewriteUrl);
     }
   }
 
@@ -242,6 +229,6 @@ export const config = {
     '/imovel-:id(\\d+)',           // /imovel-1715
     '/imovel-:id(\\d+)/',          // /imovel-1715/
     '/imovel-:id(\\d+)/:slug*',    // /imovel-1715/helbor-brooklin
-    '/buscar/:cidade/:finalidade/:categoria*', // URLs SEO-friendly
+    '/buscar/:finalidade/:categoria/:cidade*', // URLs SEO-friendly (new order)
   ],
 };
