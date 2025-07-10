@@ -67,57 +67,56 @@ export async function generateMetadata({ params }) {
   console.error(`[IMOVEL-META] Data convertida: ${modifiedDate}`);
 
   return {
+  title,
+  description,
+  alternates: {
+    canonical: currentUrl,
+  },
+  robots: {
+    index: true,
+    follow: true,
+  },
+  openGraph: {
     title,
     description,
-    alternates: {
-      canonical: currentUrl,
+    url: currentUrl,
+    type: "website",
+    siteName: "NPI Consultoria",
+    images: [
+      {
+        url: imageUrl,
+        width: 1200,
+        height: 630,
+        alt: title,
+        type: "image/jpeg",
+      }
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title,
+    description,
+    site: "@NPIImoveis",
+    creator: "@NPIImoveis",
+    images: [
+      {
+        url: imageUrl,
+        alt: title,
+      }
+    ],
+  },
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL),
+  alternates: {
+    canonical: currentUrl,
+    languages: {
+      "pt-BR": currentUrl,
     },
-    robots: {
-      index: true,
-      follow: true,
-    },
-    openGraph: {
-      title,
-      description,
-      url: currentUrl,
-      type: "website",
-      siteName: "NPI Consultoria",
-      images: [
-        {
-          url: imageUrl,
-          width: 1200,
-          height: 630,
-          alt: title,
-          type: "image/jpeg",
-        }
-      ],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      site: "@NPIImoveis",
-      creator: "@NPIImoveis",
-      images: [
-        {
-          url: imageUrl,
-          alt: title,
-        }
-      ],
-    },
-    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL),
-    alternates: {
-      canonical: currentUrl,
-      languages: {
-        "pt-BR": currentUrl,
-      },
-    },
-    // ✅ Data de atualização para SEO - COM CONVERSÃO
-    other: {
-      ...(modifiedDate && {
-        other: {
-  'article:modified_time': '2025-01-10T14:30:00Z', // Data fixa para teste
-},
+  },
+  // ✅ ESTRUTURA CORRETA
+  other: {
+    'article:modified_time': '2025-01-10T14:30:00Z', // Data fixa para teste
+  },
+};
       }),
     },
   };
