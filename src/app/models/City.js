@@ -7,14 +7,16 @@ const CitySchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true,
-    trim: true
+    trim: true,
+    index: true
   },
   slug: {
     type: String,
     required: true,
     unique: true,
     lowercase: true,
-    trim: true
+    trim: true,
+    index: true
   },
   state: {
     type: String,
@@ -54,9 +56,7 @@ const CitySchema = new mongoose.Schema({
   collection: 'cities'
 });
 
-// Indexes for better performance
-CitySchema.index({ name: 1 });
-CitySchema.index({ slug: 1 });
+// Indexes for better performance (only non-unique ones)
 CitySchema.index({ isActive: 1 });
 CitySchema.index({ state: 1 });
 CitySchema.index({ priority: -1 });
