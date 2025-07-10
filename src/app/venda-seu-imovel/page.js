@@ -141,8 +141,8 @@ export default async function ImovelFormPage() {
       
       <section>
         <HeaderPage
-          title="Cadastre seu imóvel GRATUITAMENTE com o HUB da NPi"
-          description="Cadastre seu imóvel para venda ou locação no HUB DE IMOBILIÁRIAS BOUTOQUE DE ALTO PADRÃO, e tenha visibilidade na maior vitrine do mundo, o GOOGLE."
+          title="Cadastre seu imóvel GRATUITAMENTE no HUB da NPi"
+          description="Cadastre seu imóvel para venda ou locação no HUB DE IMOBILIÁRIAS BOUTIQUE DE ALTO PADRÃO, e tenha visibilidade na maior vitrine do mundo, o GOOGLE."
           image="/assets/images/imoveis/02.jpg"
         />
         
