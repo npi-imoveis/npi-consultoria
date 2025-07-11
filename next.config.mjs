@@ -75,6 +75,17 @@ const nextConfig = {
   async redirects() {
     return [
       // Redirects de condominios (slugs antigos para novos)
+
+       {
+        source: "/e-side-vila-madalena-rua-girassol1280",
+        destination: "/e-side-vila-madalena",
+        permanent: true
+      },
+      {
+        source: "/edificio-itanhanga-santana",
+        destination: "/condominio-itanhanga",
+        permanent: true
+      },
       {
         source: "/residencial-azul",
         destination: "/azul-idea-zarvos",
