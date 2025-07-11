@@ -76,6 +76,11 @@ const nextConfig = {
     return [
       // Redirects de condominios (slugs antigos para novos)
 
+      {
+        source: "/casas-em-condominio-gramado",
+        destination: "/casa-punta-gramado-rs",
+        permanent: true
+      },
        {
         source: "/e-side-vila-madalena-rua-girassol1280",
         destination: "/e-side-vila-madalena",
