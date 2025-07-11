@@ -13,8 +13,11 @@ export default function ServicosTab({ form, updateForm, updateNestedForm }) {
 
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("section", "servicos");
-      formData.append("subsection", serviceKey); // Identificador único para cada serviço
+      // Usar tanto o sistema novo quanto o original para máxima compatibilidade
+      formData.append("section", "servicos");      // Sistema novo
+      formData.append("subsection", serviceKey);   // Sistema novo
+      formData.append("directory", "servicos");    // Sistema original
+      formData.append("subdirectory", serviceKey); // Sistema original
 
       const res = await fetch("/api/admin/upload", {
         method: "POST",
@@ -28,7 +31,8 @@ export default function ServicosTab({ form, updateForm, updateNestedForm }) {
       const data = await res.json();
       
       // Atualizar apenas a imagem do serviço específico
-      updateNestedForm(serviceKey, "imagem", data.url);
+      // Usar 'url' ou 'path' para compatibilidade com diferentes versões da API
+      updateNestedForm(serviceKey, "imagem", data.url || data.path);
       
     } catch (error) {
       console.error("Erro no upload:", error);
