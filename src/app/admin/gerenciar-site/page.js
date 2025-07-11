@@ -21,31 +21,25 @@ export default function GerenciarSite() {
           throw new Error("Falha ao carregar conteúdo");
         }
         const data = await res.json();
-        setForm(data.data || {});
+        
+        // VERIFICAÇÃO DEFENSIVA: garantir estrutura mínima
+        const safeData = data.data || {};
+        
+        // Garantir que as seções principais existam
+        if (!safeData.home) safeData.home = {};
+        if (!safeData.hub) safeData.hub = {};
+        if (!safeData.sobre) safeData.sobre = {};
+        if (!safeData.servicos) safeData.servicos = {};
+        
+        setForm(safeData);
       } catch (error) {
         console.error("Erro ao carregar conteúdo:", error);
-        // Inicializar com estrutura padrão em caso de erro
+        // FALLBACK seguro
         setForm({
           home: {},
           hub: {},
           sobre: {},
-          servicos: {
-            atendimentoPersonalizado: {
-              titulo: "Atendimento Personalizado",
-              descricao: "",
-              imagem: ""
-            },
-            avaliacaoImoveis: {
-              titulo: "Avaliação de Imóveis", 
-              descricao: "",
-              imagem: ""
-            },
-            assessoriaJuridica: {
-              titulo: "Assessoria Jurídica",
-              descricao: "",
-              imagem: ""
-            }
-          }
+          servicos: {}
         });
       } finally {
         setIsLoading(false);
@@ -54,25 +48,25 @@ export default function GerenciarSite() {
     fetchData();
   }, []);
 
-  // Função para atualizar campos específicos do formulário
+  // Função para atualizar campos específicos do formulário (SEGURA)
   const updateForm = (section, field, value) => {
     setForm(prev => ({
       ...prev,
       [section]: {
-        ...prev[section],
+        ...(prev[section] || {}), // Garantir que a seção existe
         [field]: value
       }
     }));
   };
 
-  // Função para atualizar campos aninhados (como serviços)
+  // Função para atualizar campos aninhados (SEGURA)
   const updateNestedForm = (section, subsection, field, value) => {
     setForm(prev => ({
       ...prev,
       [section]: {
-        ...prev[section],
+        ...(prev[section] || {}), // Garantir que a seção existe
         [subsection]: {
-          ...prev[section]?.[subsection],
+          ...(prev[section]?.[subsection] || {}), // Garantir que a subseção existe
           [field]: value
         }
       }
