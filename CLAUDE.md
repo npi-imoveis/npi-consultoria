@@ -51,6 +51,8 @@ vercel env ls            # List environment variables
 - ✅ Removed conflicting redirects from next.config.mjs  
 - ✅ Middleware now handles all property route logic
 - ✅ Works consistently on both Vercel and local development
+- ✅ **Direct 301 redirects without cascades** - optimized for SEO
+- ✅ **Old slug to new slug redirects** - handles property slug updates automatically
 
 ### SEO-Friendly Search URLs
 **MAJOR UPDATE (July 2025)**: Implemented complete SEO-friendly URL system for property search:
@@ -186,6 +188,14 @@ const imageUrl = Array.isArray(imovel.Foto) && imovel.Foto.length > 0
 - Run `npm run build` locally before deploying
 - Check for missing required props in components
 
+### 5. Google Search Console "Page with redirect" Issues
+**Problem**: SEO issues due to redirect cascades
+**Solution**: 
+- ✅ **RESOLVED**: Middleware now performs direct 301 redirects
+- No slug → correct slug: `/imovel-1715` → `/imovel-1715/slug` (single redirect)
+- Old slug → new slug: `/imovel-1715/old-slug` → `/imovel-1715/new-slug` (single redirect)
+- **Testing**: Use `curl -I` to verify single 301 redirects in production
+
 ## API Endpoints
 
 ### Key APIs:
@@ -263,6 +273,10 @@ curl http://localhost:3000/api/cities
 6. **Social Sharing**: Enhanced OpenGraph and Twitter Cards
 7. **Build Stability**: Fixed array operations and undefined checks
 8. **Automatic City Sync**: Real-time city detection and creation system
+9. **Direct Redirect System**: ✅ **RESOLVED Google Search Console issues**
+   - Single 301 redirects without cascades
+   - Old slug → new slug redirects work seamlessly
+   - Verified in production with curl testing
 
 ## Performance Notes
 - Images optimized via Next.js Image component
@@ -272,7 +286,7 @@ curl http://localhost:3000/api/cities
 
 ---
 
-**Last Updated**: July 2025 - After major routing fixes and admin panel improvements
+**Last Updated**: July 2025 - After direct redirect system implementation and Google Search Console optimization
 
 ## Development Branch Setup
 - ✅ Branch `dev` created for development work
