@@ -20,18 +20,18 @@ export default function GerenciarSite() {
         if (!res.ok) {
           throw new Error("Falha ao carregar conteúdo");
         }
-        const data = await res.json();
+        const response = await res.json();
+        
+        // AJUSTAR para estrutura MongoDB: { status: 200, data: content }
+        const content = response.data || {};
         
         // VERIFICAÇÃO DEFENSIVA: garantir estrutura mínima
-        const safeData = data.data || {};
+        if (!content.home) content.home = {};
+        if (!content.hub) content.hub = {};
+        if (!content.sobre) content.sobre = {};
+        if (!content.servicos) content.servicos = {};
         
-        // Garantir que as seções principais existam
-        if (!safeData.home) safeData.home = {};
-        if (!safeData.hub) safeData.hub = {};
-        if (!safeData.sobre) safeData.sobre = {};
-        if (!safeData.servicos) safeData.servicos = {};
-        
-        setForm(safeData);
+        setForm(content);
       } catch (error) {
         console.error("Erro ao carregar conteúdo:", error);
         // FALLBACK seguro
@@ -73,11 +73,13 @@ export default function GerenciarSite() {
     }));
   };
 
-  // Função para salvar todas as alterações
+  // Função para salvar (compatível com PATCH e PUT)
   const saveForm = async () => {
     try {
       setIsSaving(true);
-      const res = await fetch("/api/admin/content", {
+      
+      // Tentar PUT primeiro (novo sistema), depois PATCH (sistema original)
+      let res = await fetch("/api/admin/content", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -85,11 +87,29 @@ export default function GerenciarSite() {
         body: JSON.stringify({ data: form }),
       });
 
+      // Se PUT não funcionar, tentar PATCH
+      if (!res.ok && res.status === 405) {
+        res = await fetch("/api/admin/content", {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(form),
+        });
+      }
+
       if (!res.ok) {
         throw new Error("Falha ao salvar conteúdo");
       }
 
-      alert("Conteúdo salvo com sucesso!");
+      const response = await res.json();
+      
+      // Verificar se foi sucesso (compatível com ambas estruturas)
+      if (response.status === 200 || response.success === true) {
+        alert("Conteúdo salvo com sucesso!");
+      } else {
+        throw new Error(response.message || "Erro ao salvar");
+      }
     } catch (error) {
       console.error("Erro ao salvar conteúdo:", error);
       alert("Erro ao salvar conteúdo. Tente novamente.");
