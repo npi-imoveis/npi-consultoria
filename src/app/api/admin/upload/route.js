@@ -24,18 +24,25 @@ function isImageFile(filename) {
   return imageExtensions.includes(path.extname(filename).toLowerCase());
 }
 
-// Função para validar o diretório
+// Função para validar o diretório (EXPANDIDA para incluir servicos)
 function validateDirectory(dir) {
-  // Lista de diretórios permitidos
-  const allowedDirs = ["parceiros", "home", "sobre_hub", "sobre_npi", "historia"];
+  // Lista de diretórios permitidos (MANTIDOS OS ORIGINAIS + servicos)
+  const allowedDirs = ["parceiros", "home", "sobre_hub", "sobre_npi", "historia", "servicos"];
   return allowedDirs.includes(dir);
 }
 
-// GET - Lista todas as imagens
+// NOVA: Função para validar subdiretórios de serviços
+function validateServiceSubdirectory(subdir) {
+  const allowedSubdirs = ["atendimentoPersonalizado", "avaliacaoImoveis", "assessoriaJuridica"];
+  return allowedSubdirs.includes(subdir);
+}
+
+// GET - Lista todas as imagens (MANTIDO ORIGINAL + suporte a subdiretórios)
 export async function GET(request) {
   try {
     const { searchParams } = request.nextUrl;
     const directory = searchParams.get("directory");
+    const subdirectory = searchParams.get("subdirectory"); // NOVO parâmetro opcional
 
     if (!directory || !validateDirectory(directory)) {
       return NextResponse.json(
@@ -44,7 +51,26 @@ export async function GET(request) {
       );
     }
 
-    const targetDir = path.join(BASE_UPLOAD_DIR, directory);
+    // NOVO: Validação para subdiretórios de serviços
+    if (directory === "servicos" && subdirectory && !validateServiceSubdirectory(subdirectory)) {
+      return NextResponse.json(
+        { success: false, error: "Subdiretório de serviços inválido" },
+        { status: 400 }
+      );
+    }
+
+    // NOVO: Construir caminho com ou sem subdiretório
+    let targetDir;
+    let urlPath;
+    
+    if (directory === "servicos" && subdirectory) {
+      targetDir = path.join(BASE_UPLOAD_DIR, directory, subdirectory);
+      urlPath = `uploads/${directory}/${subdirectory}`;
+    } else {
+      targetDir = path.join(BASE_UPLOAD_DIR, directory);
+      urlPath = `uploads/${directory}`;
+    }
+
     await ensureDirectoryExists(targetDir);
 
     const files = await readdir(targetDir);
@@ -52,24 +78,53 @@ export async function GET(request) {
 
     return NextResponse.json({
       success: true,
-      images: images.map((image) => `/uploads/${directory}/${image}`),
+      images: images.map((image) => `/${urlPath}/${image}`),
     });
   } catch (error) {
     return NextResponse.json({ success: false, error: "Erro ao listar imagens" }, { status: 500 });
   }
 }
 
-// POST - Upload de nova imagem
+// POST - Upload de nova imagem (EXPANDIDO para suportar subdiretórios)
 export async function POST(request) {
   try {
     const formData = await request.formData();
     const file = formData.get("file");
     const directory = formData.get("directory");
     const customFilename = formData.get("customFilename");
+    
+    // NOVO: Suporte aos parâmetros do sistema de serviços
+    const section = formData.get("section");
+    const subsection = formData.get("subsection");
 
-    if (!directory || !validateDirectory(directory)) {
+    // COMPATIBILIDADE: Se section/subsection forem fornecidos, usar essa estrutura
+    let finalDirectory, finalSubdirectory;
+    
+    if (section === "servicos" && subsection) {
+      finalDirectory = "servicos";
+      finalSubdirectory = subsection;
+    } else if (directory) {
+      // Usar sistema original
+      finalDirectory = directory;
+      finalSubdirectory = formData.get("subdirectory");
+    } else {
       return NextResponse.json(
-        { success: false, error: "Diretório inválido ou não especificado" },
+        { success: false, error: "Diretório não especificado" },
+        { status: 400 }
+      );
+    }
+
+    if (!validateDirectory(finalDirectory)) {
+      return NextResponse.json(
+        { success: false, error: "Diretório inválido" },
+        { status: 400 }
+      );
+    }
+
+    // NOVO: Validação para subdiretórios de serviços
+    if (finalDirectory === "servicos" && finalSubdirectory && !validateServiceSubdirectory(finalSubdirectory)) {
+      return NextResponse.json(
+        { success: false, error: "Subdiretório de serviços inválido" },
         { status: 400 }
       );
     }
@@ -89,15 +144,24 @@ export async function POST(request) {
       );
     }
 
-    const targetDir = path.join(BASE_UPLOAD_DIR, directory);
+    // NOVO: Construir diretório de destino
+    let targetDir, urlPath;
+    
+    if (finalDirectory === "servicos" && finalSubdirectory) {
+      targetDir = path.join(BASE_UPLOAD_DIR, finalDirectory, finalSubdirectory);
+      urlPath = `uploads/${finalDirectory}/${finalSubdirectory}`;
+    } else {
+      targetDir = path.join(BASE_UPLOAD_DIR, finalDirectory);
+      urlPath = `uploads/${finalDirectory}`;
+    }
+
     await ensureDirectoryExists(targetDir);
 
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    // Determinar o nome do arquivo
+    // Determinar o nome do arquivo (MANTIDO ORIGINAL)
     let filename;
     if (customFilename) {
-      // Se o customFilename não tiver extensão, use a extensão do arquivo original
       const originalExt = path.extname(file.name).toLowerCase();
       if (path.extname(customFilename).toLowerCase() === "") {
         filename = `${customFilename}${originalExt}`;
@@ -105,19 +169,37 @@ export async function POST(request) {
         filename = customFilename;
       }
     } else {
-      // Usar o nome original do arquivo (sanitizado)
-      filename = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+      // NOVO: Para serviços, criar nome mais organizado
+      if (finalDirectory === "servicos" && finalSubdirectory) {
+        const timestamp = Date.now();
+        const originalExt = path.extname(file.name).toLowerCase();
+        const sanitizedName = file.name.replace(originalExt, "").replace(/[^a-zA-Z0-9.-]/g, "_");
+        filename = `${finalSubdirectory}-${sanitizedName}-${timestamp}${originalExt}`;
+      } else {
+        // Usar sistema original
+        filename = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
+      }
     }
 
     const filepath = path.join(targetDir, filename);
 
     await writeFile(filepath, buffer);
 
-    return NextResponse.json({
+    // RESPOSTA EXPANDIDA (mantém compatibilidade + novos campos)
+    const response = {
       success: true,
       filename,
-      path: `/uploads/${directory}/${filename}`,
-    });
+      path: `/${urlPath}/${filename}`,
+      url: `/${urlPath}/${filename}`, // Adicionar 'url' para compatibilidade com sistema de serviços
+    };
+
+    // Adicionar informações extras se for upload de serviços
+    if (finalDirectory === "servicos" && finalSubdirectory) {
+      response.section = "servicos";
+      response.subsection = finalSubdirectory;
+    }
+
+    return NextResponse.json(response);
   } catch (error) {
     return NextResponse.json(
       { success: false, error: "Erro ao fazer upload da imagem" },
@@ -126,16 +208,25 @@ export async function POST(request) {
   }
 }
 
-// DELETE - Remove uma imagem específica
+// DELETE - Remove uma imagem específica (EXPANDIDO para subdiretórios)
 export async function DELETE(request) {
   try {
     const { searchParams } = request.nextUrl;
     const filename = searchParams.get("filename");
     const directory = searchParams.get("directory");
+    const subdirectory = searchParams.get("subdirectory"); // NOVO parâmetro opcional
 
     if (!directory || !validateDirectory(directory)) {
       return NextResponse.json(
         { success: false, error: "Diretório inválido ou não especificado" },
+        { status: 400 }
+      );
+    }
+
+    // NOVO: Validação para subdiretórios de serviços
+    if (directory === "servicos" && subdirectory && !validateServiceSubdirectory(subdirectory)) {
+      return NextResponse.json(
+        { success: false, error: "Subdiretório de serviços inválido" },
         { status: 400 }
       );
     }
@@ -147,12 +238,16 @@ export async function DELETE(request) {
       );
     }
 
-    const filepath = path.join(BASE_UPLOAD_DIR, directory, filename);
+    // NOVO: Construir caminho com ou sem subdiretório
+    let filepath;
+    if (directory === "servicos" && subdirectory) {
+      filepath = path.join(BASE_UPLOAD_DIR, directory, subdirectory, filename);
+    } else {
+      filepath = path.join(BASE_UPLOAD_DIR, directory, filename);
+    }
 
-    // Verificar se estamos em produção na Vercel
+    // Verificar se estamos em produção na Vercel (MANTIDO ORIGINAL)
     if (isVercelProduction()) {
-      // Em produção na Vercel, não podemos deletar arquivos do filesystem
-      // Retornar sucesso simulado para manter a compatibilidade da UI
       console.warn(`Tentativa de deletar arquivo em produção (Vercel): ${filepath}`);
       return NextResponse.json({
         success: true,
@@ -163,14 +258,12 @@ export async function DELETE(request) {
     }
 
     try {
-      // Tentar deletar o arquivo (funciona apenas em desenvolvimento local)
       await unlink(filepath);
       return NextResponse.json({
         success: true,
         message: "Imagem excluída com sucesso",
       });
     } catch (unlinkError) {
-      // Se o erro for relacionado ao filesystem read-only
       if (unlinkError.code === "EROFS" || unlinkError.code === "EPERM") {
         console.warn(`Filesystem read-only detectado: ${unlinkError.message}`);
         return NextResponse.json({
@@ -180,8 +273,6 @@ export async function DELETE(request) {
             "O ambiente atual não permite exclusão física de arquivos. Considere usar uma solução de armazenamento externa.",
         });
       }
-
-      // Se for outro tipo de erro (arquivo não encontrado, etc.)
       throw unlinkError;
     }
   } catch (error) {
