@@ -4,7 +4,7 @@ import { useState } from "react";
 export default function ServicosTab({ form, updateForm, updateNestedForm }) {
   const [uploadingImages, setUploadingImages] = useState({});
 
-  // Função para upload de imagem específica para cada serviço
+  // Função ULTRA DEFENSIVA para upload - não sobrescreve outros campos
   const handleImageUpload = async (serviceKey, file) => {
     if (!file) return;
 
@@ -13,11 +13,10 @@ export default function ServicosTab({ form, updateForm, updateNestedForm }) {
 
       const formData = new FormData();
       formData.append("file", file);
-      // Usar tanto o sistema novo quanto o original para máxima compatibilidade
-      formData.append("section", "servicos");      // Sistema novo
-      formData.append("subsection", serviceKey);   // Sistema novo
-      formData.append("directory", "servicos");    // Sistema original
-      formData.append("subdirectory", serviceKey); // Sistema original
+      formData.append("section", "servicos");
+      formData.append("subsection", serviceKey);
+      formData.append("directory", "servicos");
+      formData.append("subdirectory", serviceKey);
 
       const res = await fetch("/api/admin/upload", {
         method: "POST",
@@ -30,9 +29,10 @@ export default function ServicosTab({ form, updateForm, updateNestedForm }) {
 
       const data = await res.json();
       
-      // Atualizar apenas a imagem do serviço específico
-      // Usar 'url' ou 'path' para compatibilidade com diferentes versões da API
+      // Atualizar APENAS o campo imagem - preservar todo o resto
       updateNestedForm(serviceKey, "imagem", data.url || data.path);
+      
+      console.log(`📸 IMAGEM ATUALIZADA: ${serviceKey}.imagem =`, data.url || data.path);
       
     } catch (error) {
       console.error("Erro no upload:", error);
@@ -42,42 +42,53 @@ export default function ServicosTab({ form, updateForm, updateNestedForm }) {
     }
   };
 
-  // Verificações defensivas para garantir que os dados existam
+  // Função ULTRA DEFENSIVA para obter dados com fallbacks
+  const getServiceData = (serviceKey) => {
+    const data = form?.[serviceKey] || {};
+    
+    // Retornar dados existentes OU valores padrão mínimos
+    return {
+      titulo: data.titulo || (serviceKey === "atendimentoPersonalizado" ? "Atendimento Personalizado" : 
+                              serviceKey === "avaliacaoImoveis" ? "Avaliação de Imóveis" : "Assessoria Jurídica"),
+      descricao: data.descricao || "",
+      imagem: data.imagem || "",
+      link: data.link || "",
+      preco: data.preco || "",
+      prazo: data.prazo || "",
+      beneficios: data.beneficios || "",
+      ativo: data.ativo !== undefined ? data.ativo : true,
+      destaque: data.destaque !== undefined ? data.destaque : false
+    };
+  };
+
   const services = [
     {
       key: "atendimentoPersonalizado",
       label: "Atendimento Personalizado",
-      data: form?.atendimentoPersonalizado || { 
-        titulo: "Atendimento Personalizado", 
-        descricao: "", 
-        imagem: "", 
-        link: "" 
-      }
+      data: getServiceData("atendimentoPersonalizado")
     },
     {
       key: "avaliacaoImoveis", 
       label: "Avaliação de Imóveis",
-      data: form?.avaliacaoImoveis || { 
-        titulo: "Avaliação de Imóveis", 
-        descricao: "", 
-        imagem: "", 
-        link: "" 
-      }
+      data: getServiceData("avaliacaoImoveis")
     },
     {
       key: "assessoriaJuridica",
       label: "Assessoria Jurídica", 
-      data: form?.assessoriaJuridica || { 
-        titulo: "Assessoria Jurídica", 
-        descricao: "", 
-        imagem: "", 
-        link: "" 
-      }
+      data: getServiceData("assessoriaJuridica")
     }
   ];
 
   return (
     <div className="space-y-8">
+      {/* Aviso de Segurança */}
+      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+        <h3 className="font-medium text-green-900 mb-2">🛡️ Modo Seguro Ativo</h3>
+        <p className="text-sm text-green-800">
+          Este sistema preserva todos os dados existentes. Apenas os campos que você editar serão atualizados.
+        </p>
+      </div>
+
       {/* Seção geral de serviços */}
       <div className="bg-white p-6 rounded-lg shadow-sm border">
         <h2 className="text-xl font-semibold mb-4">Nossa missão e serviços</h2>
@@ -101,7 +112,7 @@ export default function ServicosTab({ form, updateForm, updateNestedForm }) {
               Descrição Principal
             </label>
             <textarea
-              value={form?.descricao || "Desde 2007, a NPI se dedica a oferecer um serviço imparcial e de excelência, ajudando nossos clientes a realizarem o sonho de adquirir um imóvel."}
+              value={form?.descricao || ""}
               onChange={(e) => updateForm("descricao", e.target.value)}
               rows={4}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -120,9 +131,6 @@ export default function ServicosTab({ form, updateForm, updateNestedForm }) {
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="https://youtube.com/watch?v=..."
             />
-            <p className="text-xs text-gray-500 mt-1">
-              Cole o link completo do vídeo do YouTube
-            </p>
           </div>
         </div>
       </div>
@@ -133,7 +141,10 @@ export default function ServicosTab({ form, updateForm, updateNestedForm }) {
         
         {services.map(({ key, label, data }) => (
           <div key={key} className="bg-white p-6 rounded-lg shadow-sm border">
-            <h3 className="text-lg font-medium mb-4 text-blue-600">{label}</h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium text-blue-600">{label}</h3>
+              <span className="text-xs text-gray-500">ID: {key}</span>
+            </div>
             
             <div className="grid gap-4">
               {/* Título do Serviço */}
@@ -143,7 +154,7 @@ export default function ServicosTab({ form, updateForm, updateNestedForm }) {
                 </label>
                 <input
                   type="text"
-                  value={data.titulo || ""}
+                  value={data.titulo}
                   onChange={(e) => updateNestedForm(key, "titulo", e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   placeholder={label}
@@ -156,7 +167,7 @@ export default function ServicosTab({ form, updateForm, updateNestedForm }) {
                   Descrição do Serviço
                 </label>
                 <textarea
-                  value={data.descricao || ""}
+                  value={data.descricao}
                   onChange={(e) => updateNestedForm(key, "descricao", e.target.value)}
                   rows={4}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -178,7 +189,9 @@ export default function ServicosTab({ form, updateForm, updateNestedForm }) {
                       alt={label}
                       className="h-40 w-auto object-cover rounded-md border shadow-sm"
                     />
-                    <p className="text-xs text-gray-500 mt-1">Imagem atual</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Imagem atual: {data.imagem}
+                    </p>
                   </div>
                 )}
 
@@ -206,113 +219,105 @@ export default function ServicosTab({ form, updateForm, updateNestedForm }) {
                 </div>
 
                 <p className="text-xs text-gray-500 mt-1">
-                  Formato recomendado: JPG, PNG, WebP. Tamanho máximo: 2MB
+                  A imagem será salva em: /uploads/servicos/{key}/
                 </p>
               </div>
 
-              {/* Link adicional do serviço (opcional) */}
+              {/* Campos adicionais em layout de grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Link Adicional
+                  </label>
+                  <input
+                    type="url"
+                    value={data.link}
+                    onChange={(e) => updateNestedForm(key, "link", e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="https://..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Preço/Valor
+                  </label>
+                  <input
+                    type="text"
+                    value={data.preco}
+                    onChange={(e) => updateNestedForm(key, "preco", e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Ex: A partir de R$ 500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Prazo de Entrega
+                  </label>
+                  <input
+                    type="text"
+                    value={data.prazo}
+                    onChange={(e) => updateNestedForm(key, "prazo", e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Ex: 5 a 7 dias úteis"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Status
+                  </label>
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={data.ativo}
+                        onChange={(e) => updateNestedForm(key, "ativo", e.target.checked)}
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-sm">Ativo</span>
+                    </label>
+
+                    <label className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={data.destaque}
+                        onChange={(e) => updateNestedForm(key, "destaque", e.target.checked)}
+                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                      />
+                      <span className="text-sm">Destaque</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* Benefícios */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Link Adicional (opcional)
+                  Benefícios Principais
                 </label>
-                <input
-                  type="url"
-                  value={data.link || ""}
-                  onChange={(e) => updateNestedForm(key, "link", e.target.value)}
+                <textarea
+                  value={data.beneficios}
+                  onChange={(e) => updateNestedForm(key, "beneficios", e.target.value)}
+                  rows={3}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="https://..."
+                  placeholder="Liste os principais benefícios deste serviço..."
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Link para página específica do serviço, formulário de contato, etc.
-                </p>
-              </div>
-
-              {/* Informações adicionais do serviço */}
-              <div className="bg-gray-50 p-4 rounded-md">
-                <h4 className="font-medium text-gray-700 mb-2">Informações Adicionais</h4>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Preço/Valor (opcional)
-                    </label>
-                    <input
-                      type="text"
-                      value={data.preco || ""}
-                      onChange={(e) => updateNestedForm(key, "preco", e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Ex: A partir de R$ 500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Tempo de Entrega (opcional)
-                    </label>
-                    <input
-                      type="text"
-                      value={data.prazo || ""}
-                      onChange={(e) => updateNestedForm(key, "prazo", e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Ex: 5 a 7 dias úteis"
-                    />
-                  </div>
-                </div>
-
-                <div className="mt-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Benefícios Principais (opcional)
-                  </label>
-                  <textarea
-                    value={data.beneficios || ""}
-                    onChange={(e) => updateNestedForm(key, "beneficios", e.target.value)}
-                    rows={2}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Liste os principais benefícios deste serviço..."
-                  />
-                </div>
-              </div>
-
-              {/* Status do serviço */}
-              <div className="flex items-center gap-4">
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={data.ativo !== false} // Por padrão, serviços são ativos
-                    onChange={(e) => updateNestedForm(key, "ativo", e.target.checked)}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <span className="text-sm font-medium text-gray-700">
-                    Serviço Ativo (visível no site)
-                  </span>
-                </label>
-
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={data.destaque || false}
-                    onChange={(e) => updateNestedForm(key, "destaque", e.target.checked)}
-                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                  />
-                  <span className="text-sm font-medium text-gray-700">
-                    Destacar este serviço
-                  </span>
-                </label>
               </div>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Informações de ajuda */}
+      {/* Informações finais */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h3 className="font-medium text-blue-900 mb-2">💡 Dicas de Preenchimento</h3>
+        <h3 className="font-medium text-blue-900 mb-2">📋 Informações Importantes</h3>
         <ul className="text-sm text-blue-800 space-y-1">
-          <li>• <strong>Título:</strong> Use nomes claros e objetivos para cada serviço</li>
-          <li>• <strong>Descrição:</strong> Explique o que o serviço oferece e como funciona</li>
-          <li>• <strong>Imagens:</strong> Use fotos de boa qualidade que representem o serviço</li>
-          <li>• <strong>Benefícios:</strong> Liste as vantagens que o cliente terá</li>
-          <li>• <strong>Link:</strong> Pode apontar para uma página específica ou formulário</li>
+          <li>• Apenas os campos que você editar serão atualizados no banco</li>
+          <li>• Imagens são salvas em diretórios separados para cada serviço</li>
+          <li>• Todos os dados existentes são preservados</li>
+          <li>• Use o botão "Desfazer Alterações" para voltar ao estado original</li>
         </ul>
       </div>
     </div>
