@@ -8,6 +8,9 @@ import { auth } from "@/app/lib/firebase";
 import { User2Icon } from "lucide-react";
 import Link from "next/link";
 
+// Disable static generation for all admin pages
+export const dynamic = 'force-dynamic';
+
 // Carregar a fonte Inter no lado do cliente para evitar problemas de hidratação
 const inter = Inter({ subsets: ["latin"] });
 

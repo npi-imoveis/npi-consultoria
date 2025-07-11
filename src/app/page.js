@@ -63,8 +63,17 @@ export const metadata = {
   },
 };
 
+// Disable static generation for pages that make API calls
+export const dynamic = 'force-dynamic';
+
 export default async function Home() {
-  const content = await getContentSite();
+  let content = {};
+  
+  try {
+    content = await getContentSite();
+  } catch (error) {
+    console.error("Erro ao carregar conteúdo:", error);
+  }
 
   return (
     <div>

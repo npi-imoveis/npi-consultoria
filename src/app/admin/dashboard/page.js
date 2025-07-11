@@ -7,11 +7,33 @@ import { getUsuarios } from "../services/usuarios";
 import { getDashboard } from "../services/dashboard";
 import { formatterNumber } from "@/app/utils/formatter-number";
 
-export default async function AdminDashboard() {
-  const corretoresResponse = await getCorretores({}, 1, 20);
-  const { data: users } = await getUsuarios();
+// Disable static generation for admin pages
+export const dynamic = 'force-dynamic';
 
-  const dashboard = await getDashboard();
+export default async function AdminDashboard() {
+  let corretoresResponse, users, dashboard;
+  
+  try {
+    corretoresResponse = await getCorretores({}, 1, 20);
+  } catch (error) {
+    console.error("Erro ao carregar corretores:", error);
+    corretoresResponse = { corretores: [] };
+  }
+  
+  try {
+    const usersResponse = await getUsuarios();
+    users = usersResponse?.data || { users: [] };
+  } catch (error) {
+    console.error("Erro ao carregar usuários:", error);
+    users = { users: [] };
+  }
+  
+  try {
+    dashboard = await getDashboard();
+  } catch (error) {
+    console.error("Erro ao carregar dashboard:", error);
+    dashboard = { data: {} };
+  }
 
   // Verificar se corretores existe e é um array
   const corretores = corretoresResponse?.corretores || [];

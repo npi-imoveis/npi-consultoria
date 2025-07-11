@@ -2,11 +2,6 @@ import axios from "axios";
 
 // Determinar a URL base com base no ambiente
 const getBaseUrl = () => {
-  // Durante o build, sempre usa API local
-  if (process.env.NODE_ENV === 'production' && !process.env.VERCEL_ENV) {
-    return "http://localhost:3000/api/";
-  }
-  
   if (process.env.NODE_ENV === 'production') {
     // Verifica se estamos em ambiente de servidor ou cliente
     const isServer = typeof window === 'undefined';
