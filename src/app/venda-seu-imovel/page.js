@@ -6,7 +6,7 @@ import ImovelFormClient from "./ImovelFormClient";
 // ✅ METADATA SEO (IGUAL AO HUB QUE FUNCIONOU)
 export const metadata = {
   title: "Cadastre seu Imóvel no HUB de Imobiliárias da NPi",
-  description: "Cadastre gratuitamente seu imóvel no HUB DE IMOBILIÁRIAS BOUTIQUE DE ALTO PADRÃO, dando visibilidade e ele na maior vitrine do mundo, o GOOGLE.",
+  description: "Cadastre gratuitamente seu imóvel no HUB DE IMOBILIÁRIAS BOUTIQUE DE ALTO PADRÃO, e dê visibilidade a ele na maior vitrine do mundo, o GOOGLE.",
   keywords: "vender imóvel São Paulo, alugar imóvel, avaliação imóvel gratuita, consultoria imobiliária, venda apartamento, locação casa, corretora imóveis",
   authors: [{ name: "NPI Consultoria" }],
   creator: "NPI Consultoria", 
@@ -28,7 +28,7 @@ export const metadata = {
     url: "https://www.npiconsultoria.com.br/venda-seu-imovel",
     siteName: "NPI Consultoria",
     title: "Venda ou Alugue seu Imóvel com o HUB DE IMOBILIÁRIAS BOUTIQUE DE ALTO PADRÃO | NPi",
-    description: "Cadastre gratuitamente seu imóvel no HUB DE IMOBILIÁRIAS BOUTIQUE DE ALTO PADRÃO, dando visibilidade e ele na maior vitrine do mundo, o GOOGLE.",
+    description: "Cadastre gratuitamente seu imóvel no HUB DE IMOBILIÁRIAS BOUTIQUE DE ALTO PADRÃO, e dê visibilidade a ele na maior vitrine do mundo, o GOOGLE.",
     images: [
       {
         url: "https://www.npiconsultoria.com.br/assets/images/imoveis/02.jpg",
@@ -44,7 +44,7 @@ export const metadata = {
     site: "@NPIImoveis",
     creator: "@NPIImoveis",
     title: "Venda ou Alugue seu Imóvel com o HUB DE IMOBILIÁRIAS BOUTIQUE DE ALTO PADRÃO | NPi",
-    description: "Cadastre gratuitamente seu imóvel para venda ou locação no HUB DE IMOBILIÁRIAS BOUTIQUE DE ALTO PADRÃO, dando visibilidade e ele na maior vitrine do mundo, o GOOGLE.",
+    description: "Cadastre gratuitamente seu imóvel no HUB DE IMOBILIÁRIAS BOUTIQUE DE ALTO PADRÃO, e dê visibilidade a ele na maior vitrine do mundo, o GOOGLE.",
     images: ["https://www.npiconsultoria.com.br/assets/images/imoveis/02.jpg"],
   },
   alternates: {
@@ -67,7 +67,7 @@ const structuredData = {
   "@context": "https://schema.org",
   "@type": "WebPage",
   name: "Venda ou Alugue seu Imóvel com o HUB DE IMOBILIÁRIAS BOUTIQUE DE ALTO PADRÃO | NPi",
-  description: "Cadastre gratuitamente seu imóvel para venda ou locação no HUB DE IMOBILIÁRIAS BOUTIQUE DE ALTO PADRÃO, dando visibilidade e ele na maior vitrine do mundo, o GOOGLE.",
+  description: "Cadastre gratuitamente seu imóvel para venda ou locação no HUB DE IMOBILIÁRIAS BOUTIQUE DE ALTO PADRÃO, e dê visibilidade a ele na maior vitrine do mundo, o GOOGLE.",
   url: "https://www.npiconsultoria.com.br/venda-seu-imovel",
   mainEntity: {
     "@type": "RealEstateAgent",
@@ -142,7 +142,7 @@ export default async function ImovelFormPage() {
       <section>
         <HeaderPage
           title="Cadastre seu imóvel GRATUITAMENTE no HUB da NPi"
-          description="Cadastre seu imóvel para venda ou locação no HUB DE IMOBILIÁRIAS BOUTIQUE DE ALTO PADRÃO, e tenha visibilidade na maior vitrine do mundo, o GOOGLE."
+          description="Cadastre seu imóvel para venda ou locação no HUB DE IMOBILIÁRIAS BOUTIQUE DE ALTO PADRÃO, e dê visibilidade a ele na maior vitrine do mundo, o GOOGLE."
           image="/assets/images/imoveis/02.jpg"
         />
         
