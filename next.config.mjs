@@ -92,7 +92,7 @@ const nextConfig = {
       },
       {
         source: "/residencial-jequitibas",
-        destination: "/condominio-portal-jequitiba-valinhos",
+        destination: "/condominio-portal-do-jequitiba-valinhos",
         permanent: true
       },
       {
