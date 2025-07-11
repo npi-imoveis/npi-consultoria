@@ -11,7 +11,7 @@ export default function GerenciarSite() {
   const [form, setForm] = useState({});
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [originalData, setOriginalData] = useState({}); // BACKUP dos dados originais
+  const [originalData, setOriginalData] = useState({});
 
   useEffect(() => {
     const fetchData = async () => {
@@ -25,10 +25,12 @@ export default function GerenciarSite() {
         
         // PRESERVAR dados originais completamente
         const content = response.data || {};
-        setOriginalData(content); // BACKUP COMPLETO
-        setForm(content); // Trabalhar com cópia
+        setOriginalData(content);
+        setForm(content);
         
         console.log("🔒 DADOS ORIGINAIS PRESERVADOS:", content);
+        console.log("🔍 ESTRUTURA SOBRE_NPI:", content.sobre_npi);
+        console.log("🔍 ESTRUTURA MISSAO:", content.sobre_npi?.missao);
       } catch (error) {
         console.error("Erro ao carregar conteúdo:", error);
         alert("Erro ao carregar conteúdo. Recarregue a página.");
@@ -44,12 +46,10 @@ export default function GerenciarSite() {
     setForm(prev => {
       const newForm = { ...prev };
       
-      // Garantir que a seção existe
       if (!newForm[section]) {
         newForm[section] = {};
       }
       
-      // Atualizar apenas o campo específico
       newForm[section][field] = value;
       
       console.log(`🔧 CAMPO ATUALIZADO: ${section}.${field} =`, value);
@@ -62,17 +62,14 @@ export default function GerenciarSite() {
     setForm(prev => {
       const newForm = { ...prev };
       
-      // Garantir que a seção existe
       if (!newForm[section]) {
         newForm[section] = {};
       }
       
-      // Garantir que a subseção existe
       if (!newForm[section][subsection]) {
         newForm[section][subsection] = {};
       }
       
-      // Atualizar apenas o campo específico
       newForm[section][subsection][field] = value;
       
       console.log(`🔧 CAMPO ANINHADO ATUALIZADO: ${section}.${subsection}.${field} =`, value);
@@ -80,12 +77,43 @@ export default function GerenciarSite() {
     });
   };
 
+  // Função para calcular apenas os campos que mudaram
+  const getChangedFields = (original, current) => {
+    const changes = {};
+    
+    const compareDeep = (orig, curr, path = '') => {
+      if (typeof curr === 'object' && curr !== null && !Array.isArray(curr)) {
+        Object.keys(curr).forEach(key => {
+          const newPath = path ? `${path}.${key}` : key;
+          const origValue = orig?.[key];
+          const currValue = curr[key];
+          
+          if (typeof currValue === 'object' && currValue !== null && !Array.isArray(currValue)) {
+            compareDeep(origValue, currValue, newPath);
+          } else {
+            if (JSON.stringify(origValue) !== JSON.stringify(currValue)) {
+              const pathParts = newPath.split('.');
+              let target = changes;
+              for (let i = 0; i < pathParts.length - 1; i++) {
+                if (!target[pathParts[i]]) target[pathParts[i]] = {};
+                target = target[pathParts[i]];
+              }
+              target[pathParts[pathParts.length - 1]] = currValue;
+            }
+          }
+        });
+      }
+    };
+    
+    compareDeep(original, current);
+    return changes;
+  };
+
   // Função ULTRA DEFENSIVA para salvar - envia apenas o que mudou
   const saveForm = async () => {
     try {
       setIsSaving(true);
       
-      // CALCULAR apenas os campos que mudaram
       const changedFields = getChangedFields(originalData, form);
       
       if (Object.keys(changedFields).length === 0) {
@@ -95,13 +123,13 @@ export default function GerenciarSite() {
       
       console.log("🔧 ENVIANDO APENAS CAMPOS ALTERADOS:", changedFields);
       
-      // Enviar apenas os campos que mudaram
+      // Usar PATCH (método original) para maior compatibilidade
       const res = await fetch("/api/admin/content", {
-        method: "PUT",
+        method: "PATCH",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ data: changedFields }),
+        body: JSON.stringify(changedFields),
       });
 
       if (!res.ok) {
@@ -110,9 +138,9 @@ export default function GerenciarSite() {
 
       const response = await res.json();
       
-      if (response.status === 200 || response.success === true) {
+      if (response.status === 200) {
         alert("Conteúdo salvo com sucesso!");
-        console.log("✅ CAMPOS SALVOS:", response.fieldsUpdated || Object.keys(changedFields));
+        console.log("✅ CAMPOS SALVOS:", Object.keys(changedFields));
         
         // Atualizar backup com dados salvos
         setOriginalData(form);
@@ -125,52 +153,6 @@ export default function GerenciarSite() {
     } finally {
       setIsSaving(false);
     }
-  };
-
-  // Função para identificar apenas os campos que mudaram
-  const getChangedFields = (original, current) => {
-    const changes = {};
-    
-    const compareObjects = (orig, curr, path = '') => {
-      Object.keys(curr).forEach(key => {
-        const currentPath = path ? `${path}.${key}` : key;
-        const origValue = orig?.[key];
-        const currValue = curr[key];
-        
-        if (typeof currValue === 'object' && currValue !== null && !Array.isArray(currValue)) {
-          // Para objetos, comparar recursivamente
-          if (!orig || typeof origValue !== 'object') {
-            changes[key] = currValue;
-          } else {
-            const nestedChanges = {};
-            compareObjects(origValue, currValue);
-            Object.keys(currValue).forEach(nestedKey => {
-              if (origValue[nestedKey] !== currValue[nestedKey]) {
-                if (!changes[key]) changes[key] = {};
-                changes[key][nestedKey] = currValue[nestedKey];
-              }
-            });
-          }
-        } else {
-          // Para valores simples, comparar diretamente
-          if (origValue !== currValue) {
-            if (!changes[path.split('.')[0]]) {
-              changes[path.split('.')[0]] = {};
-            }
-            const keys = currentPath.split('.');
-            let target = changes;
-            for (let i = 0; i < keys.length - 1; i++) {
-              if (!target[keys[i]]) target[keys[i]] = {};
-              target = target[keys[i]];
-            }
-            target[keys[keys.length - 1]] = currValue;
-          }
-        }
-      });
-    };
-    
-    compareObjects(original, current);
-    return changes;
   };
 
   // Função para restaurar dados originais
@@ -256,10 +238,10 @@ export default function GerenciarSite() {
               )}
               {tab === "servicos" && (
                 <ServicosTab 
-                  form={form.servicos || {}} 
+                  form={form}
                   updateForm={(field, value) => updateForm("servicos", field, value)}
-                  updateNestedForm={(subsection, field, value) => 
-                    updateNestedForm("servicos", subsection, field, value)
+                  updateNestedForm={(section, subsection, field, value) => 
+                    updateNestedForm(section, subsection, field, value)
                   }
                 />
               )}
@@ -267,12 +249,15 @@ export default function GerenciarSite() {
           )}
         </div>
 
-        {/* Debug info (remover em produção) */}
+        {/* Debug info detalhado */}
         {process.env.NODE_ENV === 'development' && (
           <div className="mt-8 p-4 bg-gray-100 rounded-md text-xs">
             <h3 className="font-bold mb-2">🔧 Debug Info:</h3>
-            <p><strong>Dados carregados:</strong> {Object.keys(originalData).length} seções</p>
-            <p><strong>Alterações pendentes:</strong> {Object.keys(getChangedFields(originalData, form)).length} campos</p>
+            <p><strong>Seções carregadas:</strong> {Object.keys(originalData).length}</p>
+            <p><strong>Alterações pendentes:</strong> {Object.keys(getChangedFields(originalData, form)).length}</p>
+            <p><strong>Sobre NPI carregado:</strong> {form.sobre_npi ? '✅' : '❌'}</p>
+            <p><strong>Missão carregada:</strong> {form.sobre_npi?.missao ? '✅' : '❌'}</p>
+            <p><strong>Itens da missão:</strong> {form.sobre_npi?.missao?.itens?.length || 0}</p>
           </div>
         )}
       </div>
