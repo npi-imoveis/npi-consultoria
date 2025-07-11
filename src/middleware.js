@@ -165,6 +165,32 @@ export async function middleware(request) {
     if (slugMatch) {
       const [, id, slug] = slugMatch;
       console.log(`🔍 [MIDDLEWARE] ✅ URL com slug detectada: ID=${id}, SLUG=${slug}`);
+      
+      try {
+        // Verificar se o slug está atualizado consultando a API
+        const apiUrl = new URL(`/api/imoveis/${id}`, origin);
+        console.log(`🔍 [MIDDLEWARE] 📞 Verificando slug atual: ${apiUrl}`);
+        
+        const response = await fetch(apiUrl, {
+          headers: { 'Content-Type': 'application/json' },
+          signal: AbortSignal.timeout(5000),
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          const imovel = data.data;
+          
+          // Se o imóvel tem um slug atual e é diferente do slug na URL
+          if (imovel?.Slug && imovel.Slug !== slug) {
+            const newSlugUrl = `/imovel-${id}/${imovel.Slug}`;
+            console.log(`🔍 [MIDDLEWARE] ✅ Redirecionando slug antigo para novo: ${slug} → ${imovel.Slug}`);
+            return NextResponse.redirect(new URL(newSlugUrl, origin), 301);
+          }
+        }
+      } catch (error) {
+        console.error('🔍 [MIDDLEWARE] ❌ Erro ao verificar slug:', error.message);
+      }
+      
       console.log(`🔍 [MIDDLEWARE] Reescrevendo para: /imovel/${id}/${slug}`);
       
       const rewriteUrl = url.clone();
