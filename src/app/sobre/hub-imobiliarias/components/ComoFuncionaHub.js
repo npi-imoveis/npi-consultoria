@@ -40,12 +40,18 @@ export async function ComoFuncionaHub({ howto }) {
 
         {/* Cartões de informação */}
         <div className="lg:w-2/3 space-y-8">
-          {howto.map((item, index) => (
-            <div key={index} className="bg-black/40 p-6 rounded-md shadow-lg">
-              <h3 className="text-xl uppercase font-semibold mb-2">{item.title}</h3>
-              <p className="text-lg leading-relaxed text-gray-300">{item.description}</p>
+          {howto && Array.isArray(howto) && howto.length > 0 ? (
+            howto.map((item, index) => (
+              <div key={index} className="bg-black/40 p-6 rounded-md shadow-lg">
+                <h3 className="text-xl uppercase font-semibold mb-2">{item.title}</h3>
+                <p className="text-lg leading-relaxed text-gray-300">{item.description}</p>
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-gray-400">Conteúdo em breve...</p>
             </div>
-          ))}
+          )}
         </div>
       </div>
     </section>

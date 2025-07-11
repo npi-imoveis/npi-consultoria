@@ -59,12 +59,18 @@ export default function VideoNpi({ missao }) {
 
             {/* Lista de Serviços */}
             <div className="mt-6 space-y-6">
-              {missao?.itens?.map((service, index) => (
-                <div key={index} className="bg-zinc-100 p-4 rounded-lg ">
-                  <h1 className="text-lg font-semibold text-black">{service.title}</h1>
-                  <p className="text-black mt-2">{service.description}</p>
+              {missao?.itens && Array.isArray(missao.itens) && missao.itens.length > 0 ? (
+                missao.itens.map((service, index) => (
+                  <div key={index} className="bg-zinc-100 p-4 rounded-lg ">
+                    <h1 className="text-lg font-semibold text-black">{service.title}</h1>
+                    <p className="text-black mt-2">{service.description}</p>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-gray-600">Serviços em breve...</p>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>

@@ -2,17 +2,22 @@ import axios from "axios";
 
 // Determinar a URL base com base no ambiente
 const getBaseUrl = () => {
+  // Durante o build, sempre usa API local
+  if (process.env.NODE_ENV === 'production' && !process.env.VERCEL_ENV) {
+    return "http://localhost:3000/api/";
+  }
+  
   if (process.env.NODE_ENV === 'production') {
     // Verifica se estamos em ambiente de servidor ou cliente
     const isServer = typeof window === 'undefined';
 
     // Se estiver no servidor, usa URL absoluta para API interna
     if (isServer) {
-      return process.env.NEXT_PUBLIC_API_URL || "https://npiconsultoria.com.br/api/";
+      return process.env.NEXT_PUBLIC_API_URL || "https://www.npiconsultoria.com.br/api/";
     }
 
     // No cliente em produção, usa URL completa
-    return process.env.NEXT_PUBLIC_API_URL || "https://npiconsultoria.com.br/api/";
+    return process.env.NEXT_PUBLIC_API_URL || "https://www.npiconsultoria.com.br/api/";
   }
 
   // Em desenvolvimento, usa localhost

@@ -14,18 +14,24 @@ export async function FaqHub({ faqs }) {
                 description="Encontre respostas para as perguntas mais comuns sobre o HUB."
               />
               <div className="accordion-group">
-                {faqs.map((faq, index) => (
-                  <div key={index} className="accordion py-6 border-b border-gray-200">
-                    <div className="flex justify-between items-center w-full text-left text-lg sm:text-xl font-medium text-gray-700">
-                      <p className="text-base sm:text-lg text-black font-semibold">
-                        {faq.question}
-                      </p>
+                {faqs && Array.isArray(faqs) && faqs.length > 0 ? (
+                  faqs.map((faq, index) => (
+                    <div key={index} className="accordion py-6 border-b border-gray-200">
+                      <div className="flex justify-between items-center w-full text-left text-lg sm:text-xl font-medium text-gray-700">
+                        <p className="text-base sm:text-lg text-black font-semibold">
+                          {faq.question}
+                        </p>
+                      </div>
+                      <div className="accordion-content w-full pt-4">
+                        <p className="text-sm sm:text-base text-gray-800">{faq.answer}</p>
+                      </div>
                     </div>
-                    <div className="accordion-content w-full pt-4">
-                      <p className="text-sm sm:text-base text-gray-800">{faq.answer}</p>
-                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-gray-600">Perguntas frequentes em breve...</p>
                   </div>
-                ))}
+                )}
               </div>
             </div>
           </div>

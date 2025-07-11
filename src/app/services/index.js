@@ -337,10 +337,10 @@ export async function getCondominioDestacado() {
 export async function getContentSite() {
   try {
     const response = await axiosClient.get("admin/content");
-    return response?.data?.data;
+    return response?.data?.data || {};
   } catch (error) {
     console.error("Erro ao buscar conteúdo:", error);
-    return null;
+    return {};
   }
 }
 
