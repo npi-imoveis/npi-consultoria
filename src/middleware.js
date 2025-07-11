@@ -210,7 +210,7 @@ export async function middleware(request) {
     return NextResponse.redirect(new URL('/busca', origin), 302);
   }
 
-  // Se tem slug, verificar se está correto (mas apenas rewrite, SEM redirecionamento)
+  // Se tem slug, verificar se está correto e redirecionar se necessário
   try {
     const apiUrl = new URL(`/api/imoveis/${id}`, origin);
     
@@ -223,16 +223,18 @@ export async function middleware(request) {
       const data = await response.json();
       const imovel = data.data;
       
-      // APENAS LOG - não redireciona mais para evitar cascata
+      // Se slug está desatualizado, redireciona para slug correto
       if (imovel?.Slug && imovel.Slug !== currentSlug) {
-        console.log(`🔍 [MIDDLEWARE] ⚠️ Slug desatualizado detectado: ${currentSlug} vs ${imovel.Slug} (mantendo URL atual)`);
+        const correctUrl = `/imovel-${id}/${imovel.Slug}`;
+        console.log(`🔍 [MIDDLEWARE] ✅ Redirecionando slug antigo para correto: ${currentSlug} → ${imovel.Slug}`);
+        return NextResponse.redirect(new URL(correctUrl, origin), 301);
       }
     }
   } catch (error) {
     console.error('🔍 [MIDDLEWARE] ❌ Erro ao verificar slug:', error.message);
   }
   
-  // Sempre faz rewrite para a rota interna (sem redirecionamento)
+  // Se slug está correto ou não conseguiu verificar, faz rewrite
   console.log(`🔍 [MIDDLEWARE] 🔄 Rewrite para: /imovel/${id}/${currentSlug}`);
   const rewriteUrl = url.clone();
   rewriteUrl.pathname = `/imovel/${id}/${currentSlug}`;

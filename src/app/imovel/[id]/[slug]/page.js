@@ -228,10 +228,10 @@ export default async function ImovelPage({ params }) {
 
     const slugCorreto = imovel.Slug;
 
-    // REMOVIDO: Redirect é tratado no middleware para evitar cascata
-    // Agora apenas logamos se há diferença de slug
+    // Middleware já redireciona slugs antigos, então aqui só chegam slugs corretos
+    // Apenas logamos para debug se necessário
     if (slug !== slugCorreto) {
-      console.log(`🏠 [IMOVEL-PAGE] ⚠️ Slug diferente detectado: ${slug} vs ${slugCorreto} (mantendo URL atual)`);
+      console.log(`🏠 [IMOVEL-PAGE] ⚠️ Slug inconsistente (middleware deveria ter redirecionado): ${slug} vs ${slugCorreto}`);
     }
 
     const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
