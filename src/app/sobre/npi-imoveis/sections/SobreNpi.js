@@ -17,7 +17,7 @@ export default async function SobreNPI({ sobre }) {
                   </h1>
                   <p className="text-black text-base font-normal leading-relaxed lg:text-start text-center">
                     {sobre?.description ||
-                      "Com os empreendedores Eduardo Lima e Aline Monteiro de Barros, a ideia inicial era para suprir algumas lacunas de uma mercado imobiliário em plena expansão."}
+                      "A ideia inicial era suprir algumas lacunas de uma mercado imobiliário em plena expansão, aproximando o cliente da construtora. Assim nascíamos com uma proposta inovadora e fomos pioneiros em realizar parcerias B2B com as maiores construtoras do mercado, algo que não existia na época. Com isso, aproximávamos o nosso cliente final aos donos ou diretores das incorporadoras, realizando negociações extremamente rentáveis para os compradores, e acelerávamos as vendas das construtoras."}
                   </p>
                 </div>
               </div>
