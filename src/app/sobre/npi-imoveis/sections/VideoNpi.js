@@ -1,31 +1,70 @@
 "use client";
 import { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { XMarkIcon } from "@heroicons/react/24/outline";
-import { TitleSection } from "@/app/components/ui/title-section";
 
 export default function VideoNpi({ missao }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-  
-<section className="bg-white py-24 px-6 lg:px-0">
-  <div className="container mx-auto max-w-6xl">
-    {/* Título e Descrição */}
-    <TitleSection
-      section={missao?.title || "Missão e Serviços"}
-      title={missao?.title || "Nossa Missão e Serviços"}
-      description={
-        missao?.description ||
-        `Desde 2007, a NPi se dedica a oferecer um serviço imparcial e de excelência, ajudando clientes a realizarem suas metas e objetivos pessoais, através de investimentos no mercado imobiliário. 
-
-Com o passar dos anos, a empresa cresceu com suas parcerias, e nossos serviços foram altamente ampliados, e assim nasce em 2024 o HUB DE IMOBILIÁRIAS BOUTIQUE DE ALTO PADRÃO. 
-
-Um novo e exclusivo modelo de negócios no mercado imobiliário, baseado em nossa expertise em SEO para imóveis e em parceria com imobiliárias boutique que atuam com mercado de alto padrão e mercado de luxo.
-
-Acesse o link e saiba mais sobre o HUB da NPi: https://www.npiconsultoria.com.br/sobre/hub-imobiliarias`
-      }
-    />
+    <section className="bg-white py-24 px-6 lg:px-0">
+      <div className="container mx-auto max-w-6xl">
+        
+        {/* Header da seção customizado (substitui TitleSection) */}
+        <div className="text-center mb-12">
+          <div className="space-y-3 max-w-md mx-auto">
+            <span className="bg-[#8B6F4B] text-white px-5 py-2 text-sm font-bold">
+              {missao?.title || "Missão e Serviços"}
+            </span>
+            <h2 className="text-xl uppercase font-bold tracking-tight">
+              {missao?.title || "Nossa Missão e Serviços"}
+            </h2>
+          </div>
+          
+          {/* Descrição formatada */}
+          <div className="max-w-4xl mx-auto mt-8 text-left space-y-6 text-gray-700 leading-relaxed">
+            <p className="text-lg">
+              Desde 2007, a NPi se dedica a oferecer um serviço imparcial e de excelência, 
+              ajudando clientes a realizarem suas metas e objetivos pessoais, através de 
+              investimentos no mercado imobiliário.
+            </p>
+            
+            <p className="text-lg">
+              Com o passar dos anos, a empresa cresceu com suas parcerias, e nossos serviços 
+              foram altamente ampliados, e assim nasce em 2024 o{" "}
+              <strong className="text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                HUB DE IMOBILIÁRIAS BOUTIQUE DE ALTO PADRÃO
+              </strong>.
+            </p>
+            
+            <p className="text-lg">
+              Um novo e exclusivo modelo de negócios no mercado imobiliário, baseado em nossa 
+              expertise em SEO para imóveis e em parceria com imobiliárias boutique que atuam 
+              com mercado de alto padrão e mercado de luxo.
+            </p>
+            
+            {/* CTA Box para o HUB */}
+            <div className="mt-8 p-6 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg">
+              <div className="flex items-center justify-between flex-col md:flex-row gap-4">
+                <div className="text-center md:text-left">
+                  <h3 className="text-lg font-bold text-blue-800 mb-2">
+                    Conheça nosso HUB de Imobiliárias
+                  </h3>
+                  <p className="text-blue-700">
+                    Saiba mais sobre nosso novo modelo de negócios
+                  </p>
+                </div>
+                <Link 
+                  href="/sobre/hub-imobiliarias"
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors whitespace-nowrap"
+                >
+                  Acessar o HUB
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
         
         <div className="grid lg:grid-cols-2 grid-cols-1 gap-12 items-center">
           {/* Vídeo Thumbnail */}
@@ -61,9 +100,9 @@ Acesse o link e saiba mais sobre o HUB da NPi: https://www.npiconsultoria.com.br
             <div className="mt-6 space-y-6">
               {missao?.itens && Array.isArray(missao.itens) && missao.itens.length > 0 ? (
                 missao.itens.map((service, index) => (
-                  <div key={index} className="bg-zinc-100 p-4 rounded-lg">
-                    {/* ✅ CORRIGIDO: H1 → H3 (mantendo estilos) */}
-                    <h3 className="text-lg font-semibold text-black">{service.title}</h3>
+                  <div key={index} className="bg-zinc-100 p-4 rounded-lg hover:bg-zinc-200 transition-colors">
+                    {/* ✅ CORRIGIDO: H1 → H4 (mantendo estilos) */}
+                    <h4 className="text-lg font-semibold text-black">{service.title}</h4>
                     <p className="text-black mt-2">{service.description}</p>
                   </div>
                 ))
@@ -83,7 +122,7 @@ Acesse o link e saiba mais sobre o HUB da NPi: https://www.npiconsultoria.com.br
           <div className="relative bg-white rounded-lg overflow-hidden shadow-lg w-full max-w-4xl">
             {/* Botão Fechar */}
             <button
-              className="absolute top-4 right-4 text-gray-600 hover:text-gray-900"
+              className="absolute top-4 right-4 text-gray-600 hover:text-gray-900 z-10"
               onClick={() => setIsOpen(false)}
             >
               <XMarkIcon className="w-6 h-6" />
