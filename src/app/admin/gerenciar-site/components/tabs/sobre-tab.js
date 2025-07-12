@@ -43,32 +43,21 @@ export default function SobreTab({ form }) {
 
     // Tratamento especial para campos da missão
     if (name.startsWith("missao_item")) {
-  const match = name.match(/missao_item(\d+)_(title|description)/);
-  if (match) {
-    const [_, indexStr, field] = match;
-    const index = parseInt(indexStr) - 1;
-    
-    setFormData((prev) => ({
-      ...prev,
-      missao: {
-        ...prev.missao,
-        itens: prev.missao.itens.map((item, i) =>
-          i === index ? { ...item, [field]: value } : item
-        ),
-      },
-    }));
-  }
-}
-
-      setFormData((prev) => ({
-        ...prev,
-        missao: {
-          ...prev.missao,
-          itens: prev.missao.itens.map((item, i) =>
-            i === index ? { ...item, [field]: value } : item
-          ),
-        },
-      }));
+      const match = name.match(/missao_item(\d+)_(title|description)/);
+      if (match) {
+        const [_, indexStr, field] = match;
+        const index = parseInt(indexStr) - 1;
+        
+        setFormData((prev) => ({
+          ...prev,
+          missao: {
+            ...prev.missao,
+            itens: prev.missao.itens.map((item, i) =>
+              i === index ? { ...item, [field]: value } : item
+            ),
+          },
+        }));
+      }
     }
     // Tratamento para campos dentro de missao
     else if (name.startsWith("missao_")) {
@@ -348,3 +337,4 @@ export default function SobreTab({ form }) {
     </div>
   );
 }
+
