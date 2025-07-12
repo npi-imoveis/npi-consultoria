@@ -60,6 +60,12 @@ export async function POST(request) {
     const directory = formData.get("directory");
     const customFilename = formData.get("customFilename");
 
+    console.log(`🔥 API recebeu:`, {
+      directory,
+      customFilename,
+      fileInfo: file ? `${file.name} (${file.size} bytes)` : 'No file'
+    });
+
     if (!directory || !validateDirectory(directory)) {
       return NextResponse.json(
         { success: false, error: "Diretório inválido ou não especificado" },
@@ -94,9 +100,9 @@ export async function POST(request) {
     // Determinar o nome do arquivo
     let filename;
     if (customFilename) {
-      const originalExt = file.name.split(".").pop();
+      const originalExt = file.name.split(".").pop().toLowerCase();
       if (!customFilename.includes(".")) {
-        filename = `${customFilename}.${originalExt}`;
+        filename = `${customFilename}.${originalExt}`; // ✅ ADICIONA extensão se não tiver
       } else {
         filename = customFilename;
       }
@@ -105,14 +111,24 @@ export async function POST(request) {
       filename = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
     }
 
+    console.log(`📝 Filename final: ${filename}`);
+
     // Criar pathname com o diretório
     const pathname = `${directory}/${filename}`;
+    console.log(`📁 Pathname completo: ${pathname}`);
 
     try {
       // Upload para Vercel Blob
       const blob = await put(pathname, file, {
         access: "public",
         addRandomSuffix: false, // Para manter o nome exato
+        allowOverwrite: true,   // ✅ PERMITE SOBRESCREVER arquivos existentes
+      });
+
+      console.log(`✅ Blob criado:`, {
+        url: blob.url,
+        pathname: blob.pathname,
+        size: blob.size
       });
 
       // Retornar com cache busting
