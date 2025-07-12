@@ -12,9 +12,10 @@ export default async function SobreNPI({ sobre }) {
               <div className="flex flex-col justify-start lg:items-start items-center gap-4">
                 <Chip text="Quem Somos" />
                 <div className="w-full flex flex-col justify-start lg:items-start items-center gap-3">
-                  <h1 className="text-black text-xl font-bold leading-normal lg:text-start text-center">
+                  {/* ✅ CORRIGIDO: H1 → H2 (mantendo todos os estilos) */}
+                  <h2 className="text-black text-xl font-bold leading-normal lg:text-start text-center">
                     {sobre?.title || "A NPi Imóveis nasceu em 2007"}
-                  </h1>
+                  </h2>
                   <p className="text-black text-base font-normal leading-relaxed lg:text-start text-center">
                     {sobre?.description ||
                       "A ideia inicial era suprir algumas lacunas de uma mercado imobiliário em plena expansão, aproximando o cliente da construtora. Assim nascíamos com uma proposta inovadora e fomos pioneiros em realizar parcerias B2B com as maiores construtoras do mercado, algo que não existia na época. Com isso, aproximávamos o nosso cliente final aos donos ou diretores das incorporadoras, realizando negociações extremamente rentáveis para os compradores, e acelerávamos as vendas das construtoras."}
@@ -22,22 +23,19 @@ export default async function SobreNPI({ sobre }) {
                 </div>
               </div>
             </div>
-
             {/* Botão */}
             <Button link="/" text="Conheça o Hub" />
           </div>
-
           {/* Imagem */}
           <div className="w-full flex lg:justify-start justify-center items-start">
             <div className="sm:w-[564px] w-full sm:h-[646px] h-auto sm:bg-gray-100 rounded-3xl sm:border border-gray-200 relative">
               <Image
-              src={sobre?.image || "/uploads/sobre_npi/sobre.jpg"}
-              alt="Sobre NPI"
-              layout="fill"
-              objectFit="cover"
-              className="sm:mt-5 sm:ml-5 w-full h-full rounded-3xl"
+                src={sobre?.image || "/uploads/sobre_npi/sobre.jpg"}
+                alt="NPi Imóveis - Hub de Imobiliárias Boutique desde 2007"
+                layout="fill"
+                objectFit="cover"
+                className="sm:mt-5 sm:ml-5 w-full h-full rounded-3xl"
               />
-
             </div>
           </div>
         </div>
