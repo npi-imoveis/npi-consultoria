@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import Section from "../ui/section";
 import { InputField, TextareaField } from "../ui/form-fields";
@@ -39,7 +38,6 @@ export default function HomeTab({ form }) {
     }
   }, [form]);
 
-  // Array de campos de estatísticas
   const statsFields = [
     { label: "Posições 1 Página", key: "position" },
     { label: "Visualizações no Google", key: "views" },
@@ -51,7 +49,6 @@ export default function HomeTab({ form }) {
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    // Handle card fields
     if (name.startsWith("card_destacado_title") || name.startsWith("card_destacado_description")) {
       let idx = 0;
       if (name.includes("2")) {
@@ -69,37 +66,25 @@ export default function HomeTab({ form }) {
         }
         return updatedCards;
       });
-    }
-    // Handle campos dentro da estrutura "sobre"
-    else if (name.startsWith("sobre.")) {
+    } else if (name.startsWith("sobre.")) {
       const field = name.split(".")[1];
       setFormData((prev) => {
         const newSobre = {
           ...prev.sobre,
           [field]: value,
         };
-
-        // If this is an image update, trigger an immediate save
-        if (field === "image_url") {
-          updateContent("sobre", { sobre: { ...newSobre } });
-        }
-
         return {
           ...prev,
           sobre: newSobre,
         };
       });
-    }
-    // Handle stats fields
-    else if (name.startsWith("stats.")) {
+    } else if (name.startsWith("stats.")) {
       const fieldName = name.split(".")[1];
       setStats((prev) => ({
         ...prev,
         [fieldName]: value,
       }));
-    }
-    // Update formData for all other fields
-    else {
+    } else {
       setFormData((prev) => ({
         ...prev,
         [name]: value,
@@ -109,32 +94,27 @@ export default function HomeTab({ form }) {
 
   const handleImageChange = (e) => {
     const { name, value, previewUrl } = e.target;
-    // Usar previewUrl ou value, o que estiver disponível
     const imageUrl = previewUrl || value;
 
-    if (imageUrl) {
-      // Se for um campo de imagem para a seção "sobre", atualizar o formData
-      if (name.startsWith("sobre.")) {
-        const field = name.split(".")[1];
-        setFormData((prev) => ({
-          ...prev,
-          sobre: {
-            ...prev.sobre,
-            [field]: imageUrl,
-          },
-        }));
-      }
+    if (imageUrl && name.startsWith("sobre.")) {
+      const field = name.split(".")[1];
+      setFormData((prev) => ({
+        ...prev,
+        sobre: {
+          ...prev.sobre,
+          [field]: imageUrl,
+        },
+      }));
+      updateContent("sobre", { sobre: { ...formData.sobre, [field]: imageUrl } });
     }
   };
 
-  // Função para mostrar e ocultar mensagens de status
   const showStatusMessage = (section, type, message) => {
     setSectionStatus((prev) => ({
       ...prev,
       [section]: { show: true, type, message },
     }));
 
-    // Esconde a mensagem após 5 segundos
     setTimeout(() => {
       setSectionStatus((prev) => ({
         ...prev,
@@ -143,14 +123,11 @@ export default function HomeTab({ form }) {
     }, 5000);
   };
 
-  // Função genérica para atualizar o conteúdo
   const updateContent = async (section, data) => {
     try {
-      // Ativa o estado de loading para esta seção
       setLoadingSection(section);
 
       const payload = {};
-
       switch (section) {
         case "sobre":
           payload.sobre = formData.sobre;
@@ -165,7 +142,6 @@ export default function HomeTab({ form }) {
           payload[section] = data;
       }
 
-      // Adiciona um tempo mínimo de loading de 2 segundos
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
       const response = await fetch("/api/admin/content", {
@@ -197,12 +173,10 @@ export default function HomeTab({ form }) {
       console.error(`Erro ao atualizar ${section}:`, error);
       showStatusMessage(section, "error", `Erro ao atualizar ${section}`);
     } finally {
-      // Desativa o estado de loading
       setLoadingSection(null);
     }
   };
 
-  // Componente para renderizar mensagens de status
   const StatusMessage = ({ section }) => {
     const status = sectionStatus[section];
     if (!status.show) return null;
@@ -245,16 +219,18 @@ export default function HomeTab({ form }) {
             />
           </div>
           <div className="flex-1">
-          <ImageSection 
-          directory="home" 
-          filename="about" 
-           onChange={handleImageChange}
-           currentImageUrl={formData.sobre?.image_url || ""}
-           sectionKey="sobre" // Identificador único para esta seção
-           />
+            <ImageSection
+              directory="home"
+              filename="about"
+              section="home"
+              subsection="about"
+              onChange={handleImageChange}
+              currentImageUrl={formData.sobre?.image_url || ""}
+              sectionKey="sobre"
+            />
           </div>
-          </div>
-          <div className="mt-4 flex flex-col space-y-2">
+        </div>
+        <div className="mt-4 flex flex-col space-y-2">
           <Button onClick={() => updateContent("sobre")} disabled={loadingSection === "sobre"}>
             {loadingSection === "sobre" ? "Atualizando..." : "Atualizar Quem Somos"}
           </Button>
