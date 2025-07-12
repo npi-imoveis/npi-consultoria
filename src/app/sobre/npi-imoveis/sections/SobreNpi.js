@@ -32,14 +32,14 @@ export default async function SobreNPI({ sobre }) {
                   <div className="grid grid-cols-3 gap-6 w-full mt-6">
                     <div className="text-center lg:text-left">
                       <div className="text-2xl md:text-3xl font-bold text-[#8B6F4B]">15+</div>
-                      <div className="text-sm text-gray-600">Anos</div>
+                      <div className="text-sm text-gray-600">Anos de Mercado</div>
                     </div>
                     <div className="text-center lg:text-left">
                       <div className="text-2xl md:text-3xl font-bold text-[#8B6F4B]">20.000+</div>
-                      <div className="text-sm text-gray-600">Clientes</div>
+                      <div className="text-sm text-gray-600">Clientes Atendidos</div>
                     </div>
                     <div className="text-center lg:text-left">
-                      <div className="text-2xl md:text-3xl font-bold text-[#8B6F4B]">1º</div>
+                      <div className="text-2xl md:text-3xl font-bold text-[#8B6F4B]">1º Lugar</div>
                       <div className="text-sm text-gray-600">No Google</div>
                     </div>
                   </div>
