@@ -6,7 +6,7 @@ import VideoNpi from "./sections/VideoNpi";
 
 // Metadata completo para SEO
 export const metadata = {
-  title: "Sobre NPi Imóveis - Um pouco da nossa história",
+  title: "Sobre NPi Imóveis - A nossa história | Hub de Imobiliárias Boutique",
   description: "Começamos com imobiliária tradicional em Moema, SP, mas já com a parceria em nosso DNA, e hoje somos um HUB DE IMOBILIÁRIAS BOUTIQUE DE ALTO PADRÃO.",
   keywords: "NPI Imóveis, imobiliária, Hub de imobiliárias, alto padrão, parceria imobiliária, imóveis, consultoria personalizada, Moema, São Paulo",
   
@@ -18,7 +18,7 @@ export const metadata = {
     siteName: "NPi Consultoria",
     images: [
       {
-        url: "https://npiconsultoria.com.br/assets/images/imoveis/02.jpg",
+        url: "https://npiconsultoria.com.br/assets/images/logo/npi-logo-social.png",
         width: 1200,
         height: 630,
         alt: "NPi Imóveis - Hub de Imobiliárias Boutique de Alto Padrão",
@@ -33,7 +33,7 @@ export const metadata = {
     card: "summary_large_image",
     title: "Sobre NPi Imóveis - A nossa história",
     description: "Começamos com imobiliária tradicional em Moema, SP, mas já com a parceria em nosso DNA, e hoje somos um HUB DE IMOBILIÁRIAS BOUTIQUE DE ALTO PADRÃO.",
-    images: ["https://npiconsultoria.com.br/assets/images/imoveis/02.jpg"],
+    images: ["https://npiconsultoria.com.br/assets/images/logo/npi-logo-social.png"],
     creator: "@npiconsultoria",
     site: "@npiconsultoria",
   },
@@ -88,7 +88,7 @@ export default async function SobrePage() {
       <HeaderPage
         title={content?.sobre_npi?.header?.title || "Sobre a NPi Imóveis"}
         description={content?.sobre_npi?.header?.subtitle || "A nossa história como Hub de Imobiliárias Boutique"}
-        image="/assets/images/imoveis/02.jpg"
+        image="/assets/images/logo/npi-logo-bg.jpg"
       />
       <SobreNPI sobre={content?.sobre_npi} />
       <HistoriaNpi historia={content?.sobre_npi?.historia} />
