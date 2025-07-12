@@ -32,8 +32,11 @@ export async function GET(request) {
       limit: 100,
     });
 
-    // Filtrar apenas imagens
-    const images = blobs.filter((blob) => isImageFile(blob.pathname)).map((blob) => blob.url);
+    // Filtrar apenas imagens e adicionar cache busting
+    const timestamp = Date.now();
+    const images = blobs
+      .filter((blob) => isImageFile(blob.pathname))
+      .map((blob) => `${blob.url}?v=${timestamp}`); // ✅ Cache busting
 
     return NextResponse.json({
       success: true,
@@ -41,7 +44,11 @@ export async function GET(request) {
     });
   } catch (error) {
     console.error("Erro ao listar imagens:", error);
-    return NextResponse.json({ success: false, error: "Erro ao listar imagens" }, { status: 500 });
+    return NextResponse.json({ 
+      success: false, 
+      error: "Erro ao listar imagens",
+      details: error.message 
+    }, { status: 500 });
   }
 }
 
@@ -75,6 +82,15 @@ export async function POST(request) {
       );
     }
 
+    // Verificar tamanho do arquivo (4.5MB max para Vercel Blob gratuito)
+    const maxSize = 4.5 * 1024 * 1024; // 4.5MB
+    if (file.size > maxSize) {
+      return NextResponse.json(
+        { success: false, error: "Arquivo muito grande. Máximo 4.5MB." },
+        { status: 400 }
+      );
+    }
+
     // Determinar o nome do arquivo
     let filename;
     if (customFilename) {
@@ -92,22 +108,48 @@ export async function POST(request) {
     // Criar pathname com o diretório
     const pathname = `${directory}/${filename}`;
 
-    // Upload para Vercel Blob
-    const blob = await put(pathname, file, {
-      access: "public",
-      addRandomSuffix: false, // Para manter o nome exato
-    });
+    try {
+      // Upload para Vercel Blob
+      const blob = await put(pathname, file, {
+        access: "public",
+        addRandomSuffix: false, // Para manter o nome exato
+      });
 
-    return NextResponse.json({
-      success: true,
-      filename,
-      path: blob.url,
-      blobUrl: blob.url,
-    });
+      // ✅ Retornar com cache busting
+      const timestamp = Date.now();
+      
+      return NextResponse.json({
+        success: true,
+        filename,
+        path: `${blob.url}?v=${timestamp}`, // ✅ Com cache busting
+        blobUrl: blob.url, // ✅ URL original sem cache busting
+        pathWithoutCache: blob.url, // ✅ Para salvar no banco
+      });
+
+    } catch (blobError) {
+      console.error("Erro no Vercel Blob:", blobError);
+      
+      // ✅ Erro específico do Vercel Blob
+      if (blobError.message?.includes("unauthorized")) {
+        return NextResponse.json({
+          success: false,
+          error: "Vercel Blob não configurado",
+          message: "Configure BLOB_READ_WRITE_TOKEN na Vercel",
+          details: blobError.message
+        }, { status: 401 });
+      }
+      
+      return NextResponse.json({
+        success: false,
+        error: "Erro no upload para Vercel Blob",
+        details: blobError.message
+      }, { status: 500 });
+    }
+
   } catch (error) {
-    console.error("Erro no upload:", error);
+    console.error("Erro geral no upload:", error);
     return NextResponse.json(
-      { success: false, error: "Erro ao fazer upload da imagem" },
+      { success: false, error: "Erro interno do servidor", details: error.message },
       { status: 500 }
     );
   }
@@ -130,11 +172,19 @@ export async function DELETE(request) {
 
     let blobUrl = url;
 
+    // Limpar cache busting da URL se houver
+    if (blobUrl && blobUrl.includes('?v=')) {
+      blobUrl = blobUrl.split('?v=')[0];
+    }
+
     // Se não foi fornecida a URL completa, construir baseado no filename
     if (!blobUrl && filename) {
+      // Limpar filename de cache busting
+      const cleanFilename = filename.split('?')[0];
+      
       // Listar blobs para encontrar a URL exata
       const { blobs } = await list({
-        prefix: `${directory}/${filename}`,
+        prefix: `${directory}/${cleanFilename}`,
         limit: 1,
       });
 
