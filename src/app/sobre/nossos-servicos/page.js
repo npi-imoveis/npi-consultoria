@@ -4,14 +4,14 @@ import { BriefcaseBusinessIcon } from "lucide-react";
 
 // Metadata completo para SEO
 export const metadata = {
-  title: "Nossos Serviços | SEO Imobiliário e Parcerias Estratégicas",
-  description: "Conheça os serviços da NPi: posicionamento de imóveis no Google, consultoria personalizada, e parcerias estratégicas no mercado imobiliário de alto padrão.",
-  keywords: "serviços imobiliários, consultoria imobiliária, SEO imóveis, parcerias estratégicas, NPi Imóveis, mercado imobiliário",
+  title: "NPi Imóveis - Nossos Serviços | Consultoria Imobiliária e Parcerias Estratégicas",
+  description: "Conheça todos os serviços da NPi Imóveis: consultoria personalizada, assessoria jurídica, posicionamento digital e parcerias estratégicas no mercado imobiliário.",
+  keywords: "serviços imobiliários, consultoria imobiliária, assessoria jurídica, SEO imóveis, parcerias estratégicas, NPi Imóveis, mercado imobiliário",
   
   // Open Graph (Facebook, LinkedIn, WhatsApp)
   openGraph: {
-    title: "NPi Imóveis - Nossos Serviços",
-    description: "Conheça os serviços da NPi: posicionamento de imóveis no Google, consultoria personalizada, e parcerias estratégicas no mercado imobiliário de alto padrão.",
+    title: "NPi Imóveis - Nossos Serviços Especializados",
+    description: "Soluções completas em consultoria imobiliária, SEO e parcerias estratégicas para o mercado de alto padrão.",
     url: "https://npiconsultoria.com.br/sobre/nossos-servicos",
     siteName: "NPi Consultoria",
     images: [
@@ -29,9 +29,9 @@ export const metadata = {
   // Twitter Cards
   twitter: {
     card: "summary_large_image",
-    title: "NPi Imóveis - Nossos Serviços",
-    description: "Conheça os serviços da NPi: posicionamento de imóveis no Google, consultoria personalizada, e parcerias estratégicas no mercado imobiliário de alto padrão.",
-    images: ["https://npiconsultoria.com.br/assets/images/imoveis/02.jpg"],
+    title: "NPi Imóveis - Nossos Serviços Especializados",
+    description: "Soluções completas em consultoria imobiliária, SEO e parcerias estratégicas para o mercado de alto padrão.",
+    images: ["https://npiconsultoria.com.br/assets/thumbnail.jpg"],
     creator: "@npiconsultoria",
     site: "@npiconsultoria",
   },
@@ -84,8 +84,8 @@ export default async function ServicesPage() {
   return (
     <section>
       <HeaderPage
-        title={content?.servicos_page?.header?.title || "Conheça nossos serviços"}
-        description={content?.servicos_page?.header?.subtitle || "Oferecemos uma ampla gama de serviços para atender às necessidades de nossos clientes."}
+        title="Nossos Serviços Especializados"
+        description="Soluções completas em consultoria imobiliária, SEO e parcerias estratégicas para o mercado de alto padrão."
         image="/assets/images/imoveis/02.jpg"
       />
       
@@ -93,10 +93,10 @@ export default async function ServicesPage() {
         {/* Introdução da seção */}
         <div className="text-center mb-12">
           <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">
-            Nossos Serviços Especializados
+            Serviços Completos para o Mercado Imobiliário
           </h2>
           <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-            Oferecemos soluções completas para o mercado imobiliário, desde consultoria personalizada até parcerias estratégicas.
+            Desde consultoria personalizada até posicionamento digital, oferecemos todas as ferramentas necessárias para seu sucesso no mercado imobiliário de alto padrão.
           </p>
         </div>
 
