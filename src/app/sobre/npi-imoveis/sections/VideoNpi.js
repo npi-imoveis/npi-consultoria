@@ -33,7 +33,7 @@ export default function VideoNpi({ missao }) {
             <p className="text-lg">
               Com o passar dos anos, a empresa cresceu com suas parcerias, e nossos serviços 
               foram altamente ampliados, e assim nasce em 2024 o{" "}
-              <strong className="text-blue-600 bg-blue-50 px-2 py-1 rounded">
+              <strong className="text-[#8B6F4B] bg-[#8B6F4B]/10 px-2 py-1 rounded">
                 HUB DE IMOBILIÁRIAS BOUTIQUE DE ALTO PADRÃO
               </strong>.
             </p>
