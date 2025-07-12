@@ -16,7 +16,7 @@ export const metadata = {
     siteName: "NPi Consultoria",
     images: [
       {
-        url: "https://npiconsultoria.com.br/assets/images/imoveis/02.jpg",
+        url: "https://npiconsultoria.com.br/assets/thumbnail.jpg",
         width: 1200,
         height: 630,
         alt: "NPi Imóveis - Nossos Serviços Especializados",
