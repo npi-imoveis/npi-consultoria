@@ -74,13 +74,12 @@ export default async function SobreNPI({ sobre }) {
                 {/* Container da imagem */}
                 <div className="relative bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100">
                   <Image
-                    src={sobre?.image || "/uploads/sobre_npi/sobre.jpg?v=2024"}
+                    src={sobre?.image || "/uploads/sobre_npi/sobre.jpg?v=2024dec"}
                     alt="NPi Imóveis - Escritório e equipe especializada desde 2007"
                     width={600}
                     height={700}
                     className="w-full h-auto object-cover"
                     style={{ aspectRatio: '4/5' }}
-                    priority={true}
                     unoptimized={true}
                   />
                   
