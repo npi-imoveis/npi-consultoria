@@ -1,214 +1,277 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import Section from "../ui/section";
+import { InputField, TextareaField } from "../ui/form-fields";
+import Button from "../ui/button";
 
-export default function ServicosTab({ form, updateForm }) {
-  const [isLoading, setIsLoading] = useState(false);
+export default function ServicosTab({ form }) {
+  const [formData, setFormData] = useState({
+    header: {
+      title: "",
+      subtitle: ""
+    },
+    missao: {
+      titulo: "",
+      descricao: "",
+      youtube_link: ""
+    },
+    servicos: {
+      atendimento: {
+        titulo: "",
+        descricao: ""
+      },
+      avaliacao: {
+        titulo: "",
+        descricao: ""
+      },
+      assessoria: {
+        titulo: "",
+        descricao: ""
+      }
+    }
+  });
+  
+  const [loadingSection, setLoadingSection] = useState(null);
+  const [sectionStatus, setSectionStatus] = useState({
+    header: { show: false, type: null, message: null },
+    missao: { show: false, type: null, message: null },
+    servicos: { show: false, type: null, message: null }
+  });
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
+  useEffect(() => {
+    if (form && form.servicos_page) {
+      setFormData(form.servicos_page);
+    }
+  }, [form]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    const keys = name.split('.');
     
+    setFormData(prev => {
+      const newData = { ...prev };
+      let current = newData;
+      
+      for (let i = 0; i < keys.length - 1; i++) {
+        if (!current[keys[i]]) {
+          current[keys[i]] = {};
+        }
+        current = current[keys[i]];
+      }
+      
+      current[keys[keys.length - 1]] = value;
+      return newData;
+    });
+  };
+
+  const showStatusMessage = (section, type, message) => {
+    setSectionStatus(prev => ({
+      ...prev,
+      [section]: { show: true, type, message }
+    }));
+
+    setTimeout(() => {
+      setSectionStatus(prev => ({
+        ...prev,
+        [section]: { ...prev[section], show: false }
+      }));
+    }, 5000);
+  };
+
+  const updateContent = async (section) => {
     try {
-      // Aqui seria a lógica de submissão original
-      // Provavelmente fazia update dos campos da missão
-      console.log("Atualizando missão e serviços...", form);
-      
-      // Simular delay de API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      alert("Missão e serviços atualizados com sucesso!");
+      setLoadingSection(section);
+
+      const payload = {
+        servicos_page: formData
+      };
+
+      const response = await fetch("/api/admin/content", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      await fetch("/api/revalidate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ path: "/servicos" }),
+      });
+
+      if (response.ok) {
+        showStatusMessage(section, "success", "Atualizado com sucesso!");
+      } else {
+        showStatusMessage(section, "error", "Erro ao atualizar");
+      }
     } catch (error) {
-      console.error("Erro ao atualizar:", error);
-      alert("Erro ao atualizar missão e serviços");
+      console.error(`Erro ao atualizar ${section}:`, error);
+      showStatusMessage(section, "error", "Erro ao atualizar");
     } finally {
-      setIsLoading(false);
+      setLoadingSection(null);
     }
   };
 
+  const StatusMessage = ({ section }) => {
+    const status = sectionStatus[section];
+    if (!status.show) return null;
+
+    return (
+      <div className={`mt-4 p-3 rounded ${
+        status.type === "success" 
+          ? "bg-green-100 text-green-800" 
+          : "bg-red-100 text-red-800"
+      }`}>
+        {status.message}
+      </div>
+    );
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Header */}
-      <div className="space-y-4">
-        <div>
-          <label htmlFor="header-title" className="block text-sm font-medium text-gray-700 mb-2">
-            Título
-          </label>
-          <input
-            type="text"
-            id="header-title"
-            name="header-title"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+    <div className="space-y-8">
+      {/* Header Section */}
+      <Section title="Header">
+        <div className="space-y-4">
+          <InputField
+            label="Título"
+            name="header.title"
+            value={formData.header?.title || ""}
+            onChange={handleChange}
             placeholder="Sobre a NPi Imóveis"
           />
-        </div>
-
-        <div>
-          <label htmlFor="header-subtitle" className="block text-sm font-medium text-gray-700 mb-2">
-            Subtítulo
-          </label>
-          <input
-            type="text"
-            id="header-subtitle"
-            name="header-subtitle"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          <InputField
+            label="Subtítulo"
+            name="header.subtitle"
+            value={formData.header?.subtitle || ""}
+            onChange={handleChange}
             placeholder="De 2007 a 2025 - Um pouco da nossa história"
           />
         </div>
-      </div>
+        <div className="mt-4 flex flex-col space-y-2">
+          <Button 
+            onClick={() => updateContent("header")} 
+            disabled={loadingSection === "header"}
+          >
+            {loadingSection === "header" ? "Atualizando..." : "Atualizar Header"}
+          </Button>
+          <StatusMessage section="header" />
+        </div>
+      </Section>
 
-      {/* Nossa missão e serviços */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Nossa missão e serviços</h3>
-        
-        <div>
-          <label htmlFor="missao-titulo" className="block text-sm font-medium text-gray-700 mb-2">
-            Título
-          </label>
-          <input
-            type="text"
-            id="missao-titulo"
-            name="missao-titulo"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+      {/* Nossa Missão e Serviços Section */}
+      <Section title="Nossa missão e serviços">
+        <div className="space-y-4">
+          <InputField
+            label="Título"
+            name="missao.titulo"
+            value={formData.missao?.titulo || ""}
+            onChange={handleChange}
             placeholder="Nossa Missão e Serviços"
           />
-        </div>
-
-        <div>
-          <label htmlFor="missao-descricao" className="block text-sm font-medium text-gray-700 mb-2">
-            Descrição
-          </label>
-          <textarea
-            id="missao-descricao"
-            name="missao-descricao"
+          <TextareaField
+            label="Descrição"
+            name="missao.descricao"
+            value={formData.missao?.descricao || ""}
+            onChange={handleChange}
             rows={4}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Desde 2007, a NPi se dedica a oferecer um serviço imparcial e de excelência, ajudando nossos clientes a realizarem o sonho de adquirir um imóvel."
+            placeholder="Desde 2007, a NPi se dedica a oferecer um serviço imparcial e de excelência..."
           />
-        </div>
-
-        <div>
-          <label htmlFor="youtube-link" className="block text-sm font-medium text-gray-700 mb-2">
-            Link do vídeo do YouTube
-          </label>
-          <input
+          <InputField
+            label="Link do vídeo do YouTube"
+            name="missao.youtube_link"
+            value={formData.missao?.youtube_link || ""}
+            onChange={handleChange}
             type="url"
-            id="youtube-link"
-            name="youtube-link"
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="https://youtube.com/watch?v=..."
           />
         </div>
-      </div>
+        <div className="mt-4 flex flex-col space-y-2">
+          <Button 
+            onClick={() => updateContent("missao")} 
+            disabled={loadingSection === "missao"}
+          >
+            {loadingSection === "missao" ? "Atualizando..." : "Atualizar Missão"}
+          </Button>
+          <StatusMessage section="missao" />
+        </div>
+      </Section>
 
-      {/* Serviços */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Atendimento Personalizado */}
-        <div className="space-y-4">
-          <h4 className="text-md font-semibold text-blue-600">Atendimento Personalizado</h4>
-          
-          <div>
-            <label htmlFor="atendimento-titulo" className="block text-sm font-medium text-gray-700 mb-2">
-              Título
-            </label>
-            <input
-              type="text"
-              id="atendimento-titulo"
-              name="atendimento-titulo"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+      {/* Serviços Section */}
+      <Section title="Serviços">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Atendimento Personalizado */}
+          <div className="bg-gray-50 rounded-lg p-6 space-y-4">
+            <h4 className="text-md font-semibold text-blue-600">Atendimento Personalizado</h4>
+            <InputField
+              label="Título"
+              name="servicos.atendimento.titulo"
+              value={formData.servicos?.atendimento?.titulo || ""}
+              onChange={handleChange}
               placeholder="Atendimento Personalizado"
             />
-          </div>
-
-          <div>
-            <label htmlFor="atendimento-descricao" className="block text-sm font-medium text-gray-700 mb-2">
-              Descrição
-            </label>
-            <textarea
-              id="atendimento-descricao"
-              name="atendimento-descricao"
+            <TextareaField
+              label="Descrição"
+              name="servicos.atendimento.descricao"
+              value={formData.servicos?.atendimento?.descricao || ""}
+              onChange={handleChange}
               rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Nossa missão é entender as necessidades de cada cliente e oferecer as melhores opções de imóveis, garantindo um processo de compra fácil, ágil e seguro."
+              placeholder="Nossa missão é entender as necessidades de cada cliente..."
             />
           </div>
-        </div>
 
-        {/* Avaliação de Imóveis */}
-        <div className="space-y-4">
-          <h4 className="text-md font-semibold text-blue-600">Avaliação de Imóveis</h4>
-          
-          <div>
-            <label htmlFor="avaliacao-titulo" className="block text-sm font-medium text-gray-700 mb-2">
-              Título
-            </label>
-            <input
-              type="text"
-              id="avaliacao-titulo"
-              name="avaliacao-titulo"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          {/* Avaliação de Imóveis */}
+          <div className="bg-gray-50 rounded-lg p-6 space-y-4">
+            <h4 className="text-md font-semibold text-blue-600">Avaliação de Imóveis</h4>
+            <InputField
+              label="Título"
+              name="servicos.avaliacao.titulo"
+              value={formData.servicos?.avaliacao?.titulo || ""}
+              onChange={handleChange}
               placeholder="Avaliação de Imóveis"
             />
-          </div>
-
-          <div>
-            <label htmlFor="avaliacao-descricao" className="block text-sm font-medium text-gray-700 mb-2">
-              Descrição
-            </label>
-            <textarea
-              id="avaliacao-descricao"
-              name="avaliacao-descricao"
+            <TextareaField
+              label="Descrição"
+              name="servicos.avaliacao.descricao"
+              value={formData.servicos?.avaliacao?.descricao || ""}
+              onChange={handleChange}
               rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Equipe altamente capacitada para precificar o seu imóvel com uma metodologia completa."
+              placeholder="Equipe altamente capacitada para precificar o seu imóvel..."
             />
           </div>
-        </div>
 
-        {/* Assessoria Jurídica */}
-        <div className="space-y-4">
-          <h4 className="text-md font-semibold text-blue-600">Assessoria Jurídica</h4>
-          
-          <div>
-            <label htmlFor="assessoria-titulo" className="block text-sm font-medium text-gray-700 mb-2">
-              Título
-            </label>
-            <input
-              type="text"
-              id="assessoria-titulo"
-              name="assessoria-titulo"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          {/* Assessoria Jurídica */}
+          <div className="bg-gray-50 rounded-lg p-6 space-y-4">
+            <h4 className="text-md font-semibold text-blue-600">Assessoria Jurídica</h4>
+            <InputField
+              label="Título"
+              name="servicos.assessoria.titulo"
+              value={formData.servicos?.assessoria?.titulo || ""}
+              onChange={handleChange}
               placeholder="Assessoria Jurídica"
             />
-          </div>
-
-          <div>
-            <label htmlFor="assessoria-descricao" className="block text-sm font-medium text-gray-700 mb-2">
-              Descrição
-            </label>
-            <textarea
-              id="assessoria-descricao"
-              name="assessoria-descricao"
+            <TextareaField
+              label="Descrição"
+              name="servicos.assessoria.descricao"
+              value={formData.servicos?.assessoria?.descricao || ""}
+              onChange={handleChange}
               rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Consultoria especializada no mercado imobiliário para assessorar nossos clientes."
+              placeholder="Consultoria especializada no mercado imobiliário..."
             />
           </div>
         </div>
-      </div>
-
-      {/* Botão Submit */}
-      <div className="flex justify-center">
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="bg-black text-white px-8 py-3 rounded-md hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-        >
-          {isLoading && (
-            <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
-          )}
-          {isLoading ? "Atualizando..." : "Atualizar Missão e Serviços"}
-        </button>
-      </div>
-    </form>
+        <div className="mt-4 flex flex-col space-y-2">
+          <Button 
+            onClick={() => updateContent("servicos")} 
+            disabled={loadingSection === "servicos"}
+          >
+            {loadingSection === "servicos" ? "Atualizando..." : "Atualizar Serviços"}
+          </Button>
+          <StatusMessage section="servicos" />
+        </div>
+      </Section>
+    </div>
   );
 }
