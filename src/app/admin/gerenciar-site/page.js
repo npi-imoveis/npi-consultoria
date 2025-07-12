@@ -7,6 +7,10 @@ import HubTab from "./components/tabs/hub-tab";
 import SobreTab from "./components/tabs/sobre-tab";
 import ServicosTab from "./components/tabs/servicos-tab";
 
+function DebugComponent({ form }) {
+  return <pre>{JSON.stringify(form, null, 2)}</pre>;
+}
+
 export default function GerenciarSite() {
   const [tab, setTab] = useState("home");
   const [form, setForm] = useState({});
@@ -66,6 +70,7 @@ export default function GerenciarSite() {
             </div>
           ) : (
             <>
+              <DebugComponent form={form} />
               {tab === "home" && <HomeTab form={form} />}
               {tab === "hub" && <HubTab form={form} />}
               {tab === "sobre" && <SobreTab form={form} />}
