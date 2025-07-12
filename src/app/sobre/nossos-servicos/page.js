@@ -4,14 +4,14 @@ import { BriefcaseBusinessIcon } from "lucide-react";
 
 // Metadata completo para SEO
 export const metadata = {
-  title: "NPi Imóveis - Nossos Serviços | Consultoria Imobiliária e Parcerias Estratégicas",
-  description: "Conheça todos os serviços da NPi Imóveis: consultoria personalizada, assessoria jurídica, posicionamento digital e parcerias estratégicas no mercado imobiliário.",
-  keywords: "serviços imobiliários, consultoria imobiliária, assessoria jurídica, SEO imóveis, parcerias estratégicas, NPi Imóveis, mercado imobiliário",
+  title: "Nossos Serviços | SEO Imobiliário e Parcerias Estratégicas",
+  description: "Conheça os serviços da NPi: posicionamento de imóveis no Google, consultoria personalizada, e parcerias estratégicas no mercado imobiliário de alto padrão.",
+  keywords: "serviços imobiliários, consultoria imobiliária, SEO imóveis, parcerias estratégicas, NPi Imóveis, mercado imobiliário",
   
   // Open Graph (Facebook, LinkedIn, WhatsApp)
   openGraph: {
     title: "NPi Imóveis - Nossos Serviços",
-    description: "Conheça todos os serviços da NPi Imóveis: consultoria personalizada, assessoria jurídica, posicionamento digital e parcerias estratégicas no mercado imobiliário.",
+    description: "Conheça os serviços da NPi: posicionamento de imóveis no Google, consultoria personalizada, e parcerias estratégicas no mercado imobiliário de alto padrão.",
     url: "https://npiconsultoria.com.br/sobre/nossos-servicos",
     siteName: "NPi Consultoria",
     images: [
@@ -30,7 +30,7 @@ export const metadata = {
   twitter: {
     card: "summary_large_image",
     title: "NPi Imóveis - Nossos Serviços",
-    description: "Conheça todos os serviços da NPi Imóveis: consultoria personalizada, assessoria jurídica, posicionamento digital e parcerias estratégicas.",
+    description: "Conheça os serviços da NPi: posicionamento de imóveis no Google, consultoria personalizada, e parcerias estratégicas no mercado imobiliário de alto padrão.",
     images: ["https://npiconsultoria.com.br/assets/images/imoveis/02.jpg"],
     creator: "@npiconsultoria",
     site: "@npiconsultoria",
