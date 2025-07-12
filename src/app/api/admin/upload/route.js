@@ -1,45 +1,22 @@
 import { NextResponse } from "next/server";
-import { writeFile, unlink, readdir, mkdir } from "fs/promises";
-import path from "path";
-import { existsSync } from "fs";
+import { put, del, list } from "@vercel/blob";
 
-// Diretório base para armazenar as imagens
-const BASE_UPLOAD_DIR = path.join(process.cwd(), "public/uploads");
-
-// Função para verificar se estamos em ambiente de produção na Vercel
-function isVercelProduction() {
-  return process.env.VERCEL_ENV === "production";
-}
-
-// Função para garantir que o diretório existe
-async function ensureDirectoryExists(directory) {
-  try {
-    if (!existsSync(directory)) {
-      await mkdir(directory, { recursive: true });
-    }
-  } catch (error) {
-    console.error("Erro ao criar diretório:", error);
-    throw new Error(`Não foi possível criar o diretório: ${error.message}`);
-  }
+// Função para validar o diretório
+function validateDirectory(dir) {
+  const allowedDirs = ["parceiros", "home", "sobre_hub", "sobre_npi", "historia"];
+  return allowedDirs.includes(dir);
 }
 
 // Função auxiliar para verificar se o arquivo é uma imagem
 function isImageFile(filename) {
   const imageExtensions = [".jpg", ".jpeg", ".png", ".gif", ".webp"];
-  return imageExtensions.includes(path.extname(filename).toLowerCase());
+  return imageExtensions.some((ext) => filename.toLowerCase().endsWith(ext));
 }
 
-// Função para validar o diretório
-function validateDirectory(dir) {
-  // Lista de diretórios permitidos
-  const allowedDirs = ["parceiros", "home", "sobre_hub", "sobre_npi", "historia"];
-  return allowedDirs.includes(dir);
-}
-
-// GET - Lista todas as imagens com cache busting
+// GET - Lista todas as imagens do diretório especificado
 export async function GET(request) {
   try {
-    const { searchParams } = new URL(request.url);
+    const { searchParams } = request.nextUrl;
     const directory = searchParams.get("directory");
 
     if (!directory || !validateDirectory(directory)) {
@@ -49,26 +26,21 @@ export async function GET(request) {
       );
     }
 
-    const targetDir = path.join(BASE_UPLOAD_DIR, directory);
-    
-    try {
-      await ensureDirectoryExists(targetDir);
-    } catch (dirError) {
-      return NextResponse.json(
-        { success: false, error: `Erro no diretório: ${dirError.message}` },
-        { status: 500 }
-      );
-    }
+    // Listar arquivos do Vercel Blob com prefixo do diretório
+    const { blobs } = await list({
+      prefix: `${directory}/`,
+      limit: 100,
+    });
 
-    const files = await readdir(targetDir);
-    const images = files.filter((file) => isImageFile(file));
-
-    // ✅ ADICIONAR CACHE BUSTING NAS IMAGENS LISTADAS
+    // Filtrar apenas imagens e adicionar cache busting
     const timestamp = Date.now();
-    
+    const images = blobs
+      .filter((blob) => isImageFile(blob.pathname))
+      .map((blob) => `${blob.url}?v=${timestamp}`);
+
     return NextResponse.json({
       success: true,
-      images: images.map((image) => `/uploads/${directory}/${image}?v=${timestamp}`),
+      images: images,
     });
   } catch (error) {
     console.error("Erro ao listar imagens:", error);
@@ -80,7 +52,7 @@ export async function GET(request) {
   }
 }
 
-// POST - Upload de nova imagem com cache busting
+// POST - Upload de nova imagem para Vercel Blob
 export async function POST(request) {
   try {
     const formData = await request.formData();
@@ -88,7 +60,6 @@ export async function POST(request) {
     const directory = formData.get("directory");
     const customFilename = formData.get("customFilename");
 
-    // Validações
     if (!directory || !validateDirectory(directory)) {
       return NextResponse.json(
         { success: false, error: "Diretório inválido ou não especificado" },
@@ -111,43 +82,21 @@ export async function POST(request) {
       );
     }
 
-    // Verificar tamanho do arquivo (10MB max)
-    const maxSize = 10 * 1024 * 1024; // 10MB
+    // Verificar tamanho do arquivo (4.5MB max para Vercel Blob gratuito)
+    const maxSize = 4.5 * 1024 * 1024; // 4.5MB
     if (file.size > maxSize) {
       return NextResponse.json(
-        { success: false, error: "Arquivo muito grande. Máximo 10MB." },
+        { success: false, error: "Arquivo muito grande. Máximo 4.5MB." },
         { status: 400 }
-      );
-    }
-
-    const targetDir = path.join(BASE_UPLOAD_DIR, directory);
-    
-    try {
-      await ensureDirectoryExists(targetDir);
-    } catch (dirError) {
-      return NextResponse.json(
-        { success: false, error: `Erro ao criar diretório: ${dirError.message}` },
-        { status: 500 }
-      );
-    }
-
-    let buffer;
-    try {
-      buffer = Buffer.from(await file.arrayBuffer());
-    } catch (bufferError) {
-      return NextResponse.json(
-        { success: false, error: "Erro ao processar arquivo" },
-        { status: 500 }
       );
     }
 
     // Determinar o nome do arquivo
     let filename;
     if (customFilename) {
-      // Se o customFilename não tiver extensão, use a extensão do arquivo original
-      const originalExt = path.extname(file.name).toLowerCase();
-      if (path.extname(customFilename).toLowerCase() === "") {
-        filename = `${customFilename}${originalExt}`;
+      const originalExt = file.name.split(".").pop();
+      if (!customFilename.includes(".")) {
+        filename = `${customFilename}.${originalExt}`;
       } else {
         filename = customFilename;
       }
@@ -156,27 +105,47 @@ export async function POST(request) {
       filename = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
     }
 
-    const filepath = path.join(targetDir, filename);
+    // Criar pathname com o diretório
+    const pathname = `${directory}/${filename}`;
 
     try {
-      await writeFile(filepath, buffer);
-    } catch (writeError) {
-      console.error("Erro ao escrever arquivo:", writeError);
-      return NextResponse.json(
-        { success: false, error: `Erro ao salvar arquivo: ${writeError.message}` },
-        { status: 500 }
-      );
+      // Upload para Vercel Blob
+      const blob = await put(pathname, file, {
+        access: "public",
+        addRandomSuffix: false, // Para manter o nome exato
+      });
+
+      // Retornar com cache busting
+      const timestamp = Date.now();
+      
+      return NextResponse.json({
+        success: true,
+        filename,
+        path: `${blob.url}?v=${timestamp}`,
+        blobUrl: blob.url,
+        pathWithoutCache: blob.url,
+      });
+
+    } catch (blobError) {
+      console.error("Erro no Vercel Blob:", blobError);
+      
+      // Erro específico do Vercel Blob
+      if (blobError.message?.includes("unauthorized")) {
+        return NextResponse.json({
+          success: false,
+          error: "Vercel Blob não configurado",
+          message: "Configure BLOB_READ_WRITE_TOKEN na Vercel",
+          details: blobError.message
+        }, { status: 401 });
+      }
+      
+      return NextResponse.json({
+        success: false,
+        error: "Erro no upload para Vercel Blob",
+        details: blobError.message
+      }, { status: 500 });
     }
 
-    // ✅ RETORNAR COM CACHE BUSTING
-    const timestamp = Date.now();
-    
-    return NextResponse.json({
-      success: true,
-      filename,
-      path: `/uploads/${directory}/${filename}?v=${timestamp}`,
-      pathWithoutCache: `/uploads/${directory}/${filename}`, // Caso precise sem cache
-    });
   } catch (error) {
     console.error("Erro geral no upload:", error);
     return NextResponse.json(
@@ -186,10 +155,11 @@ export async function POST(request) {
   }
 }
 
-// DELETE - Remove uma imagem específica
+// DELETE - Remove uma imagem específica do Vercel Blob
 export async function DELETE(request) {
   try {
-    const { searchParams } = new URL(request.url);
+    const { searchParams } = request.nextUrl;
+    const url = searchParams.get("url");
     const filename = searchParams.get("filename");
     const directory = searchParams.get("directory");
 
@@ -200,54 +170,59 @@ export async function DELETE(request) {
       );
     }
 
-    if (!filename) {
+    let blobUrl = url;
+
+    // Limpar cache busting da URL se houver
+    if (blobUrl && blobUrl.includes('?v=')) {
+      blobUrl = blobUrl.split('?v=')[0];
+    }
+
+    // Se não foi fornecida a URL completa, construir baseado no filename
+    if (!blobUrl && filename) {
+      // Limpar filename de cache busting
+      const cleanFilename = filename.split('?')[0];
+      
+      // Listar blobs para encontrar a URL exata
+      const { blobs } = await list({
+        prefix: `${directory}/${cleanFilename}`,
+        limit: 1,
+      });
+
+      if (blobs.length === 0) {
+        return NextResponse.json(
+          { success: false, error: "Arquivo não encontrado" },
+          { status: 404 }
+        );
+      }
+
+      blobUrl = blobs[0].url;
+    }
+
+    if (!blobUrl) {
       return NextResponse.json(
-        { success: false, error: "Nome do arquivo não especificado" },
+        { success: false, error: "URL do arquivo não especificada" },
         { status: 400 }
       );
     }
 
-    // Limpar o filename de parâmetros de cache se houver
-    const cleanFilename = filename.split('?')[0];
-    const filepath = path.join(BASE_UPLOAD_DIR, directory, cleanFilename);
+    // Deletar do Vercel Blob
+    await del(blobUrl);
 
-    // Verificar se estamos em produção na Vercel
-    if (isVercelProduction()) {
-      console.warn(`Tentativa de deletar arquivo em produção (Vercel): ${filepath}`);
-      return NextResponse.json({
-        success: true,
-        message: "Arquivo marcado para exclusão (limitação do ambiente de produção)",
-        warning: "Em produção, arquivos não podem ser fisicamente removidos devido às limitações da Vercel.",
-      });
-    }
-
-    try {
-      await unlink(filepath);
-      return NextResponse.json({
-        success: true,
-        message: "Imagem excluída com sucesso",
-      });
-    } catch (unlinkError) {
-      if (unlinkError.code === "EROFS" || unlinkError.code === "EPERM") {
-        console.warn(`Filesystem read-only detectado: ${unlinkError.message}`);
-        return NextResponse.json({
-          success: true,
-          message: "Arquivo marcado para exclusão (limitação do filesystem)",
-          warning: "O ambiente atual não permite exclusão física de arquivos.",
-        });
-      }
-
-      if (unlinkError.code === "ENOENT") {
-        return NextResponse.json({
-          success: false,
-          error: "Arquivo não encontrado",
-        }, { status: 404 });
-      }
-
-      throw unlinkError;
-    }
+    return NextResponse.json({
+      success: true,
+      message: "Imagem excluída com sucesso do Vercel Blob",
+    });
   } catch (error) {
     console.error("Erro ao excluir arquivo:", error);
+
+    // Vercel Blob pode retornar erro se arquivo não existir
+    if (error.message?.includes("not found")) {
+      return NextResponse.json({
+        success: true,
+        message: "Arquivo já foi removido ou não existe",
+      });
+    }
+
     return NextResponse.json(
       {
         success: false,
