@@ -16,7 +16,7 @@ export default function ImageSection({ onChange, filename, directory }) {
 
   const fetchImage = async () => {
     try {
-      const response = await fetch(`/api/upload?directory=${DIRECTORY}`);
+      const response = await fetch(`/api/admin/upload?directory=${DIRECTORY}`);
       const data = await response.json();
       if (data.success && data.images.length > 0) {
         // Procurar pela imagem específica com o nome do arquivo
@@ -67,7 +67,7 @@ export default function ImageSection({ onChange, filename, directory }) {
       // Se já existe uma imagem, vamos deletá-la primeiro
       if (image) {
         const oldFilename = image.split("/").pop();
-        await fetch(`/api/upload?directory=${DIRECTORY}&filename=${oldFilename}`, {
+        await fetch(`/api/admin/upload?directory=${DIRECTORY}&filename=${oldFilename}`, {
           method: "DELETE",
         });
       }
@@ -81,8 +81,7 @@ export default function ImageSection({ onChange, filename, directory }) {
         formData.append("customFilename", filename);
       }
 
-      const response = await fetch("/api/upload", {
-
+      const response = await fetch("/api/admin/upload", {
         method: "POST",
         body: formData,
       });
