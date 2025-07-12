@@ -43,8 +43,22 @@ export default function SobreTab({ form }) {
 
     // Tratamento especial para campos da missão
     if (name.startsWith("missao_item")) {
-      const [_, field, indexStr] = name.match(/missao_item(\d+)_(title|description)/);
-      const index = parseInt(indexStr) - 1;
+  const match = name.match(/missao_item(\d+)_(title|description)/);
+  if (match) {
+    const [_, indexStr, field] = match;
+    const index = parseInt(indexStr) - 1;
+    
+    setFormData((prev) => ({
+      ...prev,
+      missao: {
+        ...prev.missao,
+        itens: prev.missao.itens.map((item, i) =>
+          i === index ? { ...item, [field]: value } : item
+        ),
+      },
+    }));
+  }
+}
 
       setFormData((prev) => ({
         ...prev,
