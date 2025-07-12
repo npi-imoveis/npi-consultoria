@@ -18,10 +18,10 @@ export const metadata = {
     siteName: "NPi Consultoria",
     images: [
       {
-        url: "https://npiconsultoria.com.br/assets/images/imoveis/02.jpg",
+        url: "https://npiconsultoria.com.br/assets/thumbnail.jpg",
         width: 1200,
         height: 630,
-        alt: "NPi Imóveis - Hub de Imobiliárias Boutique de Alto Padrão",
+        alt: "NPi Imóveis - Logo e Identidade Visual",
       },
     ],
     locale: "pt_BR",
@@ -33,7 +33,7 @@ export const metadata = {
     card: "summary_large_image",
     title: "Sobre NPi Imóveis - A nossa história",
     description: "Começamos com imobiliária tradicional em Moema, SP, mas já com a parceria em nosso DNA, e hoje somos um HUB DE IMOBILIÁRIAS BOUTIQUE DE ALTO PADRÃO.",
-    images: ["https://npiconsultoria.com.br/assets/images/imoveis/02.jpg"],
+    images: ["https://npiconsultoria.com.br/assets/thumbnail.jpg"],
     creator: "@npiconsultoria",
     site: "@npiconsultoria",
   },
@@ -88,7 +88,7 @@ export default async function SobrePage() {
       <HeaderPage
         title={content?.sobre_npi?.header?.title || "Sobre a NPi Imóveis"}
         description={content?.sobre_npi?.header?.subtitle || "A nossa história como Hub de Imobiliárias Boutique"}
-        image="/assets/images/logo/npi-logo-bg.jpg"
+        image="/assets/images/imoveis/02.jpg"
       />
       <SobreNPI sobre={content?.sobre_npi} />
       <HistoriaNpi historia={content?.sobre_npi?.historia} />
