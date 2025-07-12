@@ -6,14 +6,14 @@ import VideoNpi from "./sections/VideoNpi";
 
 // Metadata completo para SEO
 export const metadata = {
-  title: "Sobre NPi Imóveis - A nossa história",
-  description: "Começamos com imobiliária tradicional em Moema, SP, mas já com a parceria em nosso DNA, e hoje sonos um HUB DE IMOBILIÁRIAS BOUTIQUE DE ALTO PADRÃO.",
-  keywords: "NPI Imóveis, imobiliária, Hub de imobiliárias, alto padrão, parceria imobiliária, imóveis, consultoria personalizada",
+  title: "Sobre NPi Imóveis - A nossa história | Hub de Imobiliárias Boutique",
+  description: "Começamos com imobiliária tradicional em Moema, SP, mas já com a parceria em nosso DNA, e hoje somos um HUB DE IMOBILIÁRIAS BOUTIQUE DE ALTO PADRÃO.",
+  keywords: "NPI Imóveis, imobiliária, Hub de imobiliárias, alto padrão, parceria imobiliária, imóveis, consultoria personalizada, Moema, São Paulo",
   
-  // Open Graph (Facebook, LinkedIn, etc.)
+  // Open Graph (Facebook, LinkedIn, WhatsApp)
   openGraph: {
     title: "Sobre NPi Imóveis - A nossa história",
-    description: "Começamos com imobiliária tradicional em Moema, SP, mas já com a parceria em nosso DNA, e hoje sonos um HUB DE IMOBILIÁRIAS BOUTIQUE DE ALTO PADRÃO.",
+    description: "Começamos com imobiliária tradicional em Moema, SP, mas já com a parceria em nosso DNA, e hoje somos um HUB DE IMOBILIÁRIAS BOUTIQUE DE ALTO PADRÃO.",
     url: "https://npiconsultoria.com.br/sobre/npi-imoveis",
     siteName: "NPi Consultoria",
     images: [
@@ -21,7 +21,7 @@ export const metadata = {
         url: "https://npiconsultoria.com.br/assets/images/imoveis/02.jpg",
         width: 1200,
         height: 630,
-        alt: "NPi Imóveis - Consultoria Imobiliária",
+        alt: "NPi Imóveis - Hub de Imobiliárias Boutique de Alto Padrão",
       },
     ],
     locale: "pt_BR",
@@ -32,10 +32,10 @@ export const metadata = {
   twitter: {
     card: "summary_large_image",
     title: "Sobre NPi Imóveis - A nossa história",
-    description: "Começamos com imobiliária tradicional em Moema, SP, mas já com a parceria em nosso DNA, e hoje sonos um HUB DE IMOBILIÁRIAS BOUTIQUE DE ALTO PADRÃO.",
+    description: "Começamos com imobiliária tradicional em Moema, SP, mas já com a parceria em nosso DNA, e hoje somos um HUB DE IMOBILIÁRIAS BOUTIQUE DE ALTO PADRÃO.",
     images: ["https://npiconsultoria.com.br/assets/images/imoveis/02.jpg"],
-    creator: "@npiconsultoria", // Substitua pelo Twitter da empresa se houver
-    site: "@npiconsultoria", // Substitua pelo Twitter da empresa se houver
+    creator: "@npiconsultoria",
+    site: "@npiconsultoria",
   },
   
   // Canonical URL
@@ -60,17 +60,12 @@ export const metadata = {
   other: {
     "og:locale": "pt_BR",
     "article:author": "NPi Consultoria",
-    "article:publisher": "https://www.facebook.com/npiconsultoria", // Substitua pela página do Facebook
-  },
-  
-  // Para verificação do Google Search Console (se necessário)
-  verification: {
-    google: "seu-codigo-de-verificacao-aqui", // Adicione se tiver
+    "article:publisher": "https://www.facebook.com/npiconsultoria",
   },
   
   // Configurações adicionais
   category: "business",
-  classification: "Consultoria Imobiliária",
+  classification: "Hub de Imobiliárias Boutique",
   
   // Meta tags adicionais
   metadataBase: new URL("https://npiconsultoria.com.br"),
@@ -91,8 +86,8 @@ export default async function SobrePage() {
   return (
     <section>
       <HeaderPage
-        title={content?.sobre_npi?.header?.title}
-        description={content?.sobre_npi?.header?.subtitle}
+        title={content?.sobre_npi?.header?.title || "Sobre a NPi Imóveis"}
+        description={content?.sobre_npi?.header?.subtitle || "A nossa história como Hub de Imobiliárias Boutique"}
         image="/assets/images/imoveis/02.jpg"
       />
       <SobreNPI sobre={content?.sobre_npi} />
