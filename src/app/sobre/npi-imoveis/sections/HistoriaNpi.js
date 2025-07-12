@@ -32,14 +32,10 @@ export async function HistoriaNpi({ historia }) {
                 {/* Imagem */}
                 <div className="lg:w-1/2">
                   <div className="relative w-full h-[250px] lg:h-[300px] rounded-lg overflow-hidden">
-                    <Image
-                      src={`/uploads/historia/0${index + 1}.jpg?v=2024`}
+                    <img
+                      src={`/uploads/historia/0${index + 1}.jpg?v=${Date.now()}`}
                       alt={`NPi Imóveis - ${item.title} em ${item.ano}`}
-                      layout="fill"
-                      objectFit="cover"
-                      className="transition-transform duration-500 group-hover:scale-105"
-                      unoptimized={true}
-                      priority={index < 2}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   </div>
                 </div>
