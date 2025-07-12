@@ -1,24 +1,17 @@
 "use client";
 import { useState, useEffect } from "react";
-import Image from "next/image";
 
 export default function ImageSection({ directory, filename, onChange }) {
   const [imageUrl, setImageUrl] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState("");
+  const [imageExists, setImageExists] = useState(false);
 
-  // Carregar imagem existente com cache busting
   useEffect(() => {
     if (filename && directory) {
-      console.log(`🔄 Carregando imagem: ${directory}/${filename}`); // Debug
-      // ✅ Cache busting automático
-      const timestamp = Date.now();
-      setImageUrl(`https://[seu-blob-url]/${directory}/${filename}?v=${timestamp}`);
-      
-      // ✅ Fallback para uploads locais (se ainda existirem)
-      setTimeout(() => {
-        setImageUrl(`/uploads/${directory}/${filename}?v=${timestamp}`);
-      }, 100);
+      console.log(`🔄 Verificando imagem: ${directory}/${filename}`);
+      // ✅ Não tenta carregar automaticamente - evita loop
+      setImageExists(false);
     }
   }, [directory, filename]);
 
@@ -26,6 +19,8 @@ export default function ImageSection({ directory, filename, onChange }) {
     const file = event.target.files[0];
     if (!file) return;
 
+    console.log(`🚀 Upload para: ${directory}/${filename}`);
+    
     setIsUploading(true);
     setError("");
 
@@ -33,95 +28,114 @@ export default function ImageSection({ directory, filename, onChange }) {
       const formData = new FormData();
       formData.append("file", file);
       formData.append("directory", directory);
-      
-      // ✅ FORÇAR o filename específico
-      if (filename) {
-        formData.append("customFilename", filename);
-        console.log(`🔥 Upload para: ${directory}/${filename}`); // Debug
-      }
+      formData.append("customFilename", filename);
 
-      // ✅ Usar a nova API do Vercel Blob
       const response = await fetch("/api/admin/upload", {
         method: "POST",
         body: formData,
       });
 
       const data = await response.json();
-      console.log("📤 Resposta do upload:", data); // Debug
+      console.log("📥 Resposta:", data);
 
       if (data.success) {
-        // ✅ Verificar se foi salvo com o nome correto
-        console.log(`✅ Imagem salva como: ${data.filename}`);
+        console.log(`✅ Sucesso: ${data.filename}`);
         
-        // ✅ Cache busting na URL retornada
+        // ✅ Usar URL do Vercel Blob (não mais /uploads/)
         setImageUrl(data.path);
+        setImageExists(true);
         
-        // Notificar component pai
         if (onChange) {
           onChange({
             target: {
-              name: `${directory}_${filename.replace('.jpg', '')}`, // historia_01, historia_02, etc
+              name: directory,
               value: data.pathWithoutCache || data.path,
             }
           });
         }
 
-        // ✅ Força atualização extra após 200ms
-        setTimeout(() => {
-          const newTimestamp = Date.now();
-          setImageUrl(`${data.pathWithoutCache || data.blobUrl}?v=${newTimestamp}`);
-        }, 200);
-
       } else {
+        console.error("❌ Erro:", data);
         setError(data.error || "Erro no upload");
-        console.error("❌ Erro no upload:", data);
       }
     } catch (err) {
-      console.error("❌ Erro no upload:", err);
-      setError("Erro ao fazer upload da imagem");
+      console.error("❌ Erro geral:", err);
+      setError("Erro ao conectar com servidor");
     } finally {
       setIsUploading(false);
     }
   };
 
+  // ✅ Função para tentar carregar imagem existente (manual)
+  const tryLoadExistingImage = () => {
+    const timestamp = Date.now();
+    const testUrl = `/uploads/${directory}/${filename}?v=${timestamp}`;
+    
+    // Criar img para testar se existe
+    const img = new Image();
+    img.onload = () => {
+      console.log(`✅ Imagem encontrada: ${testUrl}`);
+      setImageUrl(testUrl);
+      setImageExists(true);
+    };
+    img.onerror = () => {
+      console.log(`❌ Imagem não encontrada: ${testUrl}`);
+      setImageExists(false);
+    };
+    img.src = testUrl;
+  };
+
   return (
     <div className="space-y-4">
-      <label className="block text-sm font-medium text-gray-700">
-        Upload de Imagem - {filename}
-      </label>
+      <div className="text-center">
+        <h3 className="text-sm font-medium text-gray-700 mb-2">
+          Upload de Imagem - {filename}
+        </h3>
+        <div className="text-xs text-gray-500">
+          {directory}/{filename}
+        </div>
+      </div>
       
       {/* Preview da imagem */}
       <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 min-h-[200px] flex items-center justify-center">
-        {imageUrl ? (
+        {imageUrl && imageExists ? (
           <div className="relative w-full h-48">
-            <Image
+            <img
               src={imageUrl}
-              alt={`Upload ${directory}/${filename}`}
-              fill
-              className="object-cover rounded"
-              unoptimized={true} // ✅ Evita cache do Next.js
+              alt={`${directory}/${filename}`}
+              className="w-full h-full object-cover rounded"
               onError={() => {
-                console.log("Erro ao carregar imagem, tentando recarregar...");
-                // Tenta novamente com novo timestamp
-                const retryTimestamp = Date.now();
-                setImageUrl(`/uploads/${directory}/${filename}?v=${retryTimestamp}`);
+                console.log(`❌ Erro ao carregar: ${imageUrl}`);
+                setImageExists(false);
+                // ✅ NÃO tenta recarregar automaticamente - evita loop
+              }}
+              onLoad={() => {
+                console.log(`✅ Imagem carregada: ${imageUrl}`);
+                setImageExists(true);
               }}
             />
             
-            {/* Indicador de carregamento */}
             {isUploading && (
               <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded">
-                <div className="text-white font-semibold">Enviando...</div>
+                <div className="text-white font-semibold">
+                  Enviando {filename}...
+                </div>
               </div>
             )}
           </div>
         ) : (
           <div className="text-center text-gray-500">
-            <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-              <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <p className="mt-2">Clique para fazer upload</p>
-            <p className="text-xs text-gray-400">{filename}</p>
+            <div className="text-4xl mb-2">📷</div>
+            <p>Nenhuma imagem</p>
+            <p className="text-xs mt-1 font-mono">{filename}</p>
+            
+            {/* Botão para tentar carregar imagem existente */}
+            <button
+              onClick={tryLoadExistingImage}
+              className="mt-2 text-xs text-blue-600 hover:text-blue-800 underline"
+            >
+              🔍 Verificar se existe imagem
+            </button>
           </div>
         )}
       </div>
@@ -135,25 +149,25 @@ export default function ImageSection({ directory, filename, onChange }) {
         className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50"
       />
 
-      {/* Mensagens de erro */}
+      {/* Status */}
       {error && (
         <div className="text-red-600 text-sm bg-red-50 p-3 rounded border border-red-200">
           ❌ {error}
         </div>
       )}
 
-      {/* Botão para forçar reload (debug) */}
-      {imageUrl && !isUploading && (
-        <button
-          onClick={() => {
-            const refreshTimestamp = Date.now();
-            setImageUrl(`/uploads/${directory}/${filename}?v=${refreshTimestamp}`);
-          }}
-          className="text-xs text-gray-500 hover:text-gray-700 underline"
-        >
-          🔄 Recarregar imagem
-        </button>
+      {isUploading && (
+        <div className="text-blue-600 text-sm">
+          📤 Enviando para Vercel Blob...
+        </div>
       )}
+
+      {/* Info */}
+      <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
+        <div>📁 Pasta: <code>{directory}</code></div>
+        <div>📄 Arquivo: <code>{filename}</code></div>
+        <div>🔗 Status: {imageExists ? "✅ Carregada" : "❌ Não encontrada"}</div>
+      </div>
     </div>
   );
 }
