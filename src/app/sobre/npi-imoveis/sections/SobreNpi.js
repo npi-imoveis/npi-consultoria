@@ -1,6 +1,7 @@
 import { Button } from "@/app/components/ui/button";
 import { Chip } from "@/app/components/ui/chip";
 import Image from "next/image";
+import Link from "next/link";
 
 export default async function SobreNPI({ sobre }) {
   return (
@@ -22,26 +23,20 @@ export default async function SobreNPI({ sobre }) {
                     {sobre?.title || "A NPi Imóveis nasceu em 2007"}
                   </h2>
                   
-                  <div className="space-y-4 lg:text-start text-center">
-                    <p className="text-gray-700 text-base md:text-lg leading-relaxed">
-                      {sobre?.description ||
-                        "A ideia inicial era suprir algumas lacunas de um mercado imobiliário em plena expansão, aproximando o cliente da construtora. Assim nascíamos com uma proposta inovadora e fomos pioneiros em realizar parcerias B2B com as maiores construtoras do mercado, algo que não existia na época."}
-                    </p>
-                    
-                    <p className="text-gray-600 text-sm md:text-base leading-relaxed">
-                      Com isso, aproximávamos o nosso cliente final aos donos ou diretores das incorporadoras, realizando negociações extremamente rentáveis para os compradores, e acelerávamos as vendas das construtoras.
-                    </p>
-                  </div>
+                  <p className="text-gray-700 text-base md:text-lg leading-relaxed lg:text-start text-center">
+                    {sobre?.description ||
+                      "A ideia inicial era suprir algumas lacunas de um mercado imobiliário em plena expansão, aproximando o cliente da construtora. Assim nascíamos com uma proposta inovadora e fomos pioneiros em realizar parcerias B2B com as maiores construtoras do mercado, algo que não existia na época. Com isso, aproximávamos o nosso cliente final aos donos ou diretores das incorporadoras, realizando negociações extremamente rentáveis para os compradores, e acelerávamos as vendas das construtoras."}
+                  </p>
                   
                   {/* Estatísticas rápidas */}
                   <div className="grid grid-cols-3 gap-6 w-full mt-6">
                     <div className="text-center lg:text-left">
                       <div className="text-2xl md:text-3xl font-bold text-[#8B6F4B]">15+</div>
-                      <div className="text-sm text-gray-600">Anos de Empresa</div>
+                      <div className="text-sm text-gray-600">Anos</div>
                     </div>
                     <div className="text-center lg:text-left">
                       <div className="text-2xl md:text-3xl font-bold text-[#8B6F4B]">20.000+</div>
-                      <div className="text-sm text-gray-600">Clientes Atendidos</div>
+                      <div className="text-sm text-gray-600">Clientes</div>
                     </div>
                     <div className="text-center lg:text-left">
                       <div className="text-2xl md:text-3xl font-bold text-[#8B6F4B]">1º</div>
@@ -59,9 +54,12 @@ export default async function SobreNPI({ sobre }) {
                 text="Conheça o Hub" 
                 className="bg-[#8B6F4B] hover:bg-[#7A5E42] text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 shadow-md hover:shadow-lg"
               />
-              <button className="border-2 border-[#8B6F4B] text-[#8B6F4B] hover:bg-[#8B6F4B] hover:text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300">
+              <Link 
+                href="/sobre/nossos-servicos"
+                className="border-2 border-[#8B6F4B] text-[#8B6F4B] hover:bg-[#8B6F4B] hover:text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 text-center inline-block"
+              >
                 Nossos Serviços
-              </button>
+              </Link>
             </div>
           </div>
           
