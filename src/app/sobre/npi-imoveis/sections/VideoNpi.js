@@ -48,15 +48,7 @@ export default function VideoNpi({ missao }) {
           </div>
 
           {/* Texto */}
-          <div>
-            <h1 className="text-xl uppercase font-semibold text-black">
-              Atendimento Personalizado
-            </h1>
-            <p className="text-black mt-4">
-              Nossa missão é entender as necessidades de cada cliente e oferecer as melhores opções
-              de imóveis, garantindo um processo de compra fácil, ágil e seguro.
-            </p>
-
+          <div>         
             {/* Lista de Serviços */}
             <div className="mt-6 space-y-6">
               {missao?.itens && Array.isArray(missao.itens) && missao.itens.length > 0 ? (
