@@ -33,7 +33,7 @@ export default function VideoNpi({ missao }) {
             <p className="text-lg">
               Com o passar dos anos, a empresa cresceu com suas parcerias, e nossos serviços 
               foram altamente ampliados, e assim nasce em 2024 o{" "}
-              <strong className="text-[#8B6F4B] bg-[#8B6F4B]/10 px-2 py-1 rounded">
+              <strong className="text-[#8B6F4B] bg-amber-50 px-2 py-1 rounded">
                 HUB DE IMOBILIÁRIAS BOUTIQUE DE ALTO PADRÃO
               </strong>.
             </p>
@@ -45,19 +45,19 @@ export default function VideoNpi({ missao }) {
             </p>
             
             {/* CTA Box para o HUB */}
-            <div className="mt-8 p-6 bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg">
+            <div className="mt-8 p-6 bg-gradient-to-r from-amber-50 to-orange-50 border border-[#8B6F4B]/30 rounded-lg">
               <div className="flex items-center justify-between flex-col md:flex-row gap-4">
                 <div className="text-center md:text-left">
-                  <h3 className="text-lg font-bold text-blue-800 mb-2">
+                  <h3 className="text-lg font-bold text-[#8B6F4B] mb-2">
                     Conheça nosso HUB de Imobiliárias
                   </h3>
-                  <p className="text-blue-700">
+                  <p className="text-gray-700">
                     Saiba mais sobre nosso novo modelo de negócios
                   </p>
                 </div>
                 <Link 
                   href="/sobre/hub-imobiliarias"
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors whitespace-nowrap"
+                  className="bg-[#8B6F4B] hover:bg-[#7A5E42] text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 whitespace-nowrap shadow-md hover:shadow-lg"
                 >
                   Acessar o HUB
                 </Link>
@@ -100,7 +100,7 @@ export default function VideoNpi({ missao }) {
             <div className="mt-6 space-y-6">
               {missao?.itens && Array.isArray(missao.itens) && missao.itens.length > 0 ? (
                 missao.itens.map((service, index) => (
-                  <div key={index} className="bg-zinc-100 p-4 rounded-lg hover:bg-zinc-200 transition-colors">
+                  <div key={index} className="bg-zinc-100 p-4 rounded-lg hover:bg-zinc-200 hover:border-[#8B6F4B]/30 border border-transparent transition-all duration-300">
                     {/* ✅ CORRIGIDO: H1 → H4 (mantendo estilos) */}
                     <h4 className="text-lg font-semibold text-black">{service.title}</h4>
                     <p className="text-black mt-2">{service.description}</p>
