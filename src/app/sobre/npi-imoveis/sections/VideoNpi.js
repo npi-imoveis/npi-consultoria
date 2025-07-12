@@ -8,20 +8,24 @@ export default function VideoNpi({ missao }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-   <section className="bg-white py-24 px-6 lg:px-0">
-   <div className="container mx-auto max-w-6xl">
-   {/* Título e Descrição */}
-   <TitleSection
-   section={missao?.title || "Missão e Serviços"}
-   title={missao?.title || "Nossa Missão e Serviços"}
-   description={
-   missao?.description ||
-   `Desde 2007, a NPi se dedica a oferecer um serviço imparcial e de excelência, ajudando clientes a realizarem suas metas e objetivos pessoais, através de investimentos no mercado imobiliário.
-    Com o passar dos anos, a empresa cresceu com suas parcerias, e nossos serviços foram altamente ampliados, e assim nasce em 2024 o HUB DE IMOBILIÁRIAS BOUTIQUE DE ALTO PADRÃO. Um novo e exclusivo modelo de negócios no mercado imobiliário, baseado em nossa expertise em SEO para imóveis e em parceria com imobiliárias boutique que atuam com mercado de alto padrão e mercado de luxo.
+  
+<section className="bg-white py-24 px-6 lg:px-0">
+  <div className="container mx-auto max-w-6xl">
+    {/* Título e Descrição */}
+    <TitleSection
+      section={missao?.title || "Missão e Serviços"}
+      title={missao?.title || "Nossa Missão e Serviços"}
+      description={
+        missao?.description ||
+        `Desde 2007, a NPi se dedica a oferecer um serviço imparcial e de excelência, ajudando clientes a realizarem suas metas e objetivos pessoais, através de investimentos no mercado imobiliário. 
 
-    Acesse o link e saiba mais sobre o HUB da NPi: https://www.npiconsultoria.com.br/sobre/hub-imobiliarias`
+Com o passar dos anos, a empresa cresceu com suas parcerias, e nossos serviços foram altamente ampliados, e assim nasce em 2024 o HUB DE IMOBILIÁRIAS BOUTIQUE DE ALTO PADRÃO. 
+
+Um novo e exclusivo modelo de negócios no mercado imobiliário, baseado em nossa expertise em SEO para imóveis e em parceria com imobiliárias boutique que atuam com mercado de alto padrão e mercado de luxo.
+
+Acesse o link e saiba mais sobre o HUB da NPi: https://www.npiconsultoria.com.br/sobre/hub-imobiliarias`
       }
-        />
+    />
         
         <div className="grid lg:grid-cols-2 grid-cols-1 gap-12 items-center">
           {/* Vídeo Thumbnail */}
