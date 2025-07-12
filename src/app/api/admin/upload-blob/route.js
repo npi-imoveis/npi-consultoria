@@ -36,7 +36,7 @@ export async function GET(request) {
     const timestamp = Date.now();
     const images = blobs
       .filter((blob) => isImageFile(blob.pathname))
-      .map((blob) => `${blob.url}?v=${timestamp}`); // ✅ Cache busting
+      .map((blob) => `${blob.url}?v=${timestamp}`);
 
     return NextResponse.json({
       success: true,
@@ -94,9 +94,9 @@ export async function POST(request) {
     // Determinar o nome do arquivo
     let filename;
     if (customFilename) {
-      const originalExt = file.name.split(".").pop();
+      const originalExt = file.name.split(".").pop().toLowerCase();
       if (!customFilename.includes(".")) {
-        filename = `${customFilename}.${originalExt}`;
+        filename = `${customFilename}.${originalExt}`; // ✅ ADICIONA extensão se não tiver
       } else {
         filename = customFilename;
       }
@@ -104,6 +104,8 @@ export async function POST(request) {
       // Usar o nome original do arquivo (sanitizado)
       filename = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
     }
+
+    console.log(`📝 Filename final: ${filename}`); // ✅ Debug
 
     // Criar pathname com o diretório
     const pathname = `${directory}/${filename}`;
@@ -113,23 +115,24 @@ export async function POST(request) {
       const blob = await put(pathname, file, {
         access: "public",
         addRandomSuffix: false, // Para manter o nome exato
+        allowOverwrite: true,   // ✅ PERMITE SOBRESCREVER arquivos existentes
       });
 
-      // ✅ Retornar com cache busting
+      // Retornar com cache busting
       const timestamp = Date.now();
       
       return NextResponse.json({
         success: true,
         filename,
-        path: `${blob.url}?v=${timestamp}`, // ✅ Com cache busting
-        blobUrl: blob.url, // ✅ URL original sem cache busting
-        pathWithoutCache: blob.url, // ✅ Para salvar no banco
+        path: `${blob.url}?v=${timestamp}`,
+        blobUrl: blob.url,
+        pathWithoutCache: blob.url,
       });
 
     } catch (blobError) {
       console.error("Erro no Vercel Blob:", blobError);
       
-      // ✅ Erro específico do Vercel Blob
+      // Erro específico do Vercel Blob
       if (blobError.message?.includes("unauthorized")) {
         return NextResponse.json({
           success: false,
