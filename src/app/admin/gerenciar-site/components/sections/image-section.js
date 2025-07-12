@@ -20,6 +20,11 @@ export default function ImageSection({ directory, filename, onChange }) {
     if (!file) return;
 
     console.log(`🚀 Upload para: ${directory}/${filename}`);
+    console.log(`📄 Arquivo selecionado:`, {
+      name: file.name,
+      size: file.size,
+      type: file.type
+    });
     
     setIsUploading(true);
     setError("");
@@ -30,18 +35,26 @@ export default function ImageSection({ directory, filename, onChange }) {
       formData.append("directory", directory);
       formData.append("customFilename", filename);
 
+      console.log(`📦 FormData sendo enviado:`, {
+        directory: directory,
+        customFilename: filename,
+        fileInfo: `${file.name} (${file.size} bytes)`
+      });
+
       const response = await fetch("/api/admin/upload", {
         method: "POST",
         body: formData,
       });
 
+      console.log(`📡 Response status: ${response.status}`);
+      
       const data = await response.json();
-      console.log("📥 Resposta:", data);
+      console.log("📥 Resposta completa:", data);
 
       if (data.success) {
         console.log(`✅ Sucesso: ${data.filename}`);
+        console.log(`🔗 URL gerada: ${data.path}`);
         
-        // ✅ Usar URL do Vercel Blob (não mais /uploads/)
         setImageUrl(data.path);
         setImageExists(true);
         
@@ -55,12 +68,12 @@ export default function ImageSection({ directory, filename, onChange }) {
         }
 
       } else {
-        console.error("❌ Erro:", data);
-        setError(data.error || "Erro no upload");
+        console.error("❌ Erro na resposta:", data);
+        setError(`API Error: ${data.error} ${data.details ? '- ' + data.details : ''}`);
       }
     } catch (err) {
-      console.error("❌ Erro geral:", err);
-      setError("Erro ao conectar com servidor");
+      console.error("❌ Erro de conexão:", err);
+      setError(`Erro de conexão: ${err.message}`);
     } finally {
       setIsUploading(false);
     }
