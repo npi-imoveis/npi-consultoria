@@ -33,20 +33,10 @@ export async function HistoriaNpi({ historia }) {
                 <div className="lg:w-1/2">
                   <div className="relative w-full h-[250px] lg:h-[300px] rounded-lg overflow-hidden">
                     <img
-                      src={`/uploads/historia/0${index + 1}.jpg?v=${Date.now()}`}
+                      src={`/uploads/historia/0${index + 1}.jpg?v=2024dec`}
                       alt={`NPi Imóveis - ${item.title} em ${item.ano}`}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-                      onLoad={() => console.log(`✅ Imagem ${index + 1} carregou!`)}
-                      onError={(e) => {
-                        console.log(`❌ Erro na imagem ${index + 1}:`, e.target.src);
-                        // Fallback para uma imagem padrão
-                        e.target.src = '/assets/images/placeholder.jpg';
-                      }}
                     />
-                    {/* Debug info - remover depois */}
-                    <div className="absolute top-2 left-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
-                      Img {index + 1}
-                    </div>
                   </div>
                 </div>
               </div>
