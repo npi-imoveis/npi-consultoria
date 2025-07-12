@@ -89,7 +89,7 @@ export default async function ServicesPage() {
         image="/assets/images/imoveis/02.jpg"
         breadcrumb={[
           { label: "Home", active: false },
-          { label: "Serviços", active: true }
+          { label: "Nossos Serviços", active: true }
         ]}
       />
       
