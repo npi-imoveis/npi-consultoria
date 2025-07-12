@@ -32,14 +32,14 @@ export default async function SobreNPI({ sobre }) {
                   <div className="grid grid-cols-3 gap-6 w-full mt-6">
                     <div className="text-center lg:text-left">
                       <div className="text-2xl md:text-3xl font-bold text-[#8B6F4B]">15+</div>
-                      <div className="text-sm text-gray-600">Anos de Mercado</div>
+                      <div className="text-sm text-gray-600">Anos</div>
                     </div>
                     <div className="text-center lg:text-left">
                       <div className="text-2xl md:text-3xl font-bold text-[#8B6F4B]">20.000+</div>
-                      <div className="text-sm text-gray-600">Clientes Atendidos</div>
+                      <div className="text-sm text-gray-600">Clientes</div>
                     </div>
                     <div className="text-center lg:text-left">
-                      <div className="text-2xl md:text-3xl font-bold text-[#8B6F4B]">1º Lugar</div>
+                      <div className="text-2xl md:text-3xl font-bold text-[#8B6F4B]">1º</div>
                       <div className="text-sm text-gray-600">No Google</div>
                     </div>
                   </div>
@@ -74,12 +74,14 @@ export default async function SobreNPI({ sobre }) {
                 {/* Container da imagem */}
                 <div className="relative bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100">
                   <Image
-                    src={sobre?.image || "/uploads/sobre_npi/sobre.jpg"}
+                    src={sobre?.image || "/uploads/sobre_npi/sobre.jpg?v=2024"}
                     alt="NPi Imóveis - Escritório e equipe especializada desde 2007"
                     width={600}
                     height={700}
                     className="w-full h-auto object-cover"
                     style={{ aspectRatio: '4/5' }}
+                    priority={true}
+                    unoptimized={true}
                   />
                   
                   {/* Badge flutuante */}
