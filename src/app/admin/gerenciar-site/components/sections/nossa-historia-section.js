@@ -1,8 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
-import { InputField, TextareaField } from "../ui/form-fields";
+import { InputField } from "../ui/form-fields";
 import TabButtons from "../ui/tab-buttons";
-import ImageUpload from "@/app/components/admin/ImageUpload"; // ✅ Caminho absoluto
+import ImageSection from "./image-section"; // ✅ Usar o existente
 
 export default function NossaHistoriaSection({ form, onChange }) {
   const [historias, setHistorias] = useState([
@@ -88,17 +88,23 @@ export default function NossaHistoriaSection({ form, onChange }) {
             onChange={(e) => handleChange(activeTab, "title", e.target.value)}
           />
           
-          <TextareaField
-            label="Descrição"
-            placeholder="Digite a descrição"
-            value={historias[activeTab].description || ""}
-            onChange={(e) => handleChange(activeTab, "description", e.target.value)}
-          />
+          <div className="space-y-1">
+            <label className="block text-sm font-medium text-gray-700">
+              Descrição
+            </label>
+            <textarea
+              placeholder="Digite a descrição"
+              value={historias[activeTab].description || ""}
+              onChange={(e) => handleChange(activeTab, "description", e.target.value)}
+              rows={4}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-vertical"
+            />
+          </div>
         </div>
         
         <div className="flex-1">
-          {/* ✅ CORRIGIDO: Usar ImageUpload com filename único */}
-          <ImageUpload
+          {/* ✅ USANDO ImageSection com filename único */}
+          <ImageSection
             directory="historia"
             filename={`0${activeTab + 1}.jpg`} // ✅ 01.jpg, 02.jpg, 03.jpg, 04.jpg
             onChange={handleImageChange}
