@@ -6,14 +6,14 @@ import VideoNpi from "./sections/VideoNpi";
 
 // Metadata completo para SEO
 export const metadata = {
-  title: "NPi Imóveis - Sobre NPi Imóveis | Consultoria Personalizada e Núcleo de Parcerias",
-  description: "Conheça a NPi Imóveis: consultoria personalizada, núcleo de parcerias e serviços especializados em imóveis. Saiba mais sobre nossa história e missão.",
-  keywords: "NPI Imóveis, consultoria imobiliária, núcleo de parcerias, imóveis, consultoria personalizada, corretora",
+  title: "Sobre NPi Imóveis - A nossa história",
+  description: "Começamos com imobiliária tradicional em Moema, SP, mas já com a parceria em nosso DNA, e hoje sonos um HUB DE IMOBILIÁRIAS BOUTIQUE DE ALTO PADRÃO.",
+  keywords: "NPI Imóveis, imobiliária, Hub de imobiliárias, alto padrão, parceria imobiliária, imóveis, consultoria personalizada",
   
   // Open Graph (Facebook, LinkedIn, etc.)
   openGraph: {
-    title: "NPi Imóveis - Sobre NPi Imóveis",
-    description: "Conheça a NPi Imóveis: consultoria personalizada e núcleo de parcerias especializados em soluções imobiliárias.",
+    title: "Sobre NPi Imóveis - A nossa história",
+    description: "Começamos com imobiliária tradicional em Moema, SP, mas já com a parceria em nosso DNA, e hoje sonos um HUB DE IMOBILIÁRIAS BOUTIQUE DE ALTO PADRÃO.",
     url: "https://npiconsultoria.com.br/sobre/npi-imoveis",
     siteName: "NPi Consultoria",
     images: [
@@ -31,8 +31,8 @@ export const metadata = {
   // Twitter Cards
   twitter: {
     card: "summary_large_image",
-    title: "NPi Imóveis - Sobre NPi Imóveis",
-    description: "Conheça a NPi Imóveis: consultoria personalizada e núcleo de parcerias especializados em soluções imobiliárias.",
+    title: "Sobre NPi Imóveis - A nossa história",
+    description: "Começamos com imobiliária tradicional em Moema, SP, mas já com a parceria em nosso DNA, e hoje sonos um HUB DE IMOBILIÁRIAS BOUTIQUE DE ALTO PADRÃO.",
     images: ["https://npiconsultoria.com.br/assets/images/imoveis/02.jpg"],
     creator: "@npiconsultoria", // Substitua pelo Twitter da empresa se houver
     site: "@npiconsultoria", // Substitua pelo Twitter da empresa se houver
