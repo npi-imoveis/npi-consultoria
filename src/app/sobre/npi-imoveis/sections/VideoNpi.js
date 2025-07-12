@@ -19,6 +19,7 @@ export default function VideoNpi({ missao }) {
             "Desde 2007, a NPi se dedica a oferecer um serviço imparcial e de excelência, ajudando nossos clientes a realizarem o sonho de adquirir um imóvel."
           }
         />
+        
         <div className="grid lg:grid-cols-2 grid-cols-1 gap-12 items-center">
           {/* Vídeo Thumbnail */}
           <div
@@ -27,7 +28,7 @@ export default function VideoNpi({ missao }) {
           >
             <Image
               src="/assets/images/imoveis/02.jpg"
-              alt="Thumbnail do Vídeo"
+              alt="NPi Imóveis - Vídeo institucional sobre nossa missão e serviços"
               width={800}
               height={450}
               className="rounded-lg shadow-lg transition-transform duration-300 group-hover:scale-105"
@@ -46,15 +47,16 @@ export default function VideoNpi({ missao }) {
               </div>
             </div>
           </div>
-
+          
           {/* Texto */}
           <div>         
             {/* Lista de Serviços */}
             <div className="mt-6 space-y-6">
               {missao?.itens && Array.isArray(missao.itens) && missao.itens.length > 0 ? (
                 missao.itens.map((service, index) => (
-                  <div key={index} className="bg-zinc-100 p-4 rounded-lg ">
-                    <h1 className="text-lg font-semibold text-black">{service.title}</h1>
+                  <div key={index} className="bg-zinc-100 p-4 rounded-lg">
+                    {/* ✅ CORRIGIDO: H1 → H3 (mantendo estilos) */}
+                    <h3 className="text-lg font-semibold text-black">{service.title}</h3>
                     <p className="text-black mt-2">{service.description}</p>
                   </div>
                 ))
@@ -67,7 +69,7 @@ export default function VideoNpi({ missao }) {
           </div>
         </div>
       </div>
-
+      
       {/* Modal de Vídeo */}
       {isOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-70 z-50">
@@ -79,14 +81,13 @@ export default function VideoNpi({ missao }) {
             >
               <XMarkIcon className="w-6 h-6" />
             </button>
-
             {/* Vídeo */}
             <div className="w-full aspect-video">
               <iframe
                 width="100%"
                 height="100%"
                 src={missao?.youtube}
-                title="Vídeo Institucional NPi"
+                title="Vídeo Institucional NPi - Nossa Missão e Serviços"
                 frameBorder="0"
                 allowFullScreen
                 className="w-full h-full"
