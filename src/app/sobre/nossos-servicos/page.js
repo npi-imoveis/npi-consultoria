@@ -87,6 +87,10 @@ export default async function ServicesPage() {
         title="Nossos Serviços Especializados"
         description="Soluções completas em consultoria imobiliária, SEO e parcerias estratégicas para o mercado de alto padrão."
         image="/assets/images/imoveis/02.jpg"
+        breadcrumb={[
+          { label: "Home", active: false },
+          { label: "Serviços", active: true }
+        ]}
       />
       
       <div className="container mx-auto py-12 px-4 sm:px-6 lg:px-8">
