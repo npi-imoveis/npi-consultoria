@@ -18,6 +18,8 @@ export async function POST(request) {
     try {
         const formData = await request.formData();
         const file = formData.get('file');
+        const directory = formData.get('directory') || 'home';
+        const customFilename = formData.get('customFilename');
 
         if (!file) {
             return NextResponse.json(
@@ -37,11 +39,21 @@ export async function POST(request) {
         // Obter a extensão do arquivo
         const fileExtension = file.name.split('.').pop().toLowerCase();
 
-        // Criar um nome único para o arquivo
-        const fileName = `${uuidv4()}.${fileExtension}`;
+        // Criar nome do arquivo
+        let fileName;
+        if (customFilename) {
+            // Se customFilename não tiver extensão, adicionar
+            if (!customFilename.includes('.')) {
+                fileName = `${customFilename}.${fileExtension}`;
+            } else {
+                fileName = customFilename;
+            }
+        } else {
+            fileName = `${uuidv4()}.${fileExtension}`;
+        }
 
-        // Diretório para salvar as imagens
-        const uploadDir = join(process.cwd(), 'public', 'uploads', 'home');
+        // Diretório para salvar as imagens (dinâmico)
+        const uploadDir = join(process.cwd(), 'public', 'uploads', directory);
 
         // Garantir que o diretório exista
         await ensureDirectoryExists(uploadDir);
@@ -56,12 +68,13 @@ export async function POST(request) {
         await writeFile(filePath, buffer);
 
         // Caminho relativo para acessar a imagem (para uso no frontend)
-        const relativePath = `/uploads/home/${fileName}`;
+        const relativePath = `/uploads/${directory}/${fileName}`;
 
         return NextResponse.json({
             success: true,
             message: 'Arquivo enviado com sucesso',
-            filePath: relativePath
+            path: relativePath,
+            filename: fileName
         });
     } catch (error) {
         console.error('Erro no upload:', error);
@@ -74,4 +87,4 @@ export async function POST(request) {
             { status: 500 }
         );
     }
-} 
+}
