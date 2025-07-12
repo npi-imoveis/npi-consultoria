@@ -4,9 +4,76 @@ import { getContentSite } from "@/app/services";
 import { HistoriaNpi } from "./sections/HistoriaNpi";
 import VideoNpi from "./sections/VideoNpi";
 
+// Metadata completo para SEO
 export const metadata = {
-  title: "NPi Imóveis - Sobre NPi Imóveis",
-  description: "Conheça a NPi Imóveis",
+  title: "NPi Imóveis - Sobre NPi Imóveis | Consultoria Personalizada e Núcleo de Parcerias",
+  description: "Conheça a NPi Imóveis: consultoria personalizada, núcleo de parcerias e serviços especializados em imóveis. Saiba mais sobre nossa história e missão.",
+  keywords: "NPI Imóveis, consultoria imobiliária, núcleo de parcerias, imóveis, consultoria personalizada, corretora",
+  
+  // Open Graph (Facebook, LinkedIn, etc.)
+  openGraph: {
+    title: "NPi Imóveis - Sobre NPi Imóveis",
+    description: "Conheça a NPi Imóveis: consultoria personalizada e núcleo de parcerias especializados em soluções imobiliárias.",
+    url: "https://npiconsultoria.com.br/sobre/npi-imoveis",
+    siteName: "NPi Consultoria",
+    images: [
+      {
+        url: "https://npiconsultoria.com.br/assets/images/imoveis/02.jpg",
+        width: 1200,
+        height: 630,
+        alt: "NPi Imóveis - Consultoria Imobiliária",
+      },
+    ],
+    locale: "pt_BR",
+    type: "website",
+  },
+  
+  // Twitter Cards
+  twitter: {
+    card: "summary_large_image",
+    title: "NPi Imóveis - Sobre NPi Imóveis",
+    description: "Conheça a NPi Imóveis: consultoria personalizada e núcleo de parcerias especializados em soluções imobiliárias.",
+    images: ["https://npiconsultoria.com.br/assets/images/imoveis/02.jpg"],
+    creator: "@npiconsultoria", // Substitua pelo Twitter da empresa se houver
+    site: "@npiconsultoria", // Substitua pelo Twitter da empresa se houver
+  },
+  
+  // Canonical URL
+  alternates: {
+    canonical: "https://npiconsultoria.com.br/sobre/npi-imoveis",
+  },
+  
+  // Robots
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
+  
+  // Dados estruturados básicos
+  other: {
+    "og:locale": "pt_BR",
+    "article:author": "NPi Consultoria",
+    "article:publisher": "https://www.facebook.com/npiconsultoria", // Substitua pela página do Facebook
+  },
+  
+  // Para verificação do Google Search Console (se necessário)
+  verification: {
+    google: "seu-codigo-de-verificacao-aqui", // Adicione se tiver
+  },
+  
+  // Configurações adicionais
+  category: "business",
+  classification: "Consultoria Imobiliária",
+  
+  // Meta tags adicionais
+  metadataBase: new URL("https://npiconsultoria.com.br"),
 };
 
 // Disable static generation for pages that make API calls
