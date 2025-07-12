@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { InputField, TextareaField } from "../ui/form-fields";
 import TabButtons from "../ui/tab-buttons";
-import ImageUpload from "../admin/ImageUpload"; // ✅ Usar o ImageUpload que criamos
+import ImageUpload from "../../../components/admin/ImageUpload"; // ✅ Caminho correto
 
 export default function NossaHistoriaSection({ form, onChange }) {
   const [historias, setHistorias] = useState([
