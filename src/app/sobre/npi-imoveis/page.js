@@ -6,7 +6,7 @@ import VideoNpi from "./sections/VideoNpi";
 
 // Metadata completo para SEO
 export const metadata = {
-  title: "Sobre NPi Imóveis - A nossa história | Hub de Imobiliárias Boutique",
+  title: "Sobre NPi Imóveis - Um pouco da nossa história",
   description: "Começamos com imobiliária tradicional em Moema, SP, mas já com a parceria em nosso DNA, e hoje somos um HUB DE IMOBILIÁRIAS BOUTIQUE DE ALTO PADRÃO.",
   keywords: "NPI Imóveis, imobiliária, Hub de imobiliárias, alto padrão, parceria imobiliária, imóveis, consultoria personalizada, Moema, São Paulo",
   
