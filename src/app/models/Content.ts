@@ -60,7 +60,36 @@ export interface IContent {
     servicos: Array<{
         title: string;
         descricao: string;
+        image_url: string;
     }>;
+    servicos_page: {
+        header: {
+            title: string;
+            subtitle: string;
+        };
+        missao: {
+            titulo: string;
+            descricao: string;
+            youtube_link: string;
+        };
+        servicos: {
+            atendimento: {
+                titulo: string;
+                descricao: string;
+                image_url: string;
+            };
+            avaliacao: {
+                titulo: string;
+                descricao: string;
+                image_url: string;
+            };
+            assessoria: {
+                titulo: string;
+                descricao: string;
+                image_url: string;
+            };
+        };
+    };
     testemunhos: Array<{
         id: number;
         content: string;
@@ -144,8 +173,37 @@ const ContentSchema = new Schema(
             {
                 title: String,
                 descricao: String,
+                image_url: String,
             },
         ],
+        servicos_page: {
+            header: {
+                title: { type: String, default: "" },
+                subtitle: { type: String, default: "" },
+            },
+            missao: {
+                titulo: { type: String, default: "" },
+                descricao: { type: String, default: "" },
+                youtube_link: { type: String, default: "" },
+            },
+            servicos: {
+                atendimento: {
+                    titulo: { type: String, default: "" },
+                    descricao: { type: String, default: "" },
+                    image_url: { type: String, default: "" },
+                },
+                avaliacao: {
+                    titulo: { type: String, default: "" },
+                    descricao: { type: String, default: "" },
+                    image_url: { type: String, default: "" },
+                },
+                assessoria: {
+                    titulo: { type: String, default: "" },
+                    descricao: { type: String, default: "" },
+                    image_url: { type: String, default: "" },
+                },
+            },
+        },
         testemunhos: [
             {
                 id: Number,
@@ -165,4 +223,4 @@ const ContentSchema = new Schema(
 
 const Content = models.Content || model("Content", ContentSchema);
 
-export default Content;  
+export default Content;
