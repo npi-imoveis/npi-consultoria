@@ -13,8 +13,13 @@ function isVercelProduction() {
 
 // Função para garantir que o diretório existe
 async function ensureDirectoryExists(directory) {
-  if (!existsSync(directory)) {
-    await mkdir(directory, { recursive: true });
+  try {
+    if (!existsSync(directory)) {
+      await mkdir(directory, { recursive: true });
+    }
+  } catch (error) {
+    console.error("Erro ao criar diretório:", error);
+    throw new Error(`Não foi possível criar o diretório: ${error.message}`);
   }
 }
 
@@ -31,7 +36,7 @@ function validateDirectory(dir) {
   return allowedDirs.includes(dir);
 }
 
-// GET - Lista todas as imagens
+// GET - Lista todas as imagens com cache busting
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
@@ -45,21 +50,37 @@ export async function GET(request) {
     }
 
     const targetDir = path.join(BASE_UPLOAD_DIR, directory);
-    await ensureDirectoryExists(targetDir);
+    
+    try {
+      await ensureDirectoryExists(targetDir);
+    } catch (dirError) {
+      return NextResponse.json(
+        { success: false, error: `Erro no diretório: ${dirError.message}` },
+        { status: 500 }
+      );
+    }
 
     const files = await readdir(targetDir);
     const images = files.filter((file) => isImageFile(file));
 
+    // ✅ ADICIONAR CACHE BUSTING NAS IMAGENS LISTADAS
+    const timestamp = Date.now();
+    
     return NextResponse.json({
       success: true,
-      images: images.map((image) => `/uploads/${directory}/${image}`),
+      images: images.map((image) => `/uploads/${directory}/${image}?v=${timestamp}`),
     });
   } catch (error) {
-    return NextResponse.json({ success: false, error: "Erro ao listar imagens" }, { status: 500 });
+    console.error("Erro ao listar imagens:", error);
+    return NextResponse.json({ 
+      success: false, 
+      error: "Erro ao listar imagens",
+      details: error.message 
+    }, { status: 500 });
   }
 }
 
-// POST - Upload de nova imagem
+// POST - Upload de nova imagem com cache busting
 export async function POST(request) {
   try {
     const formData = await request.formData();
@@ -67,6 +88,7 @@ export async function POST(request) {
     const directory = formData.get("directory");
     const customFilename = formData.get("customFilename");
 
+    // Validações
     if (!directory || !validateDirectory(directory)) {
       return NextResponse.json(
         { success: false, error: "Diretório inválido ou não especificado" },
@@ -89,10 +111,35 @@ export async function POST(request) {
       );
     }
 
-    const targetDir = path.join(BASE_UPLOAD_DIR, directory);
-    await ensureDirectoryExists(targetDir);
+    // Verificar tamanho do arquivo (10MB max)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      return NextResponse.json(
+        { success: false, error: "Arquivo muito grande. Máximo 10MB." },
+        { status: 400 }
+      );
+    }
 
-    const buffer = Buffer.from(await file.arrayBuffer());
+    const targetDir = path.join(BASE_UPLOAD_DIR, directory);
+    
+    try {
+      await ensureDirectoryExists(targetDir);
+    } catch (dirError) {
+      return NextResponse.json(
+        { success: false, error: `Erro ao criar diretório: ${dirError.message}` },
+        { status: 500 }
+      );
+    }
+
+    let buffer;
+    try {
+      buffer = Buffer.from(await file.arrayBuffer());
+    } catch (bufferError) {
+      return NextResponse.json(
+        { success: false, error: "Erro ao processar arquivo" },
+        { status: 500 }
+      );
+    }
 
     // Determinar o nome do arquivo
     let filename;
@@ -111,16 +158,29 @@ export async function POST(request) {
 
     const filepath = path.join(targetDir, filename);
 
-    await writeFile(filepath, buffer);
+    try {
+      await writeFile(filepath, buffer);
+    } catch (writeError) {
+      console.error("Erro ao escrever arquivo:", writeError);
+      return NextResponse.json(
+        { success: false, error: `Erro ao salvar arquivo: ${writeError.message}` },
+        { status: 500 }
+      );
+    }
 
+    // ✅ RETORNAR COM CACHE BUSTING
+    const timestamp = Date.now();
+    
     return NextResponse.json({
       success: true,
       filename,
-      path: `/uploads/${directory}/${filename}`,
+      path: `/uploads/${directory}/${filename}?v=${timestamp}`,
+      pathWithoutCache: `/uploads/${directory}/${filename}`, // Caso precise sem cache
     });
   } catch (error) {
+    console.error("Erro geral no upload:", error);
     return NextResponse.json(
-      { success: false, error: "Erro ao fazer upload da imagem" },
+      { success: false, error: "Erro interno do servidor", details: error.message },
       { status: 500 }
     );
   }
@@ -147,41 +207,43 @@ export async function DELETE(request) {
       );
     }
 
-    const filepath = path.join(BASE_UPLOAD_DIR, directory, filename);
+    // Limpar o filename de parâmetros de cache se houver
+    const cleanFilename = filename.split('?')[0];
+    const filepath = path.join(BASE_UPLOAD_DIR, directory, cleanFilename);
 
     // Verificar se estamos em produção na Vercel
     if (isVercelProduction()) {
-      // Em produção na Vercel, não podemos deletar arquivos do filesystem
-      // Retornar sucesso simulado para manter a compatibilidade da UI
       console.warn(`Tentativa de deletar arquivo em produção (Vercel): ${filepath}`);
       return NextResponse.json({
         success: true,
         message: "Arquivo marcado para exclusão (limitação do ambiente de produção)",
-        warning:
-          "Em produção, arquivos não podem ser fisicamente removidos devido às limitações da Vercel. Considere usar uma solução de armazenamento externa como AWS S3, Cloudinary ou Vercel Blob.",
+        warning: "Em produção, arquivos não podem ser fisicamente removidos devido às limitações da Vercel.",
       });
     }
 
     try {
-      // Tentar deletar o arquivo (funciona apenas em desenvolvimento local)
       await unlink(filepath);
       return NextResponse.json({
         success: true,
         message: "Imagem excluída com sucesso",
       });
     } catch (unlinkError) {
-      // Se o erro for relacionado ao filesystem read-only
       if (unlinkError.code === "EROFS" || unlinkError.code === "EPERM") {
         console.warn(`Filesystem read-only detectado: ${unlinkError.message}`);
         return NextResponse.json({
           success: true,
           message: "Arquivo marcado para exclusão (limitação do filesystem)",
-          warning:
-            "O ambiente atual não permite exclusão física de arquivos. Considere usar uma solução de armazenamento externa.",
+          warning: "O ambiente atual não permite exclusão física de arquivos.",
         });
       }
 
-      // Se for outro tipo de erro (arquivo não encontrado, etc.)
+      if (unlinkError.code === "ENOENT") {
+        return NextResponse.json({
+          success: false,
+          error: "Arquivo não encontrado",
+        }, { status: 404 });
+      }
+
       throw unlinkError;
     }
   } catch (error) {
