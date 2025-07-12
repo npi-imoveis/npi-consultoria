@@ -89,6 +89,11 @@ export default async function SobrePage() {
         title={content?.sobre_npi?.header?.title || "Sobre a NPi Imóveis"}
         description={content?.sobre_npi?.header?.subtitle || "A nossa história como Hub de Imobiliárias Boutique"}
         image="/assets/images/imoveis/02.jpg"
+        breadcrumb={[
+          { label: "Home", active: false },
+          { label: "Sobre", active: false },
+          { label: "NPi Imóveis", active: true }
+        ]}
       />
       <SobreNPI sobre={content?.sobre_npi} />
       <HistoriaNpi historia={content?.sobre_npi?.historia} />
