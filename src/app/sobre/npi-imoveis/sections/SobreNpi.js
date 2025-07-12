@@ -31,12 +31,13 @@ export default async function SobreNPI({ sobre }) {
           <div className="w-full flex lg:justify-start justify-center items-start">
             <div className="sm:w-[564px] w-full sm:h-[646px] h-auto sm:bg-gray-100 rounded-3xl sm:border border-gray-200 relative">
               <Image
-                src="/uploads/sobre_npi/sobre.jpg"
-                alt="Sobre NPI"
-                layout="fill"
-                objectFit="cover"
-                className="sm:mt-5 sm:ml-5 w-full h-full rounded-3xl"
+              src={sobre?.image || "/uploads/sobre_npi/sobre.jpg"}
+              alt="Sobre NPI"
+              layout="fill"
+              objectFit="cover"
+              className="sm:mt-5 sm:ml-5 w-full h-full rounded-3xl"
               />
+
             </div>
           </div>
         </div>
