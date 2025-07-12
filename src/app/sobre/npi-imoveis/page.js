@@ -18,7 +18,7 @@ export const metadata = {
     siteName: "NPi Consultoria",
     images: [
       {
-        url: "https://npiconsultoria.com.br/assets/images/logo/npi-logo-social.png",
+        url: "https://npiconsultoria.com.br/assets/images/imoveis/02.jpg",
         width: 1200,
         height: 630,
         alt: "NPi Imóveis - Hub de Imobiliárias Boutique de Alto Padrão",
@@ -33,7 +33,7 @@ export const metadata = {
     card: "summary_large_image",
     title: "Sobre NPi Imóveis - A nossa história",
     description: "Começamos com imobiliária tradicional em Moema, SP, mas já com a parceria em nosso DNA, e hoje somos um HUB DE IMOBILIÁRIAS BOUTIQUE DE ALTO PADRÃO.",
-    images: ["https://npiconsultoria.com.br/assets/images/logo/npi-logo-social.png"],
+    images: ["https://npiconsultoria.com.br/assets/images/imoveis/02.jpg"],
     creator: "@npiconsultoria",
     site: "@npiconsultoria",
   },
