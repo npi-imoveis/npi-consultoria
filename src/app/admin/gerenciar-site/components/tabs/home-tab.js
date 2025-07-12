@@ -245,10 +245,16 @@ export default function HomeTab({ form }) {
             />
           </div>
           <div className="flex-1">
-            <ImageSection directory="home" filename="about" onChange={handleImageChange} />
+          <ImageSection 
+          directory="home" 
+          filename="about" 
+           onChange={handleImageChange}
+           currentImageUrl={formData.sobre?.image_url || ""}
+           sectionKey="sobre" // Identificador único para esta seção
+           />
           </div>
-        </div>
-        <div className="mt-4 flex flex-col space-y-2">
+          </div>
+          <div className="mt-4 flex flex-col space-y-2">
           <Button onClick={() => updateContent("sobre")} disabled={loadingSection === "sobre"}>
             {loadingSection === "sobre" ? "Atualizando..." : "Atualizar Quem Somos"}
           </Button>
