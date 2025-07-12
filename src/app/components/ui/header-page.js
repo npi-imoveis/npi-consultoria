@@ -2,7 +2,7 @@
 import Image from "next/image";
 import { BreadcrumbList } from "@/app/components/structured-data";
 
-export function HeaderPage({ title, description, image }) {
+export function HeaderPage({ title, description, image, breadcrumb }) {
   const breadcrumbItems = [
     {
       name: "Home",
@@ -13,6 +13,15 @@ export function HeaderPage({ title, description, image }) {
       url: typeof window !== "undefined" ? window.location.href : "",
     },
   ];
+
+  // Breadcrumb padrão se não for passado
+  const defaultBreadcrumb = [
+    { label: "Home", active: false },
+    { label: "Sobre", active: false },
+    { label: title, active: true }
+  ];
+
+  const finalBreadcrumb = breadcrumb || defaultBreadcrumb;
 
   return (
     <div className="relative pt-24 w-full h-[400px] md:h-[450px] lg:h-[500px] md:pt-20 lg:pt-24 flex flex-col justify-end items-center text-center text-white">
@@ -44,12 +53,17 @@ export function HeaderPage({ title, description, image }) {
         </p>
       </div>
       
-      {/* Breadcrumb visual */}
+      {/* Breadcrumb visual dinâmico */}
       <div className="relative z-10 w-full mt-10 sm:mt-12 md:mt-16">
         <div className="bg-black w-full py-3 sm:py-4 text-center text-white">
-          <span className="font-bold text-white">Home</span> »{" "}
-          <span className="font-bold">Sobre</span> »{" "}
-          <span className="text-gray-300">Hub Imobiliárias</span>
+          {finalBreadcrumb.map((item, index) => (
+            <span key={index}>
+              <span className={item.active ? "text-gray-300" : "font-bold text-white"}>
+                {item.label}
+              </span>
+              {index < finalBreadcrumb.length - 1 && " » "}
+            </span>
+          ))}
         </div>
       </div>
     </div>
