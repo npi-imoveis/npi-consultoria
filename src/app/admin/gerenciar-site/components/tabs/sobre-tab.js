@@ -2,397 +2,336 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Section from "../ui/section";
+import { InputField, TextareaField, ImageUpload } from "../ui/form-fields";
+import NossaHistoriaSection from "../sections/nossa-historia-section";
+import Button from "../ui/button";
+import ImageSection from "../sections/image-section";
 
 export default function SobreTab({ form }) {
-  const [formData, setFormData] = useState(form?.sobre || {});
-  const [imagemSobre, setImagemSobre] = useState(null);
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
-  const [isLoadingImage, setIsLoadingImage] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [status, setStatus] = useState({ show: false, type: null, message: null });
+  const [formData, setFormData] = useState(form?.sobre_npi || {});
+  const [loadingSection, setLoadingSection] = useState(null);
+  const [sectionStatus, setSectionStatus] = useState({
+    header: { show: false, type: null, message: null },
+    sobre: { show: false, type: null, message: null },
+    historia: { show: false, type: null, message: null },
+    missao: { show: false, type: null, message: null },
+  });
 
   useEffect(() => {
-    // Carrega dados do formulário
-    if (form?.sobre) {
-      setFormData(form.sobre);
+    if (form?.sobre_npi) {
+      // Garantir que missao.itens seja sempre um array com 3 itens
+      const itens = form.sobre_npi.missao?.itens || [];
+      const formattedItens = Array(3)
+        .fill(null)
+        .map((_, index) => ({
+          title: itens[index]?.title || "",
+          description: itens[index]?.description || "",
+        }));
+
+      setFormData({
+        ...form.sobre_npi,
+        missao: {
+          ...(form.sobre_npi.missao || {}),
+          itens: formattedItens,
+        },
+      });
     }
-    
-    // Carrega imagem existente
-    carregarImagemSobre();
   }, [form]);
 
-  const carregarImagemSobre = async () => {
-    try {
-      setIsLoadingImage(true);
-      console.log('🔍 SobreTab: Carregando imagem...');
-      
-      const response = await fetch('/api/admin/upload?directory=sobre');
-      const data = await response.json();
-      
-      console.log('📡 SobreTab: Resposta da API:', data);
-      
-      if (data.success && data.images && data.images.length > 0) {
-        setImagemSobre(data.images[0]); // Primeira imagem
-        console.log('✅ SobreTab: Imagem carregada:', data.images[0]);
-      } else {
-        setImagemSobre(null);
-        console.log('📝 SobreTab: Nenhuma imagem encontrada');
-      }
-    } catch (error) {
-      console.error('❌ SobreTab: Erro ao carregar imagem:', error);
-      setImagemSobre(null);
-    } finally {
-      setIsLoadingImage(false);
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    // Tratamento especial para campos da missão
+    if (name.startsWith("missao_item")) {
+      const [_, field, indexStr] = name.match(/missao_item(\d+)_(title|description)/);
+      const index = parseInt(indexStr) - 1;
+
+      setFormData((prev) => ({
+        ...prev,
+        missao: {
+          ...prev.missao,
+          itens: prev.missao.itens.map((item, i) =>
+            i === index ? { ...item, [field]: value } : item
+          ),
+        },
+      }));
+    }
+    // Tratamento para campos dentro de missao
+    else if (name.startsWith("missao_")) {
+      const field = name.replace("missao_", "");
+      setFormData((prev) => ({
+        ...prev,
+        missao: {
+          ...prev.missao,
+          [field]: value,
+        },
+      }));
+    }
+    // Tratamento para campos dentro de header
+    else if (name.startsWith("header_")) {
+      const field = name.replace("header_", "");
+      setFormData((prev) => ({
+        ...prev,
+        header: {
+          ...prev.header,
+          [field]: value,
+        },
+      }));
+    }
+    // Campos diretos
+    else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
     }
   };
 
-  const handleChange = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
+  const handleImageChange = (e) => {
+    const { name, value, previewUrl } = e.target;
+    // Usar previewUrl ou value, o que estiver disponível
+    const imageUrl = previewUrl || value;
+    if (imageUrl) {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: imageUrl,
+      }));
+    }
   };
 
-  const handleSave = async () => {
+  // Função para mostrar e ocultar mensagens de status
+  const showStatusMessage = (section, type, message) => {
+    setSectionStatus((prev) => ({
+      ...prev,
+      [section]: { show: true, type, message },
+    }));
+
+    setTimeout(() => {
+      setSectionStatus((prev) => ({
+        ...prev,
+        [section]: { ...prev[section], show: false },
+      }));
+    }, 5000);
+  };
+
+  // Função genérica para atualizar o conteúdo
+  const updateContent = async (section, data) => {
     try {
-      setIsSaving(true);
-      showStatus("info", "Salvando dados...");
+      setLoadingSection(section);
+
+      const payload = {
+        sobre_npi: {
+          ...formData,
+          ...data,
+        },
+      };
+
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
       const response = await fetch("/api/admin/content", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      await fetch("/api/revalidate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          ...form,
-          sobre: formData
-        }),
+        body: JSON.stringify({ path: "/" }),
       });
 
-      const data = await response.json();
-      
-      if (data.success) {
-        showStatus("success", "Dados salvos com sucesso!");
+      if (response.ok) {
+        showStatusMessage(
+          section,
+          "success",
+          `${section.charAt(0).toUpperCase() + section.slice(1)} atualizado com sucesso`
+        );
       } else {
-        showStatus("error", data.error || "Erro ao salvar dados");
+        showStatusMessage(section, "error", `Erro ao atualizar ${section}`);
       }
     } catch (error) {
-      console.error("Erro ao salvar:", error);
-      showStatus("error", "Erro ao salvar dados");
+      console.error(`Erro ao atualizar ${section}:`, error);
+      showStatusMessage(section, "error", `Erro ao atualizar ${section}`);
     } finally {
-      setIsSaving(false);
+      setLoadingSection(null);
     }
   };
 
-  const handleImageUpload = async (e) => {
-    const files = e.target.files;
-    if (!files.length) return;
+  // Componente para renderizar mensagens de status
+  const StatusMessage = ({ section }) => {
+    const status = sectionStatus[section];
+    if (!status.show) return null;
 
-    const file = files[0];
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
-
-    if (!allowedTypes.includes(file.type)) {
-      showStatus("error", "Tipo de arquivo não permitido. Use JPG, PNG ou WebP.");
-      return;
-    }
-
-    if (file.size > maxSize) {
-      showStatus("error", "Arquivo muito grande. Máximo 5MB.");
-      return;
-    }
-
-    setIsUploadingImage(true);
-    showStatus("info", "Enviando imagem...");
-
-    try {
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("directory", "sobre");
-
-      const response = await fetch("/api/admin/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        showStatus("success", "Imagem enviada com sucesso!");
-        await carregarImagemSobre(); // Recarrega a imagem
-        e.target.value = ''; // Limpa o input
-      } else {
-        showStatus("error", data.error || "Erro ao enviar imagem");
-      }
-    } catch (error) {
-      console.error("Erro no upload:", error);
-      showStatus("error", "Erro ao enviar imagem");
-    } finally {
-      setIsUploadingImage(false);
-    }
-  };
-
-  const handleDeleteImage = async () => {
-    if (!imagemSobre || !confirm("Tem certeza que deseja deletar esta imagem?")) return;
-
-    try {
-      const filename = imagemSobre.split('/').pop();
-      const response = await fetch(
-        `/api/admin/upload?directory=sobre&filename=${filename}`,
-        { method: "DELETE" }
-      );
-
-      const data = await response.json();
-      if (data.success) {
-        showStatus("success", "Imagem deletada com sucesso!");
-        setImagemSobre(null);
-      } else {
-        showStatus("error", data.error || "Erro ao deletar imagem");
-      }
-    } catch (error) {
-      console.error("Erro ao deletar:", error);
-      showStatus("error", "Erro ao deletar imagem");
-    }
-  };
-
-  const showStatus = (type, message) => {
-    setStatus({ show: true, type, message });
-    setTimeout(() => {
-      setStatus({ show: false, type: null, message: null });
-    }, 5000);
+    return (
+      <div
+        className={`mt-4 p-3 rounded ${
+          status.type === "success" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+        }`}
+      >
+        {status.message}
+      </div>
+    );
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900">
-              ℹ️ Sobre a NPi
-            </h2>
-            <p className="text-gray-600 mt-1">
-              Configure o conteúdo da seção "Quem Somos"
-            </p>
-          </div>
-          
-          <button
-            onClick={handleSave}
-            disabled={isSaving}
-            className={`px-6 py-2 bg-blue-600 text-white rounded-lg font-medium transition-colors ${
-              isSaving ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-700"
-            }`}
+    <div className="space-y-8">
+      <Section title="Header">
+        <div className="space-y-4">
+          <InputField
+            label="Título"
+            name="header_title"
+            value={formData.header?.title || ""}
+            onChange={handleChange}
+            type="text"
+          />
+          <TextareaField
+            label="Subtítulo"
+            name="header_subtitle"
+            value={formData.header?.subtitle || ""}
+            onChange={handleChange}
+          />
+        </div>
+        <div className="mt-4 flex flex-col space-y-2">
+          <Button
+            onClick={() =>
+              updateContent("header", {
+                header: {
+                  title: formData.header?.title,
+                  subtitle: formData.header?.subtitle,
+                },
+              })
+            }
+            disabled={loadingSection === "header"}
           >
-            {isSaving ? (
-              <span className="flex items-center">
-                <svg className="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Salvando...
-              </span>
-            ) : (
-              "Salvar Alterações"
-            )}
-          </button>
+            {loadingSection === "header" ? "Atualizando..." : "Atualizar Header"}
+          </Button>
+          <StatusMessage section="header" />
         </div>
+      </Section>
 
-        {/* Status message */}
-        {status.show && (
-          <div className={`mt-4 p-4 rounded-md ${
-            status.type === "success" ? "bg-green-100 text-green-800" :
-            status.type === "error" ? "bg-red-100 text-red-800" :
-            "bg-blue-100 text-blue-800"
-          }`}>
-            {status.message}
-          </div>
-        )}
-      </div>
-
-      {/* Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        {/* Formulário de Texto */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border space-y-6">
-          <h3 className="text-lg font-medium text-gray-900 border-b pb-2">
-            📝 Conteúdo Textual
-          </h3>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Título Principal
-            </label>
-            <input
+      <Section title="Quem Somos">
+        <div className="flex flex-col md:flex-row gap-8">
+          <div className="flex-1 space-y-4">
+            <InputField
+              label="Título"
+              name="title"
+              value={formData.title || ""}
+              onChange={handleChange}
               type="text"
-              value={formData.titulo || ""}
-              onChange={(e) => handleChange("titulo", e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Ex: A NPi Imóveis nasceu em 2007"
+            />
+            <TextareaField
+              label="Descrição"
+              name="description"
+              value={formData.description || ""}
+              onChange={handleChange}
             />
           </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Descrição Completa
-            </label>
-            <textarea
-              value={formData.descricao || ""}
-              onChange={(e) => handleChange("descricao", e.target.value)}
-              rows="8"
-              className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Escreva sobre a história e missão da NPi Imóveis..."
-            />
-            <p className="text-sm text-gray-500 mt-1">
-              Este texto aparecerá na seção "Quem Somos" da home
-            </p>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Missão (opcional)
-            </label>
-            <textarea
-              value={formData.missao || ""}
-              onChange={(e) => handleChange("missao", e.target.value)}
-              rows="3"
-              className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Nossa missão é..."
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Valores (opcional)
-            </label>
-            <textarea
-              value={formData.valores || ""}
-              onChange={(e) => handleChange("valores", e.target.value)}
-              rows="3"
-              className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Nossos valores são..."
-            />
+          <div className="flex-1">
+            <ImageSection directory="sobre_npi" filename="sobre" onChange={handleImageChange} />
           </div>
         </div>
+        <div className="mt-4 flex flex-col space-y-2">
+          <Button
+            onClick={() =>
+              updateContent("sobre", {
+                title: formData.title,
+                description: formData.description,
+                image: formData.image,
+              })
+            }
+            disabled={loadingSection === "sobre"}
+          >
+            {loadingSection === "sobre" ? "Atualizando..." : "Atualizar Quem Somos"}
+          </Button>
+          <StatusMessage section="sobre" />
+        </div>
+      </Section>
 
-        {/* Gestão de Imagem */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border space-y-6">
-          <h3 className="text-lg font-medium text-gray-900 border-b pb-2">
-            🖼️ Imagem da Seção
-          </h3>
+      <Section title="Nossa história">
+        <NossaHistoriaSection form={formData} onChange={handleChange} />
+        <div className="mt-4 flex flex-col space-y-2">
+          <Button
+            onClick={() =>
+              updateContent("historia", {
+                historia: formData.historia,
+              })
+            }
+            disabled={loadingSection === "historia"}
+          >
+            {loadingSection === "historia" ? "Atualizando..." : "Atualizar História"}
+          </Button>
+          <StatusMessage section="historia" />
+        </div>
+      </Section>
 
-          {/* Upload de Imagem */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Imagem Principal
-            </label>
-            
-            <div className="space-y-4">
-              {/* Input de Upload */}
-              <div>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  disabled={isUploadingImage}
-                  className="hidden"
-                  id="imagemSobre"
-                />
-                <label
-                  htmlFor="imagemSobre"
-                  className={`inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg cursor-pointer transition-colors hover:bg-blue-700 ${
-                    isUploadingImage ? "opacity-50 cursor-not-allowed" : ""
-                  }`}
-                >
-                  {isUploadingImage ? (
-                    <>
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      Enviando...
-                    </>
-                  ) : (
-                    <>
-                      📤 {imagemSobre ? "Trocar Imagem" : "Enviar Imagem"}
-                    </>
-                  )}
-                </label>
-                <p className="text-sm text-gray-500 mt-2">
-                  Formatos aceitos: JPG, PNG, WebP (máx. 5MB)
-                </p>
-              </div>
+      <Section title="Nossa missão e serviços">
+        <div className="space-y-4">
+          <InputField
+            label="Título"
+            name="missao_title"
+            value={formData.missao?.title || ""}
+            onChange={handleChange}
+            type="text"
+          />
+          <TextareaField
+            label="Descrição"
+            name="missao_description"
+            value={formData.missao?.description || ""}
+            onChange={handleChange}
+          />
+          <InputField
+            label="Link do vídeo do YouTube"
+            name="missao_youtube"
+            value={formData.missao?.youtube || ""}
+            onChange={handleChange}
+            type="text"
+          />
+        </div>
 
-              {/* Preview da Imagem */}
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
-                {isLoadingImage ? (
-                  <div className="flex items-center justify-center h-48 bg-gray-100 rounded">
-                    <div className="text-center">
-                      <svg className="animate-spin h-8 w-8 text-gray-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                      <p className="text-gray-500 mt-2">Carregando...</p>
-                    </div>
-                  </div>
-                ) : imagemSobre ? (
-                  <div className="relative group">
-                    <img
-                      src={imagemSobre}
-                      alt="Imagem Sobre NPi"
-                      className="w-full h-48 object-cover rounded-lg"
-                      onError={(e) => {
-                        console.error('❌ Erro ao carregar preview:', imagemSobre);
-                        e.target.style.display = 'none';
-                      }}
-                    />
-                    
-                    {/* Overlay com ações */}
-                    <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg flex items-center justify-center">
-                      <button
-                        onClick={handleDeleteImage}
-                        className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors"
-                      >
-                        🗑️ Deletar
-                      </button>
-                    </div>
-
-                    {/* Status indicator */}
-                    <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded text-xs">
-                      ✅ Ativa na Home
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center h-48 text-gray-400">
-                    <div className="text-center">
-                      <svg className="h-12 w-12 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                      </svg>
-                      <p>Nenhuma imagem selecionada</p>
-                      <p className="text-sm">A seção aparecerá sem imagem na home</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Info sobre uso da imagem */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <p className="text-blue-800 text-sm">
-                  💡 <strong>Como funciona:</strong> A imagem carregada aqui aparecerá automaticamente na seção "Quem Somos" da home. Se não houver imagem, será exibido um placeholder padrão.
-                </p>
-              </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+          {[1, 2, 3].map((idx) => (
+            <div key={idx} className="bg-gray-50 rounded-lg p-6 space-y-4">
+              <InputField
+                label="Título"
+                name={`missao_item${idx}_title`}
+                value={formData.missao?.itens?.[idx - 1]?.title || ""}
+                onChange={handleChange}
+                type="text"
+              />
+              <TextareaField
+                label="Descrição"
+                name={`missao_item${idx}_description`}
+                value={formData.missao?.itens?.[idx - 1]?.description || ""}
+                onChange={handleChange}
+              />
             </div>
-          </div>
+          ))}
         </div>
-      </div>
 
-      {/* Debug Info (apenas em desenvolvimento) */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="bg-gray-100 p-4 rounded-lg text-sm">
-          <strong>🔧 Debug SobreTab:</strong><br />
-          Imagem carregada: {imagemSobre ? '✅ Sim' : '❌ Não'}<br />
-          URL da imagem: {imagemSobre || 'Nenhuma'}<br />
-          Loading: {isLoadingImage ? 'Sim' : 'Não'}
+        <div className="mt-4 flex flex-col space-y-2">
+          <Button
+            onClick={() =>
+              updateContent("missao", {
+                missao: {
+                  title: formData.missao?.title,
+                  description: formData.missao?.description,
+                  youtube: formData.missao?.youtube,
+                  itens: formData.missao?.itens,
+                },
+              })
+            }
+            disabled={loadingSection === "missao"}
+          >
+            {loadingSection === "missao" ? "Atualizando..." : "Atualizar Missão e Serviços"}
+          </Button>
+          <StatusMessage section="missao" />
         </div>
-      )}
+      </Section>
     </div>
   );
 }
