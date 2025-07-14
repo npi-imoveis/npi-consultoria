@@ -1,63 +1,69 @@
-"use client";
-
-import { ArrowRightIcon } from "@heroicons/react/24/outline";
+// components/ui/custom-card.js
 import Image from "next/image";
 import Link from "next/link";
+import { ArrowRightIcon } from "@heroicons/react/24/outline";
 
-export default function CustomCard({
-  id,
-  image,
-  sign,
+export default function CustomCard({ 
+  id, 
+  image, 
+  title, 
+  description, 
+  sign, 
   slug,
-  title,
-  description,
-  aspect = "aspect-[3/2]",
+  // ✅ NOVAS PROPS para otimização das imagens
+  imageTitle,
+  imageAlt,
+  loading = "lazy"
 }) {
+  // ✅ FALLBACKS para title e alt se não foram passados
+  const finalImageTitle = imageTitle || `${title} - ${description} - NPi Imóveis`;
+  const finalImageAlt = imageAlt || `${title} - ${sign} - NPi Imóveis`;
+  
   return (
-    <div className="relative w-full h-auto overflow-hidden shadow-lg group">
-      <div className={`relative w-full ${aspect} overflow-hidden bg-gray-200`}>
-        {image ? (
-          <Image
-            src={image}
-            alt={title || "Imagem do condomínio"}
-            fill
-            style={{ objectFit: "cover" }}
-            priority
-            className="transition-transform duration-300 ease-in-out group-hover:scale-110"
-          />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-            Sem imagem disponível
-          </div>
-        )}
-      </div>
-
-      <div className="absolute inset-0 bg-black/70" />
-
-      <div className="absolute bottom-0 left-0 right-0 p-10 text-white flex items-center justify-between">
-        <div>
-          <span className="text-xs sm:text-sm block mb-1 text-white/40">
-            {sign || "Condomínio"}
-          </span>
-          <h3 className="font-semibold text-xl leading-tight text-white/70">
-            {title
-              ? title.length > 20
-                ? title.substring(0, 20) + "..."
-                : title
-              : "Título não disponível"}
-          </h3>
-          {description && (
-            <p className="font-medium text-sm leading-tight text-zinc-300 mt-2">{description}</p>
-          )}
-        </div>
-        {slug && (
-          <Link href={`/${slug}`} target="_blank" rel="noopener noreferrer">
-            <div className="flex items-center justify-center w-10 h-10 sm:w-12 sm:h-12 bg-[#8B6F4B] text-white rounded-full shadow-md hover:bg-[#d8b887] transition-colors">
-              <ArrowRightIcon className="w-4 h-4 sm:w-5 sm:h-5 text-black" />
+    <div className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300">
+      <Link href={slug ? `/${slug}` : `/condominio/${id}`}>
+        <div className="relative h-48 w-full">
+          {image ? (
+            <Image
+              src={image}
+              alt={finalImageAlt}
+              title={finalImageTitle} // ✅ TITLE IMPLEMENTADO
+              fill
+              className="object-cover hover:scale-105 transition-transform duration-300"
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
+              loading={loading}
+              quality={75}
+            />
+          ) : (
+            // ✅ PLACEHOLDER com title e alt também
+            <div 
+              className="w-full h-full bg-gray-200 flex items-center justify-center"
+              title={`${title} - Imagem não disponível - NPi Imóveis`}
+              role="img"
+              aria-label={`${title} - Imagem não disponível`}
+            >
+              <span className="text-gray-500 text-sm">Sem imagem</span>
             </div>
-          </Link>
-        )}
-      </div>
+          )}
+          
+          {/* ✅ SETA CIRCULAR (igual sua versão original) */}
+          <div className="absolute bottom-4 right-4 w-12 h-12 bg-amber-600 bg-opacity-80 rounded-full flex items-center justify-center hover:bg-opacity-100 transition-all duration-300">
+            <ArrowRightIcon className="w-6 h-6 text-white" />
+          </div>
+        </div>
+        
+        <div className="p-4">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
+            {title}
+          </h3>
+          <p className="text-gray-600 text-sm mb-2 line-clamp-2">
+            {description}
+          </p>
+          <span className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+            {sign}
+          </span>
+        </div>
+      </Link>
     </div>
   );
 }
