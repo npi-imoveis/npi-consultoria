@@ -5,11 +5,11 @@ import Image from "next/image";
 
 export function FaqSection({ faqs }) {
   const [openIndex, setOpenIndex] = useState(null);
-
+  
   const toggleAccordion = (index) => {
     setOpenIndex(openIndex === index ? null : index);
   };
-
+  
   return (
     <section className="w-full pb-16 pt-10 px-10 ">
       <div className="container mx-auto">
@@ -64,10 +64,16 @@ export function FaqSection({ faqs }) {
               </div>
             </div>
           </div>
-
           {/* Image */}
           <div className="w-full flex justify-end lg:w-1/2">
-            <Image src="/assets/images/faq.jpg" alt="FAQ" width={500} height={500} unoptimized />
+            <Image 
+              src="/assets/images/faq.jpg" 
+              alt="FAQ - Perguntas Frequentes sobre o HUB da NPi"
+              title="Perguntas Frequentes sobre o HUB da NPi - Tire suas dúvidas" // ✅ ADICIONEI APENAS ESTA LINHA
+              width={500} 
+              height={500} 
+              unoptimized 
+            />
           </div>
         </div>
       </div>
