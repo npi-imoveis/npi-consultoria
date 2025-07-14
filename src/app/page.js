@@ -1,4 +1,4 @@
-// app/page.js
+// app/page.js -> HOME
 import { Hero, HeroSection } from "./components/sections/hero-section";
 import { LuxuryGridSection } from "./components/sections/luxury-grid-section";
 import { AboutSection } from "./components/sections/about-section";
