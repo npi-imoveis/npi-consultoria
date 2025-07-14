@@ -1,9 +1,13 @@
 import { connectToDatabase } from "@/app/lib/mongodb";
 import Imovel from "@/app/models/Imovel";
-import { redirect } from "next/navigation";
+import { NextResponse } from "next/server";
 
 export async function GET(request, { params }) {
   const { id } = params;
+  const { searchParams } = new URL(request.url);
+  const isTrailingSlash = searchParams.get('trailing') === 'true';
+
+  console.log(`🔍 [API REDIRECT] ${isTrailingSlash ? '🔧 TRAILING SLASH' : '📍 NORMAL'} redirect para imóvel ${id}`);
 
   try {
     await connectToDatabase();
@@ -29,12 +33,14 @@ export async function GET(request, { params }) {
             .replace(/^-|-$/g, '') // Remove hífens do início e fim
         : `imovel-${id}`);
 
-    // Redirecionar para a URL com slug
-    return redirect(`/imovel-${id}/${slugBasico}`);
+    // Redirecionar para a URL com slug com status 301 explícito
+    const finalUrl = `/imovel-${id}/${slugBasico}`;
+    console.log(`🔍 [API REDIRECT] ✅ Redirecionamento DIRETO (301): /imovel-${id}${isTrailingSlash ? '/' : ''} → ${finalUrl}`);
+    return NextResponse.redirect(new URL(finalUrl, request.url), 301);
 
   } catch (error) {
     console.error('Erro ao buscar imóvel para redirecionamento:', error);
-    // Em caso de erro, redireciona para slug genérico
-    return redirect(`/imovel-${id}/imovel-${id}`);
+    // Em caso de erro, redireciona para slug genérico com status 301
+    return NextResponse.redirect(new URL(`/imovel-${id}/imovel-${id}`, request.url), 301);
   }
 }

@@ -1,5 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  trailingSlash: false, // Volta para o padrão - middleware gerencia tudo
   images: {
     remotePatterns: [
       {
@@ -213,7 +214,6 @@ const nextConfig = {
       }
     ];
   },
-  // Rewrites removidos - middleware gerencia tudo
   output: "standalone", // Ou 'export' se estiver gerando static sites
 };
 

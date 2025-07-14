@@ -6,9 +6,60 @@ export async function middleware(request) {
   const url = request.nextUrl.clone();
   const { pathname, origin } = url;
 
+
   console.log(`🔍 [MIDDLEWARE] =================== INÍCIO ===================`);
   console.log(`🔍 [MIDDLEWARE] Processando: ${pathname}`);
   console.log(`🔍 [MIDDLEWARE] Origin: ${origin}`);
+
+  // 🔧 CORREÇÃO: URLs de imóveis sem slug - redirect DIRETO para slug completo (SEM trailing slash)
+  const imovelMatch = pathname.match(/^\/imovel-(\d+)\/?$/);
+  if (imovelMatch) {
+    const id = imovelMatch[1];
+    const hasTrailingSlash = pathname.endsWith('/');
+    
+    console.log(`🔍 [MIDDLEWARE] 🔧 Imóvel ${hasTrailingSlash ? 'COM' : 'SEM'} trailing slash: ${pathname}`);
+    
+    try {
+      const apiUrl = new URL(`/api/imoveis/${id}`, origin);
+      const response = await fetch(apiUrl, {
+        headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(5000),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        const imovel = data.data;
+        
+        if (imovel?.Slug) {
+          const finalUrl = `/imovel-${id}/${imovel.Slug}`; // SEM trailing slash
+          console.log(`🔍 [MIDDLEWARE] ✅ Redirecionamento DIRETO (301): ${pathname} → ${finalUrl}`);
+          // Forçar status 301 explicitamente
+          return NextResponse.redirect(new URL(finalUrl, origin), 301);
+        } else if (imovel?.Empreendimento) {
+          const slugGerado = imovel.Empreendimento
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-')
+            .replace(/^-|-$/g, '')
+            || `imovel-${id}`;
+          
+          const finalUrl = `/imovel-${id}/${slugGerado}`; // SEM trailing slash
+          console.log(`🔍 [MIDDLEWARE] ✅ Redirecionamento DIRETO (301 - slug gerado): ${pathname} → ${finalUrl}`);
+          // Forçar status 301 explicitamente
+          return NextResponse.redirect(new URL(finalUrl, origin), 301);
+        }
+      }
+    } catch (error) {
+      console.error('🔍 [MIDDLEWARE] ❌ Erro ao buscar slug:', error.message);
+    }
+    
+    // Se falhou, redireciona para busca
+    console.log(`🔍 [MIDDLEWARE] ❌ Imóvel ${id} não encontrado - redirecionando para /busca`);
+    return NextResponse.redirect(new URL('/busca', origin), 302);
+  }
 
   // 1. Verificar se é URL SEO-friendly (/buscar/finalidade/categoria/cidade/bairro)
   const seoMatch = pathname.match(/^\/buscar\/([^\/]+)\/([^\/]+)\/([^\/]+)(.*)$/);
@@ -154,63 +205,18 @@ export async function middleware(request) {
     }
   }
 
-  // 2. Processar URLs de imóveis com padrão unificado
-  const imovelMatch = pathname.match(/^\/imovel-(\d+)(?:\/(.+))?$/);
+  // 2. Processar URLs de imóveis COM slug - verificar se slug está correto
+  const imovelComSlugMatch = pathname.match(/^\/imovel-(\d+)\/(.+)$/);
   
-  if (!imovelMatch) {
+  if (!imovelComSlugMatch) {
     console.log(`🔍 [MIDDLEWARE] ➡️ Não é URL de imóvel: ${pathname}`);
     return NextResponse.next();
   }
 
-  const [, id, currentSlug] = imovelMatch;
-  console.log(`🔍 [MIDDLEWARE] ✅ URL de imóvel detectada: ID=${id}, SLUG=${currentSlug || 'SEM_SLUG'}`);
+  const [, id, currentSlug] = imovelComSlugMatch;
+  console.log(`🔍 [MIDDLEWARE] ✅ URL de imóvel COM SLUG detectada: ID=${id}, SLUG=${currentSlug}`);
 
-  // Se não tem slug, buscar o slug correto e redirecionar DIRETO
-  if (!currentSlug) {
-    try {
-      const apiUrl = new URL(`/api/imoveis/${id}`, origin);
-      console.log(`🔍 [MIDDLEWARE] 📞 Buscando slug para /imovel-${id}`);
-      
-      const response = await fetch(apiUrl, {
-        headers: { 'Content-Type': 'application/json' },
-        signal: AbortSignal.timeout(5000),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const imovel = data.data;
-        
-        if (imovel?.Slug) {
-          const finalUrl = `/imovel-${id}/${imovel.Slug}`;
-          console.log(`🔍 [MIDDLEWARE] ✅ Redirecionamento DIRETO: ${pathname} → ${finalUrl}`);
-          return NextResponse.redirect(new URL(finalUrl, origin), 301);
-        } else if (imovel?.Empreendimento) {
-          // Gerar slug se não existir
-          const slugGerado = imovel.Empreendimento
-            .toLowerCase()
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .replace(/[^a-z0-9\s-]/g, '')
-            .replace(/\s+/g, '-')
-            .replace(/-+/g, '-')
-            .replace(/^-|-$/g, '')
-            || `imovel-${id}`;
-          
-          const finalUrl = `/imovel-${id}/${slugGerado}`;
-          console.log(`🔍 [MIDDLEWARE] ✅ Redirecionamento DIRETO com slug gerado: ${pathname} → ${finalUrl}`);
-          return NextResponse.redirect(new URL(finalUrl, origin), 301);
-        }
-      }
-    } catch (error) {
-      console.error('🔍 [MIDDLEWARE] ❌ Erro ao buscar dados do imóvel:', error.message);
-    }
-    
-    // Se falhou, redireciona para busca (sem API fallback)
-    console.log(`🔍 [MIDDLEWARE] ❌ Imóvel ${id} não encontrado - redirecionando para /busca`);
-    return NextResponse.redirect(new URL('/busca', origin), 302);
-  }
-
-  // Se tem slug, verificar se está correto e redirecionar se necessário
+  // Verificar se slug está correto e redirecionar se necessário
   try {
     const apiUrl = new URL(`/api/imoveis/${id}`, origin);
     
@@ -226,7 +232,8 @@ export async function middleware(request) {
       // Se slug está desatualizado, redireciona para slug correto
       if (imovel?.Slug && imovel.Slug !== currentSlug) {
         const correctUrl = `/imovel-${id}/${imovel.Slug}`;
-        console.log(`🔍 [MIDDLEWARE] ✅ Redirecionando slug antigo para correto: ${currentSlug} → ${imovel.Slug}`);
+        console.log(`🔍 [MIDDLEWARE] ✅ Redirecionando slug antigo para correto (301): ${currentSlug} → ${imovel.Slug}`);
+        // Forçar status 301 explicitamente
         return NextResponse.redirect(new URL(correctUrl, origin), 301);
       }
     }
@@ -234,7 +241,7 @@ export async function middleware(request) {
     console.error('🔍 [MIDDLEWARE] ❌ Erro ao verificar slug:', error.message);
   }
   
-  // Se slug está correto ou não conseguiu verificar, faz rewrite
+  // Se slug está correto, faz rewrite
   console.log(`🔍 [MIDDLEWARE] 🔄 Rewrite para: /imovel/${id}/${currentSlug}`);
   const rewriteUrl = url.clone();
   rewriteUrl.pathname = `/imovel/${id}/${currentSlug}`;
@@ -243,9 +250,9 @@ export async function middleware(request) {
 
 export const config = {
   matcher: [
-    '/imovel-:id(\\d+)',           // /imovel-1715
-    '/imovel-:id(\\d+)/',          // /imovel-1715/
-    '/imovel-:id(\\d+)/:slug*',    // /imovel-1715/helbor-brooklin
-    '/buscar/:finalidade/:categoria/:cidade*', // URLs SEO-friendly (new order)
+    '/imovel-:id(\\d+)',           // /imovel-1715 (sem slug)
+    '/imovel-:id(\\d+)/',          // /imovel-1715/ (sem slug, com trailing slash)
+    '/imovel-:id(\\d+)/:slug*',    // /imovel-1715/helbor-brooklin (com slug)
+    '/buscar/:finalidade/:categoria/:cidade*', // URLs SEO-friendly
   ],
 };
