@@ -58,6 +58,7 @@ export function ActionSection({ cards }) {
             <Image
               src="/assets/images/acao-home.jpg"
               alt="Imóveis de luxo"
+              title="Condomínios de luxo entre 4 e 10 milhões - NPi Imóveis" // ✅ ADICIONEI APENAS ESTA LINHA
               fill
               style={{ objectFit: "cover" }}
               quality={90}
@@ -94,6 +95,7 @@ export function ActionSection({ cards }) {
             <Image
               src="/assets/images/fasano.jpg"
               alt="Imóveis de alto padrão"
+              title="Imóveis exclusivos acima de 10 milhões - NPi Imóveis" // ✅ ADICIONEI APENAS ESTA LINHA
               fill
               style={{ objectFit: "cover" }}
               quality={90}
