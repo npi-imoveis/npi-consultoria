@@ -19,7 +19,7 @@ export function FaqSection({ faqs }) {
             <div className="lg:max-w-xl">
               <TitleSection
                 section="FAQ"
-                title="Perguntas frequentes"
+                title="Perguntas frequentes sobre o HUB da NPi"
                 description="Encontre respostas para as perguntas mais comuns sobre o HUB."
               />
               <div className="accordion-group">
