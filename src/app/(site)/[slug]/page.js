@@ -1,3 +1,4 @@
+// app/(site)/[slug]/page.js
 import { Button } from "@/app/components/ui/button";
 import { getCondominioPorSlug } from "@/app/services";
 import { formatterValue } from "@/app/utils/formatter-value";
@@ -58,6 +59,9 @@ export async function generateMetadata({ params }) {
                          `${process.env.NEXT_PUBLIC_SITE_URL}/og-image.png`;
   
   const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`;
+  
+  // ✅ Gerar data para o condomínio
+  const modifiedDate = new Date().toISOString();
 
   console.error(`[CONDOMINIO-META] Image URL: ${destaqueFotoUrl}`);
 
@@ -70,6 +74,9 @@ export async function generateMetadata({ params }) {
     robots: {
       index: true,
       follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
     },
     alternates: {
       canonical: currentUrl,
@@ -83,6 +90,8 @@ export async function generateMetadata({ params }) {
       url: currentUrl,
       type: "website",
       siteName: "NPI Consultoria",
+      publishedTime: modifiedDate,
+      modifiedTime: modifiedDate,
       images: [
         {
           url: destaqueFotoUrl,
@@ -92,6 +101,7 @@ export async function generateMetadata({ params }) {
           type: "image/jpeg",
         }
       ],
+      updated_time: modifiedDate,
     },
     twitter: {
       card: "summary_large_image",
@@ -105,6 +115,18 @@ export async function generateMetadata({ params }) {
           alt: rawTitle,
         }
       ],
+    },
+    other: {
+      'article:published_time': modifiedDate,
+      'article:modified_time': modifiedDate,
+      'article:author': 'NPI Consultoria',
+      'article:section': 'Imobiliário',
+      'article:tag': `${condominio.Categoria}, ${condominio.BairroComercial}, ${condominio.Cidade}, condomínio`,
+      'og:updated_time': modifiedDate,
+      'last-modified': modifiedDate,
+      'date': modifiedDate,
+      'DC.date.modified': modifiedDate,
+      'DC.date.created': modifiedDate,
     },
   };
 }
@@ -127,6 +149,24 @@ export default async function CondominioPage({ params }) {
 
   const rawTitle = ensureCondominio(condominio.Empreendimento);
   const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`;
+  const modifiedDate = new Date().toISOString();
+
+  // Structured Data adicional para datas
+  const structuredDataDates = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    url: currentUrl,
+    datePublished: modifiedDate,
+    dateModified: modifiedDate,
+    author: {
+      "@type": "Organization",
+      name: "NPI Consultoria"
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "NPI Consultoria"
+    }
+  };
 
   function isValidValue(value) {
     return value !== undefined && value !== null && value !== "" && value !== "0";
@@ -134,6 +174,7 @@ export default async function CondominioPage({ params }) {
 
   return (
     <section className="w-full bg-zinc-100 pb-10">
+      {/* Structured Data para o condomínio */}
       <StructuredDataApartment
         title={rawTitle}
         price={condominio.ValorAntigo ? `R$ ${condominio.ValorAntigo}` : "Consulte"}
@@ -141,6 +182,14 @@ export default async function CondominioPage({ params }) {
         address={`${condominio.TipoEndereco} ${condominio.Endereco}, ${condominio.Numero}, ${condominio.BairroComercial}, ${condominio.Cidade}`}
         url={currentUrl}
         image={condominio.Foto}
+      />
+
+      {/* Structured Data para datas */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(structuredDataDates),
+        }}
       />
 
       <ExitIntentModal condominio={rawTitle} link={currentUrl} />
