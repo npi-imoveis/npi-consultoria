@@ -9,7 +9,7 @@ export function LuxuryGridSection() {
           center
           section="Novidades"
           title="Outros produtos de luxo"
-          description="Em breve!"
+          description="Em breve em nosso HUB!"
         />
         <div className="w-full py-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-0 ">
           <CustomCard
