@@ -1,318 +1,346 @@
+// admin/gerenciar-site/components/tabs/home-tab.js
 "use client";
 
-import { useState, useEffect } from "react";
-import Section from "../ui/section";
-import { InputField, TextareaField } from "../ui/form-fields";
-import TestemunhosSection from "../sections/testemunhos-section";
+import { useState } from "react";
 import LogosParceirosSection from "../sections/logos-parceiros-section";
-import ImageSection from "../sections/image-section";
-import Button from "../ui/button";
 
 export default function HomeTab({ form }) {
+  const [activeSection, setActiveSection] = useState("logos-parceiros");
   const [formData, setFormData] = useState(form || {});
-  const [cards, setCards] = useState(
-    form?.cards_destacados || [
-      { title: "", description: "" },
-      { title: "", description: "" },
-    ]
-  );
-  const [stats, setStats] = useState(
-    form?.stats || { position: "", views: "", clicks: "", partners: "", properties: "" }
-  );
-  const [loadingSection, setLoadingSection] = useState(null);
-  const [sectionStatus, setSectionStatus] = useState({
-    sobre: { show: false, type: null, message: null },
-    stats: { show: false, type: null, message: null },
-    cards: { show: false, type: null, message: null },
-    testemunhos: { show: false, type: null, message: null },
-  });
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState({ show: false, type: null, message: null });
 
-  useEffect(() => {
-    if (form) {
-      setFormData(form);
-      if (form.cards_destacados && form.cards_destacados.length > 0) {
-        setCards(form.cards_destacados);
-      }
-      if (form.stats) {
-        setStats(form.stats);
-      }
-    }
-  }, [form]);
-
-  // Array de campos de estatísticas
-  const statsFields = [
-    { label: "Posições 1 Página", key: "position" },
-    { label: "Visualizações no Google", key: "views" },
-    { label: "Cliques no site", key: "clicks" },
-    { label: "Imobiliárias parceiras", key: "partners" },
-    { label: "Imóveis cadastrados", key: "properties" },
-  ];
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-
-    // Handle card fields
-    if (name.startsWith("card_destacado_title") || name.startsWith("card_destacado_description")) {
-      let idx = 0;
-      if (name.includes("2")) {
-        idx = 1;
-      } else if (name.includes("3")) {
-        idx = 2;
-      }
-
-      setCards((prevCards) => {
-        const updatedCards = [...prevCards];
-        if (name.includes("title")) {
-          updatedCards[idx] = { ...updatedCards[idx], title: value };
-        } else if (name.includes("description")) {
-          updatedCards[idx] = { ...updatedCards[idx], description: value };
-        }
-        return updatedCards;
-      });
-    }
-    // Handle campos dentro da estrutura "sobre"
-    else if (name.startsWith("sobre.")) {
-      const field = name.split(".")[1];
-      setFormData((prev) => {
-        const newSobre = {
-          ...prev.sobre,
-          [field]: value,
-        };
-
-        // If this is an image update, trigger an immediate save
-        if (field === "image_url") {
-          updateContent("sobre", { sobre: { ...newSobre } });
-        }
-
-        return {
-          ...prev,
-          sobre: newSobre,
-        };
-      });
-    }
-    // Handle stats fields
-    else if (name.startsWith("stats.")) {
-      const fieldName = name.split(".")[1];
-      setStats((prev) => ({
-        ...prev,
-        [fieldName]: value,
-      }));
-    }
-    // Update formData for all other fields
-    else {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
-    }
-  };
-
-  const handleImageChange = (e) => {
-    const { name, value, previewUrl } = e.target;
-    // Usar previewUrl ou value, o que estiver disponível
-    const imageUrl = previewUrl || value;
-
-    if (imageUrl) {
-      // Se for um campo de imagem para a seção "sobre", atualizar o formData
-      if (name.startsWith("sobre.")) {
-        const field = name.split(".")[1];
-        setFormData((prev) => ({
-          ...prev,
-          sobre: {
-            ...prev.sobre,
-            [field]: imageUrl,
-          },
-        }));
-      }
-    }
-  };
-
-  // Função para mostrar e ocultar mensagens de status
-  const showStatusMessage = (section, type, message) => {
-    setSectionStatus((prev) => ({
+  const handleChange = (field, value) => {
+    setFormData(prev => ({
       ...prev,
-      [section]: { show: true, type, message },
+      [field]: value
     }));
-
-    // Esconde a mensagem após 5 segundos
-    setTimeout(() => {
-      setSectionStatus((prev) => ({
-        ...prev,
-        [section]: { ...prev[section], show: false },
-      }));
-    }, 5000);
   };
 
-  // Função genérica para atualizar o conteúdo
-  const updateContent = async (section, data) => {
+  const handleSave = async () => {
     try {
-      // Ativa o estado de loading para esta seção
-      setLoadingSection(section);
-
-      const payload = {};
-
-      switch (section) {
-        case "sobre":
-          payload.sobre = formData.sobre;
-          break;
-        case "stats":
-          payload.stats = stats;
-          break;
-        case "cards":
-          payload.cards_destacados = cards;
-          break;
-        default:
-          payload[section] = data;
-      }
-
-      // Adiciona um tempo mínimo de loading de 2 segundos
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      setIsSaving(true);
+      showSaveStatus("info", "Salvando dados...");
 
       const response = await fetch("/api/admin/content", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-      await fetch("/api/revalidate", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ path: "/" }),
+        body: JSON.stringify(formData),
       });
 
-      if (response.ok) {
-        showStatusMessage(
-          section,
-          "success",
-          `${section.charAt(0).toUpperCase() + section.slice(1)} atualizado com sucesso`
-        );
+      const data = await response.json();
+      
+      if (data.success) {
+        showSaveStatus("success", "Dados salvos com sucesso!");
       } else {
-        showStatusMessage(section, "error", `Erro ao atualizar ${section}`);
+        showSaveStatus("error", data.error || "Erro ao salvar dados");
       }
     } catch (error) {
-      console.error(`Erro ao atualizar ${section}:`, error);
-      showStatusMessage(section, "error", `Erro ao atualizar ${section}`);
+      console.error("Erro ao salvar:", error);
+      showSaveStatus("error", "Erro ao salvar dados");
     } finally {
-      // Desativa o estado de loading
-      setLoadingSection(null);
+      setIsSaving(false);
     }
   };
 
-  // Componente para renderizar mensagens de status
-  const StatusMessage = ({ section }) => {
-    const status = sectionStatus[section];
-    if (!status.show) return null;
+  const showSaveStatus = (type, message) => {
+    setSaveStatus({ show: true, type, message });
+    setTimeout(() => {
+      setSaveStatus({ show: false, type: null, message: null });
+    }, 5000);
+  };
 
-    return (
-      <div
-        className={`mt-4 p-3 rounded ${
-          status.type === "success" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
-        }`}
-      >
-        {status.message}
+  const sections = [
+    {
+      key: "logos-parceiros",
+      label: "Logos dos Parceiros",
+      icon: "🤝",
+      description: "Gerencie os logos das empresas parceiras que aparecem na home"
+    },
+    {
+      key: "cards-destacados", 
+      label: "Cards em Destaque",
+      icon: "⭐",
+      description: "Cards principais da seção ActionSection"
+    },
+    {
+      key: "configuracoes-home",
+      label: "Configurações Gerais",
+      icon: "⚙️", 
+      description: "Outras configurações da página inicial"
+    }
+  ];
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="bg-white p-6 rounded-lg shadow-sm border">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900">
+              🏠 Configurações da Home
+            </h2>
+            <p className="text-gray-600 mt-1">
+              Gerencie o conteúdo e elementos da página inicial
+            </p>
+          </div>
+          
+          <button
+            onClick={handleSave}
+            disabled={isSaving}
+            className={`px-6 py-2 bg-blue-600 text-white rounded-lg font-medium transition-colors ${
+              isSaving ? "opacity-50 cursor-not-allowed" : "hover:bg-blue-700"
+            }`}
+          >
+            {isSaving ? (
+              <span className="flex items-center">
+                <svg className="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Salvando...
+              </span>
+            ) : (
+              "Salvar Alterações"
+            )}
+          </button>
+        </div>
+
+        {/* Status message */}
+        {saveStatus.show && (
+          <div className={`mt-4 p-4 rounded-md ${
+            saveStatus.type === "success" ? "bg-green-100 text-green-800" :
+            saveStatus.type === "error" ? "bg-red-100 text-red-800" :
+            "bg-blue-100 text-blue-800"
+          }`}>
+            {saveStatus.message}
+          </div>
+        )}
       </div>
-    );
+
+      {/* Navigation */}
+      <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+        <div className="border-b border-gray-200">
+          <nav className="flex space-x-8 px-6" aria-label="Tabs">
+            {sections.map((section) => (
+              <button
+                key={section.key}
+                onClick={() => setActiveSection(section.key)}
+                className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                  activeSection === section.key
+                    ? "border-blue-500 text-blue-600"
+                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
+              >
+                <span className="flex items-center space-x-2">
+                  <span>{section.icon}</span>
+                  <span>{section.label}</span>
+                </span>
+              </button>
+            ))}
+          </nav>
+        </div>
+
+        <div className="p-6">
+          {/* Section Description */}
+          <div className="mb-6">
+            {sections.map((section) => 
+              activeSection === section.key && (
+                <div key={section.key} className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-blue-800 text-sm">
+                    {section.icon} {section.description}
+                  </p>
+                </div>
+              )
+            )}
+          </div>
+
+          {/* Section Content */}
+          {activeSection === "logos-parceiros" && (
+            <LogosParceirosSection 
+              form={formData} 
+              onChange={handleChange}
+            />
+          )}
+
+          {activeSection === "cards-destacados" && (
+            <CardsDestacadosSection 
+              form={formData} 
+              onChange={handleChange}
+            />
+          )}
+
+          {activeSection === "configuracoes-home" && (
+            <ConfiguracoesHomeSection 
+              form={formData} 
+              onChange={handleChange}
+            />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Componente para Cards em Destaque
+function CardsDestacadosSection({ form, onChange }) {
+  const cardsDestacados = form?.cards_destacados || [];
+
+  const adicionarCard = () => {
+    const novosCards = [...cardsDestacados, {
+      id: Date.now(),
+      titulo: "",
+      descricao: "",
+      icone: "",
+      link: ""
+    }];
+    onChange("cards_destacados", novosCards);
+  };
+
+  const removerCard = (index) => {
+    const novosCards = cardsDestacados.filter((_, i) => i !== index);
+    onChange("cards_destacados", novosCards);
+  };
+
+  const atualizarCard = (index, campo, valor) => {
+    const novosCards = [...cardsDestacados];
+    novosCards[index] = { ...novosCards[index], [campo]: valor };
+    onChange("cards_destacados", novosCards);
   };
 
   return (
-    <div className="space-y-8">
-      <Section title="Quem somos">
-        <div className="flex flex-col md:flex-row gap-8">
-          <div className="flex-1 space-y-4">
-            <InputField
-              label="Título"
-              name="sobre.titulo"
-              value={formData.sobre?.titulo || ""}
-              onChange={handleChange}
-              type="text"
-            />
-            <InputField
-              label="Subtítulo"
-              name="sobre.subtitulo"
-              value={formData.sobre?.subtitulo || ""}
-              onChange={handleChange}
-              type="text"
-            />
-            <TextareaField
-              label="Descrição"
-              name="sobre.descricao"
-              value={formData.sobre?.descricao || ""}
-              onChange={handleChange}
-            />
-          </div>
-          <div className="flex-1">
-            <ImageSection directory="home" filename="about" onChange={handleImageChange} />
-          </div>
-        </div>
-        <div className="mt-4 flex flex-col space-y-2">
-          <Button onClick={() => updateContent("sobre")} disabled={loadingSection === "sobre"}>
-            {loadingSection === "sobre" ? "Atualizando..." : "Atualizar Quem Somos"}
-          </Button>
-          <StatusMessage section="sobre" />
-        </div>
-      </Section>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-medium text-gray-900">Cards em Destaque</h3>
+        <button
+          onClick={adicionarCard}
+          className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+        >
+          + Adicionar Card
+        </button>
+      </div>
 
-      <Section title="Nossos Resultados em Números">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {statsFields.map(({ label, key }) => (
-            <InputField
-              key={key}
-              label={label}
-              name={`stats.${key}`}
-              value={stats[key] || ""}
-              onChange={handleChange}
-              type="text"
-            />
-          ))}
+      {cardsDestacados.length === 0 ? (
+        <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+          <p className="text-gray-500">Nenhum card criado ainda.</p>
         </div>
-        <div className="mt-4 flex flex-col space-y-2">
-          <Button onClick={() => updateContent("stats")} disabled={loadingSection === "stats"}>
-            {loadingSection === "stats" ? "Atualizando..." : "Atualizar Resultados"}
-          </Button>
-          <StatusMessage section="stats" />
-        </div>
-      </Section>
+      ) : (
+        <div className="space-y-4">
+          {cardsDestacados.map((card, index) => (
+            <div key={card.id || index} className="bg-gray-50 p-4 rounded-lg border">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="font-medium">Card {index + 1}</h4>
+                <button
+                  onClick={() => removerCard(index)}
+                  className="text-red-600 hover:text-red-800"
+                >
+                  🗑️ Remover
+                </button>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Título
+                  </label>
+                  <input
+                    type="text"
+                    value={card.titulo || ""}
+                    onChange={(e) => atualizarCard(index, "titulo", e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                    placeholder="Ex: Apartamentos de Luxo"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Ícone (emoji ou classe)
+                  </label>
+                  <input
+                    type="text"
+                    value={card.icone || ""}
+                    onChange={(e) => atualizarCard(index, "icone", e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                    placeholder="🏠 ou fa-home"
+                  />
+                </div>
+              </div>
 
-      <Section title="Cards Destacados">
-        <div className="flex flex-col md:flex-row gap-8">
-          {cards.map((card, idx) => (
-            <div key={idx} className="flex-1 bg-gray-50 rounded-lg p-6 space-y-4">
-              <InputField
-                label="Título"
-                name={`card_destacado_title${idx > 0 ? idx + 1 : ""}`}
-                value={card.title || ""}
-                onChange={handleChange}
-                type="text"
-              />
-              <InputField
-                label="Descrição"
-                name={`card_destacado_description${idx > 0 ? idx + 1 : ""}`}
-                value={card.description || ""}
-                onChange={handleChange}
-                type="text"
-              />
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Descrição
+                </label>
+                <textarea
+                  value={card.descricao || ""}
+                  onChange={(e) => atualizarCard(index, "descricao", e.target.value)}
+                  rows="3"
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                  placeholder="Descrição do card..."
+                />
+              </div>
+
+              <div className="mt-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Link (opcional)
+                </label>
+                <input
+                  type="url"
+                  value={card.link || ""}
+                  onChange={(e) => atualizarCard(index, "link", e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                  placeholder="https://..."
+                />
+              </div>
             </div>
           ))}
         </div>
-        <div className="mt-4 flex flex-col space-y-2">
-          <Button onClick={() => updateContent("cards")} disabled={loadingSection === "cards"}>
-            {loadingSection === "cards" ? "Atualizando..." : "Atualizar Cards Destacados"}
-          </Button>
-          <StatusMessage section="cards" />
+      )}
+    </div>
+  );
+}
+
+// Componente para Configurações Gerais da Home
+function ConfiguracoesHomeSection({ form, onChange }) {
+  return (
+    <div className="space-y-6">
+      <h3 className="text-lg font-medium text-gray-900">Configurações Gerais</h3>
+      
+      <div className="grid grid-cols-1 gap-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Meta Description da Home
+          </label>
+          <textarea
+            value={form?.meta_description || ""}
+            onChange={(e) => onChange("meta_description", e.target.value)}
+            rows="3"
+            className="w-full p-3 border border-gray-300 rounded-md"
+            placeholder="Descrição para SEO da página inicial..."
+          />
         </div>
-      </Section>
 
-      <Section title="Testemunhos">
-        <TestemunhosSection form={formData} onChange={handleChange} />
-      </Section>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Palavras-chave (SEO)
+          </label>
+          <input
+            type="text"
+            value={form?.keywords || ""}
+            onChange={(e) => onChange("keywords", e.target.value)}
+            className="w-full p-3 border border-gray-300 rounded-md"
+            placeholder="imobiliárias boutique, alto padrão, apartamentos de luxo..."
+          />
+        </div>
 
-      <Section title="Logos dos Parceiros">
-        <LogosParceirosSection form={formData} onChange={handleChange} />
-      </Section>
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <h4 className="font-medium text-yellow-800 mb-2">💡 Outras configurações</h4>
+          <p className="text-yellow-700 text-sm">
+            Configurações adicionais da home podem ser adicionadas aqui conforme necessário.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
