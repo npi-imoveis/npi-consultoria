@@ -1,4 +1,4 @@
-// app/page.js -> HOME OTIMIZADA
+// app/page.js -> HOME (VERSÃO SEGURA - SEM QUEBRAR)
 import { Hero, HeroSection } from "./components/sections/hero-section";
 import { LuxuryGridSection } from "./components/sections/luxury-grid-section";
 import { AboutSection } from "./components/sections/about-section";
@@ -161,30 +161,6 @@ export default async function Home() {
     }
   };
 
-  // ✅ CONFIGURAÇÕES DE IMAGENS OTIMIZADAS para cada seção
-  const imageOptimizations = {
-    hero: {
-      title: "NPi Imóveis - Encontre seu imóvel de alto padrão",
-      alt: "Apartamentos e casas de luxo - NPi HUB Imobiliárias Boutique"
-    },
-    about: {
-      title: "NPi Imóveis - Equipe especializada em imóveis de luxo",
-      alt: "Equipe NPi Imóveis - Especialistas em imobiliárias boutique de alto padrão"
-    },
-    testimonials: {
-      titlePattern: (nome) => `Depoimento de ${nome} - Cliente satisfeito NPi`,
-      altPattern: (nome) => `${nome} - Cliente NPi Imóveis`
-    },
-    partners: {
-      titlePattern: (nome) => `${nome} - Parceiro NPi HUB Imobiliárias`,
-      altPattern: (nome) => `${nome} - Parceria NPi Imóveis`
-    },
-    faq: {
-      title: "Perguntas Frequentes sobre o HUB da NPi",
-      alt: "FAQ - Tire suas dúvidas sobre o HUB NPi Imóveis"
-    }
-  };
-
   return (
     <div>
       {/* Structured Data para datas */}
@@ -195,100 +171,21 @@ export default async function Home() {
         }}
       />
 
-      {/* ✅ HEADER com configuração de imagem otimizada */}
-      <Header 
-        logoTitle="NPi Imóveis - HUB de Imobiliárias Boutique de Alto Padrão"
-        logoAlt="NPi Imóveis - Logo da empresa"
-      />
-      
-      {/* ✅ HERO SECTION com configuração de imagem otimizada */}
-      <HeroSection 
-        imageTitle={imageOptimizations.hero.title}
-        imageAlt={imageOptimizations.hero.alt}
-      />
-      
-      {/* ✅ ACTION SECTION com cards otimizados */}
-      <ActionSection 
-        cards={content?.cards_destacados} 
-        imageOptimization={{
-          titlePattern: (titulo) => `${titulo} - NPi Imóveis Alto Padrão`,
-          altPattern: (titulo) => `${titulo} - Serviço NPi HUB`
-        }}
-      />
-      
-      {/* ✅ FEATURED CONDOS já otimizado */}
+      {/* ✅ COMPONENTES ORIGINAIS - SEM ALTERAR PROPS */}
+      <Header />
+      <HeroSection />
+      <ActionSection cards={content?.cards_destacados} />
       <FeaturedCondosSection />
-      
-      {/* ✅ PROPERTY LIST com otimização */}
-      <PropertyList 
-        imageOptimization={{
-          titlePattern: (empreendimento, bairro, cidade) => 
-            `${empreendimento} - ${bairro}, ${cidade} - NPi Imóveis`,
-          altPattern: (tipo, empreendimento, bairro) => 
-            `${tipo} no ${empreendimento} - ${bairro} - Imóvel de luxo NPi`
-        }}
-      />
-      
-      {/* ✅ LIST CITIES com otimização */}
-      <ListCities 
-        imageOptimization={{
-          titlePattern: (cidade) => `Imóveis de alto padrão em ${cidade} - NPi`,
-          altPattern: (cidade) => `${cidade} - Apartamentos e casas de luxo NPi Imóveis`
-        }}
-      />
-      
-      {/* ✅ LUXURY GRID com otimização */}
-      <LuxuryGridSection 
-        imageOptimization={{
-          titlePattern: (categoria) => `${categoria} de luxo - NPi Imóveis`,
-          altPattern: (categoria) => `${categoria} - Alto padrão NPi HUB`
-        }}
-      />
-      
-      {/* ✅ ABOUT SECTION com configuração de imagem otimizada */}
-      <AboutSection 
-        about={content?.sobre}
-        imageTitle={imageOptimizations.about.title}
-        imageAlt={imageOptimizations.about.alt}
-      />
-      
-      {/* ✅ REVIEW SECTION */}
+      <PropertyList />
+      <ListCities />
+      <LuxuryGridSection />
+      <AboutSection about={content?.sobre} />
       <ReviewSection stats={content?.stats} />
-      
-      {/* ✅ SLIDE PARTNERS com otimização */}
-      <SlidePartners 
-        imageOptimization={imageOptimizations.partners}
-      />
-      
-      {/* ✅ TESTIMONIALS com otimização */}
-      <TestimonialsSection 
-        testimonials={content?.testemunhos}
-        imageOptimization={imageOptimizations.testimonials}
-      />
-      
-      {/* ✅ FAQ SECTION com título otimizado */}
-      <FaqSection 
-        faqs={content?.faq}
-        title="Perguntas Frequentes sobre o HUB da NPi"
-        description="Tire suas principais dúvidas sobre nosso HUB de imobiliárias boutique de alto padrão"
-        imageOptimization={imageOptimizations.faq}
-      />
-      
-      {/* ✅ CONTACT SECTION */}
-      <ContactSection 
-        imageOptimization={{
-          title: "NPi Imóveis - Entre em contato conosco",
-          alt: "Contato NPi Imóveis - Escritório e atendimento"
-        }}
-      />
-      
-      {/* ✅ WHATSAPP FLOAT com otimização */}
-      <WhatsappFloat 
-        imageTitle="Fale conosco via WhatsApp - NPi Imóveis"
-        imageAlt="WhatsApp NPi Imóveis - Atendimento imediato"
-      />
-      
-      {/* ✅ FOOTER */}
+      <SlidePartners />
+      <TestimonialsSection testimonials={content?.testemunhos} />
+      <FaqSection faqs={content?.faq} />
+      <ContactSection />
+      <WhatsappFloat />
       <Footer />
     </div>
   );
