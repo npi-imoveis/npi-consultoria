@@ -1,5 +1,5 @@
+// *components/sections/featured-condos-section.js*
 "use client";
-
 import { useEffect, useRef, useState } from "react";
 import CustomCard from "../ui/custom-card";
 import { TitleSection } from "../ui/title-section";
@@ -15,7 +15,6 @@ export function FeaturedCondosSection() {
     async function fetchCondominios() {
       try {
         const response = await getCondominioDestacado();
-
         if (response && response.data && Array.isArray(response.data.data)) {
           setCondominios(response.data.data);
         } else if (response && response.data && Array.isArray(response.data)) {
@@ -34,6 +33,29 @@ export function FeaturedCondosSection() {
     }
     fetchCondominios();
   }, []);
+
+  // ✅ FUNÇÃO para gerar title otimizado da imagem
+  const generateImageTitle = (condominio) => {
+    const nome = condominio.Empreendimento || "Condomínio";
+    const bairro = condominio.BairroComercial || condominio.Bairro || "";
+    const cidade = condominio.Cidade || "São Paulo";
+    
+    if (bairro) {
+      return `${nome} - ${bairro}, ${cidade} - Condomínio de Alto Padrão NPi`;
+    }
+    return `${nome} - ${cidade} - Condomínio de Alto Padrão NPi`;
+  };
+
+  // ✅ FUNÇÃO para gerar alt otimizado da imagem  
+  const generateImageAlt = (condominio) => {
+    const nome = condominio.Empreendimento || "Condomínio";
+    const bairro = condominio.BairroComercial || condominio.Bairro || "";
+    
+    if (bairro) {
+      return `${nome} - Condomínio de alto padrão em ${bairro} - NPi Imóveis`;
+    }
+    return `${nome} - Condomínio de alto padrão - NPi Imóveis`;
+  };
 
   return (
     <section className="w-full bg-zinc-100">
@@ -59,7 +81,7 @@ export function FeaturedCondosSection() {
             ))
           ) : condominios && condominios.length > 0 ? (
             // Renderiza os condomínios quando disponíveis
-            condominios.map((condominio) => {
+            condominios.map((condominio, index) => {
               // Verificar se o condomínio tem fotos
               const temFoto =
                 condominio.Foto &&
@@ -77,6 +99,10 @@ export function FeaturedCondosSection() {
                   description={condominio.Endereco || "Endereço não disponível"}
                   sign="Condomínio"
                   slug={condominio.Slug}
+                  // ✅ NOVAS PROPS para otimização das imagens
+                  imageTitle={generateImageTitle(condominio)}
+                  imageAlt={generateImageAlt(condominio)}
+                  loading={index < 4 ? "eager" : "lazy"} // Primeiras 4 imagens carregam imediatamente
                 />
               );
             })
