@@ -182,8 +182,11 @@ export async function generateMetadata({ params }) {
         ],
       },
       other: {
-        'article:modified_time': modifiedDate,
         'article:published_time': modifiedDate,
+        'article:modified_time': modifiedDate,
+        'article:author': 'NPI Consultoria',
+        'article:section': 'Imobiliário',
+        'article:tag': `${imovel.Categoria}, ${imovel.BairroComercial}, ${imovel.Cidade}, imóvel à venda`,
         'og:updated_time': modifiedDate,
         'last-modified': modifiedDate,
         'date': modifiedDate,
@@ -242,8 +245,26 @@ export default async function ImovelPage({ params }) {
     
     console.log('🔍 Data convertida no componente:', modifiedDate);
 
+    // Structured Data adicional para datas
+    const structuredDataDates = {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      url: currentUrl,
+      datePublished: modifiedDate,
+      dateModified: modifiedDate,
+      author: {
+        "@type": "Organization",
+        name: "NPI Consultoria"
+      },
+      publisher: {
+        "@type": "Organization",
+        name: "NPI Consultoria"
+      }
+    };
+
     return (
       <section className="w-full bg-white pb-32 pt-20">
+        {/* Structured Data para o imóvel */}
         <StructuredDataApartment
           title={imovel.Empreendimento}
           price={imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}
@@ -251,6 +272,14 @@ export default async function ImovelPage({ params }) {
           address={`${imovel.TipoEndereco} ${imovel.Endereco}, ${imovel.Numero}, ${imovel.BairroComercial}, ${imovel.Cidade}`}
           url={currentUrl}
           image={imovel.Foto}
+        />
+
+        {/* Structured Data para datas */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(structuredDataDates),
+          }}
         />
 
         <ExitIntentModal condominio={imovel.Empreendimento} link={currentUrl} />
