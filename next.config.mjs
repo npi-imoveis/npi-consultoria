@@ -77,6 +77,16 @@ const nextConfig = {
     return [
       // Redirects de condominios (slugs antigos para novos)
 
+       {
+        source: "/avenida-jamaris-603",
+        destination: "/edificio-michelangelo",
+        permanent: true
+      },
+      {
+        source: "/east-blue",
+        destination: "/east-blue-residences-tatuape",
+        permanent: true
+      },
       {
         source: "/casas-em-condominio-gramado",
         destination: "/casa-punta-gramado-rs",
