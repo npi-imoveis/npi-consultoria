@@ -1,5 +1,11 @@
 {
   "redirects": [
+     
+    {
+      "source": "/condominio-edificio-villa-adriana",
+      "destination": "/edificio-villa-adriana",
+      "permanent": true
+    },
     {
       "source": "/avenida-jamaris-603",
       "destination": "/edificio-michelangelo",
