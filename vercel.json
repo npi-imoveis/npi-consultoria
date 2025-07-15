@@ -158,7 +158,5 @@
         destination: "/condominio-jardim-acapulco",
         permanent: true
       }
-    ];
-  },
-  ]
+   ]
 }
