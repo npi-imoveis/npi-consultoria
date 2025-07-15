@@ -1,4 +1,4 @@
-// middleware.js - CORREÇÃO FINAL
+// middleware.js - VERSÃO SIMPLIFICADA que funciona com skipTrailingSlashRedirect
 import { NextResponse } from "next/server";
 import { getCityValidSlugsSync, converterSlugCidadeSync } from "@/app/utils/url-slugs";
 
@@ -10,13 +10,14 @@ export async function middleware(request) {
   console.log(`🔍 [MIDDLEWARE] Processando: ${pathname}`);
   console.log(`🔍 [MIDDLEWARE] Origin: ${origin}`);
 
-  // 🔧 CORREÇÃO DEFINITIVA: URLs de imóveis com ou sem trailing slash
+  // ✅ SOLUÇÃO: Agora o Next.js NÃO interfere mais - middleware tem controle total
+  // URLs de imóveis sem slug - redirect DIRETO para slug completo
   const imovelMatch = pathname.match(/^\/imovel-(\d+)\/?$/);
   if (imovelMatch) {
     const id = imovelMatch[1];
     const hasTrailingSlash = pathname.endsWith('/');
     
-    console.log(`🔍 [MIDDLEWARE] 🔧 Imóvel ${hasTrailingSlash ? 'COM' : 'SEM'} trailing slash: ${pathname}`);
+    console.log(`🔍 [MIDDLEWARE] 🔧 Imóvel detectado: ${pathname}`);
     
     try {
       const apiUrl = new URL(`/api/imoveis/${id}`, origin);
@@ -30,9 +31,9 @@ export async function middleware(request) {
         const imovel = data.data;
         
         if (imovel?.Slug) {
-          // ✅ REDIRECT DIRETO - independente se tem ou não trailing slash
+          // ✅ REDIRECT DIRETO - sem cascata!
           const finalUrl = `/imovel-${id}/${imovel.Slug}`;
-          console.log(`🔍 [MIDDLEWARE] ✅ Redirecionamento DIRETO (301): ${pathname} → ${finalUrl}`);
+          console.log(`🔍 [MIDDLEWARE] ✅ Redirecionamento ÚNICO (301): ${pathname} → ${finalUrl}`);
           return NextResponse.redirect(new URL(finalUrl, origin), 301);
         } else if (imovel?.Empreendimento) {
           const slugGerado = imovel.Empreendimento
@@ -45,9 +46,8 @@ export async function middleware(request) {
             .replace(/^-|-$/g, '')
             || `imovel-${id}`;
           
-          // ✅ REDIRECT DIRETO - independente se tem ou não trailing slash
           const finalUrl = `/imovel-${id}/${slugGerado}`;
-          console.log(`🔍 [MIDDLEWARE] ✅ Redirecionamento DIRETO (301 - slug gerado): ${pathname} → ${finalUrl}`);
+          console.log(`🔍 [MIDDLEWARE] ✅ Redirecionamento ÚNICO (301 - slug gerado): ${pathname} → ${finalUrl}`);
           return NextResponse.redirect(new URL(finalUrl, origin), 301);
         }
       }
@@ -249,8 +249,8 @@ export async function middleware(request) {
 export const config = {
   matcher: [
     /*
-     * ✅ CORREÇÃO CRÍTICA: Matcher mais amplo para capturar todas URLs
-     * Isso garante que QUALQUER URL seja processada pelo middleware primeiro
+     * ✅ AGORA FUNCIONA: Com skipTrailingSlashRedirect=true, 
+     * o middleware tem controle total sobre trailing slashes
      */
     '/((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap).*)',
   ],
