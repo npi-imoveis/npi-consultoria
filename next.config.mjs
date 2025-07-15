@@ -1,6 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  trailingSlash: false, // Volta para o padrão - middleware gerencia tudo
+  trailingSlash: false, // Mantém sua configuração atual
+  
+  // ✅ SOLUÇÃO DEFINITIVA: Desabilita redirects automáticos de trailing slash
+  experimental: {
+    skipTrailingSlashRedirect: true, // Deixa o middleware gerenciar tudo
+  },
   
   images: {
     remotePatterns: [
@@ -77,8 +82,9 @@ const nextConfig = {
   },
   
   async redirects() {
+    // ✅ Agora pode voltar com seus redirects específicos aqui se quiser
     return [
-      // Adicionar redirects aqui quando necessário
+      // Seus redirects manuais específicos podem ficar aqui
     ];
   },
   
