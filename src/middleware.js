@@ -1,4 +1,4 @@
-// middleware.js
+// middleware.js - VERSÃO CORRIGIDA
 import { NextResponse } from "next/server";
 import { getCityValidSlugsSync, converterSlugCidadeSync } from "@/app/utils/url-slugs";
 
@@ -6,18 +6,26 @@ export async function middleware(request) {
   const url = request.nextUrl.clone();
   const { pathname, origin } = url;
 
-
   console.log(`🔍 [MIDDLEWARE] =================== INÍCIO ===================`);
   console.log(`🔍 [MIDDLEWARE] Processando: ${pathname}`);
   console.log(`🔍 [MIDDLEWARE] Origin: ${origin}`);
 
-  // 🔧 CORREÇÃO: URLs de imóveis sem slug - redirect DIRETO para slug completo (SEM trailing slash)
-  const imovelMatch = pathname.match(/^\/imovel-(\d+)\/?$/);
+  // 🔧 CORREÇÃO APLICADA: Processa trailing slash PRIMEIRO
+  // Remove trailing slash ANTES de qualquer lógica
+  if (pathname.endsWith('/') && pathname !== '/') {
+    const cleanPath = pathname.slice(0, -1);
+    console.log(`🔍 [MIDDLEWARE] 🔧 Removendo trailing slash: ${pathname} → ${cleanPath}`);
+    url.pathname = cleanPath;
+    return NextResponse.redirect(url, 308);
+  }
+
+  // 🔧 CORREÇÃO: URLs de imóveis sem slug - redirect DIRETO para slug completo
+  // AGORA SÓ PROCESSA URLs SEM trailing slash (já foi removida acima)
+  const imovelMatch = pathname.match(/^\/imovel-(\d+)$/);
   if (imovelMatch) {
     const id = imovelMatch[1];
-    const hasTrailingSlash = pathname.endsWith('/');
     
-    console.log(`🔍 [MIDDLEWARE] 🔧 Imóvel ${hasTrailingSlash ? 'COM' : 'SEM'} trailing slash: ${pathname}`);
+    console.log(`🔍 [MIDDLEWARE] 🔧 Imóvel SEM trailing slash: ${pathname}`);
     
     try {
       const apiUrl = new URL(`/api/imoveis/${id}`, origin);
@@ -31,9 +39,8 @@ export async function middleware(request) {
         const imovel = data.data;
         
         if (imovel?.Slug) {
-          const finalUrl = `/imovel-${id}/${imovel.Slug}`; // SEM trailing slash
+          const finalUrl = `/imovel-${id}/${imovel.Slug}`;
           console.log(`🔍 [MIDDLEWARE] ✅ Redirecionamento DIRETO (301): ${pathname} → ${finalUrl}`);
-          // Forçar status 301 explicitamente
           return NextResponse.redirect(new URL(finalUrl, origin), 301);
         } else if (imovel?.Empreendimento) {
           const slugGerado = imovel.Empreendimento
@@ -46,9 +53,8 @@ export async function middleware(request) {
             .replace(/^-|-$/g, '')
             || `imovel-${id}`;
           
-          const finalUrl = `/imovel-${id}/${slugGerado}`; // SEM trailing slash
+          const finalUrl = `/imovel-${id}/${slugGerado}`;
           console.log(`🔍 [MIDDLEWARE] ✅ Redirecionamento DIRETO (301 - slug gerado): ${pathname} → ${finalUrl}`);
-          // Forçar status 301 explicitamente
           return NextResponse.redirect(new URL(finalUrl, origin), 301);
         }
       }
@@ -233,7 +239,6 @@ export async function middleware(request) {
       if (imovel?.Slug && imovel.Slug !== currentSlug) {
         const correctUrl = `/imovel-${id}/${imovel.Slug}`;
         console.log(`🔍 [MIDDLEWARE] ✅ Redirecionando slug antigo para correto (301): ${currentSlug} → ${imovel.Slug}`);
-        // Forçar status 301 explicitamente
         return NextResponse.redirect(new URL(correctUrl, origin), 301);
       }
     }
@@ -251,7 +256,7 @@ export async function middleware(request) {
 export const config = {
   matcher: [
     '/imovel-:id(\\d+)',           // /imovel-1715 (sem slug)
-    '/imovel-:id(\\d+)/',          // /imovel-1715/ (sem slug, com trailing slash)
+    '/imovel-:id(\\d+)/',          // /imovel-1715/ (sem slug, com trailing slash) 
     '/imovel-:id(\\d+)/:slug*',    // /imovel-1715/helbor-brooklin (com slug)
     '/buscar/:finalidade/:categoria/:cidade*', // URLs SEO-friendly
   ],
