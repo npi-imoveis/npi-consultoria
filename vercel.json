@@ -145,6 +145,6 @@
         source: "/residencial-acapulco-guaruja",
         destination: "/condominio-jardim-acapulco",
         permanent: true
-      }
+      },
    ]
 }
