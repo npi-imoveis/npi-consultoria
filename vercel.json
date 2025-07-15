@@ -1,6 +1,10 @@
 {
   "redirects": [
-    
+    {
+      "source": "/avenida-jamaris-603",
+      "destination": "/edificio-michelangelo",
+      "permanent": true
+    },
     {
       "source": "/east-blue",
       "destination": "/east-blue-residences-tatuape",
