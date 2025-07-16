@@ -32,15 +32,38 @@ export function ImageGallery({ imovel }) {
 
   const slug = formatterSlug(imovel.Empreendimento);
 
-  // Ensure Foto is an array and handle edge cases
+  // ✅ ORDENAÇÃO CORRIGIDA: Primeiro por ORDEM, depois por Destaque
   const images =
     Array.isArray(imovel.Foto) && imovel.Foto.length > 0
-      ? [...imovel.Foto].sort((a, b) => {
-          if (a.Destaque === "Sim" && b.Destaque !== "Sim") return -1;
-          if (a.Destaque !== "Sim" && b.Destaque === "Sim") return 1;
-          return 0;
-        })
+      ? [...imovel.Foto]
+          // PASSO 1: Ordenar por ORDEM primeiro
+          .sort((a, b) => {
+            const ordemA = parseInt(a.ORDEM || a.Ordem || a.ordem || 999);
+            const ordemB = parseInt(b.ORDEM || b.Ordem || b.ordem || 999);
+            
+            console.log(`[IMAGE-GALLERY] 🔢 Ordenando: ${ordemA} vs ${ordemB}`);
+            return ordemA - ordemB;
+          })
+          // PASSO 2: Depois aplicar lógica de Destaque (mantém ordem, mas prioriza destaque)
+          .sort((a, b) => {
+            const destaqueA = a.Destaque === "Sim" || a.DESTAQUE === 1 || a.DESTAQUE === "1" || a.DESTAQUE === true;
+            const destaqueB = b.Destaque === "Sim" || b.DESTAQUE === 1 || b.DESTAQUE === "1" || b.DESTAQUE === true;
+            
+            if (destaqueA && !destaqueB) return -1;
+            if (!destaqueA && destaqueB) return 1;
+            return 0; // Mantém ordem original se ambos têm mesmo status de destaque
+          })
       : [];
+
+  console.log(`[IMAGE-GALLERY] 📸 Total de fotos processadas: ${images.length}`);
+  if (images.length > 0) {
+    console.log(`[IMAGE-GALLERY] 📸 Primeira foto:`, {
+      nome: images[0].Nome || images[0].nome || 'sem-nome',
+      ordem: images[0].ORDEM || images[0].Ordem || images[0].ordem,
+      destaque: images[0].Destaque || images[0].DESTAQUE,
+      url: images[0].Foto?.substring(0, 50) + '...'
+    });
+  }
 
   if (images.length === 0) {
     // Return a placeholder or default image if no images are available
@@ -159,7 +182,7 @@ export function ImageGallery({ imovel }) {
             Ver todas as {images.length} fotos
           </button>
         </div>
-      )}
+        )}
 
       {/* Modal */}
       {isModalOpen && (
