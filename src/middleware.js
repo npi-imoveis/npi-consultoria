@@ -1,4 +1,4 @@
-// middleware.js - VERSÃO SIMPLIFICADA que funciona com skipTrailingSlashRedirect
+// middleware.js - VERSÃO CORRIGIDA para URLs únicas
 import { NextResponse } from "next/server";
 import { getCityValidSlugsSync, converterSlugCidadeSync } from "@/app/utils/url-slugs";
 
@@ -10,7 +10,18 @@ export async function middleware(request) {
   console.log(`🔍 [MIDDLEWARE] Processando: ${pathname}`);
   console.log(`🔍 [MIDDLEWARE] Origin: ${origin}`);
 
-  // ✅ SOLUÇÃO: Agora o Next.js NÃO interfere mais - middleware tem controle total
+  // ✅ NOVO: Bloquear formato /imovel/ID/slug e redirecionar para /imovel-ID/slug
+  const formatoErradoMatch = pathname.match(/^\/imovel\/(\d+)\/(.+)$/);
+  if (formatoErradoMatch) {
+    const [, id, slug] = formatoErradoMatch;
+    const formatoCorreto = `/imovel-${id}/${slug}`;
+    
+    console.log(`🔍 [MIDDLEWARE] ❌ Formato incorreto detectado: ${pathname}`);
+    console.log(`🔍 [MIDDLEWARE] ✅ Redirecionando para formato correto (301): ${pathname} → ${formatoCorreto}`);
+    
+    return NextResponse.redirect(new URL(formatoCorreto, origin), 301);
+  }
+
   // URLs de imóveis sem slug - redirect DIRETO para slug completo
   const imovelMatch = pathname.match(/^\/imovel-(\d+)\/?$/);
   if (imovelMatch) {
