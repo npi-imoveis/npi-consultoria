@@ -348,20 +348,22 @@ export const useImovelForm = () => {
     setShowImageModal(true);
   }, []);
 
-  // Função para adicionar uma imagem manualmente
+  // ✅ FUNÇÃO CORRIGIDA: addSingleImage - SEM campo Ordem
   const addSingleImage = useCallback(() => {
-    const newImageCode = Date.now().toString(); // Gera um código único baseado no timestamp
+    console.log("⚙️ ADMIN - Adicionando nova imagem");
+    const newImageCode = Date.now().toString();
     setFormData((prevData) => {
       const newPhoto = {
         Codigo: newImageCode,
         Destaque: "Nao",
-        Foto: "", // URL da imagem será adicionada pelo usuário
+        Foto: "",
         isUploading: false,
-        Ordem: Array.isArray(prevData.Foto) ? prevData.Foto.length + 1 : 1, // ✅ RESTAURADO: Campo Ordem
+        // ✅ REMOVIDO: Campo Ordem - usa posição natural do array
       };
 
-      // Handle both array and empty cases
       const updatedFotos = Array.isArray(prevData.Foto) ? [...prevData.Foto, newPhoto] : [newPhoto];
+      
+      console.log("⚙️ ADMIN - Photos após adicionar:", updatedFotos);
 
       return {
         ...prevData,
@@ -375,12 +377,11 @@ export const useImovelForm = () => {
     setFormData((prevData) => {
       if (!Array.isArray(prevData.Foto)) return prevData;
 
-      // Atualiza apenas a imagem com o Codigo correspondente
       const updatedFotos = prevData.Foto.map((photo) =>
         photo.Codigo === codigo ? { ...photo, [field]: value } : photo
       );
 
-      console.log("Dados UpdatedFotos", updatedFotos);
+      console.log("⚙️ ADMIN - Photos após update:", updatedFotos);
 
       return {
         ...prevData,
@@ -389,31 +390,28 @@ export const useImovelForm = () => {
     });
   }, []);
 
-  // Função para remover uma imagem
+  // ✅ FUNÇÃO CORRIGIDA: removeImage - SEM reordenação
   const removeImage = useCallback((codigo) => {
     if (!window.confirm("Tem certeza que deseja remover esta imagem?")) return;
 
+    console.log("⚙️ ADMIN - Removendo imagem:", codigo);
     setFormData((prevData) => {
       if (!Array.isArray(prevData.Foto)) return prevData;
 
-      // Filter out the photo with the given codigo
       const updatedFotos = prevData.Foto.filter((photo) => photo.Codigo !== codigo);
-
-      // ✅ RESTAURADO: Update the order of remaining photos
-      const reorderedFotos = updatedFotos.map((photo, index) => ({
-        ...photo,
-        Ordem: index + 1,
-      }));
+      
+      console.log("⚙️ ADMIN - Photos após remover:", updatedFotos);
 
       return {
         ...prevData,
-        Foto: reorderedFotos, // ✅ RESTAURADO: usa reorderedFotos
+        Foto: updatedFotos,
       };
     });
   }, []);
 
   // Função para definir uma imagem como destaque
   const setImageAsHighlight = useCallback((codigo) => {
+    console.log("⚙️ ADMIN - Definindo destaque:", codigo);
     setFormData((prevData) => {
       if (!Array.isArray(prevData.Foto)) return prevData;
 
@@ -422,6 +420,8 @@ export const useImovelForm = () => {
         Destaque: photo.Codigo === codigo ? "Sim" : "Nao",
       }));
 
+      console.log("⚙️ ADMIN - Photos após definir destaque:", updatedFotos);
+
       return {
         ...prevData,
         Foto: updatedFotos,
@@ -429,35 +429,25 @@ export const useImovelForm = () => {
     });
   }, []);
 
-  // ✅ RESTAURADO: Função para alterar a posição da imagem (do backup)
+  // ✅ FUNÇÃO CORRIGIDA: changeImagePosition - move no array sem mexer em campo Ordem
   const changeImagePosition = useCallback((codigo, newPosition) => {
+    console.log("⚙️ ADMIN - Mudando posição:", codigo, "para posição:", newPosition);
     setFormData((prevData) => {
       if (!Array.isArray(prevData.Foto)) return prevData;
 
-      // Sort photos by their order
-      const sortedPhotos = [...prevData.Foto].sort((a, b) => {
-        const orderA = a.Ordem || prevData.Foto.findIndex((p) => p.Codigo === a.Codigo) + 1;
-        const orderB = b.Ordem || prevData.Foto.findIndex((p) => p.Codigo === b.Codigo) + 1;
-        return orderA - orderB;
-      });
-
-      // Find current index of the photo
-      const currentIndex = sortedPhotos.findIndex((photo) => photo.Codigo === codigo);
+      const currentIndex = prevData.Foto.findIndex((photo) => photo.Codigo === codigo);
       if (currentIndex === -1 || currentIndex === newPosition - 1) return prevData;
 
-      // Create a new array with the photo in the new position
-      const movedPhoto = sortedPhotos.splice(currentIndex, 1)[0];
-      sortedPhotos.splice(newPosition - 1, 0, movedPhoto);
+      // Criar novo array com item movido
+      const newFotos = [...prevData.Foto];
+      const [movedPhoto] = newFotos.splice(currentIndex, 1);
+      newFotos.splice(newPosition - 1, 0, movedPhoto);
 
-      // ✅ RESTAURADO: Update all orders
-      const reorderedPhotos = sortedPhotos.map((photo, index) => ({
-        ...photo,
-        Ordem: index + 1,
-      }));
+      console.log("⚙️ ADMIN - Photos após mover posição:", newFotos);
 
       return {
         ...prevData,
-        Foto: reorderedPhotos,
+        Foto: newFotos,
       };
     });
   }, []);
@@ -486,27 +476,29 @@ export const useImovelForm = () => {
     });
   }, [formData]);
 
+  // ✅ FUNÇÃO CORRIGIDA: handleImagesUploaded - SEM campo Ordem
   const handleImagesUploaded = (novasImagens) => {
     if (!novasImagens || !Array.isArray(novasImagens) || novasImagens.length === 0) {
-      return; // Não fazer nada se não receber imagens
+      return;
     }
 
+    console.log("⚙️ ADMIN - Upload de imagens:", novasImagens);
     setFormData((prevData) => {
-      // Criar array existente ou vazio se não existir
       const fotosExistentes = Array.isArray(prevData.Foto) ? [...prevData.Foto] : [];
 
-      // Para cada imagem nova, criar um objeto com estrutura correta
       const novasFotos = novasImagens.map((image, index) => ({
         Codigo: Date.now().toString() + Math.random().toString(36).substr(2, 5),
         Foto: image.Foto,
         Destaque: "Nao",
-        Ordem: fotosExistentes.length + index + 1, // ✅ RESTAURADO: Campo Ordem
+        // ✅ REMOVIDO: Campo Ordem - usa posição natural do array
       }));
 
-      // Retornar state atualizado com ARRAY concatenado
+      const resultado = [...fotosExistentes, ...novasFotos];
+      console.log("⚙️ ADMIN - Photos após upload:", resultado);
+
       return {
         ...prevData,
-        Foto: [...fotosExistentes, ...novasFotos],
+        Foto: resultado,
       };
     });
   };
