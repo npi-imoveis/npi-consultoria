@@ -100,41 +100,58 @@ const ImagesSection = memo(({
     }
   };
 
-  // ✅ ORDENAÇÃO RESTAURADA DO BACKUP + Destaque melhorado
+  // ✅ ORDENAÇÃO CORRIGIDA: Usar campo ORDEM do banco + destaque primeiro
   const sortedPhotos = formData.Foto
-    ? [...formData.Foto]
-        // PASSO 1: Ordenar por Ordem (como no backup) ou usar índice como fallback
-        .sort((a, b) => {
-          const orderA = a.Ordem || formData.Foto.indexOf(a) + 1;
-          const orderB = b.Ordem || formData.Foto.indexOf(b) + 1;
-          return orderA - orderB;
-        })
-        // PASSO 2: Mover foto destaque para primeira posição (melhoria nova)
-        .sort((a, b) => {
-          const destaqueA = a.Destaque === "Sim";
-          const destaqueB = b.Destaque === "Sim";
-          
-          if (destaqueA && !destaqueB) return -1; // Destaque vai primeiro
-          if (!destaqueA && destaqueB) return 1;
-          
-          // Se ambos têm mesmo status de destaque, manter ordem original
-          return 0;
-        })
-    : [];
+    ? (() => {
+        console.log(`[ADMIN-IMAGES] 🔍 Dados originais:`, formData.Foto.slice(0, 3).map(f => ({
+          codigo: f.Codigo,
+          ordem: f.Ordem,
+          destaque: f.Destaque
+        })));
 
-  console.log(`[ADMIN-IMAGES] 📸 Fotos ordenadas (BACKUP+DESTAQUE):`, {
-    total: sortedPhotos.length,
-    primeira: sortedPhotos[0] ? {
-      codigo: sortedPhotos[0].Codigo,
-      ordem: sortedPhotos[0].Ordem,
-      destaque: sortedPhotos[0].Destaque
-    } : null,
-    primeiras3: sortedPhotos.slice(0, 3).map(f => ({
-      codigo: f.Codigo,
-      ordem: f.Ordem,
-      destaque: f.Destaque
-    }))
-  });
+        // PASSO 1: Ordenar por campo ORDEM do banco (ordem original da migração)
+        const fotosOrdenadas = [...formData.Foto].sort((a, b) => {
+          const ordemA = parseInt(a.Ordem) || 999999; // Fotos sem ordem vão para o final
+          const ordemB = parseInt(b.Ordem) || 999999;
+          return ordemA - ordemB;
+        });
+
+        console.log(`[ADMIN-IMAGES] 📋 Após ordenação por ORDEM:`, fotosOrdenadas.slice(0, 5).map(f => ({
+          codigo: f.Codigo,
+          ordem: f.Ordem,
+          destaque: f.Destaque
+        })));
+
+        // PASSO 2: Encontrar foto de destaque
+        const fotoDestaque = fotosOrdenadas.find(foto => foto.Destaque === "Sim");
+        
+        // PASSO 3: Se não há foto de destaque, retornar ordem do banco
+        if (!fotoDestaque) {
+          console.log(`[ADMIN-IMAGES] ⚠️ Nenhuma foto de destaque encontrada, mantendo ordem do campo ORDEM`);
+          return fotosOrdenadas;
+        }
+        
+        // PASSO 4: Remover foto de destaque da posição original
+        const fotosSemDestaque = fotosOrdenadas.filter(foto => foto.Destaque !== "Sim");
+        
+        // PASSO 5: Colocar foto de destaque na primeira posição + demais na ordem do banco
+        const resultado = [fotoDestaque, ...fotosSemDestaque];
+        
+        console.log(`[ADMIN-IMAGES] ✅ Foto de destaque movida para primeira posição:`, {
+          codigo: fotoDestaque.Codigo,
+          ordem: fotoDestaque.Ordem,
+          destaque: fotoDestaque.Destaque
+        });
+
+        console.log(`[ADMIN-IMAGES] 📸 Resultado final (primeiras 5):`, resultado.slice(0, 5).map(f => ({
+          codigo: f.Codigo,
+          ordem: f.Ordem,
+          destaque: f.Destaque
+        })));
+        
+        return resultado;
+      })()
+    : [];
 
   return (
     <FormSection title="Imagens do Imóvel" className="mb-8">
