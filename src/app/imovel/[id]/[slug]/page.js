@@ -18,152 +18,6 @@ import { Apartment as StructuredDataApartment } from "@/app/components/structure
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 import { notFound, redirect } from "next/navigation";
 
-// ✅ FUNÇÃO DE DEBUG - Para ver a estrutura real
-function debugFotosEstrutura(imovelData) {
-  console.log('🔍 [DEBUG-FOTOS] =================== INÍCIO DEBUG ===================');
-  console.log('🔍 [DEBUG-FOTOS] Dados brutos do imovel.Foto:', imovelData.Foto);
-  console.log('🔍 [DEBUG-FOTOS] Tipo:', typeof imovelData.Foto);
-  console.log('🔍 [DEBUG-FOTOS] É array?', Array.isArray(imovelData.Foto));
-  
-  if (Array.isArray(imovelData.Foto)) {
-    console.log('🔍 [DEBUG-FOTOS] Total de fotos:', imovelData.Foto.length);
-    
-    imovelData.Foto.forEach((foto, index) => {
-      console.log(`🔍 [DEBUG-FOTOS] Foto ${index + 1}:`, {
-        // Estrutura completa da foto
-        fotoCompleta: foto,
-        // Campos que buscamos
-        ORDEM: foto.ORDEM,
-        Ordem: foto.Ordem,
-        ordem: foto.ordem,
-        DESTAQUE: foto.DESTAQUE,
-        Destaque: foto.Destaque,
-        destaque: foto.destaque,
-        // URLs
-        Foto: foto.Foto,
-        FotoPequena: foto.FotoPequena,
-        // Outros campos possíveis
-        Nome: foto.Nome,
-        nome: foto.nome,
-        // Todos os campos disponíveis
-        todasAsChaves: Object.keys(foto)
-      });
-    });
-  }
-  
-  console.log('🔍 [DEBUG-FOTOS] =================== FIM DEBUG ===================');
-}
-
-// ✅ FUNÇÃO CORRIGIDA - Mais robusta
-function processarFotosImovel(imovelData) {
-  console.log(`[PROCESSAR-FOTOS] 📸 Iniciando processamento...`);
-  
-  // Debug da estrutura
-  debugFotosEstrutura(imovelData);
-  
-  if (!imovelData || !imovelData.Foto) {
-    console.log(`[PROCESSAR-FOTOS] ⚠️ Nenhuma foto encontrada`);
-    return {
-      fotosOrdenadas: [],
-      fotoDestaque: null
-    };
-  }
-  
-  const fotos = Array.isArray(imovelData.Foto) ? imovelData.Foto : [imovelData.Foto];
-  
-  console.log(`[PROCESSAR-FOTOS] 📊 Total fotos para processar: ${fotos.length}`);
-  
-  // 1. PRIMEIRO: Clonar array para não modificar o original
-  const fotosClone = fotos.map(foto => ({ ...foto }));
-  
-  // 2. SEGUNDO: Ordenar por ORDEM (tentando todas as variações)
-  const fotosOrdenadas = fotosClone.sort((a, b) => {
-    // Buscar campo ORDEM em todas as variações possíveis
-    const ordemA = a.ORDEM || a.Ordem || a.ordem || 999;
-    const ordemB = b.ORDEM || b.Ordem || b.ordem || 999;
-    
-    const numA = parseInt(ordemA);
-    const numB = parseInt(ordemB);
-    
-    console.log(`[PROCESSAR-FOTOS] 🔢 Comparando ordens: ${numA} vs ${numB}`);
-    
-    return numA - numB;
-  });
-  
-  console.log(`[PROCESSAR-FOTOS] ✅ Fotos ordenadas por ORDEM:`, 
-    fotosOrdenadas.map((f, i) => ({
-      indice: i,
-      ordem: f.ORDEM || f.Ordem || f.ordem,
-      nome: f.Nome || f.nome || `foto-${i}`,
-      destaque: f.DESTAQUE || f.Destaque || f.destaque
-    }))
-  );
-  
-  // 3. TERCEIRO: Encontrar índice da foto destaque
-  const indiceFotoDestaque = fotosOrdenadas.findIndex(foto => {
-    const destaque = foto.DESTAQUE || foto.Destaque || foto.destaque;
-    
-    // Verificar todas as variações possíveis de "destaque"
-    const isDestaque = destaque === 1 || 
-                      destaque === "1" || 
-                      destaque === true ||
-                      destaque === "true" ||
-                      destaque === "Sim" ||
-                      destaque === "sim" ||
-                      destaque === "S" ||
-                      destaque === "s";
-    
-    if (isDestaque) {
-      console.log(`[PROCESSAR-FOTOS] 🎯 Foto destaque encontrada no índice ${indiceFotoDestaque}:`, {
-        nome: foto.Nome || foto.nome,
-        ordem: foto.ORDEM || foto.Ordem || foto.ordem,
-        destaque: destaque
-      });
-    }
-    
-    return isDestaque;
-  });
-  
-  // 4. QUARTO: Mover foto destaque para primeira posição (se encontrada e não estiver já na primeira)
-  if (indiceFotoDestaque > 0) {
-    console.log(`[PROCESSAR-FOTOS] 📌 Movendo foto destaque do índice ${indiceFotoDestaque} para 0`);
-    
-    const fotoDestaque = fotosOrdenadas[indiceFotoDestaque];
-    fotosOrdenadas.splice(indiceFotoDestaque, 1); // Remove da posição atual
-    fotosOrdenadas.unshift(fotoDestaque); // Adiciona no início
-    
-    console.log(`[PROCESSAR-FOTOS] ✅ Foto destaque movida para primeira posição`);
-  } else if (indiceFotoDestaque === 0) {
-    console.log(`[PROCESSAR-FOTOS] ✅ Foto destaque já está na primeira posição`);
-  } else {
-    console.log(`[PROCESSAR-FOTOS] ⚠️ Nenhuma foto destaque encontrada`);
-  }
-  
-  // 5. QUINTO: Encontrar URL da foto destaque
-  const fotoDestaque = fotosOrdenadas[0] ? (
-    fotosOrdenadas[0].Foto || 
-    fotosOrdenadas[0].FotoPequena || 
-    fotosOrdenadas[0].url || 
-    fotosOrdenadas[0]
-  ) : null;
-  
-  console.log(`[PROCESSAR-FOTOS] 🏁 Resultado final:`, {
-    totalFotos: fotosOrdenadas.length,
-    primeiraFoto: fotosOrdenadas[0] ? {
-      nome: fotosOrdenadas[0].Nome || fotosOrdenadas[0].nome,
-      ordem: fotosOrdenadas[0].ORDEM || fotosOrdenadas[0].Ordem || fotosOrdenadas[0].ordem,
-      destaque: fotosOrdenadas[0].DESTAQUE || fotosOrdenadas[0].Destaque || fotosOrdenadas[0].destaque,
-      url: fotosOrdenadas[0].Foto?.substring(0, 50) + '...'
-    } : null,
-    fotoDestaque: fotoDestaque ? fotoDestaque.substring(0, 50) + '...' : null
-  });
-  
-  return {
-    fotosOrdenadas,
-    fotoDestaque
-  };
-}
-
 // Função utilitária CORRIGIDA para converter data brasileira para ISO
 function convertBrazilianDateToISO(brazilianDate, imovelData) {
   // Tentar múltiplos campos de data
@@ -235,7 +89,7 @@ function convertBrazilianDateToISO(brazilianDate, imovelData) {
 // Configuração de revalidação
 export const revalidate = 0;
 
-// ✅ FUNÇÃO MODIFICADA: Geração dinâmica de metadados SEO
+// Geração dinâmica de metadados SEO
 export async function generateMetadata({ params }) {
   const { id } = params;
   
@@ -251,9 +105,6 @@ export async function generateMetadata({ params }) {
     }
 
     const imovel = response.data;
-    
-    // ✅ PROCESSAR FOTOS PARA METADATA
-    const { fotosOrdenadas, fotoDestaque } = processarFotosImovel(imovel);
     
     // ✅ GARANTIR DATA VÁLIDA
     let modifiedDate;
@@ -275,18 +126,11 @@ export async function generateMetadata({ params }) {
     
     const title = `${imovel.Empreendimento} - ${imovel.BairroComercial}, ${imovel.Cidade}`;
     const description = `${imovel.Categoria} à venda no bairro ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.DormitoriosAntigo} dormitórios, ${imovel.SuiteAntigo} suítes, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt}. Valor: ${imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}.`;
-    const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel/${imovel.Codigo}/${imovel.Slug}`;
+    const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
     
-    // ✅ USAR FOTO DESTAQUE PARA OG IMAGE
-    const imageUrl = fotoDestaque || 
-                    (fotosOrdenadas.length > 0 ? 
-                      (fotosOrdenadas[0].Foto || fotosOrdenadas[0].FotoPequena || fotosOrdenadas[0]) : 
-                      `${process.env.NEXT_PUBLIC_SITE_URL}/og-image.png`);
-
-    console.log(`[IMOVEL-META] 🎯 Imagem selecionada:`, {
-      usandoDestaque: !!fotoDestaque,
-      imageUrl: imageUrl?.substring(0, 50) + '...'
-    });
+    const imageUrl = Array.isArray(imovel.Foto) && imovel.Foto.length > 0 
+      ? (imovel.Foto[0].Foto || imovel.Foto[0].FotoPequena || imovel.Foto[0])
+      : imovel.Foto || `${process.env.NEXT_PUBLIC_SITE_URL}/og-image.png`;
 
     return {
       title,
@@ -359,7 +203,7 @@ export async function generateMetadata({ params }) {
   }
 }
 
-// ✅ COMPONENTE PRINCIPAL MODIFICADO
+// Componente principal da página do imóvel
 export default async function ImovelPage({ params }) {
   const { id, slug } = params;
   
@@ -380,22 +224,12 @@ export default async function ImovelPage({ params }) {
       notFound();
     }
 
-    const imovelRaw = {
+    const imovel = {
       ...response.data,
       SuiteAntigo: response.data.SuiteAntigo ?? response.data.Suites ?? 0,
       DormitoriosAntigo: response.data.DormitoriosAntigo ?? 0,
       VagasAntigo: response.data.VagasAntigo ?? 0,
       BanheiroSocialQtd: response.data.BanheiroSocialQtd ?? 0,
-    };
-
-    // ✅ PROCESSAR FOTOS DO IMÓVEL
-    const { fotosOrdenadas, fotoDestaque } = processarFotosImovel(imovelRaw);
-    
-    // ✅ CRIAR OBJETO IMOVEL COM FOTOS ORDENADAS
-    const imovel = {
-      ...imovelRaw,
-      Foto: fotosOrdenadas, // Substituir fotos originais pelas ordenadas
-      FotoDestaque: fotoDestaque // Adicionar foto destaque
     };
 
     const slugCorreto = imovel.Slug;
@@ -406,15 +240,10 @@ export default async function ImovelPage({ params }) {
       console.log(`🏠 [IMOVEL-PAGE] ⚠️ Slug inconsistente (middleware deveria ter redirecionado): ${slug} vs ${slugCorreto}`);
     }
 
-    const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel/${imovel.Codigo}/${imovel.Slug}`;
+    const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
     const modifiedDate = convertBrazilianDateToISO(imovel.DataHoraAtualizacao, imovel);
     
     console.log('🔍 Data convertida no componente:', modifiedDate);
-    console.log('📸 Fotos processadas:', {
-      original: imovelRaw.Foto ? (Array.isArray(imovelRaw.Foto) ? imovelRaw.Foto.length : 1) : 0,
-      ordenadas: fotosOrdenadas.length,
-      temDestaque: !!fotoDestaque
-    });
 
     // Structured Data adicional para datas
     const structuredDataDates = {
@@ -442,7 +271,7 @@ export default async function ImovelPage({ params }) {
           description={`${imovel.Categoria} à venda em ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.Empreendimento}: ${imovel.DormitoriosAntigo} quartos, ${imovel.SuiteAntigo} suítes, ${imovel.BanheiroSocialQtd} banheiros, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt}. ${imovel.Situacao}. Valor: ${imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}. ${imovel.TipoEndereco} ${imovel.Endereco}.`}
           address={`${imovel.TipoEndereco} ${imovel.Endereco}, ${imovel.Numero}, ${imovel.BairroComercial}, ${imovel.Cidade}`}
           url={currentUrl}
-          image={imovel.Foto} // Agora com fotos ordenadas
+          image={imovel.Foto}
         />
 
         {/* Structured Data para datas */}
@@ -456,7 +285,6 @@ export default async function ImovelPage({ params }) {
         <ExitIntentModal condominio={imovel.Empreendimento} link={currentUrl} />
 
         <div className="w-full mx-auto">
-          {/* ✅ GALERIA COM FOTOS ORDENADAS */}
           <ImageGallery imovel={imovel} />
         </div>
 
