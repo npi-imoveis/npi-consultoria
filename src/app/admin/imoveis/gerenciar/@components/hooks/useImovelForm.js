@@ -357,7 +357,7 @@ export const useImovelForm = () => {
         Destaque: "Nao",
         Foto: "", // URL da imagem será adicionada pelo usuário
         isUploading: false,
-        // ✅ REMOVIDO: Campo Ordem - deixa o array determinar a ordem natural
+        Ordem: Array.isArray(prevData.Foto) ? prevData.Foto.length + 1 : 1, // ✅ RESTAURADO: Campo Ordem
       };
 
       // Handle both array and empty cases
@@ -399,15 +399,15 @@ export const useImovelForm = () => {
       // Filter out the photo with the given codigo
       const updatedFotos = prevData.Foto.filter((photo) => photo.Codigo !== codigo);
 
-      // ✅ REMOVIDO: Atualização automática da ordem - deixa o array natural
-      // const reorderedFotos = updatedFotos.map((photo, index) => ({
-      //   ...photo,
-      //   Ordem: index + 1,
-      // }));
+      // ✅ RESTAURADO: Update the order of remaining photos
+      const reorderedFotos = updatedFotos.map((photo, index) => ({
+        ...photo,
+        Ordem: index + 1,
+      }));
 
       return {
         ...prevData,
-        Foto: updatedFotos, // ✅ ALTERADO: usa updatedFotos em vez de reorderedFotos
+        Foto: reorderedFotos, // ✅ RESTAURADO: usa reorderedFotos
       };
     });
   }, []);
@@ -429,23 +429,35 @@ export const useImovelForm = () => {
     });
   }, []);
 
-  // ✅ FUNÇÃO SIMPLIFICADA: changeImagePosition - move item no array sem mexer no campo Ordem
+  // ✅ RESTAURADO: Função para alterar a posição da imagem (do backup)
   const changeImagePosition = useCallback((codigo, newPosition) => {
     setFormData((prevData) => {
       if (!Array.isArray(prevData.Foto)) return prevData;
 
-      // Encontrar índice atual da foto
-      const currentIndex = prevData.Foto.findIndex((photo) => photo.Codigo === codigo);
+      // Sort photos by their order
+      const sortedPhotos = [...prevData.Foto].sort((a, b) => {
+        const orderA = a.Ordem || prevData.Foto.findIndex((p) => p.Codigo === a.Codigo) + 1;
+        const orderB = b.Ordem || prevData.Foto.findIndex((p) => p.Codigo === b.Codigo) + 1;
+        return orderA - orderB;
+      });
+
+      // Find current index of the photo
+      const currentIndex = sortedPhotos.findIndex((photo) => photo.Codigo === codigo);
       if (currentIndex === -1 || currentIndex === newPosition - 1) return prevData;
 
-      // Criar novo array com item movido
-      const newFotos = [...prevData.Foto];
-      const [movedPhoto] = newFotos.splice(currentIndex, 1);
-      newFotos.splice(newPosition - 1, 0, movedPhoto);
+      // Create a new array with the photo in the new position
+      const movedPhoto = sortedPhotos.splice(currentIndex, 1)[0];
+      sortedPhotos.splice(newPosition - 1, 0, movedPhoto);
+
+      // ✅ RESTAURADO: Update all orders
+      const reorderedPhotos = sortedPhotos.map((photo, index) => ({
+        ...photo,
+        Ordem: index + 1,
+      }));
 
       return {
         ...prevData,
-        Foto: newFotos,
+        Foto: reorderedPhotos,
       };
     });
   }, []);
@@ -488,7 +500,7 @@ export const useImovelForm = () => {
         Codigo: Date.now().toString() + Math.random().toString(36).substr(2, 5),
         Foto: image.Foto,
         Destaque: "Nao",
-        // ✅ REMOVIDO: Campo Ordem - deixa posição natural do array
+        Ordem: fotosExistentes.length + index + 1, // ✅ RESTAURADO: Campo Ordem
       }));
 
       // Retornar state atualizado com ARRAY concatenado
