@@ -32,22 +32,17 @@ export function ImageGallery({ imovel }) {
 
   const slug = formatterSlug(imovel.Empreendimento);
 
-  // ✅ ORDENAÇÃO CORRIGIDA: Primeiro por ORDEM, depois por Destaque
+  // ✅ ORDENAÇÃO CORRIGIDA: Usar as chaves do objeto como ordem
   const images =
     Array.isArray(imovel.Foto) && imovel.Foto.length > 0
       ? [...imovel.Foto]
-          // PASSO 1: Ordenar por ORDEM primeiro
+          // PASSO 1: Ordenar pelo índice original do objeto (que representa a ordem correta)
+          .map((foto, index) => ({ ...foto, _originalIndex: index }))
+          .sort((a, b) => a._originalIndex - b._originalIndex)
+          // PASSO 2: Depois aplicar lógica de Destaque (move destaque para primeira posição)
           .sort((a, b) => {
-            const ordemA = parseInt(a.ORDEM || a.Ordem || a.ordem || 999);
-            const ordemB = parseInt(b.ORDEM || b.Ordem || b.ordem || 999);
-            
-            console.log(`[IMAGE-GALLERY] 🔢 Ordenando: ${ordemA} vs ${ordemB}`);
-            return ordemA - ordemB;
-          })
-          // PASSO 2: Depois aplicar lógica de Destaque (mantém ordem, mas prioriza destaque)
-          .sort((a, b) => {
-            const destaqueA = a.Destaque === "Sim" || a.DESTAQUE === 1 || a.DESTAQUE === "1" || a.DESTAQUE === true;
-            const destaqueB = b.Destaque === "Sim" || b.DESTAQUE === 1 || b.DESTAQUE === "1" || b.DESTAQUE === true;
+            const destaqueA = a.Destaque === "Sim";
+            const destaqueB = b.Destaque === "Sim";
             
             if (destaqueA && !destaqueB) return -1;
             if (!destaqueA && destaqueB) return 1;
@@ -58,11 +53,18 @@ export function ImageGallery({ imovel }) {
   console.log(`[IMAGE-GALLERY] 📸 Total de fotos processadas: ${images.length}`);
   if (images.length > 0) {
     console.log(`[IMAGE-GALLERY] 📸 Primeira foto:`, {
-      nome: images[0].Nome || images[0].nome || 'sem-nome',
-      ordem: images[0].ORDEM || images[0].Ordem || images[0].ordem,
-      destaque: images[0].Destaque || images[0].DESTAQUE,
+      codigo: images[0].Codigo,
+      originalIndex: images[0]._originalIndex,
+      destaque: images[0].Destaque,
       url: images[0].Foto?.substring(0, 50) + '...'
     });
+    console.log(`[IMAGE-GALLERY] 📸 Primeiras 5 fotos ordenadas:`, 
+      images.slice(0, 5).map(f => ({
+        codigo: f.Codigo,
+        originalIndex: f._originalIndex,
+        destaque: f.Destaque
+      }))
+    );
   }
 
   if (images.length === 0) {
