@@ -82,9 +82,19 @@ const nextConfig = {
   },
   
   async redirects() {
-    // ✅ Agora pode voltar com seus redirects específicos aqui se quiser
     return [
-      // Seus redirects manuais específicos podem ficar aqui
+      // 🚫 Bloquear/Redirecionar URLs do iframe antigo (WordPress)
+      {
+        source: '/iConatusIframe/:path*',
+        destination: '/',
+        permanent: true // 301 para homepage ou página apropriada
+      },
+      {
+        source: '/iframe.php',
+        destination: '/',
+        permanent: true
+      },
+      // Seus outros redirects específicos podem ficar aqui
     ];
   },
   
