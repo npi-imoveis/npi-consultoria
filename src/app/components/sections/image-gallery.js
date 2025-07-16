@@ -34,41 +34,35 @@ export function ImageGallery({ imovel }) {
 
   // ✅ ORDENAÇÃO CORRIGIDA: Usar posição do array como ordem (já que Ordem não existe no banco)
   const images =
-    Array.isArray(imovel.Foto) && imovel.Foto.length > 0
-      ? [...imovel.Foto]
-          // PASSO 1: Manter ordem original do array (que é a ordem de upload/criação)
-          .map((foto, index) => ({
-            ...foto,
-            _arrayPosition: index // Salvar posição original
-          }))
-          // PASSO 2: Mover foto destaque para primeira posição
-          .sort((a, b) => {
-            const destaqueA = a.Destaque === "Sim";
-            const destaqueB = b.Destaque === "Sim";
-            
-            if (destaqueA && !destaqueB) return -1; // Destaque vai para primeira posição
-            if (!destaqueA && destaqueB) return 1;
-            
-            // Se ambos têm mesmo status de destaque, manter ordem original
-            return a._arrayPosition - b._arrayPosition;
-          })
-      : [];
+  Array.isArray(imovel.Foto) && imovel.Foto.length > 0
+    ? [...imovel.Foto]
+        // ✅ PASSO 1: Ordenar por campo Ordem (do backup) ou usar índice como fallback
+        .sort((a, b) => {
+          const orderA = a.Ordem || imovel.Foto.indexOf(a) + 1;
+          const orderB = b.Ordem || imovel.Foto.indexOf(b) + 1;
+          return orderA - orderB;
+        })
+        // ✅ PASSO 2: Mover foto destaque para primeira posição (funcionalidade já existente)
+        .sort((a, b) => {
+          const destaqueA = a.Destaque === "Sim";
+          const destaqueB = b.Destaque === "Sim";
+          
+          if (destaqueA && !destaqueB) return -1; // Destaque vai primeiro
+          if (!destaqueA && destaqueB) return 1;
+          
+          // Se ambos têm mesmo status de destaque, manter ordem original
+          return 0;
+        })
+    : [];
 
-  console.log(`[IMAGE-GALLERY] 📸 Total de fotos processadas: ${images.length}`);
-  if (images.length > 0) {
-    console.log(`[IMAGE-GALLERY] 📸 Primeira foto (deve ser destaque):`, {
-      codigo: images[0].Codigo,
-      posicaoOriginal: images[0]._arrayPosition,
-      destaque: images[0].Destaque,
-      url: images[0].Foto?.substring(0, 50) + '...'
-    });
-    console.log(`[IMAGE-GALLERY] 📸 Primeiras 5 fotos ordenadas:`, 
-      images.slice(0, 5).map(f => ({
-        codigo: f.Codigo,
-        posicaoOriginal: f._arrayPosition,
-        destaque: f.Destaque
-      }))
-    );
+console.log(`[IMAGE-GALLERY] 📸 Fotos ordenadas (PRESERVANDO TUDO):`, {
+  total: images.length,
+  primeira: images[0] ? {
+    codigo: images[0].Codigo,
+    ordem: images[0].Ordem,
+    destaque: images[0].Destaque
+  } : null
+});
   }
 
   if (images.length === 0) {
