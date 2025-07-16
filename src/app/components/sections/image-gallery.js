@@ -32,21 +32,29 @@ export function ImageGallery({ imovel }) {
 
   const slug = formatterSlug(imovel.Empreendimento);
 
-  // ✅ ORDENAÇÃO CORRIGIDA: Usar as chaves do objeto como ordem
+  // ✅ ORDENAÇÃO CORRIGIDA: Usar índices como ordem se Ordem não existir
   const images =
     Array.isArray(imovel.Foto) && imovel.Foto.length > 0
       ? [...imovel.Foto]
-          // PASSO 1: Ordenar pelo índice original do objeto (que representa a ordem correta)
-          .map((foto, index) => ({ ...foto, _originalIndex: index }))
-          .sort((a, b) => a._originalIndex - b._originalIndex)
-          // PASSO 2: Depois aplicar lógica de Destaque (move destaque para primeira posição)
+          // PASSO 1: Garantir que todas as fotos tenham Ordem
+          .map((foto, index) => ({
+            ...foto,
+            Ordem: foto.Ordem || (index + 1) // Se não tem Ordem, usar índice + 1
+          }))
+          // PASSO 2: Ordenar por Ordem
+          .sort((a, b) => {
+            const ordemA = parseInt(a.Ordem || 999);
+            const ordemB = parseInt(b.Ordem || 999);
+            return ordemA - ordemB;
+          })
+          // PASSO 3: Mover foto destaque para primeira posição
           .sort((a, b) => {
             const destaqueA = a.Destaque === "Sim";
             const destaqueB = b.Destaque === "Sim";
             
             if (destaqueA && !destaqueB) return -1;
             if (!destaqueA && destaqueB) return 1;
-            return 0; // Mantém ordem original se ambos têm mesmo status de destaque
+            return 0; // Mantém ordem se ambos têm mesmo status de destaque
           })
       : [];
 
@@ -54,14 +62,14 @@ export function ImageGallery({ imovel }) {
   if (images.length > 0) {
     console.log(`[IMAGE-GALLERY] 📸 Primeira foto:`, {
       codigo: images[0].Codigo,
-      originalIndex: images[0]._originalIndex,
+      ordem: images[0].Ordem,
       destaque: images[0].Destaque,
       url: images[0].Foto?.substring(0, 50) + '...'
     });
     console.log(`[IMAGE-GALLERY] 📸 Primeiras 5 fotos ordenadas:`, 
       images.slice(0, 5).map(f => ({
         codigo: f.Codigo,
-        originalIndex: f._originalIndex,
+        ordem: f.Ordem,
         destaque: f.Destaque
       }))
     );
