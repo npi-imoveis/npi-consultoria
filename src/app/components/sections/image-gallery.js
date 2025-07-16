@@ -32,74 +32,55 @@ export function ImageGallery({ imovel }) {
 
   const slug = formatterSlug(imovel.Empreendimento);
 
-  // ✅ SOLUÇÃO FINAL CORRIGIDA: Respeitar campo ORDEM do banco + destaque primeiro
+  // ✅ SOLUÇÃO FINAL: Usa POSIÇÃO DO ARRAY (ordem da migração) + move destaque para primeiro
   const images =
     Array.isArray(imovel.Foto) && imovel.Foto.length > 0
       ? (() => {
-          console.log(`[IMAGE-GALLERY] 🔍 Dados originais:`, imovel.Foto.slice(0, 3).map(f => ({
-            codigo: f.Codigo,
-            ordem: f.Ordem,
-            destaque: f.Destaque,
-            url: f.Foto?.substring(0, 30) + '...'
-          })));
+          console.log(`[IMAGE-GALLERY] 🔍 Total de fotos recebidas:`, imovel.Foto.length);
+          console.log(`[IMAGE-GALLERY] 🔍 Primeiras 3 fotos (ordem original):`, 
+            imovel.Foto.slice(0, 3).map((f, idx) => ({
+              posicao: idx + 1,
+              codigo: f.Codigo,
+              destaque: f.Destaque,
+              url: f.Foto?.substring(0, 30) + '...'
+            }))
+          );
 
-          // PASSO 1: Ordenar por campo ORDEM do banco (ordem original da migração)
-          const fotosOrdenadas = [...imovel.Foto].sort((a, b) => {
-            const ordemA = parseInt(a.Ordem) || 999999; // Fotos sem ordem vão para o final
-            const ordemB = parseInt(b.Ordem) || 999999;
-            return ordemA - ordemB;
-          });
-
-          console.log(`[IMAGE-GALLERY] 📋 Após ordenação por ORDEM:`, fotosOrdenadas.slice(0, 5).map(f => ({
-            codigo: f.Codigo,
-            ordem: f.Ordem,
-            destaque: f.Destaque
-          })));
-
-          // PASSO 2: Encontrar foto de destaque
-          const fotoDestaque = fotosOrdenadas.find(foto => foto.Destaque === "Sim");
+          // PASSO 1: Encontrar foto de destaque (se existir)
+          const fotoDestaque = imovel.Foto.find(foto => foto.Destaque === "Sim");
           
-          // PASSO 3: Se não há foto de destaque, retornar ordem do banco
+          // PASSO 2: Se não há destaque, manter ordem original do array
           if (!fotoDestaque) {
-            console.log(`[IMAGE-GALLERY] ⚠️ Nenhuma foto de destaque encontrada, mantendo ordem do campo ORDEM`);
-            return fotosOrdenadas;
+            console.log(`[IMAGE-GALLERY] ⚠️ Nenhuma foto de destaque, mantendo ordem original do array`);
+            return imovel.Foto;
           }
           
-          // PASSO 4: Remover foto de destaque da posição original
-          const fotosSemDestaque = fotosOrdenadas.filter(foto => foto.Destaque !== "Sim");
+          // PASSO 3: Remover foto de destaque da posição original
+          const fotosSemDestaque = imovel.Foto.filter(foto => foto.Destaque !== "Sim");
           
-          // PASSO 5: Colocar foto de destaque na primeira posição + demais na ordem do banco
+          // PASSO 4: Colocar destaque primeiro + demais na ordem original
           const resultado = [fotoDestaque, ...fotosSemDestaque];
           
           console.log(`[IMAGE-GALLERY] ✅ Foto de destaque movida para primeira posição:`, {
             codigo: fotoDestaque.Codigo,
-            ordem: fotoDestaque.Ordem,
+            posicaoOriginal: imovel.Foto.findIndex(f => f.Codigo === fotoDestaque.Codigo) + 1,
             destaque: fotoDestaque.Destaque
           });
+          
+          console.log(`[IMAGE-GALLERY] 📸 Primeiras 5 fotos finais:`, 
+            resultado.slice(0, 5).map((f, idx) => ({
+              posicaoFinal: idx + 1,
+              codigo: f.Codigo,
+              destaque: f.Destaque,
+              posicaoOriginal: imovel.Foto.findIndex(original => original.Codigo === f.Codigo) + 1
+            }))
+          );
           
           return resultado;
         })()
       : [];
 
-  console.log(`[IMAGE-GALLERY] 📸 Total de fotos processadas: ${images.length}`);
-  if (images.length > 0) {
-    console.log(`[IMAGE-GALLERY] 📸 Primeira foto (deve ser destaque):`, {
-      codigo: images[0].Codigo,
-      ordem: images[0].Ordem,
-      destaque: images[0].Destaque,
-      url: images[0].Foto?.substring(0, 50) + '...'
-    });
-    console.log(`[IMAGE-GALLERY] 📸 Primeiras 5 fotos ordenadas:`, 
-      images.slice(0, 5).map(f => ({
-        codigo: f.Codigo,
-        ordem: f.Ordem,
-        destaque: f.Destaque
-      }))
-    );
-  }
-
   if (images.length === 0) {
-    // Return a placeholder or default image if no images are available
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-1 w-full">
         <div className="col-span-1 h-[410px] relative">
@@ -150,9 +131,9 @@ export function ImageGallery({ imovel }) {
               height={600}
               sizes="(max-width: 350px) 100vw, (max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               placeholder="blur"
-              blurDataURL={images[0].blurDataURL || "/placeholder.png"} // Use um placeholder otimizado
-              loading="eager" // Carregamento prioritário para melhorar o LCP
-              priority={true} // Priorizar a imagem principal
+              blurDataURL={images[0].blurDataURL || "/placeholder.png"}
+              loading="eager"
+              priority={true}
               className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
             />
           </div>
@@ -266,7 +247,7 @@ export function ImageGallery({ imovel }) {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4 ">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
               {images.map((image, idx) => (
                 <div
                   key={idx}
