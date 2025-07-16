@@ -32,38 +32,37 @@ export function ImageGallery({ imovel }) {
 
   const slug = formatterSlug(imovel.Empreendimento);
 
-  // ✅ ORDENAÇÃO CORRIGIDA: Usar posição do array como ordem (já que Ordem não existe no banco)
+  // ✅ ORDENAÇÃO CORRIGIDA: Ordem + Destaque
   const images =
-  Array.isArray(imovel.Foto) && imovel.Foto.length > 0
-    ? [...imovel.Foto]
-        // ✅ PASSO 1: Ordenar por campo Ordem (do backup) ou usar índice como fallback
-        .sort((a, b) => {
-          const orderA = a.Ordem || imovel.Foto.indexOf(a) + 1;
-          const orderB = b.Ordem || imovel.Foto.indexOf(b) + 1;
-          return orderA - orderB;
-        })
-        // ✅ PASSO 2: Mover foto destaque para primeira posição (funcionalidade já existente)
-        .sort((a, b) => {
-          const destaqueA = a.Destaque === "Sim";
-          const destaqueB = b.Destaque === "Sim";
-          
-          if (destaqueA && !destaqueB) return -1; // Destaque vai primeiro
-          if (!destaqueA && destaqueB) return 1;
-          
-          // Se ambos têm mesmo status de destaque, manter ordem original
-          return 0;
-        })
-    : [];
+    Array.isArray(imovel.Foto) && imovel.Foto.length > 0
+      ? [...imovel.Foto]
+          // ✅ PASSO 1: Ordenar por campo Ordem (do backup) ou usar índice como fallback
+          .sort((a, b) => {
+            const orderA = a.Ordem || imovel.Foto.indexOf(a) + 1;
+            const orderB = b.Ordem || imovel.Foto.indexOf(b) + 1;
+            return orderA - orderB;
+          })
+          // ✅ PASSO 2: Mover foto destaque para primeira posição
+          .sort((a, b) => {
+            const destaqueA = a.Destaque === "Sim";
+            const destaqueB = b.Destaque === "Sim";
+            
+            if (destaqueA && !destaqueB) return -1; // Destaque vai primeiro
+            if (!destaqueA && destaqueB) return 1;
+            
+            // Se ambos têm mesmo status de destaque, manter ordem original
+            return 0;
+          })
+      : [];
 
-console.log(`[IMAGE-GALLERY] 📸 Fotos ordenadas (PRESERVANDO TUDO):`, {
-  total: images.length,
-  primeira: images[0] ? {
-    codigo: images[0].Codigo,
-    ordem: images[0].Ordem,
-    destaque: images[0].Destaque
-  } : null
-});
-  }
+  console.log(`[IMAGE-GALLERY] 📸 Fotos ordenadas (PRESERVANDO TUDO):`, {
+    total: images.length,
+    primeira: images[0] ? {
+      codigo: images[0].Codigo,
+      ordem: images[0].Ordem,
+      destaque: images[0].Destaque
+    } : null
+  });
 
   if (images.length === 0) {
     // Return a placeholder or default image if no images are available
@@ -117,9 +116,9 @@ console.log(`[IMAGE-GALLERY] 📸 Fotos ordenadas (PRESERVANDO TUDO):`, {
               height={600}
               sizes="(max-width: 350px) 100vw, (max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               placeholder="blur"
-              blurDataURL={images[0].blurDataURL || "/placeholder.png"} // Use um placeholder otimizado
-              loading="eager" // Carregamento prioritário para melhorar o LCP
-              priority={true} // Priorizar a imagem principal
+              blurDataURL={images[0].blurDataURL || "/placeholder.png"}
+              loading="eager"
+              priority={true}
               className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
             />
           </div>
@@ -182,7 +181,7 @@ console.log(`[IMAGE-GALLERY] 📸 Fotos ordenadas (PRESERVANDO TUDO):`, {
             Ver todas as {images.length} fotos
           </button>
         </div>
-        )}
+      )}
 
       {/* Modal */}
       {isModalOpen && (
@@ -233,7 +232,7 @@ console.log(`[IMAGE-GALLERY] 📸 Fotos ordenadas (PRESERVANDO TUDO):`, {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4 ">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
               {images.map((image, idx) => (
                 <div
                   key={idx}
