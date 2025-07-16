@@ -32,16 +32,17 @@ export function ImageGallery({ imovel }) {
 
   const slug = formatterSlug(imovel.Empreendimento);
 
-  // ✅ SOLUÇÃO FINAL: Usa POSIÇÃO DO ARRAY (ordem da migração) + move destaque para primeiro
+  // ✅ SOLUÇÃO FINAL: USA POSIÇÃO DO ARRAY (ordem migração) + move destaque primeiro
   const images =
     Array.isArray(imovel.Foto) && imovel.Foto.length > 0
       ? (() => {
           console.log(`[IMAGE-GALLERY] 🔍 Total de fotos recebidas:`, imovel.Foto.length);
-          console.log(`[IMAGE-GALLERY] 🔍 Primeiras 3 fotos (ordem original):`, 
+          console.log(`[IMAGE-GALLERY] 🔍 Primeiras 3 fotos (ordem original do array):`, 
             imovel.Foto.slice(0, 3).map((f, idx) => ({
-              posicao: idx + 1,
+              posicaoArray: idx + 1,
               codigo: f.Codigo,
               destaque: f.Destaque,
+              campoOrdem: f.Ordem,
               url: f.Foto?.substring(0, 30) + '...'
             }))
           );
@@ -49,7 +50,7 @@ export function ImageGallery({ imovel }) {
           // PASSO 1: Encontrar foto de destaque (se existir)
           const fotoDestaque = imovel.Foto.find(foto => foto.Destaque === "Sim");
           
-          // PASSO 2: Se não há destaque, manter ordem original do array
+          // PASSO 2: Se não há destaque, usar ordem original do array (migração)
           if (!fotoDestaque) {
             console.log(`[IMAGE-GALLERY] ⚠️ Nenhuma foto de destaque, mantendo ordem original do array`);
             return imovel.Foto;
@@ -58,13 +59,14 @@ export function ImageGallery({ imovel }) {
           // PASSO 3: Remover foto de destaque da posição original
           const fotosSemDestaque = imovel.Foto.filter(foto => foto.Destaque !== "Sim");
           
-          // PASSO 4: Colocar destaque primeiro + demais na ordem original
+          // PASSO 4: Colocar destaque primeiro + demais na ordem original do array
           const resultado = [fotoDestaque, ...fotosSemDestaque];
           
           console.log(`[IMAGE-GALLERY] ✅ Foto de destaque movida para primeira posição:`, {
             codigo: fotoDestaque.Codigo,
             posicaoOriginal: imovel.Foto.findIndex(f => f.Codigo === fotoDestaque.Codigo) + 1,
-            destaque: fotoDestaque.Destaque
+            destaque: fotoDestaque.Destaque,
+            campoOrdem: fotoDestaque.Ordem
           });
           
           console.log(`[IMAGE-GALLERY] 📸 Primeiras 5 fotos finais:`, 
@@ -72,7 +74,7 @@ export function ImageGallery({ imovel }) {
               posicaoFinal: idx + 1,
               codigo: f.Codigo,
               destaque: f.Destaque,
-              posicaoOriginal: imovel.Foto.findIndex(original => original.Codigo === f.Codigo) + 1
+              posicaoOriginalArray: imovel.Foto.findIndex(original => original.Codigo === f.Codigo) + 1
             }))
           );
           
@@ -196,7 +198,7 @@ export function ImageGallery({ imovel }) {
             Ver todas as {images.length} fotos
           </button>
         </div>
-        )}
+      )}
 
       {/* Modal */}
       {isModalOpen && (
