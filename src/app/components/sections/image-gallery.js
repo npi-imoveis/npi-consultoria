@@ -39,6 +39,12 @@ export function ImageGallery({ imovel }) {
     : [];
 
   console.log(`[IMAGE-GALLERY] 📸 Recebidas ${images.length} fotos já ordenadas`);
+  console.log(`[IMAGE-GALLERY] 📸 Primeira foto:`, images[0] ? {
+    nome: images[0].Nome || images[0].nome,
+    ordem: images[0].ORDEM || images[0].Ordem,
+    destaque: images[0].DESTAQUE || images[0].Destaque,
+    url: images[0].Foto?.substring(0, 50) + '...'
+  } : null);
 
   if (images.length === 0) {
     // Return a placeholder or default image if no images are available
