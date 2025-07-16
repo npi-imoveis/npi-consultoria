@@ -18,9 +18,6 @@ import { Apartment as StructuredDataApartment } from "@/app/components/structure
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 import { notFound, redirect } from "next/navigation";
 
-// ✅ CORREÇÃO: Data fixa para evitar diferenças servidor/cliente
-const FALLBACK_DATE = '2024-01-01T00:00:00.000Z';
-
 // Função utilitária CORRIGIDA para converter data brasileira para ISO
 function convertBrazilianDateToISO(brazilianDate, imovelData) {
   // Tentar múltiplos campos de data
@@ -41,10 +38,11 @@ function convertBrazilianDateToISO(brazilianDate, imovelData) {
     }
   }
   
-  // ✅ CORREÇÃO: Se não encontrar data válida, usar data fixa
+  // ✅ FALLBACK: Se não encontrar data válida, usar data atual
   if (!workingDate) {
-    console.log(`[DATE-CONVERT] ⚠️  Usando data fixa como fallback: ${FALLBACK_DATE}`);
-    return FALLBACK_DATE;
+    const currentDate = new Date();
+    console.log(`[DATE-CONVERT] ⚠️  Usando data atual como fallback: ${currentDate.toISOString()}`);
+    return currentDate.toISOString();
   }
   
   try {
@@ -76,13 +74,15 @@ function convertBrazilianDateToISO(brazilianDate, imovelData) {
       return date.toISOString();
     }
     
-    // ✅ CORREÇÃO: Se chegou aqui, usar data fixa
-    console.log(`[DATE-CONVERT] ⚠️  Fallback para data fixa: ${FALLBACK_DATE}`);
-    return FALLBACK_DATE;
+    // ✅ Se chegou aqui, usar data atual
+    const fallbackDate = new Date();
+    console.log(`[DATE-CONVERT] ⚠️  Fallback para data atual: ${fallbackDate.toISOString()}`);
+    return fallbackDate.toISOString();
     
   } catch (error) {
     console.error(`[DATE-CONVERT] ❌ Erro na conversão:`, error);
-    return FALLBACK_DATE;
+    const errorFallbackDate = new Date();
+    return errorFallbackDate.toISOString();
   }
 }
 
@@ -106,7 +106,7 @@ export async function generateMetadata({ params }) {
 
     const imovel = response.data;
     
-    // ✅ CORREÇÃO: GARANTIR DATA VÁLIDA
+    // ✅ GARANTIR DATA VÁLIDA
     let modifiedDate;
     try {
       modifiedDate = convertBrazilianDateToISO(imovel.DataHoraAtualizacao, imovel);
@@ -115,11 +115,11 @@ export async function generateMetadata({ params }) {
       const testDate = new Date(modifiedDate);
       if (isNaN(testDate.getTime())) {
         console.error(`[IMOVEL-META] ❌ Data inválida gerada, usando fallback`);
-        modifiedDate = FALLBACK_DATE;
+        modifiedDate = new Date().toISOString();
       }
     } catch (error) {
       console.error(`[IMOVEL-META] ❌ Erro na conversão de data:`, error);
-      modifiedDate = FALLBACK_DATE;
+      modifiedDate = new Date().toISOString();
     }
     
     console.error(`[IMOVEL-META] ✅ Data final válida: ${modifiedDate}`);
@@ -181,11 +181,17 @@ export async function generateMetadata({ params }) {
           }
         ],
       },
-      // ✅ CORREÇÃO: Removidas meta tags de data problemáticas
       other: {
+        'article:published_time': modifiedDate,
+        'article:modified_time': modifiedDate,
         'article:author': 'NPI Consultoria',
         'article:section': 'Imobiliário',
         'article:tag': `${imovel.Categoria}, ${imovel.BairroComercial}, ${imovel.Cidade}, imóvel à venda`,
+        'og:updated_time': modifiedDate,
+        'last-modified': modifiedDate,
+        'date': modifiedDate,
+        'DC.date.modified': modifiedDate,
+        'DC.date.created': modifiedDate,
       },
     };
   } catch (error) {
@@ -239,7 +245,7 @@ export default async function ImovelPage({ params }) {
     
     console.log('🔍 Data convertida no componente:', modifiedDate);
 
-    // ✅ CORREÇÃO: Structured Data adicional para datas com suppressHydrationWarning
+    // Structured Data adicional para datas
     const structuredDataDates = {
       "@context": "https://schema.org",
       "@type": "WebPage",
@@ -268,10 +274,9 @@ export default async function ImovelPage({ params }) {
           image={imovel.Foto}
         />
 
-        {/* ✅ CORREÇÃO: Structured Data para datas com suppressHydrationWarning */}
+        {/* Structured Data para datas */}
         <script
           type="application/ld+json"
-          suppressHydrationWarning={true}
           dangerouslySetInnerHTML={{
             __html: JSON.stringify(structuredDataDates),
           }}
