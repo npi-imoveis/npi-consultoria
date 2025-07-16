@@ -18,6 +18,9 @@ import { Apartment as StructuredDataApartment } from "@/app/components/structure
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 import { notFound, redirect } from "next/navigation";
 
+// ✅ CORREÇÃO: Data fixa para evitar diferenças servidor/cliente
+const FALLBACK_DATE = '2024-01-01T00:00:00.000Z';
+
 // Função utilitária CORRIGIDA para converter data brasileira para ISO
 function convertBrazilianDateToISO(brazilianDate, imovelData) {
   // Tentar múltiplos campos de data
@@ -38,11 +41,10 @@ function convertBrazilianDateToISO(brazilianDate, imovelData) {
     }
   }
   
-  // ✅ FALLBACK: Se não encontrar data válida, usar data atual
+  // ✅ CORREÇÃO: Se não encontrar data válida, usar data fixa
   if (!workingDate) {
-    const currentDate = new Date();
-    console.log(`[DATE-CONVERT] ⚠️  Usando data atual como fallback: ${currentDate.toISOString()}`);
-    return currentDate.toISOString();
+    console.log(`[DATE-CONVERT] ⚠️  Usando data fixa como fallback: ${FALLBACK_DATE}`);
+    return FALLBACK_DATE;
   }
   
   try {
@@ -74,15 +76,13 @@ function convertBrazilianDateToISO(brazilianDate, imovelData) {
       return date.toISOString();
     }
     
-    // ✅ Se chegou aqui, usar data atual
-    const fallbackDate = new Date();
-    console.log(`[DATE-CONVERT] ⚠️  Fallback para data atual: ${fallbackDate.toISOString()}`);
-    return fallbackDate.toISOString();
+    // ✅ CORREÇÃO: Se chegou aqui, usar data fixa
+    console.log(`[DATE-CONVERT] ⚠️  Fallback para data fixa: ${FALLBACK_DATE}`);
+    return FALLBACK_DATE;
     
   } catch (error) {
     console.error(`[DATE-CONVERT] ❌ Erro na conversão:`, error);
-    const errorFallbackDate = new Date();
-    return errorFallbackDate.toISOString();
+    return FALLBACK_DATE;
   }
 }
 
@@ -106,7 +106,7 @@ export async function generateMetadata({ params }) {
 
     const imovel = response.data;
     
-    // ✅ GARANTIR DATA VÁLIDA
+    // ✅ CORREÇÃO: GARANTIR DATA VÁLIDA
     let modifiedDate;
     try {
       modifiedDate = convertBrazilianDateToISO(imovel.DataHoraAtualizacao, imovel);
@@ -115,11 +115,11 @@ export async function generateMetadata({ params }) {
       const testDate = new Date(modifiedDate);
       if (isNaN(testDate.getTime())) {
         console.error(`[IMOVEL-META] ❌ Data inválida gerada, usando fallback`);
-        modifiedDate = new Date().toISOString();
+        modifiedDate = FALLBACK_DATE;
       }
     } catch (error) {
       console.error(`[IMOVEL-META] ❌ Erro na conversão de data:`, error);
-      modifiedDate = new Date().toISOString();
+      modifiedDate = FALLBACK_DATE;
     }
     
     console.error(`[IMOVEL-META] ✅ Data final válida: ${modifiedDate}`);
@@ -245,7 +245,7 @@ export default async function ImovelPage({ params }) {
     
     console.log('🔍 Data convertida no componente:', modifiedDate);
 
-    // Structured Data adicional para datas
+    // ✅ CORREÇÃO: Structured Data adicional para datas com suppressHydrationWarning
     const structuredDataDates = {
       "@context": "https://schema.org",
       "@type": "WebPage",
@@ -274,9 +274,10 @@ export default async function ImovelPage({ params }) {
           image={imovel.Foto}
         />
 
-        {/* Structured Data para datas */}
+        {/* ✅ CORREÇÃO: Structured Data para datas com suppressHydrationWarning */}
         <script
           type="application/ld+json"
+          suppressHydrationWarning={true}
           dangerouslySetInnerHTML={{
             __html: JSON.stringify(structuredDataDates),
           }}
