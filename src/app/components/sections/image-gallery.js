@@ -32,27 +32,36 @@ export function ImageGallery({ imovel }) {
 
   const slug = formatterSlug(imovel.Empreendimento);
 
-  // ✅ ORDENAÇÃO RESTAURADA DO BACKUP: usar campo Ordem + destaque
+  // ✅ SOLUÇÃO CORRIGIDA: Ordenação simplificada e correta
   const images =
     Array.isArray(imovel.Foto) && imovel.Foto.length > 0
-      ? [...imovel.Foto]
-          // PASSO 1: Ordenar por campo Ordem (como no backup) ou usar índice como fallback
-          .sort((a, b) => {
-            const orderA = a.Ordem || imovel.Foto.indexOf(a) + 1;
-            const orderB = b.Ordem || imovel.Foto.indexOf(b) + 1;
-            return orderA - orderB;
-          })
-          // PASSO 2: Mover foto destaque para primeira posição (melhoria)
-          .sort((a, b) => {
-            const destaqueA = a.Destaque === "Sim";
-            const destaqueB = b.Destaque === "Sim";
-            
-            if (destaqueA && !destaqueB) return -1; // Destaque vai primeiro
-            if (!destaqueA && destaqueB) return 1;
-            
-            // Se ambos têm mesmo status de destaque, manter ordem original
-            return 0;
-          })
+      ? (() => {
+          // PASSO 1: Criar cópia do array original (preserva ordem da migração)
+          const fotosOriginais = [...imovel.Foto];
+          
+          // PASSO 2: Encontrar foto de destaque
+          const fotoDestaque = fotosOriginais.find(foto => foto.Destaque === "Sim");
+          
+          // PASSO 3: Se não há foto de destaque, retornar ordem original
+          if (!fotoDestaque) {
+            console.log(`[IMAGE-GALLERY] 📸 Nenhuma foto de destaque encontrada, mantendo ordem original`);
+            return fotosOriginais;
+          }
+          
+          // PASSO 4: Remover foto de destaque da posição original
+          const fotosSemDestaque = fotosOriginais.filter(foto => foto.Destaque !== "Sim");
+          
+          // PASSO 5: Colocar foto de destaque na primeira posição + demais na ordem original
+          const fotosOrdenadas = [fotoDestaque, ...fotosSemDestaque];
+          
+          console.log(`[IMAGE-GALLERY] 📸 Foto de destaque movida para primeira posição:`, {
+            codigo: fotoDestaque.Codigo,
+            ordem: fotoDestaque.Ordem,
+            destaque: fotoDestaque.Destaque
+          });
+          
+          return fotosOrdenadas;
+        })()
       : [];
 
   console.log(`[IMAGE-GALLERY] 📸 Total de fotos processadas: ${images.length}`);
