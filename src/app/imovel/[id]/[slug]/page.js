@@ -275,7 +275,7 @@ export async function generateMetadata({ params }) {
     
     const title = `${imovel.Empreendimento} - ${imovel.BairroComercial}, ${imovel.Cidade}`;
     const description = `${imovel.Categoria} à venda no bairro ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.DormitoriosAntigo} dormitórios, ${imovel.SuiteAntigo} suítes, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt}. Valor: ${imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}.`;
-    const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
+    const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel/${imovel.Codigo}/${imovel.Slug}`;
     
     // ✅ USAR FOTO DESTAQUE PARA OG IMAGE
     const imageUrl = fotoDestaque || 
@@ -406,7 +406,7 @@ export default async function ImovelPage({ params }) {
       console.log(`🏠 [IMOVEL-PAGE] ⚠️ Slug inconsistente (middleware deveria ter redirecionado): ${slug} vs ${slugCorreto}`);
     }
 
-    const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
+    const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel/${imovel.Codigo}/${imovel.Slug}`;
     const modifiedDate = convertBrazilianDateToISO(imovel.DataHoraAtualizacao, imovel);
     
     console.log('🔍 Data convertida no componente:', modifiedDate);
