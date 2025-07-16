@@ -1,524 +1,295 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect } from "react";
+import Image from "next/image";
+import { ArrowLeft } from "lucide-react";
 import { formatterSlug } from "@/app/utils/formatter-slug";
-import { OpenStreetMapProvider } from "leaflet-geosearch";
-import { REQUIRED_FIELDS } from "../FieldGroup";
-import useImovelStore from "@/app/admin/store/imovelStore";
-import { getCorretorById } from "@/app/admin/services/corretor";
-import { generateUniqueCode } from "@/app/utils/idgenerate";
+import { Share } from "../ui/share";
 
-// Export the generateRandomCode function so it can be reused
-export const generateRandomCode = async () => {
-  const code = await generateUniqueCode();
-  return code;
-};
+// Hook para detectar se é mobile
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false);
 
-export const useImovelForm = () => {
-  const provider = new OpenStreetMapProvider();
-  const fileInputRef = useRef(null);
-
-  // Access the store to check for Automacao flag
-  const imovelSelecionado = useImovelStore((state) => state.imovelSelecionado);
-  const isAutomacao = imovelSelecionado?.Automacao === true;
-
-  const [formData, setFormData] = useState({
-    Codigo: "",
-    CodigoOriginal: "",
-    Empreendimento: "",
-    TituloSite: "",
-    Categoria: "Apartamento",
-    Situacao: "PRONTO NOVO",
-    Status: "VENDA",
-    Slug: "",
-    Destacado: "Não",
-    Condominio: "Não",
-    CondominioDestaque: "Não",
-    Ativo: "Sim",
-    Construtora: "",
-    Endereco: "",
-    Numero: "",
-    Complemento: "",
-    Bairro: "",
-    BairroComercial: "",
-    Cidade: "",
-    UF: "",
-    CEP: "",
-    Latitude: "",
-    Longitude: "",
-    Regiao: "",
-    AreaPrivativa: "",
-    AreaTotal: "",
-    Dormitorios: "",
-    Suites: "",
-    BanheiroSocialQtd: "",
-    Vagas: "",
-    DataEntrega: "",
-    AnoConstrucao: "",
-    ValorAntigo: "",
-    ValorAluguelSite: "",
-    ValorCondominio: "",
-    ValorIptu: "",
-    DescricaoUnidades: "",
-    DescricaoDiferenciais: "",
-    DestaquesDiferenciais: "",
-    DestaquesLazer: "",
-    DestaquesLocalizacao: "",
-    FichaTecnica: "",
-    Tour360: "",
-    IdCorretor: "",
-    Corretor: "",
-    EmailCorretor: "",
-    CelularCorretor: "",
-    Imobiliaria: "",
-    Video: "",
-    Foto: [],
-  });
-
-  const [displayValues, setDisplayValues] = useState({
-    ValorAntigo: "",
-    ValorAluguelSite: "",
-    ValorCondominio: "",
-    ValorIptu: "",
-  });
-
-  const [newImovelCode, setNewImovelCode] = useState("");
-  const [showImageModal, setShowImageModal] = useState(false);
-
-  const [validation, setValidation] = useState({
-    isFormValid: false,
-    photoCount: 0,
-    requiredPhotoCount: 5,
-    fieldValidation: {},
-  });
-
-  // Generate random code on init only if in Automacao mode
   useEffect(() => {
-    if (isAutomacao || !formData.Codigo) {
-      const fetchCode = async () => {
-        const code = await generateRandomCode();
-        setNewImovelCode(code);
-        setFormData((prev) => {
-          if (prev.Codigo && prev.Codigo !== code) {
-            return prev;
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  return isMobile;
+}
+
+export function ImageGallery({ imovel }) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(null);
+  const isMobile = useIsMobile();
+
+  // Validate if imovel exists and has the required properties
+  if (!imovel || !imovel.Empreendimento) {
+    return null;
+  }
+
+  const slug = formatterSlug(imovel.Empreendimento);
+
+  // ✅ SOLUÇÃO FINAL CORRIGIDA: Respeitar campo ORDEM do banco + destaque primeiro
+  const images =
+    Array.isArray(imovel.Foto) && imovel.Foto.length > 0
+      ? (() => {
+          console.log(`[IMAGE-GALLERY] 🔍 Dados originais:`, imovel.Foto.slice(0, 3).map(f => ({
+            codigo: f.Codigo,
+            ordem: f.Ordem,
+            destaque: f.Destaque,
+            url: f.Foto?.substring(0, 30) + '...'
+          })));
+
+          // PASSO 1: Ordenar por campo ORDEM do banco (ordem original da migração)
+          const fotosOrdenadas = [...imovel.Foto].sort((a, b) => {
+            const ordemA = parseInt(a.Ordem) || 999999; // Fotos sem ordem vão para o final
+            const ordemB = parseInt(b.Ordem) || 999999;
+            return ordemA - ordemB;
+          });
+
+          console.log(`[IMAGE-GALLERY] 📋 Após ordenação por ORDEM:`, fotosOrdenadas.slice(0, 5).map(f => ({
+            codigo: f.Codigo,
+            ordem: f.Ordem,
+            destaque: f.Destaque
+          })));
+
+          // PASSO 2: Encontrar foto de destaque
+          const fotoDestaque = fotosOrdenadas.find(foto => foto.Destaque === "Sim");
+          
+          // PASSO 3: Se não há foto de destaque, retornar ordem do banco
+          if (!fotoDestaque) {
+            console.log(`[IMAGE-GALLERY] ⚠️ Nenhuma foto de destaque encontrada, mantendo ordem do campo ORDEM`);
+            return fotosOrdenadas;
           }
-          return {
-            ...prev,
-            Codigo: code,
-          };
-        });
-      };
-      fetchCode();
-    }
-  }, [isAutomacao]);
+          
+          // PASSO 4: Remover foto de destaque da posição original
+          const fotosSemDestaque = fotosOrdenadas.filter(foto => foto.Destaque !== "Sim");
+          
+          // PASSO 5: Colocar foto de destaque na primeira posição + demais na ordem do banco
+          const resultado = [fotoDestaque, ...fotosSemDestaque];
+          
+          console.log(`[IMAGE-GALLERY] ✅ Foto de destaque movida para primeira posição:`, {
+            codigo: fotoDestaque.Codigo,
+            ordem: fotoDestaque.Ordem,
+            destaque: fotoDestaque.Destaque
+          });
+          
+          return resultado;
+        })()
+      : [];
 
-  useEffect(() => {
-    if (formData.CEP && formData.CEP.length >= 8) {
-      fetchAddressByCep(formData.CEP);
-    }
-  }, [formData.CEP]);
-
-  // Ensure formData.Codigo is always synced with newImovelCode
-  useEffect(() => {
-    if (isAutomacao && newImovelCode && (!formData.Codigo || formData.Codigo !== newImovelCode)) {
-      setFormData((prev) => ({
-        ...prev,
-        Codigo: newImovelCode,
-      }));
-    }
-  }, [newImovelCode, formData.Codigo, isAutomacao]);
-
-  // Ensure Slug is always generated from Empreendimento
-  useEffect(() => {
-    if (formData.Empreendimento || formData.TermoSeo) {
-      let slug;
-
-      if (isAutomacao && formData.TermoSeo) {
-        slug = formatterSlug(formData.TermoSeo);
-      } else {
-        slug = formatterSlug(formData.Empreendimento);
-      }
-      // Only update if the slug has actually changed
-      if (slug !== formData.Slug) {
-        setFormData((prev) => ({
-          ...prev,
-          Slug: slug,
-        }));
-      }
-    }
-  }, [formData.Empreendimento, formData.TermoSeo, formData.Slug]);
-
-  useEffect(() => {
-    const fetchCorretor = async () => {
-      try {
-        if (formData.Codigo && !isAutomacao) {
-          const response = await getCorretorById(formData.Codigo);
-          if (response.data) {
-            setFormData((prev) => ({
-              ...prev,
-              Corretor: response.data.nome,
-              EmailCorretor: response.data.email,
-              CelularCorretor: response.data.celular,
-            }));
-          } else {
-            setFormData((prev) => ({
-              ...prev,
-              Corretor: "",
-              EmailCorretor: "",
-              CelularCorretor: "",
-            }));
-          }
-        }
-      } catch (error) {
-        console.error("Erro ao buscar corretor:", error);
-      }
-    };
-
-    fetchCorretor();
-  }, [formData.Codigo]);
-
-  const maskDateBR = useCallback((value) => {
-    // Remove tudo que não for número
-    let v = value.replace(/\D/g, "");
-    // Adiciona a barra após o dia
-    if (v.length > 2) v = v.replace(/^(\d{2})(\d)/, "$1/$2");
-    // Adiciona a barra após o mês
-    if (v.length > 5) v = v.replace(/^(\d{2})\/(\d{2})(\d)/, "$1/$2/$3");
-    // Limita a 10 caracteres (dd/mm/yyyy)
-    return v.slice(0, 10);
-  }, []);
-
-  // Função para formatar valores monetários
-  const formatarParaReal = useCallback((valor) => {
-    if (valor === null || valor === undefined || valor === "") return "";
-
-    // Remove qualquer caractere não numérico
-    const apenasNumeros = String(valor).replace(/\D/g, "");
-
-    // Converte para número e formata
-    try {
-      const numero = parseInt(apenasNumeros, 10);
-      return numero.toLocaleString("pt-BR", {
-        style: "currency",
-        currency: "BRL",
-        minimumFractionDigits: 0,
-        maximumFractionDigits: 0,
-      });
-    } catch (e) {
-      console.error("Erro ao formatar valor:", e);
-      return String(valor);
-    }
-  }, []);
-
-  // Função para extrair somente os números (remove formatação)
-  const extrairNumeros = useCallback((valorFormatado) => {
-    if (!valorFormatado) return "";
-    return valorFormatado.replace(/\D/g, "");
-  }, []);
-
-  // Função para buscar coordenadas usando OpenStreetMap
-  const fetchCoordinates = useCallback(
-    async (address) => {
-      try {
-        const searchQuery = `${address.logradouro}, ${address.bairro}, ${address.localidade} - ${address.uf}, ${address.cep}, Brasil`;
-        const results = await provider.search({ query: searchQuery });
-
-        if (results && results.length > 0) {
-          const { y: lat, x: lng } = results[0];
-          return { latitude: lat, longitude: lng };
-        }
-        return null;
-      } catch (error) {
-        console.error("Erro ao buscar coordenadas:", error);
-        return null;
-      }
-    },
-    [provider]
-  );
-
-  // Função para buscar endereço pelo CEP
-  const fetchAddressByCep = useCallback(
-    async (cep) => {
-      // Remove caracteres não numéricos
-      const cleanCep = cep.replace(/\D/g, "");
-
-      // Verifica se o CEP tem 8 dígitos
-      if (cleanCep.length !== 8) return;
-
-      try {
-        const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
-        const data = await response.json();
-
-        if (!data.erro) {
-          // Buscar coordenadas após obter o endereço
-          const coordinates = await fetchCoordinates(data);
-
-          setFormData((prevData) => ({
-            ...prevData,
-            Endereco: data.logradouro || prevData.Endereco,
-            Bairro: data.bairro || prevData.Bairro,
-            Cidade: data.localidade || prevData.Cidade,
-            UF: data.uf || prevData.UF,
-            Regiao: data.regiao || prevData.Regiao,
-            Latitude: coordinates?.latitude?.toString() || prevData.Latitude,
-            Longitude: coordinates?.longitude?.toString() || prevData.Longitude,
-          }));
-        }
-      } catch (error) {
-        console.error("Erro ao buscar CEP:", error);
-      }
-    },
-    [fetchCoordinates]
-  );
-
-  // Handle field changes
-  const handleChange = useCallback(
-    (e) => {
-      const { name, value } = e.target;
-
-      if (name === "DataEntrega") {
-        const maskedValue = maskDateBR(value);
-        setFormData((prevData) => ({
-          ...prevData,
-          [name]: maskedValue,
-        }));
-        return;
-      }
-
-      // Tratamento especial para campos monetários
-      if (["ValorAntigo", "ValorAluguelSite", "ValorCondominio", "ValorIptu"].includes(name)) {
-        // Armazena o valor não formatado no formData
-        const valorNumerico = extrairNumeros(value);
-        setFormData((prevData) => ({
-          ...prevData,
-          [name]: valorNumerico,
-        }));
-
-        // Atualiza o valor formatado para exibição
-        setDisplayValues((prevValues) => ({
-          ...prevValues,
-          [name]: formatarParaReal(valorNumerico),
-        }));
-      }
-      // Tratamento especial para o campo de vídeo
-      else if (name === "Video.1.Video") {
-        setFormData((prevData) => ({
-          ...prevData,
-          Video: {
-            ...(prevData.Video || {}),
-            1: {
-              ...(prevData.Video?.[1] || {}),
-              Codigo: prevData.Video?.[1]?.Codigo || "1",
-              Destaque: prevData.Video?.[1]?.Destaque || "Nao",
-              Tipo: "youtube",
-              Video: value,
-              VideoCodigo: prevData.Video?.[1]?.VideoCodigo || "1",
-            },
-          },
-        }));
-      } else {
-        setFormData((prevData) => {
-          // Se o campo alterado for Empreendimento, gerar o slug automaticamente
-          if (name === "Empreendimento") {
-            return {
-              ...prevData,
-              [name]: value,
-              Slug: formatterSlug(value),
-            };
-          }
-
-          // Se o campo alterado for CEP, buscar o endereço
-          if (name === "CEP" && value.length >= 8) {
-            // Permite executar apenas quando tiver 8 ou mais caracteres
-            fetchAddressByCep(value);
-          }
-
-          return {
-            ...prevData,
-            [name]: value,
-          };
-        });
-      }
-    },
-    [extrairNumeros, formatarParaReal, fetchAddressByCep]
-  );
-
-  // Função para adicionar imagens via modal
-  const addImage = useCallback(() => {
-    setShowImageModal(true);
-  }, []);
-
-  // Função para adicionar uma imagem manualmente
-  const addSingleImage = useCallback(() => {
-    const newImageCode = Date.now().toString(); // Gera um código único baseado no timestamp
-    setFormData((prevData) => {
-      const newPhoto = {
-        Codigo: newImageCode,
-        Destaque: "Nao",
-        Foto: "", // URL da imagem será adicionada pelo usuário
-        isUploading: false,
-        // ✅ REMOVIDO: Campo Ordem - deixa o array determinar a ordem natural
-      };
-
-      // Handle both array and empty cases
-      const updatedFotos = Array.isArray(prevData.Foto) ? [...prevData.Foto, newPhoto] : [newPhoto];
-
-      return {
-        ...prevData,
-        Foto: updatedFotos,
-      };
+  console.log(`[IMAGE-GALLERY] 📸 Total de fotos processadas: ${images.length}`);
+  if (images.length > 0) {
+    console.log(`[IMAGE-GALLERY] 📸 Primeira foto (deve ser destaque):`, {
+      codigo: images[0].Codigo,
+      ordem: images[0].Ordem,
+      destaque: images[0].Destaque,
+      url: images[0].Foto?.substring(0, 50) + '...'
     });
-  }, []);
+    console.log(`[IMAGE-GALLERY] 📸 Primeiras 5 fotos ordenadas:`, 
+      images.slice(0, 5).map(f => ({
+        codigo: f.Codigo,
+        ordem: f.Ordem,
+        destaque: f.Destaque
+      }))
+    );
+  }
 
-  // Função para atualizar uma imagem específica
-  const updateImage = useCallback((codigo, field, value) => {
-    setFormData((prevData) => {
-      if (!Array.isArray(prevData.Foto)) return prevData;
+  if (images.length === 0) {
+    // Return a placeholder or default image if no images are available
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-1 w-full">
+        <div className="col-span-1 h-[410px] relative">
+          <div className="w-full h-full overflow-hidden bg-gray-200 flex items-center justify-center">
+            <span className="text-gray-500">Imagem não disponível</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-      // Atualiza apenas a imagem com o Codigo correspondente
-      const updatedFotos = prevData.Foto.map((photo) =>
-        photo.Codigo === codigo ? { ...photo, [field]: value } : photo
-      );
-
-      console.log("Dados UpdatedFotos", updatedFotos);
-
-      return {
-        ...prevData,
-        Foto: updatedFotos,
-      };
-    });
-  }, []);
-
-  // Função para remover uma imagem
-  const removeImage = useCallback((codigo) => {
-    if (!window.confirm("Tem certeza que deseja remover esta imagem?")) return;
-
-    setFormData((prevData) => {
-      if (!Array.isArray(prevData.Foto)) return prevData;
-
-      // Filter out the photo with the given codigo
-      const updatedFotos = prevData.Foto.filter((photo) => photo.Codigo !== codigo);
-
-      // ✅ REMOVIDO: Atualização automática da ordem - deixa o array natural
-      // const reorderedFotos = updatedFotos.map((photo, index) => ({
-      //   ...photo,
-      //   Ordem: index + 1,
-      // }));
-
-      return {
-        ...prevData,
-        Foto: updatedFotos, // ✅ ALTERADO: usa updatedFotos em vez de reorderedFotos
-      };
-    });
-  }, []);
-
-  // Função para definir uma imagem como destaque
-  const setImageAsHighlight = useCallback((codigo) => {
-    setFormData((prevData) => {
-      if (!Array.isArray(prevData.Foto)) return prevData;
-
-      const updatedFotos = prevData.Foto.map((photo) => ({
-        ...photo,
-        Destaque: photo.Codigo === codigo ? "Sim" : "Nao",
-      }));
-
-      return {
-        ...prevData,
-        Foto: updatedFotos,
-      };
-    });
-  }, []);
-
-  // ✅ FUNÇÃO SIMPLIFICADA: changeImagePosition - move item no array sem mexer no campo Ordem
-  const changeImagePosition = useCallback((codigo, newPosition) => {
-    setFormData((prevData) => {
-      if (!Array.isArray(prevData.Foto)) return prevData;
-
-      // Encontrar índice atual da foto
-      const currentIndex = prevData.Foto.findIndex((photo) => photo.Codigo === codigo);
-      if (currentIndex === -1 || currentIndex === newPosition - 1) return prevData;
-
-      // Criar novo array com item movido
-      const newFotos = [...prevData.Foto];
-      const [movedPhoto] = newFotos.splice(currentIndex, 1);
-      newFotos.splice(newPosition - 1, 0, movedPhoto);
-
-      return {
-        ...prevData,
-        Foto: newFotos,
-      };
-    });
-  }, []);
-
-  // Validate the form
-  useEffect(() => {
-    // Validate required fields
-    const fieldValidation = {};
-    let allFieldsValid = true;
-
-    REQUIRED_FIELDS.forEach((fieldName) => {
-      const isValid = formData[fieldName] && formData[fieldName].trim() !== "";
-      fieldValidation[fieldName] = isValid;
-      if (!isValid) allFieldsValid = false;
-    });
-
-    // Validate photos
-    const photoCount = formData.Foto ? formData.Foto.length : 0;
-    const hasEnoughPhotos = photoCount >= 5;
-
-    setValidation({
-      isFormValid: allFieldsValid && hasEnoughPhotos,
-      photoCount,
-      requiredPhotoCount: 5,
-      fieldValidation,
-    });
-  }, [formData]);
-
-  const handleImagesUploaded = (novasImagens) => {
-    if (!novasImagens || !Array.isArray(novasImagens) || novasImagens.length === 0) {
-      return; // Não fazer nada se não receber imagens
-    }
-
-    setFormData((prevData) => {
-      // Criar array existente ou vazio se não existir
-      const fotosExistentes = Array.isArray(prevData.Foto) ? [...prevData.Foto] : [];
-
-      // Para cada imagem nova, criar um objeto com estrutura correta
-      const novasFotos = novasImagens.map((image, index) => ({
-        Codigo: Date.now().toString() + Math.random().toString(36).substr(2, 5),
-        Foto: image.Foto,
-        Destaque: "Nao",
-        // ✅ REMOVIDO: Campo Ordem - deixa posição natural do array
-      }));
-
-      // Retornar state atualizado com ARRAY concatenado
-      return {
-        ...prevData,
-        Foto: [...fotosExistentes, ...novasFotos],
-      };
-    });
+  const openModal = (index) => {
+    setIsModalOpen(true);
+    setSelectedIndex(index ?? null);
   };
 
-  return {
-    formData,
-    setFormData,
-    displayValues,
-    setDisplayValues,
-    handleChange,
-    newImovelCode,
-    fileInputRef,
-    showImageModal,
-    setShowImageModal,
-    addImage,
-    addSingleImage,
-    updateImage,
-    removeImage,
-    setImageAsHighlight,
-    changeImagePosition,
-    validation,
-    generateRandomCode,
-    handleImagesUploaded,
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedIndex(null);
   };
-};
 
-export default useImovelForm;
+  const goNext = () => {
+    if (selectedIndex !== null) {
+      setSelectedIndex((prev) => (prev + 1) % images.length);
+    }
+  };
+
+  const goPrev = () => {
+    if (selectedIndex !== null) {
+      setSelectedIndex((prev) => (prev - 1 + images.length) % images.length);
+    }
+  };
+
+  const tituloCompartilhamento = `Confira este imóvel: ${imovel.Empreendimento}`;
+  const url = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${slug}`;
+
+  return (
+    <>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-1 w-full">
+        {/* Imagem principal */}
+        <div className="col-span-1 h-[410px] cursor-pointer relative" onClick={() => openModal()}>
+          <div className="w-full h-full overflow-hidden">
+            <Image
+              src={images[0].Foto}
+              alt={imovel.Empreendimento}
+              title={imovel.Empreendimento}
+              width={800}
+              height={600}
+              sizes="(max-width: 350px) 100vw, (max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              placeholder="blur"
+              blurDataURL={images[0].blurDataURL || "/placeholder.png"} // Use um placeholder otimizado
+              loading="eager" // Carregamento prioritário para melhorar o LCP
+              priority={true} // Priorizar a imagem principal
+              className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
+            />
+          </div>
+
+          {/* Chip com número de imagens (apenas no mobile) */}
+          {isMobile && images.length > 1 && (
+            <div className="absolute top-4 right-4 bg-white bg-opacity-80 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium">
+              {images.length} fotos
+            </div>
+          )}
+        </div>
+
+        {/* Galeria lateral (somente no desktop) */}
+        {!isMobile && (
+          <div className="col-span-1 grid grid-cols-2 grid-rows-2 gap-1 h-[410px]">
+            {images.slice(1, 5).map((image, index) => {
+              const isLastImage = index === 3;
+              return (
+                <div
+                  key={index}
+                  className="relative h-full overflow-hidden cursor-pointer"
+                  onClick={() => openModal()}
+                >
+                  <Image
+                    src={image.Foto}
+                    alt={`${imovel.Empreendimento} - imagem ${index + 2}`}
+                    title={`${imovel.Empreendimento} - imagem ${index + 2}`}
+                    width={400}
+                    height={300}
+                    sizes="25vw"
+                    placeholder="blur"
+                    blurDataURL={image.blurDataURL || "/placeholder.png"}
+                    loading="lazy"
+                    className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
+                  />
+                  {isLastImage && images.length > 5 && (
+                    <div className="absolute inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center">
+                      <button
+                        className="border border-white text-white px-4 py-2 rounded hover:bg-white hover:text-black transition-colors"
+                        aria-label="Ver mais fotos"
+                      >
+                        Ver mais fotos
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Botão para ver todas as fotos (apenas no mobile) */}
+      {isMobile && images.length > 1 && (
+        <div className="mt-4 px-4">
+          <button
+            onClick={() => openModal()}
+            className="w-full py-3 text-center border border-gray-300 rounded-md bg-white hover:bg-gray-50 transition-colors"
+          >
+            Ver todas as {images.length} fotos
+          </button>
+        </div>
+        )}
+
+      {/* Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-90 z-50 overflow-auto">
+          <div className="flex justify-between gap-4 p-5 pt-28 mt-6 md:mt-0">
+            <button onClick={closeModal} aria-label="Fechar galeria">
+              <ArrowLeft color="white" size={24} />
+            </button>
+            <Share
+              primary
+              url={url}
+              title={tituloCompartilhamento}
+              imovel={{
+                Codigo: imovel.Codigo,
+                Empreendimento: imovel.Empreendimento,
+              }}
+            />
+          </div>
+
+          {selectedIndex !== null ? (
+            <div className="flex items-center justify-center min-h-screen p-4 relative">
+              <Image
+                src={images[selectedIndex].Foto}
+                alt={`${imovel.Empreendimento} - imagem ampliada`}
+                title={`${imovel.Empreendimento} - imagem ampliada`}
+                width={1200}
+                height={800}
+                sizes="100vw"
+                placeholder="blur"
+                blurDataURL={images[selectedIndex].blurDataURL || "/placeholder.png"}
+                loading="eager"
+                className="max-w-full max-h-screen object-contain"
+              />
+
+              <button
+                onClick={goPrev}
+                className="absolute left-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2"
+                aria-label="Imagem anterior"
+              >
+                &#10094;
+              </button>
+              <button
+                onClick={goNext}
+                className="absolute right-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2"
+                aria-label="Próxima imagem"
+              >
+                &#10095;
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4 ">
+              {images.map((image, idx) => (
+                <div
+                  key={idx}
+                  onClick={() => setSelectedIndex(idx)}
+                  className="relative w-full h-48 sm:h-56 md:h-64 lg:h-72 xl:h-80 cursor-pointer overflow-hidden"
+                >
+                  <Image
+                    src={image.Foto}
+                    alt={`${imovel.Empreendimento} - imagem ${idx + 1}`}
+                    title={`${imovel.Empreendimento} - imagem ${idx + 1}`}
+                    fill
+                    sizes="(max-width: 768px) 50vw, 25vw"
+                    placeholder="blur"
+                    blurDataURL={image.blurDataURL || "/placeholder.png"}
+                    loading="lazy"
+                    className="object-cover"
+                  />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </>
+  );
+}
