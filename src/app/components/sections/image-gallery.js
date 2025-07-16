@@ -32,15 +32,13 @@ export function ImageGallery({ imovel }) {
 
   const slug = formatterSlug(imovel.Empreendimento);
 
-  // Ensure Foto is an array and handle edge cases
-  const images =
-    Array.isArray(imovel.Foto) && imovel.Foto.length > 0
-      ? [...imovel.Foto].sort((a, b) => {
-          if (a.Destaque === "Sim" && b.Destaque !== "Sim") return -1;
-          if (a.Destaque !== "Sim" && b.Destaque === "Sim") return 1;
-          return 0;
-        })
-      : [];
+  // ✅ USAR FOTOS JÁ ORDENADAS DA PÁGINA PRINCIPAL
+  // Como a página principal já processa e ordena as fotos, apenas validamos se é array
+  const images = Array.isArray(imovel.Foto) && imovel.Foto.length > 0 
+    ? imovel.Foto 
+    : [];
+
+  console.log(`[IMAGE-GALLERY] 📸 Recebidas ${images.length} fotos já ordenadas`);
 
   if (images.length === 0) {
     // Return a placeholder or default image if no images are available
