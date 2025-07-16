@@ -32,44 +32,40 @@ export function ImageGallery({ imovel }) {
 
   const slug = formatterSlug(imovel.Empreendimento);
 
-  // ✅ ORDENAÇÃO CORRIGIDA: Usar índices como ordem se Ordem não existir
+  // ✅ ORDENAÇÃO CORRIGIDA: Usar posição do array como ordem (já que Ordem não existe no banco)
   const images =
     Array.isArray(imovel.Foto) && imovel.Foto.length > 0
       ? [...imovel.Foto]
-          // PASSO 1: Garantir que todas as fotos tenham Ordem
+          // PASSO 1: Manter ordem original do array (que é a ordem de upload/criação)
           .map((foto, index) => ({
             ...foto,
-            Ordem: foto.Ordem || (index + 1) // Se não tem Ordem, usar índice + 1
+            _arrayPosition: index // Salvar posição original
           }))
-          // PASSO 2: Ordenar por Ordem
-          .sort((a, b) => {
-            const ordemA = parseInt(a.Ordem || 999);
-            const ordemB = parseInt(b.Ordem || 999);
-            return ordemA - ordemB;
-          })
-          // PASSO 3: Mover foto destaque para primeira posição
+          // PASSO 2: Mover foto destaque para primeira posição
           .sort((a, b) => {
             const destaqueA = a.Destaque === "Sim";
             const destaqueB = b.Destaque === "Sim";
             
-            if (destaqueA && !destaqueB) return -1;
+            if (destaqueA && !destaqueB) return -1; // Destaque vai para primeira posição
             if (!destaqueA && destaqueB) return 1;
-            return 0; // Mantém ordem se ambos têm mesmo status de destaque
+            
+            // Se ambos têm mesmo status de destaque, manter ordem original
+            return a._arrayPosition - b._arrayPosition;
           })
       : [];
 
   console.log(`[IMAGE-GALLERY] 📸 Total de fotos processadas: ${images.length}`);
   if (images.length > 0) {
-    console.log(`[IMAGE-GALLERY] 📸 Primeira foto:`, {
+    console.log(`[IMAGE-GALLERY] 📸 Primeira foto (deve ser destaque):`, {
       codigo: images[0].Codigo,
-      ordem: images[0].Ordem,
+      posicaoOriginal: images[0]._arrayPosition,
       destaque: images[0].Destaque,
       url: images[0].Foto?.substring(0, 50) + '...'
     });
     console.log(`[IMAGE-GALLERY] 📸 Primeiras 5 fotos ordenadas:`, 
       images.slice(0, 5).map(f => ({
         codigo: f.Codigo,
-        ordem: f.Ordem,
+        posicaoOriginal: f._arrayPosition,
         destaque: f.Destaque
       }))
     );
