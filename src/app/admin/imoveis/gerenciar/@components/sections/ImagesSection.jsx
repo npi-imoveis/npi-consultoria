@@ -16,10 +16,25 @@ const ImagesSection = ({
   validation,
 }) => {
   const fileInputRef = useRef(null);
+  
   // Handle both array and object formats for backward compatibility
   const photos = Array.isArray(formData.Foto)
   ? formData.Foto
   : Object.keys(formData.Foto || {}).map((key) => formData.Foto[key]);
+  
+  // 🔍 DEBUG LOGS
+  console.log("⚙️ ADMIN - Fotos no form:", formData.Foto);
+  console.log("⚙️ ADMIN - Photos processado:", photos);
+  console.log("⚙️ ADMIN - Primeiras 3 fotos (ordem do array):", 
+    photos.slice(0, 3).map((f, idx) => ({
+      posicaoArray: idx + 1,
+      codigo: f.Codigo,
+      destaque: f.Destaque,
+      campoOrdem: f.Ordem,
+      url: f.Foto?.substring(0, 30) + '...'
+    }))
+  );
+  
   const photoCount = photos.length;
   const requiredPhotoCount = validation?.requiredPhotoCount || 5;
   const hasEnoughPhotos = photoCount >= requiredPhotoCount;
@@ -66,14 +81,8 @@ const ImagesSection = ({
         {photoCount > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 grid-fotos">
             {photos
-              // ✅ REMOVIDO: A ordenação por Ordem - agora usa ordem natural do array
-              // .sort((a, b) => {
-              //   const orderA = a.Ordem || photos.indexOf(a);
-              //   const orderB = b.Ordem || photos.indexOf(b);
-              //   return orderA - orderB;
-              // })
+              // ✅ CORRETO: Não ordena - usa ordem natural do array (migração)
               .map((image, index) => {
-                // Generate unique key for each photo, ensuring uniqueness even with duplicate Codigo values
                 const uniquePhotoKey = `${image.Foto || ""}-${index}`;
 
                 return (
@@ -94,6 +103,12 @@ const ImagesSection = ({
                       <div className="absolute top-0 left-0 bg-black/70 text-white px-2 py-0.5 text-xs font-semibold">
                         Posição: {index + 1}
                       </div>
+                      {/* ✅ INDICADOR VISUAL DE DESTAQUE */}
+                      {image.Destaque === "Sim" && (
+                        <div className="absolute top-0 right-0 bg-green-600 text-white px-2 py-0.5 text-xs font-semibold">
+                          ⭐ DESTAQUE
+                        </div>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <div>
@@ -134,7 +149,7 @@ const ImagesSection = ({
                         </button>
                       </div>
                       <div className="flex justify-between items-center mt-2 pt-2 border-t">
-                        <span className="text-xs text-gray-500">Posição:</span>
+                        <span className="text-xs text-gray-500">Reordenar:</span>
                         <select
                           className="border border-gray-300 rounded text-xs px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-black"
                           value={index + 1}
