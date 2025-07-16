@@ -1,280 +1,320 @@
-// app/(site)/[slug]/page.js
-import { Button } from "@/app/components/ui/button";
-import { getCondominioPorSlug } from "@/app/services";
-import { formatterValue } from "@/app/utils/formatter-value";
-import { Apartment as StructuredDataApartment } from "@/app/components/structured-data";
-import { Share } from "@/app/components/ui/share";
-import { PropertyTableOwner } from "./componentes/property-table-owner";
-import { WhatsappFloat } from "@/app/components/ui/whatsapp";
-import CondominioGallery from "./componentes/condominio-gallery";
-import { PropertyTable } from "./componentes/property-table";
-import { ImoveisRelacionados } from "./componentes/related-properties";
-import SobreCondominio from "./componentes/SobreCondominio";
+// app/imovel/[id]/[slug]/page.js
+import { ImageGallery } from "@/app/components/sections/image-gallery";
+import { FAQImovel } from "./componentes/FAQImovel";
+import DetalhesCondominio from "./componentes/DetalhesCondominio";
+import LocalizacaoCondominio from "./componentes/LocalizacaoCondominio";
 import FichaTecnica from "./componentes/FichaTecnica";
-import DiferenciaisCondominio from "./componentes/DiferenciaisCondominio";
 import Lazer from "./componentes/Lazer";
+import TituloImovel from "./componentes/TituloImovel";
+import DetalhesImovel from "./componentes/DetalhesImovel";
+import DescricaoImovel from "./componentes/DescricaoImovel";
 import VideoCondominio from "./componentes/VideoCondominio";
 import TourVirtual from "./componentes/TourVirtual";
-import ExploreRegiao from "./componentes/ExploreRegiao";
-import { notFound, redirect } from "next/navigation";
+import Contato from "./componentes/Contato";
+import { SimilarProperties } from "./componentes/similar-properties";
+import { getImovelById } from "@/app/services";
+import { WhatsappFloat } from "@/app/components/ui/whatsapp";
+import { Apartment as StructuredDataApartment } from "@/app/components/structured-data";
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
-import ScrollToImoveisButton from "./componentes/scroll-to-imovel-button";
+import { notFound, redirect } from "next/navigation";
 
-function ensureCondominio(text) {
-  return /condom[ií]nio/i.test(text) ? text : `Condomínio ${text}`;
+// ✅ CORREÇÃO: Data fixa para evitar diferenças servidor/cliente
+const FALLBACK_DATE = '2024-01-01T00:00:00.000Z';
+
+// Função utilitária CORRIGIDA para converter data brasileira para ISO
+function convertBrazilianDateToISO(brazilianDate, imovelData) {
+  // Tentar múltiplos campos de data
+  const possibleDateFields = [
+    brazilianDate,
+    imovelData?.DataHoraAtualizacao,
+    imovelData?.DataAtualizacao,
+    imovelData?.DataCadastro,
+    imovelData?.DataModificacao,
+    imovelData?.UltimaAtualizacao
+  ];
+  
+  let workingDate = null;
+  for (const dateField of possibleDateFields) {
+    if (dateField && typeof dateField === 'string' && dateField.trim() !== '') {
+      workingDate = dateField.trim();
+      break;
+    }
+  }
+  
+  // ✅ CORREÇÃO: Se não encontrar data válida, usar data fixa
+  if (!workingDate) {
+    console.log(`[DATE-CONVERT] ⚠️  Usando data fixa como fallback: ${FALLBACK_DATE}`);
+    return FALLBACK_DATE;
+  }
+  
+  try {
+    // Formato 1: "DD/MM/AAAA, HH:MM:SS"
+    if (workingDate.includes(', ')) {
+      const [datePart, timePart] = workingDate.split(', ');
+      const [day, month, year] = datePart.split('/');
+      const [hours, minutes, seconds] = timePart.split(':');
+      
+      const date = new Date(
+        parseInt(year), 
+        parseInt(month) - 1, 
+        parseInt(day), 
+        parseInt(hours), 
+        parseInt(minutes), 
+        parseInt(seconds || 0)
+      );
+      
+      if (!isNaN(date.getTime())) {
+        console.log(`[DATE-CONVERT] ✅ Formato brasileiro convertido: ${date.toISOString()}`);
+        return date.toISOString();
+      }
+    }
+    
+    // Formato 2: Tentar parse direto
+    const date = new Date(workingDate);
+    if (!isNaN(date.getTime())) {
+      console.log(`[DATE-CONVERT] ✅ Parse direto: ${date.toISOString()}`);
+      return date.toISOString();
+    }
+    
+    // ✅ CORREÇÃO: Se chegou aqui, usar data fixa
+    console.log(`[DATE-CONVERT] ⚠️  Fallback para data fixa: ${FALLBACK_DATE}`);
+    return FALLBACK_DATE;
+    
+  } catch (error) {
+    console.error(`[DATE-CONVERT] ❌ Erro na conversão:`, error);
+    return FALLBACK_DATE;
+  }
 }
 
+// Configuração de revalidação
+export const revalidate = 0;
+
+// Geração dinâmica de metadados SEO
 export async function generateMetadata({ params }) {
-  const { slug } = params;
+  const { id } = params;
   
-  // Detectar URLs que sigam o padrão imovel-{id} e retornar metadata vazio (não redirecionar aqui)
-  if (slug.match(/^imovel-(\d+)$/)) {
+  console.error(`[IMOVEL-META] =========== PROCESSANDO ID: ${id} ===========`);
+  
+  try {
+    const response = await getImovelById(id);
+    if (!response?.data) {
+      return {
+        title: 'Imóvel não encontrado - NPI Consultoria',
+        description: 'O imóvel solicitado não foi encontrado.',
+      };
+    }
+
+    const imovel = response.data;
+    
+    // ✅ CORREÇÃO: GARANTIR DATA VÁLIDA
+    let modifiedDate;
+    try {
+      modifiedDate = convertBrazilianDateToISO(imovel.DataHoraAtualizacao, imovel);
+      
+      // ✅ VALIDAÇÃO EXTRA: Verificar se a data é realmente válida
+      const testDate = new Date(modifiedDate);
+      if (isNaN(testDate.getTime())) {
+        console.error(`[IMOVEL-META] ❌ Data inválida gerada, usando fallback`);
+        modifiedDate = FALLBACK_DATE;
+      }
+    } catch (error) {
+      console.error(`[IMOVEL-META] ❌ Erro na conversão de data:`, error);
+      modifiedDate = FALLBACK_DATE;
+    }
+    
+    console.error(`[IMOVEL-META] ✅ Data final válida: ${modifiedDate}`);
+    
+    const title = `${imovel.Empreendimento} - ${imovel.BairroComercial}, ${imovel.Cidade}`;
+    const description = `${imovel.Categoria} à venda no bairro ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.DormitoriosAntigo} dormitórios, ${imovel.SuiteAntigo} suítes, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt}. Valor: ${imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}.`;
+    const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
+    
+    const imageUrl = Array.isArray(imovel.Foto) && imovel.Foto.length > 0 
+      ? (imovel.Foto[0].Foto || imovel.Foto[0].FotoPequena || imovel.Foto[0])
+      : imovel.Foto || `${process.env.NEXT_PUBLIC_SITE_URL}/og-image.png`;
+
     return {
-      title: "Redirecionando...",
-      robots: { index: false, follow: false }
-    };
-  }
-  
-  const response = await getCondominioPorSlug(slug);
-  const condominio = response?.data;
-
-  if (!condominio) {
-    return {
-      title: "Condomínio não encontrado",
-      description: "A página do condomínio que você procura não foi encontrada.",
-      robots: "noindex, nofollow",
-    };
-  }
-
-  const rawTitle = ensureCondominio(condominio.Empreendimento);
-  
-  // Corrigir extração da imagem - buscar foto destacada ou primeira disponível
-  const destaqueFotoObj = condominio.Foto?.find((f) => f.Destaque === "Sim");
-  const primeiraFoto = Array.isArray(condominio.Foto) && condominio.Foto.length > 0 ? condominio.Foto[0] : null;
-  
-  const destaqueFotoUrl = destaqueFotoObj?.Foto || 
-                         destaqueFotoObj?.FotoPequena || 
-                         primeiraFoto?.Foto || 
-                         primeiraFoto?.FotoPequena ||
-                         `${process.env.NEXT_PUBLIC_SITE_URL}/og-image.png`;
-  
-  const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`;
-  
-  // ✅ Gerar data para o condomínio
-  const modifiedDate = new Date().toISOString();
-
-  console.error(`[CONDOMINIO-META] Image URL: ${destaqueFotoUrl}`);
-
-  const description = `${rawTitle} em ${condominio.BairroComercial}, ${condominio.Cidade}. ${condominio.Categoria} com ${condominio.MetragemAnt}, ${condominio.DormitoriosAntigo} quartos, ${condominio.VagasAntigo} vagas. ${condominio.Situacao}.`;
-
-  return {
-    title: `${rawTitle}, ${condominio.TipoEndereco} ${condominio.Endereco} ${condominio.Numero}, ${condominio.BairroComercial}`,
-    description,
-    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL),
-    robots: {
-      index: true,
-      follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
-    },
-    alternates: {
-      canonical: currentUrl,
-      languages: {
-        "pt-BR": currentUrl,
+      title,
+      description,
+      alternates: {
+        canonical: currentUrl,
+        languages: {
+          "pt-BR": currentUrl,
+        },
       },
-    },
-    openGraph: {
-      title: rawTitle,
-      description,
-      url: currentUrl,
-      type: "website",
-      siteName: "NPI Consultoria",
-      publishedTime: modifiedDate,
-      modifiedTime: modifiedDate,
-      images: [
-        {
-          url: destaqueFotoUrl,
-          width: 1200,
-          height: 630,
-          alt: rawTitle,
-          type: "image/jpeg",
-        }
-      ],
-      updated_time: modifiedDate,
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: rawTitle,
-      description,
-      site: "@NPIImoveis",
-      creator: "@NPIImoveis",
-      images: [
-        {
-          url: destaqueFotoUrl,
-          alt: rawTitle,
-        }
-      ],
-    },
-    other: {
-      'article:published_time': modifiedDate,
-      'article:modified_time': modifiedDate,
-      'article:author': 'NPI Consultoria',
-      'article:section': 'Imobiliário',
-      'article:tag': `${condominio.Categoria}, ${condominio.BairroComercial}, ${condominio.Cidade}, condomínio`,
-      'og:updated_time': modifiedDate,
-      'last-modified': modifiedDate,
-      'date': modifiedDate,
-      'DC.date.modified': modifiedDate,
-      'DC.date.created': modifiedDate,
-    },
-  };
+      robots: {
+        index: true,
+        follow: true,
+        'max-video-preview': -1,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
+      openGraph: {
+        title,
+        description,
+        url: currentUrl,
+        type: "website",
+        siteName: "NPI Consultoria",
+        publishedTime: modifiedDate,
+        modifiedTime: modifiedDate,
+        images: [
+          {
+            url: imageUrl,
+            width: 1200,
+            height: 630,
+            alt: title,
+            type: "image/jpeg",
+          }
+        ],
+        // ✅ Meta tags OpenGraph adicionais
+        updated_time: modifiedDate,
+      },
+      twitter: {
+        card: "summary_large_image",
+        title,
+        description,
+        site: "@NPIImoveis",
+        creator: "@NPIImoveis",
+        images: [
+          {
+            url: imageUrl,
+            alt: title,
+          }
+        ],
+      },
+      // ✅ CORREÇÃO: Removidas meta tags de data problemáticas
+      other: {
+        'article:author': 'NPI Consultoria',
+        'article:section': 'Imobiliário',
+        'article:tag': `${imovel.Categoria}, ${imovel.BairroComercial}, ${imovel.Cidade}, imóvel à venda`,
+      },
+    };
+  } catch (error) {
+    console.error('Erro ao gerar metadata:', error);
+    return {
+      title: 'Erro - NPI Consultoria',
+      description: 'Ocorreu um erro ao carregar as informações do imóvel.',
+    };
+  }
 }
 
-
-export default async function CondominioPage({ params }) {
-  const { slug } = params;
+// Componente principal da página do imóvel
+export default async function ImovelPage({ params }) {
+  const { id, slug } = params;
   
-  // URLs imovel-{id} agora são interceptadas pelo next.config.mjs
-  // Esta página só deve processar slugs de condomínios reais
+  console.log(`🏠 [IMOVEL-PAGE] =================== INÍCIO ===================`);
+  console.log(`🏠 [IMOVEL-PAGE] Processando ID: ${id}, SLUG: ${slug}`);
   
-  const response = await getCondominioPorSlug(slug);
+  try {
+    console.log(`🏠 [IMOVEL-PAGE] 📞 Chamando getImovelById(${id})`);
+    const response = await getImovelById(id);
+    
+    console.log(`🏠 [IMOVEL-PAGE] 📞 Response:`, { 
+      success: !!response?.data, 
+      codigo: response?.data?.Codigo,
+      empreendimento: response?.data?.Empreendimento?.substring(0, 30)
+    });
+    
+    if (!response?.data) {
+      notFound();
+    }
 
-  if (!response.data) {
+    const imovel = {
+      ...response.data,
+      SuiteAntigo: response.data.SuiteAntigo ?? response.data.Suites ?? 0,
+      DormitoriosAntigo: response.data.DormitoriosAntigo ?? 0,
+      VagasAntigo: response.data.VagasAntigo ?? 0,
+      BanheiroSocialQtd: response.data.BanheiroSocialQtd ?? 0,
+    };
+
+    const slugCorreto = imovel.Slug;
+
+    // Middleware já redireciona slugs antigos, então aqui só chegam slugs corretos
+    // Apenas logamos para debug se necessário
+    if (slug !== slugCorreto) {
+      console.log(`🏠 [IMOVEL-PAGE] ⚠️ Slug inconsistente (middleware deveria ter redirecionado): ${slug} vs ${slugCorreto}`);
+    }
+
+    const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
+    const modifiedDate = convertBrazilianDateToISO(imovel.DataHoraAtualizacao, imovel);
+    
+    console.log('🔍 Data convertida no componente:', modifiedDate);
+
+    // ✅ CORREÇÃO: Structured Data adicional para datas com suppressHydrationWarning
+    const structuredDataDates = {
+      "@context": "https://schema.org",
+      "@type": "WebPage",
+      url: currentUrl,
+      datePublished: modifiedDate,
+      dateModified: modifiedDate,
+      author: {
+        "@type": "Organization",
+        name: "NPI Consultoria"
+      },
+      publisher: {
+        "@type": "Organization",
+        name: "NPI Consultoria"
+      }
+    };
+
+    return (
+      <section className="w-full bg-white pb-32 pt-20">
+        {/* Structured Data para o imóvel */}
+        <StructuredDataApartment
+          title={imovel.Empreendimento}
+          price={imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}
+          description={`${imovel.Categoria} à venda em ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.Empreendimento}: ${imovel.DormitoriosAntigo} quartos, ${imovel.SuiteAntigo} suítes, ${imovel.BanheiroSocialQtd} banheiros, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt}. ${imovel.Situacao}. Valor: ${imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}. ${imovel.TipoEndereco} ${imovel.Endereco}.`}
+          address={`${imovel.TipoEndereco} ${imovel.Endereco}, ${imovel.Numero}, ${imovel.BairroComercial}, ${imovel.Cidade}`}
+          url={currentUrl}
+          image={imovel.Foto}
+        />
+
+        {/* ✅ CORREÇÃO: Structured Data para datas com suppressHydrationWarning */}
+        <script
+          type="application/ld+json"
+          suppressHydrationWarning={true}
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(structuredDataDates),
+          }}
+        />
+
+        <ExitIntentModal condominio={imovel.Empreendimento} link={currentUrl} />
+
+        <div className="w-full mx-auto">
+          <ImageGallery imovel={imovel} />
+        </div>
+
+        <div className="container mx-auto gap-4 mt-3 px-4 md:px-0 flex flex-col lg:flex-row">
+          <div className="w-full lg:w-[65%]">
+            <TituloImovel imovel={imovel} currentUrl={currentUrl} />
+            <DetalhesImovel imovel={imovel} />
+            <DescricaoImovel imovel={imovel} />
+            <FichaTecnica imovel={imovel} />
+            <DetalhesCondominio imovel={imovel} />
+            <Lazer imovel={imovel} />
+            {imovel.Video && Object.keys(imovel.Video).length > 0 && (
+              <VideoCondominio imovel={imovel} />
+            )}
+            {imovel.Tour360 && <TourVirtual link={imovel.Tour360} titulo={imovel.Empreendimento} />}
+            <SimilarProperties id={imovel.Codigo} />
+            <LocalizacaoCondominio imovel={imovel} />
+          </div>
+
+          <div className="w-full lg:w-[35%] h-fit lg:sticky lg:top-24 order-first lg:order-last mb-6 lg:mb-0">
+            <Contato imovel={imovel} currentUrl={currentUrl} />
+          </div>
+        </div>
+
+        <div className="container mx-auto px-4 md:px-0">
+          <FAQImovel imovel={imovel} />
+        </div>
+
+        <WhatsappFloat
+          message={`Quero saber mais sobre o ${imovel.Empreendimento}, no bairro ${imovel.BairroComercial}, disponível na página do Imóvel: ${currentUrl}`}
+        />
+      </section>
+    );
+  } catch (error) {
+    console.error('Erro na página do imóvel:', error);
     notFound();
   }
-
-  const condominio = response.data;
-  const imoveisRelacionados = response.imoveisRelacionados;
-
-  const rawTitle = ensureCondominio(condominio.Empreendimento);
-  const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`;
-  const modifiedDate = new Date().toISOString();
-
-  // Structured Data adicional para datas
-  const structuredDataDates = {
-    "@context": "https://schema.org",
-    "@type": "WebPage",
-    url: currentUrl,
-    datePublished: modifiedDate,
-    dateModified: modifiedDate,
-    author: {
-      "@type": "Organization",
-      name: "NPI Consultoria"
-    },
-    publisher: {
-      "@type": "Organization",
-      name: "NPI Consultoria"
-    }
-  };
-
-  function isValidValue(value) {
-    return value !== undefined && value !== null && value !== "" && value !== "0";
-  }
-
-  return (
-    <section className="w-full bg-zinc-100 pb-10">
-      {/* Structured Data para o condomínio */}
-      <StructuredDataApartment
-        title={rawTitle}
-        price={condominio.ValorAntigo ? `R$ ${condominio.ValorAntigo}` : "Consulte"}
-        description={`${condominio.Categoria} à venda em ${condominio.BairroComercial}, ${condominio.Cidade}. ${rawTitle}: ${condominio.DormitoriosAntigo} quartos, ${condominio.SuiteAntigo} suítes, ${condominio.BanheiroSocialQtd} banheiros, ${condominio.VagasAntigo} vagas, ${condominio.MetragemAnt}. ${condominio.Situacao}. Valor: ${condominio.ValorAntigo ? `R$ ${condominio.ValorAntigo}` : "Consulte"}. ${condominio.TipoEndereco} ${condominio.Endereco}.`}
-        address={`${condominio.TipoEndereco} ${condominio.Endereco}, ${condominio.Numero}, ${condominio.BairroComercial}, ${condominio.Cidade}`}
-        url={currentUrl}
-        image={condominio.Foto}
-      />
-
-      {/* Structured Data para datas */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(structuredDataDates),
-        }}
-      />
-
-      <ExitIntentModal condominio={rawTitle} link={currentUrl} />
-
-      <div className="container mx-auto pt-20">
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 ">
-          <div className="flex flex-col gap-4 ">
-            <div className="px-10 py-6 bg-white max-h-[400px] xl:max-h-[300px] rounded-lg flex-grow">
-              <div className="flex justify-between">
-                <span className="text-[10px]">Código:{condominio.Codigo}</span>
-                <Share
-                  url={currentUrl}
-                  title={`Compartilhe o imóvel ${rawTitle} em ${condominio.BairroComercial}`}
-                  variant="secondary"
-                />
-              </div>
-
-              <h1 className="text-xl font-bold mt-2">{rawTitle}</h1>
-              <span className="text-xs text-zinc-700 font-semibold">
-                {condominio.TipoEndereco} {condominio.Endereco}, {condominio.Numero}, {condominio.BairroComercial}, {condominio.Cidade}
-              </span>
-              <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-3 gap-3 mt-4 mb-8">
-                {condominio.ValorAluguelSite && (
-                  <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
-                    <h4 className="text-zinc-600 text-[10px] font-bold">Aluguel:</h4>
-                    <h2 className="text-black font-semibold text-[10px]">R$ {condominio.ValorAluguelSite}</h2>
-                  </div>
-                )}
-
-                {/* Este é o bloco do Valor de Venda. O erro estava aqui. */}
-                <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
-                  <h4 className="text-zinc-600 text-[10px] font-bold">Venda:</h4>
-                  <h2 className="text-black font-semibold text-[10px]">R$ {condominio.ValorAntigo}</h2>
-                </div>
-                {/* A linha 132 do erro anterior (onde estava o ')}') foi removida aqui. */}
-
-                {condominio.ValorCondominio && (
-                  <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
-                    <h4 className="text-zinc-600 text-[10px] font-bold">Condomínio:</h4>
-                    <h2 className="text-black font-semibold text-[10px]">{formatterValue(condominio.ValorCondominio)}</h2>
-                  </div>
-                )}
-                {condominio.ValorIptu && (
-                  <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
-                    <h4 className="text-zinc-600 text-[10px] font-bold">IPTU:</h4>
-                    <h2 className="text-black font-semibold text-[10px]">{formatterValue(condominio.ValorIptu)}</h2>
-                  </div>
-                )}
-              </div>
-              <ScrollToImoveisButton text={`Mostrar imóveis (${imoveisRelacionados.length})`} />
-            </div>
-            <div className="relative w-full h-[230px] overflow-y-auto bg-white rounded-lg overflow-hidden p-4">
-              {isValidValue(condominio.ValorVenda2) || isValidValue(condominio.ValorGarden) || isValidValue(condominio.ValorCobertura) ? (
-                <PropertyTableOwner imovel={condominio} />
-              ) : (
-                <PropertyTable imoveisRelacionados={imoveisRelacionados} />
-              )}
-            </div>
-          </div>
-          <div className="relative w-full min-h-[550px] overflow-hidden rounded-lg">
-            <CondominioGallery fotos={condominio.Foto} title={rawTitle} />
-          </div>
-        </div>
-      </div>
-      {imoveisRelacionados && imoveisRelacionados.length > 0 && (
-        <div id="imoveis-relacionados">
-          <ImoveisRelacionados imoveisRelacionados={imoveisRelacionados} />
-        </div>
-      )}
-      <SobreCondominio condominio={condominio} />
-
-      {condominio.FichaTecnica && <FichaTecnica condominio={condominio} />}
-      {condominio.DescricaoDiferenciais && <DiferenciaisCondominio condominio={condominio} />}
-      {condominio.DestaquesLazer && <Lazer condominio={condominio} />}
-      {condominio.Video && Object.keys(condominio.Video).length > 0 && (
-        <VideoCondominio condominio={condominio} />
-      )}
-      {condominio.Tour360 && (
-        <TourVirtual link={condominio.Tour360} titulo={rawTitle} />
-      )}
-
-      <ExploreRegiao condominio={condominio} currentUrl={currentUrl} />
-      <WhatsappFloat
-        message={`Quero saber mais sobre o ${rawTitle}, no bairro ${condominio.BairroComercial}, disponível na página de Condomínio: ${currentUrl}`}
-      />
-    </section>
-  );
 }
