@@ -32,17 +32,17 @@ export function ImageGallery({ imovel }) {
 
   const slug = formatterSlug(imovel.Empreendimento);
 
-  // ✅ ORDENAÇÃO CORRIGIDA: Ordem + Destaque
+  // ✅ ORDENAÇÃO RESTAURADA DO BACKUP: usar campo Ordem + destaque
   const images =
     Array.isArray(imovel.Foto) && imovel.Foto.length > 0
       ? [...imovel.Foto]
-          // ✅ PASSO 1: Ordenar por campo Ordem (do backup) ou usar índice como fallback
+          // PASSO 1: Ordenar por campo Ordem (como no backup) ou usar índice como fallback
           .sort((a, b) => {
             const orderA = a.Ordem || imovel.Foto.indexOf(a) + 1;
             const orderB = b.Ordem || imovel.Foto.indexOf(b) + 1;
             return orderA - orderB;
           })
-          // ✅ PASSO 2: Mover foto destaque para primeira posição
+          // PASSO 2: Mover foto destaque para primeira posição (melhoria)
           .sort((a, b) => {
             const destaqueA = a.Destaque === "Sim";
             const destaqueB = b.Destaque === "Sim";
@@ -55,14 +55,22 @@ export function ImageGallery({ imovel }) {
           })
       : [];
 
-  console.log(`[IMAGE-GALLERY] 📸 Fotos ordenadas (PRESERVANDO TUDO):`, {
-    total: images.length,
-    primeira: images[0] ? {
+  console.log(`[IMAGE-GALLERY] 📸 Total de fotos processadas: ${images.length}`);
+  if (images.length > 0) {
+    console.log(`[IMAGE-GALLERY] 📸 Primeira foto (deve ser destaque):`, {
       codigo: images[0].Codigo,
       ordem: images[0].Ordem,
-      destaque: images[0].Destaque
-    } : null
-  });
+      destaque: images[0].Destaque,
+      url: images[0].Foto?.substring(0, 50) + '...'
+    });
+    console.log(`[IMAGE-GALLERY] 📸 Primeiras 5 fotos ordenadas:`, 
+      images.slice(0, 5).map(f => ({
+        codigo: f.Codigo,
+        ordem: f.Ordem,
+        destaque: f.Destaque
+      }))
+    );
+  }
 
   if (images.length === 0) {
     // Return a placeholder or default image if no images are available
@@ -116,9 +124,9 @@ export function ImageGallery({ imovel }) {
               height={600}
               sizes="(max-width: 350px) 100vw, (max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               placeholder="blur"
-              blurDataURL={images[0].blurDataURL || "/placeholder.png"}
-              loading="eager"
-              priority={true}
+              blurDataURL={images[0].blurDataURL || "/placeholder.png"} // Use um placeholder otimizado
+              loading="eager" // Carregamento prioritário para melhorar o LCP
+              priority={true} // Priorizar a imagem principal
               className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
             />
           </div>
@@ -181,7 +189,7 @@ export function ImageGallery({ imovel }) {
             Ver todas as {images.length} fotos
           </button>
         </div>
-      )}
+        )}
 
       {/* Modal */}
       {isModalOpen && (
@@ -232,7 +240,7 @@ export function ImageGallery({ imovel }) {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4 ">
               {images.map((image, idx) => (
                 <div
                   key={idx}
