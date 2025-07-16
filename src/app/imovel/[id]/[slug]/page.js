@@ -18,83 +18,48 @@ import { Apartment as StructuredDataApartment } from "@/app/components/structure
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 import { notFound, redirect } from "next/navigation";
 
-// ✅ NOVA FUNÇÃO: Ordenar fotos pelo campo ORDEM
-function ordenarFotos(fotos) {
-  if (!Array.isArray(fotos) || fotos.length === 0) {
-    return [];
-  }
+// ✅ FUNÇÃO DE DEBUG - Para ver a estrutura real
+function debugFotosEstrutura(imovelData) {
+  console.log('🔍 [DEBUG-FOTOS] =================== INÍCIO DEBUG ===================');
+  console.log('🔍 [DEBUG-FOTOS] Dados brutos do imovel.Foto:', imovelData.Foto);
+  console.log('🔍 [DEBUG-FOTOS] Tipo:', typeof imovelData.Foto);
+  console.log('🔍 [DEBUG-FOTOS] É array?', Array.isArray(imovelData.Foto));
   
-  console.log(`[FOTO-ORDER] 📸 Ordenando ${fotos.length} fotos...`);
-  
-  // Ordenar por ORDEM (números menores primeiro)
-  const fotosOrdenadas = fotos.sort((a, b) => {
-    const ordemA = parseInt(a.ORDEM || a.Ordem || 999);
-    const ordemB = parseInt(b.ORDEM || b.Ordem || 999);
+  if (Array.isArray(imovelData.Foto)) {
+    console.log('🔍 [DEBUG-FOTOS] Total de fotos:', imovelData.Foto.length);
     
-    console.log(`[FOTO-ORDER] Comparando: ${ordemA} vs ${ordemB}`);
-    return ordemA - ordemB;
-  });
-  
-  console.log(`[FOTO-ORDER] ✅ Fotos ordenadas:`, fotosOrdenadas.map(f => ({ 
-    nome: f.Nome || f.nome || 'sem-nome', 
-    ordem: f.ORDEM || f.Ordem 
-  })));
-  
-  return fotosOrdenadas;
-}
-
-// ✅ NOVA FUNÇÃO: Encontrar foto DESTAQUE para thumbnail
-function encontrarFotoDestaque(fotos) {
-  if (!Array.isArray(fotos) || fotos.length === 0) {
-    return null;
-  }
-  
-  console.log(`[FOTO-DESTAQUE] 🎯 Procurando foto destaque em ${fotos.length} fotos...`);
-  
-  // Procurar por foto marcada como DESTAQUE
-  const fotoDestaque = fotos.find(foto => {
-    const isDestaque = foto.DESTAQUE === 1 || 
-                      foto.DESTAQUE === "1" || 
-                      foto.DESTAQUE === true ||
-                      foto.Destaque === 1 ||
-                      foto.Destaque === "1" ||
-                      foto.Destaque === true ||
-                      foto.destaque === 1 ||
-                      foto.destaque === "1" ||
-                      foto.destaque === true;
-    
-    if (isDestaque) {
-      console.log(`[FOTO-DESTAQUE] ✅ Encontrada foto destaque:`, {
-        nome: foto.Nome || foto.nome || 'sem-nome',
-        ordem: foto.ORDEM || foto.Ordem,
-        destaque: foto.DESTAQUE || foto.Destaque || foto.destaque
+    imovelData.Foto.forEach((foto, index) => {
+      console.log(`🔍 [DEBUG-FOTOS] Foto ${index + 1}:`, {
+        // Estrutura completa da foto
+        fotoCompleta: foto,
+        // Campos que buscamos
+        ORDEM: foto.ORDEM,
+        Ordem: foto.Ordem,
+        ordem: foto.ordem,
+        DESTAQUE: foto.DESTAQUE,
+        Destaque: foto.Destaque,
+        destaque: foto.destaque,
+        // URLs
+        Foto: foto.Foto,
+        FotoPequena: foto.FotoPequena,
+        // Outros campos possíveis
+        Nome: foto.Nome,
+        nome: foto.nome,
+        // Todos os campos disponíveis
+        todasAsChaves: Object.keys(foto)
       });
-    }
-    
-    return isDestaque;
-  });
-  
-  if (fotoDestaque) {
-    // Retornar a URL da foto destaque
-    return fotoDestaque.Foto || fotoDestaque.FotoPequena || fotoDestaque.url || fotoDestaque;
+    });
   }
   
-  console.log(`[FOTO-DESTAQUE] ⚠️ Nenhuma foto destaque encontrada, usando primeira foto ordenada`);
-  
-  // Se não encontrar destaque, usar primeira foto da lista ordenada
-  const fotosOrdenadas = ordenarFotos(fotos);
-  const primeiraFoto = fotosOrdenadas[0];
-  
-  if (primeiraFoto) {
-    return primeiraFoto.Foto || primeiraFoto.FotoPequena || primeiraFoto.url || primeiraFoto;
-  }
-  
-  return null;
+  console.log('🔍 [DEBUG-FOTOS] =================== FIM DEBUG ===================');
 }
 
-// ✅ FUNÇÃO MODIFICADA: Processar fotos do imóvel
+// ✅ FUNÇÃO CORRIGIDA - Mais robusta
 function processarFotosImovel(imovelData) {
   console.log(`[PROCESSAR-FOTOS] 📸 Iniciando processamento...`);
+  
+  // Debug da estrutura
+  debugFotosEstrutura(imovelData);
   
   if (!imovelData || !imovelData.Foto) {
     console.log(`[PROCESSAR-FOTOS] ⚠️ Nenhuma foto encontrada`);
@@ -106,24 +71,91 @@ function processarFotosImovel(imovelData) {
   
   const fotos = Array.isArray(imovelData.Foto) ? imovelData.Foto : [imovelData.Foto];
   
-  console.log(`[PROCESSAR-FOTOS] 📊 Dados brutos:`, {
-    totalFotos: fotos.length,
-    primeiraFoto: fotos[0] ? {
-      nome: fotos[0].Nome || fotos[0].nome || 'sem-nome',
-      ordem: fotos[0].ORDEM || fotos[0].Ordem,
-      destaque: fotos[0].DESTAQUE || fotos[0].Destaque || fotos[0].destaque
-    } : null
+  console.log(`[PROCESSAR-FOTOS] 📊 Total fotos para processar: ${fotos.length}`);
+  
+  // 1. PRIMEIRO: Clonar array para não modificar o original
+  const fotosClone = fotos.map(foto => ({ ...foto }));
+  
+  // 2. SEGUNDO: Ordenar por ORDEM (tentando todas as variações)
+  const fotosOrdenadas = fotosClone.sort((a, b) => {
+    // Buscar campo ORDEM em todas as variações possíveis
+    const ordemA = a.ORDEM || a.Ordem || a.ordem || 999;
+    const ordemB = b.ORDEM || b.Ordem || b.ordem || 999;
+    
+    const numA = parseInt(ordemA);
+    const numB = parseInt(ordemB);
+    
+    console.log(`[PROCESSAR-FOTOS] 🔢 Comparando ordens: ${numA} vs ${numB}`);
+    
+    return numA - numB;
   });
   
-  // 1. Ordenar fotos
-  const fotosOrdenadas = ordenarFotos(fotos);
+  console.log(`[PROCESSAR-FOTOS] ✅ Fotos ordenadas por ORDEM:`, 
+    fotosOrdenadas.map((f, i) => ({
+      indice: i,
+      ordem: f.ORDEM || f.Ordem || f.ordem,
+      nome: f.Nome || f.nome || `foto-${i}`,
+      destaque: f.DESTAQUE || f.Destaque || f.destaque
+    }))
+  );
   
-  // 2. Encontrar foto destaque
-  const fotoDestaque = encontrarFotoDestaque(fotos);
+  // 3. TERCEIRO: Encontrar índice da foto destaque
+  const indiceFotoDestaque = fotosOrdenadas.findIndex(foto => {
+    const destaque = foto.DESTAQUE || foto.Destaque || foto.destaque;
+    
+    // Verificar todas as variações possíveis de "destaque"
+    const isDestaque = destaque === 1 || 
+                      destaque === "1" || 
+                      destaque === true ||
+                      destaque === "true" ||
+                      destaque === "Sim" ||
+                      destaque === "sim" ||
+                      destaque === "S" ||
+                      destaque === "s";
+    
+    if (isDestaque) {
+      console.log(`[PROCESSAR-FOTOS] 🎯 Foto destaque encontrada no índice ${indiceFotoDestaque}:`, {
+        nome: foto.Nome || foto.nome,
+        ordem: foto.ORDEM || foto.Ordem || foto.ordem,
+        destaque: destaque
+      });
+    }
+    
+    return isDestaque;
+  });
   
-  console.log(`[PROCESSAR-FOTOS] ✅ Processamento concluído:`, {
-    fotosOrdenadas: fotosOrdenadas.length,
-    temFotoDestaque: !!fotoDestaque
+  // 4. QUARTO: Mover foto destaque para primeira posição (se encontrada e não estiver já na primeira)
+  if (indiceFotoDestaque > 0) {
+    console.log(`[PROCESSAR-FOTOS] 📌 Movendo foto destaque do índice ${indiceFotoDestaque} para 0`);
+    
+    const fotoDestaque = fotosOrdenadas[indiceFotoDestaque];
+    fotosOrdenadas.splice(indiceFotoDestaque, 1); // Remove da posição atual
+    fotosOrdenadas.unshift(fotoDestaque); // Adiciona no início
+    
+    console.log(`[PROCESSAR-FOTOS] ✅ Foto destaque movida para primeira posição`);
+  } else if (indiceFotoDestaque === 0) {
+    console.log(`[PROCESSAR-FOTOS] ✅ Foto destaque já está na primeira posição`);
+  } else {
+    console.log(`[PROCESSAR-FOTOS] ⚠️ Nenhuma foto destaque encontrada`);
+  }
+  
+  // 5. QUINTO: Encontrar URL da foto destaque
+  const fotoDestaque = fotosOrdenadas[0] ? (
+    fotosOrdenadas[0].Foto || 
+    fotosOrdenadas[0].FotoPequena || 
+    fotosOrdenadas[0].url || 
+    fotosOrdenadas[0]
+  ) : null;
+  
+  console.log(`[PROCESSAR-FOTOS] 🏁 Resultado final:`, {
+    totalFotos: fotosOrdenadas.length,
+    primeiraFoto: fotosOrdenadas[0] ? {
+      nome: fotosOrdenadas[0].Nome || fotosOrdenadas[0].nome,
+      ordem: fotosOrdenadas[0].ORDEM || fotosOrdenadas[0].Ordem || fotosOrdenadas[0].ordem,
+      destaque: fotosOrdenadas[0].DESTAQUE || fotosOrdenadas[0].Destaque || fotosOrdenadas[0].destaque,
+      url: fotosOrdenadas[0].Foto?.substring(0, 50) + '...'
+    } : null,
+    fotoDestaque: fotoDestaque ? fotoDestaque.substring(0, 50) + '...' : null
   });
   
   return {
