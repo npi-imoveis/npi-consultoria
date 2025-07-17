@@ -1,4 +1,4 @@
-// ImagesSection.jsx (ADMIN) - VERSÃO LIMPA COM DIAGNÓSTICO
+// ImagesSection.jsx (ADMIN) - VERSÃO PRODUÇÃO FINAL
 "use client";
 
 import { memo, useState } from "react";
@@ -22,66 +22,21 @@ const ImagesSection = memo(({
 
   const sortedPhotos = Array.isArray(formData?.Foto)
     ? (() => {
-        // 🔥 DIAGNÓSTICO COMPLETO - DADOS BRUTOS DA API
-        console.log('🔥 ADMIN - DIAGNÓSTICO COMPLETO:', {
-          totalFotos: formData.Foto.length,
-          primeiraFoto: formData.Foto[0]?.Foto,
-          ultimaFoto: formData.Foto[formData.Foto.length - 1]?.Foto,
-          fotosComCodigo487: formData.Foto.filter(f => f.Codigo === '487').length,
-          codigosUnicos: [...new Set(formData.Foto.map(f => f.Codigo))],
-          urlsUnicas: [...new Set(formData.Foto.map(f => f.Foto))],
-          fotoDestaque: formData.Foto.find(f => f.Destaque === 'Sim')
-        });
-
-        // 🚨 VALIDAÇÃO DA HIPÓTESE PRINCIPAL
-        const codigosDuplicados = formData.Foto.filter(f => f.Codigo === '487').length;
-        const totalFotos = formData.Foto.length;
-        const urlsUnicas = [...new Set(formData.Foto.map(f => f.Foto))];
-
-        console.log('🚨 ADMIN - DIAGNÓSTICO CRÍTICO:', {
-          temCodigosDuplicados: codigosDuplicados > 1,
-          percentualDuplicado: (codigosDuplicados / totalFotos * 100).toFixed(1) + '%',
-          precisaCorrecao: codigosDuplicados === totalFotos,
-          temUrlsDiferentes: urlsUnicas.length > 1,
-          totalUrlsUnicas: urlsUnicas.length
-        });
-
-        // 📸 COMPARAÇÃO VISUAL
-        const DEBUG_FOTOS = true;
-        if (DEBUG_FOTOS) {
-          console.log('📸 ADMIN - PRIMEIRAS 3 FOTOS DA API:');
-          formData.Foto.slice(0, 3).forEach((foto, i) => {
-            console.log(`  ${i+1}. Código: ${foto.Codigo} | URL: ${foto.Foto.slice(-30)}`);
-          });
-        }
-
-        // 🎯 BUSCAR E POSICIONAR DESTAQUE
         const ordemOriginal = [...formData.Foto];
+        
+        // Buscar foto marcada como destaque
         const destaqueIndex = ordemOriginal.findIndex(f => f.Destaque === "Sim");
         
+        // Se não há destaque, manter ordem original
         if (destaqueIndex === -1) {
-          console.log('🎯 ADMIN - ❌ SEM DESTAQUE - Mantendo ordem original');
           return ordemOriginal;
         }
 
-        console.log('🎯 ADMIN - ✅ DESTAQUE ENCONTRADO:', {
-          posicaoOriginal: destaqueIndex + 1,
-          codigoDestaque: ordemOriginal[destaqueIndex].Codigo,
-          urlDestaque: ordemOriginal[destaqueIndex].Foto.slice(-30)
-        });
-
+        // Reorganizar: destaque primeiro, depois as outras
         const fotoDestaque = ordemOriginal[destaqueIndex];
         const outrasfotos = ordemOriginal.filter((_, index) => index !== destaqueIndex);
-        const ordemFinal = [fotoDestaque, ...outrasfotos];
-
-        // 📋 RESULTADO FINAL
-        console.log('📋 ADMIN - RESULTADO FINAL:', {
-          primeiraFotoFinal: ordemFinal[0].Codigo,
-          urlPrimeiraFinal: ordemFinal[0].Foto.slice(-30),
-          mudouPosicao: formData.Foto[0]?.Foto !== ordemFinal[0]?.Foto ? '✅ SIM' : '❌ NÃO'
-        });
         
-        return ordemFinal;
+        return [fotoDestaque, ...outrasfotos];
       })()
     : [];
 
