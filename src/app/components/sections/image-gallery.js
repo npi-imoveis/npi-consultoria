@@ -1,4 +1,4 @@
-/ ImageGallery.jsx (FRONTEND)
+// ImageGallery.jsx (FRONTEND)
 "use client";
 
 import { useState, useEffect } from "react";
