@@ -88,36 +88,12 @@ export function ImageGallery({ imovel }) {
       });
     });
 
-    // 🔍 VERIFICAR SE TODAS AS FOTOS TÊM A MESMA URL
-    const urlsUnicasOriginal = [...new Set(ordemOriginal.map(f => f.Foto))];
-    console.log('🔍 FRONTEND - Total de URLs únicas:', urlsUnicasOriginal.length);
-    console.log('🔍 FRONTEND - URLs únicas:', urlsUnicasOriginal);
-    
-    if (urlsUnicasOriginal.length === 1) {
-      console.log('🚨 FRONTEND - PROBLEMA: Todas as fotos têm a mesma URL!');
-      console.log('🚨 FRONTEND - URL duplicada:', urlsUnicasOriginal[0]);
-    }
-
     const destaqueIndex = ordemOriginal.findIndex(f => f.Destaque === "Sim");
     
     if (destaqueIndex === -1) {
       console.log('🖼️ FRONTEND - ❌ Sem destaque encontrado, mantendo ordem original');
       console.log('🖼️ FRONTEND - Primeira foto sem destaque:', ordemOriginal[0]?.Codigo);
       console.log('🖼️ FRONTEND - Códigos na ordem final:', ordemOriginal.map(f => f.Codigo));
-      
-      const codigosUnicos = [...new Set(ordemOriginal.map(f => f.Codigo))];
-      console.log('🔍 FRONTEND - Total de códigos únicos:', codigosUnicos.length);
-      console.log('🔍 FRONTEND - Códigos únicos:', codigosUnicos);
-      
-      const urlsUnicasSemDestaque = [...new Set(ordemOriginal.map(f => f.Foto))];
-      console.log('🔍 FRONTEND - Total de URLs únicas:', urlsUnicasSemDestaque.length);
-      console.log('🔍 FRONTEND - URLs únicas:', urlsUnicasSemDestaque);
-      
-      if (urlsUnicasSemDestaque.length === 1) {
-        console.log('🚨 FRONTEND - PROBLEMA: Todas as fotos têm a mesma URL!');
-        console.log('🚨 FRONTEND - URL duplicada:', urlsUnicasSemDestaque[0]);
-      }
-      
       console.log('============================================================');
       return ordemOriginal;
     }
@@ -135,19 +111,6 @@ export function ImageGallery({ imovel }) {
       console.log(`  ${i+1}: ${f.Foto}`);
     });
     console.log('🖼️ FRONTEND - 🖼️ PRIMEIRA FOTO sendo exibida:', ordemFinal[0].Codigo);
-    
-    const codigosUnicos = [...new Set(ordemFinal.map(f => f.Codigo))];
-    console.log('🔍 FRONTEND - Total de códigos únicos:', codigosUnicos.length);
-    console.log('🔍 FRONTEND - Códigos únicos:', codigosUnicos);
-    
-    const urlsUnicasFinal = [...new Set(ordemFinal.map(f => f.Foto))];
-    console.log('🔍 FRONTEND - Total de URLs únicas:', urlsUnicasFinal.length);
-    console.log('🔍 FRONTEND - URLs únicas:', urlsUnicasFinal);
-    
-    if (urlsUnicasFinal.length === 1) {
-      console.log('🚨 FRONTEND - PROBLEMA: Todas as fotos têm a mesma URL!');
-      console.log('🚨 FRONTEND - URL duplicada:', urlsUnicasFinal[0]);
-    }
     
     console.log('============================================================');
     
