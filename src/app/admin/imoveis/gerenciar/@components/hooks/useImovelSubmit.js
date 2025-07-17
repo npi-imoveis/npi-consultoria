@@ -1,295 +1,199 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Image from "next/image";
-import { ArrowLeft } from "lucide-react";
-import { formatterSlug } from "@/app/utils/formatter-slug";
-import { Share } from "../ui/share";
+import { useState, useCallback } from "react";
+import { atualizarImovel, criarImovel } from "@/app/services";
+import { formatterNumber } from "@/app/utils/formatter-number";
+import { getTipoEndereco } from "@/app/utils/formater-tipo-address";
+import { formatAddress } from "@/app/utils/formatter-address";
+import { salvarLog } from "@/app/admin/services/log-service";
+import { getCurrentUserAndDate } from "@/app/utils/get-log";
 
-// Hook para detectar se é mobile
-function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(false);
+export const useImovelSubmit = (formData, setIsModalOpen, mode = "create", imovelId = null) => { // <--- MODIFIQUE ESTA LINHA
 
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768);
-    check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  const validateForm = useCallback((data) => {
+    // Required fields list
+    const requiredFields = [
+      { field: "Empreendimento", label: "Empreendimento" },
+      { field: "Slug", label: "Slug" },
+      { field: "CEP", label: "CEP" },
+      { field: "Endereco", label: "Endereço" },
+      { field: "Numero", label: "Número" },
+      { field: "Bairro", label: "Bairro" },
+      { field: "Cidade", label: "Cidade" },
+    ];
+
+    // Check required fields
+    const missingFields = requiredFields.filter(
+      (item) => !data[item.field] || data[item.field].trim() === ""
+    );
+
+    if (missingFields.length > 0) {
+      const fieldNames = missingFields.map((f) => f.label).join(", ");
+      return {
+        isValid: false,
+        error: `Campos obrigatórios não preenchidos: ${fieldNames}`,
+      };
+    }
+
+    // Check photos (at least 5 required)
+    const photoCount = data.Foto ? Object.keys(data.Foto).length : 0;
+    if (photoCount < 5) {
+      return {
+        isValid: false,
+        error: `É necessário adicionar pelo menos 5 fotos (atualmente: ${photoCount})`,
+      };
+    }
+
+    return { isValid: true };
   }, []);
 
-  return isMobile;
-}
+  const preparePayload = useCallback((data) => {
+    // Converter o objeto de fotos para um array
+    const fotosArray = data.Foto ? Object.values(data.Foto) : [];
 
-export function ImageGallery({ imovel }) {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState(null);
-  const isMobile = useIsMobile();
+    // Converter o objeto de vídeos para um array (se existir)
+    let videosArray = [];
+    if (data.Video) {
+      if (typeof data.Video === "object" && !Array.isArray(data.Video)) {
+        videosArray = Object.values(data.Video);
+      } else if (Array.isArray(data.Video)) {
+        videosArray = data.Video;
+      }
+    }
 
-  // Validate if imovel exists and has the required properties
-  if (!imovel || !imovel.Empreendimento) {
-    return null;
-  }
+    return {
+      ...data,
+      ValorAntigo: data.ValorAntigo ? formatterNumber(data.ValorAntigo) : undefined,
+      TipoEndereco: getTipoEndereco(data.Endereco),
+      Endereco: formatAddress(data.Endereco),
+      Foto: fotosArray,
+      Video: videosArray.length > 0 ? videosArray : undefined,
+    };
+  }, []);
 
-  const slug = formatterSlug(imovel.Empreendimento);
+  const handleSubmit = useCallback(
+    async (e) => {
+      e.preventDefault();
+      setIsSaving(true);
+      setError("");
+      setSuccess("");
 
-  // ✅ SOLUÇÃO FINAL CORRIGIDA: Respeitar campo ORDEM do banco + destaque primeiro
-  const images =
-    Array.isArray(imovel.Foto) && imovel.Foto.length > 0
-      ? (() => {
-          console.log(`[IMAGE-GALLERY] 🔍 Dados originais:`, imovel.Foto.slice(0, 3).map(f => ({
-            codigo: f.Codigo,
-            ordem: f.Ordem,
-            destaque: f.Destaque,
-            url: f.Foto?.substring(0, 30) + '...'
-          })));
+      // Validate form data
+      const validation = validateForm(formData);
+      if (!validation.isValid) {
+        setError(validation.error);
+        setIsSaving(false);
+        return;
+      }
 
-          // PASSO 1: Ordenar por campo ORDEM do banco (ordem original da migração)
-          const fotosOrdenadas = [...imovel.Foto].sort((a, b) => {
-            const ordemA = parseInt(a.Ordem) || 999999; // Fotos sem ordem vão para o final
-            const ordemB = parseInt(b.Ordem) || 999999;
-            return ordemA - ordemB;
-          });
+      try {
+        const payload = preparePayload(formData);
 
-          console.log(`[IMAGE-GALLERY] 📋 Após ordenação por ORDEM:`, fotosOrdenadas.slice(0, 5).map(f => ({
-            codigo: f.Codigo,
-            ordem: f.Ordem,
-            destaque: f.Destaque
-          })));
+        let result;
 
-          // PASSO 2: Encontrar foto de destaque
-          const fotoDestaque = fotosOrdenadas.find(foto => foto.Destaque === "Sim");
-          
-          // PASSO 3: Se não há foto de destaque, retornar ordem do banco
-          if (!fotoDestaque) {
-            console.log(`[IMAGE-GALLERY] ⚠️ Nenhuma foto de destaque encontrada, mantendo ordem do campo ORDEM`);
-            return fotosOrdenadas;
+        if (formData.Automacao) {
+          result = await criarImovel(formData.Codigo, payload);
+          if (result && result.success) {
+            setSuccess("Imóvel cadastrado com sucesso!");
+            setIsModalOpen(true);
+
+            try {
+              const { user, timestamp } = await getCurrentUserAndDate();
+              await salvarLog({
+                user: user.displayName ? user.displayName : "Não Identificado",
+                email: user.email,
+                data: timestamp.toISOString(),
+                action: `Automação:  ${user.email} - criou o imóvel ${formData.Codigo} a partir da automação`,
+              });
+            } catch (logError) {
+              await salvarLog({
+                user: user.displayName ? user.displayName : "Não Identificado",
+                email: user.email,
+                data: timestamp.toISOString(),
+                action: `Automação: Erro ao criar automação: ${user.email} - imóvel ${formData.Codigo} código de erro: ${logError}`,
+              });
+            }
+          } else {
+            setError(result?.message || "Erro ao criar imóvel");
           }
-          
-          // PASSO 4: Remover foto de destaque da posição original
-          const fotosSemDestaque = fotosOrdenadas.filter(foto => foto.Destaque !== "Sim");
-          
-          // PASSO 5: Colocar foto de destaque na primeira posição + demais na ordem do banco
-          const resultado = [fotoDestaque, ...fotosSemDestaque];
-          
-          console.log(`[IMAGE-GALLERY] ✅ Foto de destaque movida para primeira posição:`, {
-            codigo: fotoDestaque.Codigo,
-            ordem: fotoDestaque.Ordem,
-            destaque: fotoDestaque.Destaque
-          });
-          
-          return resultado;
-        })()
-      : [];
+        }
 
-  console.log(`[IMAGE-GALLERY] 📸 Total de fotos processadas: ${images.length}`);
-  if (images.length > 0) {
-    console.log(`[IMAGE-GALLERY] 📸 Primeira foto (deve ser destaque):`, {
-      codigo: images[0].Codigo,
-      ordem: images[0].Ordem,
-      destaque: images[0].Destaque,
-      url: images[0].Foto?.substring(0, 50) + '...'
-    });
-    console.log(`[IMAGE-GALLERY] 📸 Primeiras 5 fotos ordenadas:`, 
-      images.slice(0, 5).map(f => ({
-        codigo: f.Codigo,
-        ordem: f.Ordem,
-        destaque: f.Destaque
-      }))
-    );
-  }
+        if (mode === "edit") {
+          //Em modo de edição, chamar o serviço de atualização
+          result = await atualizarImovel(imovelId, payload); // <--- MODIFIQUE ESTA LINHA
 
-  if (images.length === 0) {
-    // Return a placeholder or default image if no images are available
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-1 w-full">
-        <div className="col-span-1 h-[410px] relative">
-          <div className="w-full h-full overflow-hidden bg-gray-200 flex items-center justify-center">
-            <span className="text-gray-500">Imagem não disponível</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
+          try {
+            const { user, timestamp } = await getCurrentUserAndDate();
+            await salvarLog({
+              user: user.displayName ? user.displayName : "Não Identificado",
+              email: user.email,
+              data: timestamp.toISOString(),
+              action: `Usuário ${user.email} atualizou o imóvel ${formData.Codigo}`,
+            });
+          } catch (logError) {
+            await salvarLog({
+              user: user.displayName ? user.displayName : "Não Identificado",
+              email: user.email,
+              data: timestamp.toISOString(),
+              action: `Imóveis: Erro ao editar imóvel: ${user.email} -  imóvel ${formData.Codigo} código de erro: ${logError}`,
+            });
+          }
 
-  const openModal = (index) => {
-    setIsModalOpen(true);
-    setSelectedIndex(index ?? null);
-  };
+          if (result && result.success) {
+            setSuccess("Imóvel atualizado com sucesso!");
+            setIsModalOpen(true);
+          } else {
+            setError(result?.message || "Erro ao atualizar imóvel");
+          }
+        } else {
+          // Em modo de criação, chamar o serviço de cadastro
+          result = await criarImovel(formData.Codigo, payload);
 
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setSelectedIndex(null);
-  };
-
-  const goNext = () => {
-    if (selectedIndex !== null) {
-      setSelectedIndex((prev) => (prev + 1) % images.length);
-    }
-  };
-
-  const goPrev = () => {
-    if (selectedIndex !== null) {
-      setSelectedIndex((prev) => (prev - 1 + images.length) % images.length);
-    }
-  };
-
-  const tituloCompartilhamento = `Confira este imóvel: ${imovel.Empreendimento}`;
-  const url = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${slug}`;
-
-  return (
-    <>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-1 w-full">
-        {/* Imagem principal */}
-        <div className="col-span-1 h-[410px] cursor-pointer relative" onClick={() => openModal()}>
-          <div className="w-full h-full overflow-hidden">
-            <Image
-              src={images[0].Foto}
-              alt={imovel.Empreendimento}
-              title={imovel.Empreendimento}
-              width={800}
-              height={600}
-              sizes="(max-width: 350px) 100vw, (max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              placeholder="blur"
-              blurDataURL={images[0].blurDataURL || "/placeholder.png"} // Use um placeholder otimizado
-              loading="eager" // Carregamento prioritário para melhorar o LCP
-              priority={true} // Priorizar a imagem principal
-              className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
-            />
-          </div>
-
-          {/* Chip com número de imagens (apenas no mobile) */}
-          {isMobile && images.length > 1 && (
-            <div className="absolute top-4 right-4 bg-white bg-opacity-80 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium">
-              {images.length} fotos
-            </div>
-          )}
-        </div>
-
-        {/* Galeria lateral (somente no desktop) */}
-        {!isMobile && (
-          <div className="col-span-1 grid grid-cols-2 grid-rows-2 gap-1 h-[410px]">
-            {images.slice(1, 5).map((image, index) => {
-              const isLastImage = index === 3;
-              return (
-                <div
-                  key={index}
-                  className="relative h-full overflow-hidden cursor-pointer"
-                  onClick={() => openModal()}
-                >
-                  <Image
-                    src={image.Foto}
-                    alt={`${imovel.Empreendimento} - imagem ${index + 2}`}
-                    title={`${imovel.Empreendimento} - imagem ${index + 2}`}
-                    width={400}
-                    height={300}
-                    sizes="25vw"
-                    placeholder="blur"
-                    blurDataURL={image.blurDataURL || "/placeholder.png"}
-                    loading="lazy"
-                    className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
-                  />
-                  {isLastImage && images.length > 5 && (
-                    <div className="absolute inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center">
-                      <button
-                        className="border border-white text-white px-4 py-2 rounded hover:bg-white hover:text-black transition-colors"
-                        aria-label="Ver mais fotos"
-                      >
-                        Ver mais fotos
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* Botão para ver todas as fotos (apenas no mobile) */}
-      {isMobile && images.length > 1 && (
-        <div className="mt-4 px-4">
-          <button
-            onClick={() => openModal()}
-            className="w-full py-3 text-center border border-gray-300 rounded-md bg-white hover:bg-gray-50 transition-colors"
-          >
-            Ver todas as {images.length} fotos
-          </button>
-        </div>
-        )}
-
-      {/* Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-90 z-50 overflow-auto">
-          <div className="flex justify-between gap-4 p-5 pt-28 mt-6 md:mt-0">
-            <button onClick={closeModal} aria-label="Fechar galeria">
-              <ArrowLeft color="white" size={24} />
-            </button>
-            <Share
-              primary
-              url={url}
-              title={tituloCompartilhamento}
-              imovel={{
-                Codigo: imovel.Codigo,
-                Empreendimento: imovel.Empreendimento,
-              }}
-            />
-          </div>
-
-          {selectedIndex !== null ? (
-            <div className="flex items-center justify-center min-h-screen p-4 relative">
-              <Image
-                src={images[selectedIndex].Foto}
-                alt={`${imovel.Empreendimento} - imagem ampliada`}
-                title={`${imovel.Empreendimento} - imagem ampliada`}
-                width={1200}
-                height={800}
-                sizes="100vw"
-                placeholder="blur"
-                blurDataURL={images[selectedIndex].blurDataURL || "/placeholder.png"}
-                loading="eager"
-                className="max-w-full max-h-screen object-contain"
-              />
-
-              <button
-                onClick={goPrev}
-                className="absolute left-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2"
-                aria-label="Imagem anterior"
-              >
-                &#10094;
-              </button>
-              <button
-                onClick={goNext}
-                className="absolute right-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2"
-                aria-label="Próxima imagem"
-              >
-                &#10095;
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4 ">
-              {images.map((image, idx) => (
-                <div
-                  key={idx}
-                  onClick={() => setSelectedIndex(idx)}
-                  className="relative w-full h-48 sm:h-56 md:h-64 lg:h-72 xl:h-80 cursor-pointer overflow-hidden"
-                >
-                  <Image
-                    src={image.Foto}
-                    alt={`${imovel.Empreendimento} - imagem ${idx + 1}`}
-                    title={`${imovel.Empreendimento} - imagem ${idx + 1}`}
-                    fill
-                    sizes="(max-width: 768px) 50vw, 25vw"
-                    placeholder="blur"
-                    blurDataURL={image.blurDataURL || "/placeholder.png"}
-                    loading="lazy"
-                    className="object-cover"
-                  />
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-    </>
+          if (result && result.success) {
+            setSuccess("Imóvel cadastrado com sucesso!");
+            setIsModalOpen(true);
+            try {
+              const { user, timestamp } = await getCurrentUserAndDate();
+              await salvarLog({
+                user: user.displayName,
+                email: user.email,
+                data: timestamp.toISOString(),
+                action: `Usuário ${user.email} atualizou o imóvel ${formData.Codigo}`,
+              });
+            } catch (logError) {
+              await salvarLog({
+                user: user.displayName ? user.displayName : "Não Identificado",
+                email: user.email,
+                data: timestamp.toISOString(),
+                action: `Imóveis: Erro ao criar imóvel: ${user.email} -  imóvel ${formData.Codigo} código de erro: ${logError}`,
+              });
+            }
+          } else {
+            setError(result?.message || "Erro ao cadastrar imóvel");
+          }
+        }
+      } catch (error) {
+        console.error(`Erro ao ${mode === "edit" ? "atualizar" : "cadastrar"} imóvel:`, error);
+        setError(`Ocorreu um erro ao ${mode === "edit" ? "atualizar" : "cadastrar"} o imóvel`);
+      } finally {
+        setIsSaving(false);
+      }
+    },
+    [formData, setIsModalOpen, validateForm, preparePayload, mode]
   );
-}
+
+  return {
+    handleSubmit,
+    isSaving,
+    error,
+    success,
+    setError,
+    setSuccess,
+  };
+};
+
+export default useImovelSubmit;
