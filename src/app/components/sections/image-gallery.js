@@ -30,7 +30,7 @@ export function ImageGallery({ imovel }) {
 
   const slug = formatterSlug(imovel.Empreendimento);
 
-  // ✅✅✅ SOLUÇÃO ATUALIZADA - FRONTEND ✅✅✅
+  // ============== [INÍCIO DA ALTERAÇÃO] ============== //
   const images = Array.isArray(imovel?.Foto) 
     ? imovel.Foto.reduce((acc, foto) => {
         foto.Destaque === "Sim" ? acc.unshift(foto) : acc.push(foto);
@@ -38,7 +38,12 @@ export function ImageGallery({ imovel }) {
       }, [])
     : [];
 
-  console.log('FRONTEND - Ordem das fotos:', images);
+  console.log('🖼️ FRONTEND - Ordem das fotos:', images.map(f => ({
+    Codigo: f.Codigo,
+    Destaque: f.Destaque,
+    PosiçãoOriginal: imovel.Foto?.indexOf(f) ?? 'N/A'
+  })));
+  // ============== [FIM DA ALTERAÇÃO] ============== //
 
   if (images.length === 0) {
     return (
@@ -52,18 +57,6 @@ export function ImageGallery({ imovel }) {
     );
   }
 
-  // ... (restante do código original permanece EXATAMENTE IGUAL)
-  // - Funções openModal, closeModal, goNext, goPrev
-  // - Todo o JSX de renderização
-  // - Todos os estilos e props
-
-  return (
-    <>
-      {/* Todo o código de renderização original permanece aqui */}
-      {/* Apenas a ordenação das imagens foi alterada */}
-    </>
-  );
-}
   const openModal = (index) => {
     setIsModalOpen(true);
     setSelectedIndex(index ?? null);
@@ -92,7 +85,6 @@ export function ImageGallery({ imovel }) {
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-1 w-full">
-        {/* Imagem principal */}
         <div className="col-span-1 h-[410px] cursor-pointer relative" onClick={() => openModal()}>
           <div className="w-full h-full overflow-hidden">
             <Image
@@ -110,7 +102,6 @@ export function ImageGallery({ imovel }) {
             />
           </div>
 
-          {/* Chip com número de imagens (apenas no mobile) */}
           {isMobile && images.length > 1 && (
             <div className="absolute top-4 right-4 bg-white bg-opacity-80 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium">
               {images.length} fotos
@@ -118,7 +109,6 @@ export function ImageGallery({ imovel }) {
           )}
         </div>
 
-        {/* Galeria lateral (somente no desktop) */}
         {!isMobile && (
           <div className="col-span-1 grid grid-cols-2 grid-rows-2 gap-1 h-[410px]">
             {images.slice(1, 5).map((image, index) => {
@@ -158,7 +148,6 @@ export function ImageGallery({ imovel }) {
         )}
       </div>
 
-      {/* Botão para ver todas as fotos (apenas no mobile) */}
       {isMobile && images.length > 1 && (
         <div className="mt-4 px-4">
           <button
@@ -170,7 +159,6 @@ export function ImageGallery({ imovel }) {
         </div>
       )}
 
-      {/* Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-90 z-50 overflow-auto">
           <div className="flex justify-between gap-4 p-5 pt-28 mt-6 md:mt-0">
