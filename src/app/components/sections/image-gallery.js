@@ -37,32 +37,42 @@ export function ImageGallery({ imovel }) {
     }
 
     const ordemOriginal = [...imovel.Foto];
-    console.log('🖼️ FRONTEND - Ordem Original da Migração:', ordemOriginal.map((f, i) => ({
+    console.log('🖼️ FRONTEND - Total de fotos:', ordemOriginal.length);
+    console.log('🖼️ FRONTEND - Ordem Original da Migração:');
+    console.table(ordemOriginal.map((f, i) => ({
       posicao: i + 1,
       codigo: f.Codigo,
       destaque: f.Destaque,
       url: f.Foto?.substring(0, 50) + '...'
     })));
+    
+    console.log('🖼️ FRONTEND - Códigos na ordem original:', ordemOriginal.map(f => f.Codigo));
 
     // Encontrar índice do destaque
     const destaqueIndex = ordemOriginal.findIndex(f => f.Destaque === "Sim");
     
     if (destaqueIndex === -1) {
-      console.log('🖼️ FRONTEND - Sem destaque, mantendo ordem original');
+      console.log('🖼️ FRONTEND - ❌ Sem destaque encontrado, mantendo ordem original');
       return ordemOriginal;
     }
+
+    console.log('🖼️ FRONTEND - ✅ Destaque encontrado na posição:', destaqueIndex + 1, 'Código:', ordemOriginal[destaqueIndex].Codigo);
 
     // Destaque primeiro + demais na ordem original (exceto destaque)
     const fotoDestaque = ordemOriginal[destaqueIndex];
     const outrasfotos = ordemOriginal.filter((_, index) => index !== destaqueIndex);
     const ordemFinal = [fotoDestaque, ...outrasfotos];
     
-    console.log('🖼️ FRONTEND - Ordem Final:', ordemFinal.map((f, i) => ({
+    console.log('🖼️ FRONTEND - Ordem Final:');
+    console.table(ordemFinal.map((f, i) => ({
       posicao: i + 1,
       codigo: f.Codigo,
       destaque: f.Destaque,
       posicaoOriginal: ordemOriginal.findIndex(orig => orig.Codigo === f.Codigo) + 1
     })));
+    
+    console.log('🖼️ FRONTEND - Códigos na ordem final:', ordemFinal.map(f => f.Codigo));
+    console.log('🖼️ FRONTEND - 🖼️ PRIMEIRA FOTO sendo exibida:', ordemFinal[0].Codigo);
     
     return ordemFinal;
   };
