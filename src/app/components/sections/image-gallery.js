@@ -25,12 +25,21 @@ export function ImageGallery({ imovel }) {
   const [selectedIndex, setSelectedIndex] = useState(null);
   const isMobile = useIsMobile();
 
-  // Processamento das imagens com destaque primeiro
   const getProcessedImages = () => {
     if (!Array.isArray(imovel?.Foto) || imovel.Foto.length === 0) {
       console.warn('⚠️ FRONTEND - imovel.Foto inválido:', imovel?.Foto);
       return [];
     }
+
+    // 🔍 PRIMEIRO: Mostrar dados EXATOS da API (sem qualquer processamento)
+    console.log('🔍 FRONTEND - DADOS EXATOS DA API (sem processamento):');
+    console.log('🔍 FRONTEND - imovel.Foto[0]:', imovel.Foto[0]);
+    console.log('🔍 FRONTEND - imovel.Foto[1]:', imovel.Foto[1]);
+    console.log('🔍 FRONTEND - imovel.Foto[27]:', imovel.Foto[27]); // Posição do destaque
+    
+    // 🔍 ORDEM COMPLETA como vem da API
+    console.log('🔍 FRONTEND - PRIMEIRA FOTO DA API:', imovel.Foto[0]?.Foto);
+    console.log('🔍 FRONTEND - FOTO DO DESTAQUE (posição 27):', imovel.Foto[27]?.Foto);
 
     console.log('🔍 FRONTEND - DEBUG: Fonte dos dados:', {
       imovelCodigo: imovel.Codigo,
@@ -39,37 +48,56 @@ export function ImageGallery({ imovel }) {
       primeiraFoto: imovel.Foto[0]
     });
 
-    // 🔍 VERIFICAR SE CÓDIGO DO IMÓVEL ESTÁ INTERFERINDO
+    // 🔍 MOSTRAR ORDEM ORIGINAL EXATA - SEM PROCESSAMENTO
+    console.log('🔍 FRONTEND - ORDEM ORIGINAL EXATA (sem processamento):');
+    imovel.Foto.slice(0, 10).forEach((foto, index) => {
+      console.log(`  ${index + 1}. Código: ${foto.Codigo} | Destaque: ${foto.Destaque} | URL: ${foto.Foto}`);
+    });
+
     console.log('🔍 FRONTEND - Código do imóvel:', imovel.Codigo);
     console.log('🔍 FRONTEND - Código da primeira foto:', imovel.Foto[0]?.Codigo);
     console.log('🔍 FRONTEND - São iguais?', imovel.Codigo === imovel.Foto[0]?.Codigo);
 
-    // 🔧 CORREÇÃO: Gerar códigos únicos baseado no índice (problema na API)
     const ordemOriginal = [...imovel.Foto].map((foto, index) => ({
       ...foto,
-      Codigo: `${imovel.Codigo}-foto-${index}`, // Gera código único baseado no índice
+      Codigo: `${imovel.Codigo}-foto-${index}`,
     }));
     
     console.log('🔧 FRONTEND - Códigos únicos gerados:', ordemOriginal.map(f => f.Codigo));
+    console.log('🔧 FRONTEND - URLs COMPLETAS das primeiras 5 fotos:');
+    ordemOriginal.slice(0, 5).forEach((f, i) => {
+      console.log(`  ${i+1}: ${f.Foto}`);
+    });
     console.log('============================================================');
     console.log('🖼️ FRONTEND - Total de fotos:', ordemOriginal.length);
     console.log('🖼️ FRONTEND - Códigos na ordem original:', ordemOriginal.map(f => f.Codigo));
     console.log('🖼️ FRONTEND - Destaques na ordem original:', ordemOriginal.map(f => f.Destaque));
     console.log('🖼️ FRONTEND - Primeira foto original:', ordemOriginal[0]?.Codigo);
-    console.log('🖼️ FRONTEND - URLs das primeiras 5 fotos:', ordemOriginal.slice(0, 5).map(f => f.Foto?.substring(0, 60)));
+    console.log('🖼️ FRONTEND - URLs COMPLETAS das primeiras 5 fotos:');
+    ordemOriginal.slice(0, 5).forEach((f, i) => {
+      console.log(`  ${i+1}: ${f.Foto}`);
+    });
     
-    // 🔍 DEBUG ADICIONAL - Estrutura completa das primeiras 3 fotos
     console.log('🔍 FRONTEND - DEBUG: Estrutura das primeiras 3 fotos:');
     ordemOriginal.slice(0, 3).forEach((foto, index) => {
       console.log(`  Foto ${index + 1}:`, {
         Codigo: foto.Codigo,
         Destaque: foto.Destaque,
-        Foto: foto.Foto?.substring(0, 80),
+        Foto: foto.Foto,
         todasAsPropriedades: Object.keys(foto)
       });
     });
 
-    // Encontrar índice do destaque
+    // 🔍 VERIFICAR SE TODAS AS FOTOS TÊM A MESMA URL
+    const urlsUnicasOriginal = [...new Set(ordemOriginal.map(f => f.Foto))];
+    console.log('🔍 FRONTEND - Total de URLs únicas:', urlsUnicasOriginal.length);
+    console.log('🔍 FRONTEND - URLs únicas:', urlsUnicasOriginal);
+    
+    if (urlsUnicasOriginal.length === 1) {
+      console.log('🚨 FRONTEND - PROBLEMA: Todas as fotos têm a mesma URL!');
+      console.log('🚨 FRONTEND - URL duplicada:', urlsUnicasOriginal[0]);
+    }
+
     const destaqueIndex = ordemOriginal.findIndex(f => f.Destaque === "Sim");
     
     if (destaqueIndex === -1) {
@@ -77,10 +105,18 @@ export function ImageGallery({ imovel }) {
       console.log('🖼️ FRONTEND - Primeira foto sem destaque:', ordemOriginal[0]?.Codigo);
       console.log('🖼️ FRONTEND - Códigos na ordem final:', ordemOriginal.map(f => f.Codigo));
       
-      // 🔍 VERIFICAR SE OS CÓDIGOS ESTÃO DIFERENTES
       const codigosUnicos = [...new Set(ordemOriginal.map(f => f.Codigo))];
       console.log('🔍 FRONTEND - Total de códigos únicos:', codigosUnicos.length);
       console.log('🔍 FRONTEND - Códigos únicos:', codigosUnicos);
+      
+      const urlsUnicasSemDestaque = [...new Set(ordemOriginal.map(f => f.Foto))];
+      console.log('🔍 FRONTEND - Total de URLs únicas:', urlsUnicasSemDestaque.length);
+      console.log('🔍 FRONTEND - URLs únicas:', urlsUnicasSemDestaque);
+      
+      if (urlsUnicasSemDestaque.length === 1) {
+        console.log('🚨 FRONTEND - PROBLEMA: Todas as fotos têm a mesma URL!');
+        console.log('🚨 FRONTEND - URL duplicada:', urlsUnicasSemDestaque[0]);
+      }
       
       console.log('============================================================');
       return ordemOriginal;
@@ -88,20 +124,30 @@ export function ImageGallery({ imovel }) {
 
     console.log('🖼️ FRONTEND - ✅ Destaque encontrado na posição:', destaqueIndex + 1, 'Código:', ordemOriginal[destaqueIndex].Codigo);
 
-    // Destaque primeiro + demais na ordem original (exceto destaque)
     const fotoDestaque = ordemOriginal[destaqueIndex];
     const outrasfotos = ordemOriginal.filter((_, index) => index !== destaqueIndex);
     const ordemFinal = [fotoDestaque, ...outrasfotos];
     
     console.log('🖼️ FRONTEND - ✅ Código da foto destaque:', fotoDestaque.Codigo);
     console.log('🖼️ FRONTEND - Códigos na ordem final:', ordemFinal.map(f => f.Codigo));
-    console.log('🖼️ FRONTEND - URLs das primeiras 5 fotos finais:', ordemFinal.slice(0, 5).map(f => f.Foto?.substring(0, 60)));
+    console.log('🖼️ FRONTEND - URLs COMPLETAS das primeiras 5 fotos finais:');
+    ordemFinal.slice(0, 5).forEach((f, i) => {
+      console.log(`  ${i+1}: ${f.Foto}`);
+    });
     console.log('🖼️ FRONTEND - 🖼️ PRIMEIRA FOTO sendo exibida:', ordemFinal[0].Codigo);
     
-    // 🔍 VERIFICAR SE OS CÓDIGOS ESTÃO DIFERENTES
     const codigosUnicos = [...new Set(ordemFinal.map(f => f.Codigo))];
     console.log('🔍 FRONTEND - Total de códigos únicos:', codigosUnicos.length);
     console.log('🔍 FRONTEND - Códigos únicos:', codigosUnicos);
+    
+    const urlsUnicasFinal = [...new Set(ordemFinal.map(f => f.Foto))];
+    console.log('🔍 FRONTEND - Total de URLs únicas:', urlsUnicasFinal.length);
+    console.log('🔍 FRONTEND - URLs únicas:', urlsUnicasFinal);
+    
+    if (urlsUnicasFinal.length === 1) {
+      console.log('🚨 FRONTEND - PROBLEMA: Todas as fotos têm a mesma URL!');
+      console.log('🚨 FRONTEND - URL duplicada:', urlsUnicasFinal[0]);
+    }
     
     console.log('============================================================');
     
