@@ -19,56 +19,77 @@ const ImagesSection = memo(({
 }) => {
   const [downloadingPhotos, setDownloadingPhotos] = useState(false);
 
-  const baixarTodasImagens = async (imagens = []) => {
-  if (!Array.isArray(imagens) || imagens.length === 0) return;
+  // ✅✅✅ ALTERAÇÃO PRINCIPAL - INÍCIO (Nova lógica de ordenação) ✅✅✅
+  const sortedPhotos = formData.Foto
+    ? (() => {
+        // 1. Manter ordem original do array
+        const fotosOrdemOriginal = [...formData.Foto];
+        
+        // 2. Encontrar foto de destaque
+        const fotoDestaque = fotosOrdemOriginal.find(foto => foto.Destaque === "Sim");
 
-  setDownloadingPhotos(true);
-  const zip = new JSZip();
-  const pasta = zip.folder("imagens");
-
-  for (const [i, img] of imagens.entries()) {
-    try {
-      // 1. Limpa URL duplicada
-      const cleanUrl = (() => {
-        try {
-          const parsed = new URL(img.Foto);
-          if (parsed.pathname.startsWith("/_next/image")) {
-            const inner = parsed.searchParams.get("url");
-            return decodeURIComponent(inner || img.Foto);
-          }
-          return img.Foto;
-        } catch {
-          return img.Foto;
+        // 3. Se não há destaque, retornar ordem original
+        if (!fotoDestaque) {
+          console.log("⚙️ ADMIN - Ordem original (sem destaque):", fotosOrdemOriginal);
+          return fotosOrdemOriginal;
         }
-      })();
 
-      // 2. Faz o download
-      const response = await fetch(cleanUrl);
-      if (!response.ok) {
-        console.warn(`❌ Erro ao baixar imagem ${i + 1}: ${response.status} ${response.statusText}`);
-        continue;
+        // 4. Mover destaque para primeira posição
+        const fotosSemDestaque = fotosOrdemOriginal.filter(foto => foto !== fotoDestaque);
+        const fotosOrdenadas = [fotoDestaque, ...fotosSemDestaque];
+        
+        console.log("⚙️ ADMIN - Ordem final (com destaque):", fotosOrdenadas);
+        return fotosOrdenadas;
+      })()
+    : [];
+  // ✅✅✅ ALTERAÇÃO PRINCIPAL - FIM ✅✅✅
+
+  const baixarTodasImagens = async (imagens = []) => {
+    if (!Array.isArray(imagens) || imagens.length === 0) return;
+
+    setDownloadingPhotos(true);
+    const zip = new JSZip();
+    const pasta = zip.folder("imagens");
+
+    for (const [i, img] of imagens.entries()) {
+      try {
+        const cleanUrl = (() => {
+          try {
+            const parsed = new URL(img.Foto);
+            if (parsed.pathname.startsWith("/_next/image")) {
+              const inner = parsed.searchParams.get("url");
+              return decodeURIComponent(inner || img.Foto);
+            }
+            return img.Foto;
+          } catch {
+            return img.Foto;
+          }
+        })();
+
+        const response = await fetch(cleanUrl);
+        if (!response.ok) {
+          console.warn(`❌ Erro ao baixar imagem ${i + 1}: ${response.status} ${response.statusText}`);
+          continue;
+        }
+
+        const blob = await response.blob();
+        const nome = `imagem-${i + 1}.jpg`;
+        pasta?.file(nome, blob);
+      } catch (err) {
+        console.error(`❌ Erro crítico ao baixar imagem ${i + 1}:`, err);
       }
-
-      // 3. Adiciona no zip
-      const blob = await response.blob();
-      const nome = `imagem-${i + 1}.jpg`;
-      pasta?.file(nome, blob);
-    } catch (err) {
-      console.error(`❌ Erro crítico ao baixar imagem ${i + 1}:`, err);
     }
-  }
 
-  try {
-    const content = await zip.generateAsync({ type: "blob" });
-    saveAs(content, "imagens.zip");
-    console.log("✅ Download concluído com sucesso.");
-  } catch (zipError) {
-    console.error("❌ Erro ao gerar zip:", zipError);
-  }
+    try {
+      const content = await zip.generateAsync({ type: "blob" });
+      saveAs(content, "imagens.zip");
+      console.log("✅ Download concluído com sucesso.");
+    } catch (zipError) {
+      console.error("❌ Erro ao gerar zip:", zipError);
+    }
 
-  setDownloadingPhotos(false);
-};
-
+    setDownloadingPhotos(false);
+  };
 
   const handleAddImageUrl = () => {
     const imageUrl = prompt("Digite a URL da imagem:");
@@ -100,14 +121,6 @@ const ImagesSection = memo(({
       changeImagePosition(codigo, position);
     }
   };
-
-  const sortedPhotos = formData.Foto
-    ? [...formData.Foto].sort((a, b) => {
-        const orderA = a.Ordem || formData.Foto.indexOf(a) + 1;
-        const orderB = b.Ordem || formData.Foto.indexOf(b) + 1;
-        return orderA - orderB;
-      })
-    : [];
 
   return (
     <FormSection title="Imagens do Imóvel" className="mb-8">
@@ -190,7 +203,7 @@ const ImagesSection = memo(({
                     <div className="flex-1">
                       <label className="block text-xs text-gray-500 mb-1">Ordem</label>
                       <select
-                        value={photo.Ordem || index + 1}
+                        value={index + 1} // Mostra a posição atual (1-based)
                         onChange={(e) => handlePositionChange(photo.Codigo, e.target.value)}
                         className="w-full p-1.5 text-sm border rounded-md bg-gray-50"
                       >
