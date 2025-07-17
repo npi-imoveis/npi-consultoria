@@ -32,15 +32,31 @@ export function ImageGallery({ imovel }) {
 
   const slug = formatterSlug(imovel.Empreendimento);
 
+  // ✅✅✅ ALTERAÇÃO PRINCIPAL - INÍCIO (Esta é a parte modificada) ✅✅✅
   // Ensure Foto is an array and handle edge cases
-  const images =
-    Array.isArray(imovel.Foto) && imovel.Foto.length > 0
-      ? [...imovel.Foto].sort((a, b) => {
-          if (a.Destaque === "Sim" && b.Destaque !== "Sim") return -1;
-          if (a.Destaque !== "Sim" && b.Destaque === "Sim") return 1;
-          return 0;
-        })
-      : [];
+  const images = Array.isArray(imovel.Foto) && imovel.Foto.length > 0
+    ? (() => {
+        // 1. Manter ordem original do array (migração WordPress)
+        const fotosOrdemOriginal = [...imovel.Foto];
+        
+        // 2. Encontrar foto de destaque
+        const fotoDestaque = fotosOrdemOriginal.find(foto => foto.Destaque === "Sim");
+
+        // 3. Se não há destaque, retornar ordem original
+        if (!fotoDestaque) {
+          console.log("🖼️ FRONTEND - Ordem original (sem destaque):", fotosOrdemOriginal);
+          return fotosOrdemOriginal;
+        }
+
+        // 4. Mover destaque para primeira posição
+        const fotosSemDestaque = fotosOrdemOriginal.filter(foto => foto !== fotoDestaque);
+        const fotosOrdenadas = [fotoDestaque, ...fotosSemDestaque];
+        
+        console.log("🖼️ FRONTEND - Ordem final (com destaque):", fotosOrdenadas);
+        return fotosOrdenadas;
+      })()
+    : [];
+  // ✅✅✅ ALTERAÇÃO PRINCIPAL - FIM ✅✅✅
 
   if (images.length === 0) {
     // Return a placeholder or default image if no images are available
@@ -94,9 +110,9 @@ export function ImageGallery({ imovel }) {
               height={600}
               sizes="(max-width: 350px) 100vw, (max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               placeholder="blur"
-              blurDataURL={images[0].blurDataURL || "/placeholder.png"} // Use um placeholder otimizado
-              loading="eager" // Carregamento prioritário para melhorar o LCP
-              priority={true} // Priorizar a imagem principal
+              blurDataURL={images[0].blurDataURL || "/placeholder.png"}
+              loading="eager"
+              priority={true}
               className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
             />
           </div>
