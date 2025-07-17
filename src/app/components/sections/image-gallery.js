@@ -1,7 +1,7 @@
-// ===================================================
+/ ===================================================
 // ARQUIVO 1: ImageGallery.jsx (FRONTEND)
 // ===================================================
-// SOLUÇÃO MELHORADA - Preserva ordem migração + destaque primeiro
+// CORREÇÃO: Destaque primeiro + demais na ordem da migração
 
 "use client";
 
@@ -29,39 +29,39 @@ export function ImageGallery({ imovel }) {
   const [selectedIndex, setSelectedIndex] = useState(null);
   const isMobile = useIsMobile();
 
-  // ✅ SOLUÇÃO MELHORADA - Preserva ordem da migração
+  // ✅ LÓGICA MELHORADA - Destaque primeiro + ordem da migração preservada
   const getProcessedImages = () => {
     if (!Array.isArray(imovel?.Foto) || imovel.Foto.length === 0) {
-      console.warn('⚠️ FRONTEND - imovel.Foto não é um array válido:', imovel?.Foto);
+      console.warn('⚠️ FRONTEND - imovel.Foto inválido:', imovel?.Foto);
       return [];
     }
 
-    // 1. Preservar ordem original da migração
     const ordemOriginal = [...imovel.Foto];
     console.log('🖼️ FRONTEND - Ordem Original da Migração:', ordemOriginal.map((f, i) => ({
       posicao: i + 1,
       codigo: f.Codigo,
-      destaque: f.Destaque
+      destaque: f.Destaque,
+      url: f.Foto?.substring(0, 50) + '...'
     })));
 
-    // 2. Encontrar foto destaque
+    // Encontrar índice do destaque
     const destaqueIndex = ordemOriginal.findIndex(f => f.Destaque === "Sim");
     
-    // 3. Se não há destaque, manter ordem exata da migração
     if (destaqueIndex === -1) {
-      console.log('🖼️ FRONTEND - Sem destaque, mantendo ordem migração');
+      console.log('🖼️ FRONTEND - Sem destaque, mantendo ordem original');
       return ordemOriginal;
     }
 
-    // 4. Destaque primeiro + demais na ordem original (sem o destaque)
+    // Destaque primeiro + demais na ordem original (exceto destaque)
     const fotoDestaque = ordemOriginal[destaqueIndex];
-    const fotosSemDestaque = ordemOriginal.filter((_, index) => index !== destaqueIndex);
-    const ordemFinal = [fotoDestaque, ...fotosSemDestaque];
+    const outrasfotos = ordemOriginal.filter((_, index) => index !== destaqueIndex);
+    const ordemFinal = [fotoDestaque, ...outrasfotos];
     
-    console.log('🖼️ FRONTEND - Ordem Final (destaque primeiro):', ordemFinal.map((f, i) => ({
+    console.log('🖼️ FRONTEND - Ordem Final:', ordemFinal.map((f, i) => ({
       posicao: i + 1,
       codigo: f.Codigo,
-      destaque: f.Destaque
+      destaque: f.Destaque,
+      posicaoOriginal: ordemOriginal.findIndex(orig => orig.Codigo === f.Codigo) + 1
     })));
     
     return ordemFinal;
@@ -69,7 +69,6 @@ export function ImageGallery({ imovel }) {
 
   const images = getProcessedImages();
 
-  // Validações
   if (!imovel || !imovel.Empreendimento) {
     return null;
   }
@@ -88,7 +87,6 @@ export function ImageGallery({ imovel }) {
     );
   }
 
-  // ✅ PRESERVAR TODAS AS FUNÇÕES EXISTENTES
   const openModal = (index) => {
     setIsModalOpen(true);
     setSelectedIndex(index ?? null);
