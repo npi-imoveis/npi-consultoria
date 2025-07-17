@@ -1,5 +1,4 @@
 "use client";
-
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { ArrowLeft } from "lucide-react";
@@ -34,7 +33,18 @@ export function ImageGallery({ imovel }) {
 
   // ✅✅✅ ALTERAÇÃO PRINCIPAL - INÍCIO (Esta é a parte modificada) ✅✅✅
   // Ensure Foto is an array and handle edge cases
-  const images = Array.isArray(imovel.Foto) && imovel.Foto.length > 0
+  const images = Array.isArray(imovel?.Foto) 
+    ? imovel.Foto.reduce((acc, foto) => {
+        foto.Destaque === "Sim" ? acc.unshift(foto) : acc.push(foto);
+        return acc;
+      }, [])
+    : [];
+
+  console.log('FRONTEND - Ordem das fotos:', images.map(f => ({ 
+    Codigo: f.Codigo, 
+    Destaque: f.Destaque,
+    OrdemOriginal: imovel.Foto.indexOf(f)
+  })));
     ? (() => {
         // 1. Manter ordem original do array (migração WordPress)
         const fotosOrdemOriginal = [...imovel.Foto];
