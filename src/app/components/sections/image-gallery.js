@@ -1,3 +1,8 @@
+// ===================================================
+// ARQUIVO 1: ImageGallery.jsx (FRONTEND)
+// ===================================================
+// SOLUÇÃO MELHORADA - Preserva ordem migração + destaque primeiro
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -24,32 +29,47 @@ export function ImageGallery({ imovel }) {
   const [selectedIndex, setSelectedIndex] = useState(null);
   const isMobile = useIsMobile();
 
-  // ✅✅✅ SOLUÇÃO DEFINITIVA - INÍCIO ✅✅✅
+  // ✅ SOLUÇÃO MELHORADA - Preserva ordem da migração
   const getProcessedImages = () => {
-    if (!Array.isArray(imovel?.Foto)) {
-      console.warn('⚠️ imovel.Foto não é um array:', imovel?.Foto);
+    if (!Array.isArray(imovel?.Foto) || imovel.Foto.length === 0) {
+      console.warn('⚠️ FRONTEND - imovel.Foto não é um array válido:', imovel?.Foto);
       return [];
     }
 
-    const originalOrder = [...imovel.Foto];
-    console.log('🖼️ FRONTEND - Ordem Original:', originalOrder.map(f => f.Codigo));
+    // 1. Preservar ordem original da migração
+    const ordemOriginal = [...imovel.Foto];
+    console.log('🖼️ FRONTEND - Ordem Original da Migração:', ordemOriginal.map((f, i) => ({
+      posicao: i + 1,
+      codigo: f.Codigo,
+      destaque: f.Destaque
+    })));
 
-    const destaqueIndex = originalOrder.findIndex(f => f.Destaque === "Sim");
-    if (destaqueIndex === -1) return originalOrder;
-
-    const reordered = [
-      originalOrder[destaqueIndex],
-      ...originalOrder.slice(0, destaqueIndex),
-      ...originalOrder.slice(destaqueIndex + 1)
-    ];
+    // 2. Encontrar foto destaque
+    const destaqueIndex = ordemOriginal.findIndex(f => f.Destaque === "Sim");
     
-    console.log('🖼️ FRONTEND - Ordem Processada:', reordered.map(f => f.Codigo));
-    return reordered;
+    // 3. Se não há destaque, manter ordem exata da migração
+    if (destaqueIndex === -1) {
+      console.log('🖼️ FRONTEND - Sem destaque, mantendo ordem migração');
+      return ordemOriginal;
+    }
+
+    // 4. Destaque primeiro + demais na ordem original (sem o destaque)
+    const fotoDestaque = ordemOriginal[destaqueIndex];
+    const fotosSemDestaque = ordemOriginal.filter((_, index) => index !== destaqueIndex);
+    const ordemFinal = [fotoDestaque, ...fotosSemDestaque];
+    
+    console.log('🖼️ FRONTEND - Ordem Final (destaque primeiro):', ordemFinal.map((f, i) => ({
+      posicao: i + 1,
+      codigo: f.Codigo,
+      destaque: f.Destaque
+    })));
+    
+    return ordemFinal;
   };
 
   const images = getProcessedImages();
-  // ✅✅✅ SOLUÇÃO DEFINITIVA - FIM ✅✅✅
 
+  // Validações
   if (!imovel || !imovel.Empreendimento) {
     return null;
   }
@@ -68,10 +88,31 @@ export function ImageGallery({ imovel }) {
     );
   }
 
-  // ... (restante do código original permanece EXATAMENTE IGUAL)
-  // - Funções openModal, closeModal, goNext, goPrev
-  // - Todo o JSX de renderização
-  // - Todos os estilos e props
+  // ✅ PRESERVAR TODAS AS FUNÇÕES EXISTENTES
+  const openModal = (index) => {
+    setIsModalOpen(true);
+    setSelectedIndex(index ?? null);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedIndex(null);
+  };
+
+  const goNext = () => {
+    if (selectedIndex !== null) {
+      setSelectedIndex((prev) => (prev + 1) % images.length);
+    }
+  };
+
+  const goPrev = () => {
+    if (selectedIndex !== null) {
+      setSelectedIndex((prev) => (prev - 1 + images.length) % images.length);
+    }
+  };
+
+  const tituloCompartilhamento = `Confira este imóvel: ${imovel.Empreendimento}`;
+  const url = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${slug}`;
 
   return (
     <>
