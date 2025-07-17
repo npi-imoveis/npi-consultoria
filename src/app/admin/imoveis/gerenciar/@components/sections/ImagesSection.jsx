@@ -20,12 +20,22 @@ const ImagesSection = memo(({
   const [downloadingPhotos, setDownloadingPhotos] = useState(false);
 
   // ============== [INÍCIO DA ALTERAÇÃO] ============== //
-  const sortedPhotos = Array.isArray(formData?.Foto)
-    ? formData.Foto.reduce((acc, foto) => {
-        foto.Destaque === "Sim" ? acc.unshift(foto) : acc.push(foto);
-        return acc;
-      }, [])
-    : [];
+ const sortedPhotos = Array.isArray(formData?.Foto)
+  ? (() => {
+      // 1. Encontra o índice da foto destaque
+      const destaqueIndex = formData.Foto.findIndex(f => f.Destaque === "Sim");
+      
+      // 2. Se não houver destaque, mantém ordem original
+      if (destaqueIndex === -1) return [...formData.Foto];
+      
+      // 3. Cria novo array com destaque primeiro e ordem original das demais
+      return [
+        formData.Foto[destaqueIndex],
+        ...formData.Foto.slice(0, destaqueIndex),
+        ...formData.Foto.slice(destaqueIndex + 1)
+      ];
+    })()
+  : [];
 
   console.log('⚙️ ADMIN - Ordem das fotos:', sortedPhotos.map(f => ({
     Codigo: f.Codigo,
