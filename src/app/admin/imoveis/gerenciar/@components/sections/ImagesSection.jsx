@@ -19,30 +19,20 @@ const ImagesSection = memo(({
 }) => {
   const [downloadingPhotos, setDownloadingPhotos] = useState(false);
 
-  // ✅✅✅ ALTERAÇÃO PRINCIPAL - INÍCIO (Nova lógica de ordenação) ✅✅✅
-  const sortedPhotos = formData.Foto
-    ? (() => {
-        // 1. Manter ordem original do array
-        const fotosOrdemOriginal = [...formData.Foto];
-        
-        // 2. Encontrar foto de destaque
-        const fotoDestaque = fotosOrdemOriginal.find(foto => foto.Destaque === "Sim");
-
-        // 3. Se não há destaque, retornar ordem original
-        if (!fotoDestaque) {
-          console.log("⚙️ ADMIN - Ordem original (sem destaque):", fotosOrdemOriginal);
-          return fotosOrdemOriginal;
-        }
-
-        // 4. Mover destaque para primeira posição
-        const fotosSemDestaque = fotosOrdemOriginal.filter(foto => foto !== fotoDestaque);
-        const fotosOrdenadas = [fotoDestaque, ...fotosSemDestaque];
-        
-        console.log("⚙️ ADMIN - Ordem final (com destaque):", fotosOrdenadas);
-        return fotosOrdenadas;
-      })()
+  // ============== [INÍCIO DA ALTERAÇÃO] ============== //
+  const sortedPhotos = Array.isArray(formData?.Foto)
+    ? formData.Foto.reduce((acc, foto) => {
+        foto.Destaque === "Sim" ? acc.unshift(foto) : acc.push(foto);
+        return acc;
+      }, [])
     : [];
-  // ✅✅✅ ALTERAÇÃO PRINCIPAL - FIM ✅✅✅
+
+  console.log('⚙️ ADMIN - Ordem das fotos:', sortedPhotos.map(f => ({
+    Codigo: f.Codigo,
+    Destaque: f.Destaque,
+    PosiçãoOriginal: formData.Foto?.indexOf(f) ?? 'N/A'
+  })));
+  // ============== [FIM DA ALTERAÇÃO] ============== //
 
   const baixarTodasImagens = async (imagens = []) => {
     if (!Array.isArray(imagens) || imagens.length === 0) return;
@@ -203,7 +193,7 @@ const ImagesSection = memo(({
                     <div className="flex-1">
                       <label className="block text-xs text-gray-500 mb-1">Ordem</label>
                       <select
-                        value={index + 1} // Mostra a posição atual (1-based)
+                        value={index + 1}
                         onChange={(e) => handlePositionChange(photo.Codigo, e.target.value)}
                         className="w-full p-1.5 text-sm border rounded-md bg-gray-50"
                       >
