@@ -25,31 +25,33 @@ export function ImageGallery({ imovel }) {
   const [selectedIndex, setSelectedIndex] = useState(null);
   const isMobile = useIsMobile();
 
-  const getProcessedImages = () => {
-    if (!Array.isArray(imovel?.Foto) || imovel.Foto.length === 0) {
-      return [];
-    }
+ const getProcessedImages = () => {
+  if (!Array.isArray(imovel?.Foto) || imovel.Foto.length === 0) {
+    return [];
+  }
 
-    // Corrigir códigos duplicados da API gerando códigos únicos baseados no índice
-    const ordemOriginal = [...imovel.Foto].map((foto, index) => ({
-      ...foto,
-      Codigo: `${imovel.Codigo}-foto-${index}`,
-    }));
+  // 1. Reorganizar por grupos de migração
+  const fotosOrdenadas = ordenarFotosPorGruposMigracao(imovel.Foto);
+  
+  // 2. Gerar códigos únicos para evitar problemas de duplicação
+  const fotosComCodigosUnicos = fotosOrdenadas.map((foto, index) => ({
+    ...foto,
+    Codigo: `${imovel.Codigo}-foto-${index}`,
+  }));
 
-    // Buscar foto marcada como destaque
-    const destaqueIndex = ordemOriginal.findIndex(f => f.Destaque === "Sim");
+  // 3. Verificar se há destaque e colocar primeiro (opcional)
+  const destaqueIndex = fotosComCodigosUnicos.findIndex(f => f.Destaque === "Sim");
+  
+  if (destaqueIndex !== -1) {
+    const fotoDestaque = fotosComCodigosUnicos[destaqueIndex];
+    const outrasfotos = fotosComCodigosUnicos.filter((_, index) => index !== destaqueIndex);
     
-    // Se não há destaque, manter ordem original
-    if (destaqueIndex === -1) {
-      return ordemOriginal;
-    }
-
-    // Reorganizar: destaque primeiro, depois as outras
-    const fotoDestaque = ordemOriginal[destaqueIndex];
-    const outrasfotos = ordemOriginal.filter((_, index) => index !== destaqueIndex);
-    
+    console.log(`🎯 Destaque encontrado na posição ${destaqueIndex + 1}, movendo para primeira`);
     return [fotoDestaque, ...outrasfotos];
-  };
+  }
+
+  return fotosComCodigosUnicos;
+};
 
   const images = getProcessedImages();
 
