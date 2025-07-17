@@ -21,24 +21,24 @@ const ImagesSection = memo(({
   const [downloadingPhotos, setDownloadingPhotos] = useState(false);
 
   const sortedPhotos = Array.isArray(formData?.Foto)
-    ? (() => {
-        const ordemOriginal = [...formData.Foto];
+  ? (() => {
+      // 1. Reorganizar por grupos de migração
+      const fotosOrdenadas = ordenarFotosPorGruposMigracao(formData.Foto);
+      
+      // 2. Verificar se há destaque e colocar primeiro (opcional)
+      const destaqueIndex = fotosOrdenadas.findIndex(f => f.Destaque === "Sim");
+      
+      if (destaqueIndex !== -1) {
+        const fotoDestaque = fotosOrdenadas[destaqueIndex];
+        const outrasfotos = fotosOrdenadas.filter((_, index) => index !== destaqueIndex);
         
-        // Buscar foto marcada como destaque
-        const destaqueIndex = ordemOriginal.findIndex(f => f.Destaque === "Sim");
-        
-        // Se não há destaque, manter ordem original
-        if (destaqueIndex === -1) {
-          return ordemOriginal;
-        }
-
-        // Reorganizar: destaque primeiro, depois as outras
-        const fotoDestaque = ordemOriginal[destaqueIndex];
-        const outrasfotos = ordemOriginal.filter((_, index) => index !== destaqueIndex);
-        
+        console.log(`🎯 Destaque encontrado na posição ${destaqueIndex + 1}, movendo para primeira`);
         return [fotoDestaque, ...outrasfotos];
-      })()
-    : [];
+      }
+
+      return fotosOrdenadas;
+    })()
+  : [];
 
   const baixarTodasImagens = async (imagens = []) => {
     if (!Array.isArray(imagens) || imagens.length === 0) return;
