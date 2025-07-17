@@ -24,9 +24,18 @@ const ImagesSection = memo(({
 }) => {
   const [downloadingPhotos, setDownloadingPhotos] = useState(false);
 
-  // Processamento das fotos com destaque primeiro
   const sortedPhotos = Array.isArray(formData?.Foto)
     ? (() => {
+        // 🔍 PRIMEIRO: Mostrar dados EXATOS da API (sem qualquer processamento)
+        console.log('🔍 ADMIN - DADOS EXATOS DA API (sem processamento):');
+        console.log('🔍 ADMIN - formData.Foto[0]:', formData.Foto[0]);
+        console.log('🔍 ADMIN - formData.Foto[1]:', formData.Foto[1]);
+        console.log('🔍 ADMIN - formData.Foto[27]:', formData.Foto[27]); // Posição do destaque
+        
+        // 🔍 ORDEM COMPLETA como vem da API
+        console.log('🔍 ADMIN - PRIMEIRA FOTO DA API:', formData.Foto[0]?.Foto);
+        console.log('🔍 ADMIN - FOTO DO DESTAQUE (posição 27):', formData.Foto[27]?.Foto);
+
         console.log('🔍 ADMIN - DEBUG: Fonte dos dados:', {
           totalFotos: formData.Foto.length,
           tipoArray: Array.isArray(formData.Foto),
@@ -39,20 +48,37 @@ const ImagesSection = memo(({
         console.log('⚙️ ADMIN - Códigos na ordem original:', ordemOriginal.map(f => f.Codigo));
         console.log('⚙️ ADMIN - Destaques na ordem original:', ordemOriginal.map(f => f.Destaque));
         console.log('⚙️ ADMIN - Primeira foto original:', ordemOriginal[0]?.Codigo);
-        console.log('⚙️ ADMIN - URLs das primeiras 5 fotos:', ordemOriginal.slice(0, 5).map(f => f.Foto?.substring(0, 60)));
+        // 🔍 MOSTRAR ORDEM ORIGINAL EXATA - SEM PROCESSAMENTO
+        console.log('🔍 ADMIN - ORDEM ORIGINAL EXATA (sem processamento):');
+        ordemOriginal.slice(0, 10).forEach((foto, index) => {
+          console.log(`  ${index + 1}. Código: ${foto.Codigo} | Destaque: ${foto.Destaque} | URL: ${foto.Foto}`);
+        });
+
+        console.log('⚙️ ADMIN - URLs COMPLETAS das primeiras 5 fotos:');
+        ordemOriginal.slice(0, 5).forEach((f, i) => {
+          console.log(`  ${i+1}: ${f.Foto}`);
+        });
         
-        // 🔍 DEBUG ADICIONAL - Estrutura completa das primeiras 3 fotos
         console.log('🔍 ADMIN - DEBUG: Estrutura das primeiras 3 fotos:');
         ordemOriginal.slice(0, 3).forEach((foto, index) => {
           console.log(`  Foto ${index + 1}:`, {
             Codigo: foto.Codigo,
             Destaque: foto.Destaque,
-            Foto: foto.Foto?.substring(0, 80),
+            Foto: foto.Foto,
             todasAsPropriedades: Object.keys(foto)
           });
         });
 
-        // Encontrar índice do destaque
+        // 🔍 VERIFICAR SE TODAS AS FOTOS TÊM A MESMA URL
+        const urlsUnicas = [...new Set(ordemOriginal.map(f => f.Foto))];
+        console.log('🔍 ADMIN - Total de URLs únicas:', urlsUnicas.length);
+        console.log('🔍 ADMIN - URLs únicas:', urlsUnicas);
+        
+        if (urlsUnicas.length === 1) {
+          console.log('🚨 ADMIN - PROBLEMA: Todas as fotos têm a mesma URL!');
+          console.log('🚨 ADMIN - URL duplicada:', urlsUnicas[0]);
+        }
+
         const destaqueIndex = ordemOriginal.findIndex(f => f.Destaque === "Sim");
         
         if (destaqueIndex === -1) {
@@ -60,10 +86,18 @@ const ImagesSection = memo(({
           console.log('⚙️ ADMIN - Primeira foto sem destaque:', ordemOriginal[0]?.Codigo);
           console.log('⚙️ ADMIN - Códigos na ordem final:', ordemOriginal.map(f => f.Codigo));
           
-          // 🔍 VERIFICAR SE OS CÓDIGOS ESTÃO DIFERENTES
           const codigosUnicos = [...new Set(ordemOriginal.map(f => f.Codigo))];
           console.log('🔍 ADMIN - Total de códigos únicos:', codigosUnicos.length);
           console.log('🔍 ADMIN - Códigos únicos:', codigosUnicos.slice(0, 10));
+          
+          const urlsUnicas = [...new Set(ordemOriginal.map(f => f.Foto))];
+          console.log('🔍 ADMIN - Total de URLs únicas:', urlsUnicas.length);
+          console.log('🔍 ADMIN - URLs únicas:', urlsUnicas);
+          
+          if (urlsUnicas.length === 1) {
+            console.log('🚨 ADMIN - PROBLEMA: Todas as fotos têm a mesma URL!');
+            console.log('🚨 ADMIN - URL duplicada:', urlsUnicas[0]);
+          }
           
           console.log('============================================================');
           return ordemOriginal;
@@ -71,20 +105,30 @@ const ImagesSection = memo(({
 
         console.log('⚙️ ADMIN - ✅ Destaque encontrado na posição:', destaqueIndex + 1, 'Código:', ordemOriginal[destaqueIndex].Codigo);
 
-        // Destaque primeiro + demais na ordem original (exceto destaque)
         const fotoDestaque = ordemOriginal[destaqueIndex];
         const outrasfotos = ordemOriginal.filter((_, index) => index !== destaqueIndex);
         const ordemFinal = [fotoDestaque, ...outrasfotos];
         
         console.log('⚙️ ADMIN - ✅ Código da foto destaque:', fotoDestaque.Codigo);
         console.log('⚙️ ADMIN - Códigos na ordem final:', ordemFinal.map(f => f.Codigo));
-        console.log('⚙️ ADMIN - URLs das primeiras 5 fotos finais:', ordemFinal.slice(0, 5).map(f => f.Foto?.substring(0, 60)));
+        console.log('⚙️ ADMIN - URLs COMPLETAS das primeiras 5 fotos finais:');
+        ordemFinal.slice(0, 5).forEach((f, i) => {
+          console.log(`  ${i+1}: ${f.Foto}`);
+        });
         console.log('⚙️ ADMIN - 🖼️ PRIMEIRA FOTO sendo exibida:', ordemFinal[0].Codigo);
         
-        // 🔍 VERIFICAR SE OS CÓDIGOS ESTÃO DIFERENTES
         const codigosUnicos = [...new Set(ordemFinal.map(f => f.Codigo))];
         console.log('🔍 ADMIN - Total de códigos únicos:', codigosUnicos.length);
-        console.log('🔍 ADMIN - Códigos únicos:', codigosUnicos.slice(0, 10)); // Primeiros 10 para não poluir
+        console.log('🔍 ADMIN - Códigos únicos:', codigosUnicos.slice(0, 10));
+        
+        const urlsUnicas = [...new Set(ordemFinal.map(f => f.Foto))];
+        console.log('🔍 ADMIN - Total de URLs únicas:', urlsUnicas.length);
+        console.log('🔍 ADMIN - URLs únicas:', urlsUnicas);
+        
+        if (urlsUnicas.length === 1) {
+          console.log('🚨 ADMIN - PROBLEMA: Todas as fotos têm a mesma URL!');
+          console.log('🚨 ADMIN - URL duplicada:', urlsUnicas[0]);
+        }
         
         console.log('============================================================');
         
@@ -319,4 +363,4 @@ const ImagesSection = memo(({
 });
 
 ImagesSection.displayName = "ImagesSection";
-export default ImagesSection;
+export default ImagesSection; 
