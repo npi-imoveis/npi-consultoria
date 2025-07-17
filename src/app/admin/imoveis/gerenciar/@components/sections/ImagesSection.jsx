@@ -1,3 +1,8 @@
+// ===================================================
+// ARQUIVO 2: ImagesSection.jsx (ADMIN)
+// ===================================================
+// CORREÇÃO: Destaque primeiro + demais na ordem da migração
+
 "use client";
 
 import { memo, useState } from "react";
@@ -19,31 +24,42 @@ const ImagesSection = memo(({
 }) => {
   const [downloadingPhotos, setDownloadingPhotos] = useState(false);
 
-  // ============== [INÍCIO DA ALTERAÇÃO] ============== //
- const sortedPhotos = Array.isArray(formData?.Foto)
-  ? (() => {
-      // 1. Encontra o índice da foto destaque
-      const destaqueIndex = formData.Foto.findIndex(f => f.Destaque === "Sim");
-      
-      // 2. Se não houver destaque, mantém ordem original
-      if (destaqueIndex === -1) return [...formData.Foto];
-      
-      // 3. Cria novo array com destaque primeiro e ordem original das demais
-      return [
-        formData.Foto[destaqueIndex],
-        ...formData.Foto.slice(0, destaqueIndex),
-        ...formData.Foto.slice(destaqueIndex + 1)
-      ];
-    })()
-  : [];
+  // ✅ LÓGICA MELHORADA - Destaque primeiro + ordem da migração preservada
+  const sortedPhotos = Array.isArray(formData?.Foto)
+    ? (() => {
+        const ordemOriginal = [...formData.Foto];
+        console.log('⚙️ ADMIN - Ordem Original da Migração:', ordemOriginal.map((f, i) => ({
+          posicao: i + 1,
+          codigo: f.Codigo,
+          destaque: f.Destaque,
+          url: f.Foto?.substring(0, 50) + '...'
+        })));
 
-  console.log('⚙️ ADMIN - Ordem das fotos:', sortedPhotos.map(f => ({
-    Codigo: f.Codigo,
-    Destaque: f.Destaque,
-    PosiçãoOriginal: formData.Foto?.indexOf(f) ?? 'N/A'
-  })));
-  // ============== [FIM DA ALTERAÇÃO] ============== //
+        // Encontrar índice do destaque
+        const destaqueIndex = ordemOriginal.findIndex(f => f.Destaque === "Sim");
+        
+        if (destaqueIndex === -1) {
+          console.log('⚙️ ADMIN - Sem destaque, mantendo ordem original');
+          return ordemOriginal;
+        }
 
+        // Destaque primeiro + demais na ordem original (exceto destaque)
+        const fotoDestaque = ordemOriginal[destaqueIndex];
+        const outrasfotos = ordemOriginal.filter((_, index) => index !== destaqueIndex);
+        const ordemFinal = [fotoDestaque, ...outrasfotos];
+        
+        console.log('⚙️ ADMIN - Ordem Final:', ordemFinal.map((f, i) => ({
+          posicao: i + 1,
+          codigo: f.Codigo,
+          destaque: f.Destaque,
+          posicaoOriginal: ordemOriginal.findIndex(orig => orig.Codigo === f.Codigo) + 1
+        })));
+        
+        return ordemFinal;
+      })()
+    : [];
+
+  // ✅ PRESERVAR TODAS AS FUNÇÕES EXISTENTES
   const baixarTodasImagens = async (imagens = []) => {
     if (!Array.isArray(imagens) || imagens.length === 0) return;
 
@@ -137,6 +153,7 @@ const ImagesSection = memo(({
             )}
           </div>
 
+          {/* ✅ PRESERVAR TODOS OS BOTÕES */}
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
