@@ -31,12 +31,18 @@ export function ImageGallery({ imovel }) {
   const slug = formatterSlug(imovel.Empreendimento);
 
   // ============== [INÍCIO DA ALTERAÇÃO] ============== //
-  const images = Array.isArray(imovel?.Foto) 
-    ? imovel.Foto.reduce((acc, foto) => {
-        foto.Destaque === "Sim" ? acc.unshift(foto) : acc.push(foto);
-        return acc;
-      }, [])
-    : [];
+  const images = Array.isArray(imovel?.Foto)
+  ? (() => {
+      const destaqueIndex = imovel.Foto.findIndex(f => f.Destaque === "Sim");
+      if (destaqueIndex === -1) return [...imovel.Foto];
+      
+      return [
+        imovel.Foto[destaqueIndex],
+        ...imovel.Foto.slice(0, destaqueIndex),
+        ...imovel.Foto.slice(destaqueIndex + 1)
+      ];
+    })()
+  : [];
 
   console.log('🖼️ FRONTEND - Ordem das fotos:', images.map(f => ({
     Codigo: f.Codigo,
