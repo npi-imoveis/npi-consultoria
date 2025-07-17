@@ -1,4 +1,4 @@
-// ImageGallery.jsx (FRONTEND) - VERSÃO LIMPA COM DIAGNÓSTICO
+// ImageGallery.jsx (FRONTEND) - VERSÃO PRODUÇÃO FINAL
 "use client";
 
 import { useState, useEffect } from "react";
@@ -27,81 +27,28 @@ export function ImageGallery({ imovel }) {
 
   const getProcessedImages = () => {
     if (!Array.isArray(imovel?.Foto) || imovel.Foto.length === 0) {
-      console.warn('⚠️ FRONTEND - imovel.Foto inválido:', imovel?.Foto);
       return [];
     }
 
-    // 🔥 DIAGNÓSTICO COMPLETO - DADOS BRUTOS DA API
-    console.log('🔥 FRONTEND - DIAGNÓSTICO COMPLETO:', {
-      imovelCodigo: imovel.Codigo,
-      totalFotos: imovel.Foto.length,
-      primeiraFoto: imovel.Foto[0]?.Foto,
-      ultimaFoto: imovel.Foto[imovel.Foto.length - 1]?.Foto,
-      fotosComCodigo487: imovel.Foto.filter(f => f.Codigo === '487').length,
-      codigosUnicos: [...new Set(imovel.Foto.map(f => f.Codigo))],
-      urlsUnicas: [...new Set(imovel.Foto.map(f => f.Foto))],
-      fotoDestaque: imovel.Foto.find(f => f.Destaque === 'Sim')
-    });
-
-    // 🚨 VALIDAÇÃO DA HIPÓTESE PRINCIPAL
-    const codigosDuplicados = imovel.Foto.filter(f => f.Codigo === '487').length;
-    const totalFotos = imovel.Foto.length;
-    const urlsUnicas = [...new Set(imovel.Foto.map(f => f.Foto))];
-
-    console.log('🚨 FRONTEND - DIAGNÓSTICO CRÍTICO:', {
-      temCodigosDuplicados: codigosDuplicados > 1,
-      percentualDuplicado: (codigosDuplicados / totalFotos * 100).toFixed(1) + '%',
-      precisaCorrecao: codigosDuplicados === totalFotos,
-      temUrlsDiferentes: urlsUnicas.length > 1,
-      totalUrlsUnicas: urlsUnicas.length
-    });
-
-    // 📸 COMPARAÇÃO VISUAL
-    const DEBUG_FOTOS = true;
-    if (DEBUG_FOTOS) {
-      console.log('📸 FRONTEND - PRIMEIRAS 3 FOTOS DA API:');
-      imovel.Foto.slice(0, 3).forEach((foto, i) => {
-        console.log(`  ${i+1}. Código: ${foto.Codigo} | URL: ${foto.Foto.slice(-30)}`);
-      });
-    }
-
-    // ✅ CORREÇÃO: Gerar códigos únicos baseados no índice
+    // Corrigir códigos duplicados da API gerando códigos únicos baseados no índice
     const ordemOriginal = [...imovel.Foto].map((foto, index) => ({
       ...foto,
       Codigo: `${imovel.Codigo}-foto-${index}`,
     }));
 
-    console.log('✅ FRONTEND - CÓDIGOS ÚNICOS GERADOS:', {
-      totalGerados: ordemOriginal.length,
-      primeiros5: ordemOriginal.slice(0, 5).map(f => f.Codigo)
-    });
-
-    // 🎯 BUSCAR E POSICIONAR DESTAQUE
+    // Buscar foto marcada como destaque
     const destaqueIndex = ordemOriginal.findIndex(f => f.Destaque === "Sim");
     
+    // Se não há destaque, manter ordem original
     if (destaqueIndex === -1) {
-      console.log('🎯 FRONTEND - ❌ SEM DESTAQUE - Mantendo ordem original');
       return ordemOriginal;
     }
 
-    console.log('🎯 FRONTEND - ✅ DESTAQUE ENCONTRADO:', {
-      posicaoOriginal: destaqueIndex + 1,
-      codigoDestaque: ordemOriginal[destaqueIndex].Codigo,
-      urlDestaque: ordemOriginal[destaqueIndex].Foto.slice(-30)
-    });
-
+    // Reorganizar: destaque primeiro, depois as outras
     const fotoDestaque = ordemOriginal[destaqueIndex];
     const outrasfotos = ordemOriginal.filter((_, index) => index !== destaqueIndex);
-    const ordemFinal = [fotoDestaque, ...outrasfotos];
-
-    // 📋 RESULTADO FINAL
-    console.log('📋 FRONTEND - RESULTADO FINAL:', {
-      primeiraFotoFinal: ordemFinal[0].Codigo,
-      urlPrimeiraFinal: ordemFinal[0].Foto.slice(-30),
-      mudouPosicao: imovel.Foto[0]?.Foto !== ordemFinal[0]?.Foto ? '✅ SIM' : '❌ NÃO'
-    });
     
-    return ordemFinal;
+    return [fotoDestaque, ...outrasfotos];
   };
 
   const images = getProcessedImages();
