@@ -1,8 +1,4 @@
-/ ===================================================
-// ARQUIVO 1: ImageGallery.jsx (FRONTEND)
-// ===================================================
-// CORREÇÃO: Destaque primeiro + demais na ordem da migração
-
+// ImageGallery.jsx (FRONTEND)
 "use client";
 
 import { useState, useEffect } from "react";
@@ -29,7 +25,7 @@ export function ImageGallery({ imovel }) {
   const [selectedIndex, setSelectedIndex] = useState(null);
   const isMobile = useIsMobile();
 
-  // ✅ LÓGICA MELHORADA - Destaque primeiro + ordem da migração preservada
+  // Processamento das imagens com destaque primeiro
   const getProcessedImages = () => {
     if (!Array.isArray(imovel?.Foto) || imovel.Foto.length === 0) {
       console.warn('⚠️ FRONTEND - imovel.Foto inválido:', imovel?.Foto);
@@ -37,22 +33,21 @@ export function ImageGallery({ imovel }) {
     }
 
     const ordemOriginal = [...imovel.Foto];
+    console.log('============================================================');
     console.log('🖼️ FRONTEND - Total de fotos:', ordemOriginal.length);
-    console.log('🖼️ FRONTEND - Ordem Original da Migração:');
-    console.table(ordemOriginal.map((f, i) => ({
-      posicao: i + 1,
-      codigo: f.Codigo,
-      destaque: f.Destaque,
-      url: f.Foto?.substring(0, 50) + '...'
-    })));
-    
     console.log('🖼️ FRONTEND - Códigos na ordem original:', ordemOriginal.map(f => f.Codigo));
+    console.log('🖼️ FRONTEND - Destaques na ordem original:', ordemOriginal.map(f => f.Destaque));
+    console.log('🖼️ FRONTEND - Primeira foto original:', ordemOriginal[0]?.Codigo);
+    console.log('🖼️ FRONTEND - URLs das primeiras 5 fotos:', ordemOriginal.slice(0, 5).map(f => f.Foto?.substring(0, 60)));
 
     // Encontrar índice do destaque
     const destaqueIndex = ordemOriginal.findIndex(f => f.Destaque === "Sim");
     
     if (destaqueIndex === -1) {
       console.log('🖼️ FRONTEND - ❌ Sem destaque encontrado, mantendo ordem original');
+      console.log('🖼️ FRONTEND - Primeira foto sem destaque:', ordemOriginal[0]?.Codigo);
+      console.log('🖼️ FRONTEND - Códigos na ordem final:', ordemOriginal.map(f => f.Codigo));
+      console.log('============================================================');
       return ordemOriginal;
     }
 
@@ -63,16 +58,11 @@ export function ImageGallery({ imovel }) {
     const outrasfotos = ordemOriginal.filter((_, index) => index !== destaqueIndex);
     const ordemFinal = [fotoDestaque, ...outrasfotos];
     
-    console.log('🖼️ FRONTEND - Ordem Final:');
-    console.table(ordemFinal.map((f, i) => ({
-      posicao: i + 1,
-      codigo: f.Codigo,
-      destaque: f.Destaque,
-      posicaoOriginal: ordemOriginal.findIndex(orig => orig.Codigo === f.Codigo) + 1
-    })));
-    
+    console.log('🖼️ FRONTEND - ✅ Código da foto destaque:', fotoDestaque.Codigo);
     console.log('🖼️ FRONTEND - Códigos na ordem final:', ordemFinal.map(f => f.Codigo));
+    console.log('🖼️ FRONTEND - URLs das primeiras 5 fotos finais:', ordemFinal.slice(0, 5).map(f => f.Foto?.substring(0, 60)));
     console.log('🖼️ FRONTEND - 🖼️ PRIMEIRA FOTO sendo exibida:', ordemFinal[0].Codigo);
+    console.log('============================================================');
     
     return ordemFinal;
   };
