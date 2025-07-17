@@ -1,4 +1,4 @@
-// ImageGallery.jsx (FRONTEND) - VERSÃO PRODUÇÃO FINAL
+// ImageGallery.jsx (FRONTEND) - CÓDIGO COMPLETO COM CORREÇÃO
 "use client";
 
 import { useState, useEffect } from "react";
@@ -20,38 +20,93 @@ function useIsMobile() {
   return isMobile;
 }
 
+// Função para ordenar fotos pela ordem original de migração
+function ordenarFotosPorGruposMigracao(fotos) {
+  if (!Array.isArray(fotos) || fotos.length === 0) {
+    return [];
+  }
+
+  // Separar fotos por grupos baseado nos padrões dos nomes
+  const grupoApartamento = []; // iUg3s56gtAT3cfaA5U90_487
+  const grupoAreaComum = [];   // iUG8o15s_4876
+  const grupoCondominio = [];  // i268P_48766b21
+
+  fotos.forEach((foto, index) => {
+    // Preservar índice original
+    const fotoComIndex = { ...foto, originalIndex: index };
+
+    if (foto.Foto && foto.Foto.includes('iUg3s56gtAT3cfaA5U90_487')) {
+      grupoApartamento.push(fotoComIndex);
+    } else if (foto.Foto && foto.Foto.includes('iUG8o15s_4876')) {
+      grupoAreaComum.push(fotoComIndex);
+    } else if (foto.Foto && foto.Foto.includes('i268P_48766b21')) {
+      grupoCondominio.push(fotoComIndex);
+    } else {
+      // Fotos não identificadas vão para o final
+      grupoCondominio.push(fotoComIndex);
+    }
+  });
+
+  // Combinar na ordem correta: Apartamento → Área Comum → Condomínio
+  const ordemCorreta = [
+    ...grupoApartamento,
+    ...grupoAreaComum, 
+    ...grupoCondominio
+  ];
+
+  console.log('🔄 FRONTEND - REORGANIZAÇÃO POR GRUPOS:');
+  console.log(`📊 Apartamento: ${grupoApartamento.length} fotos`);
+  console.log(`📊 Área Comum: ${grupoAreaComum.length} fotos`);
+  console.log(`📊 Condomínio: ${grupoCondominio.length} fotos`);
+  console.log(`📊 Total reorganizado: ${ordemCorreta.length} fotos`);
+
+  return ordemCorreta;
+}
+
 export function ImageGallery({ imovel }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(null);
   const isMobile = useIsMobile();
 
- const getProcessedImages = () => {
-  if (!Array.isArray(imovel?.Foto) || imovel.Foto.length === 0) {
-    return [];
-  }
+  const getProcessedImages = () => {
+    if (!Array.isArray(imovel?.Foto) || imovel.Foto.length === 0) {
+      console.warn('⚠️ FRONTEND - imovel.Foto inválido:', imovel?.Foto);
+      return [];
+    }
 
-  // 1. Reorganizar por grupos de migração
-  const fotosOrdenadas = ordenarFotosPorGruposMigracao(imovel.Foto);
-  
-  // 2. Gerar códigos únicos para evitar problemas de duplicação
-  const fotosComCodigosUnicos = fotosOrdenadas.map((foto, index) => ({
-    ...foto,
-    Codigo: `${imovel.Codigo}-foto-${index}`,
-  }));
+    try {
+      // 1. Reorganizar por grupos de migração (ordem original WordPress)
+      const fotosOrdenadas = ordenarFotosPorGruposMigracao(imovel.Foto);
+      
+      // 2. Gerar códigos únicos para evitar problemas de duplicação
+      const fotosComCodigosUnicos = fotosOrdenadas.map((foto, index) => ({
+        ...foto,
+        Codigo: `${imovel.Codigo}-foto-${index}`,
+      }));
 
-  // 3. Verificar se há destaque e colocar primeiro (opcional)
-  const destaqueIndex = fotosComCodigosUnicos.findIndex(f => f.Destaque === "Sim");
-  
-  if (destaqueIndex !== -1) {
-    const fotoDestaque = fotosComCodigosUnicos[destaqueIndex];
-    const outrasfotos = fotosComCodigosUnicos.filter((_, index) => index !== destaqueIndex);
-    
-    console.log(`🎯 Destaque encontrado na posição ${destaqueIndex + 1}, movendo para primeira`);
-    return [fotoDestaque, ...outrasfotos];
-  }
+      // 3. Verificar se há destaque e colocar primeiro
+      const destaqueIndex = fotosComCodigosUnicos.findIndex(f => f.Destaque === "Sim");
+      
+      if (destaqueIndex !== -1) {
+        const fotoDestaque = fotosComCodigosUnicos[destaqueIndex];
+        const outrasfotos = fotosComCodigosUnicos.filter((_, index) => index !== destaqueIndex);
+        
+        console.log(`🎯 FRONTEND - Destaque encontrado na posição ${destaqueIndex + 1}, movendo para primeira`);
+        return [fotoDestaque, ...outrasfotos];
+      }
 
-  return fotosComCodigosUnicos;
-};
+      console.log('📋 FRONTEND - Processamento concluído:', fotosComCodigosUnicos.length, 'fotos');
+      return fotosComCodigosUnicos;
+
+    } catch (error) {
+      console.error('❌ FRONTEND - Erro ao processar imagens:', error);
+      // Em caso de erro, retorna ordem original com códigos únicos
+      return [...imovel.Foto].map((foto, index) => ({
+        ...foto,
+        Codigo: `${imovel.Codigo}-foto-${index}`,
+      }));
+    }
+  };
 
   const images = getProcessedImages();
 
