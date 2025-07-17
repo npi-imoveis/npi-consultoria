@@ -32,57 +32,18 @@ export function ImageGallery({ imovel }) {
 
   const slug = formatterSlug(imovel.Empreendimento);
 
-  // ✅ SOLUÇÃO FINAL: USA POSIÇÃO DO ARRAY (ordem migração) + move destaque primeiro
+  // Ensure Foto is an array and handle edge cases
   const images =
     Array.isArray(imovel.Foto) && imovel.Foto.length > 0
-      ? (() => {
-          console.log(`[IMAGE-GALLERY] 🔍 Total de fotos recebidas:`, imovel.Foto.length);
-          console.log(`[IMAGE-GALLERY] 🔍 Primeiras 3 fotos (ordem original do array):`, 
-            imovel.Foto.slice(0, 3).map((f, idx) => ({
-              posicaoArray: idx + 1,
-              codigo: f.Codigo,
-              destaque: f.Destaque,
-              campoOrdem: f.Ordem,
-              url: f.Foto?.substring(0, 30) + '...'
-            }))
-          );
-
-          // PASSO 1: Encontrar foto de destaque (se existir)
-          const fotoDestaque = imovel.Foto.find(foto => foto.Destaque === "Sim");
-          
-          // PASSO 2: Se não há destaque, usar ordem original do array (migração)
-          if (!fotoDestaque) {
-            console.log(`[IMAGE-GALLERY] ⚠️ Nenhuma foto de destaque, mantendo ordem original do array`);
-            return imovel.Foto;
-          }
-          
-          // PASSO 3: Remover foto de destaque da posição original
-          const fotosSemDestaque = imovel.Foto.filter(foto => foto.Destaque !== "Sim");
-          
-          // PASSO 4: Colocar destaque primeiro + demais na ordem original do array
-          const resultado = [fotoDestaque, ...fotosSemDestaque];
-          
-          console.log(`[IMAGE-GALLERY] ✅ Foto de destaque movida para primeira posição:`, {
-            codigo: fotoDestaque.Codigo,
-            posicaoOriginal: imovel.Foto.findIndex(f => f.Codigo === fotoDestaque.Codigo) + 1,
-            destaque: fotoDestaque.Destaque,
-            campoOrdem: fotoDestaque.Ordem
-          });
-          
-          console.log(`[IMAGE-GALLERY] 📸 Primeiras 5 fotos finais:`, 
-            resultado.slice(0, 5).map((f, idx) => ({
-              posicaoFinal: idx + 1,
-              codigo: f.Codigo,
-              destaque: f.Destaque,
-              posicaoOriginalArray: imovel.Foto.findIndex(original => original.Codigo === f.Codigo) + 1
-            }))
-          );
-          
-          return resultado;
-        })()
+      ? [...imovel.Foto].sort((a, b) => {
+          if (a.Destaque === "Sim" && b.Destaque !== "Sim") return -1;
+          if (a.Destaque !== "Sim" && b.Destaque === "Sim") return 1;
+          return 0;
+        })
       : [];
 
   if (images.length === 0) {
+    // Return a placeholder or default image if no images are available
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-1 w-full">
         <div className="col-span-1 h-[410px] relative">
@@ -133,9 +94,9 @@ export function ImageGallery({ imovel }) {
               height={600}
               sizes="(max-width: 350px) 100vw, (max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
               placeholder="blur"
-              blurDataURL={images[0].blurDataURL || "/placeholder.png"}
-              loading="eager"
-              priority={true}
+              blurDataURL={images[0].blurDataURL || "/placeholder.png"} // Use um placeholder otimizado
+              loading="eager" // Carregamento prioritário para melhorar o LCP
+              priority={true} // Priorizar a imagem principal
               className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
             />
           </div>
@@ -249,7 +210,7 @@ export function ImageGallery({ imovel }) {
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4 ">
               {images.map((image, idx) => (
                 <div
                   key={idx}
