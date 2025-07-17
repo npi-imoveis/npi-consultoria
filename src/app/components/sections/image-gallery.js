@@ -1,4 +1,4 @@
-// ImageGallery.jsx (FRONTEND)
+/ ImageGallery.jsx (FRONTEND)
 "use client";
 
 import { useState, useEffect } from "react";
@@ -44,7 +44,13 @@ export function ImageGallery({ imovel }) {
     console.log('🔍 FRONTEND - Código da primeira foto:', imovel.Foto[0]?.Codigo);
     console.log('🔍 FRONTEND - São iguais?', imovel.Codigo === imovel.Foto[0]?.Codigo);
 
-    const ordemOriginal = [...imovel.Foto];
+    // 🔧 CORREÇÃO: Gerar códigos únicos baseado no índice (problema na API)
+    const ordemOriginal = [...imovel.Foto].map((foto, index) => ({
+      ...foto,
+      Codigo: `${imovel.Codigo}-foto-${index}`, // Gera código único baseado no índice
+    }));
+    
+    console.log('🔧 FRONTEND - Códigos únicos gerados:', ordemOriginal.map(f => f.Codigo));
     console.log('============================================================');
     console.log('🖼️ FRONTEND - Total de fotos:', ordemOriginal.length);
     console.log('🖼️ FRONTEND - Códigos na ordem original:', ordemOriginal.map(f => f.Codigo));
