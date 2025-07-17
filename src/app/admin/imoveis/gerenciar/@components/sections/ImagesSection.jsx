@@ -26,6 +26,12 @@ const ImagesSection = memo(({
   // Processamento das fotos com destaque primeiro
   const sortedPhotos = Array.isArray(formData?.Foto)
     ? (() => {
+        console.log('🔍 ADMIN - DEBUG: Fonte dos dados:', {
+          totalFotos: formData.Foto.length,
+          tipoArray: Array.isArray(formData.Foto),
+          primeiraFoto: formData.Foto[0]
+        });
+
         const ordemOriginal = [...formData.Foto];
         console.log('============================================================');
         console.log('⚙️ ADMIN - Total de fotos:', ordemOriginal.length);
@@ -33,6 +39,17 @@ const ImagesSection = memo(({
         console.log('⚙️ ADMIN - Destaques na ordem original:', ordemOriginal.map(f => f.Destaque));
         console.log('⚙️ ADMIN - Primeira foto original:', ordemOriginal[0]?.Codigo);
         console.log('⚙️ ADMIN - URLs das primeiras 5 fotos:', ordemOriginal.slice(0, 5).map(f => f.Foto?.substring(0, 60)));
+        
+        // 🔍 DEBUG ADICIONAL - Estrutura completa das primeiras 3 fotos
+        console.log('🔍 ADMIN - DEBUG: Estrutura das primeiras 3 fotos:');
+        ordemOriginal.slice(0, 3).forEach((foto, index) => {
+          console.log(`  Foto ${index + 1}:`, {
+            Codigo: foto.Codigo,
+            Destaque: foto.Destaque,
+            Foto: foto.Foto?.substring(0, 80),
+            todasAsPropriedades: Object.keys(foto)
+          });
+        });
 
         // Encontrar índice do destaque
         const destaqueIndex = ordemOriginal.findIndex(f => f.Destaque === "Sim");
@@ -41,6 +58,12 @@ const ImagesSection = memo(({
           console.log('⚙️ ADMIN - ❌ Sem destaque encontrado, mantendo ordem original');
           console.log('⚙️ ADMIN - Primeira foto sem destaque:', ordemOriginal[0]?.Codigo);
           console.log('⚙️ ADMIN - Códigos na ordem final:', ordemOriginal.map(f => f.Codigo));
+          
+          // 🔍 VERIFICAR SE OS CÓDIGOS ESTÃO DIFERENTES
+          const codigosUnicos = [...new Set(ordemOriginal.map(f => f.Codigo))];
+          console.log('🔍 ADMIN - Total de códigos únicos:', codigosUnicos.length);
+          console.log('🔍 ADMIN - Códigos únicos:', codigosUnicos.slice(0, 10));
+          
           console.log('============================================================');
           return ordemOriginal;
         }
@@ -56,6 +79,12 @@ const ImagesSection = memo(({
         console.log('⚙️ ADMIN - Códigos na ordem final:', ordemFinal.map(f => f.Codigo));
         console.log('⚙️ ADMIN - URLs das primeiras 5 fotos finais:', ordemFinal.slice(0, 5).map(f => f.Foto?.substring(0, 60)));
         console.log('⚙️ ADMIN - 🖼️ PRIMEIRA FOTO sendo exibida:', ordemFinal[0].Codigo);
+        
+        // 🔍 VERIFICAR SE OS CÓDIGOS ESTÃO DIFERENTES
+        const codigosUnicos = [...new Set(ordemFinal.map(f => f.Codigo))];
+        console.log('🔍 ADMIN - Total de códigos únicos:', codigosUnicos.length);
+        console.log('🔍 ADMIN - Códigos únicos:', codigosUnicos.slice(0, 10)); // Primeiros 10 para não poluir
+        
         console.log('============================================================');
         
         return ordemFinal;
