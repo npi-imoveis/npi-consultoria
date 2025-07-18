@@ -76,17 +76,15 @@ export function ImageGallery({ imovel }) {
 
     try {
       // 1. Foto destacada (se existir)
-      const fotoDestaque = imovel.Foto.find(foto => foto.Destaque === "Sim");
+      const fotoDestaque = fotos.find(foto => foto.Destaque === "Sim");
       
-      // 2. Outras fotos ordenadas pela migração original
-      const outrasFotos = imovel.Foto.filter(foto => foto !== fotoDestaque);
-      
-      // 3. Ordenar outras fotos pela ordem da migração
-      const outrasFotosOrdenadas = outrasFotos.sort((a, b) => {
-        const ordemA = obterOrdemOriginal(a);
-        const ordemB = obterOrdemOriginal(b);
-        return ordemA - ordemB;
-      });
+      // 2. Outras fotos na ordem EXATA que vieram da API  
+     const outrasFotos = fotos.filter(foto => foto !== fotoDestaque);
+     const outrasFotosOrdenadas = outrasFotos.sort((a, b) => {
+     const indexA = fotos.indexOf(a);
+     const indexB = fotos.indexOf(b);
+     return indexA - indexB; // Mantém ordem original da API/migração
+});
       
       // 4. Criar array final: destaque primeiro + outras na ordem da migração
       const fotosOrdenadas = [
