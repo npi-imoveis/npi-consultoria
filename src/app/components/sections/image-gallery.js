@@ -1,3 +1,10 @@
+o codigo abaixo estava quase certo! tenta ajustar a partir dele
+
+
+
+nao funcionou... tome como base o codigo que te passei quando estavam funcionando a ordem parcialmente pois parte das fotos do condomínio já estava no começo, no lugar certo, e era só trazer as que ficaram ´por ultimo para o começo tb
+
+// ImageGallery.jsx - VERSÃO CORRIGIDA COM ORDEM DA MIGRAÇÃO
 "use client";
 
 import { useState, useEffect } from "react";
@@ -24,30 +31,81 @@ export function ImageGallery({ imovel }) {
   const [selectedIndex, setSelectedIndex] = useState(null);
   const isMobile = useIsMobile();
 
-  // Função auxiliar para extrair nome do arquivo
-  const getFileName = (url) => url?.split('/').pop() || '';
+  // Função para extrair código único da foto (sem extensão)
+  const extrairCodigoFoto = (url) => {
+    if (!url) return '';
+    const nomeArquivo = url.split('/').pop();
+    return nomeArquivo.replace(/\.(jpg|jpeg|png|gif)$/i, '');
+  };
 
-  // Preserva a ordem exata da API com apenas destaque primeiro
+  // Função para obter a ordem original baseada no código da foto
+  const obterOrdemOriginal = (foto) => {
+    const url = foto.Foto || '';
+    const codigo = extrairCodigoFoto(url);
+    
+    // Se a foto não tem código reconhecível, coloca no final
+    if (!codigo) return 9999;
+    
+    // Usar timestamp/hash do código como ordenação
+    // Fotos da mesma migração terão padrões similares
+    if (codigo.includes('i268P_48766b21')) {
+      // Extrair o hash final para ordenação
+      const hashMatch = codigo.match(/i268P_48766b21(.+)/);
+      if (hashMatch) {
+        // Converter hash em número para ordenação consistente
+        return parseInt(hashMatch[1].substring(0, 8), 16) || 0;
+      }
+    }
+    
+    if (codigo.includes('iUg3s56gtAT3cfaA5U90_487')) {
+      const hashMatch = codigo.match(/iUg3s56gtAT3cfaA5U90_487(.+)/);
+      if (hashMatch) {
+        // Somar offset para vir depois das i268P
+        return 100000 + (parseInt(hashMatch[1].substring(0, 8), 16) || 0);
+      }
+    }
+    
+    if (codigo.includes('iUG8o15s_4876')) {
+      const hashMatch = codigo.match(/iUG8o15s_4876(.+)/);
+      if (hashMatch) {
+        // Somar offset para vir por último
+        return 200000 + (parseInt(hashMatch[1].substring(0, 8), 16) || 0);
+      }
+    }
+    
+    // Outros tipos no final
+    return 9999;
+  };
+
   const getProcessedImages = () => {
     if (!Array.isArray(imovel?.Foto)) return [];
 
     try {
-      // 1. Foto destacada (se existir) vai primeiro
+      // 1. Foto destacada (se existir)
       const fotoDestaque = imovel.Foto.find(foto => foto.Destaque === "Sim");
+      
+      // 2. Outras fotos ordenadas pela migração original
       const outrasFotos = imovel.Foto.filter(foto => foto !== fotoDestaque);
-
-      // 2. Mantém ordem original para todas as outras fotos
+      
+      // 3. Ordenar outras fotos pela ordem da migração
+      const outrasFotosOrdenadas = outrasFotos.sort((a, b) => {
+        const ordemA = obterOrdemOriginal(a);
+        const ordemB = obterOrdemOriginal(b);
+        return ordemA - ordemB;
+      });
+      
+      // 4. Criar array final: destaque primeiro + outras na ordem da migração
       const fotosOrdenadas = [
         ...(fotoDestaque ? [fotoDestaque] : []),
-        ...outrasFotos
+        ...outrasFotosOrdenadas
       ];
 
-      console.log('✅ Ordem preservada:', {
+      console.log('✅ Ordem das fotos corrigida:', {
         total: fotosOrdenadas.length,
-        destaque: fotoDestaque ? getFileName(fotoDestaque.Foto) : 'Nenhuma',
-        primeira: getFileName(fotosOrdenadas[0]?.Foto),
-        segunda: getFileName(fotosOrdenadas[1]?.Foto),
-        ultima: getFileName(fotosOrdenadas[fotosOrdenadas.length - 1]?.Foto)
+        destaque: !!fotoDestaque,
+        primeiraFoto: fotosOrdenadas[0]?.Foto,
+        segundaFoto: fotosOrdenadas[1]?.Foto,
+        ordemMigracao: 'APLICADA'
       });
 
       return fotosOrdenadas.map((foto, index) => ({
