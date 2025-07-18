@@ -1,4 +1,5 @@
 // ImagesSection.jsx - VERSÃO CORRIGIDA COM ORDEM DA MIGRAÇÃO
+// ImagesSection.jsx - VERSÃO CORRIGIDA COM ORDEM DA MIGRAÇÃO
 "use client";
 
 import { memo, useState } from "react";
@@ -76,11 +77,12 @@ const ImagesSection = memo(({
       // 2. Outras fotos ordenadas pela migração original
       const outrasFotos = formData.Foto.filter(foto => foto !== fotoDestaque);
       
-      // 3. Ordenar outras fotos pela ordem da migração
+      // 3. Ordenar outras fotos mantendo ordem original da migração/API
       const outrasFotosOrdenadas = outrasFotos.sort((a, b) => {
-        const ordemA = obterOrdemOriginal(a);
-        const ordemB = obterOrdemOriginal(b);
-        return ordemA - ordemB;
+        // Manter a ordem original da API (ordem da migração)
+        const indexA = formData.Foto.indexOf(a);
+        const indexB = formData.Foto.indexOf(b);
+        return indexA - indexB;
       });
       
       // 4. Criar array final: destaque primeiro + outras na ordem da migração
