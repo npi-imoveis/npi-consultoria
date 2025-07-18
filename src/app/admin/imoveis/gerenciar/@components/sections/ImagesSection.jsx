@@ -23,54 +23,51 @@ const ImagesSection = memo(({
   const sortedPhotos = Array.isArray(formData?.Foto)
     ? (() => {
         try {
-          // REORGANIZAR POR GRUPOS DE MIGRAÇÃO (ORDEM WORDPRESS ORIGINAL)
-          const grupoApartamento = []; // iUg3s56gtAT3cfaA5U90_487
-          const grupoAreaComum = [];   // iUG8o15s_4876
-          const grupoCondominio = [];  // i268P_48766b21
-          const grupoOutros = [];      // outros padrões
+          const grupoApartamento = [];
+          const grupoAreaComum = [];
+          const grupoCondominio = [];
+          const grupoOutros = [];
 
-          formData.Foto.forEach((foto, index) => {
-            const fotoComIndex = { ...foto, originalIndex: index };
-
-            if (foto.Foto && foto.Foto.includes('iUg3s56gtAT3cfaA5U90_487')) {
-              grupoApartamento.push(fotoComIndex);
-            } else if (foto.Foto && foto.Foto.includes('iUG8o15s_4876')) {
-              grupoAreaComum.push(fotoComIndex);
-            } else if (foto.Foto && foto.Foto.includes('i268P_48766b21')) {
-              grupoCondominio.push(fotoComIndex);
+          formData.Foto.forEach((foto) => {
+            const fotoUrl = foto.Foto || '';
+            
+            if (fotoUrl.includes('iUg3s56gtAT3cfaA5U90_487')) {
+              grupoApartamento.push(foto);
+            } else if (fotoUrl.includes('iUG8o15s_4876')) {
+              grupoAreaComum.push(foto);
+            } else if (fotoUrl.includes('i268P_48766b21')) {
+              grupoCondominio.push(foto);
             } else {
-              grupoOutros.push(fotoComIndex);
+              grupoOutros.push(foto);
             }
           });
 
-          // ORDEM WORDPRESS PURA: Apartamento → Outros → Área Comum → Condomínio
           const fotosOrdenadas = [
             ...grupoApartamento,
             ...grupoOutros,
-            ...grupoAreaComum, 
+            ...grupoAreaComum,
             ...grupoCondominio
           ];
 
-          console.log('🔄 ADMIN - ORDEM WORDPRESS RESTAURADA:');
-          console.log(`📊 1. Apartamento: ${grupoApartamento.length} fotos`);
-          console.log(`📊 2. Outros: ${grupoOutros.length} fotos`);
-          console.log(`📊 3. Área Comum: ${grupoAreaComum.length} fotos`);
-          console.log(`📊 4. Condomínio: ${grupoCondominio.length} fotos`);
-          console.log(`🎯 Primeira foto: ${fotosOrdenadas[0]?.Foto?.split('/').pop()}`);
-          console.log(`📊 Total processado: ${fotosOrdenadas.length} fotos`);
+          console.log('🔄 ADMIN - ORDEM WORDPRESS RESTAURADA:', {
+            apartamento: grupoApartamento.length,
+            outros: grupoOutros.length,
+            areaComum: grupoAreaComum.length,
+            condominio: grupoCondominio.length,
+            primeiraFoto: fotosOrdenadas[0]?.Foto?.split('/').pop()
+          });
 
           return fotosOrdenadas;
 
         } catch (error) {
           console.error('❌ ADMIN - Erro ao processar imagens:', error);
-          // Fallback: usar ordem original da API se der erro
           return [...formData.Foto];
         }
       })()
     : [];
 
   const baixarTodasImagens = async (imagens = []) => {
-    if (!Array.isArray(imagens) || imagens.length === 0) return;
+    if (!Array.isArray(imagens) return;
 
     setDownloadingPhotos(true);
     const zip = new JSZip();
@@ -92,25 +89,21 @@ const ImagesSection = memo(({
         })();
 
         const response = await fetch(cleanUrl);
-        if (!response.ok) {
-          console.warn(`❌ Erro ao baixar imagem ${i + 1}: ${response.status} ${response.statusText}`);
-          continue;
-        }
+        if (!response.ok) continue;
 
         const blob = await response.blob();
         const nome = `imagem-${i + 1}.jpg`;
         pasta?.file(nome, blob);
       } catch (err) {
-        console.error(`❌ Erro crítico ao baixar imagem ${i + 1}:`, err);
+        console.error(`Erro ao baixar imagem ${i + 1}:`, err);
       }
     }
 
     try {
       const content = await zip.generateAsync({ type: "blob" });
       saveAs(content, "imagens.zip");
-      console.log("✅ Download concluído com sucesso.");
     } catch (zipError) {
-      console.error("❌ Erro ao gerar zip:", zipError);
+      console.error("Erro ao gerar zip:", zipError);
     }
 
     setDownloadingPhotos(false);
@@ -142,7 +135,7 @@ const ImagesSection = memo(({
 
   const handlePositionChange = (codigo, newPosition) => {
     const position = parseInt(newPosition);
-    if (!isNaN(position) && position > 0 && position <= formData.Foto?.length) {
+    if (!isNaN(position) {
       changeImagePosition(codigo, position);
     }
   };
