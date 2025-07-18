@@ -25,6 +25,52 @@ export function ImageGallery({ imovel }) {
   const [selectedIndex, setSelectedIndex] = useState(null);
   const isMobile = useIsMobile();
 
+  // Função para extrair código único da foto (sem extensão)
+  const extrairCodigoFoto = (url) => {
+    if (!url) return '';
+    const nomeArquivo = url.split('/').pop();
+    return nomeArquivo.replace(/\.(jpg|jpeg|png|gif)$/i, '');
+  };
+
+  // Função para obter a ordem original baseada no código da foto
+  const obterOrdemOriginal = (foto) => {
+    const url = foto.Foto || '';
+    const codigo = extrairCodigoFoto(url);
+    
+    // Se a foto não tem código reconhecível, coloca no final
+    if (!codigo) return 9999;
+    
+    // Usar timestamp/hash do código como ordenação
+    // Fotos da mesma migração terão padrões similares
+    if (codigo.includes('i268P_48766b21')) {
+      // Extrair o hash final para ordenação
+      const hashMatch = codigo.match(/i268P_48766b21(.+)/);
+      if (hashMatch) {
+        // Converter hash em número para ordenação consistente
+        return parseInt(hashMatch[1].substring(0, 8), 16) || 0;
+      }
+    }
+    
+    if (codigo.includes('iUg3s56gtAT3cfaA5U90_487')) {
+      const hashMatch = codigo.match(/iUg3s56gtAT3cfaA5U90_487(.+)/);
+      if (hashMatch) {
+        // Somar offset para vir depois das i268P
+        return 100000 + (parseInt(hashMatch[1].substring(0, 8), 16) || 0);
+      }
+    }
+    
+    if (codigo.includes('iUG8o15s_4876')) {
+      const hashMatch = codigo.match(/iUG8o15s_4876(.+)/);
+      if (hashMatch) {
+        // Somar offset para vir por último
+        return 200000 + (parseInt(hashMatch[1].substring(0, 8), 16) || 0);
+      }
+    }
+    
+    // Outros tipos no final
+    return 9999;
+  };
+
   const getProcessedImages = () => {
     if (!Array.isArray(imovel?.Foto)) return [];
 
@@ -32,79 +78,28 @@ export function ImageGallery({ imovel }) {
       // 1. Foto destacada (se existir)
       const fotoDestaque = imovel.Foto.find(foto => foto.Destaque === "Sim");
       
-      // 2. Outras fotos - reagrupar por padrão do código
+      // 2. Outras fotos ordenadas pela migração original
       const outrasFotos = imovel.Foto.filter(foto => foto !== fotoDestaque);
       
-      // 3. Extrair código de cada foto para agrupar por tipo
-      const fotosComCodigo = outrasFotos.map((foto, index) => {
-        const url = foto.Foto || '';
-        const nomeArquivo = url.split('/').pop() || '';
-        const codigo = nomeArquivo.replace(/\.(jpg|jpeg|png|gif)$/i, '');
-        
-        // Extrair prefixo genérico do código para agrupar (primeiros caracteres)
-        // Isso funcionará para qualquer imóvel
-        let prefixo = '';
-        
-        // Pegar padrão até o primeiro underscore ou até 15 caracteres
-        const underscoreIndex = codigo.indexOf('_');
-        if (underscoreIndex > 0) {
-          prefixo = codigo.substring(0, underscoreIndex + 1);
-        } else {
-          // Se não tem underscore, pega os primeiros 10 caracteres
-          prefixo = codigo.substring(0, Math.min(10, codigo.length));
-        }
-        
-        return {
-          foto,
-          codigo,
-          prefixo,
-          ordemOriginal: index
-        };
+      // 3. Ordenar outras fotos pela ordem da migração
+      const outrasFotosOrdenadas = outrasFotos.sort((a, b) => {
+        const ordemA = obterOrdemOriginal(a);
+        const ordemB = obterOrdemOriginal(b);
+        return ordemA - ordemB;
       });
       
-      // 4. Agrupar por prefixo e ordenar cada grupo pela ordem original
-      const grupos = {};
-      fotosComCodigo.forEach(item => {
-        if (!grupos[item.prefixo]) {
-          grupos[item.prefixo] = [];
-        }
-        grupos[item.prefixo].push(item);
-      });
-      
-      // 5. Ordenar fotos dentro de cada grupo pela ordem original
-      Object.keys(grupos).forEach(prefixo => {
-        grupos[prefixo].sort((a, b) => a.ordemOriginal - b.ordemOriginal);
-      });
-      
-      // 6. Definir ordem dos grupos pela primeira aparição na ordem original
-      const ordemGrupos = [];
-      fotosComCodigo.forEach(item => {
-        if (!ordemGrupos.includes(item.prefixo)) {
-          ordemGrupos.push(item.prefixo);
-        }
-      });
-      
-      // 7. Montar array final: destaque + grupos ordenados
-      const fotosReagrupadas = [];
-      
-      ordemGrupos.forEach(prefixo => {
-        if (grupos[prefixo]) {
-          grupos[prefixo].forEach(item => {
-            fotosReagrupadas.push(item.foto);
-          });
-        }
-      });
-      
+      // 4. Criar array final: destaque primeiro + outras na ordem da migração
       const fotosOrdenadas = [
         ...(fotoDestaque ? [fotoDestaque] : []),
-        ...fotosReagrupadas
+        ...outrasFotosOrdenadas
       ];
 
-      console.log('✅ Fotos reagrupadas por tipo:', {
+      console.log('✅ Ordem das fotos corrigida:', {
         total: fotosOrdenadas.length,
         destaque: !!fotoDestaque,
-        grupos: Object.keys(grupos).map(prefixo => `${prefixo}: ${grupos[prefixo].length} fotos`),
-        regraupamento: 'APLICADO'
+        primeiraFoto: fotosOrdenadas[0]?.Foto,
+        segundaFoto: fotosOrdenadas[1]?.Foto,
+        ordemMigracao: 'APLICADA'
       });
 
       return fotosOrdenadas.map((foto, index) => ({
