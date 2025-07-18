@@ -1,4 +1,4 @@
-// ImagesSection.jsx (ADMIN) - CÓDIGO COMPLETO COM CORREÇÃO
+// ImagesSection.jsx - VERSÃO FINAL COM ORDEM WORDPRESS PURA
 "use client";
 
 import { memo, useState } from "react";
@@ -6,49 +6,6 @@ import FormSection from "../FormSection";
 import Image from "next/image";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
-
-// Função para ordenar fotos pela ordem original de migração
-function ordenarFotosPorGruposMigracao(fotos) {
-  if (!Array.isArray(fotos) || fotos.length === 0) {
-    return [];
-  }
-
-  // Separar fotos por grupos baseado nos padrões dos nomes
-  const grupoApartamento = []; // iUg3s56gtAT3cfaA5U90_487
-  const grupoAreaComum = [];   // iUG8o15s_4876
-  const grupoCondominio = [];  // i268P_48766b21
-
-  fotos.forEach((foto, index) => {
-    // Preservar índice original
-    const fotoComIndex = { ...foto, originalIndex: index };
-
-    if (foto.Foto && foto.Foto.includes('iUg3s56gtAT3cfaA5U90_487')) {
-      grupoApartamento.push(fotoComIndex);
-    } else if (foto.Foto && foto.Foto.includes('iUG8o15s_4876')) {
-      grupoAreaComum.push(fotoComIndex);
-    } else if (foto.Foto && foto.Foto.includes('i268P_48766b21')) {
-      grupoCondominio.push(fotoComIndex);
-    } else {
-      // Fotos não identificadas vão para o final
-      grupoCondominio.push(fotoComIndex);
-    }
-  });
-
-  // Combinar na ordem correta: Apartamento → Área Comum → Condomínio
-  const ordemCorreta = [
-    ...grupoApartamento,
-    ...grupoAreaComum, 
-    ...grupoCondominio
-  ];
-
-  console.log('🔄 ADMIN - REORGANIZAÇÃO POR GRUPOS:');
-  console.log(`📊 Apartamento: ${grupoApartamento.length} fotos`);
-  console.log(`📊 Área Comum: ${grupoAreaComum.length} fotos`);
-  console.log(`📊 Condomínio: ${grupoCondominio.length} fotos`);
-  console.log(`📊 Total reorganizado: ${ordemCorreta.length} fotos`);
-
-  return ordemCorreta;
-}
 
 const ImagesSection = memo(({
   formData,
@@ -66,26 +23,47 @@ const ImagesSection = memo(({
   const sortedPhotos = Array.isArray(formData?.Foto)
     ? (() => {
         try {
-          // 1. Reorganizar por grupos de migração (ordem original WordPress)
-          const fotosOrdenadas = ordenarFotosPorGruposMigracao(formData.Foto);
-          
-          // 2. Verificar se há destaque e colocar primeiro
-          const destaqueIndex = fotosOrdenadas.findIndex(f => f.Destaque === "Sim");
-          
-          if (destaqueIndex !== -1) {
-            const fotoDestaque = fotosOrdenadas[destaqueIndex];
-            const outrasfotos = fotosOrdenadas.filter((_, index) => index !== destaqueIndex);
-            
-            console.log(`🎯 ADMIN - Destaque encontrado na posição ${destaqueIndex + 1}, movendo para primeira`);
-            return [fotoDestaque, ...outrasfotos];
-          }
+          // REORGANIZAR POR GRUPOS DE MIGRAÇÃO (ORDEM WORDPRESS ORIGINAL)
+          const grupoApartamento = []; // iUg3s56gtAT3cfaA5U90_487
+          const grupoAreaComum = [];   // iUG8o15s_4876
+          const grupoCondominio = [];  // i268P_48766b21
+          const grupoOutros = [];      // outros padrões
 
-          console.log('📋 ADMIN - Processamento concluído:', fotosOrdenadas.length, 'fotos');
+          formData.Foto.forEach((foto, index) => {
+            const fotoComIndex = { ...foto, originalIndex: index };
+
+            if (foto.Foto && foto.Foto.includes('iUg3s56gtAT3cfaA5U90_487')) {
+              grupoApartamento.push(fotoComIndex);
+            } else if (foto.Foto && foto.Foto.includes('iUG8o15s_4876')) {
+              grupoAreaComum.push(fotoComIndex);
+            } else if (foto.Foto && foto.Foto.includes('i268P_48766b21')) {
+              grupoCondominio.push(fotoComIndex);
+            } else {
+              grupoOutros.push(fotoComIndex);
+            }
+          });
+
+          // ORDEM WORDPRESS PURA: Apartamento → Outros → Área Comum → Condomínio
+          const fotosOrdenadas = [
+            ...grupoApartamento,
+            ...grupoOutros,
+            ...grupoAreaComum, 
+            ...grupoCondominio
+          ];
+
+          console.log('🔄 ADMIN - ORDEM WORDPRESS RESTAURADA:');
+          console.log(`📊 1. Apartamento: ${grupoApartamento.length} fotos`);
+          console.log(`📊 2. Outros: ${grupoOutros.length} fotos`);
+          console.log(`📊 3. Área Comum: ${grupoAreaComum.length} fotos`);
+          console.log(`📊 4. Condomínio: ${grupoCondominio.length} fotos`);
+          console.log(`🎯 Primeira foto: ${fotosOrdenadas[0]?.Foto?.split('/').pop()}`);
+          console.log(`📊 Total processado: ${fotosOrdenadas.length} fotos`);
+
           return fotosOrdenadas;
 
         } catch (error) {
           console.error('❌ ADMIN - Erro ao processar imagens:', error);
-          // Em caso de erro, retorna ordem original
+          // Fallback: usar ordem original da API se der erro
           return [...formData.Foto];
         }
       })()
