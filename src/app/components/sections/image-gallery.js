@@ -1,3 +1,6 @@
+vc esta fazendo aos alterações com base nesse codigo?
+
+// ImageGallery.jsx - VERSÃO CORRIGIDA COM ORDEM DA MIGRAÇÃO
 "use client";
 
 import { useState, useEffect } from "react";
@@ -39,36 +42,35 @@ export function ImageGallery({ imovel }) {
     // Se a foto não tem código reconhecível, coloca no final
     if (!codigo) return 9999;
     
-    // Ordem específica para cada padrão de migração
+    // Usar timestamp/hash do código como ordenação
+    // Fotos da mesma migração terão padrões similares
     if (codigo.includes('i268P_48766b21')) {
-      // Fotos que devem vir PRIMEIRO
+      // Extrair o hash final para ordenação
       const hashMatch = codigo.match(/i268P_48766b21(.+)/);
       if (hashMatch) {
+        // Converter hash em número para ordenação consistente
         return parseInt(hashMatch[1].substring(0, 8), 16) || 0;
       }
-      return 0;
     }
     
     if (codigo.includes('iUg3s56gtAT3cfaA5U90_487')) {
-      // Fotos que devem vir DEPOIS das i268P
       const hashMatch = codigo.match(/iUg3s56gtAT3cfaA5U90_487(.+)/);
       if (hashMatch) {
+        // Somar offset para vir depois das i268P
         return 100000 + (parseInt(hashMatch[1].substring(0, 8), 16) || 0);
       }
-      return 100000;
     }
     
     if (codigo.includes('iUG8o15s_4876')) {
-      // Fotos que devem vir por ÚLTIMO
       const hashMatch = codigo.match(/iUG8o15s_4876(.+)/);
       if (hashMatch) {
+        // Somar offset para vir por último
         return 200000 + (parseInt(hashMatch[1].substring(0, 8), 16) || 0);
       }
-      return 200000;
     }
     
     // Outros tipos no final
-    return 300000;
+    return 9999;
   };
 
   const getProcessedImages = () => {
@@ -94,14 +96,11 @@ export function ImageGallery({ imovel }) {
         ...outrasFotosOrdenadas
       ];
 
-      // Debug detalhado
-      console.log('✅ Ordem final das fotos:', {
+      console.log('✅ Ordem das fotos corrigida:', {
         total: fotosOrdenadas.length,
         destaque: !!fotoDestaque,
-        primeiraFoto: extrairCodigoFoto(fotosOrdenadas[0]?.Foto),
-        segundaFoto: extrairCodigoFoto(fotosOrdenadas[1]?.Foto),
-        terceiraFoto: extrairCodigoFoto(fotosOrdenadas[2]?.Foto),
-        ultimaFoto: extrairCodigoFoto(fotosOrdenadas[fotosOrdenadas.length - 1]?.Foto),
+        primeiraFoto: fotosOrdenadas[0]?.Foto,
+        segundaFoto: fotosOrdenadas[1]?.Foto,
         ordemMigracao: 'APLICADA'
       });
 
