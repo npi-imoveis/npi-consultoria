@@ -21,45 +21,46 @@ function useIsMobile() {
 }
 
 export function ImageGallery({ imovel }) {
-  // ... (código anterior mantido)
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(null);
+  const isMobile = useIsMobile();
 
   const getProcessedImages = () => {
-  if (!Array.isArray(imovel?.Foto)) return [];
+    if (!Array.isArray(imovel?.Foto)) return [];
 
-  try {
-    // 1. Foto destacada (se existir)
-    const fotoDestaque = imovel.Foto.find(f => f.Destaque === "Sim");
-    
-    // 2. Ordem original do WordPress (usando a ordem do array original)
-    const fotosSemDestaque = imovel.Foto.filter(f => f !== fotoDestaque);
-    
-    // 3. Criar array final mantendo a ordem original
-    const fotosOrdenadas = [
-      ...(fotoDestaque ? [fotoDestaque] : []),
-      ...fotosSemDestaque
-    ];
+    try {
+      // 1. Foto destacada (se existir)
+      const fotoDestaque = imovel.Foto.find(foto => foto.Destaque === "Sim");
+      
+      // 2. Manter ordem original para as demais fotos
+      const outrasFotos = imovel.Foto.filter(foto => foto !== fotoDestaque);
+      
+      // 3. Criar array final com destaque primeiro
+      const fotosOrdenadas = [
+        ...(fotoDestaque ? [fotoDestaque] : []),
+        ...outrasFotos
+      ];
 
-    console.log('✅ Ordem das fotos:', {
-      total: fotosOrdenadas.length,
-      destaque: !!fotoDestaque,
-      primeiraFoto: fotosOrdenadas[0]?.Foto,
-      segundaFoto: fotosOrdenadas[1]?.Foto,
-      terceiraFoto: fotosOrdenadas[2]?.Foto
-    });
+      console.log('✅ Ordem das fotos:', {
+        total: fotosOrdenadas.length,
+        destaque: !!fotoDestaque,
+        primeiraFoto: fotosOrdenadas[0]?.Foto,
+        segundaFoto: fotosOrdenadas[1]?.Foto
+      });
 
-    return fotosOrdenadas.map((foto, index) => ({
-      ...foto,
-      Codigo: `${imovel.Codigo}-foto-${index}`,
-    }));
+      return fotosOrdenadas.map((foto, index) => ({
+        ...foto,
+        Codigo: `${imovel.Codigo}-foto-${index}`,
+      }));
 
-  } catch (error) {
-    console.error('❌ Erro ao processar imagens:', error);
-    return [...imovel.Foto].map((foto, index) => ({
-      ...foto,
-      Codigo: `${imovel.Codigo}-foto-${index}`,
-    }));
-  }
-};
+    } catch (error) {
+      console.error('❌ Erro ao processar imagens:', error);
+      return [...imovel.Foto].map((foto, index) => ({
+        ...foto,
+        Codigo: `${imovel.Codigo}-foto-${index}`,
+      }));
+    }
+  };
 
   const images = getProcessedImages();
 
