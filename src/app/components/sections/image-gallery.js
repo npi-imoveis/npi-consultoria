@@ -21,52 +21,48 @@ function useIsMobile() {
 }
 
 export function ImageGallery({ imovel }) {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState(null);
-  const isMobile = useIsMobile();
+  // ... (código anterior mantido)
 
- const getProcessedImages = () => {
-    if (!Array.isArray(imovel?.Foto) || imovel.Foto.length === 0) {
-      return [];
-    }
+  const getProcessedImages = () => {
+    if (!Array.isArray(imovel?.Foto)) return [];
 
     try {
-      // 1. Separar a foto destacada (se existir)
-      const fotoDestaque = imovel.Foto.find(foto => foto.Destaque === "Sim");
-      const outrasFotos = imovel.Foto.filter(foto => foto !== fotoDestaque);
+      // 1. Ordem fixa do WordPress (grupos específicos)
+      const gruposOrdem = [
+        'iUg3s56gtAT3cfaA5U90_487', // Apartamento (1º lugar)
+        'iUG8o15s_4876',             // Área comum (2º lugar)
+        'i268P_48766b21'             // Condomínio (3º lugar)
+      ];
 
-      // 2. Ordenar as demais fotos conforme a ordem do site antigo
+      // 2. Separar foto destacada
+      const fotoDestaque = imovel.Foto.find(f => f.Destaque === "Sim");
+      const outrasFotos = imovel.Foto.filter(f => f !== fotoDestaque);
+
+      // 3. Ordenar conforme WordPress + manter ordem original dentro de cada grupo
       const fotosOrdenadas = [
-        // Foto destacada sempre primeiro (se existir)
-        ...(fotoDestaque ? [fotoDestaque] : []),
-        
-        // Demais fotos na ORDEM ORIGINAL do WordPress
+        ...(fotoDestaque ? [fotoDestaque] : []), // Destaque primeiro
         ...outrasFotos.sort((a, b) => {
-          // Extrai o número da foto do URL (ex: foto-1.jpg, foto-2.jpg)
-          const getNumeroFoto = (url) => {
-            const match = url?.match(/(\d+)\.(jpg|png|jpeg)/i);
-            return match ? parseInt(match[1]) : 0;
-          };
-
-          return getNumeroFoto(a.Foto) - getNumeroFoto(b.Foto);
+          const aGrupo = gruposOrdem.findIndex(pattern => a.Foto.includes(pattern));
+          const bGrupo = gruposOrdem.findIndex(pattern => b.Foto.includes(pattern));
+          
+          // Se estão no mesmo grupo, mantém a ordem original
+          if (aGrupo === bGrupo) {
+            return imovel.Foto.indexOf(a) - imovel.Foto.indexOf(b);
+          }
+          return aGrupo - bGrupo;
         })
       ];
 
-      console.log('🔄 Ordem das fotos:', {
-        destaque: !!fotoDestaque,
-        total: fotosOrdenadas.length,
-        primeira: fotosOrdenadas[0]?.Foto,
-        segunda: fotosOrdenadas[1]?.Foto
+      console.log('✅ Ordem WordPress restaurada:', {
+        destaque: fotoDestaque?.Foto,
+        grupos: gruposOrdem.map((g, i) => `Grupo ${i+1}: ${fotosOrdenadas.filter(f => f.Foto.includes(g)).length} fotos`)
       });
 
-      return fotosOrdenadas.map((foto, index) => ({
-        ...foto,
-        Codigo: `${imovel.Codigo}-foto-${index}`,
-      }));
+      return fotosOrdenadas;
 
     } catch (error) {
-      console.error('Erro ao ordenar fotos:', error);
-      return [...imovel.Foto]; // Fallback para ordem original
+      console.error('❌ Erro na ordenação:', error);
+      return [...imovel.Foto]; // Fallback seguro
     }
   };
 
