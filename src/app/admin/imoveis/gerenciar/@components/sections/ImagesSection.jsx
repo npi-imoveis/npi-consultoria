@@ -1,4 +1,19 @@
-// ImagesSection.jsx - VERSÃO CORRIGIDA COM ORDEM DA MIGRAÇÃO
+// Função para manter ordem original da migração (genérica para todos os imóveis)
+  const obterOrdemOriginal = (foto, index) => {
+    // Se a foto tem um campo de ordem específico, usar ele
+    if (foto.Ordem !== undefined) {
+      return foto.Ordem;
+    }
+    
+    // Se tem ID, usar ele para manter ordem cronológica de inserção
+    if (foto.Id !== undefined || foto.id !== undefined) {
+      return foto.Id || foto.id;
+    }
+    
+    // Caso contrário, manter a ordem que veio da API
+    // (que deveria ser a ordem original da migração)
+    return index;
+  };// ImagesSection.jsx - VERSÃO CORRIGIDA COM ORDEM DA MIGRAÇÃO
 "use client";
 
 import { memo, useState } from "react";
@@ -73,26 +88,79 @@ const ImagesSection = memo(({
       // 1. Foto destacada (se existir)
       const fotoDestaque = formData.Foto.find(foto => foto.Destaque === "Sim");
       
-      // 2. Outras fotos ordenadas pela migração original
+      // 2. Outras fotos - reagrupar por padrão do código
       const outrasFotos = formData.Foto.filter(foto => foto !== fotoDestaque);
       
-      // 3. Ordenar outras fotos pela ordem da migração
-      const outrasFotosOrdenadas = outrasFotos.sort((a, b) => {
-        const ordemA = obterOrdemOriginal(a);
-        const ordemB = obterOrdemOriginal(b);
-        return ordemA - ordemB;
+      // 3. Extrair código de cada foto para agrupar por tipo
+      const fotosComCodigo = outrasFotos.map((foto, index) => {
+        const url = foto.Foto || '';
+        const nomeArquivo = url.split('/').pop() || '';
+        const codigo = nomeArquivo.replace(/\.(jpg|jpeg|png|gif)$/i, '');
+        
+        // Extrair prefixo genérico do código para agrupar (primeiros caracteres)
+        // Isso funcionará para qualquer imóvel
+        let prefixo = '';
+        
+        // Pegar padrão até o primeiro underscore ou até 15 caracteres
+        const underscoreIndex = codigo.indexOf('_');
+        if (underscoreIndex > 0) {
+          prefixo = codigo.substring(0, underscoreIndex + 1);
+        } else {
+          // Se não tem underscore, pega os primeiros 10 caracteres
+          prefixo = codigo.substring(0, Math.min(10, codigo.length));
+        }
+        
+        return {
+          foto,
+          codigo,
+          prefixo,
+          ordemOriginal: index
+        };
       });
       
-      // 4. Criar array final: destaque primeiro + outras na ordem da migração
+      // 4. Agrupar por prefixo e ordenar cada grupo pela ordem original
+      const grupos = {};
+      fotosComCodigo.forEach(item => {
+        if (!grupos[item.prefixo]) {
+          grupos[item.prefixo] = [];
+        }
+        grupos[item.prefixo].push(item);
+      });
+      
+      // 5. Ordenar fotos dentro de cada grupo pela ordem original
+      Object.keys(grupos).forEach(prefixo => {
+        grupos[prefixo].sort((a, b) => a.ordemOriginal - b.ordemOriginal);
+      });
+      
+      // 6. Definir ordem dos grupos pela primeira aparição na ordem original
+      const ordemGrupos = [];
+      fotosComCodigo.forEach(item => {
+        if (!ordemGrupos.includes(item.prefixo)) {
+          ordemGrupos.push(item.prefixo);
+        }
+      });
+      
+      // 7. Montar array final: destaque + grupos ordenados
+      const fotosReagrupadas = [];
+      
+      ordemGrupos.forEach(prefixo => {
+        if (grupos[prefixo]) {
+          grupos[prefixo].forEach(item => {
+            fotosReagrupadas.push(item.foto);
+          });
+        }
+      });
+      
       const fotosOrdenadas = [
         ...(fotoDestaque ? [fotoDestaque] : []),
-        ...outrasFotosOrdenadas
+        ...fotosReagrupadas
       ];
 
-      console.log('🔧 ADMIN: Ordem das fotos corrigida:', {
+      console.log('🔧 ADMIN: Fotos reagrupadas por tipo:', {
         total: fotosOrdenadas.length,
         destaque: !!fotoDestaque,
-        ordemMigracao: 'APLICADA'
+        grupos: Object.keys(grupos).map(prefixo => `${prefixo}: ${grupos[prefixo].length} fotos`),
+        regraupamento: 'APLICADO'
       });
 
       return fotosOrdenadas;
