@@ -67,7 +67,7 @@ const ImagesSection = memo(({
     : [];
 
   const baixarTodasImagens = async (imagens = []) => {
-    if (!Array.isArray(imagens) return;
+    if (!Array.isArray(imagens)) return;
 
     setDownloadingPhotos(true);
     const zip = new JSZip();
