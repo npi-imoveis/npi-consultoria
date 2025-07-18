@@ -1,19 +1,4 @@
-// Função para manter ordem original da migração (genérica para todos os imóveis)
-  const obterOrdemOriginal = (foto, index) => {
-    // Se a foto tem um campo de ordem específico, usar ele
-    if (foto.Ordem !== undefined) {
-      return foto.Ordem;
-    }
-    
-    // Se tem ID, usar ele para manter ordem cronológica de inserção
-    if (foto.Id !== undefined || foto.id !== undefined) {
-      return foto.Id || foto.id;
-    }
-    
-    // Caso contrário, manter a ordem que veio da API
-    // (que deveria ser a ordem original da migração)
-    return index;
-  };// ImagesSection.jsx - VERSÃO CORRIGIDA COM ORDEM DA MIGRAÇÃO
+// ImagesSection.jsx - VERSÃO CORRIGIDA COM ORDEM DA MIGRAÇÃO
 "use client";
 
 import { memo, useState } from "react";
@@ -91,12 +76,11 @@ const ImagesSection = memo(({
       // 2. Outras fotos ordenadas pela migração original
       const outrasFotos = formData.Foto.filter(foto => foto !== fotoDestaque);
       
-      // 3. Ordenar outras fotos mantendo ordem original da migração/API
+      // 3. Ordenar outras fotos pela ordem da migração
       const outrasFotosOrdenadas = outrasFotos.sort((a, b) => {
-        // Manter a ordem original da API (ordem da migração)
-        const indexA = formData.Foto.indexOf(a);
-        const indexB = formData.Foto.indexOf(b);
-        return indexA - indexB;
+        const ordemA = obterOrdemOriginal(a);
+        const ordemB = obterOrdemOriginal(b);
+        return ordemA - ordemB;
       });
       
       // 4. Criar array final: destaque primeiro + outras na ordem da migração
@@ -350,4 +334,4 @@ const ImagesSection = memo(({
 });
 
 ImagesSection.displayName = "ImagesSection";
-export default ImagesSection;  
+export default ImagesSection;
