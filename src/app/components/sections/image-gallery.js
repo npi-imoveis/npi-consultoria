@@ -1,35 +1,24 @@
-o codigo abaixo estava quase certo! tenta ajustar a partir dele
-
-
-
-nao funcionou... tome como base o codigo que te passei quando estavam funcionando a ordem parcialmente pois parte das fotos do condomínio já estava no começo, no lugar certo, e era só trazer as que ficaram ´por ultimo para o começo tb
-
-// ImageGallery.jsx - VERSÃO CORRIGIDA COM ORDEM DA MIGRAÇÃO
+// ImagesSection.jsx - VERSÃO CORRIGIDA COM ORDEM DA MIGRAÇÃO
 "use client";
 
-import { useState, useEffect } from "react";
+import { memo, useState } from "react";
+import FormSection from "../FormSection";
 import Image from "next/image";
-import { ArrowLeft } from "lucide-react";
-import { formatterSlug } from "@/app/utils/formatter-slug";
-import { Share } from "../ui/share";
+import JSZip from "jszip";
+import { saveAs } from "file-saver";
 
-function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768);
-    check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
-  }, []);
-
-  return isMobile;
-}
-
-export function ImageGallery({ imovel }) {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState(null);
-  const isMobile = useIsMobile();
+const ImagesSection = memo(({
+  formData,
+  addSingleImage,
+  showImageModal,
+  updateImage,
+  removeImage,
+  removeAllImages,
+  setImageAsHighlight,
+  changeImagePosition,
+  validation
+}) => {
+  const [downloadingPhotos, setDownloadingPhotos] = useState(false);
 
   // Função para extrair código único da foto (sem extensão)
   const extrairCodigoFoto = (url) => {
@@ -77,15 +66,15 @@ export function ImageGallery({ imovel }) {
     return 9999;
   };
 
-  const getProcessedImages = () => {
-    if (!Array.isArray(imovel?.Foto)) return [];
+  const getSortedPhotos = () => {
+    if (!Array.isArray(formData?.Foto)) return [];
 
     try {
       // 1. Foto destacada (se existir)
-      const fotoDestaque = imovel.Foto.find(foto => foto.Destaque === "Sim");
+      const fotoDestaque = formData.Foto.find(foto => foto.Destaque === "Sim");
       
       // 2. Outras fotos ordenadas pela migração original
-      const outrasFotos = imovel.Foto.filter(foto => foto !== fotoDestaque);
+      const outrasFotos = formData.Foto.filter(foto => foto !== fotoDestaque);
       
       // 3. Ordenar outras fotos pela ordem da migração
       const outrasFotosOrdenadas = outrasFotos.sort((a, b) => {
@@ -100,222 +89,249 @@ export function ImageGallery({ imovel }) {
         ...outrasFotosOrdenadas
       ];
 
-      console.log('✅ Ordem das fotos corrigida:', {
+      console.log('🔧 ADMIN: Ordem das fotos corrigida:', {
         total: fotosOrdenadas.length,
         destaque: !!fotoDestaque,
-        primeiraFoto: fotosOrdenadas[0]?.Foto,
-        segundaFoto: fotosOrdenadas[1]?.Foto,
         ordemMigracao: 'APLICADA'
       });
 
-      return fotosOrdenadas.map((foto, index) => ({
-        ...foto,
-        Codigo: `${imovel.Codigo}-foto-${index}`,
-      }));
-
+      return fotosOrdenadas;
+      
     } catch (error) {
-      console.error('❌ Erro ao processar imagens:', error);
-      return [...imovel.Foto].map((foto, index) => ({
-        ...foto,
-        Codigo: `${imovel.Codigo}-foto-${index}`,
-      }));
+      console.error('❌ ADMIN: Erro ao ordenar fotos:', error);
+      return [...formData.Foto];
     }
   };
 
-  const images = getProcessedImages();
+  const sortedPhotos = getSortedPhotos();
 
-  if (!imovel || !imovel.Empreendimento) {
-    return null;
-  }
+  const baixarTodasImagens = async (imagens = []) => {
+    if (!Array.isArray(imagens)) return;
 
-  const slug = formatterSlug(imovel.Empreendimento);
+    setDownloadingPhotos(true);
+    const zip = new JSZip();
+    const pasta = zip.folder("imagens");
 
-  if (images.length === 0) {
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-1 w-full">
-        <div className="col-span-1 h-[410px] relative">
-          <div className="w-full h-full overflow-hidden bg-gray-200 flex items-center justify-center">
-            <span className="text-gray-500">Imagem não disponível</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
+    for (const [i, img] of imagens.entries()) {
+      try {
+        const cleanUrl = (() => {
+          try {
+            const parsed = new URL(img.Foto);
+            if (parsed.pathname.startsWith("/_next/image")) {
+              const inner = parsed.searchParams.get("url");
+              return decodeURIComponent(inner || img.Foto);
+            }
+            return img.Foto;
+          } catch {
+            return img.Foto;
+          }
+        })();
 
-  const openModal = (index) => {
-    setIsModalOpen(true);
-    setSelectedIndex(index ?? null);
+        const response = await fetch(cleanUrl);
+        if (!response.ok) continue;
+
+        const blob = await response.blob();
+        const nome = `imagem-${i + 1}.jpg`;
+        pasta?.file(nome, blob);
+      } catch (err) {
+        console.error(`Erro ao baixar imagem ${i + 1}:`, err);
+      }
+    }
+
+    try {
+      const content = await zip.generateAsync({ type: "blob" });
+      saveAs(content, "imagens.zip");
+    } catch (zipError) {
+      console.error("Erro ao gerar zip:", zipError);
+    }
+
+    setDownloadingPhotos(false);
   };
 
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setSelectedIndex(null);
-  };
-
-  const goNext = () => {
-    if (selectedIndex !== null) {
-      setSelectedIndex((prev) => (prev + 1) % images.length);
+  const handleAddImageUrl = () => {
+    const imageUrl = prompt("Digite a URL da imagem:");
+    if (imageUrl?.trim()) {
+      addSingleImage(imageUrl.trim());
     }
   };
 
-  const goPrev = () => {
-    if (selectedIndex !== null) {
-      setSelectedIndex((prev) => (prev - 1 + images.length) % images.length);
-    }
+  const handleImageUpload = (codigo) => {
+    const fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept = "image/*";
+    fileInput.onchange = (e) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          updateImage(codigo, e.target.result);
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+    fileInput.click();
   };
 
-  const tituloCompartilhamento = `Confira este imóvel: ${imovel.Empreendimento}`;
-  const url = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${slug}`;
+  const handlePositionChange = (codigo, newPosition) => {
+    const position = parseInt(newPosition);
+    if (!isNaN(position)) {
+      changeImagePosition(codigo, position);
+    }
+  };
 
   return (
-    <>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-1 w-full">
-        <div className="col-span-1 h-[410px] cursor-pointer relative" onClick={() => openModal()}>
-          <div className="w-full h-full overflow-hidden">
-            <Image
-              src={images[0].Foto}
-              alt={imovel.Empreendimento}
-              title={imovel.Empreendimento}
-              width={800}
-              height={600}
-              sizes="(max-width: 350px) 100vw, (max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              placeholder="blur"
-              blurDataURL={images[0].blurDataURL || "/placeholder.png"}
-              loading="eager"
-              priority={true}
-              className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
-            />
+    <FormSection title="Imagens do Imóvel" className="mb-8">
+      <div className="space-y-4">
+        <div className="flex flex-wrap justify-between items-center gap-3">
+          <div className="text-sm">
+            <span className="font-medium text-gray-700">
+              {validation.photoCount}/{validation.requiredPhotoCount} fotos
+            </span>
+            {validation.photoCount < validation.requiredPhotoCount && (
+              <span className="text-red-500 ml-2">
+                (Mínimo {validation.requiredPhotoCount})
+              </span>
+            )}
           </div>
 
-          {isMobile && images.length > 1 && (
-            <div className="absolute top-4 right-4 bg-white bg-opacity-80 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium">
-              {images.length} fotos
-            </div>
-          )}
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={handleAddImageUrl}
+              className="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors"
+            >
+              + Adicionar URL
+            </button>
+            <button
+              type="button"
+              onClick={showImageModal}
+              className="px-3 py-1.5 text-sm bg-black hover:bg-gray-800 text-white rounded-md transition-colors"
+            >
+              📤 Upload em Lote
+            </button>
+
+            {sortedPhotos.length > 0 && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => baixarTodasImagens(sortedPhotos)}
+                  disabled={downloadingPhotos}
+                  className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                    downloadingPhotos
+                      ? 'bg-blue-300 text-white cursor-wait'
+                      : 'bg-blue-600 hover:bg-blue-700 text-white'
+                  }`}
+                >
+                  {downloadingPhotos ? 'Baixando...' : '⬇️ Baixar Todas'}
+                </button>
+                <button
+                  type="button"
+                  onClick={removeAllImages}
+                  className="px-3 py-1.5 text-sm bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors"
+                >
+                  🗑️ Limpar Tudo
+                </button>
+              </>
+            )}
+          </div>
         </div>
 
-        {!isMobile && (
-          <div className="col-span-1 grid grid-cols-2 grid-rows-2 gap-1 h-[410px]">
-            {images.slice(1, 5).map((image, index) => {
-              const isLastImage = index === 3;
-              return (
-                <div
-                  key={index}
-                  className="relative h-full overflow-hidden cursor-pointer"
-                  onClick={() => openModal()}
-                >
+        {sortedPhotos.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {sortedPhotos.map((photo, index) => (
+              <div key={`${photo.Codigo}-${index}`} className="border rounded-lg overflow-hidden bg-white shadow-sm">
+                <div className="relative aspect-video w-full">
                   <Image
-                    src={image.Foto}
-                    alt={`${imovel.Empreendimento} - imagem ${index + 2}`}
-                    title={`${imovel.Empreendimento} - imagem ${index + 2}`}
-                    width={400}
-                    height={300}
-                    sizes="25vw"
-                    placeholder="blur"
-                    blurDataURL={image.blurDataURL || "/placeholder.png"}
-                    loading="lazy"
-                    className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
+                    src={photo.Foto}
+                    alt={`Imóvel ${index + 1}`}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   />
-                  {isLastImage && images.length > 5 && (
-                    <div className="absolute inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center">
-                      <button
-                        className="border border-white text-white px-4 py-2 rounded hover:bg-white hover:text-black transition-colors"
-                        aria-label="Ver mais fotos"
-                      >
-                        Ver mais fotos
-                      </button>
-                    </div>
+                  {photo.Destaque === "Sim" && (
+                    <span className="absolute top-2 left-2 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded">
+                      DESTAQUE
+                    </span>
                   )}
                 </div>
-              );
-            })}
+
+                <div className="p-3 space-y-3">
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <label className="block text-xs text-gray-500 mb-1">Ordem (Migração)</label>
+                      <input
+                        type="text"
+                        value={`${index + 1}°`}
+                        readOnly
+                        className="w-full p-1.5 text-sm border rounded-md bg-gray-100 text-gray-600"
+                        title="Ordem baseada na migração original - somente leitura"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-xs text-gray-500 mb-1">Ação</label>
+                      <button
+                        onClick={() => setImageAsHighlight(photo.Codigo)}
+                        className={`w-full p-1.5 text-sm rounded-md transition-colors ${
+                          photo.Destaque === "Sim"
+                            ? "bg-yellow-500 text-white"
+                            : "bg-gray-100 hover:bg-gray-200"
+                        }`}
+                      >
+                        {photo.Destaque === "Sim" ? "★ Destaque" : "☆ Tornar Destaque"}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="text-xs text-gray-500 truncate" title={extrairCodigoFoto(photo.Foto)}>
+                    Código: {extrairCodigoFoto(photo.Foto)}
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleImageUpload(photo.Codigo)}
+                      className="flex-1 py-1.5 text-sm bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-md transition-colors"
+                    >
+                      🔄 Trocar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeImage(photo.Codigo)}
+                      className="flex-1 py-1.5 text-sm bg-red-50 hover:bg-red-100 text-red-700 rounded-md transition-colors"
+                    >
+                      ✖ Remover
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+            <p className="text-gray-500">Nenhuma imagem cadastrada</p>
+            <p className="text-sm text-gray-400 mt-1">
+              Utilize os botões acima para adicionar imagens
+            </p>
           </div>
         )}
-      </div>
 
-      {isMobile && images.length > 1 && (
-        <div className="mt-4 px-4">
-          <button
-            onClick={() => openModal()}
-            className="w-full py-3 text-center border border-gray-300 rounded-md bg-white hover:bg-gray-50 transition-colors"
-          >
-            Ver todas as {images.length} fotos
-          </button>
-        </div>
-      )}
-
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-90 z-50 overflow-auto">
-          <div className="flex justify-between gap-4 p-5 pt-28 mt-6 md:mt-0">
-            <button onClick={closeModal} aria-label="Fechar galeria">
-              <ArrowLeft color="white" size={24} />
-            </button>
-            <Share
-              primary
-              url={url}
-              title={tituloCompartilhamento}
-              imovel={{
-                Codigo: imovel.Codigo,
-                Empreendimento: imovel.Empreendimento,
-              }}
-            />
+        {validation.photoCount < validation.requiredPhotoCount && (
+          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3">
+            <p className="text-yellow-700 text-sm">
+              ⚠️ Adicione pelo menos {validation.requiredPhotoCount} fotos para publicar
+            </p>
           </div>
+        )}
 
-          {selectedIndex !== null ? (
-            <div className="flex items-center justify-center min-h-screen p-4 relative">
-              <Image
-                src={images[selectedIndex].Foto}
-                alt={`${imovel.Empreendimento} - imagem ampliada`}
-                title={`${imovel.Empreendimento} - imagem ampliada`}
-                width={1200}
-                height={800}
-                sizes="100vw"
-                placeholder="blur"
-                blurDataURL={images[selectedIndex].blurDataURL || "/placeholder.png"}
-                loading="eager"
-                className="max-w-full max-h-screen object-contain"
-              />
-
-              <button
-                onClick={goPrev}
-                className="absolute left-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2"
-                aria-label="Imagem anterior"
-              >
-                &#10094;
-              </button>
-              <button
-                onClick={goNext}
-                className="absolute right-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2"
-                aria-label="Próxima imagem"
-              >
-                &#10095;
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4 ">
-              {images.map((image, idx) => (
-                <div
-                  key={idx}
-                  onClick={() => setSelectedIndex(idx)}
-                  className="relative w-full h-48 sm:h-56 md:h-64 lg:h-72 xl:h-80 cursor-pointer overflow-hidden"
-                >
-                  <Image
-                    src={image.Foto}
-                    alt={`${imovel.Empreendimento} - imagem ${idx + 1}`}
-                    title={`${imovel.Empreendimento} - imagem ${idx + 1}`}
-                    fill
-                    sizes="(max-width: 768px) 50vw, 25vw"
-                    placeholder="blur"
-                    blurDataURL={image.blurDataURL || "/placeholder.png"}
-                    loading="lazy"
-                    className="object-cover"
-                  />
-                </div>
-              ))}
-            </div>
-          )}
+        <div className="bg-blue-50 border-l-4 border-blue-400 p-3">
+          <p className="text-blue-700 text-sm">
+            📸 <strong>Ordem automática aplicada:</strong> Foto destaque primeiro + demais na sequência da migração original
+          </p>
         </div>
-      )}
-    </>
+      </div>
+    </FormSection>
   );
-}
+});
+
+ImagesSection.displayName = "ImagesSection";
+export default ImagesSection;
