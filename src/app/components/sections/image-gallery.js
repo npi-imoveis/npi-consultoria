@@ -75,60 +75,51 @@ export function ImageGallery({ imovel }) {
   if (!Array.isArray(imovel?.Foto)) return [];
 
   try {
-    // 1. Foto destacada (se existir)
+    // 1. Identificar a foto destacada
     const fotoDestaque = imovel.Foto.find(foto => foto.Destaque === "Sim");
-    
-    // 2. Separar fotos por grupos (usando padrões do WordPress)
-    const grupos = {
-      apartamento: [],
-      areaComum: [],
-      condominio: [],
-      outros: []
-    };
 
-    imovel.Foto.forEach(foto => {
-      if (foto === fotoDestaque) return;
-      
-      const url = foto.Foto || '';
-      if (url.includes('iUg3s56gtAT3cfaA5U90_487')) {
-        grupos.apartamento.push(foto);
-      } else if (url.includes('iUG8o15s_4876')) {
-        grupos.areaComum.push(foto);
-      } else if (url.includes('i268P_48766b21')) {
-        grupos.condominio.push(foto);
-      } else {
-        grupos.outros.push(foto);
-      }
+    // 2. Criar um mapa de ordem original para preservar a sequência exata
+    const ordemOriginal = new Map();
+    imovel.Foto.forEach((foto, index) => {
+      ordemOriginal.set(foto, index);
     });
 
-    // 3. Manter ORDEM ORIGINAL dentro de cada grupo
-    // (preserva a sequência exata do WordPress)
-    const manterOrdemOriginal = (grupo) => {
-      return grupo.sort((a, b) => 
-        imovel.Foto.indexOf(a) - imovel.Foto.indexOf(b)
-      );
+    // 3. Função para identificar o tipo de foto
+    const getTipoFoto = (foto) => {
+      const url = foto.Foto || '';
+      if (url.includes('iUg3s56gtAT3cfaA5U90_487')) return 'apartamento';
+      if (url.includes('iUG8o15s_4876')) return 'areaComum';
+      if (url.includes('i268P_48766b21')) return 'condominio';
+      return 'outros';
     };
 
-    // 4. Ordem final desejada:
-    // Destaque → Apartamento → Área comum → Condomínio → Outros
-    const fotosOrdenadas = [
-      ...(fotoDestaque ? [fotoDestaque] : []),
-      ...manterOrdemOriginal(grupos.apartamento),
-      ...manterOrdemOriginal(grupos.areaComum),
-      ...manterOrdemOriginal(grupos.condominio),
-      ...manterOrdemOriginal(grupos.outros)
-    ];
+    // 4. Separar e ordenar mantendo a ordem ORIGINAL dentro de cada grupo
+    const fotosOrdenadas = imovel.Foto
+      .filter(foto => foto !== fotoDestaque) // Remover destaque temporariamente
+      .sort((a, b) => {
+        // Manter a ordem original dentro do mesmo grupo
+        if (getTipoFoto(a) === getTipoFoto(b)) {
+          return ordemOriginal.get(a) - ordemOriginal.get(b);
+        }
+        // Ordem dos grupos: apartamento -> areaComum -> condominio -> outros
+        const grupos = { apartamento: 1, areaComum: 2, condominio: 3, outros: 4 };
+        return grupos[getTipoFoto(a)] - grupos[getTipoFoto(b)];
+      });
 
-    console.log('✅ Ordem WordPress corrigida:', {
+    // 5. Reinserir a foto destacada no início
+    if (fotoDestaque) {
+      fotosOrdenadas.unshift(fotoDestaque);
+    }
+
+    console.log('✅ Ordem MIGRAÇÃO ORIGINAL:', {
       total: fotosOrdenadas.length,
       grupos: {
-        apartamento: grupos.apartamento.length,
-        areaComum: grupos.areaComum.length,
-        condominio: grupos.condominio.length,
-        outros: grupos.outros.length
+        apartamento: fotosOrdenadas.filter(f => getTipoFoto(f) === 'apartamento').length,
+        areaComum: fotosOrdenadas.filter(f => getTipoFoto(f) === 'areaComum').length,
+        condominio: fotosOrdenadas.filter(f => getTipoFoto(f) === 'condominio').length,
+        outros: fotosOrdenadas.filter(f => getTipoFoto(f) === 'outros').length
       },
-      primeiraFoto: fotosOrdenadas[0]?.Foto?.split('/').pop(),
-      segundaFoto: fotosOrdenadas[1]?.Foto?.split('/').pop() 
+      sequencia: fotosOrdenadas.map(f => getTipoFoto(f)).join(' → ')
     });
 
     return fotosOrdenadas.map((foto, index) => ({
@@ -138,14 +129,7 @@ export function ImageGallery({ imovel }) {
 
   } catch (error) {
     console.error('❌ Erro ao ordenar fotos:', error);
-    // Fallback: mantém ordem original com destaque primeiro
-    const fotoDestaque = imovel.Foto.find(f => f.Destaque === "Sim");
-    const outrasFotos = imovel.Foto.filter(f => f !== fotoDestaque);
-    
-    return [
-      ...(fotoDestaque ? [fotoDestaque] : []),
-      ...outrasFotos
-    ].map((foto, index) => ({
+    return [...imovel.Foto].map((foto, index) => ({
       ...foto,
       Codigo: `${imovel.Codigo}-foto-${index}`,
     }));
