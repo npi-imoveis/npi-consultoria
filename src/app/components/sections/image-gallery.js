@@ -25,27 +25,38 @@ export function ImageGallery({ imovel }) {
   const [selectedIndex, setSelectedIndex] = useState(null);
   const isMobile = useIsMobile();
 
-  const getProcessedImages = () => {
+ const getProcessedImages = () => {
     if (!Array.isArray(imovel?.Foto) || imovel.Foto.length === 0) {
       return [];
     }
 
     try {
-      // 1. Encontrar a foto destacada (se existir)
+      // 1. Separar a foto destacada (se existir)
       const fotoDestaque = imovel.Foto.find(foto => foto.Destaque === "Sim");
-      
-      // 2. Manter a ordem original das fotos (exceto a destacada que vai para primeira posição)
-      const fotosSemDestaque = imovel.Foto.filter(foto => foto !== fotoDestaque);
-      
-      // 3. Criar array final com a foto destacada primeiro (se existir) seguida das demais na ordem original
-      const fotosOrdenadas = fotoDestaque 
-        ? [fotoDestaque, ...fotosSemDestaque]
-        : [...imovel.Foto];
+      const outrasFotos = imovel.Foto.filter(foto => foto !== fotoDestaque);
+
+      // 2. Ordenar as demais fotos conforme a ordem do site antigo
+      const fotosOrdenadas = [
+        // Foto destacada sempre primeiro (se existir)
+        ...(fotoDestaque ? [fotoDestaque] : []),
+        
+        // Demais fotos na ORDEM ORIGINAL do WordPress
+        ...outrasFotos.sort((a, b) => {
+          // Extrai o número da foto do URL (ex: foto-1.jpg, foto-2.jpg)
+          const getNumeroFoto = (url) => {
+            const match = url?.match(/(\d+)\.(jpg|png|jpeg)/i);
+            return match ? parseInt(match[1]) : 0;
+          };
+
+          return getNumeroFoto(a.Foto) - getNumeroFoto(b.Foto);
+        })
+      ];
 
       console.log('🔄 Ordem das fotos:', {
-        totalFotos: fotosOrdenadas.length,
-        temDestaque: !!fotoDestaque,
-        primeiraFoto: fotosOrdenadas[0]?.Foto?.split('/').pop()
+        destaque: !!fotoDestaque,
+        total: fotosOrdenadas.length,
+        primeira: fotosOrdenadas[0]?.Foto,
+        segunda: fotosOrdenadas[1]?.Foto
       });
 
       return fotosOrdenadas.map((foto, index) => ({
@@ -54,11 +65,8 @@ export function ImageGallery({ imovel }) {
       }));
 
     } catch (error) {
-      console.error('❌ Erro ao processar imagens:', error);
-      return [...imovel.Foto].map((foto, index) => ({
-        ...foto,
-        Codigo: `${imovel.Codigo}-foto-${index}`,
-      }));
+      console.error('Erro ao ordenar fotos:', error);
+      return [...imovel.Foto]; // Fallback para ordem original
     }
   };
 
