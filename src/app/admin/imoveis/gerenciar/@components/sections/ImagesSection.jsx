@@ -1,5 +1,19 @@
-// ImagesSection.jsx - VERSÃO CORRIGIDA COM ORDEM DA MIGRAÇÃO
-// ImagesSection.jsx - VERSÃO CORRIGIDA COM ORDEM DA MIGRAÇÃO
+// Função para manter ordem original da migração (genérica para todos os imóveis)
+  const obterOrdemOriginal = (foto, index) => {
+    // Se a foto tem um campo de ordem específico, usar ele
+    if (foto.Ordem !== undefined) {
+      return foto.Ordem;
+    }
+    
+    // Se tem ID, usar ele para manter ordem cronológica de inserção
+    if (foto.Id !== undefined || foto.id !== undefined) {
+      return foto.Id || foto.id;
+    }
+    
+    // Caso contrário, manter a ordem que veio da API
+    // (que deveria ser a ordem original da migração)
+    return index;
+  };// ImagesSection.jsx - VERSÃO CORRIGIDA COM ORDEM DA MIGRAÇÃO
 "use client";
 
 import { memo, useState } from "react";
@@ -336,4 +350,4 @@ const ImagesSection = memo(({
 });
 
 ImagesSection.displayName = "ImagesSection";
-export default ImagesSection;
+export default ImagesSection;  
