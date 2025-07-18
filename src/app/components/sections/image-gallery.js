@@ -72,49 +72,85 @@ export function ImageGallery({ imovel }) {
   };
 
   const getProcessedImages = () => {
-    if (!Array.isArray(imovel?.Foto)) return [];
+  if (!Array.isArray(imovel?.Foto)) return [];
 
-    try {
-      // 1. Foto destacada (se existir)
-      const fotoDestaque = imovel.Foto.find(foto => foto.Destaque === "Sim");
+  try {
+    // 1. Foto destacada (se existir)
+    const fotoDestaque = imovel.Foto.find(foto => foto.Destaque === "Sim");
+    
+    // 2. Separar fotos por grupos (usando padrões do WordPress)
+    const grupos = {
+      apartamento: [],
+      areaComum: [],
+      condominio: [],
+      outros: []
+    };
+
+    imovel.Foto.forEach(foto => {
+      if (foto === fotoDestaque) return;
       
-      // 2. Outras fotos ordenadas pela migração original
-      const outrasFotos = imovel.Foto.filter(foto => foto !== fotoDestaque);
-      
-      // 3. Ordenar outras fotos pela ordem da migração
-      const outrasFotosOrdenadas = outrasFotos.sort((a, b) => {
-        const ordemA = obterOrdemOriginal(a);
-        const ordemB = obterOrdemOriginal(b);
-        return ordemA - ordemB;
-      });
-      
-      // 4. Criar array final: destaque primeiro + outras na ordem da migração
-      const fotosOrdenadas = [
-        ...(fotoDestaque ? [fotoDestaque] : []),
-        ...outrasFotosOrdenadas
-      ];
+      const url = foto.Foto || '';
+      if (url.includes('iUg3s56gtAT3cfaA5U90_487')) {
+        grupos.apartamento.push(foto);
+      } else if (url.includes('iUG8o15s_4876')) {
+        grupos.areaComum.push(foto);
+      } else if (url.includes('i268P_48766b21')) {
+        grupos.condominio.push(foto);
+      } else {
+        grupos.outros.push(foto);
+      }
+    });
 
-      console.log('✅ Ordem das fotos corrigida:', {
-        total: fotosOrdenadas.length,
-        destaque: !!fotoDestaque,
-        primeiraFoto: fotosOrdenadas[0]?.Foto,
-        segundaFoto: fotosOrdenadas[1]?.Foto,
-        ordemMigracao: 'APLICADA'
-      });
+    // 3. Manter ORDEM ORIGINAL dentro de cada grupo
+    // (preserva a sequência exata do WordPress)
+    const manterOrdemOriginal = (grupo) => {
+      return grupo.sort((a, b) => 
+        imovel.Foto.indexOf(a) - imovel.Foto.indexOf(b)
+      );
+    };
 
-      return fotosOrdenadas.map((foto, index) => ({
-        ...foto,
-        Codigo: `${imovel.Codigo}-foto-${index}`,
-      }));
+    // 4. Ordem final desejada:
+    // Destaque → Apartamento → Área comum → Condomínio → Outros
+    const fotosOrdenadas = [
+      ...(fotoDestaque ? [fotoDestaque] : []),
+      ...manterOrdemOriginal(grupos.apartamento),
+      ...manterOrdemOriginal(grupos.areaComum),
+      ...manterOrdemOriginal(grupos.condominio),
+      ...manterOrdemOriginal(grupos.outros)
+    ];
 
-    } catch (error) {
-      console.error('❌ Erro ao processar imagens:', error);
-      return [...imovel.Foto].map((foto, index) => ({
-        ...foto,
-        Codigo: `${imovel.Codigo}-foto-${index}`,
-      }));
-    }
-  };
+    console.log('✅ Ordem WordPress corrigida:', {
+      total: fotosOrdenadas.length,
+      grupos: {
+        apartamento: grupos.apartamento.length,
+        areaComum: grupos.areaComum.length,
+        condominio: grupos.condominio.length,
+        outros: grupos.outros.length
+      },
+      primeiraFoto: fotosOrdenadas[0]?.Foto?.split('/').pop(),
+      segundaFoto: fotosOrdenadas[1]?.Foto?.split('/').pop() 
+    });
+
+    return fotosOrdenadas.map((foto, index) => ({
+      ...foto,
+      Codigo: `${imovel.Codigo}-foto-${index}`,
+    }));
+
+  } catch (error) {
+    console.error('❌ Erro ao ordenar fotos:', error);
+    // Fallback: mantém ordem original com destaque primeiro
+    const fotoDestaque = imovel.Foto.find(f => f.Destaque === "Sim");
+    const outrasFotos = imovel.Foto.filter(f => f !== fotoDestaque);
+    
+    return [
+      ...(fotoDestaque ? [fotoDestaque] : []),
+      ...outrasFotos
+    ].map((foto, index) => ({
+      ...foto,
+      Codigo: `${imovel.Codigo}-foto-${index}`,
+    }));
+  }
+};
 
   const images = getProcessedImages();
 
