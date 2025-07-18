@@ -1,3 +1,4 @@
+// ImagesSection.jsx - VERSÃO CORRIGIDA COM REAGRUPAMENTO
 "use client";
 
 import { memo, useState } from "react";
@@ -18,52 +19,6 @@ const ImagesSection = memo(({
   validation
 }) => {
   const [downloadingPhotos, setDownloadingPhotos] = useState(false);
-
-  // Função para extrair código único da foto (sem extensão)
-  const extrairCodigoFoto = (url) => {
-    if (!url) return '';
-    const nomeArquivo = url.split('/').pop();
-    return nomeArquivo.replace(/\.(jpg|jpeg|png|gif)$/i, '');
-  };
-
-  // Função para obter a ordem original baseada no código da foto
-  const obterOrdemOriginal = (foto) => {
-    const url = foto.Foto || '';
-    const codigo = extrairCodigoFoto(url);
-    
-    // Se a foto não tem código reconhecível, coloca no final
-    if (!codigo) return 9999;
-    
-    // Usar timestamp/hash do código como ordenação
-    // Fotos da mesma migração terão padrões similares
-    if (codigo.includes('i268P_48766b21')) {
-      // Extrair o hash final para ordenação
-      const hashMatch = codigo.match(/i268P_48766b21(.+)/);
-      if (hashMatch) {
-        // Converter hash em número para ordenação consistente
-        return parseInt(hashMatch[1].substring(0, 8), 16) || 0;
-      }
-    }
-    
-    if (codigo.includes('iUg3s56gtAT3cfaA5U90_487')) {
-      const hashMatch = codigo.match(/iUg3s56gtAT3cfaA5U90_487(.+)/);
-      if (hashMatch) {
-        // Somar offset para vir depois das i268P
-        return 100000 + (parseInt(hashMatch[1].substring(0, 8), 16) || 0);
-      }
-    }
-    
-    if (codigo.includes('iUG8o15s_4876')) {
-      const hashMatch = codigo.match(/iUG8o15s_4876(.+)/);
-      if (hashMatch) {
-        // Somar offset para vir por último
-        return 200000 + (parseInt(hashMatch[1].substring(0, 8), 16) || 0);
-      }
-    }
-    
-    // Outros tipos no final
-    return 9999;
-  };
 
   const getSortedPhotos = () => {
     if (!Array.isArray(formData?.Foto)) return [];
@@ -156,6 +111,13 @@ const ImagesSection = memo(({
   };
 
   const sortedPhotos = getSortedPhotos();
+
+  // Função para extrair código único da foto (para mostrar no admin)
+  const extrairCodigoFoto = (url) => {
+    if (!url) return '';
+    const nomeArquivo = url.split('/').pop();
+    return nomeArquivo.replace(/\.(jpg|jpeg|png|gif)$/i, '');
+  };
 
   const baixarTodasImagens = async (imagens = []) => {
     if (!Array.isArray(imagens)) return;
@@ -310,13 +272,13 @@ const ImagesSection = memo(({
                 <div className="p-3 space-y-3">
                   <div className="flex gap-2">
                     <div className="flex-1">
-                      <label className="block text-xs text-gray-500 mb-1">Ordem (Migração)</label>
+                      <label className="block text-xs text-gray-500 mb-1">Ordem (Reagrupada)</label>
                       <input
                         type="text"
                         value={`${index + 1}°`}
                         readOnly
                         className="w-full p-1.5 text-sm border rounded-md bg-gray-100 text-gray-600"
-                        title="Ordem baseada na migração original - somente leitura"
+                        title="Ordem baseada no reagrupamento por tipo - somente leitura"
                       />
                     </div>
                     <div className="flex-1">
@@ -377,7 +339,7 @@ const ImagesSection = memo(({
 
         <div className="bg-blue-50 border-l-4 border-blue-400 p-3">
           <p className="text-blue-700 text-sm">
-            📸 <strong>Ordem automática aplicada:</strong> Foto destaque primeiro + demais na sequência da migração original
+            📸 <strong>Reagrupamento aplicado:</strong> Foto destaque primeiro + fotos agrupadas por tipo na sequência original
           </p>
         </div>
       </div>
