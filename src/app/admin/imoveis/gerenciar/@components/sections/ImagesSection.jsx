@@ -23,19 +23,21 @@ const ImagesSection = memo(({
   const sortedPhotos = Array.isArray(formData?.Foto)
     ? (() => {
         try {
-          // 1. Encontrar a foto destacada (se existir)
-          const fotoDestaque = formData.Foto.find(foto => foto.Destaque === "Sim");
-          
-          // 2. Manter a ordem original das fotos (exceto a destacada que vai para primeira posição)
-          const fotosSemDestaque = formData.Foto.filter(foto => foto !== fotoDestaque);
-          
-          // 3. Criar array final com a foto destacada primeiro (se existir) seguida das demais na ordem original
-          return fotoDestaque 
-            ? [fotoDestaque, ...fotosSemDestaque]
-            : [...formData.Foto];
+          const fotoDestaque = formData.Foto.find(f => f.Destaque === "Sim");
+          const outrasFotos = formData.Foto.filter(f => f !== fotoDestaque);
 
+          return [
+            ...(fotoDestaque ? [fotoDestaque] : []),
+            ...outrasFotos.sort((a, b) => {
+              const getNumero = (url) => {
+                const match = url?.match(/(\d+)\.(jpg|png|jpeg)/i);
+                return match ? parseInt(match[1]) : 0;
+              };
+              return getNumero(a.Foto) - getNumero(b.Foto);
+            })
+          ];
         } catch (error) {
-          console.error('❌ ADMIN - Erro ao processar imagens:', error);
+          console.error('Erro ao ordenar fotos:', error);
           return [...formData.Foto];
         }
       })()
