@@ -31,37 +31,20 @@ export function ImageGallery({ imovel }) {
     }
 
     try {
-      const grupoApartamento = [];
-      const grupoAreaComum = [];
-      const grupoCondominio = [];
-      const grupoOutros = [];
+      // 1. Encontrar a foto destacada (se existir)
+      const fotoDestaque = imovel.Foto.find(foto => foto.Destaque === "Sim");
+      
+      // 2. Manter a ordem original das fotos (exceto a destacada que vai para primeira posição)
+      const fotosSemDestaque = imovel.Foto.filter(foto => foto !== fotoDestaque);
+      
+      // 3. Criar array final com a foto destacada primeiro (se existir) seguida das demais na ordem original
+      const fotosOrdenadas = fotoDestaque 
+        ? [fotoDestaque, ...fotosSemDestaque]
+        : [...imovel.Foto];
 
-      imovel.Foto.forEach((foto) => {
-        const fotoUrl = foto.Foto || '';
-        
-        if (fotoUrl.includes('iUg3s56gtAT3cfaA5U90_487')) {
-          grupoApartamento.push(foto);
-        } else if (fotoUrl.includes('iUG8o15s_4876')) {
-          grupoAreaComum.push(foto);
-        } else if (fotoUrl.includes('i268P_48766b21')) {
-          grupoCondominio.push(foto);
-        } else {
-          grupoOutros.push(foto);
-        }
-      });
-
-      const fotosOrdenadas = [
-        ...grupoApartamento,
-        ...grupoOutros,
-        ...grupoAreaComum,
-        ...grupoCondominio
-      ];
-
-      console.log('🔄 ORDEM WORDPRESS RESTAURADA:', {
-        apartamento: grupoApartamento.length,
-        outros: grupoOutros.length,
-        areaComum: grupoAreaComum.length,
-        condominio: grupoCondominio.length,
+      console.log('🔄 Ordem das fotos:', {
+        totalFotos: fotosOrdenadas.length,
+        temDestaque: !!fotoDestaque,
         primeiraFoto: fotosOrdenadas[0]?.Foto?.split('/').pop()
       });
 
