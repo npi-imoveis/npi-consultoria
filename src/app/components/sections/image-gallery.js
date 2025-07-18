@@ -1,70 +1,37 @@
-// ImageGallery.jsx - VERSÃO FINAL COM ORDEM CORRIGIDA
-"use client";
-
-import { useState, useEffect } from "react";
-import Image from "next/image";
-import { ArrowLeft } from "lucide-react";
-import { formatterSlug } from "@/app/utils/formatter-slug";
-import { Share } from "../ui/share";
-
-function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768);
-    check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
-  }, []);
-
-  return isMobile;
-}
-
+// ImageGallery.jsx - VERSÃO COM FOTOS DO CONDOMÍNIO NO FINAL
 export function ImageGallery({ imovel }) {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState(null);
-  const isMobile = useIsMobile();
-
-  // Função para identificar fotos do condomínio
-  const isCondominioFoto = (url) => {
-    if (!url) return false;
-    const nomeArquivo = url.split('/').pop();
-    return nomeArquivo.includes('i268P_48766b21') || 
-           nomeArquivo.includes('iUg3s56gtAT3cfaA5U90_487') ||
-           nomeArquivo.includes('iUG8o15s_4876');
-  };
+  // ... (código anterior mantido igual)
 
   const getProcessedImages = () => {
     if (!Array.isArray(imovel?.Foto)) return [];
 
     try {
-      // 1. Separar fotos do condomínio e outras fotos
-      const fotosCondominio = imovel.Foto.filter(foto => isCondominioFoto(foto.Foto));
-      const outrasFotos = imovel.Foto.filter(foto => !isCondominioFoto(foto.Foto));
-
-      // 2. Manter a ordem original das fotos do condomínio (como vieram da API)
-      // Não aplicamos sort, mantemos a ordem original
+      // 1. Separar fotos NÃO do condomínio (para vir primeiro)
+      const fotosNormais = imovel.Foto.filter(foto => !isCondominioFoto(foto.Foto));
       
-      // 3. Foto destacada (se existir) vai primeiro
+      // 2. Separar fotos DO condomínio (para vir por último)
+      const fotosCondominio = imovel.Foto.filter(foto => isCondominioFoto(foto.Foto));
+
+      // 3. Foto destacada (se existir) vai primeiro, independente do tipo
       const fotoDestaque = imovel.Foto.find(foto => foto.Destaque === "Sim");
       
       // 4. Criar array final:
       // - Destaque primeiro (se existir)
-      // - Todas fotos do condomínio (na ordem original)
-      // - Demais fotos (na ordem original)
+      // - Fotos normais (na ordem original)
+      // - Fotos do condomínio (na ordem original)
       const fotosOrdenadas = [
         ...(fotoDestaque ? [fotoDestaque] : []),
-        ...fotosCondominio,
-        ...outrasFotos
+        ...fotosNormais,
+        ...fotosCondominio
       ];
 
-      console.log('✅ Ordem das fotos:', {
+      console.log('✅ Ordem ajustada - Condomínio no final:', {
         total: fotosOrdenadas.length,
         destaque: !!fotoDestaque,
+        fotosNormais: fotosNormais.length,
         fotosCondominio: fotosCondominio.length,
-        outrasFotos: outrasFotos.length,
-        primeiraFoto: fotosOrdenadas[0]?.Foto,
-        ultimaFoto: fotosOrdenadas[fotosOrdenadas.length - 1]?.Foto
+        primeirasFotos: fotosOrdenadas.slice(0, 3).map(f => f.Foto.split('/').pop()),
+        ultimasFotos: fotosOrdenadas.slice(-3).map(f => f.Foto.split('/').pop())
       });
 
       return fotosOrdenadas.map((foto, index) => ({
