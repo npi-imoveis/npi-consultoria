@@ -7,7 +7,7 @@ import Image from "next/image";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
 
-const ImagesSection = memo(({
+const ImagesSection = memo(({ formData }) => {
   formData,
   addSingleImage,
   showImageModal,
@@ -22,24 +22,25 @@ const ImagesSection = memo(({
 
   const sortedPhotos = Array.isArray(formData?.Foto)
     ? (() => {
-        try {
-          const fotoDestaque = formData.Foto.find(f => f.Destaque === "Sim");
-          const outrasFotos = formData.Foto.filter(f => f !== fotoDestaque);
+        const gruposOrdem = [
+          'iUg3s56gtAT3cfaA5U90_487',
+          'iUG8o15s_4876', 
+          'i268P_48766b21'
+        ];
 
-          return [
-            ...(fotoDestaque ? [fotoDestaque] : []),
-            ...outrasFotos.sort((a, b) => {
-              const getNumero = (url) => {
-                const match = url?.match(/(\d+)\.(jpg|png|jpeg)/i);
-                return match ? parseInt(match[1]) : 0;
-              };
-              return getNumero(a.Foto) - getNumero(b.Foto);
-            })
-          ];
-        } catch (error) {
-          console.error('Erro ao ordenar fotos:', error);
-          return [...formData.Foto];
-        }
+        const fotoDestaque = formData.Foto.find(f => f.Destaque === "Sim");
+        const outrasFotos = formData.Foto.filter(f => f !== fotoDestaque);
+
+        return [
+          ...(fotoDestaque ? [fotoDestaque] : []),
+          ...outrasFotos.sort((a, b) => {
+            const aGrupo = gruposOrdem.findIndex(p => a.Foto.includes(p));
+            const bGrupo = gruposOrdem.findIndex(p => b.Foto.includes(p));
+            return aGrupo === bGrupo 
+              ? formData.Foto.indexOf(a) - formData.Foto.indexOf(b)
+              : aGrupo - bGrupo;
+          })
+        ];
       })()
     : [];
   const baixarTodasImagens = async (imagens = []) => {
