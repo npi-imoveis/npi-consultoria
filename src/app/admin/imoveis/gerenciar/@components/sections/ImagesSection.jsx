@@ -135,7 +135,7 @@ const ImagesSection = memo(({
 
   const handlePositionChange = (codigo, newPosition) => {
     const position = parseInt(newPosition);
-    if (!isNaN(position) {
+    if (!isNaN(position)) {
       changeImagePosition(codigo, position);
     }
   };
