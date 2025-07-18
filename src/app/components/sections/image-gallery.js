@@ -24,45 +24,30 @@ export function ImageGallery({ imovel }) {
   const [selectedIndex, setSelectedIndex] = useState(null);
   const isMobile = useIsMobile();
 
-  // Função para identificar fotos do condomínio (últimas na ordem)
-  const isCondominioFoto = (url) => {
-    if (!url) return false;
-    const nomeArquivo = url.split('/').pop();
-    // Padrões que identificam fotos do condomínio (ajuste conforme necessário)
-    return nomeArquivo.includes('i268P_48766b21') || 
-           nomeArquivo.includes('iUg3s56gtAT3cfaA5U90_487') ||
-           nomeArquivo.includes('iUG8o15s_4876');
-  };
+  // Função auxiliar para extrair nome do arquivo
+  const getFileName = (url) => url?.split('/').pop() || '';
 
+  // Preserva a ordem exata da API com apenas destaque primeiro
   const getProcessedImages = () => {
     if (!Array.isArray(imovel?.Foto)) return [];
 
     try {
-      // 1. Foto destacada (se existir) - sempre primeiro
+      // 1. Foto destacada (se existir) vai primeiro
       const fotoDestaque = imovel.Foto.find(foto => foto.Destaque === "Sim");
-      
-      // 2. Separar fotos não-condomínio (primeiras) e condomínio (últimas)
-      const fotosParaOrdenar = fotoDestaque 
-        ? imovel.Foto.filter(foto => foto !== fotoDestaque)
-        : [...imovel.Foto];
-      
-      const fotosNormais = fotosParaOrdenar.filter(foto => !isCondominioFoto(foto.Foto));
-      const fotosCondominio = fotosParaOrdenar.filter(foto => isCondominioFoto(foto.Foto));
+      const outrasFotos = imovel.Foto.filter(foto => foto !== fotoDestaque);
 
-      // 3. Criar array final:
+      // 2. Mantém ordem original para todas as outras fotos
       const fotosOrdenadas = [
-        ...(fotoDestaque ? [fotoDestaque] : []), // destaque primeiro
-        ...fotosNormais,                        // fotos normais (ordem original)
-        ...fotosCondominio                       // fotos condomínio (ordem original)
+        ...(fotoDestaque ? [fotoDestaque] : []),
+        ...outrasFotos
       ];
 
-      console.log('✅ Ordem final das fotos:', {
+      console.log('✅ Ordem preservada:', {
         total: fotosOrdenadas.length,
-        destaque: !!fotoDestaque,
-        fotosNormais: fotosNormais.length,
-        fotosCondominio: fotosCondominio.length,
-        primeirasFotos: fotosOrdenadas.slice(0, 3).map(f => f.Foto.split('/').pop()),
-        ultimasFotos: fotosOrdenadas.slice(-3).map(f => f.Foto.split('/').pop())
+        destaque: fotoDestaque ? getFileName(fotoDestaque.Foto) : 'Nenhuma',
+        primeira: getFileName(fotosOrdenadas[0]?.Foto),
+        segunda: getFileName(fotosOrdenadas[1]?.Foto),
+        ultima: getFileName(fotosOrdenadas[fotosOrdenadas.length - 1]?.Foto)
       });
 
       return fotosOrdenadas.map((foto, index) => ({
