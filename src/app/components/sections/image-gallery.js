@@ -68,28 +68,46 @@ export function ImageGallery({ imovel }) {
   const [selectedIndex, setSelectedIndex] = useState(null);
   const isMobile = useIsMobile();
 
-  Ensure Foto is an array and handle edge cases
-  const images =
-    Array.isArray(imovel.Foto) && imovel.Foto.length > 0
-      ? [...imovel.Foto].sort((a, b) => {
-          if (a.Destaque === "Sim" && b.Destaque !== "Sim") return -1;
-          if (a.Destaque !== "Sim" && b.Destaque === "Sim") return 1;
-          return 0;
-        })
-      : [];
+  const getProcessedImages = () => {
+    if (!Array.isArray(imovel?.Foto) || imovel.Foto.length === 0) {
+      console.warn('⚠️ FRONTEND - imovel.Foto inválido:', imovel?.Foto);
+      return [];
+    }
 
-  if (images.length === 0) {
-    // Return a placeholder or default image if no images are available
-    return (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-1 w-full">
-        <div className="col-span-1 h-[410px] relative">
-          <div className="w-full h-full overflow-hidden bg-gray-200 flex items-center justify-center">
-            <span className="text-gray-500">Imagem não disponível</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
+    try {
+      // 1. Reorganizar por grupos de migração (ordem original WordPress)
+      const fotosOrdenadas = ordenarFotosPorGruposMigracao(imovel.Foto);
+      
+      // 2. Gerar códigos únicos para evitar problemas de duplicação
+      const fotosComCodigosUnicos = fotosOrdenadas.map((foto, index) => ({
+        ...foto,
+        Codigo: `${imovel.Codigo}-foto-${index}`,
+      }));
+
+      // 3. Verificar se há destaque e colocar primeiro
+      const destaqueIndex = fotosComCodigosUnicos.findIndex(f => f.Destaque === "Sim");
+      
+      if (destaqueIndex !== -1) {
+        const fotoDestaque = fotosComCodigosUnicos[destaqueIndex];
+        const outrasfotos = fotosComCodigosUnicos.filter((_, index) => index !== destaqueIndex);
+        
+        console.log(`🎯 FRONTEND - Destaque encontrado na posição ${destaqueIndex + 1}, movendo para primeira`);
+        return [fotoDestaque, ...outrasfotos];
+      }
+
+      console.log('📋 FRONTEND - Processamento concluído:', fotosComCodigosUnicos.length, 'fotos');
+      return fotosComCodigosUnicos;
+
+    } catch (error) {
+      console.error('❌ FRONTEND - Erro ao processar imagens:', error);
+      // Em caso de erro, retorna ordem original com códigos únicos
+      return [...imovel.Foto].map((foto, index) => ({
+        ...foto,
+        Codigo: `${imovel.Codigo}-foto-${index}`,
+      }));
+    }
+  };
+
   const images = getProcessedImages();
 
   if (!imovel || !imovel.Empreendimento) {
