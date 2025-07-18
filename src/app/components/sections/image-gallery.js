@@ -75,51 +75,24 @@ export function ImageGallery({ imovel }) {
   if (!Array.isArray(imovel?.Foto)) return [];
 
   try {
-    // 1. Identificar a foto destacada
+    // 1. Encontrar a foto destacada (se existir)
     const fotoDestaque = imovel.Foto.find(foto => foto.Destaque === "Sim");
+    
+    // 2. Manter a ordem EXATA da API para as demais fotos
+    const outrasFotos = imovel.Foto.filter(foto => foto !== fotoDestaque);
+    
+    // 3. Criar array final com destaque primeiro + ordem original
+    const fotosOrdenadas = [
+      ...(fotoDestaque ? [fotoDestaque] : []),
+      ...outrasFotos // Mantém a ordem original da API
+    ];
 
-    // 2. Criar um mapa de ordem original para preservar a sequência exata
-    const ordemOriginal = new Map();
-    imovel.Foto.forEach((foto, index) => {
-      ordemOriginal.set(foto, index);
-    });
-
-    // 3. Função para identificar o tipo de foto
-    const getTipoFoto = (foto) => {
-      const url = foto.Foto || '';
-      if (url.includes('iUg3s56gtAT3cfaA5U90_487')) return 'apartamento';
-      if (url.includes('iUG8o15s_4876')) return 'areaComum';
-      if (url.includes('i268P_48766b21')) return 'condominio';
-      return 'outros';
-    };
-
-    // 4. Separar e ordenar mantendo a ordem ORIGINAL dentro de cada grupo
-    const fotosOrdenadas = imovel.Foto
-      .filter(foto => foto !== fotoDestaque) // Remover destaque temporariamente
-      .sort((a, b) => {
-        // Manter a ordem original dentro do mesmo grupo
-        if (getTipoFoto(a) === getTipoFoto(b)) {
-          return ordemOriginal.get(a) - ordemOriginal.get(b);
-        }
-        // Ordem dos grupos: apartamento -> areaComum -> condominio -> outros
-        const grupos = { apartamento: 1, areaComum: 2, condominio: 3, outros: 4 };
-        return grupos[getTipoFoto(a)] - grupos[getTipoFoto(b)];
-      });
-
-    // 5. Reinserir a foto destacada no início
-    if (fotoDestaque) {
-      fotosOrdenadas.unshift(fotoDestaque);
-    }
-
-    console.log('✅ Ordem MIGRAÇÃO ORIGINAL:', {
-      total: fotosOrdenadas.length,
-      grupos: {
-        apartamento: fotosOrdenadas.filter(f => getTipoFoto(f) === 'apartamento').length,
-        areaComum: fotosOrdenadas.filter(f => getTipoFoto(f) === 'areaComum').length,
-        condominio: fotosOrdenadas.filter(f => getTipoFoto(f) === 'condominio').length,
-        outros: fotosOrdenadas.filter(f => getTipoFoto(f) === 'outros').length
-      },
-      sequencia: fotosOrdenadas.map(f => getTipoFoto(f)).join(' → ')
+    console.log('✅ Ordem API preservada:', {
+      totalFotos: fotosOrdenadas.length,
+      temDestaque: !!fotoDestaque,
+      primeiraFoto: fotosOrdenadas[0]?.Foto?.split('/').pop(),
+      segundaFoto: fotosOrdenadas[1]?.Foto?.split('/').pop(),
+      terceiraFoto: fotosOrdenadas[2]?.Foto?.split('/').pop()
     });
 
     return fotosOrdenadas.map((foto, index) => ({
@@ -128,14 +101,13 @@ export function ImageGallery({ imovel }) {
     }));
 
   } catch (error) {
-    console.error('❌ Erro ao ordenar fotos:', error);
+    console.error('❌ Erro ao processar imagens:', error);
     return [...imovel.Foto].map((foto, index) => ({
       ...foto,
       Codigo: `${imovel.Codigo}-foto-${index}`,
     }));
   }
 };
-
   const images = getProcessedImages();
 
   if (!imovel || !imovel.Empreendimento) {
