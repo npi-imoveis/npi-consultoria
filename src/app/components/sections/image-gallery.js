@@ -26,59 +26,52 @@ export function ImageGallery({ imovel }) {
   const isMobile = useIsMobile();
 
   const getProcessedImages = () => {
-    // Ensure Foto is an array and handle edge cases
     if (!Array.isArray(imovel?.Foto) || imovel.Foto.length === 0) {
       return [];
     }
 
     try {
-      // REORGANIZAR POR GRUPOS DE MIGRAÇÃO (ORDEM WORDPRESS ORIGINAL)
-      const grupoApartamento = []; // iUg3s56gtAT3cfaA5U90_487
-      const grupoAreaComum = [];   // iUG8o15s_4876
-      const grupoCondominio = [];  // i268P_48766b21
-      const grupoOutros = [];      // outros padrões
+      const grupoApartamento = [];
+      const grupoAreaComum = [];
+      const grupoCondominio = [];
+      const grupoOutros = [];
 
-      imovel.Foto.forEach((foto, index) => {
-        const fotoComIndex = { ...foto, originalIndex: index };
-
-        if (foto.Foto && foto.Foto.includes('iUg3s56gtAT3cfaA5U90_487')) {
-          grupoApartamento.push(fotoComIndex);
-        } else if (foto.Foto && foto.Foto.includes('iUG8o15s_4876')) {
-          grupoAreaComum.push(fotoComIndex);
-        } else if (foto.Foto && foto.Foto.includes('i268P_48766b21')) {
-          grupoCondominio.push(fotoComIndex);
+      imovel.Foto.forEach((foto) => {
+        const fotoUrl = foto.Foto || '';
+        
+        if (fotoUrl.includes('iUg3s56gtAT3cfaA5U90_487')) {
+          grupoApartamento.push(foto);
+        } else if (fotoUrl.includes('iUG8o15s_4876')) {
+          grupoAreaComum.push(foto);
+        } else if (fotoUrl.includes('i268P_48766b21')) {
+          grupoCondominio.push(foto);
         } else {
-          grupoOutros.push(fotoComIndex);
+          grupoOutros.push(foto);
         }
       });
 
-      // ORDEM WORDPRESS PURA: Apartamento → Outros → Área Comum → Condomínio
       const fotosOrdenadas = [
         ...grupoApartamento,
         ...grupoOutros,
-        ...grupoAreaComum, 
+        ...grupoAreaComum,
         ...grupoCondominio
       ];
 
-      // Gerar códigos únicos para evitar problemas de duplicação
-      const imagesComCodigosUnicos = fotosOrdenadas.map((foto, index) => ({
+      console.log('🔄 ORDEM WORDPRESS RESTAURADA:', {
+        apartamento: grupoApartamento.length,
+        outros: grupoOutros.length,
+        areaComum: grupoAreaComum.length,
+        condominio: grupoCondominio.length,
+        primeiraFoto: fotosOrdenadas[0]?.Foto?.split('/').pop()
+      });
+
+      return fotosOrdenadas.map((foto, index) => ({
         ...foto,
         Codigo: `${imovel.Codigo}-foto-${index}`,
       }));
 
-      console.log('🔄 ORDEM WORDPRESS RESTAURADA:');
-      console.log(`📊 1. Apartamento: ${grupoApartamento.length} fotos`);
-      console.log(`📊 2. Outros: ${grupoOutros.length} fotos`);
-      console.log(`📊 3. Área Comum: ${grupoAreaComum.length} fotos`);
-      console.log(`📊 4. Condomínio: ${grupoCondominio.length} fotos`);
-      console.log(`🎯 Primeira foto: ${imagesComCodigosUnicos[0]?.Foto?.split('/').pop()}`);
-      console.log(`📊 Total processado: ${imagesComCodigosUnicos.length} fotos`);
-
-      return imagesComCodigosUnicos;
-
     } catch (error) {
       console.error('❌ Erro ao processar imagens:', error);
-      // Fallback: usar ordem original da API se der erro
       return [...imovel.Foto].map((foto, index) => ({
         ...foto,
         Codigo: `${imovel.Codigo}-foto-${index}`,
