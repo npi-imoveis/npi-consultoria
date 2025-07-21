@@ -46,21 +46,102 @@ const ImagesSection = memo(({
     return null;
   };
 
-  // 🎯 CÓPIA EXATA DO FRONTEND - Função para análise de códigos (método que mais funcionou)
+  // 🎯 SOLUÇÃO GENÉRICA PARA TODA A MIGRAÇÃO - Análise de padrões globais
   const obterOrdemPorCodigo = (foto) => {
     const url = foto.Foto || '';
     const codigo = extrairCodigoFoto(url);
     
-    // Se a foto não tem código reconhecível, coloca no final
-    if (!codigo) return 9999;
+    if (!codigo) return 999999;
     
-    // Usar timestamp/hash do código como ordenação (método que funcionou melhor)
-    if (codigo.includes('i268P_48766b21')) {
-      const hashMatch = codigo.match(/i268P_48766b21(.+)/);
-      if (hashMatch) {
-        return parseInt(hashMatch[1].substring(0, 8), 16) || 0;
+    // 🏠 ESTRATÉGIA GENÉRICA: DETECTAR FOTOS INTERNAS vs EXTERNAS
+    
+    // GRUPO A (0-99999): FOTOS INTERNAS - códigos que começam com 'i268P'
+    if (codigo.startsWith('i268P_')) {
+      // Extrair timestamp genérico de qualquer código i268P
+      const sufixo = codigo.substring(6);
+      const hexMatch = sufixo.match(/[0-9a-fA-F]{8,}/);
+      if (hexMatch) {
+        const timestamp = parseInt(hexMatch[0].substring(0, 8), 16) || 0;
+        return Math.min(timestamp, 99999); // Garantir grupo A
+      }
+      // Fallback: usar hash da string
+      let hash = 0;
+      for (let i = 0; i < sufixo.length && i < 8; i++) {
+        hash = (hash << 5) - hash + sufixo.charCodeAt(i);
+        hash = hash & hash; // 32bit
+      }
+      return Math.abs(hash) % 99999;
+    }
+    
+    // GRUPO B (100000-199999): FOTOS ÁREA/LAZER - códigos 'iUg3s56gtAT3cfaA5U90'
+    if (codigo.includes('iUg3s56gtAT3cfaA5U90')) {
+      const match = codigo.match(/iUg3s56gtAT3cfaA5U90[^0-9a-fA-F]*([0-9a-fA-F]+)/);
+      if (match && match[1]) {
+        const timestamp = parseInt(match[1].substring(0, 8), 16) || 0;
+        return 100000 + (timestamp % 99999);
+      }
+      return 100000;
+    }
+    
+    // GRUPO C (200000-299999): FOTOS FACHADA/EXTERNA - códigos 'iUG8o15s'
+    if (codigo.includes('iUG8o15s')) {
+      const match = codigo.match(/iUG8o15s[^0-9a-fA-F]*([0-9a-fA-F]+)/);
+      if (match && match[1]) {
+        const timestamp = parseInt(match[1].substring(0, 8), 16) || 0;
+        return 200000 + (timestamp % 99999);
+      }
+      return 200000;
+    }
+    
+    // GRUPO D (300000+): OUTROS PADRÕES CONHECIDOS
+    const outrosPatroes = [
+      'i19Q55g4D1123W87',
+      'ik71mgr366', 
+      'ic782Y6X12Tn'
+    ];
+    
+    for (let i = 0; i < outrosPatroes.length; i++) {
+      const padrao = outrosPatroes[i];
+      if (codigo.includes(padrao)) {
+        const match = codigo.match(new RegExp(padrao + '[^0-9a-fA-F]*([0-9a-fA-F]+)'));
+        if (match && match[1]) {
+          const timestamp = parseInt(match[1].substring(0, 8), 16) || 0;
+          return 300000 + (i * 100000) + (timestamp % 99999);
+        }
+        return 300000 + (i * 100000);
       }
     }
+    
+    // 🧠 ESTRATÉGIA INTELIGENTE: DETECTAR NOVOS PADRÕES DE FOTOS INTERNAS
+    // Códigos que provavelmente são fotos internas (padrões similares)
+    if (/^i[0-9a-fA-F]{3,8}P/i.test(codigo)) {
+      // Códigos tipo i###P, i####P, etc. (variações do i268P)
+      let hash = 0;
+      for (let i = 0; i < codigo.length; i++) {
+        hash = (hash << 5) - hash + codigo.charCodeAt(i);
+        hash = hash & hash;
+      }
+      return Math.abs(hash) % 99999; // Colocar no grupo A (fotos internas)
+    }
+    
+    // 🔍 FALLBACK GENÉRICO: Analisar estrutura do código
+    // Se tem padrão tipo i + letras/números + _ + hash
+    const padraoGeral = codigo.match(/^i([a-zA-Z0-9]{2,15})_?([0-9a-fA-F]{6,})/);
+    if (padraoGeral) {
+      const [, prefixo, hash] = padraoGeral;
+      const timestamp = parseInt(hash.substring(0, 8), 16) || 0;
+      
+      // Heurística: prefixos menores/simples = mais provável ser foto interna
+      if (prefixo.length <= 5) {
+        return Math.min(timestamp, 99999); // Grupo A (internas)
+      } else {
+        return 100000 + (timestamp % 99999); // Grupo B (outras)
+      }
+    }
+    
+    // Não reconhecido - colocar no final
+    return 999999;
+  };
     
     if (codigo.includes('iUg3s56gtAT3cfaA5U90_487')) {
       const hashMatch = codigo.match(/iUg3s56gtAT3cfaA5U90_487(.+)/);
