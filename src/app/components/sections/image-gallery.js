@@ -1,11 +1,12 @@
-// ImageGallery.jsx - SOLUÇÃO HÍBRIDA DEFINITIVA: CAMPO ORDEM + ANÁLISE DE CÓDIGOS
+// ImageGallery.jsx - VERSÃO COM ORDENAÇÃO INTELIGENTE APRIMORADA
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { ArrowLeft } from "lucide-react";
 import { formatterSlug } from "@/app/utils/formatter-slug";
 import { Share } from "../ui/share";
+import { photoSorter } from "@/app/utils/photoSorter"; // 🚀 Nova classe
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
@@ -23,161 +24,55 @@ function useIsMobile() {
 export function ImageGallery({ imovel }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(null);
+  const [debugMode, setDebugMode] = useState(false);
   const isMobile = useIsMobile();
 
-  // Função para extrair código único da foto (sem extensão)
-  const extrairCodigoFoto = (url) => {
-    if (!url) return '';
-    const nomeArquivo = url.split('/').pop();
-    return nomeArquivo.replace(/\.(jpg|jpeg|png|gif)$/i, '');
-  };
-
-  // Função para análise de códigos (método que mais funcionou)
-  const obterOrdemPorCodigo = (foto) => {
-    const url = foto.Foto || '';
-    const codigo = extrairCodigoFoto(url);
-    
-    // Se a foto não tem código reconhecível, coloca no final
-    if (!codigo) return 9999;
-    
-    // Usar timestamp/hash do código como ordenação (método que funcionou melhor)
-    if (codigo.includes('i268P_48766b21')) {
-      const hashMatch = codigo.match(/i268P_48766b21(.+)/);
-      if (hashMatch) {
-        return parseInt(hashMatch[1].substring(0, 8), 16) || 0;
-      }
+  // 🎯 NOVA LÓGICA: Usar classe inteligente para ordenação
+  const images = useMemo(() => {
+    if (!Array.isArray(imovel?.Foto) || imovel.Foto.length === 0) {
+      return [];
     }
-    
-    if (codigo.includes('iUg3s56gtAT3cfaA5U90_487')) {
-      const hashMatch = codigo.match(/iUg3s56gtAT3cfaA5U90_487(.+)/);
-      if (hashMatch) {
-        // Somar offset para vir depois das i268P
-        return 100000 + (parseInt(hashMatch[1].substring(0, 8), 16) || 0);
-      }
-    }
-    
-    if (codigo.includes('iUG8o15s_4876')) {
-      const hashMatch = codigo.match(/iUG8o15s_4876(.+)/);
-      if (hashMatch) {
-        // Somar offset para vir por último
-        return 200000 + (parseInt(hashMatch[1].substring(0, 8), 16) || 0);
-      }
-    }
-
-    // Outros padrões identificados
-    if (codigo.includes('i19Q55g4D1123W87')) {
-      const hashMatch = codigo.match(/i19Q55g4D1123W87(.+)/);
-      if (hashMatch) {
-        return 300000 + (parseInt(hashMatch[1].substring(0, 8), 16) || 0);
-      }
-    }
-
-    if (codigo.includes('ik71mgr366')) {
-      const hashMatch = codigo.match(/ik71mgr366(.+)/);
-      if (hashMatch) {
-        return 400000 + (parseInt(hashMatch[1].substring(0, 8), 16) || 0);
-      }
-    }
-
-    if (codigo.includes('ic782Y6X12Tn')) {
-      const hashMatch = codigo.match(/ic782Y6X12Tn(.+)/);
-      if (hashMatch) {
-        return 500000 + (parseInt(hashMatch[1].substring(0, 8), 16) || 0);
-      }
-    }
-    
-    // Outros tipos no final
-    return 9999;
-  };
-
-  const getProcessedImages = () => {
-    if (!Array.isArray(imovel?.Foto)) return [];
 
     try {
-      // 1. FOTO DESTAQUE SEMPRE PRIMEIRO (prioridade máxima)
-      const fotoDestaque = imovel.Foto.find(foto => foto.Destaque === "Sim");
+      // Usar o novo ordenador inteligente
+      const fotosOrdenadas = photoSorter.ordenarFotos(imovel.Foto, imovel.Codigo);
       
-      // 2. Outras fotos (EXCLUINDO destaque para evitar duplicação)
-      const outrasFotos = imovel.Foto.filter(foto => foto !== fotoDestaque);
-      
-      // 3. MÉTODO HÍBRIDO: CAMPO ORDEM primeiro, senão análise de códigos
-      let outrasFotosOrdenadas;
-      let metodoUsado;
-
-      // Verificar se existe campo ORDEM nos dados
-      const temCampoOrdem = outrasFotos.some(foto => 
-        foto.Ordem !== undefined || 
-        foto.ordem !== undefined || 
-        foto.ORDEM !== undefined
-      );
-
-      if (temCampoOrdem) {
-        // MÉTODO 1: Usar campo ORDEM original do MySQL (IDEAL)
-        outrasFotosOrdenadas = [...outrasFotos].sort((a, b) => {
-          const ordemA = a.Ordem || a.ordem || a.ORDEM || 999999;
-          const ordemB = b.Ordem || b.ordem || b.ORDEM || 999999;
-          return ordemA - ordemB; // Ordem crescente (1, 2, 3...)
-        });
-        metodoUsado = 'Campo ORDEM do MySQL';
-
-        console.log('🎯 MÉTODO 1 - CAMPO ORDEM APLICADO:', {
-          totalFotos: outrasFotosOrdenadas.length,
-          metodo: metodoUsado,
-          primeiras5: outrasFotosOrdenadas.slice(0, 5).map((f, i) => {
-            const ordem = f.Ordem || f.ordem || f.ORDEM || 'N/A';
-            const codigo = extrairCodigoFoto(f.Foto);
-            return `${i+1}: [Ordem: ${ordem}] ${codigo.substring(0, 20)}...`;
-          })
-        });
-      } else {
-        // MÉTODO 2: Usar análise de códigos (FALLBACK que funcionou melhor)
-        outrasFotosOrdenadas = [...outrasFotos].sort((a, b) => {
-          const ordemA = obterOrdemPorCodigo(a);
-          const ordemB = obterOrdemPorCodigo(b);
-          return ordemA - ordemB;
-        });
-        metodoUsado = 'Análise de códigos de arquivos';
-
-        console.log('🔄 MÉTODO 2 - ANÁLISE DE CÓDIGOS APLICADA:', {
-          totalFotos: outrasFotosOrdenadas.length,
-          metodo: metodoUsado,
-          primeiras5: outrasFotosOrdenadas.slice(0, 5).map((f, i) => {
-            const codigo = extrairCodigoFoto(f.Foto);
-            const ordem = obterOrdemPorCodigo(f);
-            return `${i+1}: [Hash: ${ordem}] ${codigo.substring(0, 20)}...`;
-          })
-        });
-      }
-      
-      // 4. MONTAGEM FINAL: DESTAQUE SEMPRE PRIMEIRO + outras ordenadas
-      const fotosFinais = [
-        ...(fotoDestaque ? [fotoDestaque] : []), // DESTAQUE SEMPRE PRIMEIRO
-        ...outrasFotosOrdenadas                   // Depois as outras ordenadas
-      ];
-
-      console.log('✅ GALERIA HÍBRIDA PROCESSADA:', {
-        total: fotosFinais.length,
-        destaque: fotoDestaque ? 'SIM - garantido em 1º' : 'NÃO',
-        metodoOrdenacao: metodoUsado,
-        verificacaoDestaque: fotosFinais[0] === fotoDestaque ? 'DESTAQUE em 1º ✅' : 'Primeira por ordenação ✅',
-        estruturaPrimeiraFoto: fotosFinais[0] ? Object.keys(fotosFinais[0]).join(', ') : 'Nenhuma'
-      });
-
-      return fotosFinais.map((foto, index) => ({
+      // Adicionar códigos únicos para o componente
+      return fotosOrdenadas.map((foto, index) => ({
         ...foto,
         Codigo: `${imovel.Codigo}-foto-${index}`,
       }));
 
     } catch (error) {
-      console.error('❌ Erro ao processar imagens:', error);
+      console.error('❌ Erro ao processar imagens na galeria:', error);
+      
+      // Fallback seguro
       return [...imovel.Foto].map((foto, index) => ({
         ...foto,
         Codigo: `${imovel.Codigo}-foto-${index}`,
       }));
     }
-  };
+  }, [imovel?.Foto, imovel?.Codigo]);
 
-  const images = getProcessedImages();
+  // 🔍 NOVA FEATURE: Debug da ordenação
+  const debugInfo = useMemo(() => {
+    if (!debugMode || !imovel?.Foto) return null;
+    
+    return photoSorter.gerarRelatorio(imovel.Foto, imovel.Codigo);
+  }, [debugMode, imovel?.Foto, imovel?.Codigo]);
+
+  // 🔧 Toggle debug no desenvolvimento
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+        setDebugMode(prev => !prev);
+        console.log(debugMode ? '🔍 Debug desativado' : '🔍 Debug ativado');
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [debugMode]);
 
   if (!imovel || !imovel.Empreendimento) {
     return null;
@@ -224,6 +119,17 @@ export function ImageGallery({ imovel }) {
 
   return (
     <>
+      {/* 🔍 DEBUG INFO (só aparece no modo debug) */}
+      {debugMode && debugInfo && (
+        <div className="mb-4 p-3 bg-black text-green-400 font-mono text-xs rounded-md">
+          <div className="font-bold mb-2">🔍 DEBUG - ORDENAÇÃO INTELIGENTE</div>
+          <div>📸 Total: {debugInfo.total} fotos</div>
+          <div>📊 Grupos: {JSON.stringify(debugInfo.grupos)}</div>
+          <div>📈 Cobertura: {(debugInfo.cobertura * 100).toFixed(1)}%</div>
+          <div>🎯 Padrões: {debugInfo.padroes.slice(0, 3).join(', ')}...</div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-1 w-full">
         <div className="col-span-1 h-[410px] cursor-pointer relative" onClick={() => openModal()}>
           <div className="w-full h-full overflow-hidden">
@@ -242,8 +148,15 @@ export function ImageGallery({ imovel }) {
             />
           </div>
 
+          {/* 🏷️ NOVO: Indicador de destaque mais visível */}
+          {images[0].Destaque === "Sim" && (
+            <div className="absolute top-4 left-4 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+              ⭐ DESTAQUE
+            </div>
+          )}
+
           {isMobile && images.length > 1 && (
-            <div className="absolute top-4 right-4 bg-white bg-opacity-80 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium">
+            <div className="absolute top-4 right-4 bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg">
               {images.length} fotos
             </div>
           )}
@@ -271,13 +184,21 @@ export function ImageGallery({ imovel }) {
                     loading="lazy"
                     className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
                   />
+                  
+                  {/* 🏷️ NOVO: Indicadores nos thumbnails */}
+                  {image.Destaque === "Sim" && (
+                    <div className="absolute top-2 left-2 bg-yellow-500 text-white text-xs font-bold px-1.5 py-0.5 rounded">
+                      ⭐
+                    </div>
+                  )}
+                  
                   {isLastImage && images.length > 5 && (
                     <div className="absolute inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center">
                       <button
                         className="border border-white text-white px-4 py-2 rounded hover:bg-white hover:text-black transition-colors"
                         aria-label="Ver mais fotos"
                       >
-                        Ver mais fotos
+                        +{images.length - 5} fotos
                       </button>
                     </div>
                   )}
@@ -292,18 +213,19 @@ export function ImageGallery({ imovel }) {
         <div className="mt-4 px-4">
           <button
             onClick={() => openModal()}
-            className="w-full py-3 text-center border border-gray-300 rounded-md bg-white hover:bg-gray-50 transition-colors"
+            className="w-full py-3 text-center border border-gray-300 rounded-md bg-white hover:bg-gray-50 transition-colors font-medium"
           >
-            Ver todas as {images.length} fotos
+            📸 Ver todas as {images.length} fotos
           </button>
         </div>
       )}
 
+      {/* 🖼️ MODAL DA GALERIA */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-90 z-50 overflow-auto">
+        <div className="fixed inset-0 bg-black bg-opacity-95 z-50 overflow-auto">
           <div className="flex justify-between gap-4 p-5 pt-28 mt-6 md:mt-0">
-            <button onClick={closeModal} aria-label="Fechar galeria">
-              <ArrowLeft color="white" size={24} />
+            <button onClick={closeModal} aria-label="Fechar galeria" className="text-white">
+              <ArrowLeft size={24} />
             </button>
             <Share
               primary
@@ -331,28 +253,34 @@ export function ImageGallery({ imovel }) {
                 className="max-w-full max-h-screen object-contain"
               />
 
+              {/* Indicador de foto atual */}
+              <div className="absolute top-20 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm">
+                {selectedIndex + 1} / {images.length}
+                {images[selectedIndex].Destaque === "Sim" && " ⭐"}
+              </div>
+
               <button
                 onClick={goPrev}
-                className="absolute left-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2"
+                className="absolute left-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2 hover:bg-black hover:bg-opacity-50 rounded-full transition-colors"
                 aria-label="Imagem anterior"
               >
                 &#10094;
               </button>
               <button
                 onClick={goNext}
-                className="absolute right-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2"
+                className="absolute right-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2 hover:bg-black hover:bg-opacity-50 rounded-full transition-colors"
                 aria-label="Próxima imagem"
               >
                 &#10095;
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4 ">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
               {images.map((image, idx) => (
                 <div
                   key={idx}
                   onClick={() => setSelectedIndex(idx)}
-                  className="relative w-full h-48 sm:h-56 md:h-64 lg:h-72 xl:h-80 cursor-pointer overflow-hidden"
+                  className="relative w-full h-48 sm:h-56 md:h-64 lg:h-72 xl:h-80 cursor-pointer overflow-hidden border-2 border-transparent hover:border-white transition-colors"
                 >
                   <Image
                     src={image.Foto}
@@ -365,10 +293,29 @@ export function ImageGallery({ imovel }) {
                     loading="lazy"
                     className="object-cover"
                   />
+                  
+                  {/* Overlay com número */}
+                  <div className="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
+                    {idx + 1}
+                  </div>
+                  
+                  {/* Indicador de destaque */}
+                  {image.Destaque === "Sim" && (
+                    <div className="absolute top-2 left-2 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded">
+                      ⭐ DESTAQUE
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* 🔍 Hint do debug no desenvolvimento */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="mt-2 text-xs text-gray-400 text-center">
+          Ctrl + Shift + D para debug da ordenação
         </div>
       )}
     </>
