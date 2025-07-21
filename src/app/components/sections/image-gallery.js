@@ -1,4 +1,4 @@
-// ImageGallery.jsx - VERSÃO CORRIGIDA COM ORDEM DA MIGRAÇÃO
+// ImageGallery.jsx - VERSÃO FINAL: Editável + Reagrupamento Genérico
 "use client";
 
 import { useState, useEffect } from "react";
@@ -25,81 +25,108 @@ export function ImageGallery({ imovel }) {
   const [selectedIndex, setSelectedIndex] = useState(null);
   const isMobile = useIsMobile();
 
-  // Função para extrair código único da foto (sem extensão)
-  const extrairCodigoFoto = (url) => {
-    if (!url) return '';
-    const nomeArquivo = url.split('/').pop();
-    return nomeArquivo.replace(/\.(jpg|jpeg|png|gif)$/i, '');
-  };
+  // Função para reagrupar fotos por padrão do código (genérica)
+  const reagruparFotosPorTipo = (fotos) => {
+    if (!Array.isArray(fotos) || fotos.length === 0) return fotos;
 
-  // Função para obter a ordem original baseada no código da foto
-  const obterOrdemOriginal = (foto) => {
-    const url = foto.Foto || '';
-    const codigo = extrairCodigoFoto(url);
-    
-    // Se a foto não tem código reconhecível, coloca no final
-    if (!codigo) return 9999;
-    
-    // Usar timestamp/hash do código como ordenação
-    // Fotos da mesma migração terão padrões similares
-    if (codigo.includes('i268P_48766b21')) {
-      // Extrair o hash final para ordenação
-      const hashMatch = codigo.match(/i268P_48766b21(.+)/);
-      if (hashMatch) {
-        // Converter hash em número para ordenação consistente
-        return parseInt(hashMatch[1].substring(0, 8), 16) || 0;
-      }
+    try {
+      // 1. Mapear cada foto com seu código e padrão
+      const fotosComPadrao = fotos.map((foto, index) => {
+        const url = foto.Foto || '';
+        const nomeArquivo = url.split('/').pop() || '';
+        const codigo = nomeArquivo.replace(/\.(jpg|jpeg|png|gif)$/i, '');
+        
+        // Extrair padrão genérico (primeiros caracteres até número ou underscore)
+        let padrao = '';
+        
+        // Tentar diferentes padrões comuns
+        if (codigo.includes('i268P')) {
+          padrao = 'i268P'; // Tipo 1
+        } else if (codigo.includes('iUg3s56gtAT3cfaA5U90')) {
+          padrao = 'iUg3s56gtAT3cfaA5U90'; // Tipo 2  
+        } else if (codigo.includes('iUG8o15s')) {
+          padrao = 'iUG8o15s'; // Tipo 3
+        } else {
+          // Para códigos diferentes, usar os primeiros 5-8 caracteres
+          padrao = codigo.substring(0, Math.min(8, codigo.length)).replace(/[0-9]/g, '');
+        }
+        
+        return {
+          foto,
+          codigo,
+          padrao,
+          ordemOriginal: index
+        };
+      });
+
+      // 2. Agrupar por padrão
+      const grupos = {};
+      fotosComPadrao.forEach(item => {
+        if (!grupos[item.padrao]) {
+          grupos[item.padrao] = [];
+        }
+        grupos[item.padrao].push(item);
+      });
+
+      // 3. Ordenar dentro de cada grupo pela ordem original
+      Object.keys(grupos).forEach(padrao => {
+        grupos[padrao].sort((a, b) => a.ordemOriginal - b.ordemOriginal);
+      });
+
+      // 4. Definir ordem dos grupos (primeiro que aparece na lista original)
+      const ordemGrupos = [];
+      fotosComPadrao.forEach(item => {
+        if (!ordemGrupos.includes(item.padrao)) {
+          ordemGrupos.push(item.padrao);
+        }
+      });
+
+      // 5. Montar lista reagrupada
+      const fotosReagrupadas = [];
+      ordemGrupos.forEach(padrao => {
+        if (grupos[padrao]) {
+          grupos[padrao].forEach(item => {
+            fotosReagrupadas.push(item.foto);
+          });
+        }
+      });
+
+      console.log('🔄 Reagrupamento aplicado:', {
+        grupos: Object.keys(grupos).map(p => `${p}: ${grupos[p].length} fotos`),
+        totalFotos: fotosReagrupadas.length
+      });
+
+      return fotosReagrupadas;
+
+    } catch (error) {
+      console.error('❌ Erro no reagrupamento:', error);
+      return fotos; // Retorna ordem original em caso de erro
     }
-    
-    if (codigo.includes('iUg3s56gtAT3cfaA5U90_487')) {
-      const hashMatch = codigo.match(/iUg3s56gtAT3cfaA5U90_487(.+)/);
-      if (hashMatch) {
-        // Somar offset para vir depois das i268P
-        return 100000 + (parseInt(hashMatch[1].substring(0, 8), 16) || 0);
-      }
-    }
-    
-    if (codigo.includes('iUG8o15s_4876')) {
-      const hashMatch = codigo.match(/iUG8o15s_4876(.+)/);
-      if (hashMatch) {
-        // Somar offset para vir por último
-        return 200000 + (parseInt(hashMatch[1].substring(0, 8), 16) || 0);
-      }
-    }
-    
-    // Outros tipos no final
-    return 9999;
   };
 
   const getProcessedImages = () => {
     if (!Array.isArray(imovel?.Foto)) return [];
 
     try {
-      // 1. Foto destacada (se existir)
+      // 1. Foto destacada (sempre primeiro)
       const fotoDestaque = imovel.Foto.find(foto => foto.Destaque === "Sim");
       
-      // 2. Outras fotos ordenadas pela migração original
+      // 2. Outras fotos (sem destaque)
       const outrasFotos = imovel.Foto.filter(foto => foto !== fotoDestaque);
       
-      // 3. Ordenar outras fotos pela ordem da migração
-      const outrasFotosOrdenadas = outrasFotos.sort((a, b) => {
-        const ordemA = obterOrdemOriginal(a);
-        const ordemB = obterOrdemOriginal(b);
-        return ordemA - ordemB;
-      });
+      // 3. Reagrupar outras fotos por tipo (genérico)
+      const outrasFotosReagrupadas = reagruparFotosPorTipo(outrasFotos);
       
-      // 4. Criar array final: destaque primeiro + outras na ordem da migração
+      // 4. Array final: destaque + reagrupadas
       const fotosOrdenadas = [
         ...(fotoDestaque ? [fotoDestaque] : []),
-        ...outrasFotosOrdenadas
+        ...outrasFotosReagrupadas
       ];
 
-      console.log('✅ Ordem das fotos corrigida:', {
+      console.log('✅ Galeria processada:', {
         total: fotosOrdenadas.length,
         destaque: !!fotoDestaque,
-        primeiraFoto: fotosOrdenadas[0]?.Foto,
-        segundaFoto: fotosOrdenadas[1]?.Foto,
-        ordemMigracao: 'APLICADA'
+        reagrupamento: 'APLICADO - GENÉRICO'
       });
 
       return fotosOrdenadas.map((foto, index) => ({
