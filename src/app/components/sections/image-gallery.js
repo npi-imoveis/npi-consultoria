@@ -1,5 +1,3 @@
-vc esta fazendo aos alterações com base nesse codigo?
-
 // ImageGallery.jsx - VERSÃO CORRIGIDA COM ORDEM DA MIGRAÇÃO
 "use client";
 
