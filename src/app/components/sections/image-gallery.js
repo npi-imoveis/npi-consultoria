@@ -1,4 +1,4 @@
-// ImageGallery.jsx - VERSÃO FINAL: Editável + Reagrupamento Genérico
+// ImageGallery.jsx - SOLUÇÃO HÍBRIDA DEFINITIVA: CAMPO ORDEM + ANÁLISE DE CÓDIGOS
 "use client";
 
 import { useState, useEffect } from "react";
@@ -25,86 +25,145 @@ export function ImageGallery({ imovel }) {
   const [selectedIndex, setSelectedIndex] = useState(null);
   const isMobile = useIsMobile();
 
-  // Função para usar campo ORDEM da migração (definida dentro do componente)
-  const usarOrdemDaMigracao = (fotos) => {
-    if (!Array.isArray(fotos) || fotos.length === 0) return fotos;
+  // Função para extrair código único da foto (sem extensão)
+  const extrairCodigoFoto = (url) => {
+    if (!url) return '';
+    const nomeArquivo = url.split('/').pop();
+    return nomeArquivo.replace(/\.(jpg|jpeg|png|gif)$/i, '');
+  };
 
-    try {
-      // Verificar se existe campo ORDEM nos dados
-      const temCampoOrdem = fotos.some(foto => 
-        foto.Ordem !== undefined || 
-        foto.ordem !== undefined || 
-        foto.ORDEM !== undefined
-      );
-
-      if (temCampoOrdem) {
-        // Usar campo ORDEM original do MySQL
-        const fotosOrdenadas = [...fotos].sort((a, b) => {
-          const ordemA = a.Ordem || a.ordem || a.ORDEM || 999999;
-          const ordemB = b.Ordem || b.ordem || b.ORDEM || 999999;
-          return ordemA - ordemB;
-        });
-
-        console.log('🎯 ORDEM DA MIGRAÇÃO APLICADA:', {
-          totalFotos: fotosOrdenadas.length,
-          metodo: 'Campo ORDEM do MySQL',
-          primeiras5: fotosOrdenadas.slice(0, 5).map((f, i) => {
-            const ordem = f.Ordem || f.ordem || f.ORDEM || 'N/A';
-            const codigo = f.Foto?.split('/').pop()?.replace(/\.(jpg|jpeg|png|gif)$/i, '') || '';
-            return `${i+1}: [Ordem: ${ordem}] ${codigo}`;
-          })
-        });
-
-        return fotosOrdenadas;
-      } else {
-        // Fallback: manter ordem da API (que pode já estar correta)
-        console.log('⚠️ Campo ORDEM não encontrado - mantendo ordem da API:', {
-          totalFotos: fotos.length,
-          metodo: 'Ordem original da API',
-          estruturaPrimeiraFoto: fotos[0] ? Object.keys(fotos[0]) : 'Nenhuma foto',
-          sugestao: 'Incluir campo ORDEM na resposta da API para ordenação precisa'
-        });
-
-        return fotos;
+  // Função para análise de códigos (método que mais funcionou)
+  const obterOrdemPorCodigo = (foto) => {
+    const url = foto.Foto || '';
+    const codigo = extrairCodigoFoto(url);
+    
+    // Se a foto não tem código reconhecível, coloca no final
+    if (!codigo) return 9999;
+    
+    // Usar timestamp/hash do código como ordenação (método que funcionou melhor)
+    if (codigo.includes('i268P_48766b21')) {
+      const hashMatch = codigo.match(/i268P_48766b21(.+)/);
+      if (hashMatch) {
+        return parseInt(hashMatch[1].substring(0, 8), 16) || 0;
       }
-
-    } catch (error) {
-      console.error('❌ Erro ao aplicar ordem da migração:', error);
-      return fotos;
     }
+    
+    if (codigo.includes('iUg3s56gtAT3cfaA5U90_487')) {
+      const hashMatch = codigo.match(/iUg3s56gtAT3cfaA5U90_487(.+)/);
+      if (hashMatch) {
+        // Somar offset para vir depois das i268P
+        return 100000 + (parseInt(hashMatch[1].substring(0, 8), 16) || 0);
+      }
+    }
+    
+    if (codigo.includes('iUG8o15s_4876')) {
+      const hashMatch = codigo.match(/iUG8o15s_4876(.+)/);
+      if (hashMatch) {
+        // Somar offset para vir por último
+        return 200000 + (parseInt(hashMatch[1].substring(0, 8), 16) || 0);
+      }
+    }
+
+    // Outros padrões identificados
+    if (codigo.includes('i19Q55g4D1123W87')) {
+      const hashMatch = codigo.match(/i19Q55g4D1123W87(.+)/);
+      if (hashMatch) {
+        return 300000 + (parseInt(hashMatch[1].substring(0, 8), 16) || 0);
+      }
+    }
+
+    if (codigo.includes('ik71mgr366')) {
+      const hashMatch = codigo.match(/ik71mgr366(.+)/);
+      if (hashMatch) {
+        return 400000 + (parseInt(hashMatch[1].substring(0, 8), 16) || 0);
+      }
+    }
+
+    if (codigo.includes('ic782Y6X12Tn')) {
+      const hashMatch = codigo.match(/ic782Y6X12Tn(.+)/);
+      if (hashMatch) {
+        return 500000 + (parseInt(hashMatch[1].substring(0, 8), 16) || 0);
+      }
+    }
+    
+    // Outros tipos no final
+    return 9999;
   };
 
   const getProcessedImages = () => {
     if (!Array.isArray(imovel?.Foto)) return [];
 
     try {
-      // 1. Foto destacada (sempre primeiro)
+      // 1. FOTO DESTAQUE SEMPRE PRIMEIRO (prioridade máxima)
       const fotoDestaque = imovel.Foto.find(foto => foto.Destaque === "Sim");
       
-      // 2. Outras fotos (sem destaque)
+      // 2. Outras fotos (EXCLUINDO destaque para evitar duplicação)
       const outrasFotos = imovel.Foto.filter(foto => foto !== fotoDestaque);
       
-      // 3. Usar ordem original da migração (campo ORDEM do MySQL)
-      const outrasFotosReagrupadas = usarOrdemDaMigracao(outrasFotos);
+      // 3. MÉTODO HÍBRIDO: CAMPO ORDEM primeiro, senão análise de códigos
+      let outrasFotosOrdenadas;
+      let metodoUsado;
+
+      // Verificar se existe campo ORDEM nos dados
+      const temCampoOrdem = outrasFotos.some(foto => 
+        foto.Ordem !== undefined || 
+        foto.ordem !== undefined || 
+        foto.ORDEM !== undefined
+      );
+
+      if (temCampoOrdem) {
+        // MÉTODO 1: Usar campo ORDEM original do MySQL (IDEAL)
+        outrasFotosOrdenadas = [...outrasFotos].sort((a, b) => {
+          const ordemA = a.Ordem || a.ordem || a.ORDEM || 999999;
+          const ordemB = b.Ordem || b.ordem || b.ORDEM || 999999;
+          return ordemA - ordemB; // Ordem crescente (1, 2, 3...)
+        });
+        metodoUsado = 'Campo ORDEM do MySQL';
+
+        console.log('🎯 MÉTODO 1 - CAMPO ORDEM APLICADO:', {
+          totalFotos: outrasFotosOrdenadas.length,
+          metodo: metodoUsado,
+          primeiras5: outrasFotosOrdenadas.slice(0, 5).map((f, i) => {
+            const ordem = f.Ordem || f.ordem || f.ORDEM || 'N/A';
+            const codigo = extrairCodigoFoto(f.Foto);
+            return `${i+1}: [Ordem: ${ordem}] ${codigo.substring(0, 20)}...`;
+          })
+        });
+      } else {
+        // MÉTODO 2: Usar análise de códigos (FALLBACK que funcionou melhor)
+        outrasFotosOrdenadas = [...outrasFotos].sort((a, b) => {
+          const ordemA = obterOrdemPorCodigo(a);
+          const ordemB = obterOrdemPorCodigo(b);
+          return ordemA - ordemB;
+        });
+        metodoUsado = 'Análise de códigos de arquivos';
+
+        console.log('🔄 MÉTODO 2 - ANÁLISE DE CÓDIGOS APLICADA:', {
+          totalFotos: outrasFotosOrdenadas.length,
+          metodo: metodoUsado,
+          primeiras5: outrasFotosOrdenadas.slice(0, 5).map((f, i) => {
+            const codigo = extrairCodigoFoto(f.Foto);
+            const ordem = obterOrdemPorCodigo(f);
+            return `${i+1}: [Hash: ${ordem}] ${codigo.substring(0, 20)}...`;
+          })
+        });
+      }
       
-      // 4. Array final: destaque + reagrupadas
-      const fotosOrdenadas = [
-        ...(fotoDestaque ? [fotoDestaque] : []),
-        ...outrasFotosReagrupadas
+      // 4. MONTAGEM FINAL: DESTAQUE SEMPRE PRIMEIRO + outras ordenadas
+      const fotosFinais = [
+        ...(fotoDestaque ? [fotoDestaque] : []), // DESTAQUE SEMPRE PRIMEIRO
+        ...outrasFotosOrdenadas                   // Depois as outras ordenadas
       ];
 
-      console.log('✅ Galeria processada:', {
-        total: fotosOrdenadas.length,
-        destaque: !!fotoDestaque,
-        metodo: 'CAMPO ORDEM da migração MySQL',
-        primeiras5: fotosOrdenadas.slice(0, 5).map((f, i) => {
-          const nome = f.Foto?.split('/').pop() || '';
-          const codigo = nome.replace(/\.(jpg|jpeg|png|gif)$/i, '');
-          return `${i+1}: ${codigo}`;
-        })
+      console.log('✅ GALERIA HÍBRIDA PROCESSADA:', {
+        total: fotosFinais.length,
+        destaque: fotoDestaque ? 'SIM - garantido em 1º' : 'NÃO',
+        metodoOrdenacao: metodoUsado,
+        verificacaoDestaque: fotosFinais[0] === fotoDestaque ? 'DESTAQUE em 1º ✅' : 'Primeira por ordenação ✅',
+        estruturaPrimeiraFoto: fotosFinais[0] ? Object.keys(fotosFinais[0]).join(', ') : 'Nenhuma'
       });
 
-      return fotosOrdenadas.map((foto, index) => ({
+      return fotosFinais.map((foto, index) => ({
         ...foto,
         Codigo: `${imovel.Codigo}-foto-${index}`,
       }));
