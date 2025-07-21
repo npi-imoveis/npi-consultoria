@@ -1,7 +1,7 @@
-// ImagesSection.jsx - VERSÃO CORRIGIDA COM ORDEM DA MIGRAÇÃO
+// ImagesSection.jsx - VERSÃO FINAL: Editável + Reagrupamento Inteligente
 "use client";
 
-import { memo, useState } from "react";
+import { memo, useState, useEffect } from "react";
 import FormSection from "../FormSection";
 import Image from "next/image";
 import JSZip from "jszip";
@@ -19,80 +19,106 @@ const ImagesSection = memo(({
   validation
 }) => {
   const [downloadingPhotos, setDownloadingPhotos] = useState(false);
+  const [autoReagroupEnabled, setAutoReagroupEnabled] = useState(true);
 
-  // Função para extrair código único da foto (sem extensão)
-  const extrairCodigoFoto = (url) => {
-    if (!url) return '';
-    const nomeArquivo = url.split('/').pop();
-    return nomeArquivo.replace(/\.(jpg|jpeg|png|gif)$/i, '');
-  };
+  // Função para reagrupar fotos por padrão do código (genérica)
+  const reagruparFotosPorTipo = (fotos) => {
+    if (!Array.isArray(fotos) || fotos.length === 0) return fotos;
 
-  // Função para obter a ordem original baseada no código da foto
-  const obterOrdemOriginal = (foto) => {
-    const url = foto.Foto || '';
-    const codigo = extrairCodigoFoto(url);
-    
-    // Se a foto não tem código reconhecível, coloca no final
-    if (!codigo) return 9999;
-    
-    // Usar timestamp/hash do código como ordenação
-    // Fotos da mesma migração terão padrões similares
-    if (codigo.includes('i268P_48766b21')) {
-      // Extrair o hash final para ordenação
-      const hashMatch = codigo.match(/i268P_48766b21(.+)/);
-      if (hashMatch) {
-        // Converter hash em número para ordenação consistente
-        return parseInt(hashMatch[1].substring(0, 8), 16) || 0;
-      }
+    try {
+      // 1. Mapear cada foto com seu código e padrão
+      const fotosComPadrao = fotos.map((foto, index) => {
+        const url = foto.Foto || '';
+        const nomeArquivo = url.split('/').pop() || '';
+        const codigo = nomeArquivo.replace(/\.(jpg|jpeg|png|gif)$/i, '');
+        
+        // Extrair padrão genérico
+        let padrao = '';
+        
+        if (codigo.includes('i268P')) {
+          padrao = 'i268P'; // Tipo 1
+        } else if (codigo.includes('iUg3s56gtAT3cfaA5U90')) {
+          padrao = 'iUg3s56gtAT3cfaA5U90'; // Tipo 2  
+        } else if (codigo.includes('iUG8o15s')) {
+          padrao = 'iUG8o15s'; // Tipo 3
+        } else {
+          // Para códigos diferentes, usar os primeiros caracteres
+          padrao = codigo.substring(0, Math.min(8, codigo.length)).replace(/[0-9]/g, '');
+        }
+        
+        return {
+          foto,
+          codigo,
+          padrao,
+          ordemOriginal: index
+        };
+      });
+
+      // 2. Agrupar por padrão
+      const grupos = {};
+      fotosComPadrao.forEach(item => {
+        if (!grupos[item.padrao]) {
+          grupos[item.padrao] = [];
+        }
+        grupos[item.padrao].push(item);
+      });
+
+      // 3. Ordenar dentro de cada grupo pela ordem original
+      Object.keys(grupos).forEach(padrao => {
+        grupos[padrao].sort((a, b) => a.ordemOriginal - b.ordemOriginal);
+      });
+
+      // 4. Definir ordem dos grupos
+      const ordemGrupos = [];
+      fotosComPadrao.forEach(item => {
+        if (!ordemGrupos.includes(item.padrao)) {
+          ordemGrupos.push(item.padrao);
+        }
+      });
+
+      // 5. Montar lista reagrupada
+      const fotosReagrupadas = [];
+      ordemGrupos.forEach(padrao => {
+        if (grupos[padrao]) {
+          grupos[padrao].forEach(item => {
+            fotosReagrupadas.push(item.foto);
+          });
+        }
+      });
+
+      return fotosReagrupadas;
+
+    } catch (error) {
+      console.error('❌ Erro no reagrupamento:', error);
+      return fotos;
     }
-    
-    if (codigo.includes('iUg3s56gtAT3cfaA5U90_487')) {
-      const hashMatch = codigo.match(/iUg3s56gtAT3cfaA5U90_487(.+)/);
-      if (hashMatch) {
-        // Somar offset para vir depois das i268P
-        return 100000 + (parseInt(hashMatch[1].substring(0, 8), 16) || 0);
-      }
-    }
-    
-    if (codigo.includes('iUG8o15s_4876')) {
-      const hashMatch = codigo.match(/iUG8o15s_4876(.+)/);
-      if (hashMatch) {
-        // Somar offset para vir por último
-        return 200000 + (parseInt(hashMatch[1].substring(0, 8), 16) || 0);
-      }
-    }
-    
-    // Outros tipos no final
-    return 9999;
   };
 
   const getSortedPhotos = () => {
     if (!Array.isArray(formData?.Foto)) return [];
 
     try {
-      // 1. Foto destacada (se existir)
+      // 1. Foto destacada (sempre primeiro)
       const fotoDestaque = formData.Foto.find(foto => foto.Destaque === "Sim");
       
-      // 2. Outras fotos ordenadas pela migração original
+      // 2. Outras fotos
       const outrasFotos = formData.Foto.filter(foto => foto !== fotoDestaque);
       
-      // 3. Ordenar outras fotos pela ordem da migração
-      const outrasFotosOrdenadas = outrasFotos.sort((a, b) => {
-        const ordemA = obterOrdemOriginal(a);
-        const ordemB = obterOrdemOriginal(b);
-        return ordemA - ordemB;
-      });
+      // 3. Aplicar reagrupamento automático (se habilitado)
+      const outrasFotosProcessadas = autoReagroupEnabled 
+        ? reagruparFotosPorTipo(outrasFotos)
+        : outrasFotos; // Manter ordem manual se reagrupamento desabilitado
       
-      // 4. Criar array final: destaque primeiro + outras na ordem da migração
+      // 4. Array final
       const fotosOrdenadas = [
         ...(fotoDestaque ? [fotoDestaque] : []),
-        ...outrasFotosOrdenadas
+        ...outrasFotosProcessadas
       ];
 
-      console.log('🔧 ADMIN: Ordem das fotos corrigida:', {
+      console.log('🔧 ADMIN: Fotos processadas:', {
         total: fotosOrdenadas.length,
         destaque: !!fotoDestaque,
-        ordemMigracao: 'APLICADA'
+        reagrupamentoAuto: autoReagroupEnabled ? 'ATIVO' : 'DESABILITADO'
       });
 
       return fotosOrdenadas;
@@ -104,6 +130,13 @@ const ImagesSection = memo(({
   };
 
   const sortedPhotos = getSortedPhotos();
+
+  // Função para extrair código da foto (para debug)
+  const extrairCodigoFoto = (url) => {
+    if (!url) return '';
+    const nomeArquivo = url.split('/').pop();
+    return nomeArquivo.replace(/\.(jpg|jpeg|png|gif)$/i, '');
+  };
 
   const baixarTodasImagens = async (imagens = []) => {
     if (!Array.isArray(imagens)) return;
@@ -174,9 +207,17 @@ const ImagesSection = memo(({
 
   const handlePositionChange = (codigo, newPosition) => {
     const position = parseInt(newPosition);
-    if (!isNaN(position)) {
+    if (!isNaN(position) && position > 0 && position <= sortedPhotos.length) {
+      // Desabilitar reagrupamento automático quando usuário reordena manualmente
+      setAutoReagroupEnabled(false);
       changeImagePosition(codigo, position);
     }
+  };
+
+  const handleReagroupPhotos = () => {
+    setAutoReagroupEnabled(true);
+    // Força reprocessamento
+    // As fotos serão reagrupadas na próxima renderização
   };
 
   return (
@@ -214,6 +255,14 @@ const ImagesSection = memo(({
               <>
                 <button
                   type="button"
+                  onClick={handleReagroupPhotos}
+                  className="px-3 py-1.5 text-sm bg-purple-600 hover:bg-purple-700 text-white rounded-md transition-colors"
+                  title="Reagrupar fotos automaticamente por tipo"
+                >
+                  🔄 Reagrupar
+                </button>
+                <button
+                  type="button"
                   onClick={() => baixarTodasImagens(sortedPhotos)}
                   disabled={downloadingPhotos}
                   className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
@@ -234,6 +283,28 @@ const ImagesSection = memo(({
               </>
             )}
           </div>
+        </div>
+
+        {/* Status do reagrupamento */}
+        <div className={`p-3 rounded-md text-sm ${
+          autoReagroupEnabled 
+            ? 'bg-green-50 border-l-4 border-green-400 text-green-700'
+            : 'bg-yellow-50 border-l-4 border-yellow-400 text-yellow-700'
+        }`}>
+          <p>
+            <strong>
+              {autoReagroupEnabled 
+                ? '🤖 Reagrupamento automático ATIVO' 
+                : '✋ Ordem manual ATIVA'
+              }
+            </strong>
+          </p>
+          <p className="text-xs mt-1">
+            {autoReagroupEnabled 
+              ? 'Fotos agrupadas automaticamente por tipo. Use os campos "Ordem" para personalizar.'
+              : 'Reagrupamento automático pausado. Você está controlando a ordem manualmente.'
+            }
+          </p>
         </div>
 
         {sortedPhotos.length > 0 ? (
@@ -258,14 +329,19 @@ const ImagesSection = memo(({
                 <div className="p-3 space-y-3">
                   <div className="flex gap-2">
                     <div className="flex-1">
-                      <label className="block text-xs text-gray-500 mb-1">Ordem (Migração)</label>
-                      <input
-                        type="text"
-                        value={`${index + 1}°`}
-                        readOnly
-                        className="w-full p-1.5 text-sm border rounded-md bg-gray-100 text-gray-600"
-                        title="Ordem baseada na migração original - somente leitura"
-                      />
+                      <label className="block text-xs text-gray-500 mb-1">Ordem</label>
+                      <select
+                        value={index + 1}
+                        onChange={(e) => handlePositionChange(photo.Codigo, e.target.value)}
+                        className="w-full p-1.5 text-sm border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        title="Alterar posição da foto na galeria"
+                      >
+                        {[...Array(sortedPhotos.length)].map((_, i) => (
+                          <option key={i + 1} value={i + 1}>
+                            {i + 1}°
+                          </option>
+                        ))}
+                      </select>
                     </div>
                     <div className="flex-1">
                       <label className="block text-xs text-gray-500 mb-1">Ação</label>
@@ -322,12 +398,6 @@ const ImagesSection = memo(({
             </p>
           </div>
         )}
-
-        <div className="bg-blue-50 border-l-4 border-blue-400 p-3">
-          <p className="text-blue-700 text-sm">
-            📸 <strong>Ordem automática aplicada:</strong> Foto destaque primeiro + demais na sequência da migração original
-          </p>
-        </div>
       </div>
     </FormSection>
   );
