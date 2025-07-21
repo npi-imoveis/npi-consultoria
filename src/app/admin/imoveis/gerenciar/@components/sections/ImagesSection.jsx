@@ -1,7 +1,7 @@
-// ImagesSection.jsx - VERSÃO FINAL: Editável + Reagrupamento Inteligente
+// ImagesSection.jsx - SOLUÇÃO HÍBRIDA DEFINITIVA: CAMPO ORDEM + ANÁLISE DE CÓDIGOS
 "use client";
 
-import { memo, useState, useEffect } from "react";
+import { memo, useState } from "react";
 import FormSection from "../FormSection";
 import Image from "next/image";
 import JSZip from "jszip";
@@ -21,90 +21,64 @@ const ImagesSection = memo(({
   const [downloadingPhotos, setDownloadingPhotos] = useState(false);
   const [autoReagroupEnabled, setAutoReagroupEnabled] = useState(true);
 
-  // Função para reagrupar fotos por padrão do código (genérica)
-  const reagruparFotosPorTipo = (fotos) => {
-    if (!Array.isArray(fotos) || fotos.length === 0) return fotos;
+  // Função para extrair código único da foto
+  const extrairCodigoFoto = (url) => {
+    if (!url) return '';
+    const nomeArquivo = url.split('/').pop();
+    return nomeArquivo.replace(/\.(jpg|jpeg|png|gif)$/i, '');
+  };
 
-    try {
-      // 1. Mapear cada foto com seu código e padrão
-      const fotosComPadrao = fotos.map((foto, index) => {
-        const url = foto.Foto || '';
-        const nomeArquivo = url.split('/').pop() || '';
-        const codigo = nomeArquivo.replace(/\.(jpg|jpeg|png|gif)$/i, '');
-        
-        // Extrair padrão genérico (mais robusto)
-        let padrao = '';
-        
-        // Método melhorado: detectar todos os padrões específicos
-        if (codigo.includes('i268P')) {
-          padrao = 'i268P'; // Grupo 1
-        } else if (codigo.includes('iUg3s56gtAT3cfaA5U90')) {
-          padrao = 'iUg3s56gtAT3cfaA5U90'; // Grupo 2  
-        } else if (codigo.includes('iUG8o15s')) {
-          padrao = 'iUG8o15s'; // Grupo 3
-        } else if (codigo.includes('i19Q55g4D1123W87')) {
-          padrao = 'i19Q55g4D1123W87'; // Grupo 4
-        } else if (codigo.includes('ik71mgr366')) {
-          padrao = 'ik71mgr366'; // Grupo 5
-        } else if (codigo.includes('ic782Y6X12Tn')) {
-          padrao = 'ic782Y6X12Tn'; // Grupo 6
-        } else {
-          // Para códigos totalmente diferentes, usar os primeiros caracteres
-          const match = codigo.match(/^([a-zA-Z]+)/);
-          padrao = match ? match[1] : codigo.substring(0, Math.min(5, codigo.length));
-        }
-        
-        return {
-          foto,
-          codigo,
-          padrao,
-          ordemOriginal: index
-        };
-      });
-
-      // 2. Agrupar por padrão
-      const grupos = {};
-      fotosComPadrao.forEach(item => {
-        if (!grupos[item.padrao]) {
-          grupos[item.padrao] = [];
-        }
-        grupos[item.padrao].push(item);
-      });
-
-      // 3. Ordenar dentro de cada grupo pela ordem original
-      Object.keys(grupos).forEach(padrao => {
-        grupos[padrao].sort((a, b) => a.ordemOriginal - b.ordemOriginal);
-      });
-
-      // 4. Definir ordem dos grupos
-      const ordemGrupos = [];
-      fotosComPadrao.forEach(item => {
-        if (!ordemGrupos.includes(item.padrao)) {
-          ordemGrupos.push(item.padrao);
-        }
-      });
-
-      // 5. Montar lista reagrupada
-      const fotosReagrupadas = [];
-      ordemGrupos.forEach(padrao => {
-        if (grupos[padrao]) {
-          grupos[padrao].forEach(item => {
-            fotosReagrupadas.push(item.foto);
-          });
-        }
-      });
-
-      console.log('🔧 ADMIN: Reagrupamento aplicado:', {
-        grupos: Object.keys(grupos).map(p => `${p}: ${grupos[p].length} fotos`),
-        totalFotos: fotosReagrupadas.length
-      });
-
-      return fotosReagrupadas;
-
-    } catch (error) {
-      console.error('❌ Erro no reagrupamento:', error);
-      return fotos;
+  // Função para análise de códigos (método que mais funcionou)
+  const obterOrdemPorCodigo = (foto) => {
+    const url = foto.Foto || '';
+    const codigo = extrairCodigoFoto(url);
+    
+    if (!codigo) return 9999;
+    
+    // Usar análise de hash (método que funcionou melhor)
+    if (codigo.includes('i268P_48766b21')) {
+      const hashMatch = codigo.match(/i268P_48766b21(.+)/);
+      if (hashMatch) {
+        return parseInt(hashMatch[1].substring(0, 8), 16) || 0;
+      }
     }
+    
+    if (codigo.includes('iUg3s56gtAT3cfaA5U90_487')) {
+      const hashMatch = codigo.match(/iUg3s56gtAT3cfaA5U90_487(.+)/);
+      if (hashMatch) {
+        return 100000 + (parseInt(hashMatch[1].substring(0, 8), 16) || 0);
+      }
+    }
+    
+    if (codigo.includes('iUG8o15s_4876')) {
+      const hashMatch = codigo.match(/iUG8o15s_4876(.+)/);
+      if (hashMatch) {
+        return 200000 + (parseInt(hashMatch[1].substring(0, 8), 16) || 0);
+      }
+    }
+
+    if (codigo.includes('i19Q55g4D1123W87')) {
+      const hashMatch = codigo.match(/i19Q55g4D1123W87(.+)/);
+      if (hashMatch) {
+        return 300000 + (parseInt(hashMatch[1].substring(0, 8), 16) || 0);
+      }
+    }
+
+    if (codigo.includes('ik71mgr366')) {
+      const hashMatch = codigo.match(/ik71mgr366(.+)/);
+      if (hashMatch) {
+        return 400000 + (parseInt(hashMatch[1].substring(0, 8), 16) || 0);
+      }
+    }
+
+    if (codigo.includes('ic782Y6X12Tn')) {
+      const hashMatch = codigo.match(/ic782Y6X12Tn(.+)/);
+      if (hashMatch) {
+        return 500000 + (parseInt(hashMatch[1].substring(0, 8), 16) || 0);
+      }
+    }
+    
+    return 9999;
   };
 
   const getSortedPhotos = () => {
@@ -117,8 +91,9 @@ const ImagesSection = memo(({
       // 2. Outras fotos (EXCLUINDO destaque para evitar duplicação)
       const outrasFotos = formData.Foto.filter(foto => foto !== fotoDestaque);
       
-      // 3. Aplicar ordenação nas outras fotos (se habilitado)
+      // 3. Aplicar ordenação híbrida (se habilitado)
       let outrasFotosProcessadas;
+      let metodoUsado;
       
       if (autoReagroupEnabled) {
         // Verificar se existe campo ORDEM nos dados
@@ -129,16 +104,17 @@ const ImagesSection = memo(({
         );
 
         if (temCampoOrdem) {
-          // Usar campo ORDEM original do MySQL para outras fotos
+          // MÉTODO 1: Usar campo ORDEM original do MySQL (IDEAL)
           outrasFotosProcessadas = [...outrasFotos].sort((a, b) => {
             const ordemA = a.Ordem || a.ordem || a.ORDEM || 999999;
             const ordemB = b.Ordem || b.ordem || b.ORDEM || 999999;
             return ordemA - ordemB; // Ordem crescente (1, 2, 3...)
           });
+          metodoUsado = 'Campo ORDEM do MySQL';
 
-          console.log('🔧 ADMIN: ORDEM DA MIGRAÇÃO APLICADA:', {
+          console.log('🔧 ADMIN: MÉTODO 1 - CAMPO ORDEM APLICADO:', {
             totalFotos: outrasFotosProcessadas.length,
-            metodo: 'Campo ORDEM do MySQL',
+            metodo: metodoUsado,
             fotoDestaque: fotoDestaque ? 'SIM - será primeira sempre' : 'NÃO',
             primeiras3: outrasFotosProcessadas.slice(0, 3).map((f, i) => {
               const ordem = f.Ordem || f.ordem || f.ORDEM || 'N/A';
@@ -146,18 +122,30 @@ const ImagesSection = memo(({
             })
           });
         } else {
-          // Fallback: manter ordem da API
-          outrasFotosProcessadas = outrasFotos;
-          console.log('⚠️ ADMIN: Campo ORDEM não encontrado:', {
-            totalFotos: outrasFotos.length,
-            metodo: 'Ordem original da API',
+          // MÉTODO 2: Usar análise de códigos (FALLBACK que funcionou melhor)
+          outrasFotosProcessadas = [...outrasFotos].sort((a, b) => {
+            const ordemA = obterOrdemPorCodigo(a);
+            const ordemB = obterOrdemPorCodigo(b);
+            return ordemA - ordemB;
+          });
+          metodoUsado = 'Análise de códigos de arquivos';
+
+          console.log('🔧 ADMIN: MÉTODO 2 - ANÁLISE DE CÓDIGOS APLICADA:', {
+            totalFotos: outrasFotosProcessadas.length,
+            metodo: metodoUsado,
             fotoDestaque: fotoDestaque ? 'SIM - será primeira sempre' : 'NÃO',
-            estruturaPrimeiraFoto: outrasFotos[0] ? Object.keys(outrasFotos[0]) : 'Nenhuma foto'
+            primeiras3: outrasFotosProcessadas.slice(0, 3).map((f, i) => {
+              const codigo = extrairCodigoFoto(f.Foto);
+              const ordem = obterOrdemPorCodigo(f);
+              return `${i+1}: [Hash: ${ordem}] ${codigo.substring(0, 15)}...`;
+            })
           });
         }
       } else {
         // Modo manual - manter ordem atual das outras fotos
         outrasFotosProcessadas = outrasFotos;
+        metodoUsado = 'Ordem manual';
+        
         console.log('🔧 ADMIN: Modo manual ativo:', {
           fotoDestaque: fotoDestaque ? 'SIM - será primeira sempre' : 'NÃO',
           outrasfotos: outrasFotos.length
@@ -170,11 +158,11 @@ const ImagesSection = memo(({
         ...outrasFotosProcessadas                 // Depois as outras
       ];
 
-      console.log('🔧 ADMIN: Processamento final - DESTAQUE PRESERVADO:', {
+      console.log('🔧 ADMIN: PROCESSAMENTO HÍBRIDO FINAL:', {
         total: fotosFinais.length,
         primeiraFoto: fotoDestaque ? 'DESTAQUE garantido em 1º' : 'Primeira da ordenação',
         destaque: !!fotoDestaque,
-        metodo: autoReagroupEnabled ? 'DESTAQUE + Campo ORDEM da migração' : 'DESTAQUE + Ordem manual',
+        metodoOrdenacao: metodoUsado,
         verificacao: fotosFinais[0] === fotoDestaque ? 'DESTAQUE em 1º ✅' : 'Primeira por ordem ✅'
       });
 
@@ -187,13 +175,6 @@ const ImagesSection = memo(({
   };
 
   const sortedPhotos = getSortedPhotos();
-
-  // Função para extrair código da foto (para debug)
-  const extrairCodigoFoto = (url) => {
-    if (!url) return '';
-    const nomeArquivo = url.split('/').pop();
-    return nomeArquivo.replace(/\.(jpg|jpeg|png|gif)$/i, '');
-  };
 
   const baixarTodasImagens = async (imagens = []) => {
     if (!Array.isArray(imagens)) return;
@@ -314,9 +295,9 @@ const ImagesSection = memo(({
                   type="button"
                   onClick={handleReagroupPhotos}
                   className="px-3 py-1.5 text-sm bg-purple-600 hover:bg-purple-700 text-white rounded-md transition-colors"
-                  title="Aplicar ordem da migração (campo ORDEM do MySQL) - DESTAQUE sempre em 1º"
+                  title="Ordem híbrida: Campo ORDEM (se existir) ou análise de códigos - DESTAQUE sempre em 1º"
                 >
-                  🔄 Ordem Migração
+                  🔄 Ordem Híbrida
                 </button>
                 <button
                   type="button"
@@ -342,7 +323,7 @@ const ImagesSection = memo(({
           </div>
         </div>
 
-        {/* Status do reagrupamento */}
+        {/* Status da ordenação híbrida */}
         <div className={`p-3 rounded-md text-sm ${
           autoReagroupEnabled 
             ? 'bg-green-50 border-l-4 border-green-400 text-green-700'
@@ -351,14 +332,14 @@ const ImagesSection = memo(({
           <p>
             <strong>
               {autoReagroupEnabled 
-                ? '🎯 Ordem da migração ATIVA' 
+                ? '🎯 Ordenação híbrida ATIVA' 
                 : '✋ Ordem manual ATIVA'
               }
             </strong>
           </p>
           <p className="text-xs mt-1">
             {autoReagroupEnabled 
-              ? '📸 DESTAQUE sempre em 1º + outras por campo ORDEM original do MySQL. Use os campos "Ordem" abaixo para personalizar.'
+              ? '📸 DESTAQUE sempre em 1º + outras por: Campo ORDEM (se existir na API) ou análise de códigos. Use os campos "Ordem" para personalizar.'
               : '📸 DESTAQUE sempre em 1º + ordem manual para as demais. Você está controlando a sequência.'
             }
           </p>
