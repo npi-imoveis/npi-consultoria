@@ -25,82 +25,52 @@ export function ImageGallery({ imovel }) {
   const [selectedIndex, setSelectedIndex] = useState(null);
   const isMobile = useIsMobile();
 
-  // Função para reagrupar fotos por padrão do código (genérica)
-  const reagruparFotosPorTipo = (fotos) => {
+  // Função para usar campo ORDEM da migração (definida dentro do componente)
+  const usarOrdemDaMigracao = (fotos) => {
     if (!Array.isArray(fotos) || fotos.length === 0) return fotos;
 
     try {
-      // 1. Mapear cada foto com seu código e padrão
-      const fotosComPadrao = fotos.map((foto, index) => {
-        const url = foto.Foto || '';
-        const nomeArquivo = url.split('/').pop() || '';
-        const codigo = nomeArquivo.replace(/\.(jpg|jpeg|png|gif)$/i, '');
-        
-        // Extrair padrão genérico (primeiros caracteres até número ou underscore)
-        let padrao = '';
-        
-        // Tentar diferentes padrões comuns
-        if (codigo.includes('i268P')) {
-          padrao = 'i268P'; // Tipo 1
-        } else if (codigo.includes('iUg3s56gtAT3cfaA5U90')) {
-          padrao = 'iUg3s56gtAT3cfaA5U90'; // Tipo 2  
-        } else if (codigo.includes('iUG8o15s')) {
-          padrao = 'iUG8o15s'; // Tipo 3
-        } else {
-          // Para códigos diferentes, usar os primeiros 5-8 caracteres
-          padrao = codigo.substring(0, Math.min(8, codigo.length)).replace(/[0-9]/g, '');
-        }
-        
-        return {
-          foto,
-          codigo,
-          padrao,
-          ordemOriginal: index
-        };
-      });
+      // Verificar se existe campo ORDEM nos dados
+      const temCampoOrdem = fotos.some(foto => 
+        foto.Ordem !== undefined || 
+        foto.ordem !== undefined || 
+        foto.ORDEM !== undefined
+      );
 
-      // 2. Agrupar por padrão
-      const grupos = {};
-      fotosComPadrao.forEach(item => {
-        if (!grupos[item.padrao]) {
-          grupos[item.padrao] = [];
-        }
-        grupos[item.padrao].push(item);
-      });
+      if (temCampoOrdem) {
+        // Usar campo ORDEM original do MySQL
+        const fotosOrdenadas = [...fotos].sort((a, b) => {
+          const ordemA = a.Ordem || a.ordem || a.ORDEM || 999999;
+          const ordemB = b.Ordem || b.ordem || b.ORDEM || 999999;
+          return ordemA - ordemB;
+        });
 
-      // 3. Ordenar dentro de cada grupo pela ordem original
-      Object.keys(grupos).forEach(padrao => {
-        grupos[padrao].sort((a, b) => a.ordemOriginal - b.ordemOriginal);
-      });
+        console.log('🎯 ORDEM DA MIGRAÇÃO APLICADA:', {
+          totalFotos: fotosOrdenadas.length,
+          metodo: 'Campo ORDEM do MySQL',
+          primeiras5: fotosOrdenadas.slice(0, 5).map((f, i) => {
+            const ordem = f.Ordem || f.ordem || f.ORDEM || 'N/A';
+            const codigo = f.Foto?.split('/').pop()?.replace(/\.(jpg|jpeg|png|gif)$/i, '') || '';
+            return `${i+1}: [Ordem: ${ordem}] ${codigo}`;
+          })
+        });
 
-      // 4. Definir ordem dos grupos (primeiro que aparece na lista original)
-      const ordemGrupos = [];
-      fotosComPadrao.forEach(item => {
-        if (!ordemGrupos.includes(item.padrao)) {
-          ordemGrupos.push(item.padrao);
-        }
-      });
+        return fotosOrdenadas;
+      } else {
+        // Fallback: manter ordem da API (que pode já estar correta)
+        console.log('⚠️ Campo ORDEM não encontrado - mantendo ordem da API:', {
+          totalFotos: fotos.length,
+          metodo: 'Ordem original da API',
+          estruturaPrimeiraFoto: fotos[0] ? Object.keys(fotos[0]) : 'Nenhuma foto',
+          sugestao: 'Incluir campo ORDEM na resposta da API para ordenação precisa'
+        });
 
-      // 5. Montar lista reagrupada
-      const fotosReagrupadas = [];
-      ordemGrupos.forEach(padrao => {
-        if (grupos[padrao]) {
-          grupos[padrao].forEach(item => {
-            fotosReagrupadas.push(item.foto);
-          });
-        }
-      });
-
-      console.log('🔄 Reagrupamento aplicado:', {
-        grupos: Object.keys(grupos).map(p => `${p}: ${grupos[p].length} fotos`),
-        totalFotos: fotosReagrupadas.length
-      });
-
-      return fotosReagrupadas;
+        return fotos;
+      }
 
     } catch (error) {
-      console.error('❌ Erro no reagrupamento:', error);
-      return fotos; // Retorna ordem original em caso de erro
+      console.error('❌ Erro ao aplicar ordem da migração:', error);
+      return fotos;
     }
   };
 
@@ -114,8 +84,8 @@ export function ImageGallery({ imovel }) {
       // 2. Outras fotos (sem destaque)
       const outrasFotos = imovel.Foto.filter(foto => foto !== fotoDestaque);
       
-      // 3. Reagrupar outras fotos por tipo (genérico)
-      const outrasFotosReagrupadas = reagruparFotosPorTipo(outrasFotos);
+      // 3. Usar ordem original da migração (campo ORDEM do MySQL)
+      const outrasFotosReagrupadas = usarOrdemDaMigracao(outrasFotos);
       
       // 4. Array final: destaque + reagrupadas
       const fotosOrdenadas = [
@@ -126,7 +96,12 @@ export function ImageGallery({ imovel }) {
       console.log('✅ Galeria processada:', {
         total: fotosOrdenadas.length,
         destaque: !!fotoDestaque,
-        reagrupamento: 'APLICADO - GENÉRICO'
+        metodo: 'CAMPO ORDEM da migração MySQL',
+        primeiras5: fotosOrdenadas.slice(0, 5).map((f, i) => {
+          const nome = f.Foto?.split('/').pop() || '';
+          const codigo = nome.replace(/\.(jpg|jpeg|png|gif)$/i, '');
+          return `${i+1}: ${codigo}`;
+        })
       });
 
       return fotosOrdenadas.map((foto, index) => ({
