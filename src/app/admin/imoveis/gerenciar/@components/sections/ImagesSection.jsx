@@ -32,18 +32,26 @@ const ImagesSection = memo(({
         const nomeArquivo = url.split('/').pop() || '';
         const codigo = nomeArquivo.replace(/\.(jpg|jpeg|png|gif)$/i, '');
         
-        // Extrair padrão genérico
+        // Extrair padrão genérico (mais robusto)
         let padrao = '';
         
+        // Método melhorado: detectar todos os padrões específicos
         if (codigo.includes('i268P')) {
-          padrao = 'i268P'; // Tipo 1
+          padrao = 'i268P'; // Grupo 1
         } else if (codigo.includes('iUg3s56gtAT3cfaA5U90')) {
-          padrao = 'iUg3s56gtAT3cfaA5U90'; // Tipo 2  
+          padrao = 'iUg3s56gtAT3cfaA5U90'; // Grupo 2  
         } else if (codigo.includes('iUG8o15s')) {
-          padrao = 'iUG8o15s'; // Tipo 3
+          padrao = 'iUG8o15s'; // Grupo 3
+        } else if (codigo.includes('i19Q55g4D1123W87')) {
+          padrao = 'i19Q55g4D1123W87'; // Grupo 4
+        } else if (codigo.includes('ik71mgr366')) {
+          padrao = 'ik71mgr366'; // Grupo 5
+        } else if (codigo.includes('ic782Y6X12Tn')) {
+          padrao = 'ic782Y6X12Tn'; // Grupo 6
         } else {
-          // Para códigos diferentes, usar os primeiros caracteres
-          padrao = codigo.substring(0, Math.min(8, codigo.length)).replace(/[0-9]/g, '');
+          // Para códigos totalmente diferentes, usar os primeiros caracteres
+          const match = codigo.match(/^([a-zA-Z]+)/);
+          padrao = match ? match[1] : codigo.substring(0, Math.min(5, codigo.length));
         }
         
         return {
@@ -86,6 +94,11 @@ const ImagesSection = memo(({
         }
       });
 
+      console.log('🔧 ADMIN: Reagrupamento aplicado:', {
+        grupos: Object.keys(grupos).map(p => `${p}: ${grupos[p].length} fotos`),
+        totalFotos: fotosReagrupadas.length
+      });
+
       return fotosReagrupadas;
 
     } catch (error) {
@@ -104,9 +117,9 @@ const ImagesSection = memo(({
       // 2. Outras fotos
       const outrasFotos = formData.Foto.filter(foto => foto !== fotoDestaque);
       
-      // 3. Aplicar reagrupamento automático (se habilitado)
+      // 3. Aplicar ordem da migração (campo ORDEM) se habilitado
       const outrasFotosProcessadas = autoReagroupEnabled 
-        ? reagruparFotosPorTipo(outrasFotos)
+        ? usarOrdemDaMigracao(outrasFotos)
         : outrasFotos; // Manter ordem manual se reagrupamento desabilitado
       
       // 4. Array final
@@ -115,10 +128,10 @@ const ImagesSection = memo(({
         ...outrasFotosProcessadas
       ];
 
-      console.log('🔧 ADMIN: Fotos processadas:', {
+      console.log('🔧 ADMIN: Processamento final:', {
         total: fotosOrdenadas.length,
         destaque: !!fotoDestaque,
-        reagrupamentoAuto: autoReagroupEnabled ? 'ATIVO' : 'DESABILITADO'
+        metodo: autoReagroupEnabled ? 'Campo ORDEM da migração' : 'Ordem manual'
       });
 
       return fotosOrdenadas;
@@ -257,9 +270,9 @@ const ImagesSection = memo(({
                   type="button"
                   onClick={handleReagroupPhotos}
                   className="px-3 py-1.5 text-sm bg-purple-600 hover:bg-purple-700 text-white rounded-md transition-colors"
-                  title="Reagrupar fotos automaticamente por tipo"
+                  title="Aplicar ordem original da migração usando campo ORDEM do MySQL"
                 >
-                  🔄 Reagrupar
+                  🔄 Ordem Migração
                 </button>
                 <button
                   type="button"
@@ -294,15 +307,15 @@ const ImagesSection = memo(({
           <p>
             <strong>
               {autoReagroupEnabled 
-                ? '🤖 Reagrupamento automático ATIVO' 
+                ? '🎯 Ordem da migração ATIVA' 
                 : '✋ Ordem manual ATIVA'
               }
             </strong>
           </p>
           <p className="text-xs mt-1">
             {autoReagroupEnabled 
-              ? 'Fotos agrupadas automaticamente por tipo. Use os campos "Ordem" para personalizar.'
-              : 'Reagrupamento automático pausado. Você está controlando a ordem manualmente.'
+              ? 'Usando campo ORDEM original do MySQL. Use os campos "Ordem" abaixo para personalizar.'
+              : 'Ordem automática pausada. Você está controlando a sequência manualmente.'
             }
           </p>
         </div>
