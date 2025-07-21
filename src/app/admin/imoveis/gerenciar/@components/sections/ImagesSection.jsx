@@ -1,4 +1,4 @@
-// ImagesSection.jsx - ADMIN COM ORDENAÇÃO INTELIGENTE APRIMORADA
+// ImagesSection.jsx - CÓPIA EXATA DA LÓGICA DO FRONTEND QUE FUNCIONOU
 "use client";
 
 import { memo, useState } from "react";
@@ -21,14 +21,14 @@ const ImagesSection = memo(({
   const [downloadingPhotos, setDownloadingPhotos] = useState(false);
   const [autoReagroupEnabled, setAutoReagroupEnabled] = useState(true);
 
-  // Função para extrair código único da foto (sem extensão) - IGUAL AO FRONTEND
+  // 🎯 CÓPIA EXATA DO FRONTEND - Função para extrair código único da foto (sem extensão)
   const extrairCodigoFoto = (url) => {
     if (!url) return '';
     const nomeArquivo = url.split('/').pop();
     return nomeArquivo.replace(/\.(jpg|jpeg|png|gif)$/i, '');
   };
 
-  // Função para análise de códigos (método que mais funcionou) - IGUAL AO FRONTEND
+  // 🎯 CÓPIA EXATA DO FRONTEND - Função para análise de códigos (método que mais funcionou)
   const obterOrdemPorCodigo = (foto) => {
     const url = foto.Foto || '';
     const codigo = extrairCodigoFoto(url);
@@ -86,15 +86,9 @@ const ImagesSection = memo(({
     return 9999;
   };
 
+  // 🎯 CÓPIA EXATA DO FRONTEND - getProcessedImages renomeado para getSortedPhotos
   const getSortedPhotos = () => {
     if (!Array.isArray(formData?.Foto)) return [];
-
-    console.log('🔧 ADMIN: DADOS DE ENTRADA:', {
-      totalFotos: formData.Foto.length,
-      codigoImovel: formData.Codigo,
-      primeiras3URLs: formData.Foto.slice(0, 3).map(f => f.Foto),
-      temDestaque: formData.Foto.some(f => f.Destaque === "Sim")
-    });
 
     try {
       // 1. FOTO DESTAQUE SEMPRE PRIMEIRO (prioridade máxima)
@@ -103,97 +97,53 @@ const ImagesSection = memo(({
       // 2. Outras fotos (EXCLUINDO destaque para evitar duplicação)
       const outrasFotos = formData.Foto.filter(foto => foto !== fotoDestaque);
       
-      // 3. Aplicar ordenação híbrida (se habilitado)
-      let outrasFotosProcessadas;
+      // 3. FORÇAR ANÁLISE INTELIGENTE (igual ao frontend que funcionou)
+      let outrasFotosOrdenadas;
       let metodoUsado;
-      
-      console.log('🔧 ADMIN: Estado do reagrupamento automático:', {
-        autoReagroupEnabled,
-        totalFotos: outrasFotos.length,
-        fotoDestaque: !!fotoDestaque
+
+      // SEMPRE usar análise de códigos (método que funcionou no frontend)
+      outrasFotosOrdenadas = [...outrasFotos].sort((a, b) => {
+        const ordemA = obterOrdemPorCodigo(a);
+        const ordemB = obterOrdemPorCodigo(b);
+        return ordemA - ordemB;
+      });
+      metodoUsado = 'Análise de códigos (forçado - igual frontend)';
+
+      console.log('🟢 ADMIN NOVO: ANÁLISE INTELIGENTE FORÇADA (igual frontend):', {
+        totalFotos: outrasFotosOrdenadas.length,
+        metodo: metodoUsado,
+        primeiras5: outrasFotosOrdenadas.slice(0, 5).map((f, i) => {
+          const codigo = extrairCodigoFoto(f.Foto);
+          const ordem = obterOrdemPorCodigo(f);
+          return `${i+1}: [Hash: ${ordem}] ${codigo.substring(0, 20)}...`;
+        })
       });
       
-      if (autoReagroupEnabled) {
-        // Verificar se existe campo ORDEM nos dados
-        const temCampoOrdem = outrasFotos.some(foto => 
-          foto.Ordem !== undefined || 
-          foto.ordem !== undefined || 
-          foto.ORDEM !== undefined
-        );
-
-        if (temCampoOrdem) {
-          // MÉTODO 1: Usar campo ORDEM original do MySQL (IDEAL)
-          outrasFotosProcessadas = [...outrasFotos].sort((a, b) => {
-            const ordemA = a.Ordem || a.ordem || a.ORDEM || 999999;
-            const ordemB = b.Ordem || b.ordem || b.ORDEM || 999999;
-            return ordemA - ordemB; // Ordem crescente (1, 2, 3...)
-          });
-          metodoUsado = 'Campo ORDEM do MySQL';
-
-          console.log('🔧 ADMIN: MÉTODO 1 - CAMPO ORDEM APLICADO:', {
-            totalFotos: outrasFotosProcessadas.length,
-            metodo: metodoUsado,
-            fotoDestaque: fotoDestaque ? 'SIM - será primeira sempre' : 'NÃO',
-            primeiras3: outrasFotosProcessadas.slice(0, 3).map((f, i) => {
-              const ordem = f.Ordem || f.ordem || f.ORDEM || 'N/A';
-              return `${i+1}: [Ordem: ${ordem}]`;
-            })
-          });
-        } else {
-          // MÉTODO 2: Usar análise de códigos (FALLBACK que funcionou melhor)
-          outrasFotosProcessadas = [...outrasFotos].sort((a, b) => {
-            const ordemA = obterOrdemPorCodigo(a);
-            const ordemB = obterOrdemPorCodigo(b);
-            return ordemA - ordemB;
-          });
-          metodoUsado = 'Análise de códigos de arquivos';
-
-          console.log('🔧 ADMIN: MÉTODO 2 - ANÁLISE DE CÓDIGOS APLICADA:', {
-            totalFotos: outrasFotosProcessadas.length,
-            metodo: metodoUsado,
-            fotoDestaque: fotoDestaque ? 'SIM - será primeira sempre' : 'NÃO',
-            primeiras5: outrasFotosProcessadas.slice(0, 5).map((f, i) => {
-              const codigo = extrairCodigoFoto(f.Foto);
-              const ordem = obterOrdemPorCodigo(f);
-              return `${i+1}: [Hash: ${ordem}] ${codigo.substring(0, 15)}...`;
-            }),
-            urlsCompletas: outrasFotosProcessadas.slice(0, 3).map(f => f.Foto)
-          });
-        }
-      } else {
-        // Modo manual - manter ordem atual das outras fotos
-        outrasFotosProcessadas = outrasFotos;
-        metodoUsado = 'Ordem manual';
-        
-        console.log('🔧 ADMIN: Modo manual ativo:', {
-          fotoDestaque: fotoDestaque ? 'SIM - será primeira sempre' : 'NÃO',
-          outrasfotos: outrasFotos.length
-        });
-      }
-      
-      // 4. MONTAGEM FINAL: DESTAQUE SEMPRE PRIMEIRO + outras processadas
+      // 4. MONTAGEM FINAL: DESTAQUE SEMPRE PRIMEIRO + outras ordenadas
       const fotosFinais = [
         ...(fotoDestaque ? [fotoDestaque] : []), // DESTAQUE SEMPRE PRIMEIRO
-        ...outrasFotosProcessadas                 // Depois as outras
+        ...outrasFotosOrdenadas                   // Depois as outras ordenadas
       ];
 
-      console.log('🔧 ADMIN: PROCESSAMENTO HÍBRIDO FINAL:', {
+      console.log('🟢 ADMIN NOVO: GALERIA HÍBRIDA PROCESSADA:', {
         total: fotosFinais.length,
-        primeiraFoto: fotoDestaque ? 'DESTAQUE garantido em 1º' : 'Primeira da ordenação',
-        destaque: !!fotoDestaque,
+        destaque: fotoDestaque ? 'SIM - garantido em 1º' : 'NÃO',
         metodoOrdenacao: metodoUsado,
-        verificacao: fotosFinais[0] === fotoDestaque ? 'DESTAQUE em 1º ✅' : 'Primeira por ordem ✅'
+        verificacaoDestaque: fotosFinais[0] === fotoDestaque ? 'DESTAQUE em 1º ✅' : 'Primeira por ordenação ✅',
+        estruturaPrimeiraFoto: fotosFinais[0] ? Object.keys(fotosFinais[0]).join(', ') : 'Nenhuma'
       });
 
-      // 🎯 IMPORTANTE: Mapear igual ao frontend para manter consistência
       return fotosFinais.map((foto, index) => ({
         ...foto,
         Codigo: `${formData.Codigo || 'temp'}-foto-${index}`,
       }));
-      
+
     } catch (error) {
-      console.error('❌ ADMIN: Erro ao ordenar fotos:', error);
-      return [...formData.Foto];
+      console.error('🔴 ADMIN NOVO: Erro ao processar imagens:', error);
+      return [...formData.Foto].map((foto, index) => ({
+        ...foto,
+        Codigo: `${formData.Codigo || 'temp'}-foto-${index}`,
+      }));
     }
   };
 
@@ -346,7 +296,7 @@ const ImagesSection = memo(({
           </div>
         </div>
 
-        {/* Status da ordenação híbrida */}
+        {/* Status da ordenação híbrida - NOVO INDICADOR VISUAL */}
         <div className={`p-3 rounded-md text-sm ${
           autoReagroupEnabled 
             ? 'bg-green-50 border-l-4 border-green-400 text-green-700'
@@ -354,7 +304,7 @@ const ImagesSection = memo(({
         }`}>
           <p>
             <strong>
-              {autoReagroupEnabled 
+              🟢 ADMIN NOVO - {autoReagroupEnabled 
                 ? '🎯 Ordenação híbrida ATIVA' 
                 : '✋ Ordem manual ATIVA'
               }
