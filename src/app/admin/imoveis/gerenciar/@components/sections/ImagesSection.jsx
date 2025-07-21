@@ -111,30 +111,74 @@ const ImagesSection = memo(({
     if (!Array.isArray(formData?.Foto)) return [];
 
     try {
-      // 1. Foto destacada (sempre primeiro)
+      // 1. FOTO DESTAQUE SEMPRE PRIMEIRO (prioridade máxima)
       const fotoDestaque = formData.Foto.find(foto => foto.Destaque === "Sim");
       
-      // 2. Outras fotos
+      // 2. Outras fotos (EXCLUINDO destaque para evitar duplicação)
       const outrasFotos = formData.Foto.filter(foto => foto !== fotoDestaque);
       
-      // 3. Aplicar ordem da migração (campo ORDEM) se habilitado
-      const outrasFotosProcessadas = autoReagroupEnabled 
-        ? usarOrdemDaMigracao(outrasFotos)
-        : outrasFotos; // Manter ordem manual se reagrupamento desabilitado
+      // 3. Aplicar ordenação nas outras fotos (se habilitado)
+      let outrasFotosProcessadas;
       
-      // 4. Array final
-      const fotosOrdenadas = [
-        ...(fotoDestaque ? [fotoDestaque] : []),
-        ...outrasFotosProcessadas
+      if (autoReagroupEnabled) {
+        // Verificar se existe campo ORDEM nos dados
+        const temCampoOrdem = outrasFotos.some(foto => 
+          foto.Ordem !== undefined || 
+          foto.ordem !== undefined || 
+          foto.ORDEM !== undefined
+        );
+
+        if (temCampoOrdem) {
+          // Usar campo ORDEM original do MySQL para outras fotos
+          outrasFotosProcessadas = [...outrasFotos].sort((a, b) => {
+            const ordemA = a.Ordem || a.ordem || a.ORDEM || 999999;
+            const ordemB = b.Ordem || b.ordem || b.ORDEM || 999999;
+            return ordemA - ordemB; // Ordem crescente (1, 2, 3...)
+          });
+
+          console.log('🔧 ADMIN: ORDEM DA MIGRAÇÃO APLICADA:', {
+            totalFotos: outrasFotosProcessadas.length,
+            metodo: 'Campo ORDEM do MySQL',
+            fotoDestaque: fotoDestaque ? 'SIM - será primeira sempre' : 'NÃO',
+            primeiras3: outrasFotosProcessadas.slice(0, 3).map((f, i) => {
+              const ordem = f.Ordem || f.ordem || f.ORDEM || 'N/A';
+              return `${i+1}: [Ordem: ${ordem}]`;
+            })
+          });
+        } else {
+          // Fallback: manter ordem da API
+          outrasFotosProcessadas = outrasFotos;
+          console.log('⚠️ ADMIN: Campo ORDEM não encontrado:', {
+            totalFotos: outrasFotos.length,
+            metodo: 'Ordem original da API',
+            fotoDestaque: fotoDestaque ? 'SIM - será primeira sempre' : 'NÃO',
+            estruturaPrimeiraFoto: outrasFotos[0] ? Object.keys(outrasFotos[0]) : 'Nenhuma foto'
+          });
+        }
+      } else {
+        // Modo manual - manter ordem atual das outras fotos
+        outrasFotosProcessadas = outrasFotos;
+        console.log('🔧 ADMIN: Modo manual ativo:', {
+          fotoDestaque: fotoDestaque ? 'SIM - será primeira sempre' : 'NÃO',
+          outrasfotos: outrasFotos.length
+        });
+      }
+      
+      // 4. MONTAGEM FINAL: DESTAQUE SEMPRE PRIMEIRO + outras processadas
+      const fotosFinais = [
+        ...(fotoDestaque ? [fotoDestaque] : []), // DESTAQUE SEMPRE PRIMEIRO
+        ...outrasFotosProcessadas                 // Depois as outras
       ];
 
-      console.log('🔧 ADMIN: Processamento final:', {
-        total: fotosOrdenadas.length,
+      console.log('🔧 ADMIN: Processamento final - DESTAQUE PRESERVADO:', {
+        total: fotosFinais.length,
+        primeiraFoto: fotoDestaque ? 'DESTAQUE garantido em 1º' : 'Primeira da ordenação',
         destaque: !!fotoDestaque,
-        metodo: autoReagroupEnabled ? 'Campo ORDEM da migração' : 'Ordem manual'
+        metodo: autoReagroupEnabled ? 'DESTAQUE + Campo ORDEM da migração' : 'DESTAQUE + Ordem manual',
+        verificacao: fotosFinais[0] === fotoDestaque ? 'DESTAQUE em 1º ✅' : 'Primeira por ordem ✅'
       });
 
-      return fotosOrdenadas;
+      return fotosFinais;
       
     } catch (error) {
       console.error('❌ ADMIN: Erro ao ordenar fotos:', error);
@@ -270,7 +314,7 @@ const ImagesSection = memo(({
                   type="button"
                   onClick={handleReagroupPhotos}
                   className="px-3 py-1.5 text-sm bg-purple-600 hover:bg-purple-700 text-white rounded-md transition-colors"
-                  title="Aplicar ordem original da migração usando campo ORDEM do MySQL"
+                  title="Aplicar ordem da migração (campo ORDEM do MySQL) - DESTAQUE sempre em 1º"
                 >
                   🔄 Ordem Migração
                 </button>
@@ -314,8 +358,8 @@ const ImagesSection = memo(({
           </p>
           <p className="text-xs mt-1">
             {autoReagroupEnabled 
-              ? 'Usando campo ORDEM original do MySQL. Use os campos "Ordem" abaixo para personalizar.'
-              : 'Ordem automática pausada. Você está controlando a sequência manualmente.'
+              ? '📸 DESTAQUE sempre em 1º + outras por campo ORDEM original do MySQL. Use os campos "Ordem" abaixo para personalizar.'
+              : '📸 DESTAQUE sempre em 1º + ordem manual para as demais. Você está controlando a sequência.'
             }
           </p>
         </div>
