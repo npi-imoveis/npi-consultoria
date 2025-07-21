@@ -89,6 +89,13 @@ const ImagesSection = memo(({
   const getSortedPhotos = () => {
     if (!Array.isArray(formData?.Foto)) return [];
 
+    console.log('🔧 ADMIN: DADOS DE ENTRADA:', {
+      totalFotos: formData.Foto.length,
+      codigoImovel: formData.Codigo,
+      primeiras3URLs: formData.Foto.slice(0, 3).map(f => f.Foto),
+      temDestaque: formData.Foto.some(f => f.Destaque === "Sim")
+    });
+
     try {
       // 1. FOTO DESTAQUE SEMPRE PRIMEIRO (prioridade máxima)
       const fotoDestaque = formData.Foto.find(foto => foto.Destaque === "Sim");
@@ -99,6 +106,12 @@ const ImagesSection = memo(({
       // 3. Aplicar ordenação híbrida (se habilitado)
       let outrasFotosProcessadas;
       let metodoUsado;
+      
+      console.log('🔧 ADMIN: Estado do reagrupamento automático:', {
+        autoReagroupEnabled,
+        totalFotos: outrasFotos.length,
+        fotoDestaque: !!fotoDestaque
+      });
       
       if (autoReagroupEnabled) {
         // Verificar se existe campo ORDEM nos dados
@@ -139,11 +152,12 @@ const ImagesSection = memo(({
             totalFotos: outrasFotosProcessadas.length,
             metodo: metodoUsado,
             fotoDestaque: fotoDestaque ? 'SIM - será primeira sempre' : 'NÃO',
-            primeiras3: outrasFotosProcessadas.slice(0, 3).map((f, i) => {
+            primeiras5: outrasFotosProcessadas.slice(0, 5).map((f, i) => {
               const codigo = extrairCodigoFoto(f.Foto);
               const ordem = obterOrdemPorCodigo(f);
               return `${i+1}: [Hash: ${ordem}] ${codigo.substring(0, 15)}...`;
-            })
+            }),
+            urlsCompletas: outrasFotosProcessadas.slice(0, 3).map(f => f.Foto)
           });
         }
       } else {
@@ -171,7 +185,11 @@ const ImagesSection = memo(({
         verificacao: fotosFinais[0] === fotoDestaque ? 'DESTAQUE em 1º ✅' : 'Primeira por ordem ✅'
       });
 
-      return fotosFinais;
+      // 🎯 IMPORTANTE: Mapear igual ao frontend para manter consistência
+      return fotosFinais.map((foto, index) => ({
+        ...foto,
+        Codigo: `${formData.Codigo || 'temp'}-foto-${index}`,
+      }));
       
     } catch (error) {
       console.error('❌ ADMIN: Erro ao ordenar fotos:', error);
