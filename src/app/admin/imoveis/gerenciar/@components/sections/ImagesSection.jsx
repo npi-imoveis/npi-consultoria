@@ -28,6 +28,24 @@ const ImagesSection = memo(({
     return nomeArquivo.replace(/\.(jpg|jpeg|png|gif)$/i, '');
   };
 
+  // 🧠 DETECTOR DE NOVOS PADRÕES (para identificar códigos não reconhecidos)
+  const detectarNovosPatroes = (codigo) => {
+    // Detectar padrões tipo "i[chars]_[numero]" ou similares
+    const padroes = [
+      /^i\w+_\d+/,           // i + letras + _ + números
+      /^i\w+\d+/,            // i + letras + números
+      /^\w+_\d+/,            // qualquer coisa + _ + números
+    ];
+    
+    for (const padrao of padroes) {
+      const match = codigo.match(padrao);
+      if (match) {
+        return match[0];
+      }
+    }
+    return null;
+  };
+
   // 🎯 CÓPIA EXATA DO FRONTEND - Função para análise de códigos (método que mais funcionou)
   const obterOrdemPorCodigo = (foto) => {
     const url = foto.Foto || '';
@@ -81,6 +99,21 @@ const ImagesSection = memo(({
         return 500000 + (parseInt(hashMatch[1].substring(0, 8), 16) || 0);
       }
     }
+
+    // 🆕 DETECTAR PADRÕES SIMILARES AO i268P (fotos internas)
+    // Qualquer código que comece com i268P (variações)
+    if (codigo.includes('i268P_')) {
+      const hashMatch = codigo.match(/i268P_(.+)/);
+      if (hashMatch) {
+        // Tentar extrair timestamp do que vier depois
+        const sufixo = hashMatch[1];
+        const hexMatch = sufixo.match(/[0-9a-fA-F]{6,}/);
+        if (hexMatch) {
+          const timestamp = parseInt(hexMatch[0].substring(0, 8), 16) || 0;
+          return timestamp; // Mesmo grupo das fotos internas
+        }
+      }
+    }
     
     // Outros tipos no final
     return 9999;
@@ -116,7 +149,16 @@ const ImagesSection = memo(({
           const codigo = extrairCodigoFoto(f.Foto);
           const ordem = obterOrdemPorCodigo(f);
           return `${i+1}: [Hash: ${ordem}] ${codigo.substring(0, 20)}...`;
-        })
+        }),
+        ultimas5: outrasFotosOrdenadas.slice(-5).map((f, i) => {
+          const codigo = extrairCodigoFoto(f.Foto);
+          const ordem = obterOrdemPorCodigo(f);
+          return `${outrasFotosOrdenadas.length - 4 + i}: [Hash: ${ordem}] ${codigo.substring(0, 20)}...`;
+        }),
+        codigosNaoReconhecidos: outrasFotosOrdenadas
+          .filter(f => obterOrdemPorCodigo(f) >= 9999)
+          .slice(0, 10)
+          .map(f => extrairCodigoFoto(f.Foto))
       });
       
       // 4. MONTAGEM FINAL: DESTAQUE SEMPRE PRIMEIRO + outras ordenadas
