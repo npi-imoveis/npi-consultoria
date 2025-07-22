@@ -4,23 +4,66 @@ import { useState } from "react";
 import { Home, Bed, Car, Calendar, Building } from "lucide-react";
 import { formatterDate } from "@/app/utils/formatter-date";
 import dynamic from 'next/dynamic';
-
-const CondominioGallery = dynamic(() => import('./condominio-gallery'), {
-    loading: () => <div className="w-full h-64 bg-zinc-100 animate-pulse rounded-lg"></div>
-});
+import { photoSorter } from "@/app/utils/photoSorter"; // 🎯 CLASSE DE ORDENAÇÃO
+import { ImageGallery } from "@/app/components/sections/image-gallery"; // 🎯 GALERIA UNIVERSAL
 
 const DetalhesCondominioSobre = dynamic(() => import('./DetalhesCondominioSobre'), {
     loading: () => <div className="w-full h-64 bg-zinc-100 animate-pulse rounded-lg"></div>
 });
 
+// 🎯 FUNÇÃO PARA ORDENAR FOTOS (igual à da página principal)
+function processarFotosCondominio(fotos, codigoCondominio) {
+  if (!Array.isArray(fotos) || fotos.length === 0) {
+    return [];
+  }
+
+  try {
+    console.log('📝 SOBRE-CONDOMÍNIO: Iniciando ordenação com photoSorter...', {
+      totalFotos: fotos.length,
+      codigo: codigoCondominio
+    });
+    
+    // 🎯 FORÇAR photoSorter a usar SEMPRE Análise Inteligente
+    const fotosTemp = fotos.map(foto => {
+      // Remover campos ORDEM para forçar análise inteligente
+      const { Ordem, ordem, ORDEM, ...fotoSemOrdem } = foto;
+      return fotoSemOrdem;
+    });
+    
+    // USAR photoSorter.ordenarFotos() - IGUAL AO RESTO DO SISTEMA
+    const fotosOrdenadas = photoSorter.ordenarFotos(fotosTemp, codigoCondominio || 'sobre-condominio');
+    
+    console.log('✅ SOBRE-CONDOMÍNIO: Ordenação finalizada:', {
+      totalFotos: fotosOrdenadas.length,
+      primeira: fotosOrdenadas[0]?.Foto?.split('/').pop()?.substring(0, 30) + '...',
+      metodo: 'photoSorter.ordenarFotos() - CONSISTENTE COM O SISTEMA'
+    });
+
+    return fotosOrdenadas;
+
+  } catch (error) {
+    console.error('❌ SOBRE-CONDOMÍNIO: Erro ao usar photoSorter:', error);
+    return fotos; // Fallback seguro
+  }
+}
+
 export default function SobreCondominio({ condominio }) {
+    // 🎯 PROCESSAR FOTOS COM A MESMA ORDENAÇÃO DO RESTO DO SISTEMA
+    const fotosOrdenadas = processarFotosCondominio(condominio.Foto, condominio.Codigo);
+    
     return (
         <div className="bg-white rounded-lg container mx-auto p-10 mt-4">
             <h2 className="text-xl font-bold text-black">
                 Mais sobre {condominio.Categoria} {condominio.Empreendimento}
             </h2>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-10">
-                <CondominioGallery fotos={condominio.Foto} title={condominio.Empreendimento} second />
+                {/* 🎯 USAR ImageGallery UNIVERSAL COM FOTOS ORDENADAS */}
+                <ImageGallery 
+                    fotos={fotosOrdenadas}
+                    title={condominio.Empreendimento}
+                    shareUrl={`${process.env.NEXT_PUBLIC_SITE_URL || ''}`}
+                    shareTitle={`Confira as fotos: ${condominio.Empreendimento}`}
+                />
                 <DetalhesCondominioSobre condominio={condominio} />
             </div>
         </div>
@@ -110,4 +153,4 @@ function DetalhesCondominio({ condominio }) {
             )}
         </div>
     );
-} 
+}
