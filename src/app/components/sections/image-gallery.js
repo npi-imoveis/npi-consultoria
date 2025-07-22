@@ -29,10 +29,7 @@ export function ImageGallery({
   fotos, 
   title,
   shareUrl,
-  shareTitle,
-
-  // 🎨 NOVA PROP: Layout da galeria
-  layout = "grid" // "grid" (padrão) ou "single" (só foto principal)
+  shareTitle 
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(null);
@@ -195,83 +192,57 @@ export function ImageGallery({
             </div>
           )}
 
-          {/* 📸 Contador de fotos - sempre visível */}
-          <div className="absolute top-4 right-4 bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg">
-            {images.length} foto{images.length > 1 ? 's' : ''}
-          </div>
+          {isMobile && images.length > 1 && (
+            <div className="absolute top-4 right-4 bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg">
+              {images.length} fotos
+            </div>
+          )}
         </div>
 
-        {/* 🎨 LAYOUT CONDICIONAL: Grid ou Single */}
-        {layout === "single" ? (
-          // LAYOUT SINGLE: Ocupar o espaço restante com foto ampliada
-          <div className="col-span-1 h-[410px] cursor-pointer relative overflow-hidden" onClick={() => openModal()}>
-            <Image
-              src={images[0].Foto}
-              alt={processedData.titulo}
-              title={processedData.titulo}
-              width={800}
-              height={600}
-              sizes="50vw"
-              placeholder="blur"
-              blurDataURL={images[0].blurDataURL || "/placeholder.png"}
-              loading="eager"
-              className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-105"
-            />
-            
-            {/* Overlay sutil para indicar clique */}
-            <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-10 transition-all duration-300 flex items-center justify-center">
-              <div className="opacity-0 hover:opacity-100 transition-opacity bg-white/90 text-black px-4 py-2 rounded-lg">
-                Ver galeria completa
-              </div>
-            </div>
+        {!isMobile && (
+          <div className="col-span-1 grid grid-cols-2 grid-rows-2 gap-1 h-[410px]">
+            {images.slice(1, 5).map((image, index) => {
+              const isLastImage = index === 3;
+              return (
+                <div
+                  key={index}
+                  className="relative h-full overflow-hidden cursor-pointer"
+                  onClick={() => openModal()}
+                >
+                  <Image
+                    src={image.Foto}
+                    alt={`${processedData.titulo} - imagem ${index + 2}`}
+                    title={`${processedData.titulo} - imagem ${index + 2}`}
+                    width={400}
+                    height={300}
+                    sizes="25vw"
+                    placeholder="blur"
+                    blurDataURL={image.blurDataURL || "/placeholder.png"}
+                    loading="lazy"
+                    className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
+                  />
+                  
+                  {/* Indicador de destaque nos thumbnails */}
+                  {image.Destaque === "Sim" && (
+                    <div className="absolute top-2 left-2 bg-yellow-500 text-white text-xs font-bold px-1.5 py-0.5 rounded">
+                      ⭐
+                    </div>
+                  )}
+                  
+                  {isLastImage && images.length > 5 && (
+                    <div className="absolute inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center">
+                      <button
+                        className="border border-white text-white px-4 py-2 rounded hover:bg-white hover:text-black transition-colors"
+                        aria-label="Ver mais fotos"
+                      >
+                        +{images.length - 5} fotos
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
-        ) : (
-          // LAYOUT GRID: Grid 2x2 original (para imóveis)
-          !isMobile && (
-            <div className="col-span-1 grid grid-cols-2 grid-rows-2 gap-1 h-[410px]">
-              {images.slice(1, 5).map((image, index) => {
-                const isLastImage = index === 3;
-                return (
-                  <div
-                    key={index}
-                    className="relative h-full overflow-hidden cursor-pointer"
-                    onClick={() => openModal()}
-                  >
-                    <Image
-                      src={image.Foto}
-                      alt={`${processedData.titulo} - imagem ${index + 2}`}
-                      title={`${processedData.titulo} - imagem ${index + 2}`}
-                      width={400}
-                      height={300}
-                      sizes="25vw"
-                      placeholder="blur"
-                      blurDataURL={image.blurDataURL || "/placeholder.png"}
-                      loading="lazy"
-                      className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
-                    />
-                    
-                    {/* Indicador de destaque nos thumbnails */}
-                    {image.Destaque === "Sim" && (
-                      <div className="absolute top-2 left-2 bg-yellow-500 text-white text-xs font-bold px-1.5 py-0.5 rounded">
-                        ⭐
-                      </div>
-                    )}
-                    
-                    {isLastImage && images.length > 5 && (
-                      <div className="absolute inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center">
-                        <button
-                          className="border border-white text-white px-4 py-2 rounded hover:bg-white hover:text-black transition-colors"
-                          aria-label="Ver mais fotos"
-                        >
-                          +{images.length - 5} fotos
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )
         )}
       </div>
 
