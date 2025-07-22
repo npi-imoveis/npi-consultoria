@@ -1,4 +1,4 @@
-// ImagesSection.jsx - USANDO A MESMA CLASSE photoSorter DO FRONTEND
+// ImagesSection.jsx - VERSÃO FINAL USANDO EXATAMENTE O MESMO photoSorter DO FRONTEND
 "use client";
 
 import { memo, useState, useMemo } from "react";
@@ -6,7 +6,7 @@ import FormSection from "../FormSection";
 import Image from "next/image";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
-import { photoSorter } from "@/app/utils/photoSorter"; // 🎯 MESMA CLASSE DO FRONTEND!
+import { photoSorter } from "@/app/utils/photoSorter"; // 🎯 MESMA CLASSE DO FRONTEND QUE FUNCIONA!
 
 const ImagesSection = memo(({
   formData,
@@ -22,256 +22,44 @@ const ImagesSection = memo(({
   const [downloadingPhotos, setDownloadingPhotos] = useState(false);
   const [autoReagroupEnabled, setAutoReagroupEnabled] = useState(true);
 
-  // 🎯 CÓPIA EXATA DO FRONTEND - Função para extrair código único da foto (sem extensão)
-  const extrairCodigoFoto = (url) => {
-    if (!url) return '';
-    const nomeArquivo = url.split('/').pop();
-    return nomeArquivo.replace(/\.(jpg|jpeg|png|gif)$/i, '');
-  };
-
-  // 🧠 DETECTOR DE NOVOS PADRÕES (para identificar códigos não reconhecidos)
-  const detectarNovosPatroes = (codigo) => {
-    // Detectar padrões tipo "i[chars]_[numero]" ou similares
-    const padroes = [
-      /^i\w+_\d+/,           // i + letras + _ + números
-      /^i\w+\d+/,            // i + letras + números
-      /^\w+_\d+/,            // qualquer coisa + _ + números
-    ];
-    
-    for (const padrao of padroes) {
-      const match = codigo.match(padrao);
-      if (match) {
-        return match[0];
-      }
+  // 🎯 USAR EXATAMENTE A MESMA LÓGICA DO FRONTEND QUE FUNCIONA PERFEITAMENTE
+  const sortedPhotos = useMemo(() => {
+    if (!Array.isArray(formData?.Foto) || formData.Foto.length === 0) {
+      return [];
     }
-    return null;
-  };
-
-  // 🎯 SOLUÇÃO GENÉRICA PARA TODA A MIGRAÇÃO - Análise de padrões globais
-  const obterOrdemPorCodigo = (foto) => {
-    const url = foto.Foto || '';
-    const codigo = extrairCodigoFoto(url);
-    
-    if (!codigo) return 999999;
-    
-    // 🏠 ESTRATÉGIA GENÉRICA: DETECTAR FOTOS INTERNAS vs EXTERNAS
-    
-    // GRUPO A (0-99999): FOTOS INTERNAS - códigos que começam com 'i268P'
-    if (codigo.startsWith('i268P_')) {
-      // Extrair timestamp genérico de qualquer código i268P
-      const sufixo = codigo.substring(6);
-      const hexMatch = sufixo.match(/[0-9a-fA-F]{8,}/);
-      if (hexMatch) {
-        const timestamp = parseInt(hexMatch[0].substring(0, 8), 16) || 0;
-        return Math.min(timestamp, 99999); // Garantir grupo A
-      }
-      // Fallback: usar hash da string
-      let hash = 0;
-      for (let i = 0; i < sufixo.length && i < 8; i++) {
-        hash = (hash << 5) - hash + sufixo.charCodeAt(i);
-        hash = hash & hash; // 32bit
-      }
-      return Math.abs(hash) % 99999;
-    }
-    
-    // GRUPO B (100000-199999): FOTOS ÁREA/LAZER - códigos 'iUg3s56gtAT3cfaA5U90'
-    if (codigo.includes('iUg3s56gtAT3cfaA5U90')) {
-      const match = codigo.match(/iUg3s56gtAT3cfaA5U90[^0-9a-fA-F]*([0-9a-fA-F]+)/);
-      if (match && match[1]) {
-        const timestamp = parseInt(match[1].substring(0, 8), 16) || 0;
-        return 100000 + (timestamp % 99999);
-      }
-      return 100000;
-    }
-    
-    // GRUPO C (200000-299999): FOTOS FACHADA/EXTERNA - códigos 'iUG8o15s'
-    if (codigo.includes('iUG8o15s')) {
-      const match = codigo.match(/iUG8o15s[^0-9a-fA-F]*([0-9a-fA-F]+)/);
-      if (match && match[1]) {
-        const timestamp = parseInt(match[1].substring(0, 8), 16) || 0;
-        return 200000 + (timestamp % 99999);
-      }
-      return 200000;
-    }
-    
-    // GRUPO D (300000+): OUTROS PADRÕES CONHECIDOS
-    const outrosPatroes = [
-      'i19Q55g4D1123W87',
-      'ik71mgr366', 
-      'ic782Y6X12Tn'
-    ];
-    
-    for (let i = 0; i < outrosPatroes.length; i++) {
-      const padrao = outrosPatroes[i];
-      if (codigo.includes(padrao)) {
-        const match = codigo.match(new RegExp(padrao + '[^0-9a-fA-F]*([0-9a-fA-F]+)'));
-        if (match && match[1]) {
-          const timestamp = parseInt(match[1].substring(0, 8), 16) || 0;
-          return 300000 + (i * 100000) + (timestamp % 99999);
-        }
-        return 300000 + (i * 100000);
-      }
-    }
-    
-    // 🧠 ESTRATÉGIA INTELIGENTE: DETECTAR NOVOS PADRÕES DE FOTOS INTERNAS
-    // Códigos que provavelmente são fotos internas (padrões similares)
-    if (/^i[0-9a-fA-F]{3,8}P/i.test(codigo)) {
-      // Códigos tipo i###P, i####P, etc. (variações do i268P)
-      let hash = 0;
-      for (let i = 0; i < codigo.length; i++) {
-        hash = (hash << 5) - hash + codigo.charCodeAt(i);
-        hash = hash & hash;
-      }
-      return Math.abs(hash) % 99999; // Colocar no grupo A (fotos internas)
-    }
-    
-    // 🔍 FALLBACK GENÉRICO: Analisar estrutura do código
-    // Se tem padrão tipo i + letras/números + _ + hash
-    const padraoGeral = codigo.match(/^i([a-zA-Z0-9]{2,15})_?([0-9a-fA-F]{6,})/);
-    if (padraoGeral) {
-      const [, prefixo, hash] = padraoGeral;
-      const timestamp = parseInt(hash.substring(0, 8), 16) || 0;
-      
-      // Heurística: prefixos menores/simples = mais provável ser foto interna
-      if (prefixo.length <= 5) {
-        return Math.min(timestamp, 99999); // Grupo A (internas)
-      } else {
-        return 100000 + (timestamp % 99999); // Grupo B (outras)
-      }
-    }
-    
-    // Não reconhecido - colocar no final
-    return 999999;
-  };
-    
-    if (codigo.includes('iUg3s56gtAT3cfaA5U90_487')) {
-      const hashMatch = codigo.match(/iUg3s56gtAT3cfaA5U90_487(.+)/);
-      if (hashMatch) {
-        // Somar offset para vir depois das i268P
-        return 100000 + (parseInt(hashMatch[1].substring(0, 8), 16) || 0);
-      }
-    }
-    
-    if (codigo.includes('iUG8o15s_4876')) {
-      const hashMatch = codigo.match(/iUG8o15s_4876(.+)/);
-      if (hashMatch) {
-        // Somar offset para vir por último
-        return 200000 + (parseInt(hashMatch[1].substring(0, 8), 16) || 0);
-      }
-    }
-
-    // Outros padrões identificados
-    if (codigo.includes('i19Q55g4D1123W87')) {
-      const hashMatch = codigo.match(/i19Q55g4D1123W87(.+)/);
-      if (hashMatch) {
-        return 300000 + (parseInt(hashMatch[1].substring(0, 8), 16) || 0);
-      }
-    }
-
-    if (codigo.includes('ik71mgr366')) {
-      const hashMatch = codigo.match(/ik71mgr366(.+)/);
-      if (hashMatch) {
-        return 400000 + (parseInt(hashMatch[1].substring(0, 8), 16) || 0);
-      }
-    }
-
-    if (codigo.includes('ic782Y6X12Tn')) {
-      const hashMatch = codigo.match(/ic782Y6X12Tn(.+)/);
-      if (hashMatch) {
-        return 500000 + (parseInt(hashMatch[1].substring(0, 8), 16) || 0);
-      }
-    }
-
-    // 🆕 DETECTAR PADRÕES SIMILARES AO i268P (fotos internas)
-    // Qualquer código que comece com i268P (variações)
-    if (codigo.includes('i268P_')) {
-      const hashMatch = codigo.match(/i268P_(.+)/);
-      if (hashMatch) {
-        // Tentar extrair timestamp do que vier depois
-        const sufixo = hashMatch[1];
-        const hexMatch = sufixo.match(/[0-9a-fA-F]{6,}/);
-        if (hexMatch) {
-          const timestamp = parseInt(hexMatch[0].substring(0, 8), 16) || 0;
-          return timestamp; // Mesmo grupo das fotos internas
-        }
-      }
-    }
-    
-    // Outros tipos no final
-    return 9999;
-  };
-
-  // 🎯 CÓPIA EXATA DO FRONTEND - getProcessedImages renomeado para getSortedPhotos
-  const getSortedPhotos = () => {
-    if (!Array.isArray(formData?.Foto)) return [];
 
     try {
-      // 1. FOTO DESTAQUE SEMPRE PRIMEIRO (prioridade máxima)
-      const fotoDestaque = formData.Foto.find(foto => foto.Destaque === "Sim");
+      console.log('📝 ADMIN: Iniciando ordenação com photoSorter...');
       
-      // 2. Outras fotos (EXCLUINDO destaque para evitar duplicação)
-      const outrasFotos = formData.Foto.filter(foto => foto !== fotoDestaque);
+      // EXATAMENTE IGUAL AO FRONTEND - usar photoSorter.ordenarFotos()
+      const fotosOrdenadas = photoSorter.ordenarFotos(formData.Foto, formData.Codigo || 'temp');
       
-      // 3. FORÇAR ANÁLISE INTELIGENTE (igual ao frontend que funcionou)
-      let outrasFotosOrdenadas;
-      let metodoUsado;
-
-      // SEMPRE usar análise de códigos (método que funcionou no frontend)
-      outrasFotosOrdenadas = [...outrasFotos].sort((a, b) => {
-        const ordemA = obterOrdemPorCodigo(a);
-        const ordemB = obterOrdemPorCodigo(b);
-        return ordemA - ordemB;
-      });
-      metodoUsado = 'Análise de códigos (forçado - igual frontend)';
-
-      console.log('🟢 ADMIN NOVO: ANÁLISE INTELIGENTE FORÇADA (igual frontend):', {
-        totalFotos: outrasFotosOrdenadas.length,
-        metodo: metodoUsado,
-        primeiras5: outrasFotosOrdenadas.slice(0, 5).map((f, i) => {
-          const codigo = extrairCodigoFoto(f.Foto);
-          const ordem = obterOrdemPorCodigo(f);
-          return `${i+1}: [Hash: ${ordem}] ${codigo.substring(0, 20)}...`;
-        }),
-        ultimas5: outrasFotosOrdenadas.slice(-5).map((f, i) => {
-          const codigo = extrairCodigoFoto(f.Foto);
-          const ordem = obterOrdemPorCodigo(f);
-          return `${outrasFotosOrdenadas.length - 4 + i}: [Hash: ${ordem}] ${codigo.substring(0, 20)}...`;
-        }),
-        codigosNaoReconhecidos: outrasFotosOrdenadas
-          .filter(f => obterOrdemPorCodigo(f) >= 9999)
-          .slice(0, 10)
-          .map(f => extrairCodigoFoto(f.Foto))
-      });
+      console.log('📝 ADMIN: photoSorter.ordenarFotos() executado com sucesso!');
       
-      // 4. MONTAGEM FINAL: DESTAQUE SEMPRE PRIMEIRO + outras ordenadas
-      const fotosFinais = [
-        ...(fotoDestaque ? [fotoDestaque] : []), // DESTAQUE SEMPRE PRIMEIRO
-        ...outrasFotosOrdenadas                   // Depois as outras ordenadas
-      ];
-
-      console.log('🟢 ADMIN NOVO: GALERIA HÍBRIDA PROCESSADA:', {
-        total: fotosFinais.length,
-        destaque: fotoDestaque ? 'SIM - garantido em 1º' : 'NÃO',
-        metodoOrdenacao: metodoUsado,
-        verificacaoDestaque: fotosFinais[0] === fotoDestaque ? 'DESTAQUE em 1º ✅' : 'Primeira por ordenação ✅',
-        estruturaPrimeiraFoto: fotosFinais[0] ? Object.keys(fotosFinais[0]).join(', ') : 'Nenhuma'
-      });
-
-      return fotosFinais.map((foto, index) => ({
+      // EXATAMENTE IGUAL AO FRONTEND - mapear códigos únicos  
+      const resultado = fotosOrdenadas.map((foto, index) => ({
         ...foto,
         Codigo: `${formData.Codigo || 'temp'}-foto-${index}`,
       }));
 
+      console.log('✅ ADMIN: Ordenação finalizada usando photoSorter:', {
+        totalFotos: resultado.length,
+        primeira: resultado[0]?.Foto?.split('/').pop()?.substring(0, 30) + '...',
+        metodo: 'photoSorter.ordenarFotos() - IGUAL AO FRONTEND'
+      });
+
+      return resultado;
+
     } catch (error) {
-      console.error('🔴 ADMIN NOVO: Erro ao processar imagens:', error);
+      console.error('❌ ADMIN: Erro ao usar photoSorter:', error);
+      
+      // Fallback seguro - IGUAL AO FRONTEND
       return [...formData.Foto].map((foto, index) => ({
         ...foto,
         Codigo: `${formData.Codigo || 'temp'}-foto-${index}`,
       }));
     }
-  };
-
-  const sortedPhotos = getSortedPhotos();
+  }, [formData?.Foto, formData?.Codigo, autoReagroupEnabled]);
 
   const baixarTodasImagens = async (imagens = []) => {
     if (!Array.isArray(imagens)) return;
@@ -350,6 +138,7 @@ const ImagesSection = memo(({
   };
 
   const handleReagroupPhotos = () => {
+    console.log('🔄 ADMIN: Limpando cache do photoSorter e reordenando...');
     setAutoReagroupEnabled(true);
     photoSorter.limparCache(); // Limpar cache igual ao frontend
   };
@@ -391,7 +180,7 @@ const ImagesSection = memo(({
                   type="button"
                   onClick={handleReagroupPhotos}
                   className="px-3 py-1.5 text-sm bg-purple-600 hover:bg-purple-700 text-white rounded-md transition-colors"
-                  title="Ordem híbrida: Campo ORDEM (se existir) ou análise de códigos - DESTAQUE sempre em 1º"
+                  title="Reordenar usando photoSorter - MESMA lógica do frontend que funciona"
                 >
                   🔄 Ordem Híbrida
                 </button>
@@ -419,7 +208,7 @@ const ImagesSection = memo(({
           </div>
         </div>
 
-        {/* Status da ordenação híbrida - USANDO PHOTOSORTER IGUAL AO FRONTEND */}
+        {/* INDICADOR VISUAL - MOSTRA QUE ESTÁ USANDO photoSorter */}
         <div className={`p-3 rounded-md text-sm border-l-4 ${
           autoReagroupEnabled 
             ? 'bg-green-50 border-green-400 text-green-700'
@@ -435,7 +224,7 @@ const ImagesSection = memo(({
           </p>
           <p className="text-xs mt-1">
             {autoReagroupEnabled 
-              ? '📸 DESTAQUE sempre em 1º + análise inteligente com photoSorter.ordenarFotos() - MESMA classe do frontend!'
+              ? '📸 DESTAQUE sempre em 1º + análise inteligente com photoSorter.ordenarFotos() - MESMA classe do frontend que funciona perfeitamente!'
               : '📸 DESTAQUE sempre em 1º + ordem manual. Você está controlando a sequência.'
             }
           </p>
