@@ -1,338 +1,363 @@
-// ImagesSection.jsx - VERSÃO FINAL USANDO EXATAMENTE O MESMO photoSorter DO FRONTEND
+// src/app/components/sections/image-gallery.js - VERSÃO UNIVERSAL para Imóvel E Condomínio
 "use client";
 
-import { memo, useState, useMemo } from "react";
-import FormSection from "../FormSection";
+import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
-import JSZip from "jszip";
-import { saveAs } from "file-saver";
-import { photoSorter } from "@/app/utils/photoSorter"; // 🎯 MESMA CLASSE DO FRONTEND QUE FUNCIONA!
+import { ArrowLeft } from "lucide-react";
+import { formatterSlug } from "@/app/utils/formatter-slug";
+import { Share } from "../ui/share";
+import { photoSorter } from "@/app/utils/photoSorter";
 
-const ImagesSection = memo(({
-  formData,
-  addSingleImage,
-  showImageModal,
-  updateImage,
-  removeImage,
-  removeAllImages,
-  setImageAsHighlight,
-  changeImagePosition,
-  validation
-}) => {
-  const [downloadingPhotos, setDownloadingPhotos] = useState(false);
-  const [autoReagroupEnabled, setAutoReagroupEnabled] = useState(true);
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false);
 
-  // 🎯 USAR EXATAMENTE A MESMA LÓGICA DO FRONTEND QUE FUNCIONA PERFEITAMENTE
-  const sortedPhotos = useMemo(() => {
-    if (!Array.isArray(formData?.Foto) || formData.Foto.length === 0) {
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  return isMobile;
+}
+
+export function ImageGallery({ 
+  // Props para página de IMÓVEL (modo original)
+  imovel,
+  
+  // Props para página de CONDOMÍNIO (modo novo) 
+  fotos, 
+  title,
+  shareUrl,
+  shareTitle,
+
+  // 🎨 NOVA PROP: Layout da galeria
+  layout = "grid" // "grid" (padrão) ou "single" (só foto principal)
+}) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(null);
+  const [debugMode, setDebugMode] = useState(false);
+  const isMobile = useIsMobile();
+
+  // 🎯 MODO INTELIGENTE: Detectar se é imóvel ou condomínio
+  const isImovelMode = !!imovel;
+  
+  // Processar dados baseado no modo
+  const processedData = useMemo(() => {
+    if (isImovelMode) {
+      // MODO IMÓVEL (original)
+      return {
+        fotos: imovel?.Foto || [],
+        titulo: imovel?.Empreendimento || '',
+        codigo: imovel?.Codigo || '',
+        urlShare: `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel?.Codigo}/${formatterSlug(imovel?.Empreendimento || '')}`,
+        tituloShare: `Confira este imóvel: ${imovel?.Empreendimento}`
+      };
+    } else {
+      // MODO CONDOMÍNIO (novo)
+      return {
+        fotos: fotos || [],
+        titulo: title || '',
+        codigo: 'condominio',
+        urlShare: shareUrl || '',
+        tituloShare: shareTitle || `Confira as fotos: ${title}`
+      };
+    }
+  }, [imovel, fotos, title, shareUrl, shareTitle, isImovelMode]);
+
+  // 🎯 PROCESSAR FOTOS (igual ao funcionamento atual)
+  const images = useMemo(() => {
+    if (!Array.isArray(processedData.fotos) || processedData.fotos.length === 0) {
       return [];
     }
 
     try {
-      console.log('📝 ADMIN: Iniciando ordenação com photoSorter...');
-      
-      // 🎯 FORÇAR photoSorter a usar SEMPRE Análise Inteligente (ignorar campo ORDEM)
-      const fotosTemp = formData.Foto.map(foto => {
-        // Remover campos ORDEM para forçar análise inteligente
-        const { Ordem, ordem, ORDEM, ...fotoSemOrdem } = foto;
-        return fotoSemOrdem;
-      });
-      
-      // EXATAMENTE IGUAL AO FRONTEND - usar photoSorter.ordenarFotos() 
-      // Mas sem campo ORDEM para garantir que use Análise Inteligente
-      const fotosOrdenadas = photoSorter.ordenarFotos(fotosTemp, formData.Codigo || 'temp');
-      
-      console.log('📝 ADMIN: photoSorter.ordenarFotos() executado com sucesso!');
-      
-      // EXATAMENTE IGUAL AO FRONTEND - mapear códigos únicos  
-      const resultado = fotosOrdenadas.map((foto, index) => ({
-        ...foto,
-        Codigo: `${formData.Codigo || 'temp'}-foto-${index}`,
-      }));
-
-      console.log('✅ ADMIN: Ordenação finalizada usando photoSorter:', {
-        totalFotos: resultado.length,
-        primeira: resultado[0]?.Foto?.split('/').pop()?.substring(0, 30) + '...',
-        metodo: 'photoSorter.ordenarFotos() - IGUAL AO FRONTEND'
-      });
-
-      return resultado;
+      // Se é modo imóvel, usar photoSorter (que já funciona)
+      if (isImovelMode) {
+        const fotosOrdenadas = photoSorter.ordenarFotos(processedData.fotos, processedData.codigo);
+        return fotosOrdenadas.map((foto, index) => ({
+          ...foto,
+          Codigo: `${processedData.codigo}-foto-${index}`,
+        }));
+      } else {
+        // Se é modo condomínio, as fotos JÁ vêm ordenadas da página (processadas)
+        return processedData.fotos.map((foto, index) => ({
+          ...foto,
+          Codigo: `${processedData.codigo}-foto-${index}`,
+        }));
+      }
 
     } catch (error) {
-      console.error('❌ ADMIN: Erro ao usar photoSorter:', error);
+      console.error('❌ Erro ao processar imagens na galeria:', error);
       
-      // Fallback seguro - IGUAL AO FRONTEND
-      return [...formData.Foto].map((foto, index) => ({
+      // Fallback seguro
+      return [...processedData.fotos].map((foto, index) => ({
         ...foto,
-        Codigo: `${formData.Codigo || 'temp'}-foto-${index}`,
+        Codigo: `${processedData.codigo}-foto-${index}`,
       }));
     }
-  }, [formData?.Foto, formData?.Codigo, autoReagroupEnabled]);
+  }, [processedData, isImovelMode]);
 
-  const baixarTodasImagens = async (imagens = []) => {
-    if (!Array.isArray(imagens)) return;
+  // 🔍 DEBUG (só no modo imóvel)
+  const debugInfo = useMemo(() => {
+    if (!debugMode || !isImovelMode || !processedData.fotos) return null;
+    return photoSorter.gerarRelatorio(processedData.fotos, processedData.codigo);
+  }, [debugMode, isImovelMode, processedData.fotos, processedData.codigo]);
 
-    setDownloadingPhotos(true);
-    const zip = new JSZip();
-    const pasta = zip.folder("imagens");
-
-    for (const [i, img] of imagens.entries()) {
-      try {
-        const cleanUrl = (() => {
-          try {
-            const parsed = new URL(img.Foto);
-            if (parsed.pathname.startsWith("/_next/image")) {
-              const inner = parsed.searchParams.get("url");
-              return decodeURIComponent(inner || img.Foto);
-            }
-            return img.Foto;
-          } catch {
-            return img.Foto;
-          }
-        })();
-
-        const response = await fetch(cleanUrl);
-        if (!response.ok) continue;
-
-        const blob = await response.blob();
-        const nome = `imagem-${i + 1}.jpg`;
-        pasta?.file(nome, blob);
-      } catch (err) {
-        console.error(`Erro ao baixar imagem ${i + 1}:`, err);
-      }
-    }
-
-    try {
-      const content = await zip.generateAsync({ type: "blob" });
-      saveAs(content, "imagens.zip");
-    } catch (zipError) {
-      console.error("Erro ao gerar zip:", zipError);
-    }
-
-    setDownloadingPhotos(false);
-  };
-
-  const handleAddImageUrl = () => {
-    const imageUrl = prompt("Digite a URL da imagem:");
-    if (imageUrl?.trim()) {
-      addSingleImage(imageUrl.trim());
-    }
-  };
-
-  const handleImageUpload = (codigo) => {
-    const fileInput = document.createElement("input");
-    fileInput.type = "file";
-    fileInput.accept = "image/*";
-    fileInput.onchange = (e) => {
-      const file = e.target.files?.[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          updateImage(codigo, e.target.result);
-        };
-        reader.readAsDataURL(file);
+  // 🔧 Toggle debug (só no desenvolvimento e modo imóvel)
+  useEffect(() => {
+    if (!isImovelMode) return;
+    
+    const handleKeyPress = (e) => {
+      if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+        setDebugMode(prev => !prev);
+        console.log(debugMode ? '🔍 Debug desativado' : '🔍 Debug ativado');
       }
     };
-    fileInput.click();
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [debugMode, isImovelMode]);
+
+  if (!processedData.titulo) {
+    return null;
+  }
+
+  if (images.length === 0) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-1 w-full">
+        <div className="col-span-1 h-[410px] relative">
+          <div className="w-full h-full overflow-hidden bg-gray-200 flex items-center justify-center">
+            <span className="text-gray-500">Imagem não disponível</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const openModal = (index) => {
+    setIsModalOpen(true);
+    setSelectedIndex(index ?? null);
   };
 
-  const handlePositionChange = (codigo, newPosition) => {
-    const position = parseInt(newPosition);
-    if (!isNaN(position) && position > 0 && position <= sortedPhotos.length) {
-      // Desabilitar reagrupamento automático quando usuário reordena manualmente
-      setAutoReagroupEnabled(false);
-      changeImagePosition(codigo, position);
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedIndex(null);
+  };
+
+  const goNext = () => {
+    if (selectedIndex !== null) {
+      setSelectedIndex((prev) => (prev + 1) % images.length);
     }
   };
 
-  const handleReagroupPhotos = () => {
-    console.log('🔄 ADMIN: Limpando cache do photoSorter e reordenando...');
-    setAutoReagroupEnabled(true);
-    photoSorter.limparCache(); // Limpar cache igual ao frontend
+  const goPrev = () => {
+    if (selectedIndex !== null) {
+      setSelectedIndex((prev) => (prev - 1 + images.length) % images.length);
+    }
   };
 
   return (
-    <FormSection title="Imagens do Imóvel" className="mb-8">
-      <div className="space-y-4">
-        <div className="flex flex-wrap justify-between items-center gap-3">
-          <div className="text-sm">
-            <span className="font-medium text-gray-700">
-              {validation.photoCount}/{validation.requiredPhotoCount} fotos
-            </span>
-            {validation.photoCount < validation.requiredPhotoCount && (
-              <span className="text-red-500 ml-2">
-                (Mínimo {validation.requiredPhotoCount})
-              </span>
-            )}
+    <>
+      {/* 🔍 DEBUG INFO (só modo imóvel) */}
+      {debugMode && debugInfo && isImovelMode && (
+        <div className="mb-4 p-3 bg-black text-green-400 font-mono text-xs rounded-md">
+          <div className="font-bold mb-2">🔍 DEBUG - ORDENAÇÃO INTELIGENTE</div>
+          <div>📸 Total: {debugInfo.total} fotos</div>
+          <div>📊 Grupos: {JSON.stringify(debugInfo.grupos)}</div>
+          <div>📈 Cobertura: {(debugInfo.cobertura * 100).toFixed(1)}%</div>
+          <div>🎯 Padrões: {debugInfo.padroes.slice(0, 3).join(', ')}...</div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-1 w-full">
+        <div className="col-span-1 h-[410px] cursor-pointer relative" onClick={() => openModal()}>
+          <div className="w-full h-full overflow-hidden">
+            <Image
+              src={images[0].Foto}
+              alt={processedData.titulo}
+              title={processedData.titulo}
+              width={800}
+              height={600}
+              sizes="(max-width: 350px) 100vw, (max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              placeholder="blur"
+              blurDataURL={images[0].blurDataURL || "/placeholder.png"}
+              loading="eager"
+              priority={true}
+              className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
+            />
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={handleAddImageUrl}
-              className="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors"
-            >
-              + Adicionar URL
-            </button>
-            <button
-              type="button"
-              onClick={showImageModal}
-              className="px-3 py-1.5 text-sm bg-black hover:bg-gray-800 text-white rounded-md transition-colors"
-            >
-              📤 Upload em Lote
-            </button>
+          {/* 🏷️ Indicador de destaque */}
+          {images[0].Destaque === "Sim" && (
+            <div className="absolute top-4 left-4 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+              ⭐ DESTAQUE
+            </div>
+          )}
 
-            {sortedPhotos.length > 0 && (
-              <>
-                <button
-                  type="button"
-                  onClick={handleReagroupPhotos}
-                  className="px-3 py-1.5 text-sm bg-purple-600 hover:bg-purple-700 text-white rounded-md transition-colors"
-                  title="Reordenar usando photoSorter - MESMA lógica do frontend que funciona"
-                >
-                  🔄 Ordem Híbrida
-                </button>
-                <button
-                  type="button"
-                  onClick={() => baixarTodasImagens(sortedPhotos)}
-                  disabled={downloadingPhotos}
-                  className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
-                    downloadingPhotos
-                      ? 'bg-blue-300 text-white cursor-wait'
-                      : 'bg-blue-600 hover:bg-blue-700 text-white'
-                  }`}
-                >
-                  {downloadingPhotos ? 'Baixando...' : '⬇️ Baixar Todas'}
-                </button>
-                <button
-                  type="button"
-                  onClick={removeAllImages}
-                  className="px-3 py-1.5 text-sm bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors"
-                >
-                  🗑️ Limpar Tudo
-                </button>
-              </>
-            )}
-          </div>
+          {isMobile && images.length > 1 && (
+            <div className="absolute top-4 right-4 bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg">
+              {images.length} fotos
+            </div>
+          )}
         </div>
 
-        {/* INDICADOR VISUAL - MOSTRA QUE ESTÁ USANDO photoSorter */}
-        <div className={`p-3 rounded-md text-sm border-l-4 ${
-          autoReagroupEnabled 
-            ? 'bg-green-50 border-green-400 text-green-700'
-            : 'bg-yellow-50 border-yellow-400 text-yellow-700'
-        }`}>
-          <p>
-            <strong>
-              🎯 ADMIN USANDO photoSorter - {autoReagroupEnabled 
-                ? '✅ Ordenação inteligente ATIVA (igual frontend)' 
-                : '✋ Modo manual ATIVO'
-              }
-            </strong>
-          </p>
-          <p className="text-xs mt-1">
-            {autoReagroupEnabled 
-              ? '📸 DESTAQUE sempre em 1º + análise inteligente com photoSorter.ordenarFotos() - MESMA classe do frontend que funciona perfeitamente!'
-              : '📸 DESTAQUE sempre em 1º + ordem manual. Você está controlando a sequência.'
-            }
-          </p>
-        </div>
-
-        {sortedPhotos.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {sortedPhotos.map((photo, index) => (
-              <div key={`${photo.Codigo}-${index}`} className="border rounded-lg overflow-hidden bg-white shadow-sm">
-                <div className="relative aspect-video w-full">
+        {!isMobile && (
+          <div className="col-span-1 grid grid-cols-2 grid-rows-2 gap-1 h-[410px]">
+            {images.slice(1, 5).map((image, index) => {
+              const isLastImage = index === 3;
+              return (
+                <div
+                  key={index}
+                  className="relative h-full overflow-hidden cursor-pointer"
+                  onClick={() => openModal()}
+                >
                   <Image
-                    src={photo.Foto}
-                    alt={`Imóvel ${index + 1}`}
-                    fill
-                    className="object-cover"
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    src={image.Foto}
+                    alt={`${processedData.titulo} - imagem ${index + 2}`}
+                    title={`${processedData.titulo} - imagem ${index + 2}`}
+                    width={400}
+                    height={300}
+                    sizes="25vw"
+                    placeholder="blur"
+                    blurDataURL={image.blurDataURL || "/placeholder.png"}
+                    loading="lazy"
+                    className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
                   />
-                  {photo.Destaque === "Sim" && (
-                    <span className="absolute top-2 left-2 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded">
-                      DESTAQUE
-                    </span>
-                  )}
-                </div>
-
-                <div className="p-3 space-y-3">
-                  <div className="flex gap-2">
-                    <div className="flex-1">
-                      <label className="block text-xs text-gray-500 mb-1">Ordem</label>
-                      <select
-                        value={index + 1}
-                        onChange={(e) => handlePositionChange(photo.Codigo, e.target.value)}
-                        className="w-full p-1.5 text-sm border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        title="Alterar posição da foto na galeria"
-                      >
-                        {[...Array(sortedPhotos.length)].map((_, i) => (
-                          <option key={i + 1} value={i + 1}>
-                            {i + 1}°
-                          </option>
-                        ))}
-                      </select>
+                  
+                  {/* Indicador de destaque nos thumbnails */}
+                  {image.Destaque === "Sim" && (
+                    <div className="absolute top-2 left-2 bg-yellow-500 text-white text-xs font-bold px-1.5 py-0.5 rounded">
+                      ⭐
                     </div>
-                    <div className="flex-1">
-                      <label className="block text-xs text-gray-500 mb-1">Ação</label>
+                  )}
+                  
+                  {isLastImage && images.length > 5 && (
+                    <div className="absolute inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center">
                       <button
-                        onClick={() => setImageAsHighlight(photo.Codigo)}
-                        className={`w-full p-1.5 text-sm rounded-md transition-colors ${
-                          photo.Destaque === "Sim"
-                            ? "bg-yellow-500 text-white"
-                            : "bg-gray-100 hover:bg-gray-200"
-                        }`}
+                        className="border border-white text-white px-4 py-2 rounded hover:bg-white hover:text-black transition-colors"
+                        aria-label="Ver mais fotos"
                       >
-                        {photo.Destaque === "Sim" ? "★ Destaque" : "☆ Tornar Destaque"}
+                        +{images.length - 5} fotos
                       </button>
                     </div>
-                  </div>
-
-                  <div className="text-xs text-gray-500 truncate" title={photo.Foto?.split('/').pop()?.replace(/\.(jpg|jpeg|png|gif)$/i, '')}>
-                    Código: {photo.Foto?.split('/').pop()?.replace(/\.(jpg|jpeg|png|gif)$/i, '') || 'N/A'}
-                  </div>
-
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleImageUpload(photo.Codigo)}
-                      className="flex-1 py-1.5 text-sm bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-md transition-colors"
-                    >
-                      🔄 Trocar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => removeImage(photo.Codigo)}
-                      className="flex-1 py-1.5 text-sm bg-red-50 hover:bg-red-100 text-red-700 rounded-md transition-colors"
-                    >
-                      ✖ Remover
-                    </button>
-                  </div>
+                  )}
                 </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
-            <p className="text-gray-500">Nenhuma imagem cadastrada</p>
-            <p className="text-sm text-gray-400 mt-1">
-              Utilize os botões acima para adicionar imagens
-            </p>
-          </div>
-        )}
-
-        {validation.photoCount < validation.requiredPhotoCount && (
-          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3">
-            <p className="text-yellow-700 text-sm">
-              ⚠️ Adicione pelo menos {validation.requiredPhotoCount} fotos para publicar
-            </p>
+              );
+            })}
           </div>
         )}
       </div>
-    </FormSection>
-  );
-});
 
-ImagesSection.displayName = "ImagesSection";
-export default ImagesSection;
+      {isMobile && images.length > 1 && (
+        <div className="mt-4 px-4">
+          <button
+            onClick={() => openModal()}
+            className="w-full py-3 text-center border border-gray-300 rounded-md bg-white hover:bg-gray-50 transition-colors font-medium"
+          >
+            📸 Ver todas as {images.length} fotos
+          </button>
+        </div>
+      )}
+
+      {/* 🖼️ MODAL DA GALERIA (MESMO CÓDIGO QUE JÁ FUNCIONA) */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-95 z-50 overflow-auto">
+          <div className="flex justify-between gap-4 p-5 pt-28 mt-6 md:mt-0">
+            <button onClick={closeModal} aria-label="Fechar galeria" className="text-white">
+              <ArrowLeft size={24} />
+            </button>
+            <Share
+              primary
+              url={processedData.urlShare}
+              title={processedData.tituloShare}
+              imovel={isImovelMode ? {
+                Codigo: imovel.Codigo,
+                Empreendimento: imovel.Empreendimento,
+              } : undefined}
+            />
+          </div>
+
+          {selectedIndex !== null ? (
+            <div className="flex items-center justify-center min-h-screen p-4 relative">
+              <Image
+                src={images[selectedIndex].Foto}
+                alt={`${processedData.titulo} - imagem ampliada`}
+                title={`${processedData.titulo} - imagem ampliada`}
+                width={1200}
+                height={800}
+                sizes="100vw"
+                placeholder="blur"
+                blurDataURL={images[selectedIndex].blurDataURL || "/placeholder.png"}
+                loading="eager"
+                className="max-w-full max-h-screen object-contain"
+              />
+
+              {/* Indicador de foto atual */}
+              <div className="absolute top-20 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm">
+                {selectedIndex + 1} / {images.length}
+                {images[selectedIndex].Destaque === "Sim" && " ⭐"}
+              </div>
+
+              <button
+                onClick={goPrev}
+                className="absolute left-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2 hover:bg-black hover:bg-opacity-50 rounded-full transition-colors"
+                aria-label="Imagem anterior"
+              >
+                &#10094;
+              </button>
+              <button
+                onClick={goNext}
+                className="absolute right-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2 hover:bg-black hover:bg-opacity-50 rounded-full transition-colors"
+                aria-label="Próxima imagem"
+              >
+                &#10095;
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
+              {images.map((image, idx) => (
+                <div
+                  key={idx}
+                  onClick={() => setSelectedIndex(idx)}
+                  className="relative w-full h-48 sm:h-56 md:h-64 lg:h-72 xl:h-80 cursor-pointer overflow-hidden border-2 border-transparent hover:border-white transition-colors"
+                >
+                  <Image
+                    src={image.Foto}
+                    alt={`${processedData.titulo} - imagem ${idx + 1}`}
+                    title={`${processedData.titulo} - imagem ${idx + 1}`}
+                    fill
+                    sizes="(max-width: 768px) 50vw, 25vw"
+                    placeholder="blur"
+                    blurDataURL={image.blurDataURL || "/placeholder.png"}
+                    loading="lazy"
+                    className="object-cover"
+                  />
+                  
+                  {/* Overlay com número */}
+                  <div className="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
+                    {idx + 1}
+                  </div>
+                  
+                  {/* Indicador de destaque */}
+                  {image.Destaque === "Sim" && (
+                    <div className="absolute top-2 left-2 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded">
+                      ⭐ DESTAQUE
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 🔍 Hint do debug (só modo imóvel) */}
+      {isImovelMode && process.env.NODE_ENV === 'development' && (
+        <div className="mt-2 text-xs text-gray-400 text-center">
+          Ctrl + Shift + D para debug da ordenação
+        </div>
+      )}
+    </>
+  );
+}
