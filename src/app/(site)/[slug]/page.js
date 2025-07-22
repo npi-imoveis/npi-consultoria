@@ -1,4 +1,4 @@
-// app/(site)/[slug]/page.js
+// app/(site)/[slug]/page.js - CORRIGIDO COM photoSorter
 import { Button } from "@/app/components/ui/button";
 import { getCondominioPorSlug } from "@/app/services";
 import { formatterValue } from "@/app/utils/formatter-value";
@@ -19,9 +19,49 @@ import ExploreRegiao from "./componentes/ExploreRegiao";
 import { notFound, redirect } from "next/navigation";
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 import ScrollToImoveisButton from "./componentes/scroll-to-imovel-button";
+import { photoSorter } from "@/app/utils/photoSorter"; // 🎯 MESMA CLASSE QUE FUNCIONOU!
 
 function ensureCondominio(text) {
   return /condom[ií]nio/i.test(text) ? text : `Condomínio ${text}`;
+}
+
+// 🎯 FUNÇÃO PARA ORDENAR FOTOS DO CONDOMÍNIO (igual ao admin que funcionou)
+function processarFotosCondominio(fotos, codigoCondominio) {
+  if (!Array.isArray(fotos) || fotos.length === 0) {
+    console.log('📸 CONDOMÍNIO: Nenhuma foto para processar');
+    return [];
+  }
+
+  try {
+    console.log('📝 CONDOMÍNIO: Iniciando ordenação com photoSorter...', {
+      totalFotos: fotos.length,
+      codigo: codigoCondominio
+    });
+    
+    // 🎯 FORÇAR photoSorter a usar SEMPRE Análise Inteligente (igual ao admin)
+    const fotosTemp = fotos.map(foto => {
+      // Remover campos ORDEM para forçar análise inteligente
+      const { Ordem, ordem, ORDEM, ...fotoSemOrdem } = foto;
+      return fotoSemOrdem;
+    });
+    
+    // EXATAMENTE IGUAL AO ADMIN QUE FUNCIONOU - usar photoSorter.ordenarFotos() 
+    const fotosOrdenadas = photoSorter.ordenarFotos(fotosTemp, codigoCondominio || 'condominio');
+    
+    console.log('✅ CONDOMÍNIO: Ordenação finalizada usando photoSorter:', {
+      totalFotos: fotosOrdenadas.length,
+      primeira: fotosOrdenadas[0]?.Foto?.split('/').pop()?.substring(0, 30) + '...',
+      metodo: 'photoSorter.ordenarFotos() - IGUAL AO ADMIN'
+    });
+
+    return fotosOrdenadas;
+
+  } catch (error) {
+    console.error('❌ CONDOMÍNIO: Erro ao usar photoSorter:', error);
+    
+    // Fallback seguro - retornar fotos originais
+    return fotos;
+  }
 }
 
 export async function generateMetadata({ params }) {
@@ -48,9 +88,12 @@ export async function generateMetadata({ params }) {
 
   const rawTitle = ensureCondominio(condominio.Empreendimento);
   
+  // 🎯 PROCESSAR FOTOS PARA METADATA TAMBÉM
+  const fotosOrdenadas = processarFotosCondominio(condominio.Foto, condominio.Codigo);
+  
   // Corrigir extração da imagem - buscar foto destacada ou primeira disponível
-  const destaqueFotoObj = condominio.Foto?.find((f) => f.Destaque === "Sim");
-  const primeiraFoto = Array.isArray(condominio.Foto) && condominio.Foto.length > 0 ? condominio.Foto[0] : null;
+  const destaqueFotoObj = fotosOrdenadas?.find((f) => f.Destaque === "Sim");
+  const primeiraFoto = Array.isArray(fotosOrdenadas) && fotosOrdenadas.length > 0 ? fotosOrdenadas[0] : null;
   
   const destaqueFotoUrl = destaqueFotoObj?.Foto || 
                          destaqueFotoObj?.FotoPequena || 
@@ -147,6 +190,9 @@ export default async function CondominioPage({ params }) {
   const condominio = response.data;
   const imoveisRelacionados = response.imoveisRelacionados;
 
+  // 🎯 PROCESSAR FOTOS COM photoSorter ANTES DE USAR (igual ao admin que funcionou)
+  const fotosOrdenadas = processarFotosCondominio(condominio.Foto, condominio.Codigo);
+
   const rawTitle = ensureCondominio(condominio.Empreendimento);
   const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`;
   const modifiedDate = new Date().toISOString();
@@ -181,7 +227,7 @@ export default async function CondominioPage({ params }) {
         description={`${condominio.Categoria} à venda em ${condominio.BairroComercial}, ${condominio.Cidade}. ${rawTitle}: ${condominio.DormitoriosAntigo} quartos, ${condominio.SuiteAntigo} suítes, ${condominio.BanheiroSocialQtd} banheiros, ${condominio.VagasAntigo} vagas, ${condominio.MetragemAnt}. ${condominio.Situacao}. Valor: ${condominio.ValorAntigo ? `R$ ${condominio.ValorAntigo}` : "Consulte"}. ${condominio.TipoEndereco} ${condominio.Endereco}.`}
         address={`${condominio.TipoEndereco} ${condominio.Endereco}, ${condominio.Numero}, ${condominio.BairroComercial}, ${condominio.Cidade}`}
         url={currentUrl}
-        image={condominio.Foto}
+        image={fotosOrdenadas} // 🎯 USAR FOTOS ORDENADAS NO STRUCTURED DATA
       />
 
       {/* Structured Data para datas */}
@@ -250,7 +296,8 @@ export default async function CondominioPage({ params }) {
             </div>
           </div>
           <div className="relative w-full min-h-[550px] overflow-hidden rounded-lg">
-            <CondominioGallery fotos={condominio.Foto} title={rawTitle} />
+            {/* 🎯 USAR FOTOS ORDENADAS COM photoSorter (igual ao admin que funcionou) */}
+            <CondominioGallery fotos={fotosOrdenadas} title={rawTitle} />
           </div>
         </div>
       </div>
