@@ -1,4 +1,4 @@
-// app/(site)/[slug]/page.js - CORRIGIDO COM photoSorter
+// app/(site)/[slug]/page.js - PÁGINA COMPLETA DO CONDOMÍNIO COM ImageGallery
 import { Button } from "@/app/components/ui/button";
 import { getCondominioPorSlug } from "@/app/services";
 import { formatterValue } from "@/app/utils/formatter-value";
@@ -6,7 +6,6 @@ import { Apartment as StructuredDataApartment } from "@/app/components/structure
 import { Share } from "@/app/components/ui/share";
 import { PropertyTableOwner } from "./componentes/property-table-owner";
 import { WhatsappFloat } from "@/app/components/ui/whatsapp";
-import CondominioGallery from "./componentes/condominio-gallery";
 import { PropertyTable } from "./componentes/property-table";
 import { ImoveisRelacionados } from "./componentes/related-properties";
 import SobreCondominio from "./componentes/SobreCondominio";
@@ -19,7 +18,8 @@ import ExploreRegiao from "./componentes/ExploreRegiao";
 import { notFound, redirect } from "next/navigation";
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 import ScrollToImoveisButton from "./componentes/scroll-to-imovel-button";
-import { photoSorter } from "@/app/utils/photoSorter"; // 🎯 MESMA CLASSE QUE FUNCIONOU!
+import { photoSorter } from "@/app/utils/photoSorter"; // 🎯 CLASSE DE ORDENAÇÃO
+import { ImageGallery } from "@/app/components/ui/ImageGallery"; // 🎯 GALERIA UNIVERSAL
 
 function ensureCondominio(text) {
   return /condom[ií]nio/i.test(text) ? text : `Condomínio ${text}`;
@@ -174,7 +174,6 @@ export async function generateMetadata({ params }) {
   };
 }
 
-
 export default async function CondominioPage({ params }) {
   const { slug } = params;
   
@@ -296,8 +295,13 @@ export default async function CondominioPage({ params }) {
             </div>
           </div>
           <div className="relative w-full min-h-[550px] overflow-hidden rounded-lg">
-            {/* 🎯 USAR FOTOS ORDENADAS COM photoSorter (igual ao admin que funcionou) */}
-            <CondominioGallery fotos={fotosOrdenadas} title={rawTitle} />
+            {/* 🎯 USAR ImageGallery UNIVERSAL EM VEZ DE CondominioGallery */}
+            <ImageGallery 
+              fotos={fotosOrdenadas}
+              title={rawTitle}
+              shareUrl={currentUrl}
+              shareTitle={`Compartilhe o imóvel ${rawTitle} em ${condominio.BairroComercial}`}
+            />
           </div>
         </div>
       </div>
