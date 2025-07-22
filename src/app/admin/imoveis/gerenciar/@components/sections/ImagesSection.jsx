@@ -22,96 +22,42 @@ const ImagesSection = memo(({
   const [downloadingPhotos, setDownloadingPhotos] = useState(false);
   const [forceReorder, setForceReorder] = useState(0);
 
-  // 🎯 SEMPRE MODO INTELIGENTE + PRESERVAÇÃO DE AJUSTES MANUAIS
+  // 🎯 ORDENAÇÃO INTELIGENTE SIMPLIFICADA
   const sortedPhotos = useMemo(() => {
     if (!Array.isArray(formData?.Foto) || formData.Foto.length === 0) {
       return [];
     }
 
     try {
-      console.log('📝 ADMIN: Ordenação inteligente SEMPRE ativa...', {
+      console.log('📝 ADMIN: Iniciando ordenação inteligente...', {
         totalFotos: formData.Foto.length,
         forceReorder,
         timestamp: new Date().toISOString()
       });
       
       // 🎯 PRESERVAR CÓDIGOS ORIGINAIS antes do photoSorter
-      const fotosComCodigosOriginais = formData.Foto.map((foto, index) => {
-        const codigoOriginal = foto.Codigo || foto.codigo || `temp-${Date.now()}-${index}`;
-        
-        return {
-          ...foto,
-          codigoOriginal,
-          // Preservar ajustes manuais se existirem
-          ajusteManual: foto.ajusteManual || false,
-          posicaoManual: foto.posicaoManual || null
-        };
-      });
+      const fotosComCodigosOriginais = formData.Foto.map((foto, index) => ({
+        ...foto,
+        codigoOriginal: foto.Codigo || foto.codigo || `temp-${Date.now()}-${index}`
+      }));
       
-      console.log('📝 ADMIN: Fotos com códigos e ajustes preservados:', 
-        fotosComCodigosOriginais.map(f => ({
-          codigo: f.codigoOriginal,
-          destaque: f.Destaque,
-          ajusteManual: f.ajusteManual,
-          posicaoManual: f.posicaoManual,
-          url: f.Foto?.substring(f.Foto?.lastIndexOf('/') + 1, f.Foto?.lastIndexOf('.'))
-        }))
-      );
-      
-      // Limpar campos de ordem para forçar análise inteligente, mas preservar ajustes manuais
+      // Limpar campos de ordem para forçar análise inteligente
       const fotosTemp = fotosComCodigosOriginais.map(foto => {
-        const { Ordem, ordem, ORDEM, codigoOriginal, ajusteManual, posicaoManual, ...fotoLimpa } = foto;
-        return {
-          ...fotoLimpa,
-          codigoOriginal,
-          ajusteManual,
-          posicaoManual
-        };
+        const { Ordem, ordem, ORDEM, codigoOriginal, ...fotoLimpa } = foto;
+        return { ...fotoLimpa, codigoOriginal };
       });
       
-      // 🔥 USAR photoSorter SEMPRE, mas com conhecimento dos ajustes manuais
+      // USAR photoSorter
       const fotosOrdenadas = photoSorter.ordenarFotos(fotosTemp, formData.Codigo || 'temp');
       
-      console.log('📝 ADMIN: photoSorter executado:', 
-        fotosOrdenadas.map((f, i) => ({
-          posicao: i + 1,
-          codigoOriginal: f.codigoOriginal,
-          destaque: f.Destaque,
-          url: f.Foto?.substring(f.Foto?.lastIndexOf('/') + 1, f.Foto?.lastIndexOf('.'))
-        }))
-      );
-      
-      // 🔥 APLICAR AJUSTES MANUAIS SOBRE A ORDEM INTELIGENTE
-      let resultado = fotosOrdenadas.map((foto) => ({
+      // RESTAURAR CÓDIGOS ORIGINAIS
+      const resultado = fotosOrdenadas.map((foto) => ({
         ...foto,
         Codigo: foto.codigoOriginal,
         codigoOriginal: undefined
       }));
 
-      // Verificar se há ajustes manuais pendentes e aplicá-los
-      const fotosComAjustes = resultado.filter(f => f.ajusteManual && f.posicaoManual);
-      if (fotosComAjustes.length > 0) {
-        console.log('🔧 APLICANDO AJUSTES MANUAIS:', fotosComAjustes.map(f => ({
-          codigo: f.Codigo,
-          novaPosicao: f.posicaoManual
-        })));
-        
-        // Aplicar ajustes manuais
-        fotosComAjustes.forEach(fotoAjuste => {
-          const posicaoAtual = resultado.findIndex(f => f.Codigo === fotoAjuste.Codigo);
-          const novaPosicao = fotoAjuste.posicaoManual - 1; // Convert to 0-based
-          
-          if (posicaoAtual !== -1 && novaPosicao >= 0 && novaPosicao < resultado.length) {
-            // Mover foto para nova posição
-            const [fotoMovida] = resultado.splice(posicaoAtual, 1);
-            resultado.splice(novaPosicao, 0, fotoMovida);
-            
-            console.log(`🔧 Foto ${fotoAjuste.Codigo} movida de ${posicaoAtual + 1} para ${novaPosicao + 1}`);
-          }
-        });
-      }
-
-      console.log('✅ ADMIN: Resultado final (inteligente + ajustes):', {
+      console.log('✅ ADMIN: Ordenação inteligente concluída:', {
         totalFotos: resultado.length,
         destaque: resultado.find(f => f.Destaque === "Sim")?.Codigo,
         primeiras3: resultado.slice(0, 3).map((f, i) => ({
@@ -230,33 +176,44 @@ const ImagesSection = memo(({
     fileInput.click();
   };
 
-  // 🔥 AJUSTE MANUAL DENTRO DO MODO INTELIGENTE
+  // 🔥 MUDANÇA DE POSIÇÃO SIMPLIFICADA
   const handlePositionChange = (codigo, newPosition) => {
     try {
       const position = parseInt(newPosition);
       const posicaoAtual = sortedPhotos.findIndex(p => p.Codigo === codigo) + 1;
       
-      console.log('📝 ADMIN: Ajuste manual solicitado:', { 
+      console.log('📝 ADMIN: Tentando alterar posição:', { 
         codigo, 
         posicaoAtual,
         novaPosicao: position,
-        totalFotos: sortedPhotos.length
+        totalFotos: sortedPhotos.length,
+        funcaoDisponivel: typeof changeImagePosition
       });
       
       if (!isNaN(position) && position > 0 && position <= sortedPhotos.length && position !== posicaoAtual) {
-        // 🔥 MARCAR FOTO COM AJUSTE MANUAL para preservar na próxima ordenação
-        console.log('🔧 APLICANDO AJUSTE MANUAL - Modo inteligente continua ativo');
+        console.log('🔧 EXECUTANDO MUDANÇA DE POSIÇÃO...');
         
-        // Chamar função de mudança de posição com flag de ajuste manual
-        changeImagePosition(codigo, position, { 
-          ajusteManual: true,
-          preservarOrdemInteligente: true 
+        // Chamar função simples primeiro - sem parâmetros extras
+        const resultado = changeImagePosition(codigo, position);
+        
+        console.log('📝 ADMIN: Resultado da mudança:', resultado);
+        console.log('✅ ADMIN: Comando de alteração enviado');
+        
+        // Não forçar reordenação imediatamente - deixar a mudança acontecer primeiro
+        // setTimeout(() => {
+        //   console.log('🔄 ADMIN: Aplicando ajuste após mudança...');
+        //   setForceReorder(prev => prev + 1);
+        // }, 500);
+        
+      } else {
+        console.warn('⚠️ ADMIN: Mudança ignorada:', {
+          positionInvalid: isNaN(position),
+          outOfRange: position <= 0 || position > sortedPhotos.length,
+          samePosition: position === posicaoAtual
         });
-        
-        console.log('✅ ADMIN: Ajuste manual aplicado - photoSorter continuará funcionando');
       }
     } catch (error) {
-      console.error('❌ ADMIN: Erro ao aplicar ajuste manual:', error);
+      console.error('❌ ADMIN: Erro ao alterar posição:', error);
       alert('Erro ao alterar posição. Tente novamente.');
     }
   };
@@ -384,7 +341,7 @@ const ImagesSection = memo(({
             </span>
           </p>
           <p className="text-xs mt-1">
-            📸 PhotoSorter organizando automaticamente + você pode fazer ajustes manuais específicos usando os selects. Destaque sempre em 1º.
+            📸 PhotoSorter organizando automaticamente. Você pode ajustar posições específicas usando os selects. Destaque sempre em 1º.
           </p>
         </div>
 
@@ -408,11 +365,6 @@ const ImagesSection = memo(({
                   <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
                     {index + 1}°
                   </div>
-                  {photo.ajusteManual && (
-                    <span className="absolute bottom-2 right-2 bg-orange-500 text-white text-xs px-1 py-0.5 rounded">
-                      AJUSTADO
-                    </span>
-                  )}
                 </div>
 
                 <div className="p-3 space-y-3">
@@ -425,7 +377,7 @@ const ImagesSection = memo(({
                         value={index + 1}
                         onChange={(e) => handlePositionChange(photo.Codigo, e.target.value)}
                         className="w-full p-1.5 text-sm border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        title={`Ajustar posição manualmente (Código: ${photo.Codigo})`}
+                        title={`Mover para posição (Código: ${photo.Codigo})`}
                       >
                         {[...Array(sortedPhotos.length)].map((_, i) => (
                           <option key={i + 1} value={i + 1}>
