@@ -65,9 +65,12 @@ const AMBIENTE_NOMES = {
   implantacao: 'Implantação'
 };
 
-// 🎯 FUNÇÃO PARA GERAR ALT INTELIGENTE
+// 🎯 FUNÇÃO PARA GERAR ALT INTELIGENTE com DEBUG FORTE
 function gerarAltInteligente(urlImagem, tituloImovel, indice) {
+  console.log('🚀 INICIANDO gerarAltInteligente:', { urlImagem, tituloImovel, indice });
+  
   if (!urlImagem || !tituloImovel) {
+    console.log('❌ Dados insuficientes para ALT');
     return `Imagem ${indice + 1}`;
   }
 
@@ -81,7 +84,8 @@ function gerarAltInteligente(urlImagem, tituloImovel, indice) {
       .replace(/\d+/g, '')
       .trim();
 
-    console.log('🔍 Analisando ALT:', { arquivo: nomeArquivo, titulo: tituloImovel });
+    console.log('🔍 ARQUIVO EXTRAÍDO:', nomeArquivo);
+    console.log('🔍 TÍTULO:', tituloImovel);
 
     // Identificar ambiente
     for (const [ambiente, keywords] of Object.entries(AMBIENTE_KEYWORDS)) {
@@ -91,18 +95,19 @@ function gerarAltInteligente(urlImagem, tituloImovel, indice) {
       
       if (encontrada) {
         const altFinal = `${tituloImovel} - ${AMBIENTE_NOMES[ambiente]}`;
-        console.log('✅ Alt detectado:', altFinal);
+        console.log('✅ ALT DETECTADO:', altFinal, 'por palavra:', keywords.find(k => nomeArquivo.includes(k)));
         return altFinal;
       }
     }
 
     // Fallback
     const altFallback = `${tituloImovel} - Imagem ${indice + 1}`;
-    console.log('⚠️ Alt fallback:', altFallback);
+    console.log('⚠️ NENHUM AMBIENTE DETECTADO, usando fallback:', altFallback);
+    console.log('📋 Nome do arquivo analisado:', nomeArquivo);
     return altFallback;
 
   } catch (error) {
-    console.error('❌ Erro no ALT:', error);
+    console.error('❌ ERRO CRÍTICO no gerarAltInteligente:', error);
     return `${tituloImovel} - Imagem ${indice + 1}`;
   }
 }
