@@ -1,4 +1,4 @@
-// ImageGallery.jsx - VERSÃO COM ORDENAÇÃO INTELIGENTE APRIMORADA
+// ImageGallery.jsx - VERSÃO UNIVERSAL para Imóvel E Condomínio
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -6,7 +6,7 @@ import Image from "next/image";
 import { ArrowLeft } from "lucide-react";
 import { formatterSlug } from "@/app/utils/formatter-slug";
 import { Share } from "../ui/share";
-import { photoSorter } from "@/app/utils/photoSorter"; // 🚀 Nova classe
+import { photoSorter } from "@/app/utils/photoSorter";
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
@@ -21,48 +21,90 @@ function useIsMobile() {
   return isMobile;
 }
 
-export function ImageGallery({ imovel }) {
+export function ImageGallery({ 
+  // Props para página de IMÓVEL (modo original)
+  imovel,
+  
+  // Props para página de CONDOMÍNIO (modo novo) 
+  fotos, 
+  title,
+  shareUrl,
+  shareTitle 
+}) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [debugMode, setDebugMode] = useState(false);
   const isMobile = useIsMobile();
 
-  // 🎯 NOVA LÓGICA: Usar classe inteligente para ordenação
+  // 🎯 MODO INTELIGENTE: Detectar se é imóvel ou condomínio
+  const isImovelMode = !!imovel;
+  
+  // Processar dados baseado no modo
+  const processedData = useMemo(() => {
+    if (isImovelMode) {
+      // MODO IMÓVEL (original)
+      return {
+        fotos: imovel?.Foto || [],
+        titulo: imovel?.Empreendimento || '',
+        codigo: imovel?.Codigo || '',
+        urlShare: `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel?.Codigo}/${formatterSlug(imovel?.Empreendimento || '')}`,
+        tituloShare: `Confira este imóvel: ${imovel?.Empreendimento}`
+      };
+    } else {
+      // MODO CONDOMÍNIO (novo)
+      return {
+        fotos: fotos || [],
+        titulo: title || '',
+        codigo: 'condominio',
+        urlShare: shareUrl || '',
+        tituloShare: shareTitle || `Confira as fotos: ${title}`
+      };
+    }
+  }, [imovel, fotos, title, shareUrl, shareTitle, isImovelMode]);
+
+  // 🎯 PROCESSAR FOTOS (igual ao funcionamento atual)
   const images = useMemo(() => {
-    if (!Array.isArray(imovel?.Foto) || imovel.Foto.length === 0) {
+    if (!Array.isArray(processedData.fotos) || processedData.fotos.length === 0) {
       return [];
     }
 
     try {
-      // Usar o novo ordenador inteligente
-      const fotosOrdenadas = photoSorter.ordenarFotos(imovel.Foto, imovel.Codigo);
-      
-      // Adicionar códigos únicos para o componente
-      return fotosOrdenadas.map((foto, index) => ({
-        ...foto,
-        Codigo: `${imovel.Codigo}-foto-${index}`,
-      }));
+      // Se é modo imóvel, usar photoSorter (que já funciona)
+      if (isImovelMode) {
+        const fotosOrdenadas = photoSorter.ordenarFotos(processedData.fotos, processedData.codigo);
+        return fotosOrdenadas.map((foto, index) => ({
+          ...foto,
+          Codigo: `${processedData.codigo}-foto-${index}`,
+        }));
+      } else {
+        // Se é modo condomínio, as fotos JÁ vêm ordenadas da página (processadas)
+        return processedData.fotos.map((foto, index) => ({
+          ...foto,
+          Codigo: `${processedData.codigo}-foto-${index}`,
+        }));
+      }
 
     } catch (error) {
       console.error('❌ Erro ao processar imagens na galeria:', error);
       
       // Fallback seguro
-      return [...imovel.Foto].map((foto, index) => ({
+      return [...processedData.fotos].map((foto, index) => ({
         ...foto,
-        Codigo: `${imovel.Codigo}-foto-${index}`,
+        Codigo: `${processedData.codigo}-foto-${index}`,
       }));
     }
-  }, [imovel?.Foto, imovel?.Codigo]);
+  }, [processedData, isImovelMode]);
 
-  // 🔍 NOVA FEATURE: Debug da ordenação
+  // 🔍 DEBUG (só no modo imóvel)
   const debugInfo = useMemo(() => {
-    if (!debugMode || !imovel?.Foto) return null;
-    
-    return photoSorter.gerarRelatorio(imovel.Foto, imovel.Codigo);
-  }, [debugMode, imovel?.Foto, imovel?.Codigo]);
+    if (!debugMode || !isImovelMode || !processedData.fotos) return null;
+    return photoSorter.gerarRelatorio(processedData.fotos, processedData.codigo);
+  }, [debugMode, isImovelMode, processedData.fotos, processedData.codigo]);
 
-  // 🔧 Toggle debug no desenvolvimento
+  // 🔧 Toggle debug (só no desenvolvimento e modo imóvel)
   useEffect(() => {
+    if (!isImovelMode) return;
+    
     const handleKeyPress = (e) => {
       if (e.ctrlKey && e.shiftKey && e.key === 'D') {
         setDebugMode(prev => !prev);
@@ -72,13 +114,11 @@ export function ImageGallery({ imovel }) {
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [debugMode]);
+  }, [debugMode, isImovelMode]);
 
-  if (!imovel || !imovel.Empreendimento) {
+  if (!processedData.titulo) {
     return null;
   }
-
-  const slug = formatterSlug(imovel.Empreendimento);
 
   if (images.length === 0) {
     return (
@@ -114,13 +154,10 @@ export function ImageGallery({ imovel }) {
     }
   };
 
-  const tituloCompartilhamento = `Confira este imóvel: ${imovel.Empreendimento}`;
-  const url = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${slug}`;
-
   return (
     <>
-      {/* 🔍 DEBUG INFO (só aparece no modo debug) */}
-      {debugMode && debugInfo && (
+      {/* 🔍 DEBUG INFO (só modo imóvel) */}
+      {debugMode && debugInfo && isImovelMode && (
         <div className="mb-4 p-3 bg-black text-green-400 font-mono text-xs rounded-md">
           <div className="font-bold mb-2">🔍 DEBUG - ORDENAÇÃO INTELIGENTE</div>
           <div>📸 Total: {debugInfo.total} fotos</div>
@@ -135,8 +172,8 @@ export function ImageGallery({ imovel }) {
           <div className="w-full h-full overflow-hidden">
             <Image
               src={images[0].Foto}
-              alt={imovel.Empreendimento}
-              title={imovel.Empreendimento}
+              alt={processedData.titulo}
+              title={processedData.titulo}
               width={800}
               height={600}
               sizes="(max-width: 350px) 100vw, (max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -148,7 +185,7 @@ export function ImageGallery({ imovel }) {
             />
           </div>
 
-          {/* 🏷️ NOVO: Indicador de destaque mais visível */}
+          {/* 🏷️ Indicador de destaque */}
           {images[0].Destaque === "Sim" && (
             <div className="absolute top-4 left-4 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
               ⭐ DESTAQUE
@@ -174,8 +211,8 @@ export function ImageGallery({ imovel }) {
                 >
                   <Image
                     src={image.Foto}
-                    alt={`${imovel.Empreendimento} - imagem ${index + 2}`}
-                    title={`${imovel.Empreendimento} - imagem ${index + 2}`}
+                    alt={`${processedData.titulo} - imagem ${index + 2}`}
+                    title={`${processedData.titulo} - imagem ${index + 2}`}
                     width={400}
                     height={300}
                     sizes="25vw"
@@ -185,7 +222,7 @@ export function ImageGallery({ imovel }) {
                     className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
                   />
                   
-                  {/* 🏷️ NOVO: Indicadores nos thumbnails */}
+                  {/* Indicador de destaque nos thumbnails */}
                   {image.Destaque === "Sim" && (
                     <div className="absolute top-2 left-2 bg-yellow-500 text-white text-xs font-bold px-1.5 py-0.5 rounded">
                       ⭐
@@ -220,7 +257,7 @@ export function ImageGallery({ imovel }) {
         </div>
       )}
 
-      {/* 🖼️ MODAL DA GALERIA */}
+      {/* 🖼️ MODAL DA GALERIA (MESMO CÓDIGO QUE JÁ FUNCIONA) */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-95 z-50 overflow-auto">
           <div className="flex justify-between gap-4 p-5 pt-28 mt-6 md:mt-0">
@@ -229,12 +266,12 @@ export function ImageGallery({ imovel }) {
             </button>
             <Share
               primary
-              url={url}
-              title={tituloCompartilhamento}
-              imovel={{
+              url={processedData.urlShare}
+              title={processedData.tituloShare}
+              imovel={isImovelMode ? {
                 Codigo: imovel.Codigo,
                 Empreendimento: imovel.Empreendimento,
-              }}
+              } : undefined}
             />
           </div>
 
@@ -242,8 +279,8 @@ export function ImageGallery({ imovel }) {
             <div className="flex items-center justify-center min-h-screen p-4 relative">
               <Image
                 src={images[selectedIndex].Foto}
-                alt={`${imovel.Empreendimento} - imagem ampliada`}
-                title={`${imovel.Empreendimento} - imagem ampliada`}
+                alt={`${processedData.titulo} - imagem ampliada`}
+                title={`${processedData.titulo} - imagem ampliada`}
                 width={1200}
                 height={800}
                 sizes="100vw"
@@ -284,8 +321,8 @@ export function ImageGallery({ imovel }) {
                 >
                   <Image
                     src={image.Foto}
-                    alt={`${imovel.Empreendimento} - imagem ${idx + 1}`}
-                    title={`${imovel.Empreendimento} - imagem ${idx + 1}`}
+                    alt={`${processedData.titulo} - imagem ${idx + 1}`}
+                    title={`${processedData.titulo} - imagem ${idx + 1}`}
                     fill
                     sizes="(max-width: 768px) 50vw, 25vw"
                     placeholder="blur"
@@ -312,8 +349,8 @@ export function ImageGallery({ imovel }) {
         </div>
       )}
 
-      {/* 🔍 Hint do debug no desenvolvimento */}
-      {process.env.NODE_ENV === 'development' && (
+      {/* 🔍 Hint do debug (só modo imóvel) */}
+      {isImovelMode && process.env.NODE_ENV === 'development' && (
         <div className="mt-2 text-xs text-gray-400 text-center">
           Ctrl + Shift + D para debug da ordenação
         </div>
