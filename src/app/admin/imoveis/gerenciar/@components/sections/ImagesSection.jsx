@@ -31,8 +31,16 @@ const ImagesSection = memo(({
     try {
       console.log('📝 ADMIN: Iniciando ordenação com photoSorter...');
       
-      // EXATAMENTE IGUAL AO FRONTEND - usar photoSorter.ordenarFotos()
-      const fotosOrdenadas = photoSorter.ordenarFotos(formData.Foto, formData.Codigo || 'temp');
+      // 🎯 FORÇAR photoSorter a usar SEMPRE Análise Inteligente (ignorar campo ORDEM)
+      const fotosTemp = formData.Foto.map(foto => {
+        // Remover campos ORDEM para forçar análise inteligente
+        const { Ordem, ordem, ORDEM, ...fotoSemOrdem } = foto;
+        return fotoSemOrdem;
+      });
+      
+      // EXATAMENTE IGUAL AO FRONTEND - usar photoSorter.ordenarFotos() 
+      // Mas sem campo ORDEM para garantir que use Análise Inteligente
+      const fotosOrdenadas = photoSorter.ordenarFotos(fotosTemp, formData.Codigo || 'temp');
       
       console.log('📝 ADMIN: photoSorter.ordenarFotos() executado com sucesso!');
       
