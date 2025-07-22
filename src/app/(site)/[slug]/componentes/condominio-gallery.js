@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { ArrowLeft, ArrowRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, X } from "lucide-react";
 import { Share } from "@/app/components/ui/share";
 
 function useIsMobile() {
@@ -192,11 +192,22 @@ export default function CondominioGallery({ fotos, title }) {
                 )}
               </div>
 
-              <Share
-                primary
-                url={`${process.env.NEXT_PUBLIC_SITE_URL || ''}`}
-                title={`Confira as fotos: ${title}`}
-              />
+              <div className="flex items-center gap-2">
+                <Share
+                  primary
+                  url={`${process.env.NEXT_PUBLIC_SITE_URL || ''}`}
+                  title={`Confira as fotos: ${title}`}
+                />
+                
+                {/* BOTÃO FECHAR GALERIA */}
+                <button 
+                  onClick={closeModal} 
+                  className="text-white hover:text-red-400 transition-colors p-2 rounded-full hover:bg-red-500/20"
+                  aria-label="Fechar galeria"
+                >
+                  <X size={24} />
+                </button>
+              </div>
             </div>
           </div>
 
