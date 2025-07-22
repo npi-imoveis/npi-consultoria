@@ -8,16 +8,6 @@ import { formatterSlug } from "@/app/utils/formatter-slug";
 import { Share } from "../ui/share";
 import { photoSorter } from "@/app/utils/photoSorter";
 
-// 🎯 FUNÇÃO PARA GERAR ALT SIMPLES
-function gerarAltInteligente(urlImagem, tituloImovel, indice) {
-  if (!urlImagem || !tituloImovel) {
-    return `Imagem ${indice + 1}`;
-  }
-
-  // Simples: Nome do empreendimento + número da imagem
-  return `${tituloImovel} - Imagem ${indice + 1}`;
-}
-
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
 
@@ -75,57 +65,40 @@ export function ImageGallery({
     }
   }, [imovel, fotos, title, shareUrl, shareTitle, isImovelMode]);
 
-  // 🎯 PROCESSAR FOTOS com ALT INTELIGENTE
+  // 🎯 PROCESSAR FOTOS (igual ao funcionamento atual)
   const images = useMemo(() => {
     if (!Array.isArray(processedData.fotos) || processedData.fotos.length === 0) {
       return [];
     }
 
     try {
-      let fotosProcessadas = [];
-
       // Se é modo imóvel, usar photoSorter (que já funciona)
       if (isImovelMode) {
         const fotosOrdenadas = photoSorter.ordenarFotos(processedData.fotos, processedData.codigo);
-        fotosProcessadas = fotosOrdenadas.map((foto, index) => ({
+        return fotosOrdenadas.map((foto, index) => ({
           ...foto,
           Codigo: `${processedData.codigo}-foto-${index}`,
         }));
       } else {
         // Se é modo condomínio, as fotos JÁ vêm ordenadas da página (processadas)
-        fotosProcessadas = processedData.fotos.map((foto, index) => ({
+        return processedData.fotos.map((foto, index) => ({
           ...foto,
           Codigo: `${processedData.codigo}-foto-${index}`,
         }));
       }
 
-      // 🎯 GERAR ALT INTELIGENTE para cada foto
-      const fotosComAltInteligente = fotosProcessadas.map((foto, index) => ({
-        ...foto,
-        altInteligente: gerarAltInteligente(foto.Foto, processedData.titulo, index)
-      }));
-
-      console.log('📸 Processamento de fotos finalizado:', {
-        total: fotosComAltInteligente.length,
-        primeiroAlt: fotosComAltInteligente[0]?.altInteligente,
-        modo: isImovelMode ? 'IMÓVEL' : 'CONDOMÍNIO'
-      });
-
-      return fotosComAltInteligente;
-
     } catch (error) {
       console.error('❌ Erro ao processar imagens na galeria:', error);
       
-      // Fallback seguro com alt básico
+      // Fallback seguro
       return [...processedData.fotos].map((foto, index) => ({
         ...foto,
         Codigo: `${processedData.codigo}-foto-${index}`,
-        altInteligente: `${processedData.titulo} - Imagem ${index + 1}`
       }));
     }
   }, [processedData, isImovelMode]);
 
-  // 🔍 DEBUG INFO (só ordenação de fotos)
+  // 🔍 DEBUG (só no modo imóvel)
   const debugInfo = useMemo(() => {
     if (!debugMode || !isImovelMode || !processedData.fotos) return null;
     return photoSorter.gerarRelatorio(processedData.fotos, processedData.codigo);
@@ -152,9 +125,11 @@ export function ImageGallery({
 
   if (images.length === 0) {
     return (
-      <div className="w-full h-[410px] relative">
-        <div className="w-full h-full overflow-hidden bg-gray-200 flex items-center justify-center rounded-lg">
-          <span className="text-gray-500">Imagem não disponível</span>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-1 w-full">
+        <div className="col-span-1 h-[410px] relative">
+          <div className="w-full h-full overflow-hidden bg-gray-200 flex items-center justify-center">
+            <span className="text-gray-500">Imagem não disponível</span>
+          </div>
         </div>
       </div>
     );
@@ -184,7 +159,7 @@ export function ImageGallery({
 
   return (
     <>
-      {/* 🔍 DEBUG INFO (só ordenação) */}
+      {/* 🔍 DEBUG INFO (só modo imóvel) */}
       {debugMode && debugInfo && isImovelMode && (
         <div className="mb-4 p-3 bg-black text-green-400 font-mono text-xs rounded-md">
           <div className="font-bold mb-2">🔍 DEBUG - ORDENAÇÃO INTELIGENTE</div>
@@ -195,23 +170,23 @@ export function ImageGallery({
         </div>
       )}
 
-      {/* 🎨 LAYOUT CONDICIONAL: Single ou Grid */}
-      {layout === "single" ? (
-        // LAYOUT SINGLE: Uma foto ocupando todo o espaço vertical disponível
-        <div className="w-full h-full cursor-pointer relative overflow-hidden rounded-lg" onClick={() => openModal()}>
-          <Image
-            src={images[0].Foto}
-            alt={images[0].altInteligente || processedData.titulo}
-            title={images[0].altInteligente || processedData.titulo}
-            width={800}
-            height={600}
-            sizes="100vw"
-            placeholder="blur"
-            blurDataURL={images[0].blurDataURL || "/placeholder.png"}
-            loading="eager"
-            priority={true}
-            className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-105"
-          />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-1 w-full">
+        <div className="col-span-1 h-[410px] cursor-pointer relative" onClick={() => openModal()}>
+          <div className="w-full h-full overflow-hidden">
+            <Image
+              src={images[0].Foto}
+              alt={processedData.titulo}
+              title={processedData.titulo}
+              width={800}
+              height={600}
+              sizes="(max-width: 350px) 100vw, (max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              placeholder="blur"
+              blurDataURL={images[0].blurDataURL || "/placeholder.png"}
+              loading="eager"
+              priority={true}
+              className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
+            />
+          </div>
 
           {/* 🏷️ Indicador de destaque */}
           {images[0].Destaque === "Sim" && (
@@ -220,53 +195,39 @@ export function ImageGallery({
             </div>
           )}
 
-          {/* 📸 Contador de fotos */}
+          {/* 📸 Contador de fotos - sempre visível */}
           <div className="absolute top-4 right-4 bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg">
             {images.length} foto{images.length > 1 ? 's' : ''}
           </div>
-
-          {/* Overlay sutil para indicar clique */}
-          <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-10 transition-all duration-300 flex items-center justify-center">
-            <div className="opacity-0 hover:opacity-100 transition-opacity bg-white/90 text-black px-4 py-2 rounded-lg">
-              Ver galeria completa
-            </div>
-          </div>
         </div>
-      ) : (
-        // LAYOUT GRID: Grid tradicional com foto principal + thumbnails
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-1 w-full">
-          <div className="col-span-1 h-[410px] cursor-pointer relative" onClick={() => openModal()}>
-            <div className="w-full h-full overflow-hidden">
-              <Image
-                src={images[0].Foto}
-                alt={images[0].altInteligente || processedData.titulo}
-                title={images[0].altInteligente || processedData.titulo}
-                width={800}
-                height={600}
-                sizes="(max-width: 350px) 100vw, (max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                placeholder="blur"
-                blurDataURL={images[0].blurDataURL || "/placeholder.png"}
-                loading="eager"
-                priority={true}
-                className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
-              />
-            </div>
 
-            {/* 🏷️ Indicador de destaque */}
-            {images[0].Destaque === "Sim" && (
-              <div className="absolute top-4 left-4 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
-                ⭐ DESTAQUE
+        {/* 🎨 LAYOUT CONDICIONAL: Grid ou Single */}
+        {layout === "single" ? (
+          // LAYOUT SINGLE: Ocupar o espaço restante com foto ampliada
+          <div className="col-span-1 h-[410px] cursor-pointer relative overflow-hidden" onClick={() => openModal()}>
+            <Image
+              src={images[0].Foto}
+              alt={processedData.titulo}
+              title={processedData.titulo}
+              width={800}
+              height={600}
+              sizes="50vw"
+              placeholder="blur"
+              blurDataURL={images[0].blurDataURL || "/placeholder.png"}
+              loading="eager"
+              className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-105"
+            />
+            
+            {/* Overlay sutil para indicar clique */}
+            <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-10 transition-all duration-300 flex items-center justify-center">
+              <div className="opacity-0 hover:opacity-100 transition-opacity bg-white/90 text-black px-4 py-2 rounded-lg">
+                Ver galeria completa
               </div>
-            )}
-
-            {/* 📸 Contador de fotos - sempre visível */}
-            <div className="absolute top-4 right-4 bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg">
-              {images.length} foto{images.length > 1 ? 's' : ''}
             </div>
           </div>
-
-          {/* GRID 2x2 original (para imóveis) */}
-          {!isMobile && (
+        ) : (
+          // LAYOUT GRID: Grid 2x2 original (para imóveis)
+          !isMobile && (
             <div className="col-span-1 grid grid-cols-2 grid-rows-2 gap-1 h-[410px]">
               {images.slice(1, 5).map((image, index) => {
                 const isLastImage = index === 3;
@@ -278,8 +239,8 @@ export function ImageGallery({
                   >
                     <Image
                       src={image.Foto}
-                      alt={image.altInteligente || `${processedData.titulo} - imagem ${index + 2}`}
-                      title={image.altInteligente || `${processedData.titulo} - imagem ${index + 2}`}
+                      alt={`${processedData.titulo} - imagem ${index + 2}`}
+                      title={`${processedData.titulo} - imagem ${index + 2}`}
                       width={400}
                       height={300}
                       sizes="25vw"
@@ -310,11 +271,10 @@ export function ImageGallery({
                 );
               })}
             </div>
-          )}
-        </div>
-      )}
+          )
+        )}
+      </div>
 
-      {/* Botão mobile para ver todas as fotos */}
       {isMobile && images.length > 1 && (
         <div className="mt-4 px-4">
           <button
@@ -326,7 +286,7 @@ export function ImageGallery({
         </div>
       )}
 
-      {/* 🖼️ MODAL DA GALERIA */}
+      {/* 🖼️ MODAL DA GALERIA (MESMO CÓDIGO QUE JÁ FUNCIONA) */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-95 z-50 overflow-auto">
           <div className="flex justify-between gap-4 p-5 pt-28 mt-6 md:mt-0">
@@ -348,8 +308,8 @@ export function ImageGallery({
             <div className="flex items-center justify-center min-h-screen p-4 relative">
               <Image
                 src={images[selectedIndex].Foto}
-                alt={images[selectedIndex].altInteligente || `${processedData.titulo} - imagem ampliada`}
-                title={images[selectedIndex].altInteligente || `${processedData.titulo} - imagem ampliada`}
+                alt={`${processedData.titulo} - imagem ampliada`}
+                title={`${processedData.titulo} - imagem ampliada`}
                 width={1200}
                 height={800}
                 sizes="100vw"
@@ -390,8 +350,8 @@ export function ImageGallery({
                 >
                   <Image
                     src={image.Foto}
-                    alt={image.altInteligente || `${processedData.titulo} - imagem ${idx + 1}`}
-                    title={image.altInteligente || `${processedData.titulo} - imagem ${idx + 1}`}
+                    alt={`${processedData.titulo} - imagem ${idx + 1}`}
+                    title={`${processedData.titulo} - imagem ${idx + 1}`}
                     fill
                     sizes="(max-width: 768px) 50vw, 25vw"
                     placeholder="blur"
