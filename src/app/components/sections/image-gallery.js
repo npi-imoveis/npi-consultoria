@@ -170,8 +170,8 @@ export function ImageGallery({
 
       {/* 🎨 LAYOUT CONDICIONAL: Single ou Grid */}
       {layout === "single" ? (
-        // LAYOUT SINGLE: Uma foto ocupando todo o espaço
-        <div className="w-full h-[410px] cursor-pointer relative overflow-hidden rounded-lg" onClick={() => openModal()}>
+        // LAYOUT SINGLE: Uma foto ocupando todo o espaço vertical disponível
+        <div className="w-full h-full cursor-pointer relative overflow-hidden rounded-lg" onClick={() => openModal()}>
           <Image
             src={images[0].Foto}
             alt={processedData.titulo}
