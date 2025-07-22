@@ -230,33 +230,44 @@ const ImagesSection = memo(({
     fileInput.click();
   };
 
-  // 🔥 AJUSTE MANUAL DENTRO DO MODO INTELIGENTE
+  // 🔥 MUDANÇA DE POSIÇÃO SIMPLIFICADA
   const handlePositionChange = (codigo, newPosition) => {
     try {
       const position = parseInt(newPosition);
       const posicaoAtual = sortedPhotos.findIndex(p => p.Codigo === codigo) + 1;
       
-      console.log('📝 ADMIN: Ajuste manual solicitado:', { 
+      console.log('📝 ADMIN: Tentando alterar posição:', { 
         codigo, 
         posicaoAtual,
         novaPosicao: position,
-        totalFotos: sortedPhotos.length
+        totalFotos: sortedPhotos.length,
+        funcaoDisponivel: typeof changeImagePosition
       });
       
       if (!isNaN(position) && position > 0 && position <= sortedPhotos.length && position !== posicaoAtual) {
-        // 🔥 MARCAR FOTO COM AJUSTE MANUAL para preservar na próxima ordenação
-        console.log('🔧 APLICANDO AJUSTE MANUAL - Modo inteligente continua ativo');
+        console.log('🔧 EXECUTANDO MUDANÇA DE POSIÇÃO...');
         
-        // Chamar função de mudança de posição com flag de ajuste manual
-        changeImagePosition(codigo, position, { 
-          ajusteManual: true,
-          preservarOrdemInteligente: true 
+        // Chamar função simples primeiro - sem parâmetros extras
+        const resultado = changeImagePosition(codigo, position);
+        
+        console.log('📝 ADMIN: Resultado da mudança:', resultado);
+        console.log('✅ ADMIN: Comando de alteração enviado');
+        
+        // Não forçar reordenação imediatamente - deixar a mudança acontecer primeiro
+        // setTimeout(() => {
+        //   console.log('🔄 ADMIN: Aplicando ajuste após mudança...');
+        //   setForceReorder(prev => prev + 1);
+        // }, 500);
+        
+      } else {
+        console.warn('⚠️ ADMIN: Mudança ignorada:', {
+          positionInvalid: isNaN(position),
+          outOfRange: position <= 0 || position > sortedPhotos.length,
+          samePosition: position === posicaoAtual
         });
-        
-        console.log('✅ ADMIN: Ajuste manual aplicado - photoSorter continuará funcionando');
       }
     } catch (error) {
-      console.error('❌ ADMIN: Erro ao aplicar ajuste manual:', error);
+      console.error('❌ ADMIN: Erro ao alterar posição:', error);
       alert('Erro ao alterar posição. Tente novamente.');
     }
   };
