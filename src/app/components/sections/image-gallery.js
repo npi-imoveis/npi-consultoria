@@ -7,6 +7,7 @@ import { ArrowLeft } from "lucide-react";
 import { formatterSlug } from "@/app/utils/formatter-slug";
 import { Share } from "../ui/share";
 import { photoSorter } from "@/app/utils/photoSorter";
+import { gerarAltInteligente, gerarRelatorioCobertura } from "@/app/utils/imageAltAnalyzer"; // 🎯 IMPORTAR ANALISADOR
 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
@@ -65,44 +66,68 @@ export function ImageGallery({
     }
   }, [imovel, fotos, title, shareUrl, shareTitle, isImovelMode]);
 
-  // 🎯 PROCESSAR FOTOS (igual ao funcionamento atual)
+  // 🎯 PROCESSAR FOTOS com ALT INTELIGENTE
   const images = useMemo(() => {
     if (!Array.isArray(processedData.fotos) || processedData.fotos.length === 0) {
       return [];
     }
 
     try {
+      let fotosProcessadas = [];
+
       // Se é modo imóvel, usar photoSorter (que já funciona)
       if (isImovelMode) {
         const fotosOrdenadas = photoSorter.ordenarFotos(processedData.fotos, processedData.codigo);
-        return fotosOrdenadas.map((foto, index) => ({
+        fotosProcessadas = fotosOrdenadas.map((foto, index) => ({
           ...foto,
           Codigo: `${processedData.codigo}-foto-${index}`,
         }));
       } else {
         // Se é modo condomínio, as fotos JÁ vêm ordenadas da página (processadas)
-        return processedData.fotos.map((foto, index) => ({
+        fotosProcessadas = processedData.fotos.map((foto, index) => ({
           ...foto,
           Codigo: `${processedData.codigo}-foto-${index}`,
         }));
       }
 
+      // 🎯 GERAR ALT INTELIGENTE para cada foto
+      const fotosComAltInteligente = fotosProcessadas.map((foto, index) => ({
+        ...foto,
+        altInteligente: gerarAltInteligente(foto.Foto, processedData.titulo, index)
+      }));
+
+      console.log('📸 Processamento de fotos finalizado:', {
+        total: fotosComAltInteligente.length,
+        primeiroAlt: fotosComAltInteligente[0]?.altInteligente,
+        modo: isImovelMode ? 'IMÓVEL' : 'CONDOMÍNIO'
+      });
+
+      return fotosComAltInteligente;
+
     } catch (error) {
       console.error('❌ Erro ao processar imagens na galeria:', error);
       
-      // Fallback seguro
+      // Fallback seguro com alt básico
       return [...processedData.fotos].map((foto, index) => ({
         ...foto,
         Codigo: `${processedData.codigo}-foto-${index}`,
+        altInteligente: `${processedData.titulo} - Imagem ${index + 1}`
       }));
     }
   }, [processedData, isImovelMode]);
 
-  // 🔍 DEBUG (só no modo imóvel)
+  // 🔍 DEBUG INFO com relatório de ALT inteligente
   const debugInfo = useMemo(() => {
     if (!debugMode || !isImovelMode || !processedData.fotos) return null;
-    return photoSorter.gerarRelatorio(processedData.fotos, processedData.codigo);
-  }, [debugMode, isImovelMode, processedData.fotos, processedData.codigo]);
+    
+    const relatorioFotos = photoSorter.gerarRelatorio(processedData.fotos, processedData.codigo);
+    const relatorioAlt = gerarRelatorioCobertura(images, processedData.titulo);
+    
+    return {
+      ...relatorioFotos,
+      alt: relatorioAlt
+    };
+  }, [debugMode, isImovelMode, processedData.fotos, processedData.codigo, images, processedData.titulo]);
 
   // 🔧 Toggle debug (só no desenvolvimento e modo imóvel)
   useEffect(() => {
@@ -157,14 +182,21 @@ export function ImageGallery({
 
   return (
     <>
-      {/* 🔍 DEBUG INFO (só modo imóvel) */}
+      {/* 🔍 DEBUG INFO com ALT inteligente */}
       {debugMode && debugInfo && isImovelMode && (
         <div className="mb-4 p-3 bg-black text-green-400 font-mono text-xs rounded-md">
-          <div className="font-bold mb-2">🔍 DEBUG - ORDENAÇÃO INTELIGENTE</div>
+          <div className="font-bold mb-2">🔍 DEBUG - ORDENAÇÃO & ALT INTELIGENTE</div>
           <div>📸 Total: {debugInfo.total} fotos</div>
           <div>📊 Grupos: {JSON.stringify(debugInfo.grupos)}</div>
-          <div>📈 Cobertura: {(debugInfo.cobertura * 100).toFixed(1)}%</div>
+          <div>📈 Cobertura ordenação: {(debugInfo.cobertura * 100).toFixed(1)}%</div>
           <div>🎯 Padrões: {debugInfo.padroes.slice(0, 3).join(', ')}...</div>
+          {debugInfo.alt && (
+            <>
+              <div className="border-t border-green-600 mt-2 pt-2"></div>
+              <div>🏷️ ALT Identificados: {debugInfo.alt.identificadas}/{debugInfo.alt.total} ({debugInfo.alt.cobertura.toFixed(1)}%)</div>
+              <div>🏠 Ambientes: {debugInfo.alt.ambientes.join(', ')}</div>
+            </>
+          )}
         </div>
       )}
 
@@ -174,8 +206,8 @@ export function ImageGallery({
         <div className="w-full h-full cursor-pointer relative overflow-hidden rounded-lg" onClick={() => openModal()}>
           <Image
             src={images[0].Foto}
-            alt={processedData.titulo}
-            title={processedData.titulo}
+            alt={images[0].altInteligente || processedData.titulo}
+            title={images[0].altInteligente || processedData.titulo}
             width={800}
             height={600}
             sizes="100vw"
@@ -212,8 +244,8 @@ export function ImageGallery({
             <div className="w-full h-full overflow-hidden">
               <Image
                 src={images[0].Foto}
-                alt={processedData.titulo}
-                title={processedData.titulo}
+                alt={images[0].altInteligente || processedData.titulo}
+                title={images[0].altInteligente || processedData.titulo}
                 width={800}
                 height={600}
                 sizes="(max-width: 350px) 100vw, (max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -251,8 +283,8 @@ export function ImageGallery({
                   >
                     <Image
                       src={image.Foto}
-                      alt={`${processedData.titulo} - imagem ${index + 2}`}
-                      title={`${processedData.titulo} - imagem ${index + 2}`}
+                      alt={image.altInteligente || `${processedData.titulo} - imagem ${index + 2}`}
+                      title={image.altInteligente || `${processedData.titulo} - imagem ${index + 2}`}
                       width={400}
                       height={300}
                       sizes="25vw"
@@ -321,8 +353,8 @@ export function ImageGallery({
             <div className="flex items-center justify-center min-h-screen p-4 relative">
               <Image
                 src={images[selectedIndex].Foto}
-                alt={`${processedData.titulo} - imagem ampliada`}
-                title={`${processedData.titulo} - imagem ampliada`}
+                alt={images[selectedIndex].altInteligente || `${processedData.titulo} - imagem ampliada`}
+                title={images[selectedIndex].altInteligente || `${processedData.titulo} - imagem ampliada`}
                 width={1200}
                 height={800}
                 sizes="100vw"
@@ -363,8 +395,8 @@ export function ImageGallery({
                 >
                   <Image
                     src={image.Foto}
-                    alt={`${processedData.titulo} - imagem ${idx + 1}`}
-                    title={`${processedData.titulo} - imagem ${idx + 1}`}
+                    alt={image.altInteligente || `${processedData.titulo} - imagem ${idx + 1}`}
+                    title={image.altInteligente || `${processedData.titulo} - imagem ${idx + 1}`}
                     fill
                     sizes="(max-width: 768px) 50vw, 25vw"
                     placeholder="blur"
