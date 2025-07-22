@@ -1,9 +1,9 @@
-// ImagesSection.jsx - VOLTANDO AO BÁSICO QUE FUNCIONAVA
+// ImagesSection.jsx - MODO INTELIGENTE COM AJUSTES MANUAIS
 "use client";
 
-import { memo, useState, useMemo } from "react";
+import { memo, useState, useMemo, useEffect } from "react";
 import FormSection from "../FormSection";
-import Image from "next/image";
+import Image from "next/Image";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
 import { photoSorter } from "@/app/utils/photoSorter";
@@ -20,58 +20,121 @@ const ImagesSection = memo(({
   validation
 }) => {
   const [downloadingPhotos, setDownloadingPhotos] = useState(false);
+  const [forceReorder, setForceReorder] = useState(0);
 
-  // 🎯 EXATAMENTE IGUAL A VERSÃO QUE FUNCIONAVA
+  // 🎯 SEMPRE MODO INTELIGENTE + PRESERVAÇÃO DE AJUSTES MANUAIS
   const sortedPhotos = useMemo(() => {
     if (!Array.isArray(formData?.Foto) || formData.Foto.length === 0) {
       return [];
     }
 
     try {
-      console.log('📝 ADMIN: Iniciando ordenação com photoSorter...');
-      
-      // Preservar códigos originais
-      const fotosComCodigosOriginais = formData.Foto.map((foto, index) => ({
-        ...foto,
-        codigoOriginal: foto.Codigo || foto.codigo || `temp-${Date.now()}-${index}`
-      }));
-      
-      // Forçar photoSorter a usar SEMPRE Análise Inteligente (ignorar campo ORDEM)
-      const fotosTemp = fotosComCodigosOriginais.map(foto => {
-        const { Ordem, ordem, ORDEM, codigoOriginal, ...fotoSemOrdem } = foto;
-        return { ...fotoSemOrdem, codigoOriginal };
+      console.log('📝 ADMIN: Ordenação inteligente SEMPRE ativa...', {
+        totalFotos: formData.Foto.length,
+        forceReorder,
+        timestamp: new Date().toISOString()
       });
       
-      // USAR photoSorter.ordenarFotos() 
+      // 🎯 PRESERVAR CÓDIGOS ORIGINAIS antes do photoSorter
+      const fotosComCodigosOriginais = formData.Foto.map((foto, index) => {
+        const codigoOriginal = foto.Codigo || foto.codigo || `temp-${Date.now()}-${index}`;
+        
+        return {
+          ...foto,
+          codigoOriginal,
+          // Preservar ajustes manuais se existirem
+          ajusteManual: foto.ajusteManual || false,
+          posicaoManual: foto.posicaoManual || null
+        };
+      });
+      
+      console.log('📝 ADMIN: Fotos com códigos e ajustes preservados:', 
+        fotosComCodigosOriginais.map(f => ({
+          codigo: f.codigoOriginal,
+          destaque: f.Destaque,
+          ajusteManual: f.ajusteManual,
+          posicaoManual: f.posicaoManual,
+          url: f.Foto?.substring(f.Foto?.lastIndexOf('/') + 1, f.Foto?.lastIndexOf('.'))
+        }))
+      );
+      
+      // Limpar campos de ordem para forçar análise inteligente, mas preservar ajustes manuais
+      const fotosTemp = fotosComCodigosOriginais.map(foto => {
+        const { Ordem, ordem, ORDEM, codigoOriginal, ajusteManual, posicaoManual, ...fotoLimpa } = foto;
+        return {
+          ...fotoLimpa,
+          codigoOriginal,
+          ajusteManual,
+          posicaoManual
+        };
+      });
+      
+      // 🔥 USAR photoSorter SEMPRE, mas com conhecimento dos ajustes manuais
       const fotosOrdenadas = photoSorter.ordenarFotos(fotosTemp, formData.Codigo || 'temp');
       
-      console.log('📝 ADMIN: photoSorter.ordenarFotos() executado com sucesso!');
+      console.log('📝 ADMIN: photoSorter executado:', 
+        fotosOrdenadas.map((f, i) => ({
+          posicao: i + 1,
+          codigoOriginal: f.codigoOriginal,
+          destaque: f.Destaque,
+          url: f.Foto?.substring(f.Foto?.lastIndexOf('/') + 1, f.Foto?.lastIndexOf('.'))
+        }))
+      );
       
-      // RESTAURAR CÓDIGOS ORIGINAIS após o photoSorter
-      const resultado = fotosOrdenadas.map((foto) => ({
+      // 🔥 APLICAR AJUSTES MANUAIS SOBRE A ORDEM INTELIGENTE
+      let resultado = fotosOrdenadas.map((foto) => ({
         ...foto,
         Codigo: foto.codigoOriginal,
         codigoOriginal: undefined
       }));
 
-      console.log('✅ ADMIN: Ordenação finalizada usando photoSorter:', {
+      // Verificar se há ajustes manuais pendentes e aplicá-los
+      const fotosComAjustes = resultado.filter(f => f.ajusteManual && f.posicaoManual);
+      if (fotosComAjustes.length > 0) {
+        console.log('🔧 APLICANDO AJUSTES MANUAIS:', fotosComAjustes.map(f => ({
+          codigo: f.Codigo,
+          novaPosicao: f.posicaoManual
+        })));
+        
+        // Aplicar ajustes manuais
+        fotosComAjustes.forEach(fotoAjuste => {
+          const posicaoAtual = resultado.findIndex(f => f.Codigo === fotoAjuste.Codigo);
+          const novaPosicao = fotoAjuste.posicaoManual - 1; // Convert to 0-based
+          
+          if (posicaoAtual !== -1 && novaPosicao >= 0 && novaPosicao < resultado.length) {
+            // Mover foto para nova posição
+            const [fotoMovida] = resultado.splice(posicaoAtual, 1);
+            resultado.splice(novaPosicao, 0, fotoMovida);
+            
+            console.log(`🔧 Foto ${fotoAjuste.Codigo} movida de ${posicaoAtual + 1} para ${novaPosicao + 1}`);
+          }
+        });
+      }
+
+      console.log('✅ ADMIN: Resultado final (inteligente + ajustes):', {
         totalFotos: resultado.length,
-        primeira: resultado[0]?.Foto?.split('/').pop()?.substring(0, 30) + '...',
-        metodo: 'photoSorter.ordenarFotos() - IGUAL AO FRONTEND'
+        destaque: resultado.find(f => f.Destaque === "Sim")?.Codigo,
+        primeiras3: resultado.slice(0, 3).map((f, i) => ({
+          posicao: i + 1,
+          codigo: f.Codigo
+        }))
       });
 
       return resultado;
 
     } catch (error) {
-      console.error('❌ ADMIN: Erro ao usar photoSorter:', error);
-      
-      // Fallback seguro
-      return [...formData.Foto].map((foto, index) => ({
-        ...foto,
-        Codigo: `${formData.Codigo || 'temp'}-foto-${index}`,
-      }));
+      console.error('❌ ADMIN: Erro na ordenação:', error);
+      return [...formData.Foto];
     }
-  }, [formData?.Foto, formData?.Codigo]);
+  }, [formData?.Foto, formData?.Codigo, forceReorder]);
+
+  // Detectar mudanças nas fotos
+  useEffect(() => {
+    if (formData?.Foto?.length > 0) {
+      console.log('📝 ADMIN: Detectada mudança nas fotos, reprocessando...');
+      setForceReorder(prev => prev + 1);
+    }
+  }, [formData?.Foto?.length]);
 
   const baixarTodasImagens = async (imagens = []) => {
     if (!Array.isArray(imagens)) return;
@@ -116,10 +179,32 @@ const ImagesSection = memo(({
     setDownloadingPhotos(false);
   };
 
-  const handleAddImageUrl = () => {
-    const imageUrl = prompt("Digite a URL da imagem:");
-    if (imageUrl?.trim()) {
-      addSingleImage(imageUrl.trim());
+  const handleAddImageUrl = async () => {
+    try {
+      const imageUrl = prompt("Digite a URL da imagem:");
+      if (imageUrl?.trim()) {
+        console.log('📝 ADMIN: Adicionando imagem via URL:', imageUrl.trim());
+        
+        try {
+          new URL(imageUrl.trim());
+          await addSingleImage(imageUrl.trim());
+          
+          // Sempre reprocessar em modo inteligente
+          setTimeout(() => {
+            console.log('🔄 ADMIN: Reprocessando após nova imagem...');
+            photoSorter.limparCache();
+            setForceReorder(prev => prev + 1);
+          }, 100);
+          
+          console.log('✅ ADMIN: Imagem via URL adicionada');
+        } catch (urlError) {
+          alert('URL inválida. Por favor, digite uma URL válida.');
+          console.error('❌ ADMIN: URL inválida:', urlError);
+        }
+      }
+    } catch (error) {
+      console.error('❌ ADMIN: Erro ao adicionar imagem via URL:', error);
+      alert('Erro ao adicionar imagem. Tente novamente.');
     }
   };
 
@@ -133,6 +218,11 @@ const ImagesSection = memo(({
         const reader = new FileReader();
         reader.onload = (e) => {
           updateImage(codigo, e.target.result);
+          
+          setTimeout(() => {
+            photoSorter.limparCache();
+            setForceReorder(prev => prev + 1);
+          }, 100);
         };
         reader.readAsDataURL(file);
       }
@@ -140,21 +230,79 @@ const ImagesSection = memo(({
     fileInput.click();
   };
 
-  // 🔥 VERSÃO MAIS SIMPLES POSSÍVEL
+  // 🔥 AJUSTE MANUAL DENTRO DO MODO INTELIGENTE
   const handlePositionChange = (codigo, newPosition) => {
-    const position = parseInt(newPosition);
-    if (!isNaN(position) && position > 0 && position <= sortedPhotos.length) {
-      changeImagePosition(codigo, position);
+    try {
+      const position = parseInt(newPosition);
+      const posicaoAtual = sortedPhotos.findIndex(p => p.Codigo === codigo) + 1;
+      
+      console.log('📝 ADMIN: Ajuste manual solicitado:', { 
+        codigo, 
+        posicaoAtual,
+        novaPosicao: position,
+        totalFotos: sortedPhotos.length
+      });
+      
+      if (!isNaN(position) && position > 0 && position <= sortedPhotos.length && position !== posicaoAtual) {
+        // 🔥 MARCAR FOTO COM AJUSTE MANUAL para preservar na próxima ordenação
+        console.log('🔧 APLICANDO AJUSTE MANUAL - Modo inteligente continua ativo');
+        
+        // Chamar função de mudança de posição com flag de ajuste manual
+        changeImagePosition(codigo, position, { 
+          ajusteManual: true,
+          preservarOrdemInteligente: true 
+        });
+        
+        console.log('✅ ADMIN: Ajuste manual aplicado - photoSorter continuará funcionando');
+      }
+    } catch (error) {
+      console.error('❌ ADMIN: Erro ao aplicar ajuste manual:', error);
+      alert('Erro ao alterar posição. Tente novamente.');
     }
   };
 
   const handleRemoveImage = (codigo) => {
-    removeImage(codigo);
+    try {
+      console.log('📝 ADMIN: Removendo imagem:', codigo);
+      removeImage(codigo);
+      
+      setTimeout(() => {
+        photoSorter.limparCache();
+        setForceReorder(prev => prev + 1);
+      }, 100);
+      
+      console.log('✅ ADMIN: Imagem removida');
+    } catch (error) {
+      console.error('❌ ADMIN: Erro ao remover imagem:', error);
+      alert('Erro ao remover imagem. Tente novamente.');
+    }
   };
 
-  const handleReagroupPhotos = () => {
-    console.log('🔄 ADMIN: Limpando cache do photoSorter e reordenando...');
-    photoSorter.limparCache();
+  const handleReprocessOrder = () => {
+    console.log('🔄 ADMIN: Reprocessando ordenação inteligente...');
+    try {
+      photoSorter.limparCache();
+      setForceReorder(prev => prev + 1);
+      console.log('✅ ADMIN: Reprocessamento solicitado');
+    } catch (error) {
+      console.error('❌ ADMIN: Erro ao reprocessar:', error);
+    }
+  };
+
+  const handleSetAsHighlight = (codigo) => {
+    try {
+      console.log('📝 ADMIN: Definindo como destaque:', codigo);
+      setImageAsHighlight(codigo);
+      
+      setTimeout(() => {
+        photoSorter.limparCache();
+        setForceReorder(prev => prev + 1);
+      }, 100);
+      
+      console.log('✅ ADMIN: Destaque definido');
+    } catch (error) {
+      console.error('❌ ADMIN: Erro ao definir destaque:', error);
+    }
   };
 
   return (
@@ -177,9 +325,11 @@ const ImagesSection = memo(({
               type="button"
               onClick={handleAddImageUrl}
               className="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors"
+              title="Adicionar imagem via URL"
             >
               + Adicionar URL
             </button>
+            
             <button
               type="button"
               onClick={showImageModal}
@@ -192,11 +342,13 @@ const ImagesSection = memo(({
               <>
                 <button
                   type="button"
-                  onClick={handleReagroupPhotos}
+                  onClick={handleReprocessOrder}
                   className="px-3 py-1.5 text-sm bg-purple-600 hover:bg-purple-700 text-white rounded-md transition-colors"
+                  title="Reprocessar ordenação inteligente"
                 >
-                  🔄 Ordem Híbrida
+                  🔄 Reordenar
                 </button>
+                
                 <button
                   type="button"
                   onClick={() => baixarTodasImagens(sortedPhotos)}
@@ -209,10 +361,12 @@ const ImagesSection = memo(({
                 >
                   {downloadingPhotos ? 'Baixando...' : '⬇️ Baixar Todas'}
                 </button>
+                
                 <button
                   type="button"
                   onClick={removeAllImages}
                   className="px-3 py-1.5 text-sm bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors"
+                  title="Remover todas as imagens"
                 >
                   🗑️ Limpar Tudo
                 </button>
@@ -221,19 +375,23 @@ const ImagesSection = memo(({
           </div>
         </div>
 
+        {/* INDICADOR SIMPLIFICADO - SEMPRE INTELIGENTE */}
         <div className="p-3 rounded-md text-sm border-l-4 bg-green-50 border-green-400 text-green-700">
           <p>
-            <strong>🎯 ADMIN USANDO photoSorter - ✅ Ordenação inteligente ATIVA (igual frontend)</strong>
+            <strong>🤖 ORDEM INTELIGENTE SEMPRE ATIVA</strong>
+            <span className="text-xs ml-2 text-green-600">
+              (Reorder #{forceReorder})
+            </span>
           </p>
           <p className="text-xs mt-1">
-            📸 DESTAQUE sempre em 1º + análise inteligente com photoSorter.ordenarFotos() - MESMA classe do frontend que funciona perfeitamente!
+            📸 PhotoSorter organizando automaticamente + você pode fazer ajustes manuais específicos usando os selects. Destaque sempre em 1º.
           </p>
         </div>
 
         {sortedPhotos.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {sortedPhotos.map((photo, index) => (
-              <div key={`${photo.Codigo}-${index}`} className="border rounded-lg overflow-hidden bg-white shadow-sm">
+              <div key={`${photo.Codigo}-${index}-${forceReorder}`} className="border rounded-lg overflow-hidden bg-white shadow-sm">
                 <div className="relative aspect-video w-full">
                   <Image
                     src={photo.Foto}
@@ -247,16 +405,27 @@ const ImagesSection = memo(({
                       DESTAQUE
                     </span>
                   )}
+                  <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                    {index + 1}°
+                  </div>
+                  {photo.ajusteManual && (
+                    <span className="absolute bottom-2 right-2 bg-orange-500 text-white text-xs px-1 py-0.5 rounded">
+                      AJUSTADO
+                    </span>
+                  )}
                 </div>
 
                 <div className="p-3 space-y-3">
                   <div className="flex gap-2">
                     <div className="flex-1">
-                      <label className="block text-xs text-gray-500 mb-1">Ordem</label>
+                      <label className="block text-xs text-gray-500 mb-1">
+                        Posição
+                      </label>
                       <select
                         value={index + 1}
                         onChange={(e) => handlePositionChange(photo.Codigo, e.target.value)}
                         className="w-full p-1.5 text-sm border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        title={`Ajustar posição manualmente (Código: ${photo.Codigo})`}
                       >
                         {[...Array(sortedPhotos.length)].map((_, i) => (
                           <option key={i + 1} value={i + 1}>
@@ -266,22 +435,23 @@ const ImagesSection = memo(({
                       </select>
                     </div>
                     <div className="flex-1">
-                      <label className="block text-xs text-gray-500 mb-1">Ação</label>
+                      <label className="block text-xs text-gray-500 mb-1">Destaque</label>
                       <button
-                        onClick={() => setImageAsHighlight(photo.Codigo)}
+                        onClick={() => handleSetAsHighlight(photo.Codigo)}
                         className={`w-full p-1.5 text-sm rounded-md transition-colors ${
                           photo.Destaque === "Sim"
-                            ? "bg-yellow-500 text-white"
-                            : "bg-gray-100 hover:bg-gray-200"
+                            ? "bg-yellow-500 hover:bg-yellow-600 text-white"
+                            : "bg-gray-100 hover:bg-gray-200 text-gray-700"
                         }`}
+                        title="Definir como foto principal"
                       >
-                        {photo.Destaque === "Sim" ? "★ Destaque" : "☆ Tornar Destaque"}
+                        {photo.Destaque === "Sim" ? "★ Destaque" : "☆ Destacar"}
                       </button>
                     </div>
                   </div>
 
-                  <div className="text-xs text-gray-500 truncate">
-                    Código: {photo.Foto?.split('/').pop()?.replace(/\.(jpg|jpeg|png|gif)$/i, '') || 'N/A'}
+                  <div className="text-xs text-gray-500 truncate" title={`Código: ${photo.Codigo}`}>
+                    ID: {photo.Codigo || 'N/A'}
                   </div>
 
                   <div className="flex gap-2">
@@ -289,6 +459,7 @@ const ImagesSection = memo(({
                       type="button"
                       onClick={() => handleImageUpload(photo.Codigo)}
                       className="flex-1 py-1.5 text-sm bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-md transition-colors"
+                      title="Substituir esta imagem"
                     >
                       🔄 Trocar
                     </button>
@@ -296,6 +467,7 @@ const ImagesSection = memo(({
                       type="button"
                       onClick={() => handleRemoveImage(photo.Codigo)}
                       className="flex-1 py-1.5 text-sm bg-red-50 hover:bg-red-100 text-red-700 rounded-md transition-colors"
+                      title="Remover esta imagem"
                     >
                       ✖ Remover
                     </button>
