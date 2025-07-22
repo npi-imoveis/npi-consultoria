@@ -3,7 +3,7 @@
 
 import { memo, useState, useMemo, useEffect } from "react";
 import FormSection from "../FormSection";
-import Image from "next/Image";
+import Image from "next/image";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
 import { photoSorter } from "@/app/utils/photoSorter";
