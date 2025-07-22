@@ -1,4 +1,5 @@
-// IMPORTS
+// src/app/(site)/[slug]/page.js
+
 import { Button } from "@/app/components/ui/button";
 import { getCondominioPorSlug } from "@/app/services";
 import { formatterValue } from "@/app/utils/formatter-value";
