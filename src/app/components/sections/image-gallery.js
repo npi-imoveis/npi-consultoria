@@ -1,4 +1,4 @@
-// ImageGallery.jsx - VERSÃO UNIVERSAL para Imóvel E Condomínio
+// src/app/components/sections/image-gallery.js - VERSÃO UNIVERSAL para Imóvel E Condomínio
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
