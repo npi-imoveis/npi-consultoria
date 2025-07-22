@@ -22,96 +22,42 @@ const ImagesSection = memo(({
   const [downloadingPhotos, setDownloadingPhotos] = useState(false);
   const [forceReorder, setForceReorder] = useState(0);
 
-  // 🎯 SEMPRE MODO INTELIGENTE + PRESERVAÇÃO DE AJUSTES MANUAIS
+  // 🎯 ORDENAÇÃO INTELIGENTE SIMPLIFICADA
   const sortedPhotos = useMemo(() => {
     if (!Array.isArray(formData?.Foto) || formData.Foto.length === 0) {
       return [];
     }
 
     try {
-      console.log('📝 ADMIN: Ordenação inteligente SEMPRE ativa...', {
+      console.log('📝 ADMIN: Iniciando ordenação inteligente...', {
         totalFotos: formData.Foto.length,
         forceReorder,
         timestamp: new Date().toISOString()
       });
       
       // 🎯 PRESERVAR CÓDIGOS ORIGINAIS antes do photoSorter
-      const fotosComCodigosOriginais = formData.Foto.map((foto, index) => {
-        const codigoOriginal = foto.Codigo || foto.codigo || `temp-${Date.now()}-${index}`;
-        
-        return {
-          ...foto,
-          codigoOriginal,
-          // Preservar ajustes manuais se existirem
-          ajusteManual: foto.ajusteManual || false,
-          posicaoManual: foto.posicaoManual || null
-        };
-      });
+      const fotosComCodigosOriginais = formData.Foto.map((foto, index) => ({
+        ...foto,
+        codigoOriginal: foto.Codigo || foto.codigo || `temp-${Date.now()}-${index}`
+      }));
       
-      console.log('📝 ADMIN: Fotos com códigos e ajustes preservados:', 
-        fotosComCodigosOriginais.map(f => ({
-          codigo: f.codigoOriginal,
-          destaque: f.Destaque,
-          ajusteManual: f.ajusteManual,
-          posicaoManual: f.posicaoManual,
-          url: f.Foto?.substring(f.Foto?.lastIndexOf('/') + 1, f.Foto?.lastIndexOf('.'))
-        }))
-      );
-      
-      // Limpar campos de ordem para forçar análise inteligente, mas preservar ajustes manuais
+      // Limpar campos de ordem para forçar análise inteligente
       const fotosTemp = fotosComCodigosOriginais.map(foto => {
-        const { Ordem, ordem, ORDEM, codigoOriginal, ajusteManual, posicaoManual, ...fotoLimpa } = foto;
-        return {
-          ...fotoLimpa,
-          codigoOriginal,
-          ajusteManual,
-          posicaoManual
-        };
+        const { Ordem, ordem, ORDEM, codigoOriginal, ...fotoLimpa } = foto;
+        return { ...fotoLimpa, codigoOriginal };
       });
       
-      // 🔥 USAR photoSorter SEMPRE, mas com conhecimento dos ajustes manuais
+      // USAR photoSorter
       const fotosOrdenadas = photoSorter.ordenarFotos(fotosTemp, formData.Codigo || 'temp');
       
-      console.log('📝 ADMIN: photoSorter executado:', 
-        fotosOrdenadas.map((f, i) => ({
-          posicao: i + 1,
-          codigoOriginal: f.codigoOriginal,
-          destaque: f.Destaque,
-          url: f.Foto?.substring(f.Foto?.lastIndexOf('/') + 1, f.Foto?.lastIndexOf('.'))
-        }))
-      );
-      
-      // 🔥 APLICAR AJUSTES MANUAIS SOBRE A ORDEM INTELIGENTE
-      let resultado = fotosOrdenadas.map((foto) => ({
+      // RESTAURAR CÓDIGOS ORIGINAIS
+      const resultado = fotosOrdenadas.map((foto) => ({
         ...foto,
         Codigo: foto.codigoOriginal,
         codigoOriginal: undefined
       }));
 
-      // Verificar se há ajustes manuais pendentes e aplicá-los
-      const fotosComAjustes = resultado.filter(f => f.ajusteManual && f.posicaoManual);
-      if (fotosComAjustes.length > 0) {
-        console.log('🔧 APLICANDO AJUSTES MANUAIS:', fotosComAjustes.map(f => ({
-          codigo: f.Codigo,
-          novaPosicao: f.posicaoManual
-        })));
-        
-        // Aplicar ajustes manuais
-        fotosComAjustes.forEach(fotoAjuste => {
-          const posicaoAtual = resultado.findIndex(f => f.Codigo === fotoAjuste.Codigo);
-          const novaPosicao = fotoAjuste.posicaoManual - 1; // Convert to 0-based
-          
-          if (posicaoAtual !== -1 && novaPosicao >= 0 && novaPosicao < resultado.length) {
-            // Mover foto para nova posição
-            const [fotoMovida] = resultado.splice(posicaoAtual, 1);
-            resultado.splice(novaPosicao, 0, fotoMovida);
-            
-            console.log(`🔧 Foto ${fotoAjuste.Codigo} movida de ${posicaoAtual + 1} para ${novaPosicao + 1}`);
-          }
-        });
-      }
-
-      console.log('✅ ADMIN: Resultado final (inteligente + ajustes):', {
+      console.log('✅ ADMIN: Ordenação inteligente concluída:', {
         totalFotos: resultado.length,
         destaque: resultado.find(f => f.Destaque === "Sim")?.Codigo,
         primeiras3: resultado.slice(0, 3).map((f, i) => ({
