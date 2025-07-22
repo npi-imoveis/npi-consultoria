@@ -1,4 +1,4 @@
-// ImagesSection.jsx - MODO INTELIGENTE COM AJUSTES MANUAIS
+// ImagesSection.jsx - VERSÃO CORRIGIDA COM REORDENAÇÃO INTERNA
 "use client";
 
 import { memo, useState, useMemo, useEffect } from "react";
@@ -21,8 +21,9 @@ const ImagesSection = memo(({
 }) => {
   const [downloadingPhotos, setDownloadingPhotos] = useState(false);
   const [forceReorder, setForceReorder] = useState(0);
+  const [localPhotoOrder, setLocalPhotoOrder] = useState(null); // 🔥 Estado local para ordem
 
-  // 🎯 ORDENAÇÃO INTELIGENTE SIMPLIFICADA
+  // 🎯 ORDENAÇÃO INTELIGENTE COM SUPORTE A REORDENAÇÃO LOCAL
   const sortedPhotos = useMemo(() => {
     if (!Array.isArray(formData?.Foto) || formData.Foto.length === 0) {
       return [];
@@ -32,8 +33,15 @@ const ImagesSection = memo(({
       console.log('📝 ADMIN: Iniciando ordenação inteligente...', {
         totalFotos: formData.Foto.length,
         forceReorder,
+        temOrdemLocal: localPhotoOrder !== null,
         timestamp: new Date().toISOString()
       });
+      
+      // 🔥 Se tem ordem local (usuário moveu fotos), usar ela
+      if (localPhotoOrder && localPhotoOrder.length === formData.Foto.length) {
+        console.log('🔄 ADMIN: Usando ordem local (usuário alterou posições)');
+        return localPhotoOrder;
+      }
       
       // 🎯 PRESERVAR CÓDIGOS ORIGINAIS antes do photoSorter
       const fotosComCodigosOriginais = formData.Foto.map((foto, index) => ({
@@ -72,12 +80,13 @@ const ImagesSection = memo(({
       console.error('❌ ADMIN: Erro na ordenação:', error);
       return [...formData.Foto];
     }
-  }, [formData?.Foto, formData?.Codigo, forceReorder]);
+  }, [formData?.Foto, formData?.Codigo, forceReorder, localPhotoOrder]);
 
   // Detectar mudanças nas fotos
   useEffect(() => {
     if (formData?.Foto?.length > 0) {
-      console.log('📝 ADMIN: Detectada mudança nas fotos, reprocessando...');
+      console.log('📝 ADMIN: Detectada mudança nas fotos, resetando ordem local...');
+      setLocalPhotoOrder(null); // Reset ordem local quando fotos mudam
       setForceReorder(prev => prev + 1);
     }
   }, [formData?.Foto?.length]);
@@ -135,7 +144,8 @@ const ImagesSection = memo(({
           new URL(imageUrl.trim());
           await addSingleImage(imageUrl.trim());
           
-          // Sempre reprocessar em modo inteligente
+          // Reset ordem local e reprocessar
+          setLocalPhotoOrder(null);
           setTimeout(() => {
             console.log('🔄 ADMIN: Reprocessando após nova imagem...');
             photoSorter.limparCache();
@@ -165,6 +175,7 @@ const ImagesSection = memo(({
         reader.onload = (e) => {
           updateImage(codigo, e.target.result);
           
+          setLocalPhotoOrder(null);
           setTimeout(() => {
             photoSorter.limparCache();
             setForceReorder(prev => prev + 1);
@@ -176,45 +187,65 @@ const ImagesSection = memo(({
     fileInput.click();
   };
 
-  // 🔥 MUDANÇA DE POSIÇÃO SIMPLIFICADA
+  // 🔥 REORDENAÇÃO LOCAL (SEM DEPENDER DE FUNÇÃO EXTERNA)
   const handlePositionChange = (codigo, newPosition) => {
     try {
       const position = parseInt(newPosition);
       const posicaoAtual = sortedPhotos.findIndex(p => p.Codigo === codigo) + 1;
       
-      console.log('📝 ADMIN: Tentando alterar posição:', { 
+      console.log('📝 ADMIN: Reordenação local solicitada:', { 
         codigo, 
         posicaoAtual,
         novaPosicao: position,
-        totalFotos: sortedPhotos.length,
-        funcaoDisponivel: typeof changeImagePosition
+        totalFotos: sortedPhotos.length
       });
       
       if (!isNaN(position) && position > 0 && position <= sortedPhotos.length && position !== posicaoAtual) {
-        console.log('🔧 EXECUTANDO MUDANÇA DE POSIÇÃO...');
+        console.log('🔧 ADMIN: Aplicando reordenação local...');
         
-        // Chamar função simples primeiro - sem parâmetros extras
-        const resultado = changeImagePosition(codigo, position);
+        // 🔥 FAZER REORDENAÇÃO LOCALMENTE (não depende de função externa)
+        const novaOrdem = [...sortedPhotos];
+        const fotoMovida = novaOrdem[posicaoAtual - 1]; // Pegar foto atual
         
-        console.log('📝 ADMIN: Resultado da mudança:', resultado);
-        console.log('✅ ADMIN: Comando de alteração enviado');
+        // Remover da posição atual
+        novaOrdem.splice(posicaoAtual - 1, 1);
         
-        // Não forçar reordenação imediatamente - deixar a mudança acontecer primeiro
-        // setTimeout(() => {
-        //   console.log('🔄 ADMIN: Aplicando ajuste após mudança...');
-        //   setForceReorder(prev => prev + 1);
-        // }, 500);
+        // Inserir na nova posição
+        novaOrdem.splice(position - 1, 0, fotoMovida);
+        
+        // Salvar ordem local
+        setLocalPhotoOrder(novaOrdem);
+        
+        console.log('✅ ADMIN: Reordenação local aplicada:', {
+          fotoMovida: fotoMovida.Codigo,
+          dePosicao: posicaoAtual,
+          paraPosicao: position
+        });
+        
+        // 🔥 TENTAR SALVAR NO BACKEND (se função existir)
+        if (typeof changeImagePosition === 'function') {
+          try {
+            console.log('💾 ADMIN: Tentando salvar no backend...');
+            changeImagePosition(codigo, position);
+            console.log('✅ ADMIN: Salvo no backend com sucesso');
+          } catch (backendError) {
+            console.warn('⚠️ ADMIN: Erro ao salvar no backend:', backendError);
+            console.log('🔄 ADMIN: Mantendo apenas reordenação local');
+          }
+        } else {
+          console.log('📝 ADMIN: Função changeImagePosition não disponível - usando apenas reordenação local');
+        }
         
       } else {
-        console.warn('⚠️ ADMIN: Mudança ignorada:', {
+        console.warn('⚠️ ADMIN: Reordenação ignorada:', {
           positionInvalid: isNaN(position),
           outOfRange: position <= 0 || position > sortedPhotos.length,
           samePosition: position === posicaoAtual
         });
       }
     } catch (error) {
-      console.error('❌ ADMIN: Erro ao alterar posição:', error);
-      alert('Erro ao alterar posição. Tente novamente.');
+      console.error('❌ ADMIN: Erro na reordenação local:', error);
+      alert(`Erro ao alterar posição: ${error.message}`);
     }
   };
 
@@ -223,6 +254,7 @@ const ImagesSection = memo(({
       console.log('📝 ADMIN: Removendo imagem:', codigo);
       removeImage(codigo);
       
+      setLocalPhotoOrder(null);
       setTimeout(() => {
         photoSorter.limparCache();
         setForceReorder(prev => prev + 1);
@@ -239,6 +271,7 @@ const ImagesSection = memo(({
     console.log('🔄 ADMIN: Reprocessando ordenação inteligente...');
     try {
       photoSorter.limparCache();
+      setLocalPhotoOrder(null); // Limpar ordem local
       setForceReorder(prev => prev + 1);
       console.log('✅ ADMIN: Reprocessamento solicitado');
     } catch (error) {
@@ -251,6 +284,7 @@ const ImagesSection = memo(({
       console.log('📝 ADMIN: Definindo como destaque:', codigo);
       setImageAsHighlight(codigo);
       
+      setLocalPhotoOrder(null);
       setTimeout(() => {
         photoSorter.limparCache();
         setForceReorder(prev => prev + 1);
@@ -301,7 +335,7 @@ const ImagesSection = memo(({
                   type="button"
                   onClick={handleReprocessOrder}
                   className="px-3 py-1.5 text-sm bg-purple-600 hover:bg-purple-700 text-white rounded-md transition-colors"
-                  title="Reprocessar ordenação inteligente"
+                  title="Resetar para ordenação inteligente"
                 >
                   🔄 Reordenar
                 </button>
@@ -332,23 +366,35 @@ const ImagesSection = memo(({
           </div>
         </div>
 
-        {/* INDICADOR SIMPLIFICADO - SEMPRE INTELIGENTE */}
-        <div className="p-3 rounded-md text-sm border-l-4 bg-green-50 border-green-400 text-green-700">
+        {/* INDICADOR COM STATUS DA ORDEM */}
+        <div className={`p-3 rounded-md text-sm border-l-4 ${
+          localPhotoOrder 
+            ? 'bg-orange-50 border-orange-400 text-orange-700'
+            : 'bg-green-50 border-green-400 text-green-700'
+        }`}>
           <p>
-            <strong>🤖 ORDEM INTELIGENTE SEMPRE ATIVA</strong>
-            <span className="text-xs ml-2 text-green-600">
+            <strong>
+              {localPhotoOrder 
+                ? '🔧 ORDEM PERSONALIZADA ATIVA' 
+                : '🤖 ORDEM INTELIGENTE ATIVA'
+              }
+            </strong>
+            <span className="text-xs ml-2 text-gray-600">
               (Reorder #{forceReorder})
             </span>
           </p>
           <p className="text-xs mt-1">
-            📸 PhotoSorter organizando automaticamente. Você pode ajustar posições específicas usando os selects. Destaque sempre em 1º.
+            {localPhotoOrder 
+              ? '📸 Você alterou a ordem das fotos. Use "🔄 Reordenar" para voltar à ordem inteligente.'
+              : '📸 PhotoSorter organizando automaticamente. Altere posições para personalizar.'
+            }
           </p>
         </div>
 
         {sortedPhotos.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {sortedPhotos.map((photo, index) => (
-              <div key={`${photo.Codigo}-${index}-${forceReorder}`} className="border rounded-lg overflow-hidden bg-white shadow-sm">
+              <div key={`${photo.Codigo}-${index}-${localPhotoOrder ? 'custom' : 'auto'}`} className="border rounded-lg overflow-hidden bg-white shadow-sm">
                 <div className="relative aspect-video w-full">
                   <Image
                     src={photo.Foto}
