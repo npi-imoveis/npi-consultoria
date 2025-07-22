@@ -1,4 +1,4 @@
-// ImagesSection.jsx - VOLTANDO AO BÁSICO QUE FUNCIONAVA
+// ImagesSection.jsx - VERSÃO FINAL USANDO EXATAMENTE O MESMO photoSorter DO FRONTEND
 "use client";
 
 import { memo, useState, useMemo } from "react";
@@ -6,7 +6,7 @@ import FormSection from "../FormSection";
 import Image from "next/image";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
-import { photoSorter } from "@/app/utils/photoSorter";
+import { photoSorter } from "@/app/utils/photoSorter"; // 🎯 MESMA CLASSE DO FRONTEND QUE FUNCIONA!
 
 const ImagesSection = memo(({
   formData,
@@ -20,8 +20,9 @@ const ImagesSection = memo(({
   validation
 }) => {
   const [downloadingPhotos, setDownloadingPhotos] = useState(false);
+  const [autoReagroupEnabled, setAutoReagroupEnabled] = useState(true);
 
-  // 🎯 EXATAMENTE IGUAL A VERSÃO QUE FUNCIONAVA
+  // 🎯 USAR EXATAMENTE A MESMA LÓGICA DO FRONTEND QUE FUNCIONA PERFEITAMENTE
   const sortedPhotos = useMemo(() => {
     if (!Array.isArray(formData?.Foto) || formData.Foto.length === 0) {
       return [];
@@ -30,28 +31,23 @@ const ImagesSection = memo(({
     try {
       console.log('📝 ADMIN: Iniciando ordenação com photoSorter...');
       
-      // Preservar códigos originais
-      const fotosComCodigosOriginais = formData.Foto.map((foto, index) => ({
-        ...foto,
-        codigoOriginal: foto.Codigo || foto.codigo || `temp-${Date.now()}-${index}`
-      }));
-      
-      // Forçar photoSorter a usar SEMPRE Análise Inteligente (ignorar campo ORDEM)
-      const fotosTemp = fotosComCodigosOriginais.map(foto => {
-        const { Ordem, ordem, ORDEM, codigoOriginal, ...fotoSemOrdem } = foto;
-        return { ...fotoSemOrdem, codigoOriginal };
+      // 🎯 FORÇAR photoSorter a usar SEMPRE Análise Inteligente (ignorar campo ORDEM)
+      const fotosTemp = formData.Foto.map(foto => {
+        // Remover campos ORDEM para forçar análise inteligente
+        const { Ordem, ordem, ORDEM, ...fotoSemOrdem } = foto;
+        return fotoSemOrdem;
       });
       
-      // USAR photoSorter.ordenarFotos() 
+      // EXATAMENTE IGUAL AO FRONTEND - usar photoSorter.ordenarFotos() 
+      // Mas sem campo ORDEM para garantir que use Análise Inteligente
       const fotosOrdenadas = photoSorter.ordenarFotos(fotosTemp, formData.Codigo || 'temp');
       
       console.log('📝 ADMIN: photoSorter.ordenarFotos() executado com sucesso!');
       
-      // RESTAURAR CÓDIGOS ORIGINAIS após o photoSorter
-      const resultado = fotosOrdenadas.map((foto) => ({
+      // EXATAMENTE IGUAL AO FRONTEND - mapear códigos únicos  
+      const resultado = fotosOrdenadas.map((foto, index) => ({
         ...foto,
-        Codigo: foto.codigoOriginal,
-        codigoOriginal: undefined
+        Codigo: `${formData.Codigo || 'temp'}-foto-${index}`,
       }));
 
       console.log('✅ ADMIN: Ordenação finalizada usando photoSorter:', {
@@ -65,13 +61,13 @@ const ImagesSection = memo(({
     } catch (error) {
       console.error('❌ ADMIN: Erro ao usar photoSorter:', error);
       
-      // Fallback seguro
+      // Fallback seguro - IGUAL AO FRONTEND
       return [...formData.Foto].map((foto, index) => ({
         ...foto,
         Codigo: `${formData.Codigo || 'temp'}-foto-${index}`,
       }));
     }
-  }, [formData?.Foto, formData?.Codigo]);
+  }, [formData?.Foto, formData?.Codigo, autoReagroupEnabled]);
 
   const baixarTodasImagens = async (imagens = []) => {
     if (!Array.isArray(imagens)) return;
@@ -140,21 +136,19 @@ const ImagesSection = memo(({
     fileInput.click();
   };
 
-  // 🔥 VERSÃO MAIS SIMPLES POSSÍVEL
   const handlePositionChange = (codigo, newPosition) => {
     const position = parseInt(newPosition);
     if (!isNaN(position) && position > 0 && position <= sortedPhotos.length) {
+      // Desabilitar reagrupamento automático quando usuário reordena manualmente
+      setAutoReagroupEnabled(false);
       changeImagePosition(codigo, position);
     }
   };
 
-  const handleRemoveImage = (codigo) => {
-    removeImage(codigo);
-  };
-
   const handleReagroupPhotos = () => {
     console.log('🔄 ADMIN: Limpando cache do photoSorter e reordenando...');
-    photoSorter.limparCache();
+    setAutoReagroupEnabled(true);
+    photoSorter.limparCache(); // Limpar cache igual ao frontend
   };
 
   return (
@@ -194,6 +188,7 @@ const ImagesSection = memo(({
                   type="button"
                   onClick={handleReagroupPhotos}
                   className="px-3 py-1.5 text-sm bg-purple-600 hover:bg-purple-700 text-white rounded-md transition-colors"
+                  title="Reordenar usando photoSorter - MESMA lógica do frontend que funciona"
                 >
                   🔄 Ordem Híbrida
                 </button>
@@ -221,12 +216,25 @@ const ImagesSection = memo(({
           </div>
         </div>
 
-        <div className="p-3 rounded-md text-sm border-l-4 bg-green-50 border-green-400 text-green-700">
+        {/* INDICADOR VISUAL - MOSTRA QUE ESTÁ USANDO photoSorter */}
+        <div className={`p-3 rounded-md text-sm border-l-4 ${
+          autoReagroupEnabled 
+            ? 'bg-green-50 border-green-400 text-green-700'
+            : 'bg-yellow-50 border-yellow-400 text-yellow-700'
+        }`}>
           <p>
-            <strong>🎯 ADMIN USANDO photoSorter - ✅ Ordenação inteligente ATIVA (igual frontend)</strong>
+            <strong>
+              🎯 ADMIN USANDO photoSorter - {autoReagroupEnabled 
+                ? '✅ Ordenação inteligente ATIVA (igual frontend)' 
+                : '✋ Modo manual ATIVO'
+              }
+            </strong>
           </p>
           <p className="text-xs mt-1">
-            📸 DESTAQUE sempre em 1º + análise inteligente com photoSorter.ordenarFotos() - MESMA classe do frontend que funciona perfeitamente!
+            {autoReagroupEnabled 
+              ? '📸 DESTAQUE sempre em 1º + análise inteligente com photoSorter.ordenarFotos() - MESMA classe do frontend que funciona perfeitamente!'
+              : '📸 DESTAQUE sempre em 1º + ordem manual. Você está controlando a sequência.'
+            }
           </p>
         </div>
 
@@ -257,6 +265,7 @@ const ImagesSection = memo(({
                         value={index + 1}
                         onChange={(e) => handlePositionChange(photo.Codigo, e.target.value)}
                         className="w-full p-1.5 text-sm border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        title="Alterar posição da foto na galeria"
                       >
                         {[...Array(sortedPhotos.length)].map((_, i) => (
                           <option key={i + 1} value={i + 1}>
@@ -280,7 +289,7 @@ const ImagesSection = memo(({
                     </div>
                   </div>
 
-                  <div className="text-xs text-gray-500 truncate">
+                  <div className="text-xs text-gray-500 truncate" title={photo.Foto?.split('/').pop()?.replace(/\.(jpg|jpeg|png|gif)$/i, '')}>
                     Código: {photo.Foto?.split('/').pop()?.replace(/\.(jpg|jpeg|png|gif)$/i, '') || 'N/A'}
                   </div>
 
@@ -294,7 +303,7 @@ const ImagesSection = memo(({
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleRemoveImage(photo.Codigo)}
+                      onClick={() => removeImage(photo.Codigo)}
                       className="flex-1 py-1.5 text-sm bg-red-50 hover:bg-red-100 text-red-700 rounded-md transition-colors"
                     >
                       ✖ Remover
