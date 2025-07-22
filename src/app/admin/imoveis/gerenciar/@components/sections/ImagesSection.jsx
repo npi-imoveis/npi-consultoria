@@ -1,11 +1,12 @@
-// ImagesSection.jsx - CÓPIA EXATA DA LÓGICA DO FRONTEND QUE FUNCIONOU
+// ImagesSection.jsx - USANDO A MESMA CLASSE photoSorter DO FRONTEND
 "use client";
 
-import { memo, useState } from "react";
+import { memo, useState, useMemo } from "react";
 import FormSection from "../FormSection";
 import Image from "next/image";
 import JSZip from "jszip";
 import { saveAs } from "file-saver";
+import { photoSorter } from "@/app/utils/photoSorter"; // 🎯 MESMA CLASSE DO FRONTEND!
 
 const ImagesSection = memo(({
   formData,
@@ -350,8 +351,7 @@ const ImagesSection = memo(({
 
   const handleReagroupPhotos = () => {
     setAutoReagroupEnabled(true);
-    // Força reprocessamento
-    // As fotos serão reagrupadas na próxima renderização
+    photoSorter.limparCache(); // Limpar cache igual ao frontend
   };
 
   return (
@@ -419,24 +419,24 @@ const ImagesSection = memo(({
           </div>
         </div>
 
-        {/* Status da ordenação híbrida - NOVO INDICADOR VISUAL */}
-        <div className={`p-3 rounded-md text-sm ${
+        {/* Status da ordenação híbrida - USANDO PHOTOSORTER IGUAL AO FRONTEND */}
+        <div className={`p-3 rounded-md text-sm border-l-4 ${
           autoReagroupEnabled 
-            ? 'bg-green-50 border-l-4 border-green-400 text-green-700'
-            : 'bg-yellow-50 border-l-4 border-yellow-400 text-yellow-700'
+            ? 'bg-green-50 border-green-400 text-green-700'
+            : 'bg-yellow-50 border-yellow-400 text-yellow-700'
         }`}>
           <p>
             <strong>
-              🟢 ADMIN NOVO - {autoReagroupEnabled 
-                ? '🎯 Ordenação híbrida ATIVA' 
-                : '✋ Ordem manual ATIVA'
+              🎯 ADMIN USANDO photoSorter - {autoReagroupEnabled 
+                ? '✅ Ordenação inteligente ATIVA (igual frontend)' 
+                : '✋ Modo manual ATIVO'
               }
             </strong>
           </p>
           <p className="text-xs mt-1">
             {autoReagroupEnabled 
-              ? '📸 DESTAQUE sempre em 1º + outras por: Campo ORDEM (se existir na API) ou análise de códigos. Use os campos "Ordem" para personalizar.'
-              : '📸 DESTAQUE sempre em 1º + ordem manual para as demais. Você está controlando a sequência.'
+              ? '📸 DESTAQUE sempre em 1º + análise inteligente com photoSorter.ordenarFotos() - MESMA classe do frontend!'
+              : '📸 DESTAQUE sempre em 1º + ordem manual. Você está controlando a sequência.'
             }
           </p>
         </div>
@@ -492,8 +492,8 @@ const ImagesSection = memo(({
                     </div>
                   </div>
 
-                  <div className="text-xs text-gray-500 truncate" title={extrairCodigoFoto(photo.Foto)}>
-                    Código: {extrairCodigoFoto(photo.Foto)}
+                  <div className="text-xs text-gray-500 truncate" title={photo.Foto?.split('/').pop()?.replace(/\.(jpg|jpeg|png|gif)$/i, '')}>
+                    Código: {photo.Foto?.split('/').pop()?.replace(/\.(jpg|jpeg|png|gif)$/i, '') || 'N/A'}
                   </div>
 
                   <div className="flex gap-2">
