@@ -57,7 +57,7 @@ export default function SobreCondominio({ condominio }) {
                 Mais sobre {condominio.Categoria} {condominio.Empreendimento}
             </h2>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-10">
-                {/* 🎯 USAR ImageGallery UNIVERSAL COM FOTOS ORDENADAS */}
+                {/* 🎯 MANTER layout="grid" (padrão) para 4 fotos na seção "Mais sobre" */}
                 <ImageGallery 
                     fotos={fotosOrdenadas}
                     title={condominio.Empreendimento}
