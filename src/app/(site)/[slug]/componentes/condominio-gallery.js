@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { ArrowLeft, ArrowRight, X } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { Share } from "@/app/components/ui/share";
 
 function useIsMobile() {
@@ -159,17 +159,18 @@ export default function CondominioGallery({ fotos, title }) {
 
       {/* MODAL DA GALERIA COMPLETA */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black/95 z-50 overflow-hidden">
+        <div className="fixed inset-0 bg-black/95 z-50 overflow-y-auto">
           
           {/* HEADER DO MODAL */}
-          <div className="absolute top-0 left-0 right-0 z-60 bg-gradient-to-b from-black/80 to-transparent p-4">
+          <div className="sticky top-0 left-0 right-0 z-60 bg-gradient-to-b from-black/90 to-black/20 p-4 backdrop-blur-sm">
             <div className="flex justify-between items-center">
               <button 
                 onClick={closeModal} 
-                className="text-white hover:text-gray-300 transition-colors p-2"
-                aria-label="Fechar galeria"
+                className="text-white hover:text-gray-300 transition-colors p-2 flex items-center gap-2"
+                aria-label="Voltar para página do condomínio"
               >
-                <X size={24} />
+                <ArrowLeft size={24} />
+                <span className="text-sm">Voltar</span>
               </button>
               
               <div className="text-white text-center">
@@ -200,42 +201,76 @@ export default function CondominioGallery({ fotos, title }) {
           </div>
 
           {selectedIndex !== null ? (
-            // VISUALIZAÇÃO INDIVIDUAL
-            <div className="flex items-center justify-center h-full p-4 pt-20">
-              <div className="relative max-w-full max-h-full">
-                <Image
-                  src={fotos[selectedIndex].Foto}
-                  alt={`${title} - Imagem ${selectedIndex + 1}`}
-                  width={1200}
-                  height={800}
-                  className="max-w-full max-h-full object-contain"
-                  priority
-                />
+            // VISUALIZAÇÃO INDIVIDUAL - COM SCROLL
+            <div className="min-h-screen pb-4">
+              <div className="flex items-center justify-center min-h-[calc(100vh-80px)] p-4">
+                <div className="relative w-full max-w-6xl">
+                  <Image
+                    src={fotos[selectedIndex].Foto}
+                    alt={`${title} - Imagem ${selectedIndex + 1}`}
+                    width={1200}
+                    height={800}
+                    className="w-full h-auto object-contain max-h-[90vh]"
+                    priority
+                  />
 
-                {/* CONTROLES DE NAVEGAÇÃO */}
-                {fotos.length > 1 && (
-                  <>
-                    <button
-                      onClick={goPrev}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 text-white text-3xl p-3 rounded-full bg-black/50 hover:bg-black/70 transition-all"
-                      aria-label="Imagem anterior"
-                    >
-                      <ArrowLeft size={24} />
-                    </button>
-                    <button
-                      onClick={goNext}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-white text-3xl p-3 rounded-full bg-black/50 hover:bg-black/70 transition-all"
-                      aria-label="Próxima imagem"
-                    >
-                      <ArrowRight size={24} />
-                    </button>
-                  </>
-                )}
+                  {/* CONTROLES DE NAVEGAÇÃO */}
+                  {fotos.length > 1 && (
+                    <>
+                      <button
+                        onClick={goPrev}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 text-white text-3xl p-3 rounded-full bg-black/60 hover:bg-black/80 transition-all backdrop-blur-sm"
+                        aria-label="Imagem anterior"
+                      >
+                        <ArrowLeft size={24} />
+                      </button>
+                      <button
+                        onClick={goNext}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-white text-3xl p-3 rounded-full bg-black/60 hover:bg-black/80 transition-all backdrop-blur-sm"
+                        aria-label="Próxima imagem"
+                      >
+                        <ArrowRight size={24} />
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
+
+              {/* NAVEGAÇÃO POR THUMBNAILS - FIXO NO BOTTOM */}
+              {fotos.length > 1 && (
+                <div className="sticky bottom-0 bg-black/80 backdrop-blur-sm p-4">
+                  <div className="flex gap-2 overflow-x-auto pb-2 justify-center">
+                    {fotos.map((foto, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setSelectedIndex(idx)}
+                        className={`relative flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
+                          selectedIndex === idx 
+                            ? 'border-white shadow-lg' 
+                            : 'border-transparent hover:border-gray-400'
+                        }`}
+                      >
+                        <Image
+                          src={foto.Foto}
+                          alt={`Thumbnail ${idx + 1}`}
+                          fill
+                          className="object-cover"
+                          sizes="64px"
+                        />
+                        {foto.Destaque === "Sim" && (
+                          <div className="absolute -top-1 -right-1 bg-yellow-500 text-black text-xs w-4 h-4 rounded-full flex items-center justify-center">
+                            ⭐
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             // GRID DE TODAS AS FOTOS
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 p-4 pt-20 overflow-y-auto h-full">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 p-4 min-h-screen">
               {fotos.map((foto, idx) => {
                 const fotoEDestaque = foto.Destaque === "Sim";
                 
