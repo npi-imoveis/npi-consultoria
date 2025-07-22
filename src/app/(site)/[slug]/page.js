@@ -1,4 +1,4 @@
-// app/(site)/[slug]/page.js - PÁGINA COMPLETA DO CONDOMÍNIO COM ImageGallery
+// IMPORTS
 import { Button } from "@/app/components/ui/button";
 import { getCondominioPorSlug } from "@/app/services";
 import { formatterValue } from "@/app/utils/formatter-value";
@@ -18,8 +18,8 @@ import ExploreRegiao from "./componentes/ExploreRegiao";
 import { notFound, redirect } from "next/navigation";
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 import ScrollToImoveisButton from "./componentes/scroll-to-imovel-button";
-import { photoSorter } from "@/app/utils/photoSorter"; // 🎯 CLASSE DE ORDENAÇÃO
-import { ImageGallery } from "@/app/components/ui/ImageGallery"; // 🎯 GALERIA UNIVERSAL
+import { photoSorter } from "@/app/utils/photoSorter"; 
+import { ImageGallery } from "@/app/components/sections/image-gallery"; // 🎯 CAMINHO CORRETO ENCONTRADO!
 
 function ensureCondominio(text) {
   return /condom[ií]nio/i.test(text) ? text : `Condomínio ${text}`;
@@ -295,7 +295,7 @@ export default async function CondominioPage({ params }) {
             </div>
           </div>
           <div className="relative w-full min-h-[550px] overflow-hidden rounded-lg">
-            {/* 🎯 USAR ImageGallery UNIVERSAL EM VEZ DE CondominioGallery */}
+            {/* 🎯 USAR ImageGallery UNIVERSAL COM CAMINHO CORRETO */}
             <ImageGallery 
               fotos={fotosOrdenadas}
               title={rawTitle}
