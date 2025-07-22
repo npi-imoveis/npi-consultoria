@@ -161,28 +161,28 @@ export default function CondominioGallery({ fotos, title }) {
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/95 z-50 overflow-y-auto">
           
-          {/* HEADER DO MODAL */}
-          <div className="sticky top-0 left-0 right-0 z-60 bg-gradient-to-b from-black/90 to-black/20 p-4 backdrop-blur-sm">
-            <div className="flex justify-between items-center">
+          {/* HEADER FIXO NO TOPO - SEMPRE VISÍVEL */}
+          <div className="fixed top-0 left-0 right-0 z-[60] bg-black/90 backdrop-blur-sm p-4 border-b border-white/10">
+            <div className="flex justify-between items-center max-w-6xl mx-auto">
+              
+              {/* BOTÃO VOLTAR - ESQUERDA */}
               <button 
                 onClick={closeModal} 
-                className="text-white hover:text-gray-300 transition-colors p-2 flex items-center gap-2"
+                className="flex items-center gap-2 text-white hover:text-gray-300 transition-colors p-2 bg-black/50 rounded-lg hover:bg-black/70"
                 aria-label="Voltar para página do condomínio"
               >
-                <ArrowLeft size={24} />
-                <span className="text-sm">Voltar</span>
+                <ArrowLeft size={20} />
+                <span className="text-sm font-medium">Voltar</span>
               </button>
               
+              {/* TÍTULO E CONTADOR - CENTRO */}
               <div className="text-white text-center">
                 <h3 className="font-semibold text-lg">{title}</h3>
                 {selectedIndex !== null && (
-                  <div className="flex items-center justify-center gap-3 mt-2">
-                    {/* CONTADOR ATUAL */}
-                    <span className="text-sm bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full">
+                  <div className="flex items-center justify-center gap-3 mt-1">
+                    <span className="text-sm bg-white/20 backdrop-blur-sm px-3 py-1 rounded-full">
                       {selectedIndex + 1} / {fotos.length}
                     </span>
-                    
-                    {/* INDICADOR DE DESTAQUE */}
                     {fotos[selectedIndex]?.Destaque === "Sim" && (
                       <span className="bg-yellow-500 text-black text-xs font-bold px-2 py-1 rounded-full">
                         ⭐ DESTAQUE
@@ -192,6 +192,7 @@ export default function CondominioGallery({ fotos, title }) {
                 )}
               </div>
 
+              {/* SHARE E FECHAR - DIREITA */}
               <div className="flex items-center gap-2">
                 <Share
                   primary
@@ -199,10 +200,10 @@ export default function CondominioGallery({ fotos, title }) {
                   title={`Confira as fotos: ${title}`}
                 />
                 
-                {/* BOTÃO FECHAR GALERIA */}
+                {/* BOTÃO FECHAR - GRANDE E VISÍVEL */}
                 <button 
                   onClick={closeModal} 
-                  className="text-white hover:text-red-400 transition-colors p-2 rounded-full hover:bg-red-500/20"
+                  className="text-white hover:text-red-400 transition-all p-2 bg-red-500/20 rounded-full hover:bg-red-500/40 border border-red-500/50"
                   aria-label="Fechar galeria"
                 >
                   <X size={24} />
@@ -211,114 +212,117 @@ export default function CondominioGallery({ fotos, title }) {
             </div>
           </div>
 
-          {selectedIndex !== null ? (
-            // VISUALIZAÇÃO INDIVIDUAL - COM SCROLL
-            <div className="min-h-screen pb-4">
-              <div className="flex items-center justify-center min-h-[calc(100vh-80px)] p-4">
-                <div className="relative w-full max-w-6xl">
-                  <Image
-                    src={fotos[selectedIndex].Foto}
-                    alt={`${title} - Imagem ${selectedIndex + 1}`}
-                    width={1200}
-                    height={800}
-                    className="w-full h-auto object-contain max-h-[90vh]"
-                    priority
-                  />
-
-                  {/* CONTROLES DE NAVEGAÇÃO */}
-                  {fotos.length > 1 && (
-                    <>
-                      <button
-                        onClick={goPrev}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 text-white text-3xl p-3 rounded-full bg-black/60 hover:bg-black/80 transition-all backdrop-blur-sm"
-                        aria-label="Imagem anterior"
-                      >
-                        <ArrowLeft size={24} />
-                      </button>
-                      <button
-                        onClick={goNext}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 text-white text-3xl p-3 rounded-full bg-black/60 hover:bg-black/80 transition-all backdrop-blur-sm"
-                        aria-label="Próxima imagem"
-                      >
-                        <ArrowRight size={24} />
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {/* NAVEGAÇÃO POR THUMBNAILS - FIXO NO BOTTOM */}
-              {fotos.length > 1 && (
-                <div className="sticky bottom-0 bg-black/80 backdrop-blur-sm p-4">
-                  <div className="flex gap-2 overflow-x-auto pb-2 justify-center">
-                    {fotos.map((foto, idx) => (
-                      <button
-                        key={idx}
-                        onClick={() => setSelectedIndex(idx)}
-                        className={`relative flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
-                          selectedIndex === idx 
-                            ? 'border-white shadow-lg' 
-                            : 'border-transparent hover:border-gray-400'
-                        }`}
-                      >
-                        <Image
-                          src={foto.Foto}
-                          alt={`Thumbnail ${idx + 1}`}
-                          fill
-                          className="object-cover"
-                          sizes="64px"
-                        />
-                        {foto.Destaque === "Sim" && (
-                          <div className="absolute -top-1 -right-1 bg-yellow-500 text-black text-xs w-4 h-4 rounded-full flex items-center justify-center">
-                            ⭐
-                          </div>
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          ) : (
-            // GRID DE TODAS AS FOTOS
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 p-4 min-h-screen">
-              {fotos.map((foto, idx) => {
-                const fotoEDestaque = foto.Destaque === "Sim";
-                
-                return (
-                  <div
-                    key={idx}
-                    onClick={() => setSelectedIndex(idx)}
-                    className="relative aspect-square cursor-pointer group overflow-hidden rounded-lg border-2 border-transparent hover:border-white/50 transition-all"
-                  >
+          {/* CONTEÚDO PRINCIPAL - COM MARGEM PARA O HEADER */}
+          <div className="pt-20">
+            {selectedIndex !== null ? (
+              // VISUALIZAÇÃO INDIVIDUAL - COM SCROLL
+              <div className="min-h-screen pb-4">
+                <div className="flex items-center justify-center min-h-[calc(100vh-120px)] p-4">
+                  <div className="relative w-full max-w-6xl">
                     <Image
-                      src={foto.Foto}
-                      alt={`${title} - Imagem ${idx + 1}`}
-                      fill
-                      sizes="(max-width: 768px) 50vw, 25vw"
-                      className="object-cover transition-transform duration-200 group-hover:scale-105"
-                      loading="lazy"
+                      src={fotos[selectedIndex].Foto}
+                      alt={`${title} - Imagem ${selectedIndex + 1}`}
+                      width={1200}
+                      height={800}
+                      className="w-full h-auto object-contain max-h-[80vh]"
+                      priority
                     />
-                    
-                    {/* OVERLAY COM NÚMERO */}
-                    <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
-                      {idx + 1}
-                    </div>
-                    
-                    {/* INDICADOR DE DESTAQUE */}
-                    {fotoEDestaque && (
-                      <div className="absolute top-2 left-2 bg-yellow-500 text-black text-xs font-bold px-2 py-1 rounded-full shadow-lg">
-                        ⭐ DESTAQUE
-                      </div>
+
+                    {/* CONTROLES DE NAVEGAÇÃO */}
+                    {fotos.length > 1 && (
+                      <>
+                        <button
+                          onClick={goPrev}
+                          className="absolute left-4 top-1/2 -translate-y-1/2 text-white text-3xl p-4 rounded-full bg-black/60 hover:bg-black/80 transition-all backdrop-blur-sm border border-white/20"
+                          aria-label="Imagem anterior"
+                        >
+                          <ArrowLeft size={24} />
+                        </button>
+                        <button
+                          onClick={goNext}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-white text-3xl p-4 rounded-full bg-black/60 hover:bg-black/80 transition-all backdrop-blur-sm border border-white/20"
+                          aria-label="Próxima imagem"
+                        >
+                          <ArrowRight size={24} />
+                        </button>
+                      </>
                     )}
-                    
-                    {/* HOVER OVERLAY */}
-                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity" />
                   </div>
-                );
-              })}
-            </div>
-          )}
+                </div>
+
+                {/* NAVEGAÇÃO POR THUMBNAILS - FIXO NO BOTTOM */}
+                {fotos.length > 1 && (
+                  <div className="fixed bottom-0 left-0 right-0 bg-black/90 backdrop-blur-sm p-4 border-t border-white/10">
+                    <div className="flex gap-2 overflow-x-auto pb-2 justify-center max-w-6xl mx-auto">
+                      {fotos.map((foto, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => setSelectedIndex(idx)}
+                          className={`relative flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
+                            selectedIndex === idx 
+                              ? 'border-white shadow-lg scale-105' 
+                              : 'border-transparent hover:border-gray-400'
+                          }`}
+                        >
+                          <Image
+                            src={foto.Foto}
+                            alt={`Thumbnail ${idx + 1}`}
+                            fill
+                            className="object-cover"
+                            sizes="64px"
+                          />
+                          {foto.Destaque === "Sim" && (
+                            <div className="absolute -top-1 -right-1 bg-yellow-500 text-black text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
+                              ★
+                            </div>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              // GRID DE TODAS AS FOTOS
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 p-4 min-h-screen">
+                {fotos.map((foto, idx) => {
+                  const fotoEDestaque = foto.Destaque === "Sim";
+                  
+                  return (
+                    <div
+                      key={idx}
+                      onClick={() => setSelectedIndex(idx)}
+                      className="relative aspect-square cursor-pointer group overflow-hidden rounded-lg border-2 border-transparent hover:border-white/50 transition-all"
+                    >
+                      <Image
+                        src={foto.Foto}
+                        alt={`${title} - Imagem ${idx + 1}`}
+                        fill
+                        sizes="(max-width: 768px) 50vw, 25vw"
+                        className="object-cover transition-transform duration-200 group-hover:scale-105"
+                        loading="lazy"
+                      />
+                      
+                      {/* OVERLAY COM NÚMERO */}
+                      <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                        {idx + 1}
+                      </div>
+                      
+                      {/* INDICADOR DE DESTAQUE */}
+                      {fotoEDestaque && (
+                        <div className="absolute top-2 left-2 bg-yellow-500 text-black text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                          ⭐ DESTAQUE
+                        </div>
+                      )}
+                      
+                      {/* HOVER OVERLAY */}
+                      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </>
