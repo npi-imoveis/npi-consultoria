@@ -295,12 +295,13 @@ export default async function CondominioPage({ params }) {
             </div>
           </div>
           <div className="relative w-full min-h-[550px] overflow-hidden rounded-lg">
-            {/* 🎯 USAR ImageGallery UNIVERSAL COM CAMINHO CORRETO */}
+            {/* 🎯 ALTERAÇÃO: Usar layout="single" para mostrar apenas 1 foto principal ocupando todo espaço */}
             <ImageGallery 
               fotos={fotosOrdenadas}
               title={rawTitle}
               shareUrl={currentUrl}
               shareTitle={`Compartilhe o imóvel ${rawTitle} em ${condominio.BairroComercial}`}
+              layout="single"
             />
           </div>
         </div>
