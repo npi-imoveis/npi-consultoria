@@ -1,46 +1,40 @@
+// CondominioGallery.jsx - VERSÃO VISUAL APRIMORADA
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
-import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowLeft, ArrowRight, X } from "lucide-react";
 import { Share } from "@/app/components/ui/share";
 
-export default function CondominioGallery({ fotos, second, title }) {
-  const [currentIndex, setCurrentIndex] = useState(0);
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  return isMobile;
+}
+
+export default function CondominioGallery({ fotos, title }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(null);
+  const isMobile = useIsMobile();
 
-  // Reorganiza as imagens para que a foto em destaque seja a primeira
-  const images = fotos
-    ? [...fotos].sort((a, b) => {
-        if (a.Destaque === "Sim" && b.Destaque !== "Sim") return -1;
-        if (a.Destaque !== "Sim" && b.Destaque === "Sim") return 1;
-        return 0;
-      })
-    : [];
-
-  // Se a propriedade second for true e tiver pelo menos 2 imagens, coloca a segunda imagem como primeira
-  if (second && images.length >= 2) {
-    const secondImage = images[1];
-    images.splice(1, 1);
-    images.unshift(secondImage);
+  if (!Array.isArray(fotos) || fotos.length === 0) {
+    return (
+      <div className="w-full h-full bg-gray-200 flex items-center justify-center rounded-lg">
+        <span className="text-gray-500">📸 Nenhuma imagem disponível</span>
+      </div>
+    );
   }
 
-  if (!images || images.length === 0) {
-    return null;
-  }
-
-  const nextSlide = () => {
-    setCurrentIndex((prevIndex) => (prevIndex + 1) % images.length);
-  };
-
-  const prevSlide = () => {
-    setCurrentIndex((prevIndex) => (prevIndex - 1 + images.length) % images.length);
-  };
-
-  const openModal = (index) => {
+  const openModal = (index = 0) => {
     setIsModalOpen(true);
-    setSelectedIndex(index !== undefined ? index : currentIndex);
+    setSelectedIndex(index);
   };
 
   const closeModal = () => {
@@ -50,118 +44,233 @@ export default function CondominioGallery({ fotos, second, title }) {
 
   const goNext = () => {
     if (selectedIndex !== null) {
-      setSelectedIndex((prev) => (prev + 1) % images.length);
+      setSelectedIndex((prev) => (prev + 1) % fotos.length);
     }
   };
 
   const goPrev = () => {
     if (selectedIndex !== null) {
-      setSelectedIndex((prev) => (prev - 1 + images.length) % images.length);
+      setSelectedIndex((prev) => (prev - 1 + fotos.length) % fotos.length);
     }
   };
 
-  const imgAlt = title || `Imagem ${currentIndex + 1} de ${images.length} do condomínio`;
+  // Verificar se a primeira foto é destaque
+  const primeiraFotoEDestaque = fotos[0]?.Destaque === "Sim";
 
   return (
     <>
-      <div className="relative w-full h-full min-h-[550px] overflow-hidden rounded-lg">
-        {/* Imagem principal */}
-        <div className="relative w-full h-[550px] cursor-pointer" onClick={() => openModal()}>
+      {/* GRID PRINCIPAL DA GALERIA */}
+      <div className="w-full h-full grid grid-cols-1 md:grid-cols-2 gap-1">
+        
+        {/* FOTO PRINCIPAL */}
+        <div 
+          className="relative h-full min-h-[400px] cursor-pointer group overflow-hidden rounded-l-lg md:rounded-l-lg md:rounded-r-none rounded-r-lg"
+          onClick={() => openModal(0)}
+        >
           <Image
-            src={images[currentIndex].Foto}
-            alt={imgAlt}
+            src={fotos[0].Foto}
+            alt={`${title} - Imagem principal`}
             title={title}
-            fill={true}
+            fill
             sizes="(max-width: 768px) 100vw, 50vw"
-            className="object-cover rounded-lg"
-            style={{ objectPosition: "center" }}
-            priority={currentIndex === 0}
-            loading={currentIndex === 0 ? "eager" : "lazy"}
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            priority
           />
-          <span className="absolute top-2 right-2 bg-black text-white text-[12px] px-2 py-1 rounded z-10">
-            {currentIndex + 1} de {images.length}
-          </span>
+          
+          {/* OVERLAY DE INFORMAÇÕES */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent">
+            
+            {/* FOTO DESTAQUE - Canto superior esquerdo */}
+            {primeiraFotoEDestaque && (
+              <div className="absolute top-4 left-4 bg-yellow-500 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-lg flex items-center gap-1">
+                ⭐ DESTAQUE
+              </div>
+            )}
+
+            {/* CONTADOR DE FOTOS - Canto superior direito */}
+            <div className="absolute top-4 right-4 bg-black/70 backdrop-blur-sm text-white text-sm font-medium px-3 py-1.5 rounded-full shadow-lg">
+              📸 {fotos.length} foto{fotos.length > 1 ? 's' : ''}
+            </div>
+
+            {/* BOTÃO VER GALERIA - Centro/Inferior em mobile */}
+            {isMobile ? (
+              <div className="absolute bottom-4 left-4 right-4">
+                <button className="w-full bg-white/90 backdrop-blur-sm text-black font-medium py-3 px-4 rounded-lg shadow-lg hover:bg-white transition-all">
+                  📱 Ver todas as fotos
+                </button>
+              </div>
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <button className="bg-white/90 backdrop-blur-sm text-black font-medium py-2 px-4 rounded-lg shadow-lg hover:bg-white transition-all">
+                  🖼️ Abrir galeria
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Botões de navegação */}
-        <button
-          onClick={prevSlide}
-          className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full z-10"
-          aria-label="Imagem anterior"
-        >
-          <ChevronLeft size={24} />
-        </button>
-        <button
-          onClick={nextSlide}
-          className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full z-10"
-          aria-label="Próxima imagem"
-        >
-          <ChevronRight size={24} />
-        </button>
+        {/* GRID DE THUMBNAILS - Apenas no desktop */}
+        {!isMobile && fotos.length > 1 && (
+          <div className="grid grid-cols-2 grid-rows-2 gap-1 h-full">
+            {fotos.slice(1, 5).map((foto, index) => {
+              const actualIndex = index + 1;
+              const isLastThumbnail = index === 3;
+              const remainingPhotos = fotos.length - 5;
+              const fotoEDestaque = foto.Destaque === "Sim";
+
+              return (
+                <div
+                  key={actualIndex}
+                  className="relative cursor-pointer group overflow-hidden"
+                  onClick={() => openModal(actualIndex)}
+                >
+                  <Image
+                    src={foto.Foto}
+                    alt={`${title} - Imagem ${actualIndex + 1}`}
+                    fill
+                    sizes="25vw"
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    loading="lazy"
+                  />
+                  
+                  {/* INDICADOR DE DESTAQUE nos thumbnails */}
+                  {fotoEDestaque && (
+                    <div className="absolute top-2 left-2 bg-yellow-500 text-white text-xs font-bold px-2 py-0.5 rounded-full shadow">
+                      ⭐
+                    </div>
+                  )}
+
+                  {/* OVERLAY DE MAIS FOTOS - Último thumbnail */}
+                  {isLastThumbnail && remainingPhotos > 0 && (
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center text-white">
+                      <span className="text-2xl font-bold">+{remainingPhotos}</span>
+                      <span className="text-xs">mais fotos</span>
+                    </div>
+                  )}
+
+                  {/* HOVER OVERLAY */}
+                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
-      {/* Modal para visualização em tela cheia */}
+      {/* MODAL DA GALERIA COMPLETA */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-90 z-50 overflow-auto">
-          <div className="flex justify-between gap-4 p-5 pt-28 mt-6 md:mt-0">
-            <button onClick={closeModal} aria-label="Fechar galeria">
-              <ArrowLeft color="white" size={24} />
-            </button>
+        <div className="fixed inset-0 bg-black/95 z-50 overflow-hidden">
+          
+          {/* HEADER DO MODAL */}
+          <div className="absolute top-0 left-0 right-0 z-60 bg-gradient-to-b from-black/80 to-transparent p-4">
+            <div className="flex justify-between items-center">
+              <button 
+                onClick={closeModal} 
+                className="text-white hover:text-gray-300 transition-colors p-2"
+                aria-label="Fechar galeria"
+              >
+                <X size={24} />
+              </button>
+              
+              <div className="text-white text-center">
+                <h3 className="font-semibold text-lg">{title}</h3>
+                {selectedIndex !== null && (
+                  <div className="flex items-center justify-center gap-3 mt-2">
+                    {/* CONTADOR ATUAL */}
+                    <span className="text-sm bg-black/50 backdrop-blur-sm px-3 py-1 rounded-full">
+                      {selectedIndex + 1} / {fotos.length}
+                    </span>
+                    
+                    {/* INDICADOR DE DESTAQUE */}
+                    {fotos[selectedIndex]?.Destaque === "Sim" && (
+                      <span className="bg-yellow-500 text-black text-xs font-bold px-2 py-1 rounded-full">
+                        ⭐ DESTAQUE
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
 
-            <Share
-              url={typeof window !== "undefined" ? window.location.href : ""}
-              title="Confira este condomínio"
-              imovel={fotos && fotos.length > 0 ? { Codigo: fotos[0].CondominioId } : null}
-            />
+              <Share
+                primary
+                url={`${process.env.NEXT_PUBLIC_SITE_URL || ''}`}
+                title={`Confira as fotos: ${title}`}
+              />
+            </div>
           </div>
 
           {selectedIndex !== null ? (
-            <div className="flex items-center justify-center min-h-screen p-4 relative">
-              <div className="relative max-w-full max-h-[80vh]">
+            // VISUALIZAÇÃO INDIVIDUAL
+            <div className="flex items-center justify-center h-full p-4 pt-20">
+              <div className="relative max-w-full max-h-full">
                 <Image
-                  src={images[selectedIndex].Foto}
-                  alt={imgAlt}
-                  title={title}
+                  src={fotos[selectedIndex].Foto}
+                  alt={`${title} - Imagem ${selectedIndex + 1}`}
                   width={1200}
                   height={800}
-                  className="max-w-full max-h-[80vh] object-contain"
-                  loading="lazy"
+                  className="max-w-full max-h-full object-contain"
+                  priority
                 />
-              </div>
 
-              <button
-                onClick={goPrev}
-                className="absolute left-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2"
-                aria-label="Imagem anterior"
-              >
-                &#10094;
-              </button>
-              <button
-                onClick={goNext}
-                className="absolute right-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2"
-                aria-label="Próxima imagem"
-              >
-                &#10095;
-              </button>
+                {/* CONTROLES DE NAVEGAÇÃO */}
+                {fotos.length > 1 && (
+                  <>
+                    <button
+                      onClick={goPrev}
+                      className="absolute left-4 top-1/2 -translate-y-1/2 text-white text-3xl p-3 rounded-full bg-black/50 hover:bg-black/70 transition-all"
+                      aria-label="Imagem anterior"
+                    >
+                      <ArrowLeft size={24} />
+                    </button>
+                    <button
+                      onClick={goNext}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-white text-3xl p-3 rounded-full bg-black/50 hover:bg-black/70 transition-all"
+                      aria-label="Próxima imagem"
+                    >
+                      <ArrowRight size={24} />
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4 min-h-screen">
-              {images.map((image, idx) => (
-                <div
-                  key={idx}
-                  onClick={() => setSelectedIndex(idx)}
-                  className="relative w-full h-48 sm:h-56 md:h-64 lg:h-72 xl:h-80 cursor-pointer overflow-hidden"
-                >
-                  <Image
-                    src={image.Foto}
-                    alt={`${title || "Imagem do condomínio"} ${idx + 1}`}
-                    title={title}
-                    fill
-                    className="object-cover"
-                    loading="lazy"
-                  />
-                </div>
-              ))}
+            // GRID DE TODAS AS FOTOS
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 p-4 pt-20 overflow-y-auto h-full">
+              {fotos.map((foto, idx) => {
+                const fotoEDestaque = foto.Destaque === "Sim";
+                
+                return (
+                  <div
+                    key={idx}
+                    onClick={() => setSelectedIndex(idx)}
+                    className="relative aspect-square cursor-pointer group overflow-hidden rounded-lg border-2 border-transparent hover:border-white/50 transition-all"
+                  >
+                    <Image
+                      src={foto.Foto}
+                      alt={`${title} - Imagem ${idx + 1}`}
+                      fill
+                      sizes="(max-width: 768px) 50vw, 25vw"
+                      className="object-cover transition-transform duration-200 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                    
+                    {/* OVERLAY COM NÚMERO */}
+                    <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+                      {idx + 1}
+                    </div>
+                    
+                    {/* INDICADOR DE DESTAQUE */}
+                    {fotoEDestaque && (
+                      <div className="absolute top-2 left-2 bg-yellow-500 text-black text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                        ⭐ DESTAQUE
+                      </div>
+                    )}
+                    
+                    {/* HOVER OVERLAY */}
+                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
