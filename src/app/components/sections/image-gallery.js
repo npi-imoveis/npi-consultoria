@@ -65,7 +65,7 @@ const AMBIENTE_NOMES = {
   implantacao: 'Implantação'
 };
 
-// 🎯 FUNÇÃO PARA GERAR ALT INTELIGENTE com DEBUG FORTE
+// 🎯 FUNÇÃO PARA GERAR ALT INTELIGENTE com HEURÍSTICAS
 function gerarAltInteligente(urlImagem, tituloImovel, indice) {
   console.log('🚀 INICIANDO gerarAltInteligente:', { urlImagem, tituloImovel, indice });
   
@@ -75,7 +75,7 @@ function gerarAltInteligente(urlImagem, tituloImovel, indice) {
   }
 
   try {
-    // Extrair nome do arquivo
+    // 1️⃣ TENTAR DETECTAR PELO NOME DO ARQUIVO
     const nomeArquivo = urlImagem
       .split('/').pop()
       .split('.')[0]
@@ -85,9 +85,8 @@ function gerarAltInteligente(urlImagem, tituloImovel, indice) {
       .trim();
 
     console.log('🔍 ARQUIVO EXTRAÍDO:', nomeArquivo);
-    console.log('🔍 TÍTULO:', tituloImovel);
 
-    // Identificar ambiente
+    // Verificar palavras-chave no nome
     for (const [ambiente, keywords] of Object.entries(AMBIENTE_KEYWORDS)) {
       const encontrada = keywords.some(keyword => 
         nomeArquivo.includes(keyword.toLowerCase())
@@ -95,21 +94,58 @@ function gerarAltInteligente(urlImagem, tituloImovel, indice) {
       
       if (encontrada) {
         const altFinal = `${tituloImovel} - ${AMBIENTE_NOMES[ambiente]}`;
-        console.log('✅ ALT DETECTADO:', altFinal, 'por palavra:', keywords.find(k => nomeArquivo.includes(k)));
+        console.log('✅ ALT DETECTADO por nome:', altFinal);
         return altFinal;
       }
     }
 
-    // Fallback
+    // 2️⃣ USAR HEURÍSTICAS INTELIGENTES baseadas na posição
+    console.log('🧠 Usando heurísticas por posição...');
+    
+    const ambientePorPosicao = definirAmbientePorPosicao(indice);
+    if (ambientePorPosicao) {
+      const altHeuristico = `${tituloImovel} - ${ambientePorPosicao}`;
+      console.log('✅ ALT por HEURÍSTICA:', altHeuristico);
+      return altHeuristico;
+    }
+
+    // 3️⃣ FALLBACK
     const altFallback = `${tituloImovel} - Imagem ${indice + 1}`;
-    console.log('⚠️ NENHUM AMBIENTE DETECTADO, usando fallback:', altFallback);
-    console.log('📋 Nome do arquivo analisado:', nomeArquivo);
+    console.log('⚠️ ALT fallback:', altFallback);
     return altFallback;
 
   } catch (error) {
     console.error('❌ ERRO CRÍTICO no gerarAltInteligente:', error);
     return `${tituloImovel} - Imagem ${indice + 1}`;
   }
+}
+
+// 🧠 HEURÍSTICAS INTELIGENTES baseadas na posição típica das fotos
+function definirAmbientePorPosicao(indice) {
+  // Baseado em padrões comuns de fotografias imobiliárias
+  const heuristicas = {
+    0: 'Fachada',           // Primeira foto geralmente é fachada
+    1: 'Sala de Estar',     // Segunda costuma ser sala principal  
+    2: 'Cozinha',           // Terceira geralmente é cozinha
+    3: 'Dormitório',        // Quarto foto costuma ser quarto principal
+    4: 'Banheiro',          // Quinta geralmente é banheiro
+    5: 'Varanda',           // Sexta costuma ser varanda/sacada
+    6: 'Dormitório',        // Mais quartos
+    7: 'Área de Lazer',     // Áreas comuns do condomínio
+    8: 'Piscina',           // Piscina aparece mais no meio
+    9: 'Academia',          // Academia
+    10: 'Salão de Festas',  // Salão
+    11: 'Garagem',          // Garagem costuma vir depois
+    12: 'Planta'            // Plantas geralmente no final
+  };
+
+  // Para fotos mais avançadas, usar padrão cíclico
+  if (indice > 12) {
+    const padroes = ['Área Comum', 'Vista', 'Detalhe', 'Ambiente'];
+    return padroes[indice % padroes.length];
+  }
+
+  return heuristicas[indice] || null;
 }
 
 function useIsMobile() {
