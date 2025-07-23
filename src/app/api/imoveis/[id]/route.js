@@ -47,13 +47,23 @@ export async function PUT(request, { params }) {
 
     const dadosAtualizados = await request.json();
 
-    // Buscar imóvel existente
-    let imovel = await Imovel.findOne({ Codigo: id });
-    if (!imovel) {
-      imovel = await Imovel.findById(id);
+    // Tenta encontrar e atualizar pelo Codigo
+    let imovelAtualizado = await Imovel.findOneAndUpdate(
+      { Codigo: id },
+      { $set: dadosAtualizados },
+      { new: true }
+    );
+
+    // Se não encontrou pelo Codigo, tenta pelo _id
+    if (!imovelAtualizado) {
+      imovelAtualizado = await Imovel.findByIdAndUpdate(
+        id,
+        { $set: dadosAtualizados },
+        { new: true }
+      );
     }
-    
-    if (!imovel) {
+
+    if (!imovelAtualizado) {
       return NextResponse.json(
         {
           status: 404,
@@ -62,17 +72,6 @@ export async function PUT(request, { params }) {
         { status: 404 }
       );
     }
-
-    // Atualizar campo por campo
-    Object.keys(dadosAtualizados).forEach(key => {
-      imovel[key] = dadosAtualizados[key];
-    });
-
-    // CRÍTICO: Forçar MongoDB a detectar mudanças no campo Foto
-    imovel.markModified('Foto');
-    
-    // Salvar com validação desabilitada para garantir
-    const imovelAtualizado = await imovel.save({ validateBeforeSave: false });
 
     return NextResponse.json({
       status: 200,
