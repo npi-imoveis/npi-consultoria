@@ -40,7 +40,7 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create", imove
     }
 
     // Check photos (at least 5 required)
-    const photoCount = data.Foto ? Object.keys(data.Foto).length : 0;
+    const photoCount = data.Foto ? (Array.isArray(data.Foto) ? data.Foto.length : Object.keys(data.Foto).length) : 0;
     if (photoCount < 5) {
       return {
         isValid: false,
@@ -52,35 +52,59 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create", imove
   }, []);
 
   const preparePayload = useCallback((data) => {
-    // Converter o objeto de fotos para um array preservando a ordem
+    // 🔥 MODIFICAÇÃO: Converter o objeto de fotos preservando a ordem manual se existir
     let fotosArray = [];
     
     if (data.Foto) {
       // Se já for um array (caso do drag & drop), preservar ordem
       if (Array.isArray(data.Foto)) {
-        fotosArray = data.Foto.map((foto, index) => ({
-          ...foto,
-          ordem: index,
-          _id: foto._id || undefined // Preserva o ID se existir
-        }));
+        // 🔥 CRÍTICO: Verificar se já tem campo ordem manual
+        const temOrdemManual = data.Foto.every(foto => 
+          foto.ordem !== undefined && foto.ordem !== null
+        );
+        
+        if (temOrdemManual) {
+          // Se tem ordem manual, manter exatamente como está
+          console.log('📸 PRESERVANDO ordem manual existente');
+          fotosArray = data.Foto.map(foto => ({
+            ...foto,
+            ordem: foto.ordem, // Manter ordem existente
+            _id: foto._id || undefined,
+            Codigo: foto.Codigo || undefined
+          }));
+        } else {
+          // Se não tem ordem manual, adicionar baseado no índice
+          console.log('📸 ADICIONANDO ordem baseada no índice');
+          fotosArray = data.Foto.map((foto, index) => ({
+            ...foto,
+            ordem: index,
+            _id: foto._id || undefined,
+            Codigo: foto.Codigo || undefined
+          }));
+        }
       } else {
         // Se for objeto (formato antigo), converter mantendo ordem
         fotosArray = Object.entries(data.Foto)
           .sort(([a], [b]) => parseInt(a) - parseInt(b)) // Ordena pelas chaves
           .map(([key, foto], index) => ({
             ...foto,
-            ordem: index,
-            _id: foto._id || undefined
+            ordem: foto.ordem !== undefined ? foto.ordem : index, // 🔥 Preservar ordem se existir
+            _id: foto._id || undefined,
+            Codigo: foto.Codigo || key
           }));
       }
     }
 
     // Debug para verificar a ordem
-    console.log('📸 Fotos sendo enviadas:', fotosArray.map((f, i) => ({
+    console.group('📸 Debug - Ordem das Fotos');
+    console.log('Total de fotos:', fotosArray.length);
+    console.log('Fotos com ordem:', fotosArray.map((f, i) => ({
       index: i,
       ordem: f.ordem,
-      url: f.url?.split('/').pop() || 'sem-url'
+      codigo: f.Codigo,
+      url: f.Foto?.split('/').pop() || f.url?.split('/').pop() || 'sem-url'
     })));
+    console.groupEnd();
 
     // Converter o objeto de vídeos para um array (se existir)
     let videosArray = [];
@@ -120,10 +144,11 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create", imove
       try {
         const payload = preparePayload(formData);
 
-        // ADD: Debug do payload
+        // Debug do payload
         console.group('🚀 Debug Salvamento de Imóvel');
         console.log('Modo:', mode);
         console.log('ID:', imovelId);
+        console.log('Código:', formData.Codigo);
         console.log('Total de fotos:', payload.Foto?.length);
         console.log('Ordem das fotos:', payload.Foto?.map((f, i) => `${i}: ordem=${f.ordem}`));
         console.groupEnd();
@@ -131,6 +156,7 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create", imove
         let result;
 
         if (formData.Automacao) {
+          // Imóvel vindo da automação
           result = await criarImovel(formData.Codigo, payload);
           if (result && result.success) {
             setSuccess("Imóvel cadastrado com sucesso!");
@@ -145,6 +171,8 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create", imove
                 action: `Automação:  ${user.email} - criou o imóvel ${formData.Codigo} a partir da automação`,
               });
             } catch (logError) {
+              console.error("Erro ao salvar log:", logError);
+              const { user, timestamp } = await getCurrentUserAndDate();
               await salvarLog({
                 user: user.displayName ? user.displayName : "Não Identificado",
                 email: user.email,
@@ -155,32 +183,38 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create", imove
           } else {
             setError(result?.message || "Erro ao criar imóvel");
           }
-        }
-
-        if (mode === "edit") {
-          //Em modo de edição, chamar o serviço de atualização
-          result = await atualizarImovel(imovelId, payload);
-
-          try {
-            const { user, timestamp } = await getCurrentUserAndDate();
-            await salvarLog({
-              user: user.displayName ? user.displayName : "Não Identificado",
-              email: user.email,
-              data: timestamp.toISOString(),
-              action: `Usuário ${user.email} atualizou o imóvel ${formData.Codigo}`,
-            });
-          } catch (logError) {
-            await salvarLog({
-              user: user.displayName ? user.displayName : "Não Identificado",
-              email: user.email,
-              data: timestamp.toISOString(),
-              action: `Imóveis: Erro ao editar imóvel: ${user.email} -  imóvel ${formData.Codigo} código de erro: ${logError}`,
-            });
-          }
+        } else if (mode === "edit") {
+          // Em modo de edição, chamar o serviço de atualização
+          console.log('📝 Modo edição - Atualizando imóvel:', imovelId || formData.Codigo);
+          
+          // 🔥 USAR serviço correto baseado no contexto
+          const codigoOuId = formData.Codigo || imovelId;
+          result = await atualizarImovel(codigoOuId, payload);
 
           if (result && result.success) {
             setSuccess("Imóvel atualizado com sucesso!");
-            setIsModalOpen(true);
+            
+            // 🔥 NÃO abrir modal em modo de edição
+            // setIsModalOpen(true);
+            
+            try {
+              const { user, timestamp } = await getCurrentUserAndDate();
+              await salvarLog({
+                user: user.displayName ? user.displayName : "Não Identificado",
+                email: user.email,
+                data: timestamp.toISOString(),
+                action: `Usuário ${user.email} atualizou o imóvel ${formData.Codigo}`,
+              });
+            } catch (logError) {
+              console.error("Erro ao salvar log:", logError);
+              const { user, timestamp } = await getCurrentUserAndDate();
+              await salvarLog({
+                user: user.displayName ? user.displayName : "Não Identificado",
+                email: user.email,
+                data: timestamp.toISOString(),
+                action: `Imóveis: Erro ao editar imóvel: ${user.email} -  imóvel ${formData.Codigo} código de erro: ${logError}`,
+              });
+            }
           } else {
             setError(result?.message || "Erro ao atualizar imóvel");
           }
@@ -191,15 +225,18 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create", imove
           if (result && result.success) {
             setSuccess("Imóvel cadastrado com sucesso!");
             setIsModalOpen(true);
+            
             try {
               const { user, timestamp } = await getCurrentUserAndDate();
               await salvarLog({
-                user: user.displayName,
+                user: user.displayName ? user.displayName : "Não Identificado",
                 email: user.email,
                 data: timestamp.toISOString(),
-                action: `Usuário ${user.email} atualizou o imóvel ${formData.Codigo}`,
+                action: `Usuário ${user.email} criou o imóvel ${formData.Codigo}`,
               });
             } catch (logError) {
+              console.error("Erro ao salvar log:", logError);
+              const { user, timestamp } = await getCurrentUserAndDate();
               await salvarLog({
                 user: user.displayName ? user.displayName : "Não Identificado",
                 email: user.email,
