@@ -123,11 +123,11 @@ export class PhotoSorter {
     const cacheKey = `${codigoImovel}-${fotos.length}`;
     
     // Verificar cache
-   // if (this.cacheOrdenacao.has(cacheKey)) {
-   // const cached = this.cacheOrdenacao.get(cacheKey);
-   //   if (this.debug) console.log('🎯 Usando cache para ordenação');
-   //   return cached;
-  //  }
+    if (this.cacheOrdenacao.has(cacheKey)) {
+      const cached = this.cacheOrdenacao.get(cacheKey);
+      if (this.debug) console.log('🎯 Usando cache para ordenação');
+      return cached;
+    }
 
     try {
       // 1. DESTAQUE SEMPRE PRIMEIRO
@@ -200,7 +200,7 @@ export class PhotoSorter {
       }
 
       // 5. SALVAR CACHE
-      //  this.cacheOrdenacao.set(cacheKey, resultado);
+      this.cacheOrdenacao.set(cacheKey, resultado);
       
       return resultado;
 
