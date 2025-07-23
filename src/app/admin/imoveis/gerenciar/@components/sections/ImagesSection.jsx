@@ -21,25 +21,6 @@ const ImagesSection = memo(({
 }) => {
   const [downloadingPhotos, setDownloadingPhotos] = useState(false);
 
-  // 🔒 PREVENIR SUBMITS ACIDENTAIS DO FORMULÁRIO
-  useEffect(() => {
-    const form = document.querySelector('form');
-    if (form) {
-      const preventerSubmit = (e) => {
-        // Se o evento vem de um select de posição, prevenir submit
-        if (e.target && e.target.tagName === 'SELECT' && e.target.options.length === sortedPhotos.length) {
-          console.log('🔒 ADMIN: Submit do formulário prevenido (select de posição)');
-          e.preventDefault();
-          e.stopPropagation();
-          return false;
-        }
-      };
-      
-      form.addEventListener('submit', preventerSubmit);
-      return () => form.removeEventListener('submit', preventerSubmit);
-    }
-  }, [sortedPhotos.length]);
-
   // 🎯 ORDENAÇÃO SIMPLES - IGUAL FUNCIONAVA ANTES
   const sortedPhotos = useMemo(() => {
     if (!Array.isArray(formData?.Foto) || formData.Foto.length === 0) {
