@@ -540,6 +540,7 @@ export async function adicionarProprietario(id, dadosProprietario) {
     };
   }  
 }
+
 export const getImovelById = async (codigo) => {
   try {
     const response = await axiosClient.get(`admin/imoveis/${codigo}`);
@@ -555,3 +556,47 @@ export const getImovelById = async (codigo) => {
     };
   }
 };
+
+// 🔥 NOVA FUNÇÃO: Atualizar imóvel pelo código (ADMIN)
+export async function atualizarImovel(codigo, dadosImovel) {
+  try {
+    console.log('📤 ADMIN Service: Atualizando imóvel:', codigo);
+    
+    // Usar rota /admin/imoveis
+    const response = await axiosClient.put(`/admin/imoveis/${codigo}`, dadosImovel, {
+      timeout: 25000,
+    });
+
+    console.log('📥 ADMIN Service: Resposta recebida:', response.status);
+
+    if (response && response.status >= 200 && response.status < 300) {
+      return {
+        success: true,
+        data: response.data,
+        message: response.data?.message || "Imóvel atualizado com sucesso",
+      };
+    } else {
+      console.error("Serviço: Erro na resposta ao atualizar imóvel", response);
+      return {
+        success: false,
+        message: response.data?.message || "Erro ao atualizar imóvel",
+      };
+    }
+  } catch (error) {
+    console.error("Serviço: Erro ao atualizar imóvel:", error);
+    
+    if (error.code === "ERR_NETWORK") {
+      return {
+        success: false,
+        message: "Erro de conexão com o servidor. Tente novamente mais tarde.",
+        error: "Erro de conexão",
+      };
+    }
+
+    return {
+      success: false,
+      message: error.response?.data?.message || "Erro ao atualizar imóvel",
+      error: error.response?.data?.error || error.message || "Erro desconhecido",
+    };
+  }
+}
