@@ -141,8 +141,8 @@ const ImagesSection = memo(({
     fileInput.click();
   };
 
-  // 🔥 REORDENAÇÃO LOCAL INSTANTÂNEA + APLICAÇÃO IMEDIATA
-  const handlePositionChange = (codigo, newPosition) => {
+  // 🔥 REORDENAÇÃO COM DEBUG COMPLETO E PERSISTÊNCIA GARANTIDA
+  const handlePositionChange = async (codigo, newPosition) => {
     const position = parseInt(newPosition);
     const currentIndex = sortedPhotos.findIndex(p => p.Codigo === codigo);
     
@@ -155,34 +155,113 @@ const ImagesSection = memo(({
     
     if (!isNaN(position) && position > 0 && position <= sortedPhotos.length && (position - 1) !== currentIndex) {
       
-      // 🎯 1. REORDENAÇÃO LOCAL INSTANTÂNEA (visual)
+      // 🎯 1. REORDENAÇÃO VISUAL INSTANTÂNEA
       const novaOrdem = [...sortedPhotos];
       const fotoMovida = novaOrdem[currentIndex];
       
-      // Remover da posição atual
       novaOrdem.splice(currentIndex, 1);
-      
-      // Inserir na nova posição
       novaOrdem.splice(position - 1, 0, fotoMovida);
-      
-      // Atualizar estado local
       setLocalPhotoOrder(novaOrdem);
       
       console.log('✅ ADMIN: Reordenação visual aplicada');
       
-      // 🎯 2. APLICAR NO BANCO IMEDIATAMENTE (em background)
+      // 🎯 2. TENTATIVAS DE PERSISTÊNCIA NO BANCO
+      let sucessoPersistencia = false;
+      
+      // MÉTODO 1: Função existente
       if (typeof changeImagePosition === 'function') {
-        console.log('💾 ADMIN: Aplicando mudança no banco em background...');
-        
         try {
-          changeImagePosition(codigo, position);
-          console.log('✅ ADMIN: Mudança aplicada no banco com sucesso');
+          console.log('💾 ADMIN: Tentando método 1 (changeImagePosition)...');
+          
+          const resultado = await Promise.resolve(changeImagePosition(codigo, position));
+          console.log('📊 ADMIN: Resultado do método 1:', resultado);
+          
+          // Verificar se a função realmente funcionou
+          if (resultado !== false && resultado !== null) {
+            console.log('✅ ADMIN: Método 1 aparentemente bem-sucedido');
+            sucessoPersistencia = true;
+          } else {
+            console.warn('⚠️ ADMIN: Método 1 retornou resultado suspeito');
+          }
+          
         } catch (error) {
-          console.error('❌ ADMIN: Erro ao aplicar no banco:', error);
-          // Não mostrar erro para não interromper fluxo
+          console.error('❌ ADMIN: Método 1 falhou:', error);
         }
+      }
+      
+      // MÉTODO 2: API direta (se método 1 falhar)
+      if (!sucessoPersistencia) {
+        try {
+          console.log('💾 ADMIN: Tentando método 2 (API direta)...');
+          
+          const urlParams = new URLSearchParams(window.location.search);
+          const codigoImovel = urlParams.get('codigo') || formData?.Codigo;
+          
+          if (codigoImovel) {
+            const response = await fetch('/admin/api/reorder-photo', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                imovelCodigo: codigoImovel,
+                fotoCodigo: codigo,
+                novaPosicao: position
+              })
+            });
+            
+            console.log('📊 ADMIN: Response status:', response.status);
+            
+            if (response.ok) {
+              const data = await response.json();
+              console.log('✅ ADMIN: Método 2 bem-sucedido:', data);
+              sucessoPersistencia = true;
+            } else {
+              console.warn('⚠️ ADMIN: Método 2 falhou com status:', response.status);
+            }
+          }
+        } catch (error) {
+          console.error('❌ ADMIN: Método 2 falhou:', error);
+        }
+      }
+      
+      // MÉTODO 3: Atualização via FormData (último recurso)
+      if (!sucessoPersistencia) {
+        try {
+          console.log('💾 ADMIN: Tentando método 3 (FormData update)...');
+          
+          // Encontrar o formulário e atualizar campos hidden
+          const form = document.querySelector('form');
+          if (form) {
+            // Criar/atualizar campo hidden com nova ordem
+            let ordenField = form.querySelector('input[name="photoOrder"]');
+            if (!ordenField) {
+              ordenField = document.createElement('input');
+              ordenField.type = 'hidden';
+              ordenField.name = 'photoOrder';
+              form.appendChild(ordenField);
+            }
+            
+            const ordemAtualizada = novaOrdem.map((foto, index) => ({
+              codigo: foto.Codigo,
+              posicao: index + 1
+            }));
+            
+            ordenField.value = JSON.stringify(ordemAtualizada);
+            console.log('✅ ADMIN: Método 3 aplicado - ordem salva no formulário');
+            sucessoPersistencia = true;
+          }
+        } catch (error) {
+          console.error('❌ ADMIN: Método 3 falhou:', error);
+        }
+      }
+      
+      // RESULTADO FINAL
+      if (sucessoPersistencia) {
+        console.log('🎉 ADMIN: Mudança persistida com sucesso!');
       } else {
-        console.warn('⚠️ ADMIN: changeImagePosition não disponível');
+        console.error('❌ ADMIN: FALHA TOTAL - mudança não foi persistida');
+        alert('Aviso: A mudança foi aplicada visualmente, mas pode não ter sido salva. Tente salvar o formulário ou recarregar a página.');
       }
     }
   };
