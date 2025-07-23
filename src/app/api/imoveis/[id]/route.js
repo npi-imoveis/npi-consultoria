@@ -1,24 +1,21 @@
 import { connectToDatabase } from "@/app/lib/mongodb";
 import Imovel from "@/app/models/Imovel";
-import ImovelAtivo from "@/app/models/ImovelAtivo";
 import { NextResponse } from "next/server";
 
 export async function GET(request, { params }) {
-  // Extrair o id dos parâmetros (este id é o Codigo do imóvel)
-  const { id } = params;
-
   try {
     await connectToDatabase();
-
-    // Buscar pelo campo Codigo
-    const imovel = await Imovel.findOne({ Codigo: id });
-
+    const { id } = params;
+    
+    // Tentar buscar por Codigo primeiro, depois por _id
+    let imovel = await Imovel.findOne({ Codigo: id });
+    if (!imovel) {
+      imovel = await Imovel.findById(id);
+    }
+    
     if (!imovel) {
       return NextResponse.json(
-        {
-          status: 404,
-          error: "Imóvel não encontrado",
-        },
+        { status: 404, message: "Imóvel não encontrado" },
         { status: 404 }
       );
     }
@@ -28,173 +25,141 @@ export async function GET(request, { params }) {
       data: imovel,
     });
   } catch (error) {
-    console.error(`Erro ao buscar imóvel com Codigo ${id}:`, error);
+    console.error("Erro ao buscar imóvel:", error);
     return NextResponse.json(
-      {
-        status: 500,
-        error: error instanceof Error ? error.message : "Erro desconhecido",
-      },
+      { status: 500, message: "Erro ao buscar imóvel", error: error.message },
       { status: 500 }
     );
   }
 }
 
+// 🔥 PUT OTIMIZADO PARA SALVAR ORDEM DAS FOTOS
 export async function PUT(request, { params }) {
   const { id } = params;
 
   try {
     await connectToDatabase();
-
     const dadosAtualizados = await request.json();
+    
+    console.group('📥 ADMIN API PUT - Processando atualização');
+    console.log('ID/Código:', id);
+    console.log('Dados recebidos:', {
+      codigo: dadosAtualizados.Codigo,
+      totalFotos: Array.isArray(dadosAtualizados.Foto) ? dadosAtualizados.Foto.length : 'Não é array',
+      primeirasFotosOrdem: Array.isArray(dadosAtualizados.Foto) 
+        ? dadosAtualizados.Foto.slice(0, 3).map(f => ({ codigo: f.Codigo, ordem: f.ordem }))
+        : 'N/A'
+    });
 
-    // Tenta encontrar e atualizar pelo Codigo
-    let imovelAtualizado = await Imovel.findOneAndUpdate(
-      { Codigo: id },
-      { $set: dadosAtualizados },
-      { new: true }
-    );
-
-    // Se não encontrou pelo Codigo, tenta pelo _id
-    if (!imovelAtualizado) {
-      imovelAtualizado = await Imovel.findByIdAndUpdate(
-        id,
-        { $set: dadosAtualizados },
-        { new: true }
-      );
+    // Buscar imóvel existente
+    let imovel = await Imovel.findOne({ Codigo: id });
+    if (!imovel) {
+      imovel = await Imovel.findById(id);
     }
 
-    if (!imovelAtualizado) {
+    if (!imovel) {
+      console.log('❌ Imóvel não encontrado');
+      console.groupEnd();
       return NextResponse.json(
-        {
-          status: 404,
-          error: "Imóvel não encontrado",
-        },
+        { status: 404, message: "Imóvel não encontrado", error: "Imóvel não encontrado" },
         { status: 404 }
       );
     }
+
+    console.log('✅ Imóvel encontrado:', imovel.Codigo);
+
+    // 🔥 PROCESSAMENTO ESPECIAL PARA FOTOS
+    if (dadosAtualizados.Foto && Array.isArray(dadosAtualizados.Foto)) {
+      console.log('📸 Processando array de fotos...');
+      
+      // Validar e limpar dados das fotos
+      const fotosLimpas = dadosAtualizados.Foto.map((foto, index) => {
+        const fotoLimpa = {
+          ...foto,
+          ordem: typeof foto.ordem === 'number' ? foto.ordem : index,
+          Codigo: foto.Codigo || `photo-${Date.now()}-${index}`,
+          Destaque: foto.Destaque || "Nao"
+        };
+        
+        // Remover propriedades undefined/null
+        Object.keys(fotoLimpa).forEach(key => {
+          if (fotoLimpa[key] === undefined || fotoLimpa[key] === null) {
+            delete fotoLimpa[key];
+          }
+        });
+        
+        return fotoLimpa;
+      });
+      
+      // Ordenar pelas ordens para garantir consistência
+      fotosLimpas.sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
+      
+      console.log('📸 Fotos processadas:', {
+        total: fotosLimpas.length,
+        ordens: fotosLimpas.map(f => f.ordem),
+        primeirasFotos: fotosLimpas.slice(0, 3).map(f => ({ 
+          codigo: f.Codigo, 
+          ordem: f.ordem,
+          url: f.Foto?.substring(f.Foto.lastIndexOf('/') + 1, f.Foto.lastIndexOf('/') + 10) + '...'
+        }))
+      });
+      
+      dadosAtualizados.Foto = fotosLimpas;
+    }
+
+    // Atualizar campo por campo
+    Object.keys(dadosAtualizados).forEach(key => {
+      imovel[key] = dadosAtualizados[key];
+    });
+
+    // 🔥 CRÍTICO: Forçar MongoDB a detectar mudanças nos arrays
+    if (dadosAtualizados.Foto) {
+      imovel.markModified('Foto');
+      console.log('🔄 Campo Foto marcado como modificado');
+    }
+    
+    if (dadosAtualizados.Video) {
+      imovel.markModified('Video');
+      console.log('🔄 Campo Video marcado como modificado');
+    }
+
+    // Salvar com validação reduzida
+    const imovelAtualizado = await imovel.save({ 
+      validateBeforeSave: false,
+      timestamps: true 
+    });
+
+    console.log('✅ Imóvel salvo com sucesso');
+    console.log('💾 Fotos finais no banco:', {
+      total: Array.isArray(imovelAtualizado.Foto) ? imovelAtualizado.Foto.length : 'Não é array',
+      primeirasFotosOrdem: Array.isArray(imovelAtualizado.Foto) 
+        ? imovelAtualizado.Foto.slice(0, 3).map(f => ({ codigo: f.Codigo, ordem: f.ordem }))
+        : 'N/A'
+    });
+    console.groupEnd();
 
     return NextResponse.json({
       status: 200,
       success: true,
       message: "Imóvel atualizado com sucesso",
-      data: imovelAtualizado,
+      data: {
+        _id: imovelAtualizado._id,
+        Codigo: imovelAtualizado.Codigo,
+        Empreendimento: imovelAtualizado.Empreendimento,
+        totalFotos: Array.isArray(imovelAtualizado.Foto) ? imovelAtualizado.Foto.length : 0
+      },
     });
+
   } catch (error) {
-    console.error(`Erro ao atualizar imóvel com Codigo ou _id ${id}:`, error);
+    console.error('❌ ADMIN API PUT - Erro:', error);
+    console.groupEnd();
+    
     return NextResponse.json(
       {
         status: 500,
         success: false,
-        error: error instanceof Error ? error.message : "Erro desconhecido",
-      },
-      { status: 500 }
-    );
-  }
-}
-
-// Método para excluir um imóvel pelo Codigo
-export async function DELETE(request, { params }) {
-  // O id nos parâmetros é o Codigo do imóvel
-  const { id } = params;
-
-  try {
-    await connectToDatabase();
-
-    // Verificar se o imóvel existe pelo Codigo
-    const imovelExistente = await Imovel.findOne({ Codigo: id });
-
-    if (!imovelExistente) {
-      return NextResponse.json(
-        {
-          status: 404,
-          error: "Imóvel não encontrado",
-        },
-        { status: 404 }
-      );
-    }
-
-    // Excluir o imóvel do banco de dados pelo Codigo
-    const resultado = await Imovel.deleteOne({ Codigo: id });
-
-    if (resultado.deletedCount === 0) {
-      return NextResponse.json(
-        {
-          status: 500,
-          error: "Erro ao excluir imóvel",
-        },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json({
-      status: 200,
-      success: true,
-      message: "Imóvel excluído com sucesso",
-    });
-  } catch (error) {
-    console.error(`Erro ao excluir imóvel com Codigo ${id}:`, error);
-    return NextResponse.json(
-      {
-        status: 500,
-        success: false,
-        error: error instanceof Error ? error.message : "Erro desconhecido",
-      },
-      { status: 500 }
-    );
-  }
-}
-
-// Método para criar um novo imóvel com Codigo específico
-export async function POST(request, { params }) {
-  // O id nos parâmetros é o Codigo do imóvel
-  const { id } = params;
-
-  try {
-    await connectToDatabase();
-
-    // Obter os dados do corpo da requisição
-    const dadosImovel = await request.json();
-
-    // Verificar se já existe um imóvel com este Codigo
-    const imovelExistente = await Imovel.findOne({ Codigo: id });
-
-    if (imovelExistente) {
-      return NextResponse.json(
-        {
-          status: 409,
-          error: "Imóvel com este código já existe",
-        },
-        { status: 409 }
-      );
-    }
-
-    // Definir o Codigo no objeto de dados
-    dadosImovel.Codigo = id;
-
-    // Criar um novo imóvel
-    const novoImovel = new Imovel(dadosImovel);
-    const imovelSalvo = await novoImovel.save();
-
-    const novoImovelAtivo = new ImovelAtivo(dadosImovel);
-    const imovelAtivoSalvo = await novoImovelAtivo.save();
-
-    return NextResponse.json(
-      {
-        status: 201,
-        success: true,
-        message: "Imóvel criado com sucesso",
-        data: imovelSalvo,
-        imovelAtivo: imovelAtivoSalvo,
-      },
-      { status: 201 }
-    );
-  } catch (error) {
-    console.error(`Erro ao criar imóvel com Codigo ${id}:`, error);
-    return NextResponse.json(
-      {
-        status: 500,
-        success: false,
-        error: error instanceof Error ? error.message : "Erro desconhecido",
+        message: "Erro ao atualizar imóvel",
+        error: error.message
       },
       { status: 500 }
     );
