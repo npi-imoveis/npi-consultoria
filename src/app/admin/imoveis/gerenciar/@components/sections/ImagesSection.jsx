@@ -130,11 +130,42 @@ const ImagesSection = memo(({
     fileInput.click();
   };
 
-  // 🔥 FUNÇÃO SIMPLES DE MUDANÇA DE POSIÇÃO
+  // 🔥 FUNÇÃO DE MUDANÇA DE POSIÇÃO COM DEBUG E FALLBACK
   const handlePositionChange = (codigo, newPosition) => {
     const position = parseInt(newPosition);
-    if (!isNaN(position) && position > 0 && position <= sortedPhotos.length) {
-      changeImagePosition(codigo, position);
+    const currentIndex = sortedPhotos.findIndex(p => p.Codigo === codigo);
+    
+    console.log('🔄 ADMIN: Tentando alterar posição:', {
+      codigo,
+      posicaoAtual: currentIndex + 1,
+      novaPosicao: position,
+      totalFotos: sortedPhotos.length,
+      changeImagePositionDisponivel: typeof changeImagePosition,
+      changeImagePositionExiste: !!changeImagePosition
+    });
+    
+    if (!isNaN(position) && position > 0 && position <= sortedPhotos.length && (position - 1) !== currentIndex) {
+      
+      // 🔧 VERIFICAR SE FUNÇÃO EXTERNA EXISTE
+      if (typeof changeImagePosition === 'function') {
+        try {
+          console.log('🔧 ADMIN: Executando changeImagePosition externa...');
+          const resultado = changeImagePosition(codigo, position);
+          console.log('✅ ADMIN: changeImagePosition externa executada:', resultado);
+        } catch (error) {
+          console.error('❌ ADMIN: Erro na função externa:', error);
+          alert(`Erro na reordenação: ${error.message}`);
+        }
+      } else {
+        console.warn('⚠️ ADMIN: changeImagePosition não disponível');
+        alert('Função de reordenação não está disponível. Verifique se o componente pai está passando a prop corretamente.');
+      }
+    } else {
+      console.warn('⚠️ ADMIN: Mudança de posição ignorada:', {
+        posicaoInvalida: isNaN(position),
+        foraDaFaixa: position <= 0 || position > sortedPhotos.length,
+        mesmaPosicao: (position - 1) === currentIndex
+      });
     }
   };
 
