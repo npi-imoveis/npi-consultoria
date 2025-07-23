@@ -22,6 +22,25 @@ const ImagesSection = memo(({
   const [downloadingPhotos, setDownloadingPhotos] = useState(false);
   const [localPhotoOrder, setLocalPhotoOrder] = useState(null); // 🔥 Estado local para ordem
 
+  // 🔥 ADICIONADO: Detectar se fotos têm campo ordem definido no banco
+  useEffect(() => {
+    if (formData?.Foto && Array.isArray(formData.Foto)) {
+      // Verificar se as fotos têm campo ordem definido
+      const temOrdemDefinida = formData.Foto.some(foto => 
+        foto.ordem !== undefined && foto.ordem !== null
+      );
+      
+      if (temOrdemDefinida) {
+        // Ordenar pelo campo ordem e definir como ordem local
+        const fotosOrdenadas = [...formData.Foto].sort((a, b) => 
+          (a.ordem || 0) - (b.ordem || 0)
+        );
+        setLocalPhotoOrder(fotosOrdenadas);
+        console.log('📌 ADMIN: Ordem manual detectada no banco');
+      }
+    }
+  }, [formData?.Foto]);
+
   // 🔥 REMOVI INTERCEPTAÇÃO DO SUBMIT - não interferir com o sistema existente
 
   // 🎯 ORDEM LOCAL OU INTELIGENTE
@@ -30,9 +49,9 @@ const ImagesSection = memo(({
       return [];
     }
 
-    // 🔥 Se há ordem local (usuário alterou), usar ela
+    // 🔥 Se há ordem local (usuário alterou ou veio do banco), usar ela
     if (localPhotoOrder) {
-      console.log('📝 ADMIN: Usando ordem local alterada pelo usuário');
+      console.log('📝 ADMIN: Usando ordem local/manual');
       return localPhotoOrder;
     }
 
