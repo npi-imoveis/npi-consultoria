@@ -1,7 +1,7 @@
 // ImagesSection.jsx - VERSÃO SIMPLES SEM COMPLICAÇÕES
 "use client";
 
-import { memo, useState, useMemo } from "react";
+import { memo, useState, useMemo, useEffect } from "react";
 import FormSection from "../FormSection";
 import Image from "next/image";
 import JSZip from "jszip";
@@ -20,6 +20,25 @@ const ImagesSection = memo(({
   validation
 }) => {
   const [downloadingPhotos, setDownloadingPhotos] = useState(false);
+
+  // 🔒 PREVENIR SUBMITS ACIDENTAIS DO FORMULÁRIO
+  useEffect(() => {
+    const form = document.querySelector('form');
+    if (form) {
+      const preventerSubmit = (e) => {
+        // Se o evento vem de um select de posição, prevenir submit
+        if (e.target && e.target.tagName === 'SELECT' && e.target.options.length === sortedPhotos.length) {
+          console.log('🔒 ADMIN: Submit do formulário prevenido (select de posição)');
+          e.preventDefault();
+          e.stopPropagation();
+          return false;
+        }
+      };
+      
+      form.addEventListener('submit', preventerSubmit);
+      return () => form.removeEventListener('submit', preventerSubmit);
+    }
+  }, [sortedPhotos.length]);
 
   // 🎯 ORDENAÇÃO SIMPLES - IGUAL FUNCIONAVA ANTES
   const sortedPhotos = useMemo(() => {
@@ -130,12 +149,12 @@ const ImagesSection = memo(({
     fileInput.click();
   };
 
-  // 🔥 SOLUÇÃO DEFINITIVA - REORDENAÇÃO QUE SEMPRE FUNCIONA
+  // 🔥 VERSÃO CONTROLADA - SEM RELOAD AUTOMÁTICO
   const handlePositionChange = (codigo, newPosition) => {
     const position = parseInt(newPosition);
     const currentIndex = sortedPhotos.findIndex(p => p.Codigo === codigo);
     
-    console.log('🔄 ADMIN: Mudança de posição solicitada:', {
+    console.log('🔄 ADMIN: Mudança de posição detectada:', {
       codigo,
       posicaoAtual: currentIndex + 1,
       novaPosicao: position,
@@ -144,85 +163,42 @@ const ImagesSection = memo(({
     
     if (!isNaN(position) && position > 0 && position <= sortedPhotos.length && (position - 1) !== currentIndex) {
       
-      // 🎯 MÉTODO 1: Tentar função externa se existir
-      if (typeof changeImagePosition === 'function') {
-        try {
-          console.log('🔧 ADMIN: Tentando função externa...');
-          changeImagePosition(codigo, position);
-          
-          setTimeout(() => {
-            photoSorter.limparCache();
-            window.location.reload();
-          }, 300);
-          return;
-        } catch (error) {
-          console.warn('⚠️ ADMIN: Função externa falhou:', error);
-        }
-      }
+      // ⚠️ AVISO AO USUÁRIO
+      const confirmar = confirm(`Mover foto da posição ${currentIndex + 1} para ${position}?\n\n⚠️ A página será recarregada para aplicar a mudança.`);
       
-      // 🎯 MÉTODO 2: Mudança via localStorage + reload (SEMPRE FUNCIONA)
-      console.log('🔧 ADMIN: Usando método alternativo...');
-      
-      try {
-        // Salvar mudança no localStorage temporariamente
-        const mudanca = {
-          codigo,
-          novaPosicao: position,
-          timestamp: Date.now()
-        };
+      if (confirmar) {
+        console.log('✅ ADMIN: Usuário confirmou mudança');
         
-        localStorage.setItem('pendingImageReorder', JSON.stringify(mudanca));
-        console.log('💾 ADMIN: Mudança salva temporariamente');
-        
-        // Feedback visual imediato
-        const fotoElement = document.querySelector(`[title*="${codigo}"]`) || 
-                           Array.from(document.querySelectorAll('img')).find(img => 
-                             img.src && sortedPhotos[currentIndex] && img.src.includes(sortedPhotos[currentIndex].Foto.split('/').pop())
-                           );
-        
-        if (fotoElement) {
-          const container = fotoElement.closest('.border, .rounded-lg');
-          if (container) {
-            container.style.border = '3px solid #10b981';
-            container.style.transform = 'scale(0.95)';
-            console.log('✨ ADMIN: Feedback visual aplicado');
+        // 🎯 Tentar função externa se existir
+        if (typeof changeImagePosition === 'function') {
+          try {
+            console.log('🔧 ADMIN: Executando mudança...');
+            changeImagePosition(codigo, position);
+            
+            // Aguardar e recarregar
+            setTimeout(() => {
+              console.log('🔄 ADMIN: Aplicando mudança...');
+              photoSorter.limparCache();
+              window.location.reload();
+            }, 1000);
+            
+          } catch (error) {
+            console.error('❌ ADMIN: Erro:', error);
+            alert(`Erro: ${error.message}`);
           }
+        } else {
+          console.warn('⚠️ ADMIN: Função changeImagePosition não disponível');
+          alert('Sistema de reordenação não está disponível no momento.');
         }
+      } else {
+        console.log('❌ ADMIN: Usuário cancelou mudança');
         
-        // Simular mudança no banco via fetch
-        const urlParams = new URLSearchParams(window.location.search);
-        const codigoImovel = urlParams.get('codigo') || formData?.Codigo;
-        
-        if (codigoImovel) {
-          fetch('/admin/api/imoveis/reorder-photo', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              imovelCodigo: codigoImovel,
-              fotoCodigo: codigo,
-              novaPosicao: position
-            })
-          }).then(response => {
-            if (response.ok) {
-              console.log('✅ ADMIN: Mudança salva no servidor');
-            }
-          }).catch(err => {
-            console.log('⚠️ ADMIN: Não foi possível salvar no servidor, mas mudança será aplicada');
-          });
+        // 🔄 RESTAURAR SELECT PARA POSIÇÃO ORIGINAL
+        const select = document.querySelector(`select[value="${position}"]`);
+        if (select) {
+          select.value = currentIndex + 1;
+          console.log('🔄 ADMIN: Select restaurado para posição original');
         }
-        
-        // Recarregar após feedback visual
-        setTimeout(() => {
-          console.log('🔄 ADMIN: Aplicando mudança...');
-          photoSorter.limparCache();
-          window.location.reload();
-        }, 800);
-        
-      } catch (error) {
-        console.error('❌ ADMIN: Erro no método alternativo:', error);
-        alert('Erro ao alterar posição. Tente recarregar a página.');
       }
     }
   };
@@ -336,7 +312,12 @@ const ImagesSection = memo(({
                       <label className="block text-xs text-gray-500 mb-1">Posição</label>
                       <select
                         value={index + 1}
-                        onChange={(e) => handlePositionChange(photo.Codigo, e.target.value)}
+                        onChange={(e) => {
+                          e.preventDefault(); // Prevenir qualquer comportamento padrão
+                          e.stopPropagation(); // Impedir propagação do evento
+                          handlePositionChange(photo.Codigo, e.target.value);
+                        }}
+                        onSubmit={(e) => e.preventDefault()} // Prevenir submit
                         className="w-full p-1.5 text-sm border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       >
                         {[...Array(sortedPhotos.length)].map((_, i) => (
