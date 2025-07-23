@@ -130,7 +130,7 @@ const ImagesSection = memo(({
     fileInput.click();
   };
 
-  // 🔥 FUNÇÃO DE MUDANÇA DE POSIÇÃO COM DEBUG E FALLBACK
+  // 🔥 FUNÇÃO DE MUDANÇA DE POSIÇÃO COM LIMPEZA DE CACHE
   const handlePositionChange = (codigo, newPosition) => {
     const position = parseInt(newPosition);
     const currentIndex = sortedPhotos.findIndex(p => p.Codigo === codigo);
@@ -152,6 +152,17 @@ const ImagesSection = memo(({
           console.log('🔧 ADMIN: Executando changeImagePosition externa...');
           const resultado = changeImagePosition(codigo, position);
           console.log('✅ ADMIN: changeImagePosition externa executada:', resultado);
+          
+          // 🔥 LIMPAR CACHE DO PHOTOSORTER APÓS MUDANÇA
+          setTimeout(() => {
+            console.log('🧹 ADMIN: Limpando cache do photoSorter após mudança de posição...');
+            photoSorter.limparCache();
+            
+            // Forçar atualização da página para refletir mudanças
+            console.log('🔄 ADMIN: Recarregando página para aplicar nova ordem...');
+            window.location.reload();
+          }, 500); // Aguardar 500ms para garantir que a mudança foi salva
+          
         } catch (error) {
           console.error('❌ ADMIN: Erro na função externa:', error);
           alert(`Erro na reordenação: ${error.message}`);
