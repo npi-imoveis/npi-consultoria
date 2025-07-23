@@ -20,7 +20,7 @@ import { notFound, redirect } from "next/navigation";
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 import ScrollToImoveisButton from "./componentes/scroll-to-imovel-button";
 import { photoSorter } from "@/app/utils/photoSorter"; 
-import { ImageGallery } from "@/app/components/sections/image-gallery"; // 🎯 CAMINHO CORRETO ENCONTRADO!
+import { ImageGallery } from "@/app/components/sections/image-gallery";
 
 function ensureCondominio(text) {
   return /condom[ií]nio/i.test(text) ? text : `Condomínio ${text}`;
@@ -107,6 +107,9 @@ export async function generateMetadata({ params }) {
   // ✅ Gerar data para o condomínio
   const modifiedDate = new Date().toISOString();
 
+  // 🎯 EXTRAIR ID DO VÍDEO - ADICIONADO
+  const videoId = condominio?.Video ? Object.values(condominio.Video)[0]?.Video : null;
+
   console.error(`[CONDOMINIO-META] Image URL: ${destaqueFotoUrl}`);
 
   const description = `${rawTitle} em ${condominio.BairroComercial}, ${condominio.Cidade}. ${condominio.Categoria} com ${condominio.MetragemAnt}, ${condominio.DormitoriosAntigo} quartos, ${condominio.VagasAntigo} vagas. ${condominio.Situacao}.`;
@@ -145,10 +148,20 @@ export async function generateMetadata({ params }) {
           type: "image/jpeg",
         }
       ],
+      // 🎯 ADICIONAR VÍDEOS SE EXISTIR
+      ...(videoId && {
+        videos: [{
+          url: `https://www.youtube.com/embed/${videoId}`,
+          secureUrl: `https://www.youtube.com/embed/${videoId}`,
+          type: 'text/html',
+          width: 1280,
+          height: 720,
+        }],
+      }),
       updated_time: modifiedDate,
     },
     twitter: {
-      card: "summary_large_image",
+      card: videoId ? "player" : "summary_large_image", // 🎯 Muda para player se tiver vídeo
       title: rawTitle,
       description,
       site: "@NPIImoveis",
@@ -159,6 +172,15 @@ export async function generateMetadata({ params }) {
           alt: rawTitle,
         }
       ],
+      // 🎯 ADICIONAR PLAYER DO TWITTER SE TIVER VÍDEO
+      ...(videoId && {
+        players: [{
+          playerUrl: `https://www.youtube.com/embed/${videoId}`,
+          streamUrl: `https://www.youtube.com/watch?v=${videoId}`,
+          width: 1280,
+          height: 720,
+        }],
+      }),
     },
     other: {
       'article:published_time': modifiedDate,
@@ -171,6 +193,18 @@ export async function generateMetadata({ params }) {
       'date': modifiedDate,
       'DC.date.modified': modifiedDate,
       'DC.date.created': modifiedDate,
+      // 🎯 META TAGS DE VÍDEO ADICIONADAS CORRETAMENTE
+      ...(videoId && {
+        'og:video': `https://www.youtube.com/embed/${videoId}`,
+        'og:video:url': `https://www.youtube.com/embed/${videoId}`,
+        'og:video:secure_url': `https://www.youtube.com/embed/${videoId}`,
+        'og:video:type': 'text/html',
+        'og:video:width': '1280',
+        'og:video:height': '720',
+        'twitter:player': `https://www.youtube.com/embed/${videoId}`,
+        'twitter:player:width': '1280',
+        'twitter:player:height': '720',
+      }),
     },
   };
 }
@@ -197,6 +231,9 @@ export default async function CondominioPage({ params }) {
   const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`;
   const modifiedDate = new Date().toISOString();
 
+  // 🎯 EXTRAIR ID DO VÍDEO - ADICIONADO
+  const videoId = condominio?.Video ? Object.values(condominio.Video)[0]?.Video : null;
+
   // Structured Data adicional para datas
   const structuredDataDates = {
     "@context": "https://schema.org",
@@ -214,6 +251,33 @@ export default async function CondominioPage({ params }) {
     }
   };
 
+  // 🎯 STRUCTURED DATA DO VÍDEO - ADICIONADO
+  let videoStructuredData = null;
+  if (videoId) {
+    videoStructuredData = {
+      "@context": "https://schema.org",
+      "@type": "VideoObject",
+      "name": `Vídeo de apresentação - ${condominio.Empreendimento}`,
+      "description": `Conheça o ${condominio.Empreendimento} em ${condominio.BairroComercial}, ${condominio.Cidade}. ${condominio.Categoria} com ${condominio.DormitoriosAntigo} quartos, ${condominio.MetragemAnt}, ${condominio.VagasAntigo} vagas.`,
+      "thumbnailUrl": `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+      "uploadDate": modifiedDate,
+      "contentUrl": `https://www.youtube.com/watch?v=${videoId}`,
+      "embedUrl": `https://www.youtube.com/embed/${videoId}`,
+      "publisher": {
+        "@type": "Organization",
+        "name": "NPI Consultoria",
+        "logo": {
+          "@type": "ImageObject",
+          "url": `${process.env.NEXT_PUBLIC_SITE_URL}/logo.png`
+        }
+      },
+      "potentialAction": {
+        "@type": "WatchAction",
+        "target": `https://www.youtube.com/watch?v=${videoId}`
+      }
+    };
+  }
+
   function isValidValue(value) {
     return value !== undefined && value !== null && value !== "" && value !== "0";
   }
@@ -229,6 +293,16 @@ export default async function CondominioPage({ params }) {
         url={currentUrl}
         image={fotosOrdenadas} // 🎯 USAR FOTOS ORDENADAS NO STRUCTURED DATA
       />
+
+      {/* 🎯 STRUCTURED DATA DO VÍDEO - ADICIONADO */}
+      {videoStructuredData && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(videoStructuredData),
+          }}
+        />
+      )}
 
       {/* Structured Data para datas */}
       <script
