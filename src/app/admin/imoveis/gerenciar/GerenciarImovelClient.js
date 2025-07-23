@@ -31,6 +31,7 @@ export default function GerenciarImovelClient() {
   const [showVincularImovel, setShowVincularImovel] = useState(false);
   const [isDesativando, setIsDesativando] = useState(false);
   const [downloadingPhotos, setDownloadingPhotos] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false); // 🔥 NOVO: Rastrear mudanças
   const router = useRouter();
 
   const imovelSelecionado = useImovelStore((state) => state.imovelSelecionado);
@@ -59,15 +60,28 @@ export default function GerenciarImovelClient() {
     handleImagesUploaded,
   } = useImovelForm();
 
-      const { handleSubmit, isSaving, error, success, setError, setSuccess } = useImovelSubmit(
+  const { handleSubmit, isSaving, error, success, setError, setSuccess } = useImovelSubmit(
     formData,
     setIsModalOpen,
     mode,
-    imovelSelecionado?._id // <--- ADICIONE ESTA LINHA
+    imovelSelecionado?._id
   );
 
-
   const { handleFileUpload } = useImageUpload(updateImage, setSuccess, setError);
+
+  // 🔥 NOVA FUNÇÃO: Atualizar fotos com ordem preservada
+  const handleUpdatePhotos = (fotosAtualizadas) => {
+    console.log('📸 PARENT: Atualizando fotos no formData');
+    console.log('📸 Total de fotos:', fotosAtualizadas.length);
+    
+    setFormData(prev => ({
+      ...prev,
+      Foto: fotosAtualizadas
+    }));
+    
+    // Marcar que há mudanças não salvas
+    setHasChanges(true);
+  };
 
   const downloadAllPhotos = async () => {
     if (!formData.Foto || formData.Foto.length === 0) {
@@ -121,9 +135,11 @@ export default function GerenciarImovelClient() {
         if (Array.isArray(imovelSelecionado.Foto)) {
           return imovelSelecionado.Foto.map((foto, index) => ({
             ...foto,
-            Codigo: `photo-${Date.now()}-${index}`,
+            Codigo: foto.Codigo || `photo-${Date.now()}-${index}`,
             Destaque: foto.Destaque || "Nao",
             Ordem: foto.Ordem || index + 1,
+            // 🔥 PRESERVAR campo ordem se existir
+            ordem: foto.ordem !== undefined ? foto.ordem : undefined
           }));
         }
         if (typeof imovelSelecionado.Foto === "object") {
@@ -132,6 +148,10 @@ export default function GerenciarImovelClient() {
             Codigo: key,
             Destaque: imovelSelecionado.Foto[key].Destaque || "Nao",
             Ordem: imovelSelecionado.Foto[key].Ordem || index + 1,
+            // 🔥 PRESERVAR campo ordem se existir
+            ordem: imovelSelecionado.Foto[key].ordem !== undefined 
+              ? imovelSelecionado.Foto[key].ordem 
+              : undefined
           }));
         }
         return [];
@@ -167,12 +187,19 @@ export default function GerenciarImovelClient() {
     };
   }, []);
 
+  // 🔥 INTERCEPTAR handleChange para marcar mudanças
+  const handleChangeWithTracking = (e) => {
+    handleChange(e);
+    setHasChanges(true);
+  };
+
   const handleFileInputChange = (e) => {
     const files = e.target.files;
     if (files.length > 0) {
       const codigo = fileInputRef.current.getAttribute("data-codigo");
       handleFileUpload(codigo, files[0]);
       e.target.value = "";
+      setHasChanges(true); // 🔥 Marcar mudança
     }
   };
 
@@ -184,6 +211,13 @@ export default function GerenciarImovelClient() {
   };
 
   const handleCancel = () => {
+    // 🔥 Verificar se há mudanças não salvas
+    if (hasChanges && typeof window !== 'undefined') {
+      if (!window.confirm("Há alterações não salvas. Deseja realmente sair?")) {
+        return;
+      }
+    }
+    
     const redirectPath = imovelSelecionado && imovelSelecionado.Automacao === false
       ? "/admin/imoveis"
       : "/admin/automacao";
@@ -237,6 +271,17 @@ export default function GerenciarImovelClient() {
     } finally {
       setIsDesativando(false);
     }
+  };
+
+  // 🔥 FUNÇÃO DE SUBMIT MODIFICADA (wrapper)
+  const handleSubmitWithOrder = async (e) => {
+    e.preventDefault();
+    
+    // Resetar indicador de mudanças ao salvar
+    setHasChanges(false);
+    
+    // Chamar o handleSubmit original
+    await handleSubmit(e);
   };
 
   const title = () => {
@@ -322,7 +367,7 @@ export default function GerenciarImovelClient() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmitWithOrder} className="space-y-8">
           {showProprietarios && (
             <ProprietariosSection id={formData.Codigo} key="proprietarios-section" />
           )}
@@ -330,7 +375,7 @@ export default function GerenciarImovelClient() {
             <VincularImovelSection
               formData={formData}
               displayValues={displayValues}
-              onChange={handleChange}
+              onChange={handleChangeWithTracking}
               validation={validation}
               key="vincular-section"
             />
@@ -339,7 +384,7 @@ export default function GerenciarImovelClient() {
           <BasicInfoSection
             formData={{ ...formData, Ativo: formData.Ativo || "Sim" }}
             displayValues={displayValues}
-            onChange={handleChange}
+            onChange={handleChangeWithTracking}
             validation={validation}
             key="basic-info-section"
           />
@@ -347,7 +392,7 @@ export default function GerenciarImovelClient() {
           <LocationSection
             formData={formData}
             displayValues={displayValues}
-            onChange={handleChange}
+            onChange={handleChangeWithTracking}
             validation={validation}
             key="location-section"
           />
@@ -355,35 +400,35 @@ export default function GerenciarImovelClient() {
           <FeaturesSection
             formData={formData}
             displayValues={displayValues}
-            onChange={handleChange}
+            onChange={handleChangeWithTracking}
             key="features-section"
           />
 
           <ValuesSection
             formData={formData}
             displayValues={displayValues}
-            onChange={handleChange}
+            onChange={handleChangeWithTracking}
             key="values-section"
           />
 
           <BrokerSection
             formData={formData}
             displayValues={displayValues}
-            onChange={handleChange}
+            onChange={handleChangeWithTracking}
             key="broker-section"
           />
 
           <DescriptionSection
             formData={formData}
             displayValues={displayValues}
-            onChange={handleChange}
+            onChange={handleChangeWithTracking}
             key="description-section"
           />
 
           <MediaSection
             formData={formData}
             displayValues={displayValues}
-            onChange={handleChange}
+            onChange={handleChangeWithTracking}
             key="media-section"
           />
 
@@ -399,6 +444,7 @@ export default function GerenciarImovelClient() {
             setImageAsHighlight={setImageAsHighlight}
             changeImagePosition={changeImagePosition}
             validation={validation}
+            onUpdatePhotos={handleUpdatePhotos} // 🔥 NOVA PROP ADICIONADA
             key="images-section"
           />
 
@@ -413,6 +459,7 @@ export default function GerenciarImovelClient() {
             isValid={validation.isFormValid}
             isEditMode={mode === "edit"}
             onCancel={handleCancel}
+            hasChanges={hasChanges} // 🔥 OPCIONAL: Passar estado de mudanças
             key="form-footer"
           />
         </form>
