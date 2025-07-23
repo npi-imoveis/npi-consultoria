@@ -7,25 +7,35 @@ export async function GET(request, { params }) {
     await connectToDatabase();
     const { id } = params;
     
-    // Tentar buscar por Codigo primeiro, depois por _id
-    let imovel = await Imovel.findOne({ Codigo: id });
-    if (!imovel) {
+    console.log('📥 GET - Buscando imóvel:', id);
+    
+    // 🔥 CORRIGIDO: Buscar por Codigo primeiro, depois por _id
+    let imovel;
+    
+    // Tentar buscar por Codigo primeiro (string normal)
+    imovel = await Imovel.findOne({ Codigo: id });
+    
+    // Se não encontrou e o id parece ser um ObjectId, tentar por _id
+    if (!imovel && id.match(/^[0-9a-fA-F]{24}$/)) {
       imovel = await Imovel.findById(id);
     }
     
     if (!imovel) {
+      console.log('❌ GET - Imóvel não encontrado:', id);
       return NextResponse.json(
         { status: 404, message: "Imóvel não encontrado" },
         { status: 404 }
       );
     }
-
+    
+    console.log('✅ GET - Imóvel encontrado:', imovel.Codigo);
+    
     return NextResponse.json({
       status: 200,
       data: imovel,
     });
   } catch (error) {
-    console.error("Erro ao buscar imóvel:", error);
+    console.error("❌ GET - Erro ao buscar imóvel:", error);
     return NextResponse.json(
       { status: 500, message: "Erro ao buscar imóvel", error: error.message },
       { status: 500 }
@@ -33,7 +43,7 @@ export async function GET(request, { params }) {
   }
 }
 
-// 🔥 PUT OTIMIZADO PARA SALVAR ORDEM DAS FOTOS
+// 🔥 PUT CORRIGIDO PARA BUSCAR POR CODIGO
 export async function PUT(request, { params }) {
   const { id } = params;
 
@@ -41,24 +51,33 @@ export async function PUT(request, { params }) {
     await connectToDatabase();
     const dadosAtualizados = await request.json();
     
-    console.group('📥 ADMIN API PUT - Processando atualização');
+    console.group('📥 PUT - Processando atualização');
     console.log('ID/Código:', id);
     console.log('Dados recebidos:', {
       codigo: dadosAtualizados.Codigo,
+      empreendimento: dadosAtualizados.Empreendimento,
       totalFotos: Array.isArray(dadosAtualizados.Foto) ? dadosAtualizados.Foto.length : 'Não é array',
       primeirasFotosOrdem: Array.isArray(dadosAtualizados.Foto) 
         ? dadosAtualizados.Foto.slice(0, 3).map(f => ({ codigo: f.Codigo, ordem: f.ordem }))
         : 'N/A'
     });
 
-    // Buscar imóvel existente
-    let imovel = await Imovel.findOne({ Codigo: id });
-    if (!imovel) {
+    // 🔥 CORRIGIDO: Buscar imóvel por Codigo primeiro, depois por _id
+    let imovel;
+    
+    // Primeiro: tentar buscar por Codigo (campo personalizado)
+    imovel = await Imovel.findOne({ Codigo: id });
+    console.log('🔍 Busca por Codigo:', id, '→', imovel ? 'Encontrado' : 'Não encontrado');
+    
+    // Segundo: se não encontrou e parece ser ObjectId, tentar por _id
+    if (!imovel && id.match(/^[0-9a-fA-F]{24}$/)) {
+      console.log('🔍 Tentando busca por _id...');
       imovel = await Imovel.findById(id);
+      console.log('🔍 Busca por _id:', imovel ? 'Encontrado' : 'Não encontrado');
     }
 
     if (!imovel) {
-      console.log('❌ Imóvel não encontrado');
+      console.log('❌ Imóvel não encontrado com ID:', id);
       console.groupEnd();
       return NextResponse.json(
         { status: 404, message: "Imóvel não encontrado", error: "Imóvel não encontrado" },
@@ -66,17 +85,20 @@ export async function PUT(request, { params }) {
       );
     }
 
-    console.log('✅ Imóvel encontrado:', imovel.Codigo);
+    console.log('✅ Imóvel encontrado:', imovel.Codigo, '(MongoDB _id:', imovel._id, ')');
 
-    // 🔥 PROCESSAMENTO ESPECIAL PARA FOTOS
+    // 🔥 PROCESSAMENTO ESPECIAL PARA FOTOS COM VALIDAÇÃO
     if (dadosAtualizados.Foto && Array.isArray(dadosAtualizados.Foto)) {
       console.log('📸 Processando array de fotos...');
       
       // Validar e limpar dados das fotos
       const fotosLimpas = dadosAtualizados.Foto.map((foto, index) => {
+        // Garantir que ordem seja número
+        const ordemFinal = typeof foto.ordem === 'number' ? foto.ordem : index;
+        
         const fotoLimpa = {
           ...foto,
-          ordem: typeof foto.ordem === 'number' ? foto.ordem : index,
+          ordem: ordemFinal,
           Codigo: foto.Codigo || `photo-${Date.now()}-${index}`,
           Destaque: foto.Destaque || "Nao"
         };
@@ -124,12 +146,13 @@ export async function PUT(request, { params }) {
     }
 
     // Salvar com validação reduzida
+    console.log('💾 Salvando no MongoDB...');
     const imovelAtualizado = await imovel.save({ 
       validateBeforeSave: false,
       timestamps: true 
     });
 
-    console.log('✅ Imóvel salvo com sucesso');
+    console.log('✅ Imóvel salvo com sucesso no MongoDB');
     console.log('💾 Fotos finais no banco:', {
       total: Array.isArray(imovelAtualizado.Foto) ? imovelAtualizado.Foto.length : 'Não é array',
       primeirasFotosOrdem: Array.isArray(imovelAtualizado.Foto) 
@@ -151,8 +174,21 @@ export async function PUT(request, { params }) {
     });
 
   } catch (error) {
-    console.error('❌ ADMIN API PUT - Erro:', error);
+    console.error('❌ PUT - Erro ao atualizar:', error);
     console.groupEnd();
+    
+    // Tratamento específico para erros do MongoDB
+    if (error.name === 'CastError') {
+      return NextResponse.json(
+        {
+          status: 400,
+          success: false,
+          message: "ID do imóvel inválido",
+          error: `Formato de ID inválido: ${id}`
+        },
+        { status: 400 }
+      );
+    }
     
     return NextResponse.json(
       {
