@@ -9,11 +9,13 @@ export async function GET(request, { params }) {
     
     console.log('📥 GET - Buscando imóvel:', id);
     
-    // Buscar por Codigo primeiro, depois por _id
+    // 🔥 BUSCA INTELIGENTE: Codigo primeiro, depois _id
     let imovel;
     
+    // Primeiro: tentar buscar por Codigo (campo personalizado)
     imovel = await Imovel.findOne({ Codigo: id });
     
+    // Segundo: se não encontrou e parece ser ObjectId, tentar por _id
     if (!imovel && id.match(/^[0-9a-fA-F]{24}$/)) {
       imovel = await Imovel.findById(id);
     }
@@ -41,7 +43,7 @@ export async function GET(request, { params }) {
   }
 }
 
-// 🔥 PUT CORRIGIDO COM TRATAMENTO DE CONCORRÊNCIA
+// 🔥 PUT COMPLETO E OTIMIZADO
 export async function PUT(request, { params }) {
   const { id } = params;
 
@@ -49,160 +51,261 @@ export async function PUT(request, { params }) {
     await connectToDatabase();
     const dadosAtualizados = await request.json();
     
-    console.group('📥 PUT - Processando atualização');
-    console.log('ID/Código:', id);
-    console.log('Dados recebidos:', {
+    console.group('📥 PUT - Processando atualização de imóvel');
+    console.log('🆔 ID/Código recebido:', id);
+    console.log('📊 Dados básicos:', {
       codigo: dadosAtualizados.Codigo,
       empreendimento: dadosAtualizados.Empreendimento,
-      totalFotos: Array.isArray(dadosAtualizados.Foto) ? dadosAtualizados.Foto.length : 'Não é array',
-      primeirasFotosOrdem: Array.isArray(dadosAtualizados.Foto) 
-        ? dadosAtualizados.Foto.slice(0, 3).map(f => ({ codigo: f.Codigo, ordem: f.ordem }))
-        : 'N/A'
+      ativo: dadosAtualizados.Ativo,
+      totalCampos: Object.keys(dadosAtualizados).length
     });
 
-    // 🔥 BUSCAR E ATUALIZAR COM RETRY PARA CONCORRÊNCIA
-    let tentativas = 0;
-    const maxTentativas = 3;
-    let imovelAtualizado = null;
+    // 🔥 VALIDAÇÃO INICIAL
+    if (!id) {
+      console.error('❌ ID não fornecido');
+      console.groupEnd();
+      return NextResponse.json(
+        { status: 400, message: "ID do imóvel é obrigatório" },
+        { status: 400 }
+      );
+    }
 
-    while (tentativas < maxTentativas) {
-      try {
-        tentativas++;
-        console.log(`🔄 Tentativa ${tentativas}/${maxTentativas}`);
-
-        // Buscar imóvel mais recente
-        let imovel;
+    // 🔍 BUSCA INTELIGENTE DO IMÓVEL
+    let imovel;
+    
+    // Primeiro: tentar buscar por Codigo (string personalizada)
+    console.log('🔍 Buscando por Codigo:', id);
+    imovel = await Imovel.findOne({ Codigo: id });
+    
+    if (imovel) {
+      console.log('✅ Imóvel encontrado por Codigo:', imovel.Codigo);
+    } else {
+      // Segundo: se não encontrou e parece ser ObjectId, tentar por _id
+      if (id.match(/^[0-9a-fA-F]{24}$/)) {
+        console.log('🔍 Tentando busca por _id MongoDB...');
+        imovel = await Imovel.findById(id);
         
-        // Primeiro: tentar buscar por Codigo
-        imovel = await Imovel.findOne({ Codigo: id });
-        console.log('🔍 Busca por Codigo:', id, '→', imovel ? 'Encontrado' : 'Não encontrado');
-        
-        // Segundo: se não encontrou e parece ser ObjectId, tentar por _id
-        if (!imovel && id.match(/^[0-9a-fA-F]{24}$/)) {
-          console.log('🔍 Tentando busca por _id...');
-          imovel = await Imovel.findById(id);
-          console.log('🔍 Busca por _id:', imovel ? 'Encontrado' : 'Não encontrado');
+        if (imovel) {
+          console.log('✅ Imóvel encontrado por _id:', imovel._id);
         }
-
-        if (!imovel) {
-          console.log('❌ Imóvel não encontrado com ID:', id);
-          console.groupEnd();
-          return NextResponse.json(
-            { status: 404, message: "Imóvel não encontrado", error: "Imóvel não encontrado" },
-            { status: 404 }
-          );
-        }
-
-        console.log('✅ Imóvel encontrado:', imovel.Codigo, '(MongoDB _id:', imovel._id, ')');
-        console.log('📊 Versão atual do documento:', imovel.__v);
-
-        // 🔥 PROCESSAMENTO ESPECIAL PARA FOTOS COM VALIDAÇÃO
-        if (dadosAtualizados.Foto && Array.isArray(dadosAtualizados.Foto)) {
-          console.log('📸 Processando array de fotos...');
-          
-          const fotosLimpas = dadosAtualizados.Foto.map((foto, index) => {
-            const ordemFinal = typeof foto.ordem === 'number' ? foto.ordem : index;
-            
-            const fotoLimpa = {
-              ...foto,
-              ordem: ordemFinal,
-              Codigo: foto.Codigo || `photo-${Date.now()}-${index}`,
-              Destaque: foto.Destaque || "Nao"
-            };
-            
-            // Remover propriedades undefined/null
-            Object.keys(fotoLimpa).forEach(key => {
-              if (fotoLimpa[key] === undefined || fotoLimpa[key] === null) {
-                delete fotoLimpa[key];
-              }
-            });
-            
-            return fotoLimpa;
-          });
-          
-          // Ordenar pelas ordens para garantir consistência
-          fotosLimpas.sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
-          
-          console.log('📸 Fotos processadas:', {
-            total: fotosLimpas.length,
-            ordens: fotosLimpas.map(f => f.ordem),
-            primeirasFotos: fotosLimpas.slice(0, 3).map(f => ({ 
-              codigo: f.Codigo, 
-              ordem: f.ordem,
-              url: f.Foto?.substring(f.Foto.lastIndexOf('/') + 1, f.Foto.lastIndexOf('/') + 10) + '...'
-            }))
-          });
-          
-          dadosAtualizados.Foto = fotosLimpas;
-        }
-
-        // 🔥 ATUALIZAÇÃO ATÔMICA COM findOneAndUpdate (EVITA CONCORRÊNCIA)
-        const imovelAtualizadoResult = await Imovel.findOneAndUpdate(
-          { 
-            _id: imovel._id,
-            __v: imovel.__v // Verificação de versão para evitar conflitos
-          },
-          {
-            $set: dadosAtualizados,
-            $inc: { __v: 1 } // Incrementar versão
-          },
-          {
-            new: true, // Retornar documento atualizado
-            runValidators: false,
-            useFindAndModify: false
-          }
-        );
-
-        if (!imovelAtualizadoResult) {
-          throw new Error('Documento foi modificado por outra operação (conflito de versão)');
-        }
-
-        imovelAtualizado = imovelAtualizadoResult;
-        console.log('✅ Imóvel atualizado com sucesso (versão:', imovelAtualizado.__v, ')');
-        break; // Sair do loop se sucesso
-
-      } catch (error) {
-        console.warn(`⚠️ Tentativa ${tentativas} falhou:`, error.message);
-        
-        if (tentativas >= maxTentativas) {
-          throw error; // Re-throw se esgotar tentativas
-        }
-        
-        // Aguardar um pouco antes da próxima tentativa
-        await new Promise(resolve => setTimeout(resolve, 100 * tentativas));
       }
     }
 
-    if (!imovelAtualizado) {
-      throw new Error('Falha ao atualizar após múltiplas tentativas');
+    if (!imovel) {
+      console.error('❌ Imóvel não encontrado com ID:', id);
+      console.groupEnd();
+      return NextResponse.json(
+        { status: 404, message: "Imóvel não encontrado", error: "Imóvel não encontrado" },
+        { status: 404 }
+      );
     }
 
-    console.log('💾 Fotos finais no banco:', {
-      total: Array.isArray(imovelAtualizado.Foto) ? imovelAtualizado.Foto.length : 'Não é array',
-      primeirasFotosOrdem: Array.isArray(imovelAtualizado.Foto) 
-        ? imovelAtualizado.Foto.slice(0, 3).map(f => ({ codigo: f.Codigo, ordem: f.ordem }))
-        : 'N/A'
+    console.log('📋 Imóvel localizado:', {
+      codigo: imovel.Codigo,
+      _id: imovel._id,
+      empreendimento: imovel.Empreendimento,
+      versaoAtual: imovel.__v
     });
-    console.groupEnd();
 
-    return NextResponse.json({
-      status: 200,
-      success: true,
-      message: "Imóvel atualizado com sucesso",
-      data: {
-        _id: imovelAtualizado._id,
-        Codigo: imovelAtualizado.Codigo,
-        Empreendimento: imovelAtualizado.Empreendimento,
-        totalFotos: Array.isArray(imovelAtualizado.Foto) ? imovelAtualizado.Foto.length : 0,
-        versao: imovelAtualizado.__v
-      },
+    // 🔥 PROCESSAMENTO ESPECIAL PARA FOTOS (CRÍTICO PARA ORDENAÇÃO)
+    if (dadosAtualizados.Foto) {
+      console.log('📸 Processando fotos...');
+      
+      let fotosProcessadas = [];
+      
+      if (Array.isArray(dadosAtualizados.Foto)) {
+        console.log('📸 Fotos em formato array:', dadosAtualizados.Foto.length);
+        
+        // Verificar se tem ordem manual
+        const temOrdemManual = dadosAtualizados.Foto.every(foto => 
+          typeof foto.ordem === 'number' && foto.ordem >= 0
+        );
+        
+        console.log('📸 Tem ordem manual?', temOrdemManual);
+        
+        // Processar cada foto individualmente
+        fotosProcessadas = dadosAtualizados.Foto.map((foto, index) => {
+          // Garantir que ordem seja número válido
+          const ordemFinal = typeof foto.ordem === 'number' ? foto.ordem : index;
+          
+          // Criar objeto limpo da foto
+          const fotoProcessada = {
+            Codigo: foto.Codigo || `photo-${Date.now()}-${index}`,
+            Foto: foto.Foto || '',
+            Destaque: foto.Destaque || "Nao",
+            ordem: ordemFinal
+          };
+          
+          // Preservar outros campos se existirem
+          if (foto._id) fotoProcessada._id = foto._id;
+          if (foto.Ordem) fotoProcessada.Ordem = foto.Ordem;
+          if (foto.ORDEM) fotoProcessada.ORDEM = foto.ORDEM;
+          if (foto.Descricao) fotoProcessada.Descricao = foto.Descricao;
+          if (foto.Alt) fotoProcessada.Alt = foto.Alt;
+          
+          // Remover campos undefined/null/vazios
+          Object.keys(fotoProcessada).forEach(key => {
+            if (fotoProcessada[key] === undefined || 
+                fotoProcessada[key] === null || 
+                fotoProcessada[key] === '') {
+              delete fotoProcessada[key];
+            }
+          });
+          
+          return fotoProcessada;
+        });
+        
+        // Ordenar por campo ordem para garantir consistência
+        fotosProcessadas.sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
+        
+        console.log('📸 Fotos processadas:', {
+          total: fotosProcessadas.length,
+          ordens: fotosProcessadas.map(f => f.ordem),
+          primeirasFotos: fotosProcessadas.slice(0, 3).map(f => ({ 
+            codigo: f.Codigo, 
+            ordem: f.ordem,
+            destaque: f.Destaque,
+            url: f.Foto?.substring(f.Foto.lastIndexOf('/') + 1, f.Foto.lastIndexOf('/') + 15) + '...'
+          }))
+        });
+        
+      } else if (typeof dadosAtualizados.Foto === 'object') {
+        // Converter objeto para array (formato legacy)
+        console.log('📸 Convertendo objeto de fotos para array...');
+        fotosProcessadas = Object.entries(dadosAtualizados.Foto)
+          .sort(([a], [b]) => parseInt(a) - parseInt(b))
+          .map(([key, foto], index) => ({
+            ...foto,
+            Codigo: key,
+            ordem: foto.ordem !== undefined ? foto.ordem : index
+          }));
+      }
+      
+      dadosAtualizados.Foto = fotosProcessadas;
+    }
+
+    // 🔥 PROCESSAMENTO DE VÍDEOS (se existir)
+    if (dadosAtualizados.Video) {
+      console.log('🎥 Processando vídeos...');
+      
+      let videosProcessados = [];
+      
+      if (Array.isArray(dadosAtualizados.Video)) {
+        videosProcessados = dadosAtualizados.Video;
+      } else if (typeof dadosAtualizados.Video === 'object') {
+        videosProcessados = Object.values(dadosAtualizados.Video);
+      }
+      
+      dadosAtualizados.Video = videosProcessados.length > 0 ? videosProcessados : undefined;
+      console.log('🎥 Vídeos processados:', videosProcessados.length);
+    }
+
+    // 🔥 LIMPEZA GERAL DOS DADOS
+    console.log('🧹 Limpando dados para atualização...');
+    
+    // Remover campos que podem causar conflito ou são desnecessários
+    const camposParaRemover = ['_id', '__v', 'createdAt', 'updatedAt'];
+    camposParaRemover.forEach(campo => {
+      if (dadosAtualizados[campo]) {
+        delete dadosAtualizados[campo];
+      }
     });
+
+    // 📝 ATUALIZAÇÃO DO DOCUMENTO
+    console.log('📝 Atualizando campos do documento...');
+    
+    // Atualizar cada campo individualmente
+    Object.keys(dadosAtualizados).forEach(key => {
+      if (dadosAtualizados[key] !== undefined) {
+        imovel[key] = dadosAtualizados[key];
+        console.log(`   ✅ Campo ${key} atualizado`);
+      }
+    });
+
+    // 🔥 MARCAR CAMPOS MODIFICADOS (CRÍTICO PARA ARRAYS)
+    const camposArray = ['Foto', 'Video'];
+    camposArray.forEach(campo => {
+      if (dadosAtualizados[campo]) {
+        imovel.markModified(campo);
+        console.log(`🔄 Campo ${campo} marcado como modificado`);
+      }
+    });
+
+    // 💾 SALVAMENTO NO MONGODB
+    console.log('💾 Salvando documento no MongoDB...');
+    
+    try {
+      const imovelAtualizado = await imovel.save({ 
+        validateBeforeSave: false,
+        // Não forçar timestamps para evitar conflitos
+      });
+
+      console.log('✅ Documento salvo com sucesso!');
+      console.log('📊 Resultado do salvamento:', {
+        _id: imovelAtualizado._id,
+        codigo: imovelAtualizado.Codigo,
+        versaoFinal: imovelAtualizado.__v,
+        totalFotos: Array.isArray(imovelAtualizado.Foto) ? imovelAtualizado.Foto.length : 0
+      });
+
+      // 📸 LOG FINAL DAS FOTOS (para debug)
+      if (Array.isArray(imovelAtualizado.Foto) && imovelAtualizado.Foto.length > 0) {
+        console.log('📸 Fotos salvas no banco:', {
+          total: imovelAtualizado.Foto.length,
+          primeirasFotosOrdem: imovelAtualizado.Foto.slice(0, 5).map((f, i) => ({
+            posicao: i + 1,
+            codigo: f.Codigo,
+            ordem: f.ordem,
+            destaque: f.Destaque
+          }))
+        });
+      }
+
+      console.groupEnd();
+
+      // 🎉 RESPOSTA DE SUCESSO
+      return NextResponse.json({
+        status: 200,
+        success: true,
+        message: "Imóvel atualizado com sucesso",
+        data: {
+          _id: imovelAtualizado._id,
+          Codigo: imovelAtualizado.Codigo,
+          Empreendimento: imovelAtualizado.Empreendimento,
+          totalFotos: Array.isArray(imovelAtualizado.Foto) ? imovelAtualizado.Foto.length : 0,
+          totalVideos: Array.isArray(imovelAtualizado.Video) ? imovelAtualizado.Video.length : 0,
+          versao: imovelAtualizado.__v,
+          ultimaAtualizacao: new Date().toISOString()
+        },
+      });
+
+    } catch (saveError) {
+      console.error('❌ Erro ao salvar no MongoDB:', saveError);
+      console.groupEnd();
+      
+      // Tratamento específico para diferentes tipos de erro de salvamento
+      if (saveError.code === 11000) {
+        return NextResponse.json(
+          {
+            status: 409,
+            success: false,
+            message: "Conflito: Imóvel com este código já existe",
+            error: "Duplicate key error"
+          },
+          { status: 409 }
+        );
+      }
+      
+      throw saveError; // Re-throw para captura no catch geral
+    }
 
   } catch (error) {
-    console.error('❌ PUT - Erro ao atualizar:', error);
+    console.error('❌ PUT - Erro geral:', error);
     console.groupEnd();
     
-    // Tratamento específico para diferentes tipos de erro
+    // 🔥 TRATAMENTO ABRANGENTE DE ERROS
+    
+    // Erro de cast (ID inválido)
     if (error.name === 'CastError') {
       return NextResponse.json(
         {
@@ -215,36 +318,55 @@ export async function PUT(request, { params }) {
       );
     }
     
-    if (error.name === 'VersionError' || error.message.includes('version') || error.message.includes('conflito')) {
-      return NextResponse.json(
-        {
-          status: 409,
-          success: false,
-          message: "Conflito de versão. O imóvel foi modificado por outra operação. Tente novamente.",
-          error: "Conflito de concorrência"
-        },
-        { status: 409 }
-      );
-    }
-    
+    // Erro de validação
     if (error.name === 'ValidationError') {
+      const validationErrors = Object.values(error.errors).map(err => err.message);
       return NextResponse.json(
         {
           status: 400,
           success: false,
           message: "Dados inválidos",
-          error: error.message
+          error: validationErrors.join(', ')
         },
         { status: 400 }
       );
     }
     
+    // Erro de versão/concorrência
+    if (error.name === 'VersionError' || 
+        error.message.includes('version') || 
+        error.message.includes('__v')) {
+      return NextResponse.json(
+        {
+          status: 409,
+          success: false,
+          message: "Conflito de versão. O documento foi modificado por outra operação simultaneamente. Recarregue a página e tente novamente.",
+          error: "Conflict error"
+        },
+        { status: 409 }
+      );
+    }
+    
+    // Erro de conexão MongoDB
+    if (error.name === 'MongoError' || error.name === 'MongooseError') {
+      return NextResponse.json(
+        {
+          status: 503,
+          success: false,
+          message: "Erro temporário no banco de dados. Tente novamente em alguns segundos.",
+          error: "Database error"
+        },
+        { status: 503 }
+      );
+    }
+    
+    // Erro genérico (fallback)
     return NextResponse.json(
       {
         status: 500,
         success: false,
         message: "Erro interno do servidor",
-        error: error.message
+        error: error.message || "Unknown error"
       },
       { status: 500 }
     );
