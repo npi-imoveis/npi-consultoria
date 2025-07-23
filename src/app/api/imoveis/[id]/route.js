@@ -47,6 +47,19 @@ export async function PUT(request, { params }) {
 
     const dadosAtualizados = await request.json();
 
+    // 🔍 LOG CRÍTICO - Ver o que está sendo recebido
+    if (dadosAtualizados.Foto) {
+      console.log('📥 API PUT - Fotos recebidas:', 
+        dadosAtualizados.Foto.map ? 
+          dadosAtualizados.Foto.map((f, i) => ({
+            index: i,
+            ordem: f.ordem,
+            url: f.url ? f.url.split('/').pop() : 'sem-url'
+          })) : 
+          'Foto não é array'
+      );
+    }
+
     // Tenta encontrar e atualizar pelo Codigo
     let imovelAtualizado = await Imovel.findOneAndUpdate(
       { Codigo: id },
@@ -60,6 +73,19 @@ export async function PUT(request, { params }) {
         id,
         { $set: dadosAtualizados },
         { new: true }
+      );
+    }
+
+    // 🔍 LOG CRÍTICO - Ver o que foi salvo
+    if (imovelAtualizado && imovelAtualizado.Foto) {
+      console.log('💾 API PUT - Fotos salvas no banco:', 
+        Array.isArray(imovelAtualizado.Foto) ? 
+          imovelAtualizado.Foto.map((f, i) => ({
+            index: i,
+            ordem: f.ordem,
+            url: f.url ? f.url.split('/').pop() : 'sem-url'
+          })) : 
+          'Foto salva como objeto, não array'
       );
     }
 
