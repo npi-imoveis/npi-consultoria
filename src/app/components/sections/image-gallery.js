@@ -1,4 +1,4 @@
-// src/app/components/sections/image-gallery.js - VERSÃO UNIVERSAL para Imóvel E Condomínio
+// src/app/components/sections/image-gallery.js - VERSÃO CORRIGIDA
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -65,30 +65,45 @@ export function ImageGallery({
     }
   }, [imovel, fotos, title, shareUrl, shareTitle, isImovelMode]);
 
-  // 🎯 PROCESSAR FOTOS (igual ao funcionamento atual)
+  // 🎯 PROCESSAR FOTOS COM CORREÇÃO
   const images = useMemo(() => {
     if (!Array.isArray(processedData.fotos) || processedData.fotos.length === 0) {
       return [];
     }
 
     try {
-      // Se é modo imóvel, usar photoSorter (que já funciona)
-      if (isImovelMode) {
-        const fotosOrdenadas = photoSorter.ordenarFotos(processedData.fotos, processedData.codigo);
-        return fotosOrdenadas.map((foto, index) => ({
-          ...foto,
-          Codigo: `${processedData.codigo}-foto-${index}`,
-        }));
-      } else {
-        // Se é modo condomínio, as fotos JÁ vêm ordenadas da página (processadas)
-        return processedData.fotos.map((foto, index) => ({
-          ...foto,
-          Codigo: `${processedData.codigo}-foto-${index}`,
-        }));
-      }
+      console.log('📸 GALERIA: Processando fotos...', {
+        modo: isImovelMode ? 'IMÓVEL' : 'CONDOMÍNIO',
+        totalFotos: processedData.fotos.length,
+        codigo: processedData.codigo
+      });
+
+      // 🔥 SEMPRE LIMPAR CAMPOS ORDEM ANTES DO PHOTOSORTER
+      const fotosLimpas = processedData.fotos.map(foto => {
+        const { Ordem, ordem, ORDEM, ...fotoSemOrdem } = foto;
+        return fotoSemOrdem;
+      });
+
+      console.log('🧹 GALERIA: Campos ORDEM removidos para forçar análise inteligente');
+
+      // 🎯 USAR PHOTOSORTER SEMPRE (para ambos os modos)
+      const fotosOrdenadas = photoSorter.ordenarFotos(fotosLimpas, processedData.codigo);
+      
+      const resultado = fotosOrdenadas.map((foto, index) => ({
+        ...foto,
+        Codigo: `${processedData.codigo}-foto-${index}`,
+      }));
+
+      console.log('✅ GALERIA: Fotos processadas com photoSorter:', {
+        total: resultado.length,
+        primeira: resultado[0]?.Foto?.split('/').pop()?.substring(0, 30) + '...',
+        destaque: resultado.find(f => f.Destaque === "Sim") ? 'SIM' : 'NÃO'
+      });
+
+      return resultado;
 
     } catch (error) {
-      console.error('❌ Erro ao processar imagens na galeria:', error);
+      console.error('❌ GALERIA: Erro ao processar imagens:', error);
       
       // Fallback seguro
       return [...processedData.fotos].map((foto, index) => ({
@@ -98,16 +113,21 @@ export function ImageGallery({
     }
   }, [processedData, isImovelMode]);
 
-  // 🔍 DEBUG (só no modo imóvel)
+  // 🔍 DEBUG
   const debugInfo = useMemo(() => {
-    if (!debugMode || !isImovelMode || !processedData.fotos) return null;
-    return photoSorter.gerarRelatorio(processedData.fotos, processedData.codigo);
-  }, [debugMode, isImovelMode, processedData.fotos, processedData.codigo]);
-
-  // 🔧 Toggle debug (só no desenvolvimento e modo imóvel)
-  useEffect(() => {
-    if (!isImovelMode) return;
+    if (!debugMode || !processedData.fotos) return null;
     
+    // Limpar campos ORDEM para debug também
+    const fotosLimpas = processedData.fotos.map(foto => {
+      const { Ordem, ordem, ORDEM, ...fotoSemOrdem } = foto;
+      return fotoSemOrdem;
+    });
+    
+    return photoSorter.gerarRelatorio(fotosLimpas, processedData.codigo);
+  }, [debugMode, processedData.fotos, processedData.codigo]);
+
+  // 🔧 Toggle debug
+  useEffect(() => {
     const handleKeyPress = (e) => {
       if (e.ctrlKey && e.shiftKey && e.key === 'D') {
         setDebugMode(prev => !prev);
@@ -117,7 +137,7 @@ export function ImageGallery({
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [debugMode, isImovelMode]);
+  }, [debugMode]);
 
   if (!processedData.titulo) {
     return null;
@@ -157,14 +177,15 @@ export function ImageGallery({
 
   return (
     <>
-      {/* 🔍 DEBUG INFO (só modo imóvel) */}
-      {debugMode && debugInfo && isImovelMode && (
+      {/* 🔍 DEBUG INFO */}
+      {debugMode && debugInfo && (
         <div className="mb-4 p-3 bg-black text-green-400 font-mono text-xs rounded-md">
-          <div className="font-bold mb-2">🔍 DEBUG - ORDENAÇÃO INTELIGENTE</div>
+          <div className="font-bold mb-2">🔍 DEBUG - ORDENAÇÃO INTELIGENTE ({isImovelMode ? 'IMÓVEL' : 'CONDOMÍNIO'})</div>
           <div>📸 Total: {debugInfo.total} fotos</div>
           <div>📊 Grupos: {JSON.stringify(debugInfo.grupos)}</div>
           <div>📈 Cobertura: {(debugInfo.cobertura * 100).toFixed(1)}%</div>
           <div>🎯 Padrões: {debugInfo.padroes.slice(0, 3).join(', ')}...</div>
+          <div>🔧 Método: ANÁLISE INTELIGENTE (campos ORDEM removidos)</div>
         </div>
       )}
 
@@ -238,7 +259,7 @@ export function ImageGallery({
             </div>
           </div>
 
-          {/* GRID 2x2 original (para imóveis) */}
+          {/* GRID 2x2 original */}
           {!isMobile && (
             <div className="col-span-1 grid grid-cols-2 grid-rows-2 gap-1 h-[410px]">
               {images.slice(1, 5).map((image, index) => {
@@ -391,10 +412,10 @@ export function ImageGallery({
         </div>
       )}
 
-      {/* 🔍 Hint do debug (só modo imóvel) */}
-      {isImovelMode && process.env.NODE_ENV === 'development' && (
+      {/* 🔍 Hint do debug */}
+      {process.env.NODE_ENV === 'development' && (
         <div className="mt-2 text-xs text-gray-400 text-center">
-          Ctrl + Shift + D para debug da ordenação
+          Ctrl + Shift + D para debug da ordenação ({isImovelMode ? 'IMÓVEL' : 'CONDOMÍNIO'})
         </div>
       )}
     </>
