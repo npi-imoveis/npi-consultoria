@@ -31,7 +31,7 @@ export default function GerenciarImovelClient() {
   const [showVincularImovel, setShowVincularImovel] = useState(false);
   const [isDesativando, setIsDesativando] = useState(false);
   const [downloadingPhotos, setDownloadingPhotos] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false); // 🔥 NOVO: Rastrear mudanças
+  const [hasChanges, setHasChanges] = useState(false);
   const router = useRouter();
 
   const imovelSelecionado = useImovelStore((state) => state.imovelSelecionado);
@@ -69,17 +69,20 @@ export default function GerenciarImovelClient() {
 
   const { handleFileUpload } = useImageUpload(updateImage, setSuccess, setError);
 
-  // 🔥 NOVA FUNÇÃO: Atualizar fotos com ordem preservada
+  // 🔥 FUNÇÃO DE ATUALIZAÇÃO DE FOTOS OTIMIZADA
   const handleUpdatePhotos = (fotosAtualizadas) => {
     console.log('📸 PARENT: Atualizando fotos no formData');
-    console.log('📸 Total de fotos:', fotosAtualizadas.length);
+    console.log('📸 Total:', fotosAtualizadas.length);
+    console.log('📸 Primeiras ordens:', fotosAtualizadas.slice(0, 3).map(f => ({ 
+      codigo: f.Codigo, 
+      ordem: f.ordem 
+    })));
     
     setFormData(prev => ({
       ...prev,
       Foto: fotosAtualizadas
     }));
     
-    // Marcar que há mudanças não salvas
     setHasChanges(true);
   };
 
@@ -115,8 +118,11 @@ export default function GerenciarImovelClient() {
     }
   };
 
+  // 🔥 USEEFFECT OTIMIZADO PARA CARREGAMENTO INICIAL
   useEffect(() => {
     if (imovelSelecionado && mode === "edit") {
+      console.group('🏠 Carregando dados do imóvel para edição');
+      
       const formatMonetaryDisplayValues = () => {
         const displayObj = {};
         ["ValorAntigo", "ValorAluguelSite", "ValorCondominio", "ValorIptu"].forEach((field) => {
@@ -130,31 +136,56 @@ export default function GerenciarImovelClient() {
         return displayObj;
       };
 
+      // 🔥 PROCESSAMENTO DE FOTOS OTIMIZADO - PRESERVAR ORDEM
       const processPhotos = () => {
         if (!imovelSelecionado.Foto) return [];
+        
+        let fotosProcessadas = [];
+        
         if (Array.isArray(imovelSelecionado.Foto)) {
-          return imovelSelecionado.Foto.map((foto, index) => ({
+          console.log('📸 Fotos já em formato array:', imovelSelecionado.Foto.length);
+          
+          fotosProcessadas = imovelSelecionado.Foto.map((foto, index) => ({
             ...foto,
             Codigo: foto.Codigo || `photo-${Date.now()}-${index}`,
             Destaque: foto.Destaque || "Nao",
             Ordem: foto.Ordem || index + 1,
-            // 🔥 PRESERVAR campo ordem se existir
-            ordem: foto.ordem !== undefined ? foto.ordem : undefined
+            // 🔥 CRUCIAL: Preservar campo 'ordem' se existir
+            ordem: foto.ordem !== undefined && foto.ordem !== null ? foto.ordem : undefined
           }));
-        }
-        if (typeof imovelSelecionado.Foto === "object") {
-          return Object.keys(imovelSelecionado.Foto).map((key, index) => ({
+          
+          // Se tem campo 'ordem' em alguma foto, ordenar por ele
+          const temOrdem = fotosProcessadas.some(f => f.ordem !== undefined && f.ordem !== null);
+          if (temOrdem) {
+            console.log('📸 Ordenando fotos pelo campo "ordem"');
+            fotosProcessadas.sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
+          }
+          
+        } else if (typeof imovelSelecionado.Foto === "object") {
+          console.log('📸 Convertendo fotos de objeto para array');
+          
+          fotosProcessadas = Object.keys(imovelSelecionado.Foto).map((key, index) => ({
             ...imovelSelecionado.Foto[key],
             Codigo: key,
             Destaque: imovelSelecionado.Foto[key].Destaque || "Nao",
             Ordem: imovelSelecionado.Foto[key].Ordem || index + 1,
-            // 🔥 PRESERVAR campo ordem se existir
+            // Preservar ordem se existir
             ordem: imovelSelecionado.Foto[key].ordem !== undefined 
               ? imovelSelecionado.Foto[key].ordem 
               : undefined
           }));
         }
-        return [];
+        
+        console.log('📸 Fotos processadas:', {
+          total: fotosProcessadas.length,
+          primeirasFotosOrdem: fotosProcessadas.slice(0, 3).map(f => ({ 
+            codigo: f.Codigo, 
+            ordem: f.ordem,
+            Ordem: f.Ordem
+          }))
+        });
+        
+        return fotosProcessadas;
       };
 
       const processVideos = () => {
@@ -170,24 +201,32 @@ export default function GerenciarImovelClient() {
         return videosObj;
       };
 
-      setFormData({
+      const dadosProcessados = {
         ...imovelSelecionado,
         Foto: processPhotos(),
         Video: processVideos(),
         Slug: formatterSlug(imovelSelecionado.Empreendimento || ""),
+      };
+
+      console.log('📋 Dados finais para formData:', {
+        codigo: dadosProcessados.Codigo,
+        totalFotos: dadosProcessados.Foto?.length,
+        primeirasOrdens: dadosProcessados.Foto?.slice(0, 3).map(f => f.ordem)
       });
 
+      setFormData(dadosProcessados);
       setDisplayValues(formatMonetaryDisplayValues());
+      
+      console.groupEnd();
     }
   }, [imovelSelecionado, mode, setFormData, setDisplayValues]);
 
   useEffect(() => {
     return () => {
-      // Não limpamos ao desmontar para manter o estado
+      // Cleanup se necessário
     };
   }, []);
 
-  // 🔥 INTERCEPTAR handleChange para marcar mudanças
   const handleChangeWithTracking = (e) => {
     handleChange(e);
     setHasChanges(true);
@@ -199,7 +238,7 @@ export default function GerenciarImovelClient() {
       const codigo = fileInputRef.current.getAttribute("data-codigo");
       handleFileUpload(codigo, files[0]);
       e.target.value = "";
-      setHasChanges(true); // 🔥 Marcar mudança
+      setHasChanges(true);
     }
   };
 
@@ -211,7 +250,6 @@ export default function GerenciarImovelClient() {
   };
 
   const handleCancel = () => {
-    // 🔥 Verificar se há mudanças não salvas
     if (hasChanges && typeof window !== 'undefined') {
       if (!window.confirm("Há alterações não salvas. Deseja realmente sair?")) {
         return;
@@ -273,14 +311,19 @@ export default function GerenciarImovelClient() {
     }
   };
 
-  // 🔥 FUNÇÃO DE SUBMIT MODIFICADA (wrapper)
+  // 🔥 SUBMIT OTIMIZADO
   const handleSubmitWithOrder = async (e) => {
     e.preventDefault();
     
-    // Resetar indicador de mudanças ao salvar
-    setHasChanges(false);
+    console.log('🚀 Submit iniciado - Estado das fotos:', {
+      totalFotos: formData.Foto?.length,
+      primeirasOrdens: formData.Foto?.slice(0, 3).map(f => ({ 
+        codigo: f.Codigo, 
+        ordem: f.ordem 
+      }))
+    });
     
-    // Chamar o handleSubmit original
+    setHasChanges(false);
     await handleSubmit(e);
   };
 
@@ -444,7 +487,7 @@ export default function GerenciarImovelClient() {
             setImageAsHighlight={setImageAsHighlight}
             changeImagePosition={changeImagePosition}
             validation={validation}
-            onUpdatePhotos={handleUpdatePhotos} // 🔥 NOVA PROP ADICIONADA
+            onUpdatePhotos={handleUpdatePhotos}
             key="images-section"
           />
 
@@ -459,7 +502,7 @@ export default function GerenciarImovelClient() {
             isValid={validation.isFormValid}
             isEditMode={mode === "edit"}
             onCancel={handleCancel}
-            hasChanges={hasChanges} // 🔥 OPCIONAL: Passar estado de mudanças
+            hasChanges={hasChanges}
             key="form-footer"
           />
         </form>
