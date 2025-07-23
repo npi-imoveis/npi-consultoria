@@ -51,62 +51,76 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create", imove
     return { isValid: true };
   }, []);
 
+  // 🔥 FUNÇÃO PREPARAR PAYLOAD OTIMIZADA
   const preparePayload = useCallback((data) => {
-    // 🔥 MODIFICAÇÃO: Converter o objeto de fotos preservando a ordem manual se existir
+    console.group('📦 Preparando payload para envio');
+    
     let fotosArray = [];
     
     if (data.Foto) {
-      // Se já for um array (caso do drag & drop), preservar ordem
       if (Array.isArray(data.Foto)) {
-        // 🔥 CRÍTICO: Verificar se já tem campo ordem manual
-        const temOrdemManual = data.Foto.every(foto => 
-          foto.ordem !== undefined && foto.ordem !== null
+        console.log('📸 Processando fotos como array:', data.Foto.length);
+        
+        // Verificar se tem ordem manual (campo 'ordem' definido)
+        const temOrdemManual = data.Foto.some(foto => 
+          typeof foto.ordem === 'number' && foto.ordem >= 0
         );
         
+        console.log('📸 Tem ordem manual?', temOrdemManual);
+        
         if (temOrdemManual) {
-          // Se tem ordem manual, manter exatamente como está
-          console.log('📸 PRESERVANDO ordem manual existente');
-          fotosArray = data.Foto.map(foto => ({
-            ...foto,
-            ordem: foto.ordem, // Manter ordem existente
-            _id: foto._id || undefined,
-            Codigo: foto.Codigo || undefined
-          }));
+          // PRESERVAR ordem manual existente
+          fotosArray = data.Foto.map(foto => {
+            const fotoProcessada = {
+              ...foto,
+              ordem: typeof foto.ordem === 'number' ? foto.ordem : 0,
+              _id: foto._id || undefined,
+              Codigo: foto.Codigo || undefined
+            };
+            
+            // Remover propriedades desnecessárias
+            delete fotoProcessada.codigoOriginal;
+            
+            return fotoProcessada;
+          });
+          
+          // Ordenar pelo campo ordem para garantir consistência
+          fotosArray.sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
+          
+          console.log('✅ Ordem manual preservada');
         } else {
-          // Se não tem ordem manual, adicionar baseado no índice
-          console.log('📸 ADICIONANDO ordem baseada no índice');
-          fotosArray = data.Foto.map((foto, index) => ({
-            ...foto,
-            ordem: index,
-            _id: foto._id || undefined,
-            Codigo: foto.Codigo || undefined
-          }));
+          // Adicionar ordem baseada no índice atual
+          fotosArray = data.Foto.map((foto, index) => {
+            const fotoProcessada = {
+              ...foto,
+              ordem: index,
+              _id: foto._id || undefined,
+              Codigo: foto.Codigo || undefined
+            };
+            
+            // Remover propriedades desnecessárias
+            delete fotoProcessada.codigoOriginal;
+            
+            return fotoProcessada;
+          });
+          
+          console.log('✅ Ordem baseada no índice aplicada');
         }
       } else {
-        // Se for objeto (formato antigo), converter mantendo ordem
+        // Converter objeto para array (formato legacy)
+        console.log('📸 Convertendo objeto para array');
         fotosArray = Object.entries(data.Foto)
-          .sort(([a], [b]) => parseInt(a) - parseInt(b)) // Ordena pelas chaves
+          .sort(([a], [b]) => parseInt(a) - parseInt(b))
           .map(([key, foto], index) => ({
             ...foto,
-            ordem: foto.ordem !== undefined ? foto.ordem : index, // 🔥 Preservar ordem se existir
+            ordem: typeof foto.ordem === 'number' ? foto.ordem : index,
             _id: foto._id || undefined,
             Codigo: foto.Codigo || key
           }));
       }
     }
 
-    // Debug para verificar a ordem
-    console.group('📸 Debug - Ordem das Fotos');
-    console.log('Total de fotos:', fotosArray.length);
-    console.log('Fotos com ordem:', fotosArray.map((f, i) => ({
-      index: i,
-      ordem: f.ordem,
-      codigo: f.Codigo,
-      url: f.Foto?.split('/').pop() || f.url?.split('/').pop() || 'sem-url'
-    })));
-    console.groupEnd();
-
-    // Converter o objeto de vídeos para um array (se existir)
+    // Converter vídeos se existir
     let videosArray = [];
     if (data.Video) {
       if (typeof data.Video === "object" && !Array.isArray(data.Video)) {
@@ -116,12 +130,24 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create", imove
       }
     }
 
+    // Debug final
+    console.log('📸 Resultado final:', {
+      totalFotos: fotosArray.length,
+      primeirasFotosOrdem: fotosArray.slice(0, 3).map(f => ({ 
+        codigo: f.Codigo, 
+        ordem: f.ordem,
+        url: f.Foto?.substring(f.Foto.lastIndexOf('/') + 1, f.Foto.lastIndexOf('/') + 10) + '...'
+      }))
+    });
+    
+    console.groupEnd();
+
     return {
       ...data,
       ValorAntigo: data.ValorAntigo ? formatterNumber(data.ValorAntigo) : undefined,
       TipoEndereco: getTipoEndereco(data.Endereco),
       Endereco: formatAddress(data.Endereco),
-      Foto: fotosArray, // Array com ordem preservada
+      Foto: fotosArray,
       Video: videosArray.length > 0 ? videosArray : undefined,
     };
   }, []);
@@ -144,13 +170,11 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create", imove
       try {
         const payload = preparePayload(formData);
 
-        // Debug do payload
-        console.group('🚀 Debug Salvamento de Imóvel');
+        console.group('🚀 Submissão de Imóvel');
         console.log('Modo:', mode);
-        console.log('ID:', imovelId);
-        console.log('Código:', formData.Codigo);
+        console.log('ID/Código:', imovelId || formData.Codigo);
         console.log('Total de fotos:', payload.Foto?.length);
-        console.log('Ordem das fotos:', payload.Foto?.map((f, i) => `${i}: ordem=${f.ordem}`));
+        console.log('Ordens das fotos:', payload.Foto?.map((f, i) => `${i}:${f.ordem}`).join(', '));
         console.groupEnd();
 
         let result;
@@ -168,34 +192,23 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create", imove
                 user: user.displayName ? user.displayName : "Não Identificado",
                 email: user.email,
                 data: timestamp.toISOString(),
-                action: `Automação:  ${user.email} - criou o imóvel ${formData.Codigo} a partir da automação`,
+                action: `Automação: ${user.email} - criou o imóvel ${formData.Codigo} a partir da automação`,
               });
             } catch (logError) {
               console.error("Erro ao salvar log:", logError);
-              const { user, timestamp } = await getCurrentUserAndDate();
-              await salvarLog({
-                user: user.displayName ? user.displayName : "Não Identificado",
-                email: user.email,
-                data: timestamp.toISOString(),
-                action: `Automação: Erro ao criar automação: ${user.email} - imóvel ${formData.Codigo} código de erro: ${logError}`,
-              });
             }
           } else {
             setError(result?.message || "Erro ao criar imóvel");
           }
         } else if (mode === "edit") {
-          // Em modo de edição, chamar o serviço de atualização
-          console.log('📝 Modo edição - Atualizando imóvel:', imovelId || formData.Codigo);
+          // Em modo de edição
+          console.log('📝 Atualizando imóvel:', imovelId || formData.Codigo);
           
-          // 🔥 USAR serviço correto baseado no contexto
-          const codigoOuId = formData.Codigo || imovelId;
+          const codigoOuId = imovelId || formData.Codigo;
           result = await atualizarImovel(codigoOuId, payload);
 
           if (result && result.success) {
             setSuccess("Imóvel atualizado com sucesso!");
-            
-            // 🔥 NÃO abrir modal em modo de edição
-            // setIsModalOpen(true);
             
             try {
               const { user, timestamp } = await getCurrentUserAndDate();
@@ -207,19 +220,12 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create", imove
               });
             } catch (logError) {
               console.error("Erro ao salvar log:", logError);
-              const { user, timestamp } = await getCurrentUserAndDate();
-              await salvarLog({
-                user: user.displayName ? user.displayName : "Não Identificado",
-                email: user.email,
-                data: timestamp.toISOString(),
-                action: `Imóveis: Erro ao editar imóvel: ${user.email} -  imóvel ${formData.Codigo} código de erro: ${logError}`,
-              });
             }
           } else {
             setError(result?.message || "Erro ao atualizar imóvel");
           }
         } else {
-          // Em modo de criação, chamar o serviço de cadastro
+          // Em modo de criação
           result = await criarImovel(formData.Codigo, payload);
 
           if (result && result.success) {
@@ -236,13 +242,6 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create", imove
               });
             } catch (logError) {
               console.error("Erro ao salvar log:", logError);
-              const { user, timestamp } = await getCurrentUserAndDate();
-              await salvarLog({
-                user: user.displayName ? user.displayName : "Não Identificado",
-                email: user.email,
-                data: timestamp.toISOString(),
-                action: `Imóveis: Erro ao criar imóvel: ${user.email} -  imóvel ${formData.Codigo} código de erro: ${logError}`,
-              });
             }
           } else {
             setError(result?.message || "Erro ao cadastrar imóvel");
