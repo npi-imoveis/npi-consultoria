@@ -84,8 +84,9 @@ export function Organization() {
         "address": {
           "@type": "PostalAddress",
           "streetAddress": "Rua George Ohm, 206P, Cj. 101 – Torre B – Brooklin",
-          "addressLocality": "São Paulo – SP – 04576-020",
+          "addressLocality": "São Paulo",
           "addressRegion": "SP",
+          "postalCode": "04576-020",
           "addressCountry": "BR"
         },
         "contactPoint": {
