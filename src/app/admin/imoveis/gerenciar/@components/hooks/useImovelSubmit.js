@@ -51,29 +51,64 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create", imove
     return { isValid: true };
   }, []);
 
-  const preparePayload = useCallback((data) => {
-    // Converter o objeto de fotos para um array
-    const fotosArray = data.Foto ? Object.values(data.Foto) : [];
+  // MODIFICAR A FUNÇÃO preparePayload NO ARQUIVO useImovelSubmit.js
 
-    // Converter o objeto de vídeos para um array (se existir)
-    let videosArray = [];
-    if (data.Video) {
-      if (typeof data.Video === "object" && !Array.isArray(data.Video)) {
-        videosArray = Object.values(data.Video);
-      } else if (Array.isArray(data.Video)) {
-        videosArray = data.Video;
-      }
+const preparePayload = useCallback((data) => {
+  // Converter o objeto de fotos para um array PRESERVANDO A ORDEM
+  let fotosArray = [];
+  
+  if (data.Foto) {
+    if (Array.isArray(data.Foto)) {
+      // Se já for array, garantir que cada foto tenha a ordem correta
+      fotosArray = data.Foto.map((foto, index) => ({
+        ...foto,
+        Ordem: index + 1, // Garantir que a ordem seja baseada na posição atual
+        Posicao: index + 1 // Adicionar também como Posicao para compatibilidade
+      }));
+    } else if (typeof data.Foto === "object") {
+      // Se for objeto, converter para array mantendo a ordem
+      fotosArray = Object.values(data.Foto)
+        .sort((a, b) => {
+          // Ordenar pelo campo Ordem se existir, senão pela ordem de inserção
+          if (a.Ordem && b.Ordem) {
+            return parseInt(a.Ordem) - parseInt(b.Ordem);
+          }
+          return 0;
+        })
+        .map((foto, index) => ({
+          ...foto,
+          Ordem: index + 1, // Reindexar para garantir ordem sequencial
+          Posicao: index + 1
+        }));
     }
+  }
 
-    return {
-      ...data,
-      ValorAntigo: data.ValorAntigo ? formatterNumber(data.ValorAntigo) : undefined,
-      TipoEndereco: getTipoEndereco(data.Endereco),
-      Endereco: formatAddress(data.Endereco),
-      Foto: fotosArray,
-      Video: videosArray.length > 0 ? videosArray : undefined,
-    };
-  }, []);
+  // Converter o objeto de vídeos para um array (se existir)
+  let videosArray = [];
+  if (data.Video) {
+    if (typeof data.Video === "object" && !Array.isArray(data.Video)) {
+      videosArray = Object.values(data.Video);
+    } else if (Array.isArray(data.Video)) {
+      videosArray = data.Video;
+    }
+  }
+
+  // Log para debug (remover em produção)
+  console.log('📸 Fotos sendo enviadas:', fotosArray.map(f => ({
+    Codigo: f.Codigo,
+    Ordem: f.Ordem,
+    Destaque: f.Destaque
+  })));
+
+  return {
+    ...data,
+    ValorAntigo: data.ValorAntigo ? formatterNumber(data.ValorAntigo) : undefined,
+    TipoEndereco: getTipoEndereco(data.Endereco),
+    Endereco: formatAddress(data.Endereco),
+    Foto: fotosArray,
+    Video: videosArray.length > 0 ? videosArray : undefined,
+  };
+}, []);
 
   const handleSubmit = useCallback(
     async (e) => {
