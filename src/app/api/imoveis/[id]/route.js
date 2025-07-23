@@ -47,49 +47,13 @@ export async function PUT(request, { params }) {
 
     const dadosAtualizados = await request.json();
 
-    // 🔍 LOG CRÍTICO - Ver o que está sendo recebido
-    if (dadosAtualizados.Foto) {
-      console.log('📥 API PUT - Fotos recebidas:', 
-        dadosAtualizados.Foto.map ? 
-          dadosAtualizados.Foto.map((f, i) => ({
-            index: i,
-            ordem: f.ordem,
-            url: f.url ? f.url.split('/').pop() : 'sem-url'
-          })) : 
-          'Foto não é array'
-      );
+    // Buscar imóvel existente
+    let imovel = await Imovel.findOne({ Codigo: id });
+    if (!imovel) {
+      imovel = await Imovel.findById(id);
     }
-
-    // Tenta encontrar e atualizar pelo Codigo
-    let imovelAtualizado = await Imovel.findOneAndUpdate(
-      { Codigo: id },
-      { $set: dadosAtualizados },
-      { new: true }
-    );
-
-    // Se não encontrou pelo Codigo, tenta pelo _id
-    if (!imovelAtualizado) {
-      imovelAtualizado = await Imovel.findByIdAndUpdate(
-        id,
-        { $set: dadosAtualizados },
-        { new: true }
-      );
-    }
-
-    // 🔍 LOG CRÍTICO - Ver o que foi salvo
-    if (imovelAtualizado && imovelAtualizado.Foto) {
-      console.log('💾 API PUT - Fotos salvas no banco:', 
-        Array.isArray(imovelAtualizado.Foto) ? 
-          imovelAtualizado.Foto.map((f, i) => ({
-            index: i,
-            ordem: f.ordem,
-            url: f.url ? f.url.split('/').pop() : 'sem-url'
-          })) : 
-          'Foto salva como objeto, não array'
-      );
-    }
-
-    if (!imovelAtualizado) {
+    
+    if (!imovel) {
       return NextResponse.json(
         {
           status: 404,
@@ -98,6 +62,17 @@ export async function PUT(request, { params }) {
         { status: 404 }
       );
     }
+
+    // Atualizar campo por campo
+    Object.keys(dadosAtualizados).forEach(key => {
+      imovel[key] = dadosAtualizados[key];
+    });
+
+    // CRÍTICO: Forçar MongoDB a detectar mudanças no campo Foto
+    imovel.markModified('Foto');
+    
+    // Salvar com validação desabilitada para garantir
+    const imovelAtualizado = await imovel.save({ validateBeforeSave: false });
 
     return NextResponse.json({
       status: 200,
