@@ -1,7 +1,7 @@
 // ImagesSection.jsx - REORDENAÇÃO LOCAL INSTANTÂNEA
 "use client";
 
-import { memo, useState, useMemo } from "react";
+import { memo, useState, useMemo, useEffect } from "react";
 import FormSection from "../FormSection";
 import Image from "next/image";
 import JSZip from "jszip";
@@ -21,6 +21,50 @@ const ImagesSection = memo(({
 }) => {
   const [downloadingPhotos, setDownloadingPhotos] = useState(false);
   const [localPhotoOrder, setLocalPhotoOrder] = useState(null); // 🔥 Estado local para ordem
+  const [mudancasPendentes, setMudancasPendentes] = useState([]); // 🔥 Track de mudanças
+
+  // 🔥 APLICAR MUDANÇAS PENDENTES QUANDO SALVAR FORMULÁRIO
+  useEffect(() => {
+    const form = document.querySelector('form');
+    if (form) {
+      const handleFormSubmit = async (e) => {
+        if (mudancasPendentes.length > 0) {
+          console.log('💾 ADMIN: Aplicando mudanças pendentes antes de salvar...', mudancasPendentes);
+          
+          // Prevenir submit temporariamente
+          e.preventDefault();
+          
+          try {
+            // Aplicar cada mudança via changeImagePosition
+            for (const mudanca of mudancasPendentes) {
+              if (typeof changeImagePosition === 'function') {
+                console.log(`🔄 ADMIN: Aplicando mudança: ${mudanca.codigo} → posição ${mudanca.novaPosicao}`);
+                await changeImagePosition(mudanca.codigo, mudanca.novaPosicao);
+              }
+            }
+            
+            console.log('✅ ADMIN: Todas as mudanças aplicadas com sucesso');
+            
+            // Limpar mudanças pendentes
+            setMudancasPendentes([]);
+            
+            // Aguardar um pouco e submeter formulário
+            setTimeout(() => {
+              console.log('📝 ADMIN: Submetendo formulário...');
+              form.submit();
+            }, 500);
+            
+          } catch (error) {
+            console.error('❌ ADMIN: Erro ao aplicar mudanças:', error);
+            alert('Erro ao salvar mudanças de posição. Tente novamente.');
+          }
+        }
+      };
+      
+      form.addEventListener('submit', handleFormSubmit);
+      return () => form.removeEventListener('submit', handleFormSubmit);
+    }
+  }, [mudancasPendentes, changeImagePosition]);
 
   // 🎯 ORDEM LOCAL OU INTELIGENTE
   const sortedPhotos = useMemo(() => {
@@ -114,6 +158,7 @@ const ImagesSection = memo(({
         addSingleImage(imageUrl.trim());
         // Reset ordem local quando adicionar nova foto
         setLocalPhotoOrder(null);
+        setMudancasPendentes([]);
       } catch {
         alert('URL inválida.');
       }
@@ -132,6 +177,7 @@ const ImagesSection = memo(({
           updateImage(codigo, e.target.result);
           // Reset ordem local quando trocar foto
           setLocalPhotoOrder(null);
+          setMudancasPendentes([]);
         };
         reader.readAsDataURL(file);
       }
@@ -139,7 +185,7 @@ const ImagesSection = memo(({
     fileInput.click();
   };
 
-  // 🔥 REORDENAÇÃO LOCAL INSTANTÂNEA
+  // 🔥 REORDENAÇÃO LOCAL INSTANTÂNEA + TRACK DE MUDANÇAS
   const handlePositionChange = (codigo, newPosition) => {
     const position = parseInt(newPosition);
     const currentIndex = sortedPhotos.findIndex(p => p.Codigo === codigo);
@@ -166,7 +212,21 @@ const ImagesSection = memo(({
       // Atualizar estado local
       setLocalPhotoOrder(novaOrdem);
       
-      console.log('✅ ADMIN: Reordenação local aplicada:', {
+      // 🔥 REGISTRAR MUDANÇA PENDENTE
+      setMudancasPendentes(prev => {
+        // Remover mudança anterior da mesma foto (se existir)
+        const filtradas = prev.filter(m => m.codigo !== codigo);
+        
+        // Adicionar nova mudança
+        return [...filtradas, {
+          codigo,
+          novaPosicao: position,
+          posicaoOriginal: currentIndex + 1,
+          timestamp: Date.now()
+        }];
+      });
+      
+      console.log('✅ ADMIN: Reordenação local aplicada + mudança registrada:', {
         fotoMovida: fotoMovida.Codigo,
         dePosicao: currentIndex + 1,
         paraPosicao: position
@@ -178,12 +238,14 @@ const ImagesSection = memo(({
     removeImage(codigo);
     // Reset ordem local quando remover foto
     setLocalPhotoOrder(null);
+    setMudancasPendentes([]);
   };
 
   const handleResetOrder = () => {
     console.log('🔄 ADMIN: Resetando para ordem inteligente...');
     photoSorter.limparCache();
     setLocalPhotoOrder(null);
+    setMudancasPendentes([]); // Limpar mudanças pendentes
   };
 
   return (
@@ -254,7 +316,7 @@ const ImagesSection = memo(({
           </div>
         </div>
 
-        {/* INDICADOR DE MODO */}
+        {/* INDICADOR DE MODO + MUDANÇAS PENDENTES */}
         <div className={`p-3 rounded-md text-sm border-l-4 ${
           localPhotoOrder 
             ? 'bg-orange-50 border-orange-400 text-orange-700'
@@ -267,13 +329,31 @@ const ImagesSection = memo(({
                 : '🤖 ORDEM INTELIGENTE (PhotoSorter)'
               }
             </strong>
+            {mudancasPendentes.length > 0 && (
+              <span className="ml-2 text-xs bg-red-500 text-white px-2 py-1 rounded-full">
+                {mudancasPendentes.length} mudança{mudancasPendentes.length > 1 ? 's' : ''} pendente{mudancasPendentes.length > 1 ? 's' : ''}
+              </span>
+            )}
           </p>
           <p className="text-xs mt-1">
             {localPhotoOrder 
-              ? '📸 Você alterou a ordem das fotos. Salve o formulário para confirmar ou use "Resetar Ordem" para voltar.'
+              ? `📸 Você alterou a ordem das fotos. ${mudancasPendentes.length > 0 ? 'Clique "Salvar" para confirmar as mudanças no banco.' : 'Use "Resetar Ordem" para voltar.'}`
               : '📸 Fotos organizadas automaticamente. Use os selects para personalizar a ordem.'
             }
           </p>
+          
+          {mudancasPendentes.length > 0 && (
+            <div className="mt-2 text-xs">
+              <strong>Mudanças pendentes:</strong>
+              <ul className="mt-1 space-y-1">
+                {mudancasPendentes.map((mudanca, index) => (
+                  <li key={index} className="flex justify-between">
+                    <span>Foto {mudanca.codigo}: posição {mudanca.posicaoOriginal} → {mudanca.novaPosicao}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </div>
 
         {sortedPhotos.length > 0 ? (
