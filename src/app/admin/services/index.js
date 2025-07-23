@@ -19,7 +19,7 @@ export async function atualizarImovel(codigo, dadosImovel) {
     });
 
     // 🔥 ROTA CORRIGIDA: /admin/imoveis/ em vez de /imoveis/
-    const response = await axiosClient.put(`/admin/imoveis/${codigo}`, dadosImovel, {
+        const response = await axiosClient.put(`/admin/imoveis/${codigo}`, dadosImovel, {
       timeout: 30000,
       headers: {
         'Content-Type': 'application/json',
