@@ -9,13 +9,11 @@ export async function GET(request, { params }) {
     
     console.log('📥 GET - Buscando imóvel:', id);
     
-    // 🔥 CORRIGIDO: Buscar por Codigo primeiro, depois por _id
+    // Buscar por Codigo primeiro, depois por _id
     let imovel;
     
-    // Tentar buscar por Codigo primeiro (string normal)
     imovel = await Imovel.findOne({ Codigo: id });
     
-    // Se não encontrou e o id parece ser um ObjectId, tentar por _id
     if (!imovel && id.match(/^[0-9a-fA-F]{24}$/)) {
       imovel = await Imovel.findById(id);
     }
@@ -43,7 +41,7 @@ export async function GET(request, { params }) {
   }
 }
 
-// 🔥 PUT CORRIGIDO PARA BUSCAR POR CODIGO
+// 🔥 PUT CORRIGIDO COM TRATAMENTO DE CONCORRÊNCIA
 export async function PUT(request, { params }) {
   const { id } = params;
 
@@ -62,97 +60,123 @@ export async function PUT(request, { params }) {
         : 'N/A'
     });
 
-    // 🔥 CORRIGIDO: Buscar imóvel por Codigo primeiro, depois por _id
-    let imovel;
-    
-    // Primeiro: tentar buscar por Codigo (campo personalizado)
-    imovel = await Imovel.findOne({ Codigo: id });
-    console.log('🔍 Busca por Codigo:', id, '→', imovel ? 'Encontrado' : 'Não encontrado');
-    
-    // Segundo: se não encontrou e parece ser ObjectId, tentar por _id
-    if (!imovel && id.match(/^[0-9a-fA-F]{24}$/)) {
-      console.log('🔍 Tentando busca por _id...');
-      imovel = await Imovel.findById(id);
-      console.log('🔍 Busca por _id:', imovel ? 'Encontrado' : 'Não encontrado');
-    }
+    // 🔥 BUSCAR E ATUALIZAR COM RETRY PARA CONCORRÊNCIA
+    let tentativas = 0;
+    const maxTentativas = 3;
+    let imovelAtualizado = null;
 
-    if (!imovel) {
-      console.log('❌ Imóvel não encontrado com ID:', id);
-      console.groupEnd();
-      return NextResponse.json(
-        { status: 404, message: "Imóvel não encontrado", error: "Imóvel não encontrado" },
-        { status: 404 }
-      );
-    }
+    while (tentativas < maxTentativas) {
+      try {
+        tentativas++;
+        console.log(`🔄 Tentativa ${tentativas}/${maxTentativas}`);
 
-    console.log('✅ Imóvel encontrado:', imovel.Codigo, '(MongoDB _id:', imovel._id, ')');
-
-    // 🔥 PROCESSAMENTO ESPECIAL PARA FOTOS COM VALIDAÇÃO
-    if (dadosAtualizados.Foto && Array.isArray(dadosAtualizados.Foto)) {
-      console.log('📸 Processando array de fotos...');
-      
-      // Validar e limpar dados das fotos
-      const fotosLimpas = dadosAtualizados.Foto.map((foto, index) => {
-        // Garantir que ordem seja número
-        const ordemFinal = typeof foto.ordem === 'number' ? foto.ordem : index;
+        // Buscar imóvel mais recente
+        let imovel;
         
-        const fotoLimpa = {
-          ...foto,
-          ordem: ordemFinal,
-          Codigo: foto.Codigo || `photo-${Date.now()}-${index}`,
-          Destaque: foto.Destaque || "Nao"
-        };
+        // Primeiro: tentar buscar por Codigo
+        imovel = await Imovel.findOne({ Codigo: id });
+        console.log('🔍 Busca por Codigo:', id, '→', imovel ? 'Encontrado' : 'Não encontrado');
         
-        // Remover propriedades undefined/null
-        Object.keys(fotoLimpa).forEach(key => {
-          if (fotoLimpa[key] === undefined || fotoLimpa[key] === null) {
-            delete fotoLimpa[key];
+        // Segundo: se não encontrou e parece ser ObjectId, tentar por _id
+        if (!imovel && id.match(/^[0-9a-fA-F]{24}$/)) {
+          console.log('🔍 Tentando busca por _id...');
+          imovel = await Imovel.findById(id);
+          console.log('🔍 Busca por _id:', imovel ? 'Encontrado' : 'Não encontrado');
+        }
+
+        if (!imovel) {
+          console.log('❌ Imóvel não encontrado com ID:', id);
+          console.groupEnd();
+          return NextResponse.json(
+            { status: 404, message: "Imóvel não encontrado", error: "Imóvel não encontrado" },
+            { status: 404 }
+          );
+        }
+
+        console.log('✅ Imóvel encontrado:', imovel.Codigo, '(MongoDB _id:', imovel._id, ')');
+        console.log('📊 Versão atual do documento:', imovel.__v);
+
+        // 🔥 PROCESSAMENTO ESPECIAL PARA FOTOS COM VALIDAÇÃO
+        if (dadosAtualizados.Foto && Array.isArray(dadosAtualizados.Foto)) {
+          console.log('📸 Processando array de fotos...');
+          
+          const fotosLimpas = dadosAtualizados.Foto.map((foto, index) => {
+            const ordemFinal = typeof foto.ordem === 'number' ? foto.ordem : index;
+            
+            const fotoLimpa = {
+              ...foto,
+              ordem: ordemFinal,
+              Codigo: foto.Codigo || `photo-${Date.now()}-${index}`,
+              Destaque: foto.Destaque || "Nao"
+            };
+            
+            // Remover propriedades undefined/null
+            Object.keys(fotoLimpa).forEach(key => {
+              if (fotoLimpa[key] === undefined || fotoLimpa[key] === null) {
+                delete fotoLimpa[key];
+              }
+            });
+            
+            return fotoLimpa;
+          });
+          
+          // Ordenar pelas ordens para garantir consistência
+          fotosLimpas.sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
+          
+          console.log('📸 Fotos processadas:', {
+            total: fotosLimpas.length,
+            ordens: fotosLimpas.map(f => f.ordem),
+            primeirasFotos: fotosLimpas.slice(0, 3).map(f => ({ 
+              codigo: f.Codigo, 
+              ordem: f.ordem,
+              url: f.Foto?.substring(f.Foto.lastIndexOf('/') + 1, f.Foto.lastIndexOf('/') + 10) + '...'
+            }))
+          });
+          
+          dadosAtualizados.Foto = fotosLimpas;
+        }
+
+        // 🔥 ATUALIZAÇÃO ATÔMICA COM findOneAndUpdate (EVITA CONCORRÊNCIA)
+        const imovelAtualizadoResult = await Imovel.findOneAndUpdate(
+          { 
+            _id: imovel._id,
+            __v: imovel.__v // Verificação de versão para evitar conflitos
+          },
+          {
+            $set: dadosAtualizados,
+            $inc: { __v: 1 } // Incrementar versão
+          },
+          {
+            new: true, // Retornar documento atualizado
+            runValidators: false,
+            useFindAndModify: false
           }
-        });
+        );
+
+        if (!imovelAtualizadoResult) {
+          throw new Error('Documento foi modificado por outra operação (conflito de versão)');
+        }
+
+        imovelAtualizado = imovelAtualizadoResult;
+        console.log('✅ Imóvel atualizado com sucesso (versão:', imovelAtualizado.__v, ')');
+        break; // Sair do loop se sucesso
+
+      } catch (error) {
+        console.warn(`⚠️ Tentativa ${tentativas} falhou:`, error.message);
         
-        return fotoLimpa;
-      });
-      
-      // Ordenar pelas ordens para garantir consistência
-      fotosLimpas.sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
-      
-      console.log('📸 Fotos processadas:', {
-        total: fotosLimpas.length,
-        ordens: fotosLimpas.map(f => f.ordem),
-        primeirasFotos: fotosLimpas.slice(0, 3).map(f => ({ 
-          codigo: f.Codigo, 
-          ordem: f.ordem,
-          url: f.Foto?.substring(f.Foto.lastIndexOf('/') + 1, f.Foto.lastIndexOf('/') + 10) + '...'
-        }))
-      });
-      
-      dadosAtualizados.Foto = fotosLimpas;
+        if (tentativas >= maxTentativas) {
+          throw error; // Re-throw se esgotar tentativas
+        }
+        
+        // Aguardar um pouco antes da próxima tentativa
+        await new Promise(resolve => setTimeout(resolve, 100 * tentativas));
+      }
     }
 
-    // Atualizar campo por campo
-    Object.keys(dadosAtualizados).forEach(key => {
-      imovel[key] = dadosAtualizados[key];
-    });
-
-    // 🔥 CRÍTICO: Forçar MongoDB a detectar mudanças nos arrays
-    if (dadosAtualizados.Foto) {
-      imovel.markModified('Foto');
-      console.log('🔄 Campo Foto marcado como modificado');
-    }
-    
-    if (dadosAtualizados.Video) {
-      imovel.markModified('Video');
-      console.log('🔄 Campo Video marcado como modificado');
+    if (!imovelAtualizado) {
+      throw new Error('Falha ao atualizar após múltiplas tentativas');
     }
 
-    // Salvar com validação reduzida
-    console.log('💾 Salvando no MongoDB...');
-    const imovelAtualizado = await imovel.save({ 
-      validateBeforeSave: false,
-      timestamps: true 
-    });
-
-    console.log('✅ Imóvel salvo com sucesso no MongoDB');
     console.log('💾 Fotos finais no banco:', {
       total: Array.isArray(imovelAtualizado.Foto) ? imovelAtualizado.Foto.length : 'Não é array',
       primeirasFotosOrdem: Array.isArray(imovelAtualizado.Foto) 
@@ -169,7 +193,8 @@ export async function PUT(request, { params }) {
         _id: imovelAtualizado._id,
         Codigo: imovelAtualizado.Codigo,
         Empreendimento: imovelAtualizado.Empreendimento,
-        totalFotos: Array.isArray(imovelAtualizado.Foto) ? imovelAtualizado.Foto.length : 0
+        totalFotos: Array.isArray(imovelAtualizado.Foto) ? imovelAtualizado.Foto.length : 0,
+        versao: imovelAtualizado.__v
       },
     });
 
@@ -177,7 +202,7 @@ export async function PUT(request, { params }) {
     console.error('❌ PUT - Erro ao atualizar:', error);
     console.groupEnd();
     
-    // Tratamento específico para erros do MongoDB
+    // Tratamento específico para diferentes tipos de erro
     if (error.name === 'CastError') {
       return NextResponse.json(
         {
@@ -190,11 +215,35 @@ export async function PUT(request, { params }) {
       );
     }
     
+    if (error.name === 'VersionError' || error.message.includes('version') || error.message.includes('conflito')) {
+      return NextResponse.json(
+        {
+          status: 409,
+          success: false,
+          message: "Conflito de versão. O imóvel foi modificado por outra operação. Tente novamente.",
+          error: "Conflito de concorrência"
+        },
+        { status: 409 }
+      );
+    }
+    
+    if (error.name === 'ValidationError') {
+      return NextResponse.json(
+        {
+          status: 400,
+          success: false,
+          message: "Dados inválidos",
+          error: error.message
+        },
+        { status: 400 }
+      );
+    }
+    
     return NextResponse.json(
       {
         status: 500,
         success: false,
-        message: "Erro ao atualizar imóvel",
+        message: "Erro interno do servidor",
         error: error.message
       },
       { status: 500 }
