@@ -1,4 +1,3 @@
-// ImagesSection.jsx - REORDENAÇÃO LOCAL INSTANTÂNEA
 "use client";
 
 import { memo, useState, useMemo, useEffect } from "react";
@@ -17,26 +16,64 @@ const ImagesSection = memo(({
   removeAllImages,
   setImageAsHighlight,
   changeImagePosition,
-  validation
+  validation,
+  onUpdatePhotos // 🔥 NOVA PROP para atualizar fotos no componente pai
 }) => {
   const [downloadingPhotos, setDownloadingPhotos] = useState(false);
-  const [localPhotoOrder, setLocalPhotoOrder] = useState(null); // 🔥 Estado local para ordem
+  const [localPhotoOrder, setLocalPhotoOrder] = useState(null);
+  const [hasManualOrder, setHasManualOrder] = useState(false); // 🔥 NOVO: detectar ordem manual
 
-  // 🔥 REMOVIDO O useEffect problemático - sempre começar com ordem inteligente
+  // 🔥 DETECTAR SE EXISTE ORDEM MANUAL AO CARREGAR
+  useEffect(() => {
+    if (formData?.Foto && formData.Foto.length > 0) {
+      // Verificar se TODAS as fotos têm campo ordem definido e sequencial
+      const todasTemOrdem = formData.Foto.every(foto => 
+        foto.ordem !== undefined && foto.ordem !== null
+      );
+      
+      if (todasTemOrdem) {
+        // Verificar se a ordem é sequencial (0, 1, 2, 3...)
+        const ordensSorted = [...formData.Foto]
+          .sort((a, b) => (a.ordem || 0) - (b.ordem || 0))
+          .map(f => f.ordem);
+        
+        const isSequential = ordensSorted.every((ordem, index) => ordem === index);
+        
+        if (isSequential && formData.Foto.length > 1) {
+          console.log('🎯 ADMIN: Ordem manual detectada! Mantendo ordem existente.');
+          setHasManualOrder(true);
+          // Usar a ordem existente
+          const fotosOrdenadas = [...formData.Foto].sort((a, b) => 
+            (a.ordem || 0) - (b.ordem || 0)
+          );
+          setLocalPhotoOrder(fotosOrdenadas);
+        }
+      }
+    }
+  }, [formData?.Foto]);
 
-  // 🎯 ORDEM LOCAL OU INTELIGENTE
+  // 🎯 ORDEM: LOCAL > MANUAL SALVA > INTELIGENTE
   const sortedPhotos = useMemo(() => {
     if (!Array.isArray(formData?.Foto) || formData.Foto.length === 0) {
       return [];
     }
 
-    // 🔥 Se há ordem local (usuário alterou), usar ela
+    // 1. Se há ordem local (usuário acabou de alterar), usar ela
     if (localPhotoOrder) {
-      console.log('📝 ADMIN: Usando ordem local alterada pelo usuário');
+      console.log('📝 ADMIN: Usando ordem local (alterada pelo usuário)');
       return localPhotoOrder;
     }
 
-    // 🎯 Senão, usar ordem inteligente
+    // 2. Se detectamos ordem manual salva, manter ela
+    if (hasManualOrder) {
+      console.log('📝 ADMIN: Usando ordem manual salva no banco');
+      const fotosOrdenadas = [...formData.Foto].sort((a, b) => 
+        (a.ordem || 0) - (b.ordem || 0)
+      );
+      return fotosOrdenadas;
+    }
+
+    // 3. Senão, usar ordem inteligente
     try {
       console.log('📝 ADMIN: Usando ordem inteligente (photoSorter)');
       
@@ -53,9 +90,10 @@ const ImagesSection = memo(({
       
       const fotosOrdenadas = photoSorter.ordenarFotos(fotosTemp, formData.Codigo || 'temp');
       
-      const resultado = fotosOrdenadas.map((foto) => ({
+      const resultado = fotosOrdenadas.map((foto, index) => ({
         ...foto,
         Codigo: foto.codigoOriginal,
+        ordem: index, // 🔥 Adicionar ordem mesmo na ordem inteligente
         codigoOriginal: undefined
       }));
 
@@ -66,7 +104,7 @@ const ImagesSection = memo(({
       console.error('❌ ADMIN: Erro na ordenação:', error);
       return [...formData.Foto];
     }
-  }, [formData?.Foto, formData?.Codigo, localPhotoOrder]);
+  }, [formData?.Foto, formData?.Codigo, localPhotoOrder, hasManualOrder]);
 
   const baixarTodasImagens = async (imagens = []) => {
     if (!Array.isArray(imagens)) return;
@@ -116,6 +154,7 @@ const ImagesSection = memo(({
         addSingleImage(imageUrl.trim());
         // Reset ordem local quando adicionar nova foto
         setLocalPhotoOrder(null);
+        setHasManualOrder(false);
       } catch {
         alert('URL inválida.');
       }
@@ -134,6 +173,7 @@ const ImagesSection = memo(({
           updateImage(codigo, e.target.result);
           // Reset ordem local quando trocar foto
           setLocalPhotoOrder(null);
+          setHasManualOrder(false);
         };
         reader.readAsDataURL(file);
       }
@@ -141,7 +181,7 @@ const ImagesSection = memo(({
     fileInput.click();
   };
 
-  // 🔥 REORDENAÇÃO COM DEBUG COMPLETO E PERSISTÊNCIA GARANTIDA
+  // 🔥 REORDENAÇÃO MELHORADA COM PERSISTÊNCIA GARANTIDA
   const handlePositionChange = async (codigo, newPosition) => {
     const position = parseInt(newPosition);
     const currentIndex = sortedPhotos.findIndex(p => p.Codigo === codigo);
@@ -162,96 +202,69 @@ const ImagesSection = memo(({
       novaOrdem.splice(currentIndex, 1);
       novaOrdem.splice(position - 1, 0, fotoMovida);
       
-      // Adicionar campo ordem em todas as fotos
+      // 🔥 CRÍTICO: Adicionar campo ordem em TODAS as fotos
       const novaOrdemComIndices = novaOrdem.map((foto, index) => ({
         ...foto,
-        ordem: index
+        ordem: index // índice 0-based
       }));
       
       setLocalPhotoOrder(novaOrdemComIndices);
+      setHasManualOrder(true); // Marcar que agora temos ordem manual
       
       console.log('✅ ADMIN: Reordenação visual aplicada');
       
-      // 🎯 2. TENTATIVAS DE PERSISTÊNCIA NO BANCO
+      // 🎯 2. ATUALIZAR NO COMPONENTE PAI IMEDIATAMENTE
+      if (typeof onUpdatePhotos === 'function') {
+        console.log('💾 ADMIN: Atualizando fotos no componente pai...');
+        onUpdatePhotos(novaOrdemComIndices);
+      } else {
+        console.warn('⚠️ ADMIN: onUpdatePhotos não disponível - use o botão SALVAR');
+      }
+      
+      // 🎯 3. TENTATIVAS DE PERSISTÊNCIA NO BANCO (opcional, para redundância)
       let sucessoPersistencia = false;
       
       // MÉTODO 1: Função existente
       if (typeof changeImagePosition === 'function') {
         try {
-          console.log('💾 ADMIN: Tentando método 1 (changeImagePosition)...');
-          
+          console.log('💾 ADMIN: Tentando changeImagePosition...');
           const resultado = await Promise.resolve(changeImagePosition(codigo, position));
-          console.log('📊 ADMIN: Resultado do método 1:', resultado);
-          
-          // Verificar se a função realmente funcionou
           if (resultado !== false && resultado !== null) {
-            console.log('✅ ADMIN: Método 1 aparentemente bem-sucedido');
             sucessoPersistencia = true;
-          } else {
-            console.warn('⚠️ ADMIN: Método 1 retornou resultado suspeito');
           }
-          
         } catch (error) {
-          console.error('❌ ADMIN: Método 1 falhou:', error);
+          console.error('❌ ADMIN: changeImagePosition falhou:', error);
         }
       }
       
-      // MÉTODO 2: API direta (se método 1 falhar)
-      if (!sucessoPersistencia) {
-        try {
-          console.log('💾 ADMIN: Tentando método 2 (API direta)...');
-          
-          const urlParams = new URLSearchParams(window.location.search);
-          const codigoImovel = urlParams.get('codigo') || formData?.Codigo;
-          
-          if (codigoImovel) {
-            const response = await fetch('/admin/api/reorder-photo', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                imovelCodigo: codigoImovel,
-                fotoCodigo: codigo,
-                novaPosicao: position
-              })
-            });
-            
-            console.log('📊 ADMIN: Response status:', response.status);
-            
-            if (response.ok) {
-              const data = await response.json();
-              console.log('✅ ADMIN: Método 2 bem-sucedido:', data);
-              sucessoPersistencia = true;
-            } else {
-              console.warn('⚠️ ADMIN: Método 2 falhou com status:', response.status);
-            }
-          }
-        } catch (error) {
-          console.error('❌ ADMIN: Método 2 falhou:', error);
-        }
-      }
-      
-      // RESULTADO FINAL
-      if (sucessoPersistencia) {
-        console.log('🎉 ADMIN: Mudança persistida com sucesso!');
-      } else {
-        console.error('❌ ADMIN: FALHA - mudança pode não ter sido persistida');
-        alert('Aviso: A mudança foi aplicada visualmente. Clique em SALVAR para garantir a persistência.');
+      // Se não conseguiu persistir, avisar o usuário
+      if (!sucessoPersistencia && !onUpdatePhotos) {
+        console.warn('⚠️ ADMIN: Mudança aplicada apenas visualmente. Use SALVAR para persistir.');
       }
     }
   };
 
   const handleRemoveImage = (codigo) => {
     removeImage(codigo);
-    // Reset ordem local quando remover foto
+    // Reset ordem quando remover foto
     setLocalPhotoOrder(null);
+    setHasManualOrder(false);
   };
 
   const handleResetOrder = () => {
     console.log('🔄 ADMIN: Resetando para ordem inteligente...');
     photoSorter.limparCache();
     setLocalPhotoOrder(null);
+    setHasManualOrder(false);
+    
+    // Atualizar no componente pai removendo campo ordem
+    if (typeof onUpdatePhotos === 'function' && formData?.Foto) {
+      const fotosSemOrdem = formData.Foto.map(foto => {
+        const { ordem, ...fotoLimpa } = foto;
+        return fotoLimpa;
+      });
+      onUpdatePhotos(fotosSemOrdem);
+    }
   };
 
   return (
@@ -322,26 +335,31 @@ const ImagesSection = memo(({
           </div>
         </div>
 
-        {/* INDICADOR DE MODO SIMPLIFICADO */}
+        {/* INDICADOR DE MODO */}
         <div className={`p-3 rounded-md text-sm border-l-4 ${
-          localPhotoOrder 
+          localPhotoOrder || hasManualOrder
             ? 'bg-orange-50 border-orange-400 text-orange-700'
             : 'bg-green-50 border-green-400 text-green-700'
         }`}>
           <p>
             <strong>
-              {localPhotoOrder 
+              {localPhotoOrder || hasManualOrder
                 ? '✋ ORDEM PERSONALIZADA' 
                 : '🤖 ORDEM INTELIGENTE (PhotoSorter)'
               }
             </strong>
           </p>
           <p className="text-xs mt-1">
-            {localPhotoOrder 
-              ? '📸 Você alterou a ordem das fotos. As mudanças são aplicadas automaticamente. Use "Resetar Ordem" para voltar à ordem inteligente.'
+            {localPhotoOrder || hasManualOrder
+              ? '📸 Ordem definida manualmente. Use "Resetar Ordem" para voltar à ordem inteligente.'
               : '📸 Fotos organizadas automaticamente. Use os selects para personalizar a ordem.'
             }
           </p>
+          {localPhotoOrder && !onUpdatePhotos && (
+            <p className="text-xs mt-1 font-semibold">
+              ⚠️ Clique em SALVAR para persistir as mudanças.
+            </p>
+          )}
         </div>
 
         {sortedPhotos.length > 0 ? (
