@@ -21,32 +21,30 @@ const ImagesSection = memo(({
 }) => {
   const [downloadingPhotos, setDownloadingPhotos] = useState(false);
   const [localPhotoOrder, setLocalPhotoOrder] = useState(null);
-  const [hasManualOrder, setHasManualOrder] = useState(false); // 🔥 NOVO: detectar ordem manual
-
-  // 🔥 DETECTAR SE EXISTE ORDEM MANUAL AO CARREGAR
-  useEffect(() => {
-    if (formData?.Foto && formData.Foto.length > 0) {
-      // Verificar se TODAS as fotos têm campo ordem definido
-      const todasTemOrdem = formData.Foto.every(foto => 
-        foto.ordem !== undefined && foto.ordem !== null
-      );
+  
+  // 🔥 DETECTAR ORDEM MANUAL IMEDIATAMENTE
+  const hasManualOrder = useMemo(() => {
+    if (!formData?.Foto || formData.Foto.length === 0) return false;
+    
+    const todasTemOrdem = formData.Foto.every(foto => 
+      foto.ordem !== undefined && foto.ordem !== null
+    );
+    
+    if (todasTemOrdem) {
+      const ordensSorted = [...formData.Foto]
+        .sort((a, b) => (a.ordem || 0) - (b.ordem || 0))
+        .map(f => f.ordem);
       
-      if (todasTemOrdem) {
-        // Verificar se a ordem é sequencial (0, 1, 2, 3...)
-        const ordensSorted = [...formData.Foto]
-          .sort((a, b) => (a.ordem || 0) - (b.ordem || 0))
-          .map(f => f.ordem);
-        
-        const isSequential = ordensSorted.every((ordem, index) => ordem === index);
-        
-        if (isSequential && formData.Foto.length > 1) {
-          console.log('🎯 ADMIN: Ordem manual detectada! Mantendo ordem existente.');
-          setHasManualOrder(true);
-          // Não definir localPhotoOrder aqui - deixar o useMemo decidir
-        }
+      const isSequential = ordensSorted.every((ordem, index) => ordem === index);
+      
+      if (isSequential) {
+        console.log('🎯 ORDEM MANUAL DETECTADA NO INÍCIO');
+        return true;
       }
     }
-  }, [formData?.Foto?.length]); // Dependência apenas no length
+    
+    return false;
+  }, [formData?.Foto]);
 
   // 🎯 ORDEM: LOCAL > MANUAL SALVA > INTELIGENTE
   const sortedPhotos = useMemo(() => {
@@ -60,28 +58,16 @@ const ImagesSection = memo(({
       return localPhotoOrder;
     }
 
-    // 2. Verificar se tem ordem manual ANTES de aplicar ordem inteligente
-    const todasTemOrdem = formData.Foto.every(foto => 
-      foto.ordem !== undefined && foto.ordem !== null
-    );
-    
-    if (todasTemOrdem) {
-      // Verificar se a ordem é sequencial
+    // 2. Se tem ordem manual salva, usar ela
+    if (hasManualOrder) {
+      console.log('📝 ADMIN: Usando ordem manual salva no banco');
       const fotosOrdenadas = [...formData.Foto].sort((a, b) => 
         (a.ordem || 0) - (b.ordem || 0)
       );
-      
-      const isSequential = fotosOrdenadas.every((foto, index) => 
-        foto.ordem === index
-      );
-      
-      if (isSequential) {
-        console.log('📝 ADMIN: Usando ordem manual salva no banco');
-        return fotosOrdenadas;
-      }
+      return fotosOrdenadas;
     }
 
-    // 3. Se não tem ordem manual válida, usar ordem inteligente
+    // 3. Usar ordem inteligente
     try {
       console.log('📝 ADMIN: Usando ordem inteligente (photoSorter)');
       
@@ -112,7 +98,7 @@ const ImagesSection = memo(({
       console.error('❌ ADMIN: Erro na ordenação:', error);
       return [...formData.Foto];
     }
-  }, [formData?.Foto, formData?.Codigo, localPhotoOrder]);
+  }, [formData?.Foto, formData?.Codigo, localPhotoOrder, hasManualOrder]);
 
   const baixarTodasImagens = async (imagens = []) => {
     if (!Array.isArray(imagens)) return;
@@ -162,7 +148,6 @@ const ImagesSection = memo(({
         addSingleImage(imageUrl.trim());
         // Reset ordem local quando adicionar nova foto
         setLocalPhotoOrder(null);
-        setHasManualOrder(false);
       } catch {
         alert('URL inválida.');
       }
@@ -181,7 +166,6 @@ const ImagesSection = memo(({
           updateImage(codigo, e.target.result);
           // Reset ordem local quando trocar foto
           setLocalPhotoOrder(null);
-          setHasManualOrder(false);
         };
         reader.readAsDataURL(file);
       }
@@ -217,7 +201,6 @@ const ImagesSection = memo(({
       }));
       
       setLocalPhotoOrder(novaOrdemComIndices);
-      setHasManualOrder(true); // Marcar que agora temos ordem manual
       
       console.log('✅ ADMIN: Reordenação visual aplicada');
       
@@ -256,14 +239,12 @@ const ImagesSection = memo(({
     removeImage(codigo);
     // Reset ordem quando remover foto
     setLocalPhotoOrder(null);
-    setHasManualOrder(false);
   };
 
   const handleResetOrder = () => {
     console.log('🔄 ADMIN: Resetando para ordem inteligente...');
     photoSorter.limparCache();
     setLocalPhotoOrder(null);
-    setHasManualOrder(false);
     
     // Atualizar no componente pai removendo campo ordem
     if (typeof onUpdatePhotos === 'function' && formData?.Foto) {
@@ -347,7 +328,7 @@ const ImagesSection = memo(({
         <div className={`p-3 rounded-md text-sm border-l-4 ${
           localPhotoOrder
             ? 'bg-orange-50 border-orange-400 text-orange-700'
-            : sortedPhotos.some(f => f.ordem !== undefined)
+            : hasManualOrder
             ? 'bg-blue-50 border-blue-400 text-blue-700'
             : 'bg-green-50 border-green-400 text-green-700'
         }`}>
@@ -355,7 +336,7 @@ const ImagesSection = memo(({
             <strong>
               {localPhotoOrder
                 ? '✋ ORDEM PERSONALIZADA (não salva)' 
-                : sortedPhotos.some(f => f.ordem !== undefined)
+                : hasManualOrder
                 ? '💾 ORDEM MANUAL SALVA'
                 : '🤖 ORDEM INTELIGENTE (PhotoSorter)'
               }
@@ -364,7 +345,7 @@ const ImagesSection = memo(({
           <p className="text-xs mt-1">
             {localPhotoOrder
               ? '📸 Você alterou a ordem. Clique em SALVAR para persistir as mudanças.'
-              : sortedPhotos.some(f => f.ordem !== undefined)
+              : hasManualOrder
               ? '📸 Ordem definida manualmente e salva no banco. Use "Resetar Ordem" para voltar à ordem inteligente.'
               : '📸 Fotos organizadas automaticamente. Use os selects para personalizar a ordem.'
             }
