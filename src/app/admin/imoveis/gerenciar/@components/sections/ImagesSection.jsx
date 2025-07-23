@@ -21,38 +21,8 @@ const ImagesSection = memo(({
 }) => {
   const [downloadingPhotos, setDownloadingPhotos] = useState(false);
   const [localPhotoOrder, setLocalPhotoOrder] = useState(null); // 🔥 Estado local para ordem
-  const [isManualOrder, setIsManualOrder] = useState(false); // 🔥 Flag para ordem manual
 
-  // 🔍 DETECTAR ORDEM MANUAL DO BANCO
-  useEffect(() => {
-    if (formData?.Foto && Array.isArray(formData.Foto)) {
-      // Verificar se todas as fotos têm campo ordem definido e são sequenciais
-      const temOrdemCompleta = formData.Foto.every(foto => 
-        foto.ordem !== undefined && foto.ordem !== null
-      );
-      
-      if (temOrdemCompleta) {
-        // Ordenar pelo campo ordem do banco
-        const fotosOrdenadas = [...formData.Foto].sort((a, b) => 
-          (a.ordem || 0) - (b.ordem || 0)
-        );
-        
-        console.log('📌 ADMIN: Ordem manual detectada no banco');
-        console.log('📌 Fotos com ordem:', fotosOrdenadas.map((f, i) => ({
-          posicao: i + 1,
-          ordem: f.ordem,
-          codigo: f.Codigo
-        })));
-        
-        setLocalPhotoOrder(fotosOrdenadas);
-        setIsManualOrder(true);
-      } else {
-        // Usar ordem inteligente
-        setIsManualOrder(false);
-        setLocalPhotoOrder(null);
-      }
-    }
-  }, [formData?.Foto]);
+  // 🔥 REMOVIDO O useEffect problemático - sempre começar com ordem inteligente
 
   // 🎯 ORDEM LOCAL OU INTELIGENTE
   const sortedPhotos = useMemo(() => {
@@ -60,13 +30,13 @@ const ImagesSection = memo(({
       return [];
     }
 
-    // 🔥 Se há ordem local (manual ou do banco), usar ela
+    // 🔥 Se há ordem local (usuário alterou), usar ela
     if (localPhotoOrder) {
-      console.log('📝 ADMIN: Usando ordem manual/personalizada');
+      console.log('📝 ADMIN: Usando ordem local alterada pelo usuário');
       return localPhotoOrder;
     }
 
-    // 🎯 Senão, usar ordem inteligente (sem passar campo ordem)
+    // 🎯 Senão, usar ordem inteligente
     try {
       console.log('📝 ADMIN: Usando ordem inteligente (photoSorter)');
       
@@ -75,7 +45,7 @@ const ImagesSection = memo(({
         codigoOriginal: foto.Codigo || foto.codigo || `temp-${index}`
       }));
       
-      // Remover campo ordem para forçar análise inteligente
+      // Sempre remover campos ORDEM para forçar análise inteligente
       const fotosTemp = fotosComCodigosOriginais.map(foto => {
         const { Ordem, ordem, ORDEM, codigoOriginal, ...fotoLimpa } = foto;
         return { ...fotoLimpa, codigoOriginal };
@@ -85,7 +55,7 @@ const ImagesSection = memo(({
       
       const resultado = fotosOrdenadas.map((foto) => ({
         ...foto,
-        Codigo: foto.codigoOriginal || foto.Codigo,
+        Codigo: foto.codigoOriginal,
         codigoOriginal: undefined
       }));
 
@@ -144,10 +114,8 @@ const ImagesSection = memo(({
       try {
         new URL(imageUrl.trim());
         addSingleImage(imageUrl.trim());
-        // Manter ordem manual se estiver ativa
-        if (!isManualOrder) {
-          setLocalPhotoOrder(null);
-        }
+        // Reset ordem local quando adicionar nova foto
+        setLocalPhotoOrder(null);
       } catch {
         alert('URL inválida.');
       }
@@ -164,10 +132,8 @@ const ImagesSection = memo(({
         const reader = new FileReader();
         reader.onload = (e) => {
           updateImage(codigo, e.target.result);
-          // Manter ordem manual se estiver ativa
-          if (!isManualOrder) {
-            setLocalPhotoOrder(null);
-          }
+          // Reset ordem local quando trocar foto
+          setLocalPhotoOrder(null);
         };
         reader.readAsDataURL(file);
       }
@@ -203,7 +169,6 @@ const ImagesSection = memo(({
       }));
       
       setLocalPhotoOrder(novaOrdemComIndices);
-      setIsManualOrder(true);
       
       console.log('✅ ADMIN: Reordenação visual aplicada');
       
@@ -279,17 +244,14 @@ const ImagesSection = memo(({
 
   const handleRemoveImage = (codigo) => {
     removeImage(codigo);
-    // Manter ordem manual se estiver ativa
-    if (!isManualOrder) {
-      setLocalPhotoOrder(null);
-    }
+    // Reset ordem local quando remover foto
+    setLocalPhotoOrder(null);
   };
 
   const handleResetOrder = () => {
     console.log('🔄 ADMIN: Resetando para ordem inteligente...');
     photoSorter.limparCache();
     setLocalPhotoOrder(null);
-    setIsManualOrder(false);
   };
 
   return (
@@ -362,20 +324,20 @@ const ImagesSection = memo(({
 
         {/* INDICADOR DE MODO SIMPLIFICADO */}
         <div className={`p-3 rounded-md text-sm border-l-4 ${
-          isManualOrder 
+          localPhotoOrder 
             ? 'bg-orange-50 border-orange-400 text-orange-700'
             : 'bg-green-50 border-green-400 text-green-700'
         }`}>
           <p>
             <strong>
-              {isManualOrder 
+              {localPhotoOrder 
                 ? '✋ ORDEM PERSONALIZADA' 
                 : '🤖 ORDEM INTELIGENTE (PhotoSorter)'
               }
             </strong>
           </p>
           <p className="text-xs mt-1">
-            {isManualOrder 
+            {localPhotoOrder 
               ? '📸 Você alterou a ordem das fotos. As mudanças são aplicadas automaticamente. Use "Resetar Ordem" para voltar à ordem inteligente.'
               : '📸 Fotos organizadas automaticamente. Use os selects para personalizar a ordem.'
             }
