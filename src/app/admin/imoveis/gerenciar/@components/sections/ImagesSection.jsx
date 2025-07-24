@@ -3,6 +3,41 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
 import { photoSorter } from "@/app/utils/photoSorter";
 
+// 🔍 FUNÇÃO HELPER FORA DO COMPONENTE (SEM HOOKS)
+function checkManualOrderHelper(fotos) {
+  if (!Array.isArray(fotos) || fotos.length === 0) {
+    return { hasManualOrder: false, todasTemOrdem: false, isSequential: false };
+  }
+
+  // Verificar se todas têm campo Ordem ou ordem
+  const todasTemOrdem = fotos.every(foto => 
+    (foto.Ordem !== undefined && foto.Ordem !== null) || 
+    (foto.ordem !== undefined && foto.ordem !== null)
+  );
+
+  if (!todasTemOrdem) {
+    return { hasManualOrder: false, todasTemOrdem: false, isSequential: false };
+  }
+
+  // Extrair ordens e verificar se é sequencial
+  const ordens = fotos.map(foto => {
+    const ordem = foto.Ordem !== undefined ? foto.Ordem : foto.ordem;
+    return typeof ordem === 'number' ? ordem : parseInt(ordem) || 0;
+  }).sort((a, b) => a - b);
+
+  const isSequential = ordens.every((ordem, index) => ordem === index);
+  const hasManualOrder = todasTemOrdem && isSequential;
+
+  console.log('🔍 ORDEM MANUAL CHECK:', {
+    todasTemOrdem,
+    isSequential,
+    ordensOrdenadas: ordens.slice(0, 5),
+    hasManualOrder
+  });
+
+  return { hasManualOrder, todasTemOrdem, isSequential };
+}
+
 export default function ImagesSection({
   formData,
   addSingleImage,
@@ -13,15 +48,15 @@ export default function ImagesSection({
   downloadAllPhotos,
   downloadingPhotos,
   setImageAsHighlight,
-  changeImagePosition, // ← Mantido para compatibilidade
+  changeImagePosition,
   validation,
-  onUpdatePhotos, // ← Função para atualizar o componente pai
+  onUpdatePhotos,
 }) {
-  // 🔥 ESTADOS CRÍTICOS PARA ORDEM MANUAL
+  // 🔥 ESTADOS
   const [localPhotoOrder, setLocalPhotoOrder] = useState([]);
   const [isManualReorder, setIsManualReorder] = useState(false);
 
-  // 🔥 PROCESSAR FOTOS COM ORDEM INTELIGENTE OU MANUAL
+  // 🔥 PROCESSAR FOTOS - USAR FUNÇÃO HELPER
   const fotosProcessadas = useMemo(() => {
     if (!formData.Foto || !Array.isArray(formData.Foto)) return [];
 
@@ -32,7 +67,7 @@ export default function ImagesSection({
     }
 
     // Verificar se fotos têm ordem manual salva no banco
-    const temOrdemManual = checkManualOrder(formData.Foto);
+    const temOrdemManual = checkManualOrderHelper(formData.Foto);
     
     if (temOrdemManual.hasManualOrder) {
       console.log('✅ Usando ordem MANUAL do banco');
@@ -49,47 +84,12 @@ export default function ImagesSection({
     const fotosOrdenadas = photoSorter.ordenarFotos(formData.Foto, formData.Codigo);
     return fotosOrdenadas.map((foto, index) => ({
       ...foto,
-      Ordem: index, // ← Campo padronizado
+      Ordem: index,
       tipoOrdenacao: 'inteligente'
     }));
   }, [formData.Foto, localPhotoOrder]);
 
-  // 🔍 FUNÇÃO PARA VERIFICAR ORDEM MANUAL
-  const checkManualOrder = useCallback((fotos) => {
-    if (!Array.isArray(fotos) || fotos.length === 0) {
-      return { hasManualOrder: false, todasTemOrdem: false, isSequential: false };
-    }
-
-    // Verificar se todas têm campo Ordem ou ordem
-    const todasTemOrdem = fotos.every(foto => 
-      (foto.Ordem !== undefined && foto.Ordem !== null) || 
-      (foto.ordem !== undefined && foto.ordem !== null)
-    );
-
-    if (!todasTemOrdem) {
-      return { hasManualOrder: false, todasTemOrdem: false, isSequential: false };
-    }
-
-    // Extrair ordens e verificar se é sequencial
-    const ordens = fotos.map(foto => {
-      const ordem = foto.Ordem !== undefined ? foto.Ordem : foto.ordem;
-      return typeof ordem === 'number' ? ordem : parseInt(ordem) || 0;
-    }).sort((a, b) => a - b);
-
-    const isSequential = ordens.every((ordem, index) => ordem === index);
-    const hasManualOrder = todasTemOrdem && isSequential;
-
-    console.log('🔍 ORDEM MANUAL CHECK:', {
-      todasTemOrdem,
-      isSequential,
-      ordensOrdenadas: ordens.slice(0, 5),
-      hasManualOrder
-    });
-
-    return { hasManualOrder, todasTemOrdem, isSequential };
-  }, []);
-
-  // 🔥 FUNÇÃO DE REORDENAÇÃO COM BOTÕES (SEM DRAG-DROP)
+  // 🔥 FUNÇÃO DE REORDENAÇÃO
   const movePhoto = useCallback((fromIndex, toIndex) => {
     console.log('🔄 MOVENDO FOTO:', {
       de: fromIndex,
@@ -97,7 +97,6 @@ export default function ImagesSection({
       totalFotos: fotosProcessadas.length
     });
 
-    // 🚀 CRIAR CÓPIA IMUTÁVEL DO ARRAY
     const fotosParaReordenar = localPhotoOrder.length > 0 ? [...localPhotoOrder] : [...fotosProcessadas];
     
     // Validação dos índices
@@ -107,17 +106,17 @@ export default function ImagesSection({
       return;
     }
 
-    // 🔥 REORDENAÇÃO IMUTÁVEL
+    // Reordenação imutável
     const newArray = [...fotosParaReordenar];
     const [movedItem] = newArray.splice(fromIndex, 1);
     newArray.splice(toIndex, 0, movedItem);
 
-    // 🚀 CRITICAL: ATUALIZAR CAMPO ORDEM BASEADO NA NOVA POSIÇÃO
+    // Atualizar campo Ordem
     const fotosComNovaOrdem = newArray.map((foto, index) => ({
-      ...foto, // ← Criar novo objeto (imutável)
-      Ordem: index, // ← CAMPO PADRONIZADO com nova ordem
-      ordem: undefined, // ← Remover campo conflitante 
-      tipoOrdenacao: 'manual' // ← Marcar como ordenação manual
+      ...foto,
+      Ordem: index,
+      ordem: undefined,
+      tipoOrdenacao: 'manual'
     }));
 
     console.log('📊 Ordens após reordenação:', fotosComNovaOrdem.slice(0, 5).map(f => ({ 
@@ -125,11 +124,9 @@ export default function ImagesSection({
       Ordem: f.Ordem 
     })));
 
-    // Atualizar estado local
     setLocalPhotoOrder(fotosComNovaOrdem);
     setIsManualReorder(true);
 
-    // 🔥 ATUALIZAR COMPONENTE PAI IMEDIATAMENTE
     if (onUpdatePhotos) {
       console.log('📤 Atualizando fotos no componente pai IMEDIATAMENTE');
       onUpdatePhotos(fotosComNovaOrdem);
@@ -138,13 +135,12 @@ export default function ImagesSection({
     console.log('✅ Reordenação concluída');
   }, [fotosProcessadas, localPhotoOrder, onUpdatePhotos]);
 
-  // 🔥 RESET DA ORDEM MANUAL
+  // 🔥 RESET DA ORDEM
   const resetOrder = useCallback(() => {
     console.log('🔄 Resetando para ordem inteligente');
     
     if (!formData.Foto || !Array.isArray(formData.Foto)) return;
 
-    // Aplicar ordem inteligente
     const fotosOrdenadas = photoSorter.ordenarFotos(formData.Foto, formData.Codigo);
     const fotosComOrdem = fotosOrdenadas.map((foto, index) => ({
       ...foto,
@@ -161,7 +157,7 @@ export default function ImagesSection({
     }
   }, [formData.Foto, formData.Codigo, onUpdatePhotos]);
 
-  // 🔥 BAIXAR TODAS AS FOTOS
+  // 🔥 OUTRAS FUNÇÕES
   const baixarTodasFotos = useCallback(() => {
     if (onUpdatePhotos) {
       onUpdatePhotos(fotosProcessadas);
@@ -171,7 +167,6 @@ export default function ImagesSection({
     }
   }, [fotosProcessadas, onUpdatePhotos, downloadAllPhotos]);
 
-  // 🔥 LIMPAR TODAS AS FOTOS  
   const limparTodasFotos = useCallback(() => {
     setLocalPhotoOrder([]);
     setIsManualReorder(false);
@@ -180,29 +175,9 @@ export default function ImagesSection({
     }
   }, [removeAllImages]);
 
-  // 📊 ESTATÍSTICAS PARA DEBUG
-  const stats = useMemo(() => {
-    const temOrdemLocal = localPhotoOrder.length > 0;
-    const temOrdemManual = checkManualOrder(formData.Foto || []).hasManualOrder;
-    
-    console.log('📋 ORDENAÇÃO - Estado atual:', {
-      totalFotos: fotosProcessadas.length,
-      temOrdemLocal,
-      temOrdemManual,
-      primeiraFoto: fotosProcessadas[0] ? {
-        codigo: fotosProcessadas[0].Codigo,
-        Ordem: fotosProcessadas[0].Ordem,
-        tipoOrdenacao: fotosProcessadas[0].tipoOrdenacao
-      } : null
-    });
-
-    return {
-      totalFotos: fotosProcessadas.length,
-      temOrdemLocal,
-      temOrdemManual,
-      isManualReorder
-    };
-  }, [fotosProcessadas, localPhotoOrder, formData.Foto, isManualReorder, checkManualOrder]);
+  // 📊 ESTATÍSTICAS SIMPLES
+  const totalFotos = fotosProcessadas.length;
+  const temOrdemLocal = localPhotoOrder.length > 0;
 
   return (
     <div className="space-y-6">
@@ -212,12 +187,12 @@ export default function ImagesSection({
           Imagens do Imóvel
         </h2>
         <div className="text-sm text-gray-500">
-          {stats.totalFotos}/5 fotos
+          {totalFotos}/5 fotos
         </div>
       </div>
 
       {/* ALERTAS E STATUS */}
-      {stats.isManualReorder && (
+      {isManualReorder && (
         <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
@@ -290,7 +265,7 @@ export default function ImagesSection({
         </button>
       </div>
 
-      {/* LISTA DE FOTOS COM BOTÕES DE REORDENAÇÃO */}
+      {/* LISTA DE FOTOS COM BOTÕES */}
       {fotosProcessadas.length > 0 && (
         <div className="space-y-4">
           {fotosProcessadas.map((foto, index) => (
@@ -308,7 +283,6 @@ export default function ImagesSection({
                     onClick={() => movePhoto(index, Math.max(0, index - 1))}
                     disabled={index === 0}
                     className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed rounded"
-                    title="Mover para cima"
                   >
                     ⬆️
                   </button>
@@ -317,7 +291,6 @@ export default function ImagesSection({
                     onClick={() => movePhoto(index, Math.min(fotosProcessadas.length - 1, index + 1))}
                     disabled={index === fotosProcessadas.length - 1}
                     className="px-2 py-1 text-xs bg-gray-100 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed rounded"
-                    title="Mover para baixo"
                   >
                     ⬇️
                   </button>
@@ -364,19 +337,17 @@ export default function ImagesSection({
                     type="button"
                     onClick={() => movePhoto(index, 0)}
                     disabled={index === 0}
-                    className="px-2 py-1 text-xs bg-blue-100 hover:bg-blue-200 disabled:opacity-30 disabled:cursor-not-allowed rounded"
-                    title="Ir para o início"
+                    className="px-2 py-1 text-xs bg-blue-100 hover:bg-blue-200 disabled:opacity-30 disabled:cursor-not-allowed rounded text-center"
                   >
-                    ⏫ Início
+                    ⏫
                   </button>
                   <button
                     type="button"
                     onClick={() => movePhoto(index, fotosProcessadas.length - 1)}
                     disabled={index === fotosProcessadas.length - 1}
-                    className="px-2 py-1 text-xs bg-blue-100 hover:bg-blue-200 disabled:opacity-30 disabled:cursor-not-allowed rounded"
-                    title="Ir para o final"
+                    className="px-2 py-1 text-xs bg-blue-100 hover:bg-blue-200 disabled:opacity-30 disabled:cursor-not-allowed rounded text-center"
                   >
-                    ⏬ Final
+                    ⏬
                   </button>
                 </div>
 
