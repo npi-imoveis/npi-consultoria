@@ -51,7 +51,87 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create", imove
     return { isValid: true };
   }, []);
 
-  // 🔥 FUNÇÃO PREPARAR PAYLOAD OTIMIZADA
+  // 🔥 FUNÇÃO CRÍTICA: PREPARAR FOTOS SEM SOBRESCREVER ORDEM
+  const prepareFotosParaEnvio = useCallback((fotos) => {
+    console.log('📸 Processando fotos como array:', fotos?.length || 0);
+    
+    if (!fotos || !Array.isArray(fotos)) {
+      console.log('⚠️ Fotos inválidas para processamento');
+      return [];
+    }
+
+    // 🔍 VERIFICAR SE TEM ORDEM MANUAL (CRÍTICO)
+    const temOrdemManual = fotos.every(foto => {
+      const temOrdem = foto.Ordem !== undefined && foto.Ordem !== null && typeof foto.Ordem === 'number';
+      const temOrdemMinuscula = foto.ordem !== undefined && foto.ordem !== null && typeof foto.ordem === 'number';
+      return temOrdem || temOrdemMinuscula;
+    });
+
+    console.log('📸 Tem ordem manual?', temOrdemManual);
+
+    if (temOrdemManual) {
+      console.log('✅ PRESERVANDO ordem manual existente');
+      
+      // 🚀 PRESERVAR ORDEM MANUAL - NÃO SOBRESCREVER!
+      const fotosComOrdemPreservada = fotos.map((foto, originalIndex) => {
+        // Unificar campos de ordem (Ordem tem prioridade sobre ordem)
+        const ordemFinal = foto.Ordem !== undefined ? foto.Ordem : 
+                          foto.ordem !== undefined ? foto.ordem : 
+                          originalIndex;
+        
+        // Criar objeto limpo preservando ordem
+        const fotoProcessada = {
+          ...foto,
+          Ordem: typeof ordemFinal === 'number' ? ordemFinal : parseInt(ordemFinal) || originalIndex,
+          _id: foto._id || undefined,
+          Codigo: foto.Codigo || `photo-${Date.now()}-${originalIndex}`,
+          Destaque: foto.Destaque || "Nao",
+          tipoOrdenacao: foto.tipoOrdenacao || 'manual'
+        };
+        
+        // Remover campo conflitante
+        delete fotoProcessada.ordem;
+        
+        return fotoProcessada;
+      });
+      
+      // 🔥 MANTER ORDEM EXATA - NÃO REORDENAR!
+      // A ordem já está correta baseada na posição no array
+      
+      console.log('📸 Ordens preservadas (primeiras 5):', 
+        fotosComOrdemPreservada.slice(0, 5).map(f => ({ 
+          codigo: f.Codigo, 
+          Ordem: f.Ordem,
+          posicaoArray: fotosComOrdemPreservada.indexOf(f)
+        }))
+      );
+      
+      return fotosComOrdemPreservada;
+      
+    } else {
+      console.log('🤖 Aplicando ordem baseada no índice (sem ordem manual)');
+      
+      // Aplicar ordem baseada no índice atual do array
+      return fotos.map((foto, index) => {
+        const fotoProcessada = {
+          ...foto,
+          Ordem: index, // Ordem baseada na posição atual
+          _id: foto._id || undefined,
+          Codigo: foto.Codigo || `photo-${Date.now()}-${index}`,
+          Destaque: foto.Destaque || "Nao",
+          tipoOrdenacao: 'inteligente'
+        };
+        
+        // Remover propriedades desnecessárias
+        delete fotoProcessada.codigoOriginal;
+        delete fotoProcessada.ordem;
+        
+        return fotoProcessada;
+      });
+    }
+  }, []);
+
+  // 🔥 FUNÇÃO PREPARAR PAYLOAD OTIMIZADA - NÃO REORDENAR
   const preparePayload = useCallback((data) => {
     console.group('📦 Preparando payload para envio');
     
@@ -61,62 +141,24 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create", imove
       if (Array.isArray(data.Foto)) {
         console.log('📸 Processando fotos como array:', data.Foto.length);
         
-        // Verificar se tem ordem manual (campo 'ordem' definido)
-        const temOrdemManual = data.Foto.some(foto => 
-          typeof foto.ordem === 'number' && foto.ordem >= 0
-        );
+        // 🚀 CRITICAL: USAR FUNÇÃO QUE PRESERVA ORDEM
+        fotosArray = prepareFotosParaEnvio(data.Foto);
         
-        console.log('📸 Tem ordem manual?', temOrdemManual);
-        
-        if (temOrdemManual) {
-          // PRESERVAR ordem manual existente
-          fotosArray = data.Foto.map(foto => {
-            const fotoProcessada = {
-              ...foto,
-              ordem: typeof foto.ordem === 'number' ? foto.ordem : 0,
-              _id: foto._id || undefined,
-              Codigo: foto.Codigo || undefined
-            };
-            
-            // Remover propriedades desnecessárias
-            delete fotoProcessada.codigoOriginal;
-            
-            return fotoProcessada;
-          });
-          
-          // Ordenar pelo campo ordem para garantir consistência
-          fotosArray.sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
-          
-          console.log('✅ Ordem manual preservada');
-        } else {
-          // Adicionar ordem baseada no índice atual
-          fotosArray = data.Foto.map((foto, index) => {
-            const fotoProcessada = {
-              ...foto,
-              ordem: index,
-              _id: foto._id || undefined,
-              Codigo: foto.Codigo || undefined
-            };
-            
-            // Remover propriedades desnecessárias
-            delete fotoProcessada.codigoOriginal;
-            
-            return fotoProcessada;
-          });
-          
-          console.log('✅ Ordem baseada no índice aplicada');
-        }
       } else {
         // Converter objeto para array (formato legacy)
         console.log('📸 Convertendo objeto para array');
-        fotosArray = Object.entries(data.Foto)
+        const fotosFromObject = Object.entries(data.Foto)
           .sort(([a], [b]) => parseInt(a) - parseInt(b))
           .map(([key, foto], index) => ({
             ...foto,
-            ordem: typeof foto.ordem === 'number' ? foto.ordem : index,
+            Ordem: typeof foto.Ordem === 'number' ? foto.Ordem : 
+                   typeof foto.ordem === 'number' ? foto.ordem : index,
             _id: foto._id || undefined,
-            Codigo: foto.Codigo || key
+            Codigo: foto.Codigo || key,
+            tipoOrdenacao: 'legacy'
           }));
+          
+        fotosArray = prepareFotosParaEnvio(fotosFromObject);
       }
     }
 
@@ -130,13 +172,14 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create", imove
       }
     }
 
-    // Debug final
-    console.log('📸 Resultado final:', {
+    // Debug final das ordens
+    console.log('📸 Resultado final das fotos:', {
       totalFotos: fotosArray.length,
-      primeirasFotosOrdem: fotosArray.slice(0, 3).map(f => ({ 
-        codigo: f.Codigo, 
-        ordem: f.ordem,
-        url: f.Foto?.substring(f.Foto.lastIndexOf('/') + 1, f.Foto.lastIndexOf('/') + 10) + '...'
+      ordensSequencia: fotosArray.map(f => f.Ordem).join(','),
+      primeirasFotosOrdem: fotosArray.slice(0, 5).map(f => ({ 
+        codigo: f.Codigo?.substring(0, 15) + '...', 
+        Ordem: f.Ordem,
+        tipoOrdenacao: f.tipoOrdenacao
       }))
     });
     
@@ -147,10 +190,10 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create", imove
       ValorAntigo: data.ValorAntigo ? formatterNumber(data.ValorAntigo) : undefined,
       TipoEndereco: getTipoEndereco(data.Endereco),
       Endereco: formatAddress(data.Endereco),
-      Foto: fotosArray,
+      Foto: fotosArray, // ← Array com ordem preservada
       Video: videosArray.length > 0 ? videosArray : undefined,
     };
-  }, []);
+  }, [prepareFotosParaEnvio]);
 
   const handleSubmit = useCallback(
     async (e) => {
@@ -174,7 +217,23 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create", imove
         console.log('Modo:', mode);
         console.log('ID/Código:', imovelId || formData.Codigo);
         console.log('Total de fotos:', payload.Foto?.length);
-        console.log('Ordens das fotos:', payload.Foto?.map((f, i) => `${i}:${f.ordem}`).join(', '));
+        
+        // 🔍 DEBUG DETALHADO DAS ORDENS
+        if (payload.Foto && payload.Foto.length > 0) {
+          console.log('📊 Ordens enviadas:', payload.Foto.map((f, i) => `${i}:${f.Ordem}`).join(', '));
+          
+          // Verificar se há reordenação (problema comum)
+          const ordensOriginais = formData.Foto?.map(f => f.Ordem || f.ordem) || [];
+          const ordensFinais = payload.Foto.map(f => f.Ordem);
+          const houveAlteracao = JSON.stringify(ordensOriginais) !== JSON.stringify(ordensFinais);
+          
+          console.log('🔄 Houve alteração nas ordens?', houveAlteracao);
+          if (houveAlteracao) {
+            console.log('📊 Ordens originais:', ordensOriginais.slice(0, 10));
+            console.log('📊 Ordens finais:', ordensFinais.slice(0, 10));
+          }
+        }
+        
         console.groupEnd();
 
         let result;
@@ -222,6 +281,7 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create", imove
               console.error("Erro ao salvar log:", logError);
             }
           } else {
+            console.error('❌ Erro na atualização:', result);
             setError(result?.message || "Erro ao atualizar imóvel");
           }
         } else {
