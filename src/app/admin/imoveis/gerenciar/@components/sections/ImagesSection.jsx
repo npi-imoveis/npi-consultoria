@@ -150,9 +150,9 @@ export default function ImagesSection({
   }), [fotosProcessadas.length, localPhotoOrder.length]);
 
   return (
-    <section className="mb-8">
+    <section className="bg-white border-2 border-gray-200 rounded-lg p-6">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-bold text-gray-900">Imagens do Imóvel</h2>
+        <h2 className="text-xl font-semibold text-gray-900">Imagens do Imóvel</h2>
         <span className="text-sm text-gray-500">{stats.totalFotos}/5 fotos</span>
       </div>
 
@@ -234,125 +234,95 @@ export default function ImagesSection({
         </button>
       </div>
 
-      {/* GALERIA COM FOTOS GRANDES - LAYOUT ORIGINAL */}
+      {/* LAYOUT EXATO DO ORIGINAL - BASEADO NA SUA IMAGEM */}
       {fotosProcessadas.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="space-y-4">
           {fotosProcessadas.map((foto, index) => (
             <div
               key={foto.Codigo}
-              className={`relative bg-white rounded-lg border-2 overflow-hidden shadow-lg ${
+              className={`border rounded-lg overflow-hidden ${
                 foto.Destaque === "Sim"
                   ? "border-yellow-400 bg-yellow-50"
-                  : "border-gray-200"
+                  : "border-gray-200 bg-white"
               }`}
             >
-              {/* IMAGEM GRANDE */}
-              <div className="relative aspect-video">
-                <img
-                  src={foto.Foto}
-                  alt={`Foto ${index + 1}`}
-                  className="w-full h-full object-cover"
-                  loading="lazy"
-                />
-                
-                {/* POSIÇÃO NO CANTO SUPERIOR ESQUERDO */}
-                <div className="absolute top-2 left-2 bg-black bg-opacity-70 text-white px-2 py-1 rounded text-sm font-bold">
-                  {foto.Destaque === "Sim" ? "⭐" : `${index + 1}º`}
-                </div>
-
-                {/* BOTÕES DE MOVIMENTO NO CANTO SUPERIOR DIREITO */}
-                <div className="absolute top-2 right-2 flex gap-1">
+              <div className="flex">
+                {/* COLUNA DA ESQUERDA - BOTÕES DE MOVIMENTO */}
+                <div className="flex flex-col items-center justify-center p-3 bg-gray-50 border-r border-gray-200">
                   <button
                     type="button"
                     onClick={() => handleReorder(index, Math.max(0, index - 1))}
                     disabled={index === 0}
-                    className="bg-black bg-opacity-70 text-white p-1 rounded hover:bg-opacity-90 disabled:opacity-30 disabled:cursor-not-allowed"
-                    title="Mover para cima"
+                    className="p-1 mb-1 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed w-6 h-6 flex items-center justify-center text-xs"
                   >
-                    ⬆️
+                    ⬆
                   </button>
                   <button
                     type="button"
                     onClick={() => handleReorder(index, Math.min(fotosProcessadas.length - 1, index + 1))}
                     disabled={index === fotosProcessadas.length - 1}
-                    className="bg-black bg-opacity-70 text-white p-1 rounded hover:bg-opacity-90 disabled:opacity-30 disabled:cursor-not-allowed"
-                    title="Mover para baixo"
+                    className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed w-6 h-6 flex items-center justify-center text-xs"
                   >
-                    ⬇️
+                    ⬇
                   </button>
                 </div>
-              </div>
 
-              {/* INFORMAÇÕES E CONTROLES */}
-              <div className="p-4">
-                <div className="mb-3">
-                  <p className="font-semibold text-gray-900 text-sm">
-                    Código: {foto.Codigo}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Ordem: {foto.Ordem} | Tipo: {foto.tipoOrdenacao || 'inteligente'}
-                  </p>
-                  <p className="text-xs text-gray-400 truncate">
-                    {foto.Foto && foto.Foto.split('/').pop()}
-                  </p>
+                {/* COLUNA DO MEIO - POSIÇÃO */}
+                <div className="flex items-center justify-center p-4 min-w-12">
+                  <span className="font-bold text-lg text-gray-700">
+                    {foto.Destaque === "Sim" ? "⭐" : `${index + 1}º`}
+                  </span>
                 </div>
 
-                {/* SELETOR DE POSIÇÃO */}
-                <div className="mb-3">
-                  <label className="block text-xs font-medium text-gray-700 mb-1">
-                    Posição
-                  </label>
-                  <select
-                    value={index + 1}
-                    onChange={(e) => {
-                      const newPosition = parseInt(e.target.value) - 1;
-                      if (newPosition !== index) {
-                        handleReorder(index, newPosition);
-                      }
-                    }}
-                    className="w-full text-sm border border-gray-300 rounded px-2 py-1"
-                  >
-                    {Array.from({ length: fotosProcessadas.length }, (_, i) => (
-                      <option key={i} value={i + 1}>
-                        {i + 1}º
-                      </option>
-                    ))}
-                  </select>
+                {/* COLUNA DA IMAGEM */}
+                <div className="flex-shrink-0">
+                  <img
+                    src={foto.Foto}
+                    alt={`Foto ${index + 1}`}
+                    className="w-32 h-24 object-cover"
+                    loading="lazy"
+                  />
                 </div>
 
-                {/* CONTROLE DE DESTAQUE */}
-                <div className="mb-4">
-                  <label className="block text-xs font-medium text-gray-700 mb-1">
-                    Destaque
-                  </label>
+                {/* COLUNA DE INFORMAÇÕES */}
+                <div className="flex-1 p-4">
+                  <div className="mb-2">
+                    <p className="font-semibold text-gray-900 text-sm">
+                      Código: {foto.Codigo}
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Ordem: {foto.Ordem} | Tipo: {foto.tipoOrdenacao || 'banco'}
+                    </p>
+                    <p className="text-xs text-gray-400 truncate">
+                      {foto.Foto && foto.Foto.split('/').pop()}
+                    </p>
+                  </div>
+                </div>
+
+                {/* COLUNA DE AÇÕES - DESTACAR */}
+                <div className="flex items-center p-4">
+                  <div className="text-sm text-gray-600 mr-3">Destaque</div>
                   <button
                     type="button"
                     onClick={() => setImageAsHighlight && setImageAsHighlight(foto.Codigo)}
-                    className={`w-full px-3 py-2 rounded text-sm font-medium transition-colors ${
+                    className={`px-3 py-1 rounded text-sm font-medium ${
                       foto.Destaque === "Sim"
-                        ? "bg-yellow-100 text-yellow-800 border border-yellow-300"
-                        : "bg-gray-100 text-gray-600 hover:bg-yellow-50 border border-gray-300"
+                        ? "bg-yellow-200 text-yellow-800"
+                        : "bg-gray-100 text-gray-600 hover:bg-yellow-100"
                     }`}
                   >
-                    {foto.Destaque === "Sim" ? "⭐ Destacar" : "⭐ Destacar"}
+                    ⭐ Destacar
                   </button>
                 </div>
 
-                {/* AÇÕES */}
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => updateImage && updateImage(foto.Codigo)}
-                    className="flex-1 px-3 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600 transition-colors"
-                  >
-                    🔄 Trocar
-                  </button>
+                {/* COLUNA DE AÇÕES - REMOVER */}
+                <div className="flex items-center p-4">
                   <button
                     type="button"
                     onClick={() => removeImage && removeImage(foto.Codigo)}
-                    className="flex-1 px-3 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600 transition-colors"
+                    className="px-3 py-1 bg-red-100 text-red-600 rounded text-sm font-medium hover:bg-red-200"
                   >
-                    ❌ Remover
+                    🗑️ Remover
                   </button>
                 </div>
               </div>
