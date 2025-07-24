@@ -122,43 +122,55 @@ export class PhotoSorter {
       return false;
     }
 
-    // Verificar se TODAS as fotos têm campo Ordem numérico válido
+    // 🚀 CORREÇÃO: Verificar múltiplos campos de ordem
     const todasTemOrdem = fotos.every(foto => {
-      const temOrdem = typeof foto.Ordem === 'number' && foto.Ordem >= 0;
+      const temOrdemMaiuscula = typeof foto.Ordem === 'number' && foto.Ordem >= 0;
       const temOrdemMinuscula = typeof foto.ordem === 'number' && foto.ordem >= 0;
-      return temOrdem || temOrdemMinuscula;
+      const temTipoOrdenacao = foto.tipoOrdenacao === 'manual' || foto.tipoOrdenacao === 'banco';
+      
+      return temOrdemMaiuscula || temOrdemMinuscula || temTipoOrdenacao;
     });
 
     if (!todasTemOrdem) {
       if (this.debug) {
         console.log('📸 PhotoSorter - Nem todas têm campo Ordem válido');
+        // Log detalhado dos campos encontrados
+        fotos.slice(0, 3).forEach((foto, i) => {
+          console.log(`  Foto ${i}: Ordem=${foto.Ordem}, ordem=${foto.ordem}, tipo=${foto.tipoOrdenacao}`);
+        });
       }
       return false;
     }
 
-    // 🔥 CORREÇÃO: Não exigir sequência perfeita, apenas verificar se tem ordem definida
-    // A presença do campo Ordem já indica intenção de ordem manual
-    
-    const ordens = fotos.map(f => {
-      const ordem = f.Ordem !== undefined ? f.Ordem : f.ordem;
+    // 🔥 CORREÇÃO: Extrair ordens de múltiplas fontes
+    const ordens = fotos.map(foto => {
+      let ordem = foto.Ordem !== undefined && foto.Ordem !== null ? foto.Ordem : foto.ordem;
       return typeof ordem === 'number' ? ordem : 0;
     }).sort((a, b) => a - b);
 
-    // 🚀 RELAXAR VERIFICAÇÃO: Aceitar qualquer ordem com números válidos
+    // 🚀 RELAXAR VERIFICAÇÃO: Aceitar qualquer ordem com números válidos >= 0
     const temOrdensValidas = ordens.every(ordem => typeof ordem === 'number' && ordem >= 0);
     
     // Verificar se não são todas iguais (seria estranho)
     const todasIguais = ordens.every(ordem => ordem === ordens[0]);
     
-    const resultado = temOrdensValidas && !todasIguais;
+    // 🔥 NOVA VERIFICAÇÃO: Se tem tipo banco ou manual, considerar válido
+    const temTipoManual = fotos.some(foto => 
+      foto.tipoOrdenacao === 'manual' || 
+      foto.tipoOrdenacao === 'banco'
+    );
+
+    const resultado = (temOrdensValidas && !todasIguais) || temTipoManual;
 
     if (this.debug) {
-      console.log('🔍 PhotoSorter - Verificação de ordem manual:', {
+      console.log('🔍 PhotoSorter - Verificação de ordem manual DETALHADA:', {
         totalFotos: fotos.length,
         todasTemOrdem,
         temOrdensValidas,
         todasIguais,
+        temTipoManual,
         ordensAmostra: ordens.slice(0, 5),
+        tiposAmostra: fotos.slice(0, 3).map(f => f.tipoOrdenacao),
         temOrdemManual: resultado
       });
     }
