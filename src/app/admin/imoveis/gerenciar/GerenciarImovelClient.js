@@ -131,44 +131,73 @@ export default function GerenciarImovelClient() {
     }
   };
 
-  // 🔥 USEEFFECT OTIMIZADO PARA CARREGAMENTO INICIAL - NÃO REORDENAR
-  useEffect(() => {
-    if (imovelSelecionado && mode === "edit" && isInitialLoad) {
-      console.group('🏠 Carregando dados do imóvel para edição');
-      
-      const formatMonetaryDisplayValues = () => {
-        const displayObj = {};
-        ["ValorAntigo", "ValorAluguelSite", "ValorCondominio", "ValorIptu"].forEach((field) => {
-          if (imovelSelecionado[field]) {
-            const value = typeof imovelSelecionado[field] === "string"
-              ? imovelSelecionado[field].replace(/\D/g, "")
-              : imovelSelecionado[field];
-            displayObj[field] = formatarParaReal(value);
-          }
-        });
-        return displayObj;
-      };
+// 🔥 SUBSTITUIR O useEffect DE CARREGAMENTO NO SEU GerenciarImovelClient.js
 
-      // 🔥 PROCESSAMENTO DE FOTOS CRÍTICO - PRESERVAR ORDEM EXATA DO BANCO
-      const processPhotos = () => {
-        if (!imovelSelecionado.Foto) return [];
+useEffect(() => {
+  if (imovelSelecionado && mode === "edit" && isInitialLoad) {
+    console.group('🏠 Carregando dados do imóvel para edição');
+    
+    const formatMonetaryDisplayValues = () => {
+      const displayObj = {};
+      ["ValorAntigo", "ValorAluguelSite", "ValorCondominio", "ValorIptu"].forEach((field) => {
+        if (imovelSelecionado[field]) {
+          const value = typeof imovelSelecionado[field] === "string"
+            ? imovelSelecionado[field].replace(/\D/g, "")
+            : imovelSelecionado[field];
+          displayObj[field] = formatarParaReal(value);
+        }
+      });
+      return displayObj;
+    };
+
+    // 🔥 PROCESSAMENTO DE FOTOS CRÍTICO - PRESERVAR ORDEM EXATA DO BANCO
+    const processPhotos = () => {
+      if (!imovelSelecionado.Foto) return [];
+      
+      let fotosProcessadas = [];
+      
+      if (Array.isArray(imovelSelecionado.Foto)) {
+        console.log('📸 Fotos já em formato array:', imovelSelecionado.Foto.length);
         
-        let fotosProcessadas = [];
+        // 🔍 ANÁLISE DETALHADA DAS FOTOS DO BANCO
+        console.log('🔍 Analisando estrutura das fotos do banco:');
         
-        if (Array.isArray(imovelSelecionado.Foto)) {
-          console.log('📸 Fotos já em formato array:', imovelSelecionado.Foto.length);
+        const primeiraFoto = imovelSelecionado.Foto[0];
+        if (primeiraFoto) {
+          console.log('📊 Campos da primeira foto:', Object.keys(primeiraFoto));
+          console.log('📊 Valores dos campos de ordem:', {
+            Ordem: primeiraFoto.Ordem,
+            ordem: primeiraFoto.ordem,
+            tipoOrdem: typeof primeiraFoto.Ordem,
+            tipoOrdemMinuscula: typeof primeiraFoto.ordem
+          });
+        }
+        
+        // 🔥 VERIFICAR SE TEM ORDEM MANUAL SALVA NO BANCO
+        const temOrdemManualNoBanco = imovelSelecionado.Foto.every(foto => {
+          const temOrdemMaiuscula = typeof foto.Ordem === 'number' && foto.Ordem >= 0;
+          const temOrdemMinuscula = typeof foto.ordem === 'number' && foto.ordem >= 0;
+          return temOrdemMaiuscula || temOrdemMinuscula;
+        });
+        
+        console.log('📸 Tem ordem manual salva no banco?', temOrdemManualNoBanco);
+        
+        if (temOrdemManualNoBanco) {
+          console.log('📸 Preservando ordem manual do banco');
           
-          // 🚀 PRESERVAR ORDEM EXATA DO BANCO - NÃO REORDENAR!
+          // 🚀 PRESERVAR ORDEM EXATA DO BANCO - NÃO APLICAR PHOTOSORTER!
           fotosProcessadas = imovelSelecionado.Foto.map((foto, index) => {
+            // Unificar campos de ordem (priorizar Ordem maiúsculo)
+            const ordemFinal = foto.Ordem !== undefined && foto.Ordem !== null ? foto.Ordem :
+                              foto.ordem !== undefined && foto.ordem !== null ? foto.ordem :
+                              index;
+            
             const fotoProcessada = {
               ...foto,
               Codigo: foto.Codigo || `photo-${Date.now()}-${index}`,
               Destaque: foto.Destaque || "Nao",
-              // 🔥 CRITICAL: Preservar campo Ordem se existir, senão usar ordem/index
-              Ordem: foto.Ordem !== undefined && foto.Ordem !== null ? foto.Ordem :
-                     foto.ordem !== undefined && foto.ordem !== null ? foto.ordem :
-                     index,
-              tipoOrdenacao: 'banco' // Marcar como vindo do banco
+              Ordem: ordemFinal, // ← PRESERVAR ORDEM DO BANCO
+              tipoOrdenacao: 'banco' // ← Marcar como vindo do banco
             };
             
             // Remover campo conflitante
@@ -177,102 +206,89 @@ export default function GerenciarImovelClient() {
             return fotoProcessada;
           });
           
-          // 🔥 VERIFICAR SE TEM ORDEM MANUAL SALVA
-          const temOrdemManual = fotosProcessadas.some(f => 
-            typeof f.Ordem === 'number' && f.Ordem >= 0
-          );
+          // 🔥 CRITICAL: ORDENAR PELAS ORDENS SALVAS NO BANCO
+          fotosProcessadas.sort((a, b) => (a.Ordem || 0) - (b.Ordem || 0));
           
-          console.log('📸 Tem ordem manual salva no banco?', temOrdemManual);
+          console.log('📸 Fotos ordenadas conforme banco:', {
+            total: fotosProcessadas.length,
+            ordensSequencia: fotosProcessadas.map(f => f.Ordem).join(','),
+            primeiras3: fotosProcessadas.slice(0, 3).map(f => ({ 
+              codigo: f.Codigo?.substring(0, 15) + '...', 
+              Ordem: f.Ordem 
+            }))
+          });
           
-          if (temOrdemManual) {
-            // 🚀 SE TEM ORDEM MANUAL, PRESERVAR ORDEM EXATA
-            console.log('📸 Preservando ordem manual do banco');
-            
-            // Verificar se ordens fazem sentido
-            const ordens = fotosProcessadas.map(f => f.Ordem).sort((a, b) => a - b);
-            const isSequential = ordens.every((ordem, index) => ordem === index);
-            
-            if (isSequential) {
-              // Ordem sequencial válida - manter como está
-              console.log('✅ Ordem sequencial válida detectada');
-            } else {
-              // Ordem não sequencial - pode ter gaps, normalizar
-              console.log('⚠️ Ordem não sequencial, normalizando...');
-              fotosProcessadas.sort((a, b) => a.Ordem - b.Ordem);
-              fotosProcessadas = fotosProcessadas.map((foto, index) => ({
-                ...foto,
-                Ordem: index
-              }));
-            }
-          } else {
-            console.log('📸 Sem ordem manual detectada - usando ordem do array');
-            // Aplicar ordem baseada na posição no array
-            fotosProcessadas = fotosProcessadas.map((foto, index) => ({
-              ...foto,
-              Ordem: index,
-              tipoOrdenacao: 'array'
-            }));
-          }
-          
-        } else if (typeof imovelSelecionado.Foto === "object") {
-          console.log('📸 Convertendo fotos de objeto para array');
-          
-          const entries = Object.entries(imovelSelecionado.Foto);
-          fotosProcessadas = entries.map(([key, foto], index) => ({
+        } else {
+          console.log('📸 Sem ordem manual no banco - aplicando ordem por índice');
+          // Se não tem ordem manual, aplicar ordem baseada na posição
+          fotosProcessadas = imovelSelecionado.Foto.map((foto, index) => ({
             ...foto,
-            Codigo: key,
+            Codigo: foto.Codigo || `photo-${Date.now()}-${index}`,
             Destaque: foto.Destaque || "Nao",
-            Ordem: foto.Ordem !== undefined ? foto.Ordem : 
-                   foto.ordem !== undefined ? foto.ordem : index,
-            tipoOrdenacao: 'objeto'
+            Ordem: index,
+            tipoOrdenacao: 'indice'
           }));
         }
         
-        console.log('📸 Fotos processadas:', {
-          total: fotosProcessadas.length,
-          primeirasFotosOrdem: fotosProcessadas.slice(0, 5).map(f => ({ 
-            codigo: f.Codigo?.substring(0, 15) + '...', 
-            Ordem: f.Ordem,
-            tipoOrdenacao: f.tipoOrdenacao
-          }))
-        });
+      } else if (typeof imovelSelecionado.Foto === "object") {
+        console.log('📸 Convertendo fotos de objeto para array');
         
-        return fotosProcessadas;
-      };
-
-      const processVideos = () => {
-        if (!imovelSelecionado.Video) return {};
-        const videosObj = {};
-        if (Array.isArray(imovelSelecionado.Video)) {
-          imovelSelecionado.Video.forEach((video) => {
-            if (video.Codigo) {
-              videosObj[video.Codigo] = { ...video };
-            }
-          });
-        }
-        return videosObj;
-      };
-
-      const dadosProcessados = {
-        ...imovelSelecionado,
-        Foto: processPhotos(), // ← Fotos com ordem preservada
-        Video: processVideos(),
-        Slug: formatterSlug(imovelSelecionado.Empreendimento || ""),
-      };
-
-      console.log('📋 Dados finais para formData:', {
-        codigo: dadosProcessados.Codigo,
-        totalFotos: dadosProcessados.Foto?.length,
-        primeirasOrdens: dadosProcessados.Foto?.slice(0, 5).map(f => f.Ordem)
-      });
-
-      setFormData(dadosProcessados);
-      setDisplayValues(formatMonetaryDisplayValues());
-      setIsInitialLoad(false); // Marcar carregamento inicial como concluído
+        const entries = Object.entries(imovelSelecionado.Foto);
+        fotosProcessadas = entries.map(([key, foto], index) => ({
+          ...foto,
+          Codigo: key,
+          Destaque: foto.Destaque || "Nao",
+          Ordem: foto.Ordem !== undefined ? foto.Ordem : 
+                 foto.ordem !== undefined ? foto.ordem : index,
+          tipoOrdenacao: 'objeto'
+        }));
+      }
       
-      console.groupEnd();
-    }
-  }, [imovelSelecionado, mode, isInitialLoad, setFormData, setDisplayValues]);
+      console.log('📸 Fotos processadas para formData:', {
+        total: fotosProcessadas.length,
+        primeirasFotosOrdem: fotosProcessadas.slice(0, 5).map(f => ({ 
+          codigo: f.Codigo?.substring(0, 15) + '...', 
+          Ordem: f.Ordem,
+          tipoOrdenacao: f.tipoOrdenacao
+        }))
+      });
+      
+      return fotosProcessadas;
+    };
+
+    const processVideos = () => {
+      if (!imovelSelecionado.Video) return {};
+      const videosObj = {};
+      if (Array.isArray(imovelSelecionado.Video)) {
+        imovelSelecionado.Video.forEach((video) => {
+          if (video.Codigo) {
+            videosObj[video.Codigo] = { ...video };
+          }
+        });
+      }
+      return videosObj;
+    };
+
+    const dadosProcessados = {
+      ...imovelSelecionado,
+      Foto: processPhotos(), // ← Fotos com ordem PRESERVADA do banco
+      Video: processVideos(),
+      Slug: formatterSlug(imovelSelecionado.Empreendimento || ""),
+    };
+
+    console.log('📋 Dados finais para formData:', {
+      codigo: dadosProcessados.Codigo,
+      totalFotos: dadosProcessados.Foto?.length,
+      primeirasOrdens: dadosProcessados.Foto?.slice(0, 5).map(f => f.Ordem)
+    });
+
+    setFormData(dadosProcessados);
+    setDisplayValues(formatMonetaryDisplayValues());
+    setIsInitialLoad(false);
+    
+    console.groupEnd();
+  }
+}, [imovelSelecionado, mode, isInitialLoad, setFormData, setDisplayValues]);
 
   useEffect(() => {
     return () => {
