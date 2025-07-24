@@ -1,4 +1,4 @@
-// src/app/admin/imoveis/gerenciar/@components/hooks/useImovelSubmit.js
+// src/app/admin/imoveis/gerenciar/components/hooks/useImovelSubmit.js
 
 "use client";
 
