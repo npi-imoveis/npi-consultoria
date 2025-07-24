@@ -195,6 +195,26 @@ export async function PUT(request, { params }) {
       console.log('  - Total salvo:', imovelAtualizado.Foto.length);
       console.log('  - Sequência de ordens salvas:', imovelAtualizado.Foto.map(f => f.Ordem).join(','));
       
+      // 🔍 VERIFICAÇÃO DETALHADA DAS PRIMEIRAS E ÚLTIMAS FOTOS
+      console.log('📋 Detalhes das fotos salvas no banco:');
+      imovelAtualizado.Foto.slice(0, 3).forEach((foto, index) => {
+        console.log(`  Primeira ${index + 1}: Código ${foto.Codigo}, Ordem: ${foto.Ordem}, Destaque: ${foto.Destaque}`);
+      });
+      imovelAtualizado.Foto.slice(-3).forEach((foto, index) => {
+        const pos = imovelAtualizado.Foto.length - 3 + index + 1;
+        console.log(`  Última ${pos}: Código ${foto.Codigo}, Ordem: ${foto.Ordem}, Destaque: ${foto.Destaque}`);
+      });
+      
+      // 🔍 VERIFICAR ESTRUTURA COMPLETA DE UMA FOTO
+      const fotoExemplo = imovelAtualizado.Foto[0];
+      console.log('📊 Estrutura completa da primeira foto salva:', {
+        keys: Object.keys(fotoExemplo),
+        Codigo: fotoExemplo.Codigo,
+        Ordem: fotoExemplo.Ordem,
+        tipoOrdem: typeof fotoExemplo.Ordem,
+        outrosCampos: Object.keys(fotoExemplo).filter(k => !['Codigo', 'Foto', 'Destaque', 'Ordem'].includes(k))
+      });
+      
       // Verificar se ordem foi preservada até o final
       if (dadosAtualizados.Foto) {
         const ordensEnviadas = dadosAtualizados.Foto.map(f => f.Ordem);
