@@ -22,35 +22,59 @@ const ImagesSection = memo(({
   const [downloadingPhotos, setDownloadingPhotos] = useState(false);
   const [localPhotoOrder, setLocalPhotoOrder] = useState(null);
   
-  // 🔥 DETECÇÃO CRÍTICA: Verificar se há ordem manual REAL
+  // 🔥 DETECÇÃO CRÍTICA CORRIGIDA: Verificar se há ordem manual REAL
   const hasManualOrder = useMemo(() => {
     if (!formData?.Foto || formData.Foto.length === 0) return false;
     
-    // Verificar se TODAS as fotos têm campo ordem numérico e sequencial
-    const todasTemOrdem = formData.Foto.every(foto => 
-      typeof foto.ordem === 'number' && foto.ordem >= 0
-    );
+    // 🚀 CORREÇÃO: Verificar múltiplos indicadores de ordem manual
+    const todasTemOrdem = formData.Foto.every(foto => {
+      const temOrdemMaiuscula = typeof foto.Ordem === 'number' && foto.Ordem >= 0;
+      const temOrdemMinuscula = typeof foto.ordem === 'number' && foto.ordem >= 0;
+      const temTipoBanco = foto.tipoOrdenacao === 'banco';
+      const temTipoManual = foto.tipoOrdenacao === 'manual';
+      
+      return temOrdemMaiuscula || temOrdemMinuscula || temTipoBanco || temTipoManual;
+    });
     
     if (!todasTemOrdem) return false;
     
-    // Verificar se é uma sequência válida (0, 1, 2, 3...)
-    const ordens = formData.Foto.map(f => f.ordem).sort((a, b) => a - b);
-    const isSequential = ordens.every((ordem, index) => ordem === index);
+    // 🔥 NOVA LÓGICA: Se tem tipo banco/manual, é válido automaticamente
+    const temTipoValido = formData.Foto.some(foto => 
+      foto.tipoOrdenacao === 'banco' || 
+      foto.tipoOrdenacao === 'manual'
+    );
     
-    const resultado = todasTemOrdem && isSequential;
+    if (temTipoValido) {
+      console.log('📸 Ordem manual detectada por tipo (banco/manual)');
+      return true;
+    }
     
-    console.log('🔍 VERIFICAÇÃO DE ORDEM MANUAL:', {
+    // Verificação tradicional para compatibilidade
+    const ordens = formData.Foto.map(foto => {
+      const ordem = foto.Ordem !== undefined ? foto.Ordem : foto.ordem;
+      return typeof ordem === 'number' ? ordem : 0;
+    }).sort((a, b) => a - b);
+
+    const hasValidOrders = ordens.length > 0 && ordens.every(ordem => ordem >= 0);
+    const todasIguais = ordens.every(ordem => ordem === ordens[0]);
+    
+    const resultado = hasValidOrders && !todasIguais;
+    
+    console.log('🔍 VERIFICAÇÃO DE ORDEM MANUAL COMPLETA:', {
       totalFotos: formData.Foto.length,
       todasTemOrdem,
-      isSequential,
-      ordens,
-      hasManualOrder: resultado
+      temTipoValido,
+      ordensValidas: hasValidOrders,
+      todasIguais,
+      ordens: ordens.slice(0, 5),
+      tipos: formData.Foto.slice(0, 3).map(f => f.tipoOrdenacao),
+      hasManualOrder: resultado || temTipoValido
     });
     
-    return resultado;
+    return resultado || temTipoValido;
   }, [formData?.Foto]);
 
-  // 🎯 ORDENAÇÃO COM PROTEÇÃO CONTRA PHOTOSORTER
+  // 🎯 ORDENAÇÃO COM PROTEÇÃO CONTRA PHOTOSORTER (CORRIGIDA)
   const sortedPhotos = useMemo(() => {
     if (!Array.isArray(formData?.Foto) || formData.Foto.length === 0) {
       return [];
@@ -61,7 +85,7 @@ const ImagesSection = memo(({
       totalFotos: formData.Foto.length,
       temOrdemLocal: !!localPhotoOrder,
       temOrdemManual: hasManualOrder,
-      primeiras3Ordens: formData.Foto.slice(0, 3).map(f => f.ordem)
+      primeiras3Ordens: formData.Foto.slice(0, 3).map(f => f.ordem || f.Ordem)
     });
 
     // 1️⃣ PRIORIDADE MÁXIMA: Ordem local (usuário acabou de alterar)
@@ -74,7 +98,14 @@ const ImagesSection = memo(({
     // 2️⃣ PRIORIDADE ALTA: Ordem manual salva
     if (hasManualOrder) {
       console.log('✅ Usando ORDEM MANUAL SALVA (protegida do PhotoSorter)');
-      const fotosOrdenadas = [...formData.Foto].sort((a, b) => a.ordem - b.ordem);
+      
+      // 🔥 CORREÇÃO: Ordenar por campo Ordem ou ordem (dar prioridade ao Ordem maiúsculo)
+      const fotosOrdenadas = [...formData.Foto].sort((a, b) => {
+        const ordemA = a.Ordem !== undefined ? a.Ordem : (a.ordem !== undefined ? a.ordem : 999);
+        const ordemB = b.Ordem !== undefined ? b.Ordem : (b.ordem !== undefined ? b.ordem : 999);
+        return ordemA - ordemB;
+      });
+      
       console.groupEnd();
       return fotosOrdenadas;
     }
@@ -99,11 +130,12 @@ const ImagesSection = memo(({
       
       const fotosOrdenadas = photoSorter.ordenarFotos(fotosLimpas, formData.Codigo || 'temp');
       
-      // Restaurar códigos e adicionar ordem sequencial
+      // 🚀 CORREÇÃO: Restaurar códigos e adicionar campo Ordem (maiúsculo) consistente
       const resultado = fotosOrdenadas.map((foto, index) => ({
         ...foto,
         Codigo: foto.codigoOriginal,
-        ordem: index, // Adicionar ordem 0-based
+        Ordem: index, // ← CAMPO PADRONIZADO (maiúsculo)
+        ordem: undefined, // ← Remover campo conflitante
         codigoOriginal: undefined
       }));
 
@@ -118,7 +150,7 @@ const ImagesSection = memo(({
     }
   }, [formData?.Foto, formData?.Codigo, localPhotoOrder, hasManualOrder]);
 
-  // 🔥 REORDENAÇÃO PROTEGIDA
+  // 🔥 REORDENAÇÃO PROTEGIDA E CORRIGIDA
   const handlePositionChange = async (codigo, newPosition) => {
     const position = parseInt(newPosition);
     const currentIndex = sortedPhotos.findIndex(p => p.Codigo === codigo);
@@ -134,28 +166,36 @@ const ImagesSection = memo(({
     // 🔥 LIMPAR CACHE DO PHOTOSORTER IMEDIATAMENTE
     photoSorter.limparCache();
     
-    // Criar nova ordem
+    // 🚀 CRÍTICO: Criar nova ordem IMUTÁVEL
     const novaOrdem = [...sortedPhotos];
     const fotoMovida = novaOrdem[currentIndex];
     
-    // Reordenar array
+    // Reordenar array de forma imutável
     novaOrdem.splice(currentIndex, 1);
     novaOrdem.splice(position - 1, 0, fotoMovida);
     
-    // 🔥 CRÍTICO: Aplicar ordens sequenciais em TODAS as fotos
+    // 🔥 CRÍTICO: Aplicar campo Ordem (maiúsculo) em TODAS as fotos
     const novaOrdemComIndices = novaOrdem.map((foto, index) => ({
       ...foto,
-      ordem: index // Sempre 0-based sequencial
+      Ordem: index, // ← CAMPO PADRONIZADO (maiúsculo)
+      ordem: undefined, // ← Remover campo conflitante
+      tipoOrdenacao: 'manual' // ← Marcar como manual
     }));
     
-    console.log('📊 Nova ordem aplicada:', novaOrdemComIndices.map((f, i) => `${i}: ${f.ordem}`));
+    console.log('📊 Nova ordem aplicada:', novaOrdemComIndices.map((f, i) => `${i}: ${f.Ordem}`));
     
     // Atualizar estado local
     setLocalPhotoOrder(novaOrdemComIndices);
     
-    // Propagar para componente pai
+    // 🔥 PROPAGAR PARA COMPONENTE PAI IMEDIATAMENTE
     if (typeof onUpdatePhotos === 'function') {
-      console.log('📤 Propagando para componente pai...');
+      console.log('📤 Propagando para componente pai IMEDIATAMENTE...');
+      console.log('📊 Dados enviados:', {
+        total: novaOrdemComIndices.length,
+        ordensSequencia: novaOrdemComIndices.map(f => f.Ordem).join(','),
+        primeiras3: novaOrdemComIndices.slice(0, 3).map(f => ({ codigo: f.Codigo, Ordem: f.Ordem }))
+      });
+      
       onUpdatePhotos(novaOrdemComIndices);
     }
     
@@ -248,7 +288,7 @@ const ImagesSection = memo(({
     if (typeof onUpdatePhotos === 'function' && formData?.Foto) {
       // 🔥 CRÍTICO: Remover TODOS os campos de ordem para forçar PhotoSorter
       const fotosSemOrdem = formData.Foto.map(foto => {
-        const { ordem, Ordem, ORDEM, ...fotoLimpa } = foto;
+        const { ordem, Ordem, ORDEM, tipoOrdenacao, ...fotoLimpa } = foto;
         return fotoLimpa;
       });
       
@@ -392,7 +432,7 @@ const ImagesSection = memo(({
                   </div>
                   {/* DEBUG: Mostrar ordem */}
                   <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-1 py-0.5 rounded">
-                    ordem: {photo.ordem}
+                    Ordem: {photo.Ordem !== undefined ? photo.Ordem : photo.ordem}
                   </div>
                 </div>
 
