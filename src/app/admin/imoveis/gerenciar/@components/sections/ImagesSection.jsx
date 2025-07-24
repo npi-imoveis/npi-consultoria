@@ -1,350 +1,476 @@
 "use client";
 
-import { useState, useCallback, useEffect, useMemo } from "react";
+import { memo, useState, useMemo, useEffect } from "react";
+import FormSection from "../FormSection";
+import Image from "next/image";
+import JSZip from "jszip";
+import { saveAs } from "file-saver";
 import { photoSorter } from "@/app/utils/photoSorter";
 
-// 🔍 FUNÇÃO HELPER FORA DO COMPONENTE (SEM HOOKS)
-function checkManualOrderHelper(fotos) {
-  if (!Array.isArray(fotos) || fotos.length === 0) {
-    return { hasManualOrder: false, todasTemOrdem: false, isSequential: false };
-  }
-
-  const todasTemOrdem = fotos.every(foto => 
-    (foto.Ordem !== undefined && foto.Ordem !== null) || 
-    (foto.ordem !== undefined && foto.ordem !== null)
-  );
-
-  if (!todasTemOrdem) {
-    return { hasManualOrder: false, todasTemOrdem: false, isSequential: false };
-  }
-
-  const ordens = fotos.map(foto => {
-    const ordem = foto.Ordem !== undefined ? foto.Ordem : foto.ordem;
-    return typeof ordem === 'number' ? ordem : parseInt(ordem) || 0;
-  }).sort((a, b) => a - b);
-
-  const isSequential = ordens.every((ordem, index) => ordem === index);
-  const hasManualOrder = todasTemOrdem && isSequential;
-
-  console.log('🔍 ORDEM MANUAL CHECK:', {
-    todasTemOrdem,
-    isSequential,
-    ordensOrdenadas: ordens.slice(0, 5),
-    hasManualOrder
-  });
-
-  return { hasManualOrder, todasTemOrdem, isSequential };
-}
-
-export default function ImagesSection({
+const ImagesSection = memo(({
   formData,
   addSingleImage,
   showImageModal,
   updateImage,
   removeImage,
   removeAllImages,
-  downloadAllPhotos,
-  downloadingPhotos,
   setImageAsHighlight,
   changeImagePosition,
   validation,
-  onUpdatePhotos,
-}) {
-  // 🔥 ESTADOS CRÍTICOS PARA ORDEM MANUAL
-  const [localPhotoOrder, setLocalPhotoOrder] = useState([]);
+  onUpdatePhotos
+}) => {
+  const [downloadingPhotos, setDownloadingPhotos] = useState(false);
+  const [localPhotoOrder, setLocalPhotoOrder] = useState(null);
+  
+  // 🔥 DETECÇÃO CRÍTICA: Verificar se há ordem manual REAL
+  const hasManualOrder = useMemo(() => {
+    if (!formData?.Foto || formData.Foto.length === 0) return false;
+    
+    // Verificar se TODAS as fotos têm campo ordem numérico e sequencial
+    const todasTemOrdem = formData.Foto.every(foto => 
+      typeof foto.ordem === 'number' && foto.ordem >= 0
+    );
+    
+    if (!todasTemOrdem) return false;
+    
+    // Verificar se é uma sequência válida (0, 1, 2, 3...)
+    const ordens = formData.Foto.map(f => f.ordem).sort((a, b) => a - b);
+    const isSequential = ordens.every((ordem, index) => ordem === index);
+    
+    const resultado = todasTemOrdem && isSequential;
+    
+    console.log('🔍 VERIFICAÇÃO DE ORDEM MANUAL:', {
+      totalFotos: formData.Foto.length,
+      todasTemOrdem,
+      isSequential,
+      ordens,
+      hasManualOrder: resultado
+    });
+    
+    return resultado;
+  }, [formData?.Foto]);
 
-  // 🔥 PROCESSAR FOTOS COM ORDEM INTELIGENTE OU MANUAL
-  const fotosProcessadas = useMemo(() => {
-    if (!formData.Foto || !Array.isArray(formData.Foto)) return [];
+  // 🎯 ORDENAÇÃO COM PROTEÇÃO CONTRA PHOTOSORTER
+  const sortedPhotos = useMemo(() => {
+    if (!Array.isArray(formData?.Foto) || formData.Foto.length === 0) {
+      return [];
+    }
 
-    // Se há ordem local (reordenação manual), usar ela
-    if (localPhotoOrder.length > 0) {
-      console.log('✅ Usando ordem LOCAL (alteração recente)');
+    console.group('📋 ORDENAÇÃO - Decisão do Sistema');
+    console.log('Estado:', {
+      totalFotos: formData.Foto.length,
+      temOrdemLocal: !!localPhotoOrder,
+      temOrdemManual: hasManualOrder,
+      primeiras3Ordens: formData.Foto.slice(0, 3).map(f => f.ordem)
+    });
+
+    // 1️⃣ PRIORIDADE MÁXIMA: Ordem local (usuário acabou de alterar)
+    if (localPhotoOrder) {
+      console.log('✅ Usando ORDEM LOCAL (alteração em tempo real)');
+      console.groupEnd();
       return localPhotoOrder;
     }
 
-    // Verificar se fotos têm ordem manual salva no banco
-    const temOrdemManual = checkManualOrderHelper(formData.Foto);
-    
-    if (temOrdemManual.hasManualOrder) {
-      console.log('✅ Usando ordem MANUAL do banco');
-      return [...formData.Foto].sort((a, b) => {
-        const ordemA = a.Ordem !== undefined ? a.Ordem : (a.ordem !== undefined ? a.ordem : 999);
-        const ordemB = b.Ordem !== undefined ? b.Ordem : (b.ordem !== undefined ? b.ordem : 999);
-        return ordemA - ordemB;
+    // 2️⃣ PRIORIDADE ALTA: Ordem manual salva
+    if (hasManualOrder) {
+      console.log('✅ Usando ORDEM MANUAL SALVA (protegida do PhotoSorter)');
+      const fotosOrdenadas = [...formData.Foto].sort((a, b) => a.ordem - b.ordem);
+      console.groupEnd();
+      return fotosOrdenadas;
+    }
+
+    // 3️⃣ ÚLTIMO RECURSO: Ordem inteligente (PhotoSorter)
+    try {
+      console.log('✅ Aplicando ORDEM INTELIGENTE (PhotoSorter)');
+      
+      // 🔥 IMPORTANTE: Limpar cache do PhotoSorter antes
+      photoSorter.limparCache();
+      
+      const fotosComCodigos = formData.Foto.map((foto, index) => ({
+        ...foto,
+        codigoOriginal: foto.Codigo || foto.codigo || `temp-${index}`
+      }));
+      
+      // 🔥 CRÍTICO: Remover TODOS os campos de ordem para forçar PhotoSorter
+      const fotosLimpas = fotosComCodigos.map(foto => {
+        const { Ordem, ordem, ORDEM, codigoOriginal, ...fotoLimpa } = foto;
+        return { ...fotoLimpa, codigoOriginal };
       });
+      
+      const fotosOrdenadas = photoSorter.ordenarFotos(fotosLimpas, formData.Codigo || 'temp');
+      
+      // Restaurar códigos e adicionar ordem sequencial
+      const resultado = fotosOrdenadas.map((foto, index) => ({
+        ...foto,
+        Codigo: foto.codigoOriginal,
+        ordem: index, // Adicionar ordem 0-based
+        codigoOriginal: undefined
+      }));
+
+      console.log('📊 PhotoSorter aplicado:', resultado.length, 'fotos ordenadas');
+      console.groupEnd();
+      return resultado;
+
+    } catch (error) {
+      console.error('❌ Erro no PhotoSorter:', error);
+      console.groupEnd();
+      return [...formData.Foto];
     }
+  }, [formData?.Foto, formData?.Codigo, localPhotoOrder, hasManualOrder]);
 
-    console.log('🤖 Aplicando ordem INTELIGENTE');
-    const fotosOrdenadas = photoSorter.ordenarFotos(formData.Foto, formData.Codigo);
-    return fotosOrdenadas.map((foto, index) => ({
-      ...foto,
-      Ordem: index,
-      tipoOrdenacao: 'inteligente'
-    }));
-  }, [formData.Foto, localPhotoOrder]);
-
-  // 🔥 FUNÇÃO DE REORDENAÇÃO CORRIGIDA
-  const handleReorder = useCallback((startIndex, endIndex) => {
-    console.log('🔄 REORDENAÇÃO iniciada:', {
-      posicaoAtual: startIndex,
-      novaPosicao: endIndex,
-      totalFotos: fotosProcessadas.length
-    });
-
-    const fotosParaReordenar = localPhotoOrder.length > 0 ? [...localPhotoOrder] : [...fotosProcessadas];
+  // 🔥 REORDENAÇÃO PROTEGIDA
+  const handlePositionChange = async (codigo, newPosition) => {
+    const position = parseInt(newPosition);
+    const currentIndex = sortedPhotos.findIndex(p => p.Codigo === codigo);
     
-    // 🔥 REORDENAÇÃO IMUTÁVEL
-    const newArray = [...fotosParaReordenar];
-    const [movedItem] = newArray.splice(startIndex, 1);
-    newArray.splice(endIndex, 0, movedItem);
-
-    // 🚀 CRITICAL: ATUALIZAR CAMPO ORDEM BASEADO NA NOVA POSIÇÃO
-    const fotosComNovaOrdem = newArray.map((foto, index) => ({
-      ...foto,
-      Ordem: index,
-      ordem: undefined,
-      tipoOrdenacao: 'manual'
-    }));
-
-    console.log('📊 Ordens após reordenação:', fotosComNovaOrdem.slice(0, 5).map(f => ({ 
-      codigo: f.Codigo, 
-      Ordem: f.Ordem 
-    })));
-
-    setLocalPhotoOrder(fotosComNovaOrdem);
-
-    // 🔥 ATUALIZAR COMPONENTE PAI IMEDIATAMENTE
-    if (onUpdatePhotos) {
-      console.log('📤 Atualizando fotos no componente pai IMEDIATAMENTE');
-      onUpdatePhotos(fotosComNovaOrdem);
+    if (isNaN(position) || position < 1 || position > sortedPhotos.length || (position - 1) === currentIndex) {
+      return;
     }
-
-    console.log('✅ Reordenação concluída');
-  }, [fotosProcessadas, localPhotoOrder, onUpdatePhotos]);
-
-  // 🔥 RESET DA ORDEM MANUAL
-  const resetOrder = useCallback(() => {
-    console.log('🔄 Resetando para ordem inteligente');
     
-    if (!formData.Foto || !Array.isArray(formData.Foto)) return;
-
-    const fotosOrdenadas = photoSorter.ordenarFotos(formData.Foto, formData.Codigo);
-    const fotosComOrdem = fotosOrdenadas.map((foto, index) => ({
+    console.group('🔄 REORDENAÇÃO MANUAL INICIADA');
+    console.log('Foto:', codigo);
+    console.log('De:', currentIndex + 1, '→ Para:', position);
+    
+    // 🔥 LIMPAR CACHE DO PHOTOSORTER IMEDIATAMENTE
+    photoSorter.limparCache();
+    
+    // Criar nova ordem
+    const novaOrdem = [...sortedPhotos];
+    const fotoMovida = novaOrdem[currentIndex];
+    
+    // Reordenar array
+    novaOrdem.splice(currentIndex, 1);
+    novaOrdem.splice(position - 1, 0, fotoMovida);
+    
+    // 🔥 CRÍTICO: Aplicar ordens sequenciais em TODAS as fotos
+    const novaOrdemComIndices = novaOrdem.map((foto, index) => ({
       ...foto,
-      Ordem: index,
-      ordem: undefined,
-      tipoOrdenacao: 'inteligente'
+      ordem: index // Sempre 0-based sequencial
     }));
-
-    setLocalPhotoOrder([]);
-
-    if (onUpdatePhotos) {
-      onUpdatePhotos(fotosComOrdem);
+    
+    console.log('📊 Nova ordem aplicada:', novaOrdemComIndices.map((f, i) => `${i}: ${f.ordem}`));
+    
+    // Atualizar estado local
+    setLocalPhotoOrder(novaOrdemComIndices);
+    
+    // Propagar para componente pai
+    if (typeof onUpdatePhotos === 'function') {
+      console.log('📤 Propagando para componente pai...');
+      onUpdatePhotos(novaOrdemComIndices);
     }
-  }, [formData.Foto, formData.Codigo, onUpdatePhotos]);
+    
+    console.log('✅ Reordenação manual concluída');
+    console.groupEnd();
+  };
 
-  const stats = useMemo(() => ({
-    totalFotos: fotosProcessadas.length,
-    temOrdemLocal: localPhotoOrder.length > 0
-  }), [fotosProcessadas.length, localPhotoOrder.length]);
+  const baixarTodasImagens = async (imagens = []) => {
+    if (!Array.isArray(imagens)) return;
+    setDownloadingPhotos(true);
+    const zip = new JSZip();
+    const pasta = zip.folder("imagens");
+
+    for (const [i, img] of imagens.entries()) {
+      try {
+        const cleanUrl = (() => {
+          try {
+            const parsed = new URL(img.Foto);
+            if (parsed.pathname.startsWith("/_next/image")) {
+              const inner = parsed.searchParams.get("url");
+              return decodeURIComponent(inner || img.Foto);
+            }
+            return img.Foto;
+          } catch {
+            return img.Foto;
+          }
+        })();
+
+        const response = await fetch(cleanUrl);
+        if (!response.ok) continue;
+        const blob = await response.blob();
+        const nome = `imagem-${i + 1}.jpg`;
+        pasta?.file(nome, blob);
+      } catch (err) {
+        console.error(`Erro ao baixar imagem ${i + 1}:`, err);
+      }
+    }
+
+    try {
+      const content = await zip.generateAsync({ type: "blob" });
+      saveAs(content, "imagens.zip");
+    } catch (zipError) {
+      console.error("Erro ao gerar zip:", zipError);
+    }
+    setDownloadingPhotos(false);
+  };
+
+  const handleAddImageUrl = () => {
+    const imageUrl = prompt("Digite a URL da imagem:");
+    if (imageUrl?.trim()) {
+      try {
+        new URL(imageUrl.trim());
+        addSingleImage(imageUrl.trim());
+        setLocalPhotoOrder(null);
+      } catch {
+        alert('URL inválida.');
+      }
+    }
+  };
+
+  const handleImageUpload = (codigo) => {
+    const fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept = "image/*";
+    fileInput.onchange = (e) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          updateImage(codigo, e.target.result);
+          setLocalPhotoOrder(null);
+        };
+        reader.readAsDataURL(file);
+      }
+    };
+    fileInput.click();
+  };
+
+  const handleRemoveImage = (codigo) => {
+    removeImage(codigo);
+    setLocalPhotoOrder(null);
+  };
+
+  const handleResetOrder = () => {
+    console.group('🔄 RESET PARA ORDEM INTELIGENTE');
+    console.log('Limpando cache do PhotoSorter...');
+    photoSorter.limparCache();
+    setLocalPhotoOrder(null);
+    
+    if (typeof onUpdatePhotos === 'function' && formData?.Foto) {
+      // 🔥 CRÍTICO: Remover TODOS os campos de ordem para forçar PhotoSorter
+      const fotosSemOrdem = formData.Foto.map(foto => {
+        const { ordem, Ordem, ORDEM, ...fotoLimpa } = foto;
+        return fotoLimpa;
+      });
+      
+      console.log('📤 Enviando fotos sem ordem para forçar recálculo...');
+      onUpdatePhotos(fotosSemOrdem);
+    }
+    
+    console.log('✅ Reset concluído');
+    console.groupEnd();
+  };
+
+  // 🎨 STATUS VISUAL MELHORADO
+  const getStatusInfo = () => {
+    if (localPhotoOrder) {
+      return {
+        status: 'local',
+        title: '✋ ORDEM PERSONALIZADA (não salva)',
+        description: 'Você alterou a ordem. Clique em SALVAR para persistir as mudanças.',
+        bgColor: 'bg-orange-50',
+        borderColor: 'border-orange-400',
+        textColor: 'text-orange-700'
+      };
+    }
+    
+    if (hasManualOrder) {
+      return {
+        status: 'manual',
+        title: '💾 ORDEM MANUAL SALVA',
+        description: 'Ordem definida manualmente e salva no banco. Use "Resetar Ordem" para voltar à ordem inteligente.',
+        bgColor: 'bg-blue-50',
+        borderColor: 'border-blue-400',
+        textColor: 'text-blue-700'
+      };
+    }
+    
+    return {
+      status: 'intelligent',
+      title: '🤖 ORDEM INTELIGENTE (PhotoSorter)',
+      description: 'Fotos organizadas automaticamente pelo sistema inteligente.',
+      bgColor: 'bg-green-50',
+      borderColor: 'border-green-400',
+      textColor: 'text-green-700'
+    };
+  };
+
+  const statusInfo = getStatusInfo();
 
   return (
-    <section className="bg-white border-2 border-gray-200 rounded-lg p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-gray-900">Imagens do Imóvel</h2>
-        <span className="text-sm text-gray-500">{stats.totalFotos}/5 fotos</span>
-      </div>
+    <FormSection title="Imagens do Imóvel" className="mb-8">
+      <div className="space-y-4">
+        <div className="flex flex-wrap justify-between items-center gap-3">
+          <div className="text-sm">
+            <span className="font-medium text-gray-700">
+              {validation.photoCount}/{validation.requiredPhotoCount} fotos
+            </span>
+            {validation.photoCount < validation.requiredPhotoCount && (
+              <span className="text-red-500 ml-2">
+                (Mínimo {validation.requiredPhotoCount})
+              </span>
+            )}
+          </div>
 
-      {/* ALERTA DE ORDEM PERSONALIZADA */}
-      {stats.temOrdemLocal && (
-        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <div className="text-orange-600 mr-3">🔄</div>
-              <div>
-                <p className="text-orange-800 font-medium">ORDEM PERSONALIZADA (não salva)</p>
-                <p className="text-orange-600 text-sm">
-                  Você alterou a ordem das fotos. As mudanças são aplicadas automaticamente. Use "Resetar Ordem" para voltar à ordem inteligente.
-                </p>
-              </div>
-            </div>
+          <div className="flex flex-wrap gap-2">
             <button
-              onClick={resetOrder}
-              className="bg-[#8B6F48] text-white px-4 py-2 rounded-md hover:bg-[#8B6F48]/80 font-medium text-sm"
+              type="button"
+              onClick={handleAddImageUrl}
+              className="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-md transition-colors"
             >
-              🔄 Resetar Ordem
+              + Adicionar URL
             </button>
+            
+            <button
+              type="button"
+              onClick={showImageModal}
+              className="px-3 py-1.5 text-sm bg-black hover:bg-gray-800 text-white rounded-md transition-colors"
+            >
+              📤 Upload em Lote
+            </button>
+
+            {sortedPhotos.length > 0 && (
+              <>
+                <button
+                  type="button"
+                  onClick={handleResetOrder}
+                  className="px-3 py-1.5 text-sm bg-purple-600 hover:bg-purple-700 text-white rounded-md transition-colors"
+                  title="Voltar para ordem inteligente"
+                >
+                  🔄 Resetar Ordem
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={() => baixarTodasImagens(sortedPhotos)}
+                  disabled={downloadingPhotos}
+                  className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                    downloadingPhotos
+                      ? 'bg-blue-300 text-white cursor-wait'
+                      : 'bg-blue-600 hover:bg-blue-700 text-white'
+                  }`}
+                >
+                  {downloadingPhotos ? 'Baixando...' : '⬇️ Baixar Todas'}
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={removeAllImages}
+                  className="px-3 py-1.5 text-sm bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors"
+                >
+                  🗑️ Limpar Tudo
+                </button>
+              </>
+            )}
           </div>
         </div>
-      )}
 
-      {validation?.fotos && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-          <p className="text-red-800">{validation.fotos}</p>
+        {/* INDICADOR DE STATUS */}
+        <div className={`p-3 rounded-md text-sm border-l-4 ${statusInfo.bgColor} ${statusInfo.borderColor} ${statusInfo.textColor}`}>
+          <p><strong>{statusInfo.title}</strong></p>
+          <p className="text-xs mt-1">{statusInfo.description}</p>
         </div>
-      )}
 
-      <div className="flex flex-wrap gap-3 mb-6">
-        <button
-          type="button"
-          onClick={() => addSingleImage && addSingleImage()}
-          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 font-medium"
-        >
-          + Adicionar URL
-        </button>
-
-        <button
-          type="button"
-          onClick={() => showImageModal && showImageModal()}
-          className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 font-medium"
-        >
-          📤 Upload em Lote
-        </button>
-
-        <button
-          type="button"
-          onClick={resetOrder}
-          className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 font-medium"
-        >
-          🔄 Resetar Ordem
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            if (onUpdatePhotos) onUpdatePhotos(fotosProcessadas);
-            if (downloadAllPhotos) downloadAllPhotos();
-          }}
-          disabled={downloadingPhotos}
-          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 font-medium disabled:opacity-50"
-        >
-          {downloadingPhotos ? "⏳ Baixando..." : "⬇️ Baixar Todas"}
-        </button>
-
-        <button
-          type="button"
-          onClick={() => {
-            setLocalPhotoOrder([]);
-            if (removeAllImages) removeAllImages();
-          }}
-          className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 font-medium"
-        >
-          🗑️ Limpar Tudo
-        </button>
-      </div>
-
-      {/* LAYOUT EXATO DO ORIGINAL - BASEADO NA SUA IMAGEM */}
-      {fotosProcessadas.length > 0 ? (
-        <div className="space-y-4">
-          {fotosProcessadas.map((foto, index) => (
-            <div
-              key={foto.Codigo}
-              className={`border rounded-lg overflow-hidden ${
-                foto.Destaque === "Sim"
-                  ? "border-yellow-400 bg-yellow-50"
-                  : "border-gray-200 bg-white"
-              }`}
-            >
-              <div className="flex">
-                {/* COLUNA DA ESQUERDA - BOTÕES DE MOVIMENTO */}
-                <div className="flex flex-col items-center justify-center p-3 bg-gray-50 border-r border-gray-200">
-                  <button
-                    type="button"
-                    onClick={() => handleReorder(index, Math.max(0, index - 1))}
-                    disabled={index === 0}
-                    className="p-1 mb-1 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed w-6 h-6 flex items-center justify-center text-xs"
-                  >
-                    ⬆
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleReorder(index, Math.min(fotosProcessadas.length - 1, index + 1))}
-                    disabled={index === fotosProcessadas.length - 1}
-                    className="p-1 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed w-6 h-6 flex items-center justify-center text-xs"
-                  >
-                    ⬇
-                  </button>
-                </div>
-
-                {/* COLUNA DO MEIO - POSIÇÃO */}
-                <div className="flex items-center justify-center p-4 min-w-12">
-                  <span className="font-bold text-lg text-gray-700">
-                    {foto.Destaque === "Sim" ? "⭐" : `${index + 1}º`}
-                  </span>
-                </div>
-
-                {/* COLUNA DA IMAGEM */}
-                <div className="flex-shrink-0">
-                  <img
-                    src={foto.Foto}
-                    alt={`Foto ${index + 1}`}
-                    className="w-32 h-24 object-cover"
-                    loading="lazy"
+        {sortedPhotos.length > 0 ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {sortedPhotos.map((photo, index) => (
+              <div key={photo.Codigo} className="border rounded-lg overflow-hidden bg-white shadow-sm">
+                <div className="relative aspect-video w-full">
+                  <Image
+                    src={photo.Foto}
+                    alt={`Imóvel ${index + 1}`}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   />
-                </div>
-
-                {/* COLUNA DE INFORMAÇÕES */}
-                <div className="flex-1 p-4">
-                  <div className="mb-2">
-                    <p className="font-semibold text-gray-900 text-sm">
-                      Código: {foto.Codigo}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Ordem: {foto.Ordem} | Tipo: {foto.tipoOrdenacao || 'banco'}
-                    </p>
-                    <p className="text-xs text-gray-400 truncate">
-                      {foto.Foto && foto.Foto.split('/').pop()}
-                    </p>
+                  {photo.Destaque === "Sim" && (
+                    <span className="absolute top-2 left-2 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded">
+                      DESTAQUE
+                    </span>
+                  )}
+                  <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
+                    {index + 1}°
+                  </div>
+                  {/* DEBUG: Mostrar ordem */}
+                  <div className="absolute bottom-2 right-2 bg-black/70 text-white text-xs px-1 py-0.5 rounded">
+                    ordem: {photo.ordem}
                   </div>
                 </div>
 
-                {/* COLUNA DE AÇÕES - DESTACAR */}
-                <div className="flex items-center p-4">
-                  <div className="text-sm text-gray-600 mr-3">Destaque</div>
-                  <button
-                    type="button"
-                    onClick={() => setImageAsHighlight && setImageAsHighlight(foto.Codigo)}
-                    className={`px-3 py-1 rounded text-sm font-medium ${
-                      foto.Destaque === "Sim"
-                        ? "bg-yellow-200 text-yellow-800"
-                        : "bg-gray-100 text-gray-600 hover:bg-yellow-100"
-                    }`}
-                  >
-                    ⭐ Destacar
-                  </button>
-                </div>
+                <div className="p-3 space-y-3">
+                  <div className="flex gap-2">
+                    <div className="flex-1">
+                      <label className="block text-xs text-gray-500 mb-1">Posição</label>
+                      <select
+                        value={index + 1}
+                        onChange={(e) => handlePositionChange(photo.Codigo, e.target.value)}
+                        className="w-full p-1.5 text-sm border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        {[...Array(sortedPhotos.length)].map((_, i) => (
+                          <option key={i + 1} value={i + 1}>
+                            {i + 1}°
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-xs text-gray-500 mb-1">Destaque</label>
+                      <button
+                        onClick={() => setImageAsHighlight(photo.Codigo)}
+                        className={`w-full p-1.5 text-sm rounded-md transition-colors ${
+                          photo.Destaque === "Sim"
+                            ? "bg-yellow-500 hover:bg-yellow-600 text-white"
+                            : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                        }`}
+                      >
+                        {photo.Destaque === "Sim" ? "★ Destaque" : "☆ Destacar"}
+                      </button>
+                    </div>
+                  </div>
 
-                {/* COLUNA DE AÇÕES - REMOVER */}
-                <div className="flex items-center p-4">
-                  <button
-                    type="button"
-                    onClick={() => removeImage && removeImage(foto.Codigo)}
-                    className="px-3 py-1 bg-red-100 text-red-600 rounded text-sm font-medium hover:bg-red-200"
-                  >
-                    🗑️ Remover
-                  </button>
+                  <div className="text-xs text-gray-500 truncate">
+                    ID: {photo.Codigo}
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleImageUpload(photo.Codigo)}
+                      className="flex-1 py-1.5 text-sm bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-md transition-colors"
+                    >
+                      🔄 Trocar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage(photo.Codigo)}
+                      className="flex-1 py-1.5 text-sm bg-red-50 hover:bg-red-100 text-red-700 rounded-md transition-colors"
+                    >
+                      ✖ Remover
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-          <div className="text-gray-400 text-6xl mb-4">📷</div>
-          <p className="text-gray-600 font-medium text-lg">Nenhuma foto adicionada</p>
-          <p className="text-gray-500 text-sm mb-6">
-            Adicione pelo menos 5 fotos para cadastrar o imóvel
-          </p>
-          <button
-            type="button"
-            onClick={() => showImageModal && showImageModal()}
-            className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 font-medium"
-          >
-            Adicionar Primeira Foto
-          </button>
-        </div>
-      )}
-    </section>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200">
+            <p className="text-gray-500">Nenhuma imagem cadastrada</p>
+            <p className="text-sm text-gray-400 mt-1">
+              Utilize os botões acima para adicionar imagens
+            </p>
+          </div>
+        )}
+
+        {validation.photoCount < validation.requiredPhotoCount && (
+          <div className="bg-yellow-50 border-l-4 border-yellow-400 p-3">
+            <p className="text-yellow-700 text-sm">
+              ⚠️ Adicione pelo menos {validation.requiredPhotoCount} fotos para publicar
+            </p>
+          </div>
+        )}
+      </div>
+    </FormSection>
   );
-}
+});
+
+ImagesSection.displayName = "ImagesSection";
+export default ImagesSection;
