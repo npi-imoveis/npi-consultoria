@@ -1,4 +1,4 @@
-// 🎯 PHOTOSORTER CORRIGIDO - Respeita ordem manual
+// 🎯 PHOTOSORTER CORRIGIDO - Respeita ordem manual DEFINITIVAMENTE
 // utils/photoSorter.js
 
 export class PhotoSorter {
@@ -116,33 +116,49 @@ export class PhotoSorter {
     };
   }
 
-  // 🔥 VERIFICAÇÃO CRÍTICA: Detectar ordem manual
+  // 🔥 VERIFICAÇÃO CRÍTICA CORRIGIDA: Detectar ordem manual
   temOrdemManual(fotos) {
     if (!Array.isArray(fotos) || fotos.length === 0) {
       return false;
     }
 
-    // Verificar se TODAS as fotos têm campo ordem numérico
-    const todasTemOrdem = fotos.every(foto => 
-      typeof foto.ordem === 'number' && foto.ordem >= 0
-    );
+    // Verificar se TODAS as fotos têm campo Ordem numérico válido
+    const todasTemOrdem = fotos.every(foto => {
+      const temOrdem = typeof foto.Ordem === 'number' && foto.Ordem >= 0;
+      const temOrdemMinuscula = typeof foto.ordem === 'number' && foto.ordem >= 0;
+      return temOrdem || temOrdemMinuscula;
+    });
 
     if (!todasTemOrdem) {
+      if (this.debug) {
+        console.log('📸 PhotoSorter - Nem todas têm campo Ordem válido');
+      }
       return false;
     }
 
-    // Verificar se é uma sequência válida (0, 1, 2, 3...)
-    const ordens = fotos.map(f => f.ordem).sort((a, b) => a - b);
-    const isSequential = ordens.every((ordem, index) => ordem === index);
+    // 🔥 CORREÇÃO: Não exigir sequência perfeita, apenas verificar se tem ordem definida
+    // A presença do campo Ordem já indica intenção de ordem manual
+    
+    const ordens = fotos.map(f => {
+      const ordem = f.Ordem !== undefined ? f.Ordem : f.ordem;
+      return typeof ordem === 'number' ? ordem : 0;
+    }).sort((a, b) => a - b);
 
-    const resultado = todasTemOrdem && isSequential;
+    // 🚀 RELAXAR VERIFICAÇÃO: Aceitar qualquer ordem com números válidos
+    const temOrdensValidas = ordens.every(ordem => typeof ordem === 'number' && ordem >= 0);
+    
+    // Verificar se não são todas iguais (seria estranho)
+    const todasIguais = ordens.every(ordem => ordem === ordens[0]);
+    
+    const resultado = temOrdensValidas && !todasIguais;
 
     if (this.debug) {
       console.log('🔍 PhotoSorter - Verificação de ordem manual:', {
         totalFotos: fotos.length,
         todasTemOrdem,
-        isSequential,
-        ordens,
+        temOrdensValidas,
+        todasIguais,
+        ordensAmostra: ordens.slice(0, 5),
         temOrdemManual: resultado
       });
     }
@@ -150,7 +166,7 @@ export class PhotoSorter {
     return resultado;
   }
 
-  // 🎯 MÉTODO PRINCIPAL: Ordenação híbrida inteligente (CORRIGIDO)
+  // 🎯 MÉTODO PRINCIPAL CORRIGIDO: Ordenação híbrida inteligente
   ordenarFotos(fotos, codigoImovel) {
     if (!Array.isArray(fotos) || fotos.length === 0) return [];
 
@@ -162,29 +178,40 @@ export class PhotoSorter {
         console.log('📸 Fotos recebidas:', fotos.length);
       }
 
-      // 🔥 VERIFICAÇÃO CRÍTICA: Se há ordem manual, PRESERVÁ-LA!
+      // 🔥 VERIFICAÇÃO CRÍTICA CORRIGIDA: Se há ordem manual, PRESERVÁ-LA TOTALMENTE!
       if (this.temOrdemManual(fotos)) {
         if (this.debug) {
-          console.log('✅ ORDEM MANUAL DETECTADA - PhotoSorter preservando ordem');
-          console.log('📊 Ordens encontradas:', fotos.map(f => f.ordem));
+          console.log('✅ ORDEM MANUAL DETECTADA - PhotoSorter preservando ordem EXATA');
+          console.log('📊 Ordens encontradas:', fotos.map(f => f.Ordem || f.ordem));
         }
 
-        // 1. DESTAQUE SEMPRE PRIMEIRO (se existir)
-        const fotoDestaque = fotos.find(foto => foto.Destaque === "Sim");
-        const outrasFotos = fotos.filter(foto => foto !== fotoDestaque);
+        // 🚀 PRESERVAR ORDEM MANUAL COMPLETAMENTE
+        // 1. Não mexer na ordem, apenas garantir campos consistentes
+        const fotosComOrdemManual = fotos.map(foto => ({
+          ...foto,
+          Ordem: foto.Ordem !== undefined ? foto.Ordem : foto.ordem,
+          tipoOrdenacao: 'manual'
+        }));
 
-        // 2. PRESERVAR ORDEM MANUAL das outras fotos
-        const fotosOrdenadas = [...outrasFotos].sort((a, b) => a.ordem - b.ordem);
+        // 2. Ordenar APENAS pelo campo Ordem para organizar conforme intenção
+        fotosComOrdemManual.sort((a, b) => (a.Ordem || 0) - (b.Ordem || 0));
 
-        // 3. RESULTADO FINAL com ordem manual preservada
+        // 3. DESTAQUE continua primeiro independente da ordem
+        const fotoDestaque = fotosComOrdemManual.find(foto => foto.Destaque === "Sim");
+        const outrasFotos = fotosComOrdemManual.filter(foto => foto.Destaque !== "Sim");
+
         const resultado = [
           ...(fotoDestaque ? [fotoDestaque] : []),
-          ...fotosOrdenadas
+          ...outrasFotos
         ];
 
         if (this.debug) {
-          console.log('✅ Ordem manual preservada');
-          console.log('📊 Resultado:', resultado.map(f => ({ codigo: f.Codigo, ordem: f.ordem })));
+          console.log('✅ Ordem manual TOTALMENTE preservada');
+          console.log('📊 Resultado ordenado:', resultado.map(f => ({ 
+            codigo: f.Codigo?.substring(0, 10) + '...', 
+            Ordem: f.Ordem,
+            Destaque: f.Destaque 
+          })));
           console.groupEnd();
         }
 
@@ -193,7 +220,7 @@ export class PhotoSorter {
 
       // 🔥 SE NÃO HÁ ORDEM MANUAL, APLICAR LÓGICA INTELIGENTE
       if (this.debug) {
-        console.log('🤖 APLICANDO ORDEM INTELIGENTE (sem ordem manual)');
+        console.log('🤖 APLICANDO ORDEM INTELIGENTE (sem ordem manual detectada)');
       }
 
       // Verificar cache apenas para ordem inteligente
@@ -210,23 +237,23 @@ export class PhotoSorter {
       const fotoDestaque = fotos.find(foto => foto.Destaque === "Sim");
       const outrasFotos = fotos.filter(foto => foto !== fotoDestaque);
 
-      // 2. VERIFICAR CAMPO ORDEM (MySQL original)
-      const temCampoOrdem = outrasFotos.some(foto => 
-        foto.Ordem !== undefined || 
-        foto.ORDEM !== undefined
+      // 2. VERIFICAR CAMPO ORDEM LEGACY (MySQL original)
+      const temCampoOrdemLegacy = outrasFotos.some(foto => 
+        foto.ORDEM !== undefined || 
+        (foto.Ordem !== undefined && foto.tipoOrdenacao !== 'manual')
       );
 
       let fotosOrdenadas;
       let metodo;
 
-      if (temCampoOrdem) {
-        // MÉTODO 1: Campo ORDEM do MySQL
+      if (temCampoOrdemLegacy) {
+        // MÉTODO 1: Campo ORDEM do MySQL (legacy)
         fotosOrdenadas = [...outrasFotos].sort((a, b) => {
-          const ordemA = a.Ordem || a.ORDEM || 999999;
-          const ordemB = b.Ordem || b.ORDEM || 999999;
+          const ordemA = a.ORDEM || a.Ordem || 999999;
+          const ordemB = b.ORDEM || b.Ordem || 999999;
           return ordemA - ordemB;
         });
-        metodo = 'MySQL ORDEM';
+        metodo = 'MySQL ORDEM Legacy';
       } else {
         // MÉTODO 2: Análise inteligente de códigos
         fotosOrdenadas = [...outrasFotos].sort((a, b) => {
@@ -244,13 +271,24 @@ export class PhotoSorter {
         metodo = 'Análise Inteligente';
       }
 
-      // 3. RESULTADO FINAL
+      // 3. ADICIONAR CAMPO ORDEM BASEADO NA POSIÇÃO FINAL
+      fotosOrdenadas = fotosOrdenadas.map((foto, index) => ({
+        ...foto,
+        Ordem: index + (fotoDestaque ? 1 : 0), // Ajustar se há destaque
+        tipoOrdenacao: 'inteligente'
+      }));
+
+      // 4. RESULTADO FINAL
       const resultado = [
-        ...(fotoDestaque ? [fotoDestaque] : []),
+        ...(fotoDestaque ? [{
+          ...fotoDestaque,
+          Ordem: 0,
+          tipoOrdenacao: 'destaque'
+        }] : []),
         ...fotosOrdenadas
       ];
 
-      // 4. LOGGING DETALHADO
+      // 5. LOGGING DETALHADO
       if (this.debug) {
         console.log(`📊 Método: ${metodo}`);
         console.log(`📸 Total: ${resultado.length} fotos`);
@@ -273,7 +311,7 @@ export class PhotoSorter {
         console.groupEnd();
       }
 
-      // 5. SALVAR CACHE (apenas para ordem inteligente)
+      // 6. SALVAR CACHE (apenas para ordem inteligente)
       this.cacheOrdenacao.set(cacheKey, resultado);
       
       return resultado;
@@ -313,6 +351,26 @@ export class PhotoSorter {
       cobertura: analises.filter(a => a.grupo !== 'DESCONHECIDO').length / fotos.length
     };
   }
+
+  // 🚀 MÉTODO ESTÁTICO PARA USO DIRETO
+  static preservarOrdemManual(fotos) {
+    // Método estático para preservar ordem manual sem criar instância
+    if (!Array.isArray(fotos) || fotos.length === 0) return [];
+    
+    const temOrdem = fotos.every(foto => 
+      typeof foto.Ordem === 'number' || typeof foto.ordem === 'number'
+    );
+    
+    if (temOrdem) {
+      return fotos.map(foto => ({
+        ...foto,
+        Ordem: foto.Ordem !== undefined ? foto.Ordem : foto.ordem,
+        tipoOrdenacao: 'manual'
+      })).sort((a, b) => (a.Ordem || 0) - (b.Ordem || 0));
+    }
+    
+    return fotos;
+  }
 }
 
 // 🚀 SINGLETON para uso global
@@ -321,4 +379,9 @@ export const photoSorter = new PhotoSorter();
 // 🎯 HOOK para Next.js
 export function usePhotoSorter() {
   return photoSorter;
+}
+
+// 🔥 FUNÇÃO HELPER PRINCIPAL
+export default function ordenarFotos(fotos, codigoImovel = 'default') {
+  return photoSorter.ordenarFotos(fotos, codigoImovel);
 }
