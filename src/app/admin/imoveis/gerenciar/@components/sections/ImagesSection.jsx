@@ -21,7 +21,40 @@ export default function ImagesSection({
   const [localPhotoOrder, setLocalPhotoOrder] = useState([]);
   const [isManualReorder, setIsManualReorder] = useState(false);
 
-  // 🔍 FUNÇÃO PARA VERIFICAR ORDEM MANUAL - MOVIDA PARA ANTES DO useMemo
+  // 🔥 PROCESSAR FOTOS COM ORDEM INTELIGENTE OU MANUAL
+  const fotosProcessadas = useMemo(() => {
+    if (!formData.Foto || !Array.isArray(formData.Foto)) return [];
+
+    // Se há ordem local (reordenação manual), usar ela
+    if (localPhotoOrder.length > 0) {
+      console.log('✅ Usando ordem LOCAL (alteração recente)');
+      return localPhotoOrder;
+    }
+
+    // Verificar se fotos têm ordem manual salva no banco
+    const temOrdemManual = checkManualOrder(formData.Foto);
+    
+    if (temOrdemManual.hasManualOrder) {
+      console.log('✅ Usando ordem MANUAL do banco');
+      // Preservar ordem manual do banco, ordenando por campo Ordem
+      return [...formData.Foto].sort((a, b) => {
+        const ordemA = a.Ordem !== undefined ? a.Ordem : (a.ordem !== undefined ? a.ordem : 999);
+        const ordemB = b.Ordem !== undefined ? b.Ordem : (b.ordem !== undefined ? b.ordem : 999);
+        return ordemA - ordemB;
+      });
+    }
+
+    console.log('🤖 Aplicando ordem INTELIGENTE');
+    // Aplicar ordem inteligente e adicionar campo Ordem
+    const fotosOrdenadas = photoSorter.ordenarFotos(formData.Foto, formData.Codigo);
+    return fotosOrdenadas.map((foto, index) => ({
+      ...foto,
+      Ordem: index, // ← Campo padronizado
+      tipoOrdenacao: 'inteligente'
+    }));
+  }, [formData.Foto, localPhotoOrder]);
+
+  // 🔍 FUNÇÃO PARA VERIFICAR ORDEM MANUAL
   const checkManualOrder = useCallback((fotos) => {
     if (!Array.isArray(fotos) || fotos.length === 0) {
       return { hasManualOrder: false, todasTemOrdem: false, isSequential: false };
@@ -55,39 +88,6 @@ export default function ImagesSection({
 
     return { hasManualOrder, todasTemOrdem, isSequential };
   }, []);
-
-  // 🔥 PROCESSAR FOTOS COM ORDEM INTELIGENTE OU MANUAL
-  const fotosProcessadas = useMemo(() => {
-    if (!formData.Foto || !Array.isArray(formData.Foto)) return [];
-
-    // Se há ordem local (reordenação manual), usar ela
-    if (localPhotoOrder.length > 0) {
-      console.log('✅ Usando ordem LOCAL (alteração recente)');
-      return localPhotoOrder;
-    }
-
-    // Verificar se fotos têm ordem manual salva no banco
-    const temOrdemManual = checkManualOrder(formData.Foto);
-    
-    if (temOrdemManual.hasManualOrder) {
-      console.log('✅ Usando ordem MANUAL do banco');
-      // Preservar ordem manual do banco, ordenando por campo Ordem
-      return [...formData.Foto].sort((a, b) => {
-        const ordemA = a.Ordem !== undefined ? a.Ordem : (a.ordem !== undefined ? a.ordem : 999);
-        const ordemB = b.Ordem !== undefined ? b.Ordem : (b.ordem !== undefined ? b.ordem : 999);
-        return ordemA - ordemB;
-      });
-    }
-
-    console.log('🤖 Aplicando ordem INTELIGENTE');
-    // Aplicar ordem inteligente e adicionar campo Ordem
-    const fotosOrdenadas = photoSorter.ordenarFotos(formData.Foto, formData.Codigo);
-    return fotosOrdenadas.map((foto, index) => ({
-      ...foto,
-      Ordem: index, // ← Campo padronizado
-      tipoOrdenacao: 'inteligente'
-    }));
-  }, [formData.Foto, localPhotoOrder, checkManualOrder]);
 
   // 🔥 FUNÇÃO DE REORDENAÇÃO COM BOTÕES (SEM DRAG-DROP)
   const movePhoto = useCallback((fromIndex, toIndex) => {
