@@ -84,7 +84,7 @@ export default function ImagesSection({
     }));
   }, [formData.Foto, localPhotoOrder]);
 
-  // 🔥 FUNÇÃO DE REORDENAÇÃO CORRIGIDA (MANTENDO A INTERFACE ORIGINAL)
+  // 🔥 FUNÇÃO DE REORDENAÇÃO CORRIGIDA
   const handleReorder = useCallback((startIndex, endIndex) => {
     console.log('🔄 REORDENAÇÃO iniciada:', {
       posicaoAtual: startIndex,
@@ -144,33 +144,15 @@ export default function ImagesSection({
     }
   }, [formData.Foto, formData.Codigo, onUpdatePhotos]);
 
-  // 📊 ESTATÍSTICAS PARA DEBUG
-  const stats = useMemo(() => {
-    const temOrdemLocal = localPhotoOrder.length > 0;
-    const temOrdemManual = checkManualOrderHelper(formData.Foto || []).hasManualOrder;
-    
-    console.log('📋 ORDENAÇÃO - Estado atual:', {
-      totalFotos: fotosProcessadas.length,
-      temOrdemLocal,
-      temOrdemManual,
-      primeiraFoto: fotosProcessadas[0] ? {
-        codigo: fotosProcessadas[0].Codigo,
-        Ordem: fotosProcessadas[0].Ordem,
-        tipoOrdenacao: fotosProcessadas[0].tipoOrdenacao
-      } : null
-    });
-
-    return {
-      totalFotos: fotosProcessadas.length,
-      temOrdemLocal,
-      temOrdemManual
-    };
-  }, [fotosProcessadas, localPhotoOrder, formData.Foto]);
+  const stats = useMemo(() => ({
+    totalFotos: fotosProcessadas.length,
+    temOrdemLocal: localPhotoOrder.length > 0
+  }), [fotosProcessadas.length, localPhotoOrder.length]);
 
   return (
-    <div className="bg-white border-2 border-gray-200 rounded-lg p-6">
+    <section className="mb-8">
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-gray-900">Imagens do Imóvel</h2>
+        <h2 className="text-2xl font-bold text-gray-900">Imagens do Imóvel</h2>
         <span className="text-sm text-gray-500">{stats.totalFotos}/5 fotos</span>
       </div>
 
@@ -183,13 +165,13 @@ export default function ImagesSection({
               <div>
                 <p className="text-orange-800 font-medium">ORDEM PERSONALIZADA (não salva)</p>
                 <p className="text-orange-600 text-sm">
-                  Você alterou a ordem. Clique em SALVAR para persistir as mudanças.
+                  Você alterou a ordem das fotos. As mudanças são aplicadas automaticamente. Use "Resetar Ordem" para voltar à ordem inteligente.
                 </p>
               </div>
             </div>
             <button
               onClick={resetOrder}
-              className="text-orange-600 hover:text-orange-800 font-medium text-sm"
+              className="bg-[#8B6F48] text-white px-4 py-2 rounded-md hover:bg-[#8B6F48]/80 font-medium text-sm"
             >
               🔄 Resetar Ordem
             </button>
@@ -197,7 +179,7 @@ export default function ImagesSection({
         </div>
       )}
 
-      {validation.fotos && (
+      {validation?.fotos && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
           <p className="text-red-800">{validation.fotos}</p>
         </div>
@@ -207,7 +189,7 @@ export default function ImagesSection({
         <button
           type="button"
           onClick={() => addSingleImage && addSingleImage()}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 font-medium"
         >
           + Adicionar URL
         </button>
@@ -215,7 +197,7 @@ export default function ImagesSection({
         <button
           type="button"
           onClick={() => showImageModal && showImageModal()}
-          className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+          className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 font-medium"
         >
           📤 Upload em Lote
         </button>
@@ -223,7 +205,7 @@ export default function ImagesSection({
         <button
           type="button"
           onClick={resetOrder}
-          className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+          className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700 font-medium"
         >
           🔄 Resetar Ordem
         </button>
@@ -235,7 +217,7 @@ export default function ImagesSection({
             if (downloadAllPhotos) downloadAllPhotos();
           }}
           disabled={downloadingPhotos}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 font-medium disabled:opacity-50"
         >
           {downloadingPhotos ? "⏳ Baixando..." : "⬇️ Baixar Todas"}
         </button>
@@ -246,126 +228,153 @@ export default function ImagesSection({
             setLocalPhotoOrder([]);
             if (removeAllImages) removeAllImages();
           }}
-          className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+          className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 font-medium"
         >
           🗑️ Limpar Tudo
         </button>
       </div>
 
+      {/* GALERIA COM FOTOS GRANDES - LAYOUT ORIGINAL */}
       {fotosProcessadas.length > 0 ? (
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {fotosProcessadas.map((foto, index) => (
             <div
               key={foto.Codigo}
-              className={`flex items-center gap-4 p-4 border rounded-lg ${
+              className={`relative bg-white rounded-lg border-2 overflow-hidden shadow-lg ${
                 foto.Destaque === "Sim"
                   ? "border-yellow-400 bg-yellow-50"
-                  : "border-gray-200 bg-white"
+                  : "border-gray-200"
               }`}
             >
-              {/* POSIÇÃO */}
-              <div className="flex-shrink-0 w-8 text-center">
-                {foto.Destaque === "Sim" ? (
-                  <span className="text-yellow-600 font-bold text-lg">⭐</span>
-                ) : (
-                  <span className="font-semibold text-gray-600">{index + 1}º</span>
-                )}
-              </div>
-
-              {/* IMAGEM */}
-              <div className="flex-shrink-0">
+              {/* IMAGEM GRANDE */}
+              <div className="relative aspect-video">
                 <img
                   src={foto.Foto}
                   alt={`Foto ${index + 1}`}
-                  className="w-20 h-20 object-cover rounded-lg border border-gray-200"
+                  className="w-full h-full object-cover"
                   loading="lazy"
                 />
+                
+                {/* POSIÇÃO NO CANTO SUPERIOR ESQUERDO */}
+                <div className="absolute top-2 left-2 bg-black bg-opacity-70 text-white px-2 py-1 rounded text-sm font-bold">
+                  {foto.Destaque === "Sim" ? "⭐" : `${index + 1}º`}
+                </div>
+
+                {/* BOTÕES DE MOVIMENTO NO CANTO SUPERIOR DIREITO */}
+                <div className="absolute top-2 right-2 flex gap-1">
+                  <button
+                    type="button"
+                    onClick={() => handleReorder(index, Math.max(0, index - 1))}
+                    disabled={index === 0}
+                    className="bg-black bg-opacity-70 text-white p-1 rounded hover:bg-opacity-90 disabled:opacity-30 disabled:cursor-not-allowed"
+                    title="Mover para cima"
+                  >
+                    ⬆️
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleReorder(index, Math.min(fotosProcessadas.length - 1, index + 1))}
+                    disabled={index === fotosProcessadas.length - 1}
+                    className="bg-black bg-opacity-70 text-white p-1 rounded hover:bg-opacity-90 disabled:opacity-30 disabled:cursor-not-allowed"
+                    title="Mover para baixo"
+                  >
+                    ⬇️
+                  </button>
+                </div>
               </div>
 
-              {/* INFO */}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">
-                  Código: {foto.Codigo}
-                </p>
-                <p className="text-xs text-gray-500">
-                  Ordem: {foto.Ordem} | Tipo: {foto.tipoOrdenacao || 'inteligente'}
-                </p>
-                <p className="text-xs text-gray-400 truncate">
-                  {foto.Foto && foto.Foto.split('/').pop()}
-                </p>
-              </div>
+              {/* INFORMAÇÕES E CONTROLES */}
+              <div className="p-4">
+                <div className="mb-3">
+                  <p className="font-semibold text-gray-900 text-sm">
+                    Código: {foto.Codigo}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Ordem: {foto.Ordem} | Tipo: {foto.tipoOrdenacao || 'inteligente'}
+                  </p>
+                  <p className="text-xs text-gray-400 truncate">
+                    {foto.Foto && foto.Foto.split('/').pop()}
+                  </p>
+                </div>
 
-              {/* CONTROLES DE MOVIMENTO */}
-              <div className="flex-shrink-0 flex gap-1">
-                <button
-                  type="button"
-                  onClick={() => handleReorder(index, Math.max(0, index - 1))}
-                  disabled={index === 0}
-                  className="p-1 text-xs bg-gray-100 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed rounded"
-                  title="Mover para cima"
-                >
-                  ⬆️
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleReorder(index, Math.min(fotosProcessadas.length - 1, index + 1))}
-                  disabled={index === fotosProcessadas.length - 1}
-                  className="p-1 text-xs bg-gray-100 hover:bg-gray-200 disabled:opacity-30 disabled:cursor-not-allowed rounded"
-                  title="Mover para baixo"
-                >
-                  ⬇️
-                </button>
-              </div>
+                {/* SELETOR DE POSIÇÃO */}
+                <div className="mb-3">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Posição
+                  </label>
+                  <select
+                    value={index + 1}
+                    onChange={(e) => {
+                      const newPosition = parseInt(e.target.value) - 1;
+                      if (newPosition !== index) {
+                        handleReorder(index, newPosition);
+                      }
+                    }}
+                    className="w-full text-sm border border-gray-300 rounded px-2 py-1"
+                  >
+                    {Array.from({ length: fotosProcessadas.length }, (_, i) => (
+                      <option key={i} value={i + 1}>
+                        {i + 1}º
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-              {/* AÇÕES */}
-              <div className="flex-shrink-0 flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setImageAsHighlight && setImageAsHighlight(foto.Codigo)}
-                  className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
-                    foto.Destaque === "Sim"
-                      ? "bg-yellow-100 text-yellow-800 border border-yellow-300"
-                      : "bg-gray-100 text-gray-600 hover:bg-yellow-50"
-                  }`}
-                >
-                  {foto.Destaque === "Sim" ? "✅ Destaque" : "⭐ Destacar"}
-                </button>
+                {/* CONTROLE DE DESTAQUE */}
+                <div className="mb-4">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Destaque
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setImageAsHighlight && setImageAsHighlight(foto.Codigo)}
+                    className={`w-full px-3 py-2 rounded text-sm font-medium transition-colors ${
+                      foto.Destaque === "Sim"
+                        ? "bg-yellow-100 text-yellow-800 border border-yellow-300"
+                        : "bg-gray-100 text-gray-600 hover:bg-yellow-50 border border-gray-300"
+                    }`}
+                  >
+                    {foto.Destaque === "Sim" ? "⭐ Destacar" : "⭐ Destacar"}
+                  </button>
+                </div>
 
-                <button
-                  type="button"
-                  onClick={() => updateImage && updateImage(foto.Codigo)}
-                  className="px-3 py-1 rounded text-xs font-medium bg-blue-100 text-blue-600 hover:bg-blue-200 transition-colors"
-                >
-                  ✏️ Editar
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() => removeImage && removeImage(foto.Codigo)}
-                  className="px-3 py-1 rounded text-xs font-medium bg-red-100 text-red-600 hover:bg-red-200 transition-colors"
-                >
-                  🗑️ Remover
-                </button>
+                {/* AÇÕES */}
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => updateImage && updateImage(foto.Codigo)}
+                    className="flex-1 px-3 py-1 bg-blue-500 text-white rounded text-xs hover:bg-blue-600 transition-colors"
+                  >
+                    🔄 Trocar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => removeImage && removeImage(foto.Codigo)}
+                    className="flex-1 px-3 py-1 bg-red-500 text-white rounded text-xs hover:bg-red-600 transition-colors"
+                  >
+                    ❌ Remover
+                  </button>
+                </div>
               </div>
             </div>
           ))}
         </div>
       ) : (
         <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-          <div className="text-gray-400 text-4xl mb-4">📷</div>
-          <p className="text-gray-600 font-medium">Nenhuma foto adicionada</p>
-          <p className="text-gray-500 text-sm mb-4">
+          <div className="text-gray-400 text-6xl mb-4">📷</div>
+          <p className="text-gray-600 font-medium text-lg">Nenhuma foto adicionada</p>
+          <p className="text-gray-500 text-sm mb-6">
             Adicione pelo menos 5 fotos para cadastrar o imóvel
           </p>
           <button
             type="button"
             onClick={() => showImageModal && showImageModal()}
-            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 font-medium"
           >
             Adicionar Primeira Foto
           </button>
         </div>
       )}
-    </div>
+    </section>
   );
 }
