@@ -10,13 +10,7 @@ import { formatAddress } from "@/app/utils/formatter-address";
 import { salvarLog } from "@/app/admin/services/log-service";
 import { getCurrentUserAndDate } from "@/app/utils/get-log";
 
-export const useImovelSubmit = (
-  formData, 
-  setIsModalOpen, 
-  mode = "create", 
-  imovelId = null,
-  onSuccessCallback = null // 🔥 NOVO PARÂMETRO - Callback de sucesso
-) => {
+export const useImovelSubmit = (formData, setIsModalOpen, mode = "create", imovelId = null) => {
 
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
@@ -270,7 +264,7 @@ export const useImovelSubmit = (
         let result;
 
         if (formData.Automacao) {
-          // 🔥 IMÓVEL VINDO DA AUTOMAÇÃO
+          // Imóvel vindo da automação
           result = await criarImovel(formData.Codigo, payload);
           if (result && result.success) {
             setSuccess("Imóvel cadastrado com sucesso!");
@@ -287,19 +281,11 @@ export const useImovelSubmit = (
             } catch (logError) {
               console.error("Erro ao salvar log:", logError);
             }
-
-            // 🔥 CALLBACK DE SUCESSO
-            if (onSuccessCallback && typeof onSuccessCallback === 'function') {
-              console.log('🎯 Executando callback de sucesso (Automação)...');
-              onSuccessCallback(result);
-            }
-
           } else {
             setError(result?.message || "Erro ao criar imóvel");
           }
-
         } else if (mode === "edit") {
-          // 🔥 MODO DE EDIÇÃO OTIMIZADO
+          // Em modo de edição
           console.log('📝 Atualizando imóvel:', imovelId || formData.Codigo);
           
           const codigoOuId = imovelId || formData.Codigo;
@@ -335,18 +321,6 @@ export const useImovelSubmit = (
             } catch (logError) {
               console.error("Erro ao salvar log:", logError);
             }
-
-            // 🔥 CALLBACK DE SUCESSO COM DADOS ATUALIZADOS (CRÍTICO)
-            if (onSuccessCallback && typeof onSuccessCallback === 'function') {
-              console.log('🎯 Executando callback de sucesso (Edição)...');
-              console.log('📦 Dados disponíveis para callback:', {
-                temData: !!result?.data,
-                temFotos: !!result?.data?.Foto,
-                totalFotos: result?.data?.Foto?.length || 0
-              });
-              onSuccessCallback(result);
-            }
-
           } else {
             console.error('❌ Erro na atualização:', {
               success: result?.success,
@@ -356,9 +330,8 @@ export const useImovelSubmit = (
             });
             setError(result?.message || "Erro ao atualizar imóvel");
           }
-
         } else {
-          // 🔥 MODO DE CRIAÇÃO
+          // Em modo de criação
           result = await criarImovel(formData.Codigo, payload);
 
           if (result && result.success) {
@@ -376,18 +349,10 @@ export const useImovelSubmit = (
             } catch (logError) {
               console.error("Erro ao salvar log:", logError);
             }
-
-            // 🔥 CALLBACK DE SUCESSO
-            if (onSuccessCallback && typeof onSuccessCallback === 'function') {
-              console.log('🎯 Executando callback de sucesso (Criação)...');
-              onSuccessCallback(result);
-            }
-
           } else {
             setError(result?.message || "Erro ao cadastrar imóvel");
           }
         }
-
       } catch (error) {
         console.error(`Erro ao ${mode === "edit" ? "atualizar" : "cadastrar"} imóvel:`, error);
         setError(`Ocorreu um erro ao ${mode === "edit" ? "atualizar" : "cadastrar"} o imóvel`);
@@ -395,15 +360,7 @@ export const useImovelSubmit = (
         setIsSaving(false);
       }
     },
-    [
-      formData, 
-      setIsModalOpen, 
-      validateForm, 
-      preparePayload, 
-      mode, 
-      imovelId, 
-      onSuccessCallback // 🔥 NOVA DEPENDÊNCIA CRÍTICA
-    ]
+    [formData, setIsModalOpen, validateForm, preparePayload, mode, imovelId]
   );
 
   return {
