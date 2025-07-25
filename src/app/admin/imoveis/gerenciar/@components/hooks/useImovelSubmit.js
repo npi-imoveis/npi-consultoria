@@ -1,5 +1,3 @@
-// src/app/admin/imoveis/gerenciar/components/hooks/useImovelSubmit.js
-
 "use client";
 
 import { useState, useCallback } from "react";
@@ -53,93 +51,7 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create", imove
     return { isValid: true };
   }, []);
 
-  // 🔥 FUNÇÃO CRÍTICA: PREPARAR FOTOS SEM SOBRESCREVER ORDEM (CORRIGIDA)
-  const prepareFotosParaEnvio = useCallback((fotos) => {
-    console.group('📸 PREPARANDO FOTOS PARA ENVIO');
-    console.log('📥 Fotos recebidas:', fotos?.length || 0);
-    
-    if (!fotos || !Array.isArray(fotos)) {
-      console.log('⚠️ Fotos inválidas para processamento');
-      console.groupEnd();
-      return [];
-    }
-
-    // 🔍 VERIFICAR SE TEM ORDEM MANUAL PRESERVADA
-    const temOrdemManual = fotos.every(foto => {
-      // Verificar ambos os campos (Ordem e ordem) para compatibilidade
-      const temOrdemMaiuscula = typeof foto.Ordem === 'number' && foto.Ordem >= 0;
-      const temOrdemMinuscula = typeof foto.ordem === 'number' && foto.ordem >= 0;
-      return temOrdemMaiuscula || temOrdemMinuscula;
-    });
-
-    console.log('🔍 Verificação de ordem manual:', {
-      totalFotos: fotos.length,
-      temOrdemManual,
-      primeirasFotosOrdens: fotos.slice(0, 3).map(f => ({ 
-        codigo: f.Codigo, 
-        Ordem: f.Ordem, 
-        ordem: f.ordem 
-      }))
-    });
-
-    if (temOrdemManual) {
-      console.log('✅ PRESERVANDO ORDEM MANUAL - NÃO SOBRESCREVER!');
-      
-      // 🚀 PRESERVAR ORDEM MANUAL EXATA
-      const fotosComOrdemPreservada = fotos.map((foto, originalIndex) => {
-        // Unificar campos de ordem (Ordem maiúsculo tem prioridade)
-        const ordemFinal = foto.Ordem !== undefined && foto.Ordem !== null ? foto.Ordem : 
-                          foto.ordem !== undefined && foto.ordem !== null ? foto.ordem : 
-                          originalIndex;
-        
-        // Criar objeto limpo preservando ordem
-        const fotoProcessada = {
-          ...foto,
-          Ordem: typeof ordemFinal === 'number' ? ordemFinal : parseInt(ordemFinal) || originalIndex,
-          _id: foto._id || undefined,
-          Codigo: foto.Codigo || `photo-${Date.now()}-${originalIndex}`,
-          Destaque: foto.Destaque || "Nao",
-          tipoOrdenacao: foto.tipoOrdenacao || 'manual'
-        };
-        
-        // 🔥 CRÍTICO: Remover campo ordem minúsculo para evitar conflito
-        delete fotoProcessada.ordem;
-        
-        return fotoProcessada;
-      });
-      
-      // 🚀 IMPORTANTE: NÃO REORDENAR AQUI! Manter ordem exata do array
-      console.log('📊 Ordens preservadas:', fotosComOrdemPreservada.map((f, i) => `pos${i}:Ordem${f.Ordem}`).join(','));
-      console.groupEnd();
-      return fotosComOrdemPreservada;
-      
-    } else {
-      console.log('🤖 Aplicando ordem baseada no índice (sem ordem manual)');
-      
-      // Aplicar ordem baseada no índice atual do array
-      const fotosComIndice = fotos.map((foto, index) => {
-        const fotoProcessada = {
-          ...foto,
-          Ordem: index, // Ordem baseada na posição atual
-          _id: foto._id || undefined,
-          Codigo: foto.Codigo || `photo-${Date.now()}-${index}`,
-          Destaque: foto.Destaque || "Nao",
-          tipoOrdenacao: 'inteligente'
-        };
-        
-        // Remover propriedades desnecessárias
-        delete fotoProcessada.codigoOriginal;
-        delete fotoProcessada.ordem;
-        
-        return fotoProcessada;
-      });
-      
-      console.groupEnd();
-      return fotosComIndice;
-    }
-  }, []);
-
-  // 🔥 FUNÇÃO PREPARAR PAYLOAD CRÍTICA - NÃO REORDENAR
+  // 🔥 FUNÇÃO PREPARAR PAYLOAD OTIMIZADA
   const preparePayload = useCallback((data) => {
     console.group('📦 Preparando payload para envio');
     
@@ -149,24 +61,62 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create", imove
       if (Array.isArray(data.Foto)) {
         console.log('📸 Processando fotos como array:', data.Foto.length);
         
-        // 🚀 CRITICAL: USAR FUNÇÃO QUE PRESERVA ORDEM EXATA
-        fotosArray = prepareFotosParaEnvio(data.Foto);
+        // Verificar se tem ordem manual (campo 'ordem' definido)
+        const temOrdemManual = data.Foto.some(foto => 
+          typeof foto.ordem === 'number' && foto.ordem >= 0
+        );
         
+        console.log('📸 Tem ordem manual?', temOrdemManual);
+        
+        if (temOrdemManual) {
+          // PRESERVAR ordem manual existente
+          fotosArray = data.Foto.map(foto => {
+            const fotoProcessada = {
+              ...foto,
+              ordem: typeof foto.ordem === 'number' ? foto.ordem : 0,
+              _id: foto._id || undefined,
+              Codigo: foto.Codigo || undefined
+            };
+            
+            // Remover propriedades desnecessárias
+            delete fotoProcessada.codigoOriginal;
+            
+            return fotoProcessada;
+          });
+          
+          // Ordenar pelo campo ordem para garantir consistência
+          fotosArray.sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
+          
+          console.log('✅ Ordem manual preservada');
+        } else {
+          // Adicionar ordem baseada no índice atual
+          fotosArray = data.Foto.map((foto, index) => {
+            const fotoProcessada = {
+              ...foto,
+              ordem: index,
+              _id: foto._id || undefined,
+              Codigo: foto.Codigo || undefined
+            };
+            
+            // Remover propriedades desnecessárias
+            delete fotoProcessada.codigoOriginal;
+            
+            return fotoProcessada;
+          });
+          
+          console.log('✅ Ordem baseada no índice aplicada');
+        }
       } else {
         // Converter objeto para array (formato legacy)
         console.log('📸 Convertendo objeto para array');
-        const fotosFromObject = Object.entries(data.Foto)
+        fotosArray = Object.entries(data.Foto)
           .sort(([a], [b]) => parseInt(a) - parseInt(b))
           .map(([key, foto], index) => ({
             ...foto,
-            Ordem: typeof foto.Ordem === 'number' ? foto.Ordem : 
-                   typeof foto.ordem === 'number' ? foto.ordem : index,
+            ordem: typeof foto.ordem === 'number' ? foto.ordem : index,
             _id: foto._id || undefined,
-            Codigo: foto.Codigo || key,
-            tipoOrdenacao: 'legacy'
+            Codigo: foto.Codigo || key
           }));
-          
-        fotosArray = prepareFotosParaEnvio(fotosFromObject);
       }
     }
 
@@ -180,26 +130,15 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create", imove
       }
     }
 
-    // 🔥 DEBUG CRÍTICO: VERIFICAR ORDEM FINAL ANTES DO ENVIO
-    console.log('📊 PAYLOAD FINAL - Verificação de ordens:');
-    console.log('Total de fotos:', fotosArray.length);
-    
-    if (fotosArray.length > 0) {
-      const ordensSequencia = fotosArray.map(f => f.Ordem).join(',');
-      console.log('Sequência de ordens enviadas:', ordensSequencia);
-      
-      // Verificar se há inconsistências
-      const ordensValidas = fotosArray.every(f => typeof f.Ordem === 'number');
-      const ordensSequenciais = fotosArray.map(f => f.Ordem).every((ordem, index) => ordem === index);
-      
-      console.log('Ordens válidas?', ordensValidas);
-      console.log('Ordens sequenciais?', ordensSequenciais);
-      
-      // Log das primeiras 5 fotos para debug
-      fotosArray.slice(0, 5).forEach((foto, index) => {
-        console.log(`  Foto ${index}: Código ${foto.Codigo} → Ordem ${foto.Ordem}`);
-      });
-    }
+    // Debug final
+    console.log('📸 Resultado final:', {
+      totalFotos: fotosArray.length,
+      primeirasFotosOrdem: fotosArray.slice(0, 3).map(f => ({ 
+        codigo: f.Codigo, 
+        ordem: f.ordem,
+        url: f.Foto?.substring(f.Foto.lastIndexOf('/') + 1, f.Foto.lastIndexOf('/') + 10) + '...'
+      }))
+    });
     
     console.groupEnd();
 
@@ -208,10 +147,10 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create", imove
       ValorAntigo: data.ValorAntigo ? formatterNumber(data.ValorAntigo) : undefined,
       TipoEndereco: getTipoEndereco(data.Endereco),
       Endereco: formatAddress(data.Endereco),
-      Foto: fotosArray, // ← Array com ordem EXATA preservada
+      Foto: fotosArray,
       Video: videosArray.length > 0 ? videosArray : undefined,
     };
-  }, [prepareFotosParaEnvio]);
+  }, []);
 
   const handleSubmit = useCallback(
     async (e) => {
@@ -231,34 +170,11 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create", imove
       try {
         const payload = preparePayload(formData);
 
-        console.group('🚀 SUBMIT - Enviando para API');
+        console.group('🚀 Submissão de Imóvel');
         console.log('Modo:', mode);
         console.log('ID/Código:', imovelId || formData.Codigo);
-        console.log('Total de fotos no payload:', payload.Foto?.length);
-        
-        // 🔍 DEBUG DETALHADO: Verificar se ordens estão corretas no envio
-        if (payload.Foto && payload.Foto.length > 0) {
-          console.log('📊 VERIFICAÇÃO FINAL - Ordens no payload:');
-          const ordensEnviadas = payload.Foto.map(f => f.Ordem);
-          console.log('Ordens enviadas:', ordensEnviadas.join(','));
-          
-          // Detectar problemas comuns
-          const todasZero = ordensEnviadas.every(o => o === 0);
-          const todasSequenciais = ordensEnviadas.every((o, i) => o === i);
-          
-          console.log('🔍 Diagnóstico:');
-          console.log('  - Todas as ordens são 0?', todasZero);
-          console.log('  - Ordens sequenciais (0,1,2,3...)?', todasSequenciais);
-          
-          if (todasZero) {
-            console.warn('⚠️ PROBLEMA: Todas as ordens são 0 - possível falha na reordenação');
-          }
-          
-          if (!todasSequenciais) {
-            console.log('✅ Ordens não sequenciais detectadas - reordenação manual presente');
-          }
-        }
-        
+        console.log('Total de fotos:', payload.Foto?.length);
+        console.log('Ordens das fotos:', payload.Foto?.map((f, i) => `${i}:${f.ordem}`).join(', '));
         console.groupEnd();
 
         let result;
@@ -289,25 +205,9 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create", imove
           console.log('📝 Atualizando imóvel:', imovelId || formData.Codigo);
           
           const codigoOuId = imovelId || formData.Codigo;
-          
-          console.log('🌐 Chamando API de atualização...');
-          console.log('📊 Payload final sendo enviado:', {
-            codigo: codigoOuId,
-            totalFotos: payload.Foto?.length,
-            ordensResumidas: payload.Foto?.slice(0, 5).map(f => f.Ordem),
-            outrosCampos: Object.keys(payload).filter(k => k !== 'Foto').length
-          });
-          
           result = await atualizarImovel(codigoOuId, payload);
-          
-          console.log('📥 Resposta da API recebida:', {
-            success: result?.success,
-            message: result?.message,
-            data: result?.data ? 'Presente' : 'Ausente'
-          });
 
           if (result && result.success) {
-            console.log('✅ Atualização bem-sucedida!');
             setSuccess("Imóvel atualizado com sucesso!");
             
             try {
@@ -322,12 +222,6 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create", imove
               console.error("Erro ao salvar log:", logError);
             }
           } else {
-            console.error('❌ Erro na atualização:', {
-              success: result?.success,
-              message: result?.message,
-              error: result?.error,
-              status: result?.status
-            });
             setError(result?.message || "Erro ao atualizar imóvel");
           }
         } else {
