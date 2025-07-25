@@ -1,9 +1,10 @@
 import { connectToDatabase } from "@/app/lib/mongodb";
 import Imovel from "@/app/models/Imovel";
 import { NextResponse } from "next/server";
-import { revalidatePath, revalidateTag } from "next/cache";
 
-// 🔥 MÉTODO PUT OTIMIZADO COM REVALIDAÇÃO DE CACHE
+// 🔥 VERSÃO DA API ROUTE COM LOGS DETALHADOS PARA DEBUG
+// Substitua o método PUT da sua API route por esta versão:
+
 export async function PUT(request, { params }) {
   const { id } = params;
 
@@ -45,13 +46,11 @@ export async function PUT(request, { params }) {
         console.log(`    ${index + 1}. Código: ${foto.Codigo}, Ordem: ${foto.Ordem}`);
       });
       
-      if (dadosAtualizados.Foto.length > 3) {
-        console.log('  - Últimas 3 fotos:');
-        dadosAtualizados.Foto.slice(-3).forEach((foto, index) => {
-          const posicao = dadosAtualizados.Foto.length - 3 + index + 1;
-          console.log(`    ${posicao}. Código: ${foto.Codigo}, Ordem: ${foto.Ordem}`);
-        });
-      }
+      console.log('  - Últimas 3 fotos:');
+      dadosAtualizados.Foto.slice(-3).forEach((foto, index) => {
+        const posicao = dadosAtualizados.Foto.length - 3 + index + 1;
+        console.log(`    ${posicao}. Código: ${foto.Codigo}, Ordem: ${foto.Ordem}`);
+      });
       
       // Detectar problemas
       const ordensValidas = ordens.every(o => typeof o === 'number' && o >= 0);
@@ -190,30 +189,24 @@ export async function PUT(request, { params }) {
 
     console.log('✅ Documento salvo com sucesso!');
 
-    // 🔥 CONVERSÃO PARA OBJETO PURO
-    const dadosCompletos = imovelAtualizado.toObject();
-
     // 📸 VERIFICAÇÃO FINAL DAS FOTOS SALVAS
-    if (Array.isArray(dadosCompletos.Foto) && dadosCompletos.Foto.length > 0) {
+    if (Array.isArray(imovelAtualizado.Foto) && imovelAtualizado.Foto.length > 0) {
       console.log('📸 VERIFICAÇÃO FINAL - Fotos salvas no banco:');
-      console.log('  - Total salvo:', dadosCompletos.Foto.length);
-      console.log('  - Sequência de ordens salvas:', dadosCompletos.Foto.map(f => f.Ordem).join(','));
+      console.log('  - Total salvo:', imovelAtualizado.Foto.length);
+      console.log('  - Sequência de ordens salvas:', imovelAtualizado.Foto.map(f => f.Ordem).join(','));
       
       // 🔍 VERIFICAÇÃO DETALHADA DAS PRIMEIRAS E ÚLTIMAS FOTOS
       console.log('📋 Detalhes das fotos salvas no banco:');
-      dadosCompletos.Foto.slice(0, 3).forEach((foto, index) => {
+      imovelAtualizado.Foto.slice(0, 3).forEach((foto, index) => {
         console.log(`  Primeira ${index + 1}: Código ${foto.Codigo}, Ordem: ${foto.Ordem}, Destaque: ${foto.Destaque}`);
       });
-      
-      if (dadosCompletos.Foto.length > 3) {
-        dadosCompletos.Foto.slice(-3).forEach((foto, index) => {
-          const pos = dadosCompletos.Foto.length - 3 + index + 1;
-          console.log(`  Última ${pos}: Código ${foto.Codigo}, Ordem: ${foto.Ordem}, Destaque: ${foto.Destaque}`);
-        });
-      }
+      imovelAtualizado.Foto.slice(-3).forEach((foto, index) => {
+        const pos = imovelAtualizado.Foto.length - 3 + index + 1;
+        console.log(`  Última ${pos}: Código ${foto.Codigo}, Ordem: ${foto.Ordem}, Destaque: ${foto.Destaque}`);
+      });
       
       // 🔍 VERIFICAR ESTRUTURA COMPLETA DE UMA FOTO
-      const fotoExemplo = dadosCompletos.Foto[0];
+      const fotoExemplo = imovelAtualizado.Foto[0];
       console.log('📊 Estrutura completa da primeira foto salva:', {
         keys: Object.keys(fotoExemplo),
         Codigo: fotoExemplo.Codigo,
@@ -225,7 +218,7 @@ export async function PUT(request, { params }) {
       // Verificar se ordem foi preservada até o final
       if (dadosAtualizados.Foto) {
         const ordensEnviadas = dadosAtualizados.Foto.map(f => f.Ordem);
-        const ordensSalvas = dadosCompletos.Foto.map(f => f.Ordem);
+        const ordensSalvas = imovelAtualizado.Foto.map(f => f.Ordem);
         const ordemFinalPreservada = JSON.stringify(ordensEnviadas) === JSON.stringify(ordensSalvas);
         
         console.log('🔍 Ordem foi preservada até o banco?', ordemFinalPreservada);
@@ -240,67 +233,19 @@ export async function PUT(request, { params }) {
       }
     }
 
-    // 🚀 REVALIDAÇÃO CRÍTICA PARA O FRONT-END PÚBLICO
-    try {
-      const codigoImovel = dadosCompletos.Codigo;
-      const slugImovel = dadosCompletos.Slug;
-      
-      console.log('🔄 Iniciando revalidação de cache...');
-      
-      // Revalidar paths do front-end público
-      if (codigoImovel && slugImovel) {
-        // Página individual do imóvel
-        revalidatePath(`/imovel-${codigoImovel}/${slugImovel}`);
-        
-        // Páginas de listagem
-        revalidatePath('/');
-        revalidatePath('/imoveis');
-        revalidatePath('/buscar');
-        
-        // Tags de cache
-        revalidateTag('imoveis');
-        revalidateTag('imovel-publico');
-        revalidateTag(`imovel-${codigoImovel}`);
-        
-        console.log('🔄 Cache do front-end revalidado para:', {
-          codigo: codigoImovel,
-          slug: slugImovel,
-          paths: [
-            `imovel-${codigoImovel}/${slugImovel}`,
-            'imoveis',
-            'buscar'
-          ]
-        });
-      }
-      
-      // Revalidar paths do admin
-      revalidatePath(`/admin/imoveis/${id}`);
-      revalidatePath(`/admin/imoveis/${id}/edit`);
-      revalidatePath('/admin/imoveis');
-      revalidateTag('admin-imoveis');
-      
-      console.log('✅ Revalidação de cache concluída com sucesso');
-      
-    } catch (revalidateError) {
-      console.error('⚠️ Erro na revalidação de cache:', revalidateError);
-      // Não falhar a requisição por causa da revalidação
-    }
-
     console.groupEnd();
 
-    // 🎉 RESPOSTA DE SUCESSO COM DADOS COMPLETOS
+    // 🎉 RESPOSTA DE SUCESSO
     return NextResponse.json({
       status: 200,
       success: true,
       message: "Imóvel atualizado com sucesso",
-      data: dadosCompletos, // ← DADOS COMPLETOS ATUALIZADOS
-      metadata: {
-        _id: dadosCompletos._id,
-        Codigo: dadosCompletos.Codigo,
-        Empreendimento: dadosCompletos.Empreendimento,
-        totalFotos: Array.isArray(dadosCompletos.Foto) ? dadosCompletos.Foto.length : 0,
-        ultimaAtualizacao: new Date().toISOString(),
-        cacheRevalidated: true
+      data: {
+        _id: imovelAtualizado._id,
+        Codigo: imovelAtualizado.Codigo,
+        Empreendimento: imovelAtualizado.Empreendimento,
+        totalFotos: Array.isArray(imovelAtualizado.Foto) ? imovelAtualizado.Foto.length : 0,
+        ultimaAtualizacao: new Date().toISOString()
       },
     });
 
@@ -321,114 +266,6 @@ export async function PUT(request, { params }) {
         message: "Erro interno do servidor",
         error: error.message || "Unknown error"
       },
-      { status: 500 }
-    );
-  }
-}
-
-// 🔥 MÉTODO GET OTIMIZADO
-export async function GET(request, { params }) {
-  const { id } = params;
-
-  try {
-    await connectToDatabase();
-
-    console.log('📥 API GET - Buscando imóvel:', id);
-
-    let imovel = await Imovel.findOne({ Codigo: id }).lean();
-    
-    if (!imovel && id.match(/^[0-9a-fA-F]{24}$/)) {
-      imovel = await Imovel.findById(id).lean();
-    }
-
-    if (!imovel) {
-      return NextResponse.json(
-        { success: false, message: "Imóvel não encontrado" },
-        { status: 404 }
-      );
-    }
-
-    // 🔥 GARANTIR QUE FOTOS TENHAM ORDEM CONSISTENTE
-    if (Array.isArray(imovel.Foto)) {
-      imovel.Foto.sort((a, b) => (a.Ordem || 0) - (b.Ordem || 0));
-      
-      console.log('📸 Fotos ordenadas no GET:', {
-        total: imovel.Foto.length,
-        primeiras5Ordens: imovel.Foto.slice(0, 5).map(f => f.Ordem)
-      });
-    }
-
-    console.log('✅ Imóvel encontrado e retornado:', {
-      codigo: imovel.Codigo,
-      totalFotos: imovel.Foto?.length || 0
-    });
-
-    return NextResponse.json({
-      success: true,
-      data: imovel,
-      timestamp: new Date().toISOString()
-    });
-
-  } catch (error) {
-    console.error('❌ Erro na API GET:', error);
-    return NextResponse.json(
-      { success: false, message: "Erro ao buscar imóvel", error: error.message },
-      { status: 500 }
-    );
-  }
-}
-
-// 🔥 MÉTODO PATCH PARA DESATIVAR IMÓVEL (mantido para compatibilidade)
-export async function PATCH(request, { params }) {
-  const { id } = params;
-  
-  try {
-    await connectToDatabase();
-    
-    const url = new URL(request.url);
-    const action = url.pathname.split('/').pop();
-    
-    if (action === 'desativar') {
-      let imovel = await Imovel.findOne({ Codigo: id });
-      
-      if (!imovel && id.match(/^[0-9a-fA-F]{24}$/)) {
-        imovel = await Imovel.findById(id);
-      }
-      
-      if (!imovel) {
-        return NextResponse.json(
-          { success: false, message: "Imóvel não encontrado" },
-          { status: 404 }
-        );
-      }
-      
-      imovel.Ativo = "Nao";
-      await imovel.save();
-      
-      // Revalidar cache
-      try {
-        revalidatePath('/admin/imoveis');
-        revalidatePath(`/imovel-${imovel.Codigo}/${imovel.Slug}`);
-        revalidateTag('imoveis');
-      } catch (revalidateError) {
-        console.warn('⚠️ Erro na revalidação:', revalidateError);
-      }
-      
-      return NextResponse.json({
-        success: true,
-        message: "Imóvel desativado com sucesso"
-      });
-    }
-    
-    return NextResponse.json(
-      { success: false, message: "Ação não reconhecida" },
-      { status: 400 }
-    );
-    
-  } catch (error) {
-    console.error('❌ Erro no PATCH:', error);
-    return NextResponse.json(
-      { success: false, message: "Erro interno do servidor", error: error.message },
       { status: 500 }
     );
   }
