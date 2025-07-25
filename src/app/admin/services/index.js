@@ -5,93 +5,49 @@ function ensureNumber(value, defaultValue) {
   return Number.isFinite(num) ? num : defaultValue;
 }
 
-// 🔥 SUBSTITUIR A FUNÇÃO atualizarImovel NO SEU services/index.js POR ESTA VERSÃO:
-
+// 🔥 FUNÇÃO CORRIGIDA: Atualizar imóvel (ROTA CORRETA)
 export async function atualizarImovel(codigo, dadosImovel) {
   try {
     console.group('📤 Service: Atualizando imóvel');
-    console.log('🆔 Código:', codigo);
-    console.log('📊 Dados básicos:', {
+    console.log('Código:', codigo);
+    console.log('Dados:', {
       empreendimento: dadosImovel.Empreendimento,
       totalFotos: Array.isArray(dadosImovel.Foto) ? dadosImovel.Foto.length : 'Não array',
-      totalCampos: Object.keys(dadosImovel).length
+      primeirasFotosOrdem: Array.isArray(dadosImovel.Foto) 
+        ? dadosImovel.Foto.slice(0, 3).map(f => ({ codigo: f.Codigo, ordem: f.ordem }))
+        : 'N/A'
     });
-    
-    // 🔍 Log detalhado das fotos sendo enviadas
-    if (Array.isArray(dadosImovel.Foto) && dadosImovel.Foto.length > 0) {
-      console.log('📸 Detalhes das fotos:');
-      console.log('  - Total:', dadosImovel.Foto.length);
-      console.log('  - Primeiras 5 ordens:', dadosImovel.Foto.slice(0, 5).map(f => f.Ordem));
-      console.log('  - Últimas 5 ordens:', dadosImovel.Foto.slice(-5).map(f => f.Ordem));
-      
-      // Verificar se há fotos com ordens duplicadas ou inválidas
-      const ordens = dadosImovel.Foto.map(f => f.Ordem);
-      const ordensUnicas = [...new Set(ordens)];
-      const temDuplicadas = ordens.length !== ordensUnicas.length;
-      const temInvalidas = ordens.some(o => typeof o !== 'number' || o < 0);
-      
-      if (temDuplicadas) {
-        console.warn('⚠️ ATENÇÃO: Ordens duplicadas detectadas!');
-      }
-      if (temInvalidas) {
-        console.warn('⚠️ ATENÇÃO: Ordens inválidas detectadas!');
-      }
-    }
 
-    console.log('🌐 Enviando requisição PUT para API...');
-    console.log('📡 URL:', `/admin/imoveis/${codigo}`);
-    
-    // 🔥 ROTA CORRIGIDA: /admin/imoveis/ 
-    const response = await axiosClient.put(`/admin/imoveis/${codigo}`, dadosImovel, {
+    // 🔥 ROTA CORRIGIDA: /admin/imoveis/ em vez de /imoveis/
+        const response = await axiosClient.put(`/admin/imoveis/${codigo}`, dadosImovel, {
       timeout: 30000,
       headers: {
         'Content-Type': 'application/json',
       }
     });
 
-    console.log('📥 Resposta HTTP recebida:', {
+    console.log('📥 Service: Resposta recebida:', {
       status: response.status,
-      statusText: response.statusText,
-      hasData: !!response.data
+      success: response.data?.success
     });
-
-    console.log('📋 Conteúdo da resposta:', {
-      success: response.data?.success,
-      message: response.data?.message,
-      dataPresent: !!response.data?.data,
-      errorPresent: !!response.data?.error
-    });
-
     console.groupEnd();
 
     if (response && response.status >= 200 && response.status < 300) {
-      console.log('✅ Service: Requisição HTTP bem-sucedida');
       return {
         success: true,
         data: response.data,
         message: response.data?.message || "Imóvel atualizado com sucesso",
       };
     } else {
-      console.error("❌ Service: Erro na resposta HTTP:", {
-        status: response.status,
-        statusText: response.statusText,
-        data: response.data
-      });
+      console.error("Service: Erro na resposta ao atualizar imóvel", response);
       return {
         success: false,
         message: response.data?.message || "Erro ao atualizar imóvel",
       };
     }
   } catch (error) {
-    console.error("❌ Service: Erro ao atualizar imóvel:", error);
+    console.error("Service: Erro ao atualizar imóvel:", error);
     console.groupEnd();
-    
-    // 🔍 Log detalhado do erro
-    console.error('📊 Detalhes do erro:');
-    console.error('  - Código:', error.code);
-    console.error('  - Mensagem:', error.message);
-    console.error('  - Status HTTP:', error.response?.status);
-    console.error('  - Dados da resposta:', error.response?.data);
     
     if (error.code === "ERR_NETWORK") {
       return {
@@ -101,25 +57,61 @@ export async function atualizarImovel(codigo, dadosImovel) {
       };
     }
 
-    if (error.response?.status >= 400 && error.response?.status < 500) {
-      return {
-        success: false,
-        message: error.response?.data?.message || "Erro nos dados enviados",
-        error: error.response?.data?.error || error.message,
-      };
-    }
+    return {
+      success: false,
+      message: error.response?.data?.message || "Erro ao atualizar imóvel",
+      error: error.response?.data?.error || error.message || "Erro desconhecido",
+    };
+  }
+}
 
-    if (error.response?.status >= 500) {
+// 🔥 FUNÇÃO CORRIGIDA: Criar imóvel (ROTA CORRETA)
+export async function criarImovel(codigo, dadosImovel) {
+  try {
+    console.group('📤 Service: Criando imóvel');
+    console.log('Código:', codigo);
+    console.log('Dados:', {
+      empreendimento: dadosImovel.Empreendimento,
+      totalFotos: Array.isArray(dadosImovel.Foto) ? dadosImovel.Foto.length : 'Não array'
+    });
+
+    // 🔥 ROTA CORRIGIDA: /admin/imoveis em vez de /admin/imoveis
+    const response = await axiosClient.post(`/admin/imoveis`, {
+      Codigo: codigo,
+      ...dadosImovel
+    }, {
+      timeout: 30000,
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+
+    console.log('📥 Service: Resposta recebida:', {
+      status: response.status,
+      success: response.data?.success
+    });
+    console.groupEnd();
+
+    return {
+      success: response.data?.success || response.status >= 200 && response.status < 300,
+      message: response.data?.message || "Imóvel criado com sucesso",
+      data: response.data?.data || null,
+    };
+  } catch (error) {
+    console.error("Service: Erro ao criar imóvel:", error);
+    console.groupEnd();
+
+    if (error.code === "ERR_NETWORK") {
       return {
         success: false,
-        message: "Erro interno do servidor. Tente novamente mais tarde.",
-        error: error.response?.data?.error || error.message,
+        message: "Erro de conexão com o servidor. Tente novamente mais tarde.",
+        error: "Erro de conexão",
       };
     }
 
     return {
       success: false,
-      message: error.response?.data?.message || "Erro ao atualizar imóvel",
+      message: error.response?.data?.message || "Erro ao criar imóvel",
       error: error.response?.data?.error || error.message || "Erro desconhecido",
     };
   }
