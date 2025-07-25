@@ -143,7 +143,7 @@ const ImagesSection = memo(({
     }
   }, [formData?.Foto, localPhotoOrder, isReordering, isRemoving]);
 
-  // 🔥 REORDENAÇÃO CORRIGIDA - Algoritmo correto para mover elementos
+  // 🔥 REORDENAÇÃO SUPER SIMPLES - Algoritmo infalível
   const handlePositionChange = async (codigo, newPosition) => {
     const position = parseInt(newPosition);
     const currentIndex = sortedPhotos.findIndex(p => p.Codigo === codigo);
@@ -153,8 +153,9 @@ const ImagesSection = memo(({
       return;
     }
     
-    console.log(`🔄 Movendo foto ${codigo} de posição ${currentIndex + 1}° para ${position}°`);
-    console.log(`📊 Índices: atual=${currentIndex}, destino=${targetIndex}`);
+    console.log(`🔄 Movendo foto ${codigo}:`);
+    console.log(`  - DA posição: ${currentIndex + 1}° (índice ${currentIndex})`);
+    console.log(`  - PARA posição: ${position}° (índice ${targetIndex})`);
     
     setIsReordering(true);
     
@@ -162,24 +163,20 @@ const ImagesSection = memo(({
       photoSorter.limparCache();
       
       const fotosParaReordenar = localPhotoOrder || [...sortedPhotos];
-      const novaOrdem = [...fotosParaReordenar];
       
-      // 🔥 ALGORITMO CORRETO: Mover elemento sem bugs de índice
-      if (currentIndex < targetIndex) {
-        // Movendo para frente: mover elementos entre as posições para trás
-        const fotoMovida = novaOrdem[currentIndex];
-        for (let i = currentIndex; i < targetIndex; i++) {
-          novaOrdem[i] = novaOrdem[i + 1];
+      // 🔥 MÉTODO INFALÍVEL: Criar novo array na ordem correta
+      const novaOrdem = [];
+      
+      // Adicionar todas as fotos exceto a que está sendo movida
+      fotosParaReordenar.forEach((foto, index) => {
+        if (index !== currentIndex) {
+          novaOrdem.push(foto);
         }
-        novaOrdem[targetIndex] = fotoMovida;
-      } else {
-        // Movendo para trás: mover elementos entre as posições para frente  
-        const fotoMovida = novaOrdem[currentIndex];
-        for (let i = currentIndex; i > targetIndex; i--) {
-          novaOrdem[i] = novaOrdem[i - 1];
-        }
-        novaOrdem[targetIndex] = fotoMovida;
-      }
+      });
+      
+      // Inserir a foto movida na posição correta
+      const fotoMovida = fotosParaReordenar[currentIndex];
+      novaOrdem.splice(targetIndex, 0, fotoMovida);
       
       // Reindexar todas as fotos
       const novaOrdemComIndices = novaOrdem.map((foto, index) => ({
@@ -189,7 +186,10 @@ const ImagesSection = memo(({
         tipoOrdenacao: 'manual'
       }));
       
-      console.log('✅ Nova sequência:', novaOrdemComIndices.map((f, i) => `${i+1}°:${f.Codigo}`).join(', '));
+      console.log('✅ Resultado final:');
+      novaOrdemComIndices.forEach((foto, index) => {
+        console.log(`  ${index + 1}°: ${foto.Codigo}`);
+      });
       
       setLocalPhotoOrder(novaOrdemComIndices);
       
