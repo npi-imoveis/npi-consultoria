@@ -5,124 +5,8 @@ function ensureNumber(value, defaultValue) {
   return Number.isFinite(num) ? num : defaultValue;
 }
 
-// 🔥 FUNÇÃO CRIAR IMÓVEL CORRIGIDA (NOVA - com detecção de automação)
-export async function criarImovel(codigo, dadosImovel) {
-  try {
-    console.group('📤 Service: Criando imóvel');
-    console.log('🆔 Código:', codigo);
-    console.log('🤖 É da automação?', dadosImovel.Automacao);
-    console.log('📊 Dados básicos:', {
-      empreendimento: dadosImovel.Empreendimento,
-      totalFotos: Array.isArray(dadosImovel.Foto) ? dadosImovel.Foto.length : 'Não array',
-      totalCampos: Object.keys(dadosImovel).length
-    });
+// 🔥 SUBSTITUIR A FUNÇÃO atualizarImovel NO SEU services/index.js POR ESTA VERSÃO:
 
-    // 🔥 ROTA DINÂMICA BASEADA NA ORIGEM
-    let endpoint;
-    
-    if (dadosImovel.Automacao === true) {
-      // Imóvel vindo da automação
-      endpoint = `/automacao/${codigo}`;
-      console.log('🤖 Usando rota de automação:', endpoint);
-    } else {
-      // Imóvel criado manualmente no admin
-      endpoint = `/admin/imoveis`;
-      console.log('👤 Usando rota do admin:', endpoint);
-    }
-
-    // Log detalhado das fotos se existirem
-    if (Array.isArray(dadosImovel.Foto) && dadosImovel.Foto.length > 0) {
-      console.log('📸 Detalhes das fotos para criação:');
-      console.log('  - Total:', dadosImovel.Foto.length);
-      console.log('  - Primeiras 5 ordens:', dadosImovel.Foto.slice(0, 5).map(f => f.Ordem));
-      
-      const ordens = dadosImovel.Foto.map(f => f.Ordem);
-      const ordensUnicas = [...new Set(ordens)];
-      const temDuplicadas = ordens.length !== ordensUnicas.length;
-      const temInvalidas = ordens.some(o => typeof o !== 'number' || o < 0);
-      
-      if (temDuplicadas) {
-        console.warn('⚠️ ATENÇÃO: Ordens duplicadas detectadas na criação!');
-      }
-      if (temInvalidas) {
-        console.warn('⚠️ ATENÇÃO: Ordens inválidas detectadas na criação!');
-      }
-    }
-
-    console.log('🌐 Enviando requisição de criação...');
-    console.log('📡 URL:', endpoint);
-    
-    const response = await axiosClient.post(endpoint, dadosImovel, {
-      timeout: 30000,
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    });
-
-    console.log('📥 Resposta HTTP recebida:', {
-      status: response.status,
-      statusText: response.statusText,
-      hasData: !!response.data
-    });
-
-    console.groupEnd();
-
-    if (response && response.status >= 200 && response.status < 300) {
-      console.log('✅ Service: Imóvel criado com sucesso');
-      return {
-        success: response.data?.success || true,
-        message: response.data?.message || "Imóvel criado com sucesso",
-        data: response.data?.data || response.data,
-        metadata: response.data?.metadata
-      };
-    } else {
-      console.error("❌ Service: Erro na criação:", {
-        status: response.status,
-        statusText: response.statusText,
-        data: response.data
-      });
-      return {
-        success: false,
-        message: response.data?.message || "Erro ao criar imóvel",
-      };
-    }
-  } catch (error) {
-    console.error("❌ Service: Erro ao criar imóvel:", error);
-    console.groupEnd();
-    
-    if (error.code === "ERR_NETWORK") {
-      return {
-        success: false,
-        message: "Erro de conexão com o servidor. Tente novamente mais tarde.",
-        error: "Erro de conexão",
-      };
-    }
-
-    if (error.response?.status >= 400 && error.response?.status < 500) {
-      return {
-        success: false,
-        message: error.response?.data?.message || "Erro nos dados enviados",
-        error: error.response?.data?.error || error.message,
-      };
-    }
-
-    if (error.response?.status >= 500) {
-      return {
-        success: false,
-        message: "Erro interno do servidor. Tente novamente mais tarde.",
-        error: error.response?.data?.error || error.message,
-      };
-    }
-
-    return {
-      success: false,
-      message: error.response?.data?.message || "Erro ao criar imóvel",
-      error: error.response?.data?.error || error.message || "Erro desconhecido",
-    };
-  }
-}
-
-// 🔥 SUA FUNÇÃO atualizarImovel MANTIDA IGUAL (já está corrigida)
 export async function atualizarImovel(codigo, dadosImovel) {
   try {
     console.group('📤 Service: Atualizando imóvel');
@@ -183,10 +67,9 @@ export async function atualizarImovel(codigo, dadosImovel) {
     if (response && response.status >= 200 && response.status < 300) {
       console.log('✅ Service: Requisição HTTP bem-sucedida');
       return {
-        success: response.data?.success || true,
+        success: true,
+        data: response.data,
         message: response.data?.message || "Imóvel atualizado com sucesso",
-        data: response.data?.data || response.data, // ← DADOS ATUALIZADOS DA API
-        metadata: response.data?.metadata
       };
     } else {
       console.error("❌ Service: Erro na resposta HTTP:", {
@@ -242,33 +125,7 @@ export async function atualizarImovel(codigo, dadosImovel) {
   }
 }
 
-// 🔥 FUNÇÃO NOVA: Forçar revalidação do cache do front
-export async function forceRevalidateImovel(codigo, slug) {
-  try {
-    console.log('🔄 Forçando revalidação de cache para:', { codigo, slug });
-    
-    // Tentar acionar endpoint de revalidação se existir
-    const response = await fetch(`/api/revalidate?path=/imovel-${codigo}/${slug}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    });
-    
-    if (response.ok) {
-      console.log('✅ Cache revalidado com sucesso');
-      return { success: true };
-    } else {
-      console.warn('⚠️ Não foi possível revalidar cache via API');
-      return { success: false };
-    }
-  } catch (error) {
-    console.warn('⚠️ Erro ao tentar revalidar cache:', error);
-    return { success: false };
-  }
-}
-
-// 🔥 SUA FUNÇÃO getImovelById MANTIDA IGUAL (já está corrigida)
+// 🔥 FUNÇÃO OTIMIZADA: Buscar imóvel por ID (ROTA CORRETA)
 export const getImovelById = async (codigo) => {
   try {
     console.log('📥 Service: Buscando imóvel:', codigo);
@@ -303,7 +160,7 @@ export const getImovelById = async (codigo) => {
   }
 };
 
-// 🔥 SUA FUNÇÃO desativarImovel MANTIDA IGUAL (já está corrigida)
+// Função para desativar imóvel (ROTA CORRIGIDA)
 export async function desativarImovel(codigo) {
   try {
     // 🔥 ROTA CORRIGIDA: /admin/imoveis/
@@ -334,7 +191,7 @@ export async function desativarImovel(codigo) {
   }
 }
 
-// === TODAS AS SUAS FUNÇÕES ORIGINAIS MANTIDAS INALTERADAS ===
+// === MANTER TODAS AS OUTRAS FUNÇÕES INALTERADAS ===
 
 export async function getImovelByIdAutomacao(codigo) {
   try {
