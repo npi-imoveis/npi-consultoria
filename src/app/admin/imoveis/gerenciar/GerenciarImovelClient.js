@@ -33,10 +33,8 @@ export default function GerenciarImovelClient() {
   const [downloadingPhotos, setDownloadingPhotos] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
   
-  // 🔥 NOVOS ESTADOS DE CONTROLE CRÍTICOS
+  // 🔥 ESTADO PARA CONTROLAR CARREGAMENTO INICIAL
   const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const [isSubmitSuccess, setIsSubmitSuccess] = useState(false);
-  const [lastUpdateTimestamp, setLastUpdateTimestamp] = useState(null);
   
   const router = useRouter();
 
@@ -66,46 +64,16 @@ export default function GerenciarImovelClient() {
     handleImagesUploaded,
   } = useImovelForm();
 
-  // 🔥 CALLBACK DE SUCESSO PARA O HOOK DE SUBMIT
-  const onSubmitSuccess = (responseData) => {
-    console.log('🎉 Submit bem-sucedido! Atualizando estado...');
-    
-    // Marcar como submit bem-sucedido
-    setIsSubmitSuccess(true);
-    setHasChanges(false);
-    
-    // SE A API RETORNOU DADOS ATUALIZADOS, USAR ELES
-    if (responseData?.data && responseData.data.Foto) {
-      console.log('📥 Atualizando formData com dados da API...');
-      
-      // Garantir que fotos estão ordenadas
-      const fotosOrdenadas = [...responseData.data.Foto].sort((a, b) => 
-        (a.Ordem || 0) - (b.Ordem || 0)
-      );
-      
-      setFormData(prev => ({
-        ...prev,
-        ...responseData.data,
-        Foto: fotosOrdenadas
-      }));
-      
-      console.log('✅ Estado atualizado com dados mais recentes da API');
-    }
-    
-    setLastUpdateTimestamp(Date.now());
-  };
-
   const { handleSubmit, isSaving, error, success, setError, setSuccess } = useImovelSubmit(
     formData,
     setIsModalOpen,
     mode,
-    imovelSelecionado?._id,
-    onSubmitSuccess // ← Callback de sucesso personalizado
+    imovelSelecionado?._id
   );
 
   const { handleFileUpload } = useImageUpload(updateImage, setSuccess, setError);
 
-  // 🔥 FUNÇÃO CRÍTICA CORRIGIDA: ATUALIZAÇÃO DE FOTOS SEM REORDENAR
+  // 🔥 FUNÇÃO CRÍTICA: ATUALIZAÇÃO DE FOTOS SEM REORDENAR
   const handleUpdatePhotos = (fotosAtualizadas) => {
     console.group('📸 PARENT: Atualizando fotos no formData');
     console.log('📸 Total de fotos recebidas:', fotosAtualizadas.length);
@@ -116,7 +84,7 @@ export default function GerenciarImovelClient() {
         console.log(`  ${index + 1}. Código: ${foto.Codigo}, Ordem: ${foto.Ordem}, Tipo: ${foto.tipoOrdenacao}`);
       });
       
-      // CRITICAL: Verificar se as ordens estão corretas
+      // 🔥 CRITICAL: Verificar se as ordens estão corretas
       const ordensSequenciais = fotosAtualizadas.map(f => f.Ordem).join(',');
       console.log('📊 Sequência de ordens:', ordensSequenciais);
     }
@@ -128,7 +96,6 @@ export default function GerenciarImovelClient() {
     }));
     
     setHasChanges(true);
-    setIsSubmitSuccess(false); // ← Resetar flag de submit
     console.groupEnd();
   };
 
@@ -164,269 +131,164 @@ export default function GerenciarImovelClient() {
     }
   };
 
+// 🔥 SUBSTITUIR O useEffect DE CARREGAMENTO NO SEU GerenciarImovelClient.js
+
 useEffect(() => {
-  // CONDIÇÕES RIGOROSAS PARA CARREGAMENTO
-  const shouldLoadFromStore = (
-    imovelSelecionado && 
-    mode === "edit" && 
-    isInitialLoad && 
-    !isSubmitSuccess // ← NÃO carregar se acabou de submitar
-  );
-
-  if (shouldLoadFromStore) {
+  if (imovelSelecionado && mode === "edit" && isInitialLoad) {
     console.group('🏠 Carregando dados do imóvel para edição');
-    console.log('🔍 Condições de carregamento:', {
-      temImovelSelecionado: !!imovelSelecionado,
-      modoEdicao: mode === "edit",
-      isInitialLoad,
-      isSubmitSuccess,
-      shouldLoad: shouldLoadFromStore
-    });
-
-    // 🔥 FORÇA BUSCAR DADOS FRESCOS DO BANCO SEMPRE
-    const loadFreshData = async () => {
-      try {
-        console.log('🔄 Buscando dados FRESCOS do banco...');
-        
-        const response = await fetch(`/api/admin/imoveis/${imovelSelecionado._id || imovelSelecionado.Codigo}`, {
-          headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'
-          }
-        });
-        
-        if (response.ok) {
-          const result = await response.json();
-          
-          if (result.success && result.data) {
-            console.log('✅ Dados frescos recebidos do banco:', {
-              codigo: result.data.Codigo,
-              totalFotos: result.data.Foto?.length,
-              primeirasFotosOrdens: result.data.Foto?.slice(0, 3).map(f => f.Ordem)
-            });
-            
-            // 🔥 USAR DADOS FRESCOS AO INVÉS DO STORE
-            const imovelFresco = result.data;
-            
-            // Processar fotos preservando ordem do banco
-            const processPhotos = () => {
-              if (!imovelFresco.Foto) return [];
-              
-              let fotosProcessadas = [];
-              
-              if (Array.isArray(imovelFresco.Foto)) {
-                console.log('📸 Processando fotos FRESCAS do banco:', imovelFresco.Foto.length);
-                
-                // Verificar se tem ordem manual salva no banco
-                const temOrdemManualNoBanco = imovelFresco.Foto.every(foto => {
-                  const temOrdemMaiuscula = typeof foto.Ordem === 'number' && foto.Ordem >= 0;
-                  const temOrdemMinuscula = typeof foto.ordem === 'number' && foto.ordem >= 0;
-                  return temOrdemMaiuscula || temOrdemMinuscula;
-                });
-                
-                console.log('📸 Ordem manual detectada no banco fresco?', temOrdemManualNoBanco);
-                
-                if (temOrdemManualNoBanco) {
-                  console.log('📸 Preservando ordem manual do banco FRESCO');
-                  
-                  fotosProcessadas = imovelFresco.Foto.map((foto, index) => {
-                    const ordemFinal = foto.Ordem !== undefined && foto.Ordem !== null ? foto.Ordem :
-                                      foto.ordem !== undefined && foto.ordem !== null ? foto.ordem :
-                                      index;
-                    
-                    return {
-                      ...foto,
-                      Codigo: foto.Codigo || `photo-${Date.now()}-${index}`,
-                      Destaque: foto.Destaque || "Nao",
-                      Ordem: ordemFinal,
-                      tipoOrdenacao: 'banco'
-                    };
-                  });
-                  
-                  // ORDENAR PELAS ORDENS SALVAS NO BANCO
-                  fotosProcessadas.sort((a, b) => (a.Ordem || 0) - (b.Ordem || 0));
-                  
-                } else {
-                  console.log('📸 Aplicando ordem por índice (dados frescos)');
-                  fotosProcessadas = imovelFresco.Foto.map((foto, index) => ({
-                    ...foto,
-                    Codigo: foto.Codigo || `photo-${Date.now()}-${index}`,
-                    Destaque: foto.Destaque || "Nao",
-                    Ordem: index,
-                    tipoOrdenacao: 'indice'
-                  }));
-                }
-              }
-              
-              console.log('📸 Fotos FRESCAS processadas:', {
-                total: fotosProcessadas.length,
-                ordensSequencia: fotosProcessadas.map(f => f.Ordem).join(',')
-              });
-              
-              return fotosProcessadas;
-            };
-
-            const processVideos = () => {
-              if (!imovelFresco.Video) return {};
-              const videosObj = {};
-              if (Array.isArray(imovelFresco.Video)) {
-                imovelFresco.Video.forEach((video) => {
-                  if (video.Codigo) {
-                    videosObj[video.Codigo] = { ...video };
-                  }
-                });
-              }
-              return videosObj;
-            };
-
-            const formatMonetaryDisplayValues = () => {
-              const displayObj = {};
-              ["ValorAntigo", "ValorAluguelSite", "ValorCondominio", "ValorIptu"].forEach((field) => {
-                if (imovelFresco[field]) {
-                  const value = typeof imovelFresco[field] === "string"
-                    ? imovelFresco[field].replace(/\D/g, "")
-                    : imovelFresco[field];
-                  displayObj[field] = formatarParaReal(value);
-                }
-              });
-              return displayObj;
-            };
-
-            const dadosProcessados = {
-              ...imovelFresco, // ← DADOS FRESCOS DO BANCO
-              Foto: processPhotos(),
-              Video: processVideos(),
-              Slug: formatterSlug(imovelFresco.Empreendimento || ""),
-            };
-
-            console.log('📋 Dados FRESCOS processados para formData:', {
-              codigo: dadosProcessados.Codigo,
-              totalFotos: dadosProcessados.Foto?.length,
-              primeirasOrdens: dadosProcessados.Foto?.slice(0, 5).map(f => f.Ordem)
-            });
-
-            setFormData(dadosProcessados);
-            setDisplayValues(formatMonetaryDisplayValues());
-            setIsInitialLoad(false);
-            setLastUpdateTimestamp(Date.now());
-            
-            console.log('✅ Estado atualizado com dados FRESCOS do banco');
-            console.groupEnd();
-            return;
-          }
+    
+    const formatMonetaryDisplayValues = () => {
+      const displayObj = {};
+      ["ValorAntigo", "ValorAluguelSite", "ValorCondominio", "ValorIptu"].forEach((field) => {
+        if (imovelSelecionado[field]) {
+          const value = typeof imovelSelecionado[field] === "string"
+            ? imovelSelecionado[field].replace(/\D/g, "")
+            : imovelSelecionado[field];
+          displayObj[field] = formatarParaReal(value);
         }
-        
-        // Se fetch falhou, usar dados do store como fallback
-        console.warn('⚠️ Fetch falhou, usando dados do store como fallback');
-        usarDadosDoStore();
-        
-      } catch (error) {
-        console.error('❌ Erro ao buscar dados frescos:', error);
-        console.log('🔄 Fallback: usando dados do store');
-        usarDadosDoStore();
-      }
+      });
+      return displayObj;
     };
 
-    // 🔥 FUNÇÃO FALLBACK PARA USAR DADOS DO STORE
-    const usarDadosDoStore = () => {
-      console.log('📦 Usando dados do store como fallback');
+    // 🔥 PROCESSAMENTO DE FOTOS CRÍTICO - PRESERVAR ORDEM EXATA DO BANCO
+    const processPhotos = () => {
+      if (!imovelSelecionado.Foto) return [];
       
-      const formatMonetaryDisplayValues = () => {
-        const displayObj = {};
-        ["ValorAntigo", "ValorAluguelSite", "ValorCondominio", "ValorIptu"].forEach((field) => {
-          if (imovelSelecionado[field]) {
-            const value = typeof imovelSelecionado[field] === "string"
-              ? imovelSelecionado[field].replace(/\D/g, "")
-              : imovelSelecionado[field];
-            displayObj[field] = formatarParaReal(value);
-          }
-        });
-        return displayObj;
-      };
-
-      const processPhotos = () => {
-        if (!imovelSelecionado.Foto) return [];
+      let fotosProcessadas = [];
+      
+      if (Array.isArray(imovelSelecionado.Foto)) {
+        console.log('📸 Fotos já em formato array:', imovelSelecionado.Foto.length);
         
-        let fotosProcessadas = [];
+        // 🔍 ANÁLISE DETALHADA DAS FOTOS DO BANCO
+        console.log('🔍 Analisando estrutura das fotos do banco:');
         
-        if (Array.isArray(imovelSelecionado.Foto)) {
-          const temOrdemManualNoBanco = imovelSelecionado.Foto.every(foto => {
-            const temOrdemMaiuscula = typeof foto.Ordem === 'number' && foto.Ordem >= 0;
-            const temOrdemMinuscula = typeof foto.ordem === 'number' && foto.ordem >= 0;
-            return temOrdemMaiuscula || temOrdemMinuscula;
+        const primeiraFoto = imovelSelecionado.Foto[0];
+        if (primeiraFoto) {
+          console.log('📊 Campos da primeira foto:', Object.keys(primeiraFoto));
+          console.log('📊 Valores dos campos de ordem:', {
+            Ordem: primeiraFoto.Ordem,
+            ordem: primeiraFoto.ordem,
+            tipoOrdem: typeof primeiraFoto.Ordem,
+            tipoOrdemMinuscula: typeof primeiraFoto.ordem
           });
+        }
+        
+        // 🔥 VERIFICAR SE TEM ORDEM MANUAL SALVA NO BANCO
+        const temOrdemManualNoBanco = imovelSelecionado.Foto.every(foto => {
+          const temOrdemMaiuscula = typeof foto.Ordem === 'number' && foto.Ordem >= 0;
+          const temOrdemMinuscula = typeof foto.ordem === 'number' && foto.ordem >= 0;
+          return temOrdemMaiuscula || temOrdemMinuscula;
+        });
+        
+        console.log('📸 Tem ordem manual salva no banco?', temOrdemManualNoBanco);
+        
+        if (temOrdemManualNoBanco) {
+          console.log('📸 Preservando ordem manual do banco');
           
-          if (temOrdemManualNoBanco) {
-            fotosProcessadas = imovelSelecionado.Foto.map((foto, index) => {
-              const ordemFinal = foto.Ordem !== undefined && foto.Ordem !== null ? foto.Ordem :
-                                foto.ordem !== undefined && foto.ordem !== null ? foto.ordem :
-                                index;
-              
-              return {
-                ...foto,
-                Codigo: foto.Codigo || `photo-${Date.now()}-${index}`,
-                Destaque: foto.Destaque || "Nao",
-                Ordem: ordemFinal,
-                tipoOrdenacao: 'banco'
-              };
-            });
+          // 🚀 PRESERVAR ORDEM EXATA DO BANCO - NÃO APLICAR PHOTOSORTER!
+          fotosProcessadas = imovelSelecionado.Foto.map((foto, index) => {
+            // Unificar campos de ordem (priorizar Ordem maiúsculo)
+            const ordemFinal = foto.Ordem !== undefined && foto.Ordem !== null ? foto.Ordem :
+                              foto.ordem !== undefined && foto.ordem !== null ? foto.ordem :
+                              index;
             
-            fotosProcessadas.sort((a, b) => (a.Ordem || 0) - (b.Ordem || 0));
-            
-          } else {
-            fotosProcessadas = imovelSelecionado.Foto.map((foto, index) => ({
+            const fotoProcessada = {
               ...foto,
               Codigo: foto.Codigo || `photo-${Date.now()}-${index}`,
               Destaque: foto.Destaque || "Nao",
-              Ordem: index,
-              tipoOrdenacao: 'indice'
-            }));
-          }
+              Ordem: ordemFinal, // ← PRESERVAR ORDEM DO BANCO
+              tipoOrdenacao: 'banco' // ← Marcar como vindo do banco
+            };
+            
+            // Remover campo conflitante
+            delete fotoProcessada.ordem;
+            
+            return fotoProcessada;
+          });
+          
+          // 🔥 CRITICAL: ORDENAR PELAS ORDENS SALVAS NO BANCO
+          fotosProcessadas.sort((a, b) => (a.Ordem || 0) - (b.Ordem || 0));
+          
+          console.log('📸 Fotos ordenadas conforme banco:', {
+            total: fotosProcessadas.length,
+            ordensSequencia: fotosProcessadas.map(f => f.Ordem).join(','),
+            primeiras3: fotosProcessadas.slice(0, 3).map(f => ({ 
+              codigo: f.Codigo?.substring(0, 15) + '...', 
+              Ordem: f.Ordem 
+            }))
+          });
+          
+        } else {
+          console.log('📸 Sem ordem manual no banco - aplicando ordem por índice');
+          // Se não tem ordem manual, aplicar ordem baseada na posição
+          fotosProcessadas = imovelSelecionado.Foto.map((foto, index) => ({
+            ...foto,
+            Codigo: foto.Codigo || `photo-${Date.now()}-${index}`,
+            Destaque: foto.Destaque || "Nao",
+            Ordem: index,
+            tipoOrdenacao: 'indice'
+          }));
         }
         
-        return fotosProcessadas;
-      };
-
-      const processVideos = () => {
-        if (!imovelSelecionado.Video) return {};
-        const videosObj = {};
-        if (Array.isArray(imovelSelecionado.Video)) {
-          imovelSelecionado.Video.forEach((video) => {
-            if (video.Codigo) {
-              videosObj[video.Codigo] = { ...video };
-            }
-          });
-        }
-        return videosObj;
-      };
-
-      const dadosProcessados = {
-        ...imovelSelecionado,
-        Foto: processPhotos(),
-        Video: processVideos(),
-        Slug: formatterSlug(imovelSelecionado.Empreendimento || ""),
-      };
-
-      setFormData(dadosProcessados);
-      setDisplayValues(formatMonetaryDisplayValues());
-      setIsInitialLoad(false);
-      setLastUpdateTimestamp(Date.now());
+      } else if (typeof imovelSelecionado.Foto === "object") {
+        console.log('📸 Convertendo fotos de objeto para array');
+        
+        const entries = Object.entries(imovelSelecionado.Foto);
+        fotosProcessadas = entries.map(([key, foto], index) => ({
+          ...foto,
+          Codigo: key,
+          Destaque: foto.Destaque || "Nao",
+          Ordem: foto.Ordem !== undefined ? foto.Ordem : 
+                 foto.ordem !== undefined ? foto.ordem : index,
+          tipoOrdenacao: 'objeto'
+        }));
+      }
       
-      console.groupEnd();
+      console.log('📸 Fotos processadas para formData:', {
+        total: fotosProcessadas.length,
+        primeirasFotosOrdem: fotosProcessadas.slice(0, 5).map(f => ({ 
+          codigo: f.Codigo?.substring(0, 15) + '...', 
+          Ordem: f.Ordem,
+          tipoOrdenacao: f.tipoOrdenacao
+        }))
+      });
+      
+      return fotosProcessadas;
     };
 
-    // 🔥 SEMPRE TENTAR DADOS FRESCOS PRIMEIRO
-    loadFreshData();
+    const processVideos = () => {
+      if (!imovelSelecionado.Video) return {};
+      const videosObj = {};
+      if (Array.isArray(imovelSelecionado.Video)) {
+        imovelSelecionado.Video.forEach((video) => {
+          if (video.Codigo) {
+            videosObj[video.Codigo] = { ...video };
+          }
+        });
+      }
+      return videosObj;
+    };
+
+    const dadosProcessados = {
+      ...imovelSelecionado,
+      Foto: processPhotos(), // ← Fotos com ordem PRESERVADA do banco
+      Video: processVideos(),
+      Slug: formatterSlug(imovelSelecionado.Empreendimento || ""),
+    };
+
+    console.log('📋 Dados finais para formData:', {
+      codigo: dadosProcessados.Codigo,
+      totalFotos: dadosProcessados.Foto?.length,
+      primeirasOrdens: dadosProcessados.Foto?.slice(0, 5).map(f => f.Ordem)
+    });
+
+    setFormData(dadosProcessados);
+    setDisplayValues(formatMonetaryDisplayValues());
+    setIsInitialLoad(false);
+    
+    console.groupEnd();
   }
-}, [
-  imovelSelecionado, 
-  mode, 
-  isInitialLoad, 
-  isSubmitSuccess,
-  setFormData, 
-  setDisplayValues
-]);
+}, [imovelSelecionado, mode, isInitialLoad, setFormData, setDisplayValues]);
 
   useEffect(() => {
     return () => {
@@ -437,7 +299,6 @@ useEffect(() => {
   const handleChangeWithTracking = (e) => {
     handleChange(e);
     setHasChanges(true);
-    setIsSubmitSuccess(false); // ← Resetar flag quando há mudanças
   };
 
   const handleFileInputChange = (e) => {
@@ -447,7 +308,6 @@ useEffect(() => {
       handleFileUpload(codigo, files[0]);
       e.target.value = "";
       setHasChanges(true);
-      setIsSubmitSuccess(false);
     }
   };
 
@@ -548,54 +408,8 @@ useEffect(() => {
     
     console.groupEnd();
     
-    // RESETAR FLAGS ANTES DO SUBMIT
-    setIsSubmitSuccess(false);
-    
-    try {
-      await handleSubmit(e);
-      console.log('✅ Submit concluído com sucesso');
-      
-    } catch (error) {
-      console.error('❌ Erro no submit:', error);
-      setIsSubmitSuccess(false);
-    }
-  };
-
-  // 🔥 FUNÇÃO PARA RECARREGAR DADOS FRESCOS (OPCIONAL - PARA DEBUG)
-  const reloadFreshData = async () => {
-    if (!imovelSelecionado?._id && !formData?.Codigo) return;
-    
-    try {
-      console.log('🔄 Recarregando dados frescos do servidor...');
-      
-      const response = await fetch(`/api/admin/imoveis/${imovelSelecionado?._id || formData.Codigo}`, {
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache'
-        }
-      });
-      
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success && result.data) {
-          console.log('✅ Dados frescos carregados:', {
-            totalFotos: result.data.Foto?.length,
-            timestamp: result.timestamp
-          });
-          
-          // Processar fotos garantindo ordem
-          if (Array.isArray(result.data.Foto)) {
-            result.data.Foto.sort((a, b) => (a.Ordem || 0) - (b.Ordem || 0));
-          }
-          
-          setFormData(result.data);
-          setIsSubmitSuccess(false);
-          setLastUpdateTimestamp(Date.now());
-        }
-      }
-    } catch (error) {
-      console.error('❌ Erro ao recarregar dados:', error);
-    }
+    setHasChanges(false);
+    await handleSubmit(e);
   };
 
   const title = () => {
@@ -638,34 +452,6 @@ useEffect(() => {
           success={success}
           isAutomacao={isAutomacao}
         />
-        
-        {/* 🔥 PAINEL DE DEBUG (APENAS EM DESENVOLVIMENTO) */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="mb-4 p-3 bg-gray-100 rounded-lg text-xs border">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p><strong>Estados de Controle:</strong></p>
-                <p>• isInitialLoad: {String(isInitialLoad)}</p>
-                <p>• isSubmitSuccess: {String(isSubmitSuccess)}</p>
-                <p>• hasChanges: {String(hasChanges)}</p>
-                <p>• lastUpdate: {lastUpdateTimestamp ? new Date(lastUpdateTimestamp).toLocaleTimeString() : 'null'}</p>
-              </div>
-              <div>
-                <p><strong>Dados do Formulário:</strong></p>
-                <p>• Total fotos: {formData?.Foto?.length || 0}</p>
-                <p>• Modo: {mode}</p>
-                <p>• Código: {formData?.Codigo || 'null'}</p>
-                <button 
-                  onClick={reloadFreshData} 
-                  className="mt-2 px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
-                >
-                  🔄 Recarregar dados frescos
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
         <div className="flex justify-between gap-2 py-4">
           {formData.Ativo === "Sim" && (
             <button
