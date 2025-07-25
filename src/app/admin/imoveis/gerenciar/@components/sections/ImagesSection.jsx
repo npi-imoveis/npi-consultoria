@@ -24,12 +24,10 @@ const ImagesSection = memo(({
   const [isReordering, setIsReordering] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
   
-  // 🔥 APENAS para imóveis vendidos: manter estado seguro das fotos
-  const [safePhotosState, setSafePhotosState] = useState(null);
-  
+  // 🔥 CORREÇÃO ESPECÍFICA PARA IMÓVEIS VENDIDOS - SEM AFETAR AUTOMAÇÃO
   const isImovelVendido = formData?.Status === "VENDIDO";
   
-  // 🔥 DETECÇÃO CRÍTICA CORRIGIDA: Verificar se há ordem manual REAL
+  // Detecção de ordem manual (mantida igual ao original)
   const hasManualOrder = useMemo(() => {
     if (!formData?.Foto || formData.Foto.length === 0) return false;
     
@@ -66,44 +64,32 @@ const ImagesSection = memo(({
     return resultado || temTipoValido;
   }, [formData?.Foto]);
 
-  // 🎯 ORDENAÇÃO COM PROTEÇÃO SIMPLES PARA VENDIDOS
+  // Ordenação (mantida praticamente igual, com apenas uma proteção para vendidos)
   const sortedPhotos = useMemo(() => {
     if (!Array.isArray(formData?.Foto) || formData.Foto.length === 0) {
       return [];
     }
 
-    // 🔥 PROTEÇÃO SIMPLES: Se imóvel vendido e todas fotos estão destacadas, corrigir
+    // 🔥 ÚNICA CORREÇÃO: Se imóvel vendido e todas fotos estão destacadas, corrigir
     if (isImovelVendido && formData.Foto.length > 1) {
       const fotosComDestaque = formData.Foto.filter(f => f.Destaque === "Sim");
       
       if (fotosComDestaque.length === formData.Foto.length) {
-        console.log('🔧 Corrigindo: todas fotos destacadas em imóvel vendido');
-        
-        // Usar estado seguro se disponível
-        if (safePhotosState && safePhotosState.length === formData.Foto.length) {
-          return safePhotosState;
-        }
-        
-        // Senão, corrigir mantendo apenas a primeira como destaque
+        console.log('Corrigindo fotos destacadas em imóvel vendido');
         const fotosCorrigidas = formData.Foto.map((foto, index) => ({
           ...foto,
           Destaque: index === 0 ? "Sim" : "Nao"
         }));
-        
-        setSafePhotosState(fotosCorrigidas);
         return fotosCorrigidas;
       }
     }
 
-    // 1️⃣ PRIORIDADE: Ordem local
+    // 1️⃣ Ordem local
     if (localPhotoOrder && !isReordering && !isRemoving) {
-      if (isImovelVendido) {
-        setSafePhotosState([...localPhotoOrder]);
-      }
       return localPhotoOrder;
     }
 
-    // 2️⃣ PRIORIDADE: Ordem manual salva
+    // 2️⃣ Ordem manual salva
     if (hasManualOrder) {
       const fotosOrdenadas = [...formData.Foto].sort((a, b) => {
         const ordemA = a.Ordem !== undefined ? a.Ordem : (a.ordem !== undefined ? a.ordem : 999);
@@ -111,14 +97,10 @@ const ImagesSection = memo(({
         return ordemA - ordemB;
       });
       
-      if (isImovelVendido) {
-        setSafePhotosState([...fotosOrdenadas]);
-      }
-      
       return fotosOrdenadas;
     }
 
-    // 3️⃣ PhotoSorter
+    // 3️⃣ PhotoSorter (mantido igual)
     try {
       photoSorter.limparCache();
       
@@ -142,17 +124,13 @@ const ImagesSection = memo(({
         codigoOriginal: undefined
       }));
 
-      if (isImovelVendido) {
-        setSafePhotosState([...resultado]);
-      }
-
       return resultado;
 
     } catch (error) {
       console.error('❌ Erro no PhotoSorter:', error);
       return [...formData.Foto];
     }
-  }, [formData?.Foto, formData?.Codigo, localPhotoOrder, hasManualOrder, isReordering, isRemoving, isImovelVendido, safePhotosState]);
+  }, [formData?.Foto, formData?.Codigo, localPhotoOrder, hasManualOrder, isReordering, isRemoving, isImovelVendido]);
 
   useEffect(() => {
     if (formData?.Foto && localPhotoOrder && !isReordering && !isRemoving) {
@@ -165,7 +143,7 @@ const ImagesSection = memo(({
     }
   }, [formData?.Foto, localPhotoOrder, isReordering, isRemoving]);
 
-  // 🔥 REORDENAÇÃO SIMPLES
+  // Reordenação (mantida igual ao original)
   const handlePositionChange = async (codigo, newPosition) => {
     const position = parseInt(newPosition);
     const currentIndex = sortedPhotos.findIndex(p => p.Codigo === codigo);
@@ -194,10 +172,6 @@ const ImagesSection = memo(({
       }));
       
       setLocalPhotoOrder(novaOrdemComIndices);
-      
-      if (isImovelVendido) {
-        setSafePhotosState([...novaOrdemComIndices]);
-      }
       
       setTimeout(() => {
         if (typeof onUpdatePhotos === 'function') {
@@ -285,9 +259,9 @@ const ImagesSection = memo(({
     fileInput.click();
   };
 
-  // 🔥 REMOÇÃO SIMPLES COM PROTEÇÃO BÁSICA
+  // 🔥 REMOÇÃO com proteção mínima para vendidos
   const handleRemoveImage = async (codigo) => {
-    // Para imóveis vendidos, não permitir remover se for a última foto
+    // Para imóveis vendidos, validação extra
     if (isImovelVendido && sortedPhotos.length <= 1) {
       alert('Não é possível remover a última foto de um imóvel vendido.');
       return;
@@ -306,15 +280,12 @@ const ImagesSection = memo(({
           tipoOrdenacao: 'manual'
         }));
       
-      // Para imóveis vendidos, garantir que sempre tenha uma foto destaque
+      // Para imóveis vendidos, garantir foto destaque
       if (isImovelVendido && fotosAposRemocao.length > 0) {
         const fotosComDestaque = fotosAposRemocao.filter(f => f.Destaque === "Sim");
-        
         if (fotosComDestaque.length === 0) {
           fotosAposRemocao[0].Destaque = "Sim";
         }
-        
-        setSafePhotosState([...fotosAposRemocao]);
       }
       
       setLocalPhotoOrder(fotosAposRemocao);
@@ -337,10 +308,10 @@ const ImagesSection = memo(({
     }
   };
 
-  // 🔥 DESTACAR FOTO SIMPLES
+  // 🔥 DESTACAR foto com correção para vendidos
   const handleSetImageAsHighlight = async (codigo) => {
     try {
-      const fotosAtuais = safePhotosState || localPhotoOrder || [...sortedPhotos];
+      const fotosAtuais = localPhotoOrder || [...sortedPhotos];
       
       // Aplicar destaque apenas na foto selecionada
       const fotosComNovoDestaque = fotosAtuais.map(foto => ({
@@ -349,11 +320,6 @@ const ImagesSection = memo(({
       }));
       
       setLocalPhotoOrder(fotosComNovoDestaque);
-      
-      if (isImovelVendido) {
-        setSafePhotosState([...fotosComNovoDestaque]);
-      }
-      
       setImageAsHighlight(codigo);
       
       setTimeout(() => {
@@ -374,10 +340,6 @@ const ImagesSection = memo(({
     setIsReordering(false);
     setIsRemoving(false);
     
-    if (isImovelVendido) {
-      setSafePhotosState(null);
-    }
-    
     if (typeof onUpdatePhotos === 'function' && formData?.Foto) {
       const fotosSemOrdem = formData.Foto.map(foto => {
         const { ordem, Ordem, ORDEM, tipoOrdenacao, ...fotoLimpa } = foto;
@@ -388,7 +350,7 @@ const ImagesSection = memo(({
     }
   };
 
-  // Status visual simples
+  // Status visual (mantido igual)
   const getStatusInfo = () => {
     if (isRemoving) {
       return {
