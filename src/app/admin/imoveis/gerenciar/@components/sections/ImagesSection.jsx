@@ -143,14 +143,18 @@ const ImagesSection = memo(({
     }
   }, [formData?.Foto, localPhotoOrder, isReordering, isRemoving]);
 
-  // Reordenação (mantida igual ao original)
+  // 🔥 REORDENAÇÃO CORRIGIDA - Algoritmo correto para mover elementos
   const handlePositionChange = async (codigo, newPosition) => {
     const position = parseInt(newPosition);
     const currentIndex = sortedPhotos.findIndex(p => p.Codigo === codigo);
+    const targetIndex = position - 1; // Converter para índice base 0
     
-    if (isNaN(position) || position < 1 || position > sortedPhotos.length || (position - 1) === currentIndex) {
+    if (isNaN(position) || position < 1 || position > sortedPhotos.length || currentIndex === targetIndex) {
       return;
     }
+    
+    console.log(`🔄 Movendo foto ${codigo} de posição ${currentIndex + 1}° para ${position}°`);
+    console.log(`📊 Índices: atual=${currentIndex}, destino=${targetIndex}`);
     
     setIsReordering(true);
     
@@ -159,17 +163,33 @@ const ImagesSection = memo(({
       
       const fotosParaReordenar = localPhotoOrder || [...sortedPhotos];
       const novaOrdem = [...fotosParaReordenar];
-      const fotoMovida = novaOrdem[currentIndex];
       
-      novaOrdem.splice(currentIndex, 1);
-      novaOrdem.splice(position - 1, 0, fotoMovida);
+      // 🔥 ALGORITMO CORRETO: Mover elemento sem bugs de índice
+      if (currentIndex < targetIndex) {
+        // Movendo para frente: mover elementos entre as posições para trás
+        const fotoMovida = novaOrdem[currentIndex];
+        for (let i = currentIndex; i < targetIndex; i++) {
+          novaOrdem[i] = novaOrdem[i + 1];
+        }
+        novaOrdem[targetIndex] = fotoMovida;
+      } else {
+        // Movendo para trás: mover elementos entre as posições para frente  
+        const fotoMovida = novaOrdem[currentIndex];
+        for (let i = currentIndex; i > targetIndex; i--) {
+          novaOrdem[i] = novaOrdem[i - 1];
+        }
+        novaOrdem[targetIndex] = fotoMovida;
+      }
       
+      // Reindexar todas as fotos
       const novaOrdemComIndices = novaOrdem.map((foto, index) => ({
         ...foto,
         Ordem: index,
         ordem: undefined,
         tipoOrdenacao: 'manual'
       }));
+      
+      console.log('✅ Nova sequência:', novaOrdemComIndices.map((f, i) => `${i+1}°:${f.Codigo}`).join(', '));
       
       setLocalPhotoOrder(novaOrdemComIndices);
       
