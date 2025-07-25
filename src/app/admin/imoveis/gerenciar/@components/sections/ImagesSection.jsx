@@ -1,6 +1,6 @@
 "use client";
 
-import { memo, useState, useMemo, useEffect } from "react";
+import { memo, useState, useMemo, useEffect, useCallback } from "react";
 import FormSection from "../FormSection";
 import Image from "next/image";
 import JSZip from "jszip";
@@ -21,6 +21,7 @@ const ImagesSection = memo(({
 }) => {
   const [downloadingPhotos, setDownloadingPhotos] = useState(false);
   const [localPhotoOrder, setLocalPhotoOrder] = useState(null);
+  const [isReordering, setIsReordering] = useState(false); // 🔥 NOVO estado para controlar reordenação
   
   // 🔥 DETECÇÃO CRÍTICA CORRIGIDA: Verificar se há ordem manual REAL
   const hasManualOrder = useMemo(() => {
@@ -85,11 +86,12 @@ const ImagesSection = memo(({
       totalFotos: formData.Foto.length,
       temOrdemLocal: !!localPhotoOrder,
       temOrdemManual: hasManualOrder,
+      isReordering, // 🔥 Log estado de reordenação
       primeiras3Ordens: formData.Foto.slice(0, 3).map(f => f.ordem || f.Ordem)
     });
 
     // 1️⃣ PRIORIDADE MÁXIMA: Ordem local (usuário acabou de alterar)
-    if (localPhotoOrder) {
+    if (localPhotoOrder && !isReordering) {
       console.log('✅ Usando ORDEM LOCAL (alteração em tempo real)');
       console.groupEnd();
       return localPhotoOrder;
@@ -148,9 +150,23 @@ const ImagesSection = memo(({
       console.groupEnd();
       return [...formData.Foto];
     }
-  }, [formData?.Foto, formData?.Codigo, localPhotoOrder, hasManualOrder]);
+  }, [formData?.Foto, formData?.Codigo, localPhotoOrder, hasManualOrder, isReordering]);
 
-  // 🔥 REORDENAÇÃO PROTEGIDA E CORRIGIDA
+  // 🔥 USEEFFECT PARA LIMPAR ESTADO LOCAL QUANDO formData MUDA EXTERNAMENTE
+  useEffect(() => {
+    if (formData?.Foto && localPhotoOrder && !isReordering) {
+      // Verificar se as ordens do formData são diferentes do estado local
+      const formDataOrdens = formData.Foto.map(f => f.Ordem).join(',');
+      const localOrdens = localPhotoOrder.map(f => f.Ordem).join(',');
+      
+      if (formDataOrdens !== localOrdens) {
+        console.log('📸 FormData mudou externamente - limpando estado local');
+        setLocalPhotoOrder(null);
+      }
+    }
+  }, [formData?.Foto, localPhotoOrder, isReordering]);
+
+  // 🔥 REORDENAÇÃO CORRIGIDA DEFINITIVAMENTE
   const handlePositionChange = async (codigo, newPosition) => {
     const position = parseInt(newPosition);
     const currentIndex = sortedPhotos.findIndex(p => p.Codigo === codigo);
@@ -163,45 +179,69 @@ const ImagesSection = memo(({
     console.log('Foto:', codigo);
     console.log('De:', currentIndex + 1, '→ Para:', position);
     
-    // 🔥 LIMPAR CACHE DO PHOTOSORTER IMEDIATAMENTE
-    photoSorter.limparCache();
+    // 🚀 BLOQUEAR MÚLTIPLAS REORDENAÇÕES SIMULTÂNEAS
+    setIsReordering(true);
     
-    // 🚀 CRÍTICO: Criar nova ordem IMUTÁVEL
-    const novaOrdem = [...sortedPhotos];
-    const fotoMovida = novaOrdem[currentIndex];
-    
-    // Reordenar array de forma imutável
-    novaOrdem.splice(currentIndex, 1);
-    novaOrdem.splice(position - 1, 0, fotoMovida);
-    
-    // 🔥 CRÍTICO: Aplicar campo Ordem (maiúsculo) em TODAS as fotos
-    const novaOrdemComIndices = novaOrdem.map((foto, index) => ({
-      ...foto,
-      Ordem: index, // ← CAMPO PADRONIZADO (maiúsculo)
-      ordem: undefined, // ← Remover campo conflitante
-      tipoOrdenacao: 'manual' // ← Marcar como manual
-    }));
-    
-    console.log('📊 Nova ordem aplicada:', novaOrdemComIndices.map((f, i) => `${i}: ${f.Ordem}`));
-    
-    // Atualizar estado local
-    setLocalPhotoOrder(novaOrdemComIndices);
-    
-    // 🔥 PROPAGAR PARA COMPONENTE PAI IMEDIATAMENTE
-    if (typeof onUpdatePhotos === 'function') {
-      console.log('📤 Propagando para componente pai IMEDIATAMENTE...');
-      console.log('📊 Dados enviados:', {
-        total: novaOrdemComIndices.length,
-        ordensSequencia: novaOrdemComIndices.map(f => f.Ordem).join(','),
-        primeiras3: novaOrdemComIndices.slice(0, 3).map(f => ({ codigo: f.Codigo, Ordem: f.Ordem }))
-      });
+    try {
+      // 🔥 LIMPAR CACHE DO PHOTOSORTER IMEDIATAMENTE
+      photoSorter.limparCache();
       
-      onUpdatePhotos(novaOrdemComIndices);
+      // 🚀 CRÍTICO: Criar nova ordem IMUTÁVEL baseada no sortedPhotos atual
+      const fotosParaReordenar = localPhotoOrder || [...sortedPhotos];
+      const novaOrdem = [...fotosParaReordenar];
+      const fotoMovida = novaOrdem[currentIndex];
+      
+      // Reordenar array de forma imutável
+      novaOrdem.splice(currentIndex, 1);
+      novaOrdem.splice(position - 1, 0, fotoMovida);
+      
+      // 🔥 CRÍTICO: Aplicar campo Ordem (maiúsculo) em TODAS as fotos
+      const novaOrdemComIndices = novaOrdem.map((foto, index) => ({
+        ...foto,
+        Ordem: index, // ← CAMPO PADRONIZADO (maiúsculo)
+        ordem: undefined, // ← Remover campo conflitante
+        tipoOrdenacao: 'manual' // ← Marcar como manual
+      }));
+      
+      console.log('📊 Nova ordem aplicada:', novaOrdemComIndices.map((f, i) => `${i}: ${f.Ordem}`));
+      
+      // 🔥 ATUALIZAR ESTADO LOCAL PRIMEIRO
+      setLocalPhotoOrder(novaOrdemComIndices);
+      
+      // 🔥 PROPAGAR PARA COMPONENTE PAI COM DELAY PARA EVITAR CONFLITOS
+      setTimeout(() => {
+        if (typeof onUpdatePhotos === 'function') {
+          console.log('📤 Propagando para componente pai...');
+          console.log('📊 Dados enviados:', {
+            total: novaOrdemComIndices.length,
+            ordensSequencia: novaOrdemComIndices.map(f => f.Ordem).join(','),
+            primeiras3: novaOrdemComIndices.slice(0, 3).map(f => ({ codigo: f.Codigo, Ordem: f.Ordem }))
+          });
+          
+          onUpdatePhotos(novaOrdemComIndices);
+        }
+      }, 100);
+      
+      console.log('✅ Reordenação manual concluída');
+      
+    } catch (error) {
+      console.error('❌ Erro na reordenação:', error);
+    } finally {
+      // 🚀 DESBLOQUEAR APÓS UM PEQUENO DELAY
+      setTimeout(() => {
+        setIsReordering(false);
+      }, 500);
     }
     
-    console.log('✅ Reordenação manual concluída');
     console.groupEnd();
   };
+
+  // 🔥 FUNÇÃO PARA RESETAR ESTADO LOCAL (chamada externamente se necessário)
+  const resetLocalOrder = useCallback(() => {
+    console.log('🧹 Resetando ordem local');
+    setLocalPhotoOrder(null);
+    setIsReordering(false);
+  }, []);
 
   const baixarTodasImagens = async (imagens = []) => {
     if (!Array.isArray(imagens)) return;
@@ -282,8 +322,11 @@ const ImagesSection = memo(({
   const handleResetOrder = () => {
     console.group('🔄 RESET PARA ORDEM INTELIGENTE');
     console.log('Limpando cache do PhotoSorter...');
+    
+    // Limpar todos os estados
     photoSorter.limparCache();
     setLocalPhotoOrder(null);
+    setIsReordering(false);
     
     if (typeof onUpdatePhotos === 'function' && formData?.Foto) {
       // 🔥 CRÍTICO: Remover TODOS os campos de ordem para forçar PhotoSorter
@@ -302,14 +345,25 @@ const ImagesSection = memo(({
 
   // 🎨 STATUS VISUAL MELHORADO
   const getStatusInfo = () => {
+    if (isReordering) {
+      return {
+        status: 'reordering',
+        title: '🔄 REORDENANDO...',
+        description: 'Processando alteração da ordem das fotos.',
+        bgColor: 'bg-yellow-50',
+        borderColor: 'border-yellow-400',
+        textColor: 'text-yellow-700'
+      };
+    }
+    
     if (localPhotoOrder) {
       return {
         status: 'local',
-        title: '✋ ORDEM PERSONALIZADA (não salva)',
-        description: 'Você alterou a ordem. Clique em SALVAR para persistir as mudanças.',
-        bgColor: 'bg-orange-50',
-        borderColor: 'border-orange-400',
-        textColor: 'text-orange-700'
+        title: '✋ ORDEM ALTERADA (não salva)',
+        description: 'Você alterou a ordem. As mudanças serão salvas no próximo submit.',
+        bgColor: 'bg-amber-50',
+        borderColor: 'border-amber-400',
+        textColor: 'text-amber-700'
       };
     }
     
@@ -373,7 +427,12 @@ const ImagesSection = memo(({
                 <button
                   type="button"
                   onClick={handleResetOrder}
-                  className="px-3 py-1.5 text-sm bg-purple-600 hover:bg-purple-700 text-white rounded-md transition-colors"
+                  disabled={isReordering}
+                  className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                    isReordering
+                      ? 'bg-purple-300 text-purple-500 cursor-not-allowed'
+                      : 'bg-purple-600 hover:bg-purple-700 text-white'
+                  }`}
                   title="Voltar para ordem inteligente"
                 >
                   🔄 Resetar Ordem
@@ -382,9 +441,9 @@ const ImagesSection = memo(({
                 <button
                   type="button"
                   onClick={() => baixarTodasImagens(sortedPhotos)}
-                  disabled={downloadingPhotos}
+                  disabled={downloadingPhotos || isReordering}
                   className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
-                    downloadingPhotos
+                    downloadingPhotos || isReordering
                       ? 'bg-blue-300 text-white cursor-wait'
                       : 'bg-blue-600 hover:bg-blue-700 text-white'
                   }`}
@@ -395,7 +454,12 @@ const ImagesSection = memo(({
                 <button
                   type="button"
                   onClick={removeAllImages}
-                  className="px-3 py-1.5 text-sm bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors"
+                  disabled={isReordering}
+                  className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
+                    isReordering
+                      ? 'bg-red-300 text-red-500 cursor-not-allowed'
+                      : 'bg-red-600 hover:bg-red-700 text-white'
+                  }`}
                 >
                   🗑️ Limpar Tudo
                 </button>
@@ -404,7 +468,7 @@ const ImagesSection = memo(({
           </div>
         </div>
 
-        {/* INDICADOR DE STATUS */}
+        {/* 🔥 INDICADOR DE STATUS MELHORADO */}
         <div className={`p-3 rounded-md text-sm border-l-4 ${statusInfo.bgColor} ${statusInfo.borderColor} ${statusInfo.textColor}`}>
           <p><strong>{statusInfo.title}</strong></p>
           <p className="text-xs mt-1">{statusInfo.description}</p>
@@ -443,7 +507,10 @@ const ImagesSection = memo(({
                       <select
                         value={index + 1}
                         onChange={(e) => handlePositionChange(photo.Codigo, e.target.value)}
-                        className="w-full p-1.5 text-sm border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        disabled={isReordering} // 🔥 DESABILITAR DURANTE REORDENAÇÃO
+                        className={`w-full p-1.5 text-sm border rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                          isReordering ? 'bg-gray-100 cursor-not-allowed' : ''
+                        }`}
                       >
                         {[...Array(sortedPhotos.length)].map((_, i) => (
                           <option key={i + 1} value={i + 1}>
@@ -456,8 +523,11 @@ const ImagesSection = memo(({
                       <label className="block text-xs text-gray-500 mb-1">Destaque</label>
                       <button
                         onClick={() => setImageAsHighlight(photo.Codigo)}
+                        disabled={isReordering}
                         className={`w-full p-1.5 text-sm rounded-md transition-colors ${
-                          photo.Destaque === "Sim"
+                          isReordering
+                            ? 'bg-gray-100 cursor-not-allowed text-gray-400'
+                            : photo.Destaque === "Sim"
                             ? "bg-yellow-500 hover:bg-yellow-600 text-white"
                             : "bg-gray-100 hover:bg-gray-200 text-gray-700"
                         }`}
@@ -475,14 +545,24 @@ const ImagesSection = memo(({
                     <button
                       type="button"
                       onClick={() => handleImageUpload(photo.Codigo)}
-                      className="flex-1 py-1.5 text-sm bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-md transition-colors"
+                      disabled={isReordering}
+                      className={`flex-1 py-1.5 text-sm rounded-md transition-colors ${
+                        isReordering
+                          ? 'bg-blue-100 text-blue-400 cursor-not-allowed'
+                          : 'bg-blue-50 hover:bg-blue-100 text-blue-700'
+                      }`}
                     >
                       🔄 Trocar
                     </button>
                     <button
                       type="button"
                       onClick={() => handleRemoveImage(photo.Codigo)}
-                      className="flex-1 py-1.5 text-sm bg-red-50 hover:bg-red-100 text-red-700 rounded-md transition-colors"
+                      disabled={isReordering}
+                      className={`flex-1 py-1.5 text-sm rounded-md transition-colors ${
+                        isReordering
+                          ? 'bg-red-100 text-red-400 cursor-not-allowed'
+                          : 'bg-red-50 hover:bg-red-100 text-red-700'
+                      }`}
                     >
                       ✖ Remover
                     </button>
