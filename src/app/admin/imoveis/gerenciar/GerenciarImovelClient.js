@@ -32,10 +32,6 @@ export default function GerenciarImovelClient() {
   const [isDesativando, setIsDesativando] = useState(false);
   const [downloadingPhotos, setDownloadingPhotos] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
-  
-  // 🔥 ESTADO PARA CONTROLAR CARREGAMENTO INICIAL
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
-  
   const router = useRouter();
 
   const imovelSelecionado = useImovelStore((state) => state.imovelSelecionado);
@@ -73,30 +69,21 @@ export default function GerenciarImovelClient() {
 
   const { handleFileUpload } = useImageUpload(updateImage, setSuccess, setError);
 
-  // 🔥 FUNÇÃO CRÍTICA: ATUALIZAÇÃO DE FOTOS SEM REORDENAR
+  // 🔥 FUNÇÃO DE ATUALIZAÇÃO DE FOTOS OTIMIZADA
   const handleUpdatePhotos = (fotosAtualizadas) => {
-    console.group('📸 PARENT: Atualizando fotos no formData');
-    console.log('📸 Total de fotos recebidas:', fotosAtualizadas.length);
+    console.log('📸 PARENT: Atualizando fotos no formData');
+    console.log('📸 Total:', fotosAtualizadas.length);
+    console.log('📸 Primeiras ordens:', fotosAtualizadas.slice(0, 3).map(f => ({ 
+      codigo: f.Codigo, 
+      ordem: f.ordem 
+    })));
     
-    if (fotosAtualizadas.length > 0) {
-      console.log('📸 Primeiras 3 fotos com suas ordens:');
-      fotosAtualizadas.slice(0, 3).forEach((foto, index) => {
-        console.log(`  ${index + 1}. Código: ${foto.Codigo}, Ordem: ${foto.Ordem}, Tipo: ${foto.tipoOrdenacao}`);
-      });
-      
-      // 🔥 CRITICAL: Verificar se as ordens estão corretas
-      const ordensSequenciais = fotosAtualizadas.map(f => f.Ordem).join(',');
-      console.log('📊 Sequência de ordens:', ordensSequenciais);
-    }
-    
-    // 🚀 ATUALIZAR ESTADO SEM MODIFICAR AS FOTOS
     setFormData(prev => ({
       ...prev,
-      Foto: fotosAtualizadas // ← Preservar ordem exata recebida
+      Foto: fotosAtualizadas
     }));
     
     setHasChanges(true);
-    console.groupEnd();
   };
 
   const downloadAllPhotos = async () => {
@@ -131,164 +118,108 @@ export default function GerenciarImovelClient() {
     }
   };
 
-// 🔥 SUBSTITUIR O useEffect DE CARREGAMENTO NO SEU GerenciarImovelClient.js
-
-useEffect(() => {
-  if (imovelSelecionado && mode === "edit" && isInitialLoad) {
-    console.group('🏠 Carregando dados do imóvel para edição');
-    
-    const formatMonetaryDisplayValues = () => {
-      const displayObj = {};
-      ["ValorAntigo", "ValorAluguelSite", "ValorCondominio", "ValorIptu"].forEach((field) => {
-        if (imovelSelecionado[field]) {
-          const value = typeof imovelSelecionado[field] === "string"
-            ? imovelSelecionado[field].replace(/\D/g, "")
-            : imovelSelecionado[field];
-          displayObj[field] = formatarParaReal(value);
-        }
-      });
-      return displayObj;
-    };
-
-    // 🔥 PROCESSAMENTO DE FOTOS CRÍTICO - PRESERVAR ORDEM EXATA DO BANCO
-    const processPhotos = () => {
-      if (!imovelSelecionado.Foto) return [];
+  // 🔥 USEEFFECT OTIMIZADO PARA CARREGAMENTO INICIAL
+  useEffect(() => {
+    if (imovelSelecionado && mode === "edit") {
+      console.group('🏠 Carregando dados do imóvel para edição');
       
-      let fotosProcessadas = [];
-      
-      if (Array.isArray(imovelSelecionado.Foto)) {
-        console.log('📸 Fotos já em formato array:', imovelSelecionado.Foto.length);
-        
-        // 🔍 ANÁLISE DETALHADA DAS FOTOS DO BANCO
-        console.log('🔍 Analisando estrutura das fotos do banco:');
-        
-        const primeiraFoto = imovelSelecionado.Foto[0];
-        if (primeiraFoto) {
-          console.log('📊 Campos da primeira foto:', Object.keys(primeiraFoto));
-          console.log('📊 Valores dos campos de ordem:', {
-            Ordem: primeiraFoto.Ordem,
-            ordem: primeiraFoto.ordem,
-            tipoOrdem: typeof primeiraFoto.Ordem,
-            tipoOrdemMinuscula: typeof primeiraFoto.ordem
-          });
-        }
-        
-        // 🔥 VERIFICAR SE TEM ORDEM MANUAL SALVA NO BANCO
-        const temOrdemManualNoBanco = imovelSelecionado.Foto.every(foto => {
-          const temOrdemMaiuscula = typeof foto.Ordem === 'number' && foto.Ordem >= 0;
-          const temOrdemMinuscula = typeof foto.ordem === 'number' && foto.ordem >= 0;
-          return temOrdemMaiuscula || temOrdemMinuscula;
+      const formatMonetaryDisplayValues = () => {
+        const displayObj = {};
+        ["ValorAntigo", "ValorAluguelSite", "ValorCondominio", "ValorIptu"].forEach((field) => {
+          if (imovelSelecionado[field]) {
+            const value = typeof imovelSelecionado[field] === "string"
+              ? imovelSelecionado[field].replace(/\D/g, "")
+              : imovelSelecionado[field];
+            displayObj[field] = formatarParaReal(value);
+          }
         });
+        return displayObj;
+      };
+
+      // 🔥 PROCESSAMENTO DE FOTOS OTIMIZADO - PRESERVAR ORDEM
+      const processPhotos = () => {
+        if (!imovelSelecionado.Foto) return [];
         
-        console.log('📸 Tem ordem manual salva no banco?', temOrdemManualNoBanco);
+        let fotosProcessadas = [];
         
-        if (temOrdemManualNoBanco) {
-          console.log('📸 Preservando ordem manual do banco');
+        if (Array.isArray(imovelSelecionado.Foto)) {
+          console.log('📸 Fotos já em formato array:', imovelSelecionado.Foto.length);
           
-          // 🚀 PRESERVAR ORDEM EXATA DO BANCO - NÃO APLICAR PHOTOSORTER!
-          fotosProcessadas = imovelSelecionado.Foto.map((foto, index) => {
-            // Unificar campos de ordem (priorizar Ordem maiúsculo)
-            const ordemFinal = foto.Ordem !== undefined && foto.Ordem !== null ? foto.Ordem :
-                              foto.ordem !== undefined && foto.ordem !== null ? foto.ordem :
-                              index;
-            
-            const fotoProcessada = {
-              ...foto,
-              Codigo: foto.Codigo || `photo-${Date.now()}-${index}`,
-              Destaque: foto.Destaque || "Nao",
-              Ordem: ordemFinal, // ← PRESERVAR ORDEM DO BANCO
-              tipoOrdenacao: 'banco' // ← Marcar como vindo do banco
-            };
-            
-            // Remover campo conflitante
-            delete fotoProcessada.ordem;
-            
-            return fotoProcessada;
-          });
-          
-          // 🔥 CRITICAL: ORDENAR PELAS ORDENS SALVAS NO BANCO
-          fotosProcessadas.sort((a, b) => (a.Ordem || 0) - (b.Ordem || 0));
-          
-          console.log('📸 Fotos ordenadas conforme banco:', {
-            total: fotosProcessadas.length,
-            ordensSequencia: fotosProcessadas.map(f => f.Ordem).join(','),
-            primeiras3: fotosProcessadas.slice(0, 3).map(f => ({ 
-              codigo: f.Codigo?.substring(0, 15) + '...', 
-              Ordem: f.Ordem 
-            }))
-          });
-          
-        } else {
-          console.log('📸 Sem ordem manual no banco - aplicando ordem por índice');
-          // Se não tem ordem manual, aplicar ordem baseada na posição
           fotosProcessadas = imovelSelecionado.Foto.map((foto, index) => ({
             ...foto,
             Codigo: foto.Codigo || `photo-${Date.now()}-${index}`,
             Destaque: foto.Destaque || "Nao",
-            Ordem: index,
-            tipoOrdenacao: 'indice'
+            Ordem: foto.Ordem || index + 1,
+            // 🔥 CRUCIAL: Preservar campo 'ordem' se existir
+            ordem: foto.ordem !== undefined && foto.ordem !== null ? foto.ordem : undefined
+          }));
+          
+          // Se tem campo 'ordem' em alguma foto, ordenar por ele
+          const temOrdem = fotosProcessadas.some(f => f.ordem !== undefined && f.ordem !== null);
+          if (temOrdem) {
+            console.log('📸 Ordenando fotos pelo campo "ordem"');
+            fotosProcessadas.sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
+          }
+          
+        } else if (typeof imovelSelecionado.Foto === "object") {
+          console.log('📸 Convertendo fotos de objeto para array');
+          
+          fotosProcessadas = Object.keys(imovelSelecionado.Foto).map((key, index) => ({
+            ...imovelSelecionado.Foto[key],
+            Codigo: key,
+            Destaque: imovelSelecionado.Foto[key].Destaque || "Nao",
+            Ordem: imovelSelecionado.Foto[key].Ordem || index + 1,
+            // Preservar ordem se existir
+            ordem: imovelSelecionado.Foto[key].ordem !== undefined 
+              ? imovelSelecionado.Foto[key].ordem 
+              : undefined
           }));
         }
         
-      } else if (typeof imovelSelecionado.Foto === "object") {
-        console.log('📸 Convertendo fotos de objeto para array');
-        
-        const entries = Object.entries(imovelSelecionado.Foto);
-        fotosProcessadas = entries.map(([key, foto], index) => ({
-          ...foto,
-          Codigo: key,
-          Destaque: foto.Destaque || "Nao",
-          Ordem: foto.Ordem !== undefined ? foto.Ordem : 
-                 foto.ordem !== undefined ? foto.ordem : index,
-          tipoOrdenacao: 'objeto'
-        }));
-      }
-      
-      console.log('📸 Fotos processadas para formData:', {
-        total: fotosProcessadas.length,
-        primeirasFotosOrdem: fotosProcessadas.slice(0, 5).map(f => ({ 
-          codigo: f.Codigo?.substring(0, 15) + '...', 
-          Ordem: f.Ordem,
-          tipoOrdenacao: f.tipoOrdenacao
-        }))
-      });
-      
-      return fotosProcessadas;
-    };
-
-    const processVideos = () => {
-      if (!imovelSelecionado.Video) return {};
-      const videosObj = {};
-      if (Array.isArray(imovelSelecionado.Video)) {
-        imovelSelecionado.Video.forEach((video) => {
-          if (video.Codigo) {
-            videosObj[video.Codigo] = { ...video };
-          }
+        console.log('📸 Fotos processadas:', {
+          total: fotosProcessadas.length,
+          primeirasFotosOrdem: fotosProcessadas.slice(0, 3).map(f => ({ 
+            codigo: f.Codigo, 
+            ordem: f.ordem,
+            Ordem: f.Ordem
+          }))
         });
-      }
-      return videosObj;
-    };
+        
+        return fotosProcessadas;
+      };
 
-    const dadosProcessados = {
-      ...imovelSelecionado,
-      Foto: processPhotos(), // ← Fotos com ordem PRESERVADA do banco
-      Video: processVideos(),
-      Slug: formatterSlug(imovelSelecionado.Empreendimento || ""),
-    };
+      const processVideos = () => {
+        if (!imovelSelecionado.Video) return {};
+        const videosObj = {};
+        if (Array.isArray(imovelSelecionado.Video)) {
+          imovelSelecionado.Video.forEach((video) => {
+            if (video.Codigo) {
+              videosObj[video.Codigo] = { ...video };
+            }
+          });
+        }
+        return videosObj;
+      };
 
-    console.log('📋 Dados finais para formData:', {
-      codigo: dadosProcessados.Codigo,
-      totalFotos: dadosProcessados.Foto?.length,
-      primeirasOrdens: dadosProcessados.Foto?.slice(0, 5).map(f => f.Ordem)
-    });
+      const dadosProcessados = {
+        ...imovelSelecionado,
+        Foto: processPhotos(),
+        Video: processVideos(),
+        Slug: formatterSlug(imovelSelecionado.Empreendimento || ""),
+      };
 
-    setFormData(dadosProcessados);
-    setDisplayValues(formatMonetaryDisplayValues());
-    setIsInitialLoad(false);
-    
-    console.groupEnd();
-  }
-}, [imovelSelecionado, mode, isInitialLoad, setFormData, setDisplayValues]);
+      console.log('📋 Dados finais para formData:', {
+        codigo: dadosProcessados.Codigo,
+        totalFotos: dadosProcessados.Foto?.length,
+        primeirasOrdens: dadosProcessados.Foto?.slice(0, 3).map(f => f.ordem)
+      });
+
+      setFormData(dadosProcessados);
+      setDisplayValues(formatMonetaryDisplayValues());
+      
+      console.groupEnd();
+    }
+  }, [imovelSelecionado, mode, setFormData, setDisplayValues]);
 
   useEffect(() => {
     return () => {
@@ -380,33 +311,17 @@ useEffect(() => {
     }
   };
 
-  // 🔥 SUBMIT OTIMIZADO COM DEBUG DETALHADO
+  // 🔥 SUBMIT OTIMIZADO
   const handleSubmitWithOrder = async (e) => {
     e.preventDefault();
     
-    console.group('🚀 SUBMIT: Estado final antes do envio');
-    console.log('Total de fotos no formData:', formData.Foto?.length);
-    
-    if (formData.Foto && formData.Foto.length > 0) {
-      console.log('📊 Ordens das fotos no formData:');
-      formData.Foto.slice(0, 10).forEach((foto, index) => {
-        console.log(`  ${index}: Código ${foto.Codigo} -> Ordem ${foto.Ordem}`);
-      });
-      
-      // Verificar se há inconsistências
-      const ordensNumericas = formData.Foto.map(f => f.Ordem);
-      const temInconsistencias = ordensNumericas.some(ordem => 
-        typeof ordem !== 'number' || ordem < 0
-      );
-      
-      if (temInconsistencias) {
-        console.warn('⚠️ ATENÇÃO: Inconsistências detectadas nas ordens:', ordensNumericas);
-      } else {
-        console.log('✅ Ordens consistentes detectadas');
-      }
-    }
-    
-    console.groupEnd();
+    console.log('🚀 Submit iniciado - Estado das fotos:', {
+      totalFotos: formData.Foto?.length,
+      primeirasOrdens: formData.Foto?.slice(0, 3).map(f => ({ 
+        codigo: f.Codigo, 
+        ordem: f.ordem 
+      }))
+    });
     
     setHasChanges(false);
     await handleSubmit(e);
@@ -572,7 +487,7 @@ useEffect(() => {
             setImageAsHighlight={setImageAsHighlight}
             changeImagePosition={changeImagePosition}
             validation={validation}
-            onUpdatePhotos={handleUpdatePhotos} // ← Função corrigida
+            onUpdatePhotos={handleUpdatePhotos}
             key="images-section"
           />
 
