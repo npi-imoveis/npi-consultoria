@@ -9,15 +9,15 @@ export async function PUT(request, { params }) {
     await connectToDatabase();
     const dadosAtualizados = await request.json();
 
-    // VALIDAÇÃO INICIAL
+    // 🔒 Validação reforçada
     if (!id) {
       return NextResponse.json(
-        { status: 400, message: "ID do imóvel é obrigatório" },
+        { status: 400, message: "ID/Código do imóvel é obrigatório" },
         { status: 400 }
       );
     }
 
-    // BUSCA INTELIGENTE (Código ou _id)
+    // 🔍 Busca inteligente (código ou _id)
     let imovel = await Imovel.findOne({ Codigo: id });
     if (!imovel && id.match(/^[0-9a-fA-F]{24}$/)) {
       imovel = await Imovel.findById(id);
@@ -30,53 +30,98 @@ export async function PUT(request, { params }) {
       );
     }
 
-    // TRATAMENTO ESPECIAL PARA IMÓVEIS VENDIDOS
-    if (imovel.Status === "Vendido" || dadosAtualizados.Status === "Vendido") {
-      if (dadosAtualizados.Foto) {
-        dadosAtualizados.Foto = imovel.Foto.filter(fotoExistente => 
-          dadosAtualizados.Foto.some(fotoNova => 
-            fotoNova.Codigo === fotoExistente.Codigo
-          )
+    // 📸 Processamento AVANÇADO de fotos
+    if (dadosAtualizados.Foto) {
+      let fotosProcessadas = [];
+
+      // 1. Converter para array se necessário
+      if (Array.isArray(dadosAtualizados.Foto)) {
+        fotosProcessadas = dadosAtualizados.Foto.map((foto, index) => ({
+          ...foto,
+          // Garantir ordem numérica válida
+          ordem: typeof foto.ordem === 'number' ? foto.ordem : index,
+          // Manter destaque existente ou definir padrão
+          Destaque: foto.Destaque || "Nao",
+          // Preservar campos importantes
+          Codigo: foto.Codigo || `photo-${Date.now()}-${index}`,
+          _id: foto._id || undefined
+        }));
+      }
+
+      // 2. Ordenar pelas posições
+      fotosProcessadas.sort((a, b) => a.ordem - b.ordem);
+
+      // 3. Tratamento especial para imóveis vendidos
+      const isVendido = dadosAtualizados.Status === "Vendido" || imovel.Status === "Vendido";
+      if (isVendido) {
+        // Garantir que a primeira foto seja destaque
+        if (fotosProcessadas.length > 0 && fotosProcessadas[0].Destaque !== "Sim") {
+          fotosProcessadas[0].Destaque = "Sim";
+        }
+        
+        // Prevenir remoção de fotos em vendidos
+        fotosProcessadas = fotosProcessadas.filter(foto => 
+          !foto._markedForDeletion
         );
       }
+
+      // 4. Aplicar ao payload
+      dadosAtualizados.Foto = fotosProcessadas;
     }
 
-    // PROCESSAMENTO DE FOTOS (COM ORDEM GARANTIDA)
-    if (dadosAtualizados.Foto && Array.isArray(dadosAtualizados.Foto)) {
-      dadosAtualizados.Foto = dadosAtualizados.Foto.map((foto, index) => ({
-        ...foto,
-        ordem: typeof foto.ordem === 'number' ? foto.ordem : index,
-        Destaque: foto.Destaque || "Nao"
-      })).sort((a, b) => a.ordem - b.ordem);
-    }
+    // ✨ Atualização segura dos campos
+    const camposPermitidos = Object.keys(dadosAtualizados).filter(
+      key => !['_id', '__v', 'createdAt', 'updatedAt'].includes(key)
+    );
 
-    // ATUALIZAÇÃO SEGURA
-    Object.keys(dadosAtualizados).forEach(key => {
-      if (dadosAtualizados[key] !== undefined && !['_id', '__v'].includes(key)) {
+    camposPermitidos.forEach(key => {
+      if (dadosAtualizados[key] !== undefined) {
         imovel[key] = dadosAtualizados[key];
       }
     });
 
-    // GARANTIR FOTO DESTAQUE EM VENDIDOS
-    if (imovel.Status === "Vendido" && imovel.Foto?.length > 0) {
-      const temDestaque = imovel.Foto.some(f => f.Destaque === "Sim");
-      if (!temDestaque) {
-        imovel.Foto[0].Destaque = "Sim";
-        imovel.markModified('Foto');
-      }
-    }
+    // 💾 Salvamento otimizado
+    const imovelAtualizado = await imovel.save({
+      validateBeforeSave: false,
+      timestamps: false
+    });
 
-    const imovelAtualizado = await imovel.save();
+    // 📬 Resposta padronizada
     return NextResponse.json({
       status: 200,
-      data: imovelAtualizado
+      success: true,
+      data: {
+        _id: imovelAtualizado._id,
+        Codigo: imovelAtualizado.Codigo,
+        Foto: imovelAtualizado.Foto?.map(f => ({
+          Codigo: f.Codigo,
+          ordem: f.ordem,
+          Destaque: f.Destaque
+        })),
+        Status: imovelAtualizado.Status,
+        updatedAt: new Date()
+      },
+      message: "Imóvel atualizado com sucesso"
     });
 
   } catch (error) {
     console.error("Erro na atualização:", error);
+    
+    // 🛑 Tratamento de erros específicos
+    let status = 500;
+    let message = "Erro ao atualizar imóvel";
+    
+    if (error.name === 'ValidationError') {
+      status = 400;
+      message = Object.values(error.errors).map(e => e.message).join(', ');
+    } else if (error.code === 11000) {
+      status = 409;
+      message = "Código do imóvel já existe";
+    }
+
     return NextResponse.json(
-      { status: 500, message: "Erro ao atualizar imóvel" },
-      { status: 500 }
+      { status, success: false, message },
+      { status }
     );
   }
 }
