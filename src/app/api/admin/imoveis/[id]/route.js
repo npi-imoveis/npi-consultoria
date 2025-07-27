@@ -2,42 +2,80 @@ import { connectToDatabase } from "@/app/lib/mongodb";
 import Imovel from "@/app/models/Imovel";
 import { NextResponse } from "next/server";
 
-export async function GET(request, { params }) {
+export async function PUT(request, { params }) {
+  const { id } = params;
+
   try {
     await connectToDatabase();
-    const { id } = params;
-    
-    console.log('📥 GET - Buscando imóvel:', id);
-    
-    // 🔥 BUSCA INTELIGENTE: Codigo primeiro, depois _id
-    let imovel;
-    
-    // Primeiro: tentar buscar por Codigo (campo personalizado)
-    imovel = await Imovel.findOne({ Codigo: id });
-    
-    // Segundo: se não encontrou e parece ser ObjectId, tentar por _id
+    const dadosAtualizados = await request.json();
+
+    // VALIDAÇÃO INICIAL
+    if (!id) {
+      return NextResponse.json(
+        { status: 400, message: "ID do imóvel é obrigatório" },
+        { status: 400 }
+      );
+    }
+
+    // BUSCA INTELIGENTE (Código ou _id)
+    let imovel = await Imovel.findOne({ Codigo: id });
     if (!imovel && id.match(/^[0-9a-fA-F]{24}$/)) {
       imovel = await Imovel.findById(id);
     }
-    
+
     if (!imovel) {
-      console.log('❌ GET - Imóvel não encontrado:', id);
       return NextResponse.json(
         { status: 404, message: "Imóvel não encontrado" },
         { status: 404 }
       );
     }
-    
-    console.log('✅ GET - Imóvel encontrado:', imovel.Codigo);
-    
+
+    // TRATAMENTO ESPECIAL PARA IMÓVEIS VENDIDOS
+    if (imovel.Status === "Vendido" || dadosAtualizados.Status === "Vendido") {
+      if (dadosAtualizados.Foto) {
+        dadosAtualizados.Foto = imovel.Foto.filter(fotoExistente => 
+          dadosAtualizados.Foto.some(fotoNova => 
+            fotoNova.Codigo === fotoExistente.Codigo
+          )
+        );
+      }
+    }
+
+    // PROCESSAMENTO DE FOTOS (COM ORDEM GARANTIDA)
+    if (dadosAtualizados.Foto && Array.isArray(dadosAtualizados.Foto)) {
+      dadosAtualizados.Foto = dadosAtualizados.Foto.map((foto, index) => ({
+        ...foto,
+        ordem: typeof foto.ordem === 'number' ? foto.ordem : index,
+        Destaque: foto.Destaque || "Nao"
+      })).sort((a, b) => a.ordem - b.ordem);
+    }
+
+    // ATUALIZAÇÃO SEGURA
+    Object.keys(dadosAtualizados).forEach(key => {
+      if (dadosAtualizados[key] !== undefined && !['_id', '__v'].includes(key)) {
+        imovel[key] = dadosAtualizados[key];
+      }
+    });
+
+    // GARANTIR FOTO DESTAQUE EM VENDIDOS
+    if (imovel.Status === "Vendido" && imovel.Foto?.length > 0) {
+      const temDestaque = imovel.Foto.some(f => f.Destaque === "Sim");
+      if (!temDestaque) {
+        imovel.Foto[0].Destaque = "Sim";
+        imovel.markModified('Foto');
+      }
+    }
+
+    const imovelAtualizado = await imovel.save();
     return NextResponse.json({
       status: 200,
-      data: imovel,
+      data: imovelAtualizado
     });
+
   } catch (error) {
-    console.error("❌ GET - Erro ao buscar imóvel:", error);
+    console.error("Erro na atualização:", error);
     return NextResponse.json(
-      { status: 500, message: "Erro ao buscar imóvel", error: error.message },
+      { status: 500, message: "Erro ao atualizar imóvel" },
       { status: 500 }
     );
   }
