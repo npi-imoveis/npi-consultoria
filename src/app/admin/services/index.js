@@ -1,153 +1,248 @@
 import axiosClient from "@/app/lib/axios-client";
 
+// Helper para garantir valores numéricos
 function ensureNumber(value, defaultValue) {
   const num = Number(value);
   return Number.isFinite(num) ? num : defaultValue;
 }
 
-// 🔥 FUNÇÃO CORRIGIDA: Atualizar imóvel (ROTA CORRETA)
+// 🔄 Função para processar fotos antes do envio
+function processarFotos(fotos, isVendido = false) {
+  if (!fotos) return [];
+  
+  // Converter para array se for objeto
+  let fotosArray = Array.isArray(fotos) 
+    ? [...fotos]
+    : Object.entries(fotos).map(([key, val]) => ({ ...val, Codigo: key }));
+
+  // Garantir campo 'ordem' e tratar foto destaque
+  fotosArray = fotosArray.map((foto, index) => ({
+    ...foto,
+    ordem: typeof foto.ordem === 'number' ? foto.ordem : index,
+    Destaque: foto.Destaque || "Nao"
+  }));
+
+  // Ordenar pela ordem
+  fotosArray.sort((a, b) => a.ordem - b.ordem);
+
+  // Tratamento especial para imóveis vendidos
+  if (isVendido) {
+    // Garantir que a primeira foto seja destaque
+    if (fotosArray.length > 0 && fotosArray[0].Destaque !== "Sim") {
+      fotosArray[0].Destaque = "Sim";
+    }
+    
+    // Remover fotos marcadas para exclusão (se houver)
+    fotosArray = fotosArray.filter(foto => !foto._markedForDeletion);
+  }
+
+  return fotosArray;
+}
+
+// 📤 Atualizar Imóvel (Versão Completa Corrigida)
 export async function atualizarImovel(codigo, dadosImovel) {
   try {
-    console.group('📤 Service: Atualizando imóvel');
-    console.log('Código:', codigo);
-    console.log('Dados:', {
-      empreendimento: dadosImovel.Empreendimento,
-      totalFotos: Array.isArray(dadosImovel.Foto) ? dadosImovel.Foto.length : 'Não array',
-      primeirasFotosOrdem: Array.isArray(dadosImovel.Foto) 
-        ? dadosImovel.Foto.slice(0, 3).map(f => ({ codigo: f.Codigo, ordem: f.ordem }))
-        : 'N/A'
-    });
-
-    // 🔥 ROTA CORRIGIDA: /admin/imoveis/ em vez de /imoveis/
-        const response = await axiosClient.put(`/admin/imoveis/${codigo}`, dadosImovel, {
-      timeout: 30000,
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    });
-
-    console.log('📥 Service: Resposta recebida:', {
-      status: response.status,
-      success: response.data?.success
-    });
-    console.groupEnd();
-
-    if (response && response.status >= 200 && response.status < 300) {
-      return {
-        success: true,
-        data: response.data,
-        message: response.data?.message || "Imóvel atualizado com sucesso",
-      };
-    } else {
-      console.error("Service: Erro na resposta ao atualizar imóvel", response);
-      return {
-        success: false,
-        message: response.data?.message || "Erro ao atualizar imóvel",
-      };
-    }
-  } catch (error) {
-    console.error("Service: Erro ao atualizar imóvel:", error);
-    console.groupEnd();
+    console.group('🔄 Service: Atualizando Imóvel');
     
-    if (error.code === "ERR_NETWORK") {
-      return {
-        success: false,
-        message: "Erro de conexão com o servidor. Tente novamente mais tarde.",
-        error: "Erro de conexão",
-      };
+    // Validação inicial
+    if (!codigo) {
+      throw new Error("Código do imóvel é obrigatório");
     }
+
+    // Processar fotos antes do envio
+    const isVendido = dadosImovel.Status === "Vendido";
+    const payload = {
+      ...dadosImovel,
+      Foto: processarFotos(dadosImovel.Foto, isVendido),
+      Video: Array.isArray(dadosImovel.Video) ? dadosImovel.Video : []
+    };
+
+    console.log('📤 Dados enviados:', {
+      codigo,
+      totalFotos: payload.Foto.length,
+      primeiraFoto: payload.Foto[0]?.Destaque,
+      status: payload.Status
+    });
+
+    const response = await axiosClient.put(`/admin/imoveis/${codigo}`, payload, {
+      timeout: 30000,
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    if (!response.data) {
+      throw new Error("Resposta vazia do servidor");
+    }
+
+    console.log('✅ Sucesso:', response.data.message);
+    console.groupEnd();
 
     return {
+      success: true,
+      data: response.data.data,
+      message: response.data.message || "Imóvel atualizado com sucesso"
+    };
+
+  } catch (error) {
+    console.error('❌ Erro:', error.message);
+    console.groupEnd();
+    
+    return {
       success: false,
-      message: error.response?.data?.message || "Erro ao atualizar imóvel",
-      error: error.response?.data?.error || error.message || "Erro desconhecido",
+      message: error.response?.data?.message || 
+              error.message || 
+              "Erro ao atualizar imóvel",
+      error: error.response?.data?.error || error.message
     };
   }
 }
 
-// 🔥 FUNÇÃO CORRIGIDA: Criar imóvel (ROTA CORRETA)
+// 🤖 Atualizar Imóvel da Automação (Versão Completa Corrigida)
+export async function atualizarImovelAutomacao(codigo, dadosImovel) {
+  try {
+    console.group('🤖 Service: Atualizando Imóvel (Automação)');
+    
+    // Validação reforçada para automação
+    if (!codigo || !dadosImovel?.Codigo) {
+      throw new Error("Código do imóvel é obrigatório na automação");
+    }
+
+    // Processamento especial para automação
+    const payload = {
+      ...dadosImovel,
+      Foto: processarFotos(dadosImovel.Foto),
+      Automacao: true // Marcar como origem automática
+    };
+
+    console.log('📤 Dados automação:', {
+      codigo,
+      totalFotos: payload.Foto.length,
+      primeiraFoto: payload.Foto[0]?.Destaque
+    });
+
+    const response = await axiosClient.post(
+      `/admin/imoveis/${codigo}/automacao`, 
+      payload,
+      { timeout: 30000 }
+    );
+
+    // Garantir código de retorno válido
+    const resultado = {
+      ...response.data,
+      data: {
+        ...response.data?.data,
+        Codigo: response.data?.data?.Codigo || codigo
+      }
+    };
+
+    console.log('✅ Automação concluída:', resultado.message);
+    console.groupEnd();
+
+    return {
+      success: true,
+      ...resultado
+    };
+
+  } catch (error) {
+    console.error('❌ Erro na automação:', error.message);
+    console.groupEnd();
+    
+    return {
+      success: false,
+      message: "Falha na automação: " + 
+              (error.response?.data?.message || error.message),
+      error: error.response?.data || error.message
+    };
+  }
+}
+
+// 🆕 Criar Imóvel (Versão Completa Corrigida)
 export async function criarImovel(codigo, dadosImovel) {
   try {
-    console.group('📤 Service: Criando imóvel');
-    console.log('Código:', codigo);
-    console.log('Dados:', {
-      empreendimento: dadosImovel.Empreendimento,
-      totalFotos: Array.isArray(dadosImovel.Foto) ? dadosImovel.Foto.length : 'Não array'
-    });
-
-    // 🔥 ROTA CORRIGIDA: /admin/imoveis em vez de /admin/imoveis
-    const response = await axiosClient.post(`/admin/imoveis`, {
-      Codigo: codigo,
-      ...dadosImovel
-    }, {
-      timeout: 30000,
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    });
-
-    console.log('📥 Service: Resposta recebida:', {
-      status: response.status,
-      success: response.data?.success
-    });
-    console.groupEnd();
-
-    return {
-      success: response.data?.success || response.status >= 200 && response.status < 300,
-      message: response.data?.message || "Imóvel criado com sucesso",
-      data: response.data?.data || null,
-    };
-  } catch (error) {
-    console.error("Service: Erro ao criar imóvel:", error);
-    console.groupEnd();
-
-    if (error.code === "ERR_NETWORK") {
-      return {
-        success: false,
-        message: "Erro de conexão com o servidor. Tente novamente mais tarde.",
-        error: "Erro de conexão",
-      };
+    console.group('🆕 Service: Criando Imóvel');
+    
+    if (!codigo) {
+      throw new Error("Código do imóvel é obrigatório");
     }
 
+    // Processar fotos e garantir ordem
+    const payload = {
+      ...dadosImovel,
+      Codigo: codigo,
+      Foto: processarFotos(dadosImovel.Foto),
+      Video: Array.isArray(dadosImovel.Video) ? dadosImovel.Video : []
+    };
+
+    console.log('📤 Dados criação:', {
+      codigo,
+      totalFotos: payload.Foto.length,
+      primeiraFoto: payload.Foto[0]?.Destaque
+    });
+
+    const response = await axiosClient.post('/admin/imoveis', payload, {
+      timeout: 30000,
+      headers: { 'Content-Type': 'application/json' }
+    });
+
+    console.log('✅ Imóvel criado:', response.data?.data?.Codigo);
+    console.groupEnd();
+
+    return {
+      success: true,
+      data: response.data?.data,
+      message: response.data?.message || "Imóvel criado com sucesso"
+    };
+
+  } catch (error) {
+    console.error('❌ Erro ao criar imóvel:', error.message);
+    console.groupEnd();
+    
     return {
       success: false,
-      message: error.response?.data?.message || "Erro ao criar imóvel",
-      error: error.response?.data?.error || error.message || "Erro desconhecido",
+      message: error.response?.data?.message || 
+              error.message || 
+              "Erro ao criar imóvel",
+      error: error.response?.data || error.message
     };
   }
 }
 
-// 🔥 FUNÇÃO OTIMIZADA: Buscar imóvel por ID (ROTA CORRETA)
+// 🔍 Buscar Imóvel por ID (Versão Completa Corrigida)
 export const getImovelById = async (codigo) => {
   try {
-    console.log('📥 Service: Buscando imóvel:', codigo);
+    console.log('🔍 Service: Buscando imóvel:', codigo);
     
-    // 🔥 ROTA CORRIGIDA: /admin/imoveis/ 
     const response = await axiosClient.get(`/admin/imoveis/${codigo}`, {
       timeout: 25000
     });
     
-    if (response && response.data) {
-      console.log('✅ Service: Imóvel encontrado:', {
-        codigo: response.data.data?.Codigo,
-        totalFotos: Array.isArray(response.data.data?.Foto) ? response.data.data.Foto.length : 'Não array'
-      });
-      
-      return {
-        success: true,
-        data: response.data?.data || response.data
-      };
+    if (!response.data?.data) {
+      throw new Error("Imóvel não encontrado");
     }
-    
-    return {
-      success: false,
-      error: "Dados não encontrados na resposta"
+
+    // Ordenar fotos pela ordem salva
+    const imovel = {
+      ...response.data.data,
+      Foto: processarFotos(response.data.data.Foto)
     };
+
+    console.log('✅ Imóvel encontrado:', {
+      codigo: imovel.Codigo,
+      totalFotos: imovel.Foto.length,
+      status: imovel.Status
+    });
+
+    return {
+      success: true,
+      data: imovel
+    };
+    
   } catch (error) {
-    console.error("Erro ao buscar imóvel:", error);
+    console.error("❌ Erro ao buscar imóvel:", error.message);
     return {
       success: false,
-      error: error.response?.data?.message || error.message || "Erro ao buscar imóvel"
+      error: error.response?.data?.message || 
+             error.message || 
+             "Erro ao buscar imóvel"
     };
   }
 };
