@@ -2,71 +2,150 @@ import { connectToDatabase } from "@/app/lib/mongodb";
 import Imovel from "@/app/models/Imovel";
 import { NextResponse } from "next/server";
 
-export async function PUT(request, { params }) {
-  const { id } = params;
-
+export async function GET(request, { params }) {
   try {
     await connectToDatabase();
-    const dadosAtualizados = await request.json();
-
-    // 🔒 Validação reforçada
-    if (!id) {
-      return NextResponse.json(
-        { status: 400, message: "ID/Código do imóvel é obrigatório" },
-        { status: 400 }
-      );
-    }
-
-    // 🔍 Busca inteligente (código ou _id)
+    const { id } = params;
+    
     let imovel = await Imovel.findOne({ Codigo: id });
     if (!imovel && id.match(/^[0-9a-fA-F]{24}$/)) {
       imovel = await Imovel.findById(id);
     }
-
+    
     if (!imovel) {
       return NextResponse.json(
         { status: 404, message: "Imóvel não encontrado" },
         { status: 404 }
       );
     }
+    
+    return NextResponse.json({
+      status: 200,
+      data: imovel,
+    });
+  } catch (error) {
+    return NextResponse.json(
+      { status: 500, message: "Erro ao buscar imóvel", error: error.message },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(request, { params }) {
+  const { id } = params;
+
+  try {
+    await connectToDatabase();
+    const dadosAtualizados = await request.json();
+    
+    console.group('📥 PUT - Processando atualização de imóvel');
+    console.log('🆔 ID/Código recebido:', id);
+    console.log('📊 Dados básicos:', {
+      codigo: dadosAtualizados.Codigo,
+      empreendimento: dadosAtualizados.Empreendimento,
+      ativo: dadosAtualizados.Ativo,
+      totalCampos: Object.keys(dadosAtualizados).length
+    });
+
+    // 🔒 Validação reforçada
+    if (!id) {
+      console.error('❌ ID não fornecido');
+      console.groupEnd();
+      return NextResponse.json(
+        { status: 400, message: "ID do imóvel é obrigatório" },
+        { status: 400 }
+      );
+    }
+
+    // 🔍 Busca inteligente (código ou _id)
+    let imovel;
+    console.log('🔍 Buscando por Codigo:', id);
+    imovel = await Imovel.findOne({ Codigo: id });
+    
+    if (imovel) {
+      console.log('✅ Imóvel encontrado por Codigo:', imovel.Codigo);
+    } else if (id.match(/^[0-9a-fA-F]{24}$/)) {
+      console.log('🔍 Tentando busca por _id MongoDB...');
+      imovel = await Imovel.findById(id);
+      if (imovel) console.log('✅ Imóvel encontrado por _id:', imovel._id);
+    }
+
+    if (!imovel) {
+      console.error('❌ Imóvel não encontrado com ID:', id);
+      console.groupEnd();
+      return NextResponse.json(
+        { status: 404, message: "Imóvel não encontrado" },
+        { status: 404 }
+      );
+    }
+
+    console.log('📋 Imóvel localizado:', {
+      codigo: imovel.Codigo,
+      _id: imovel._id,
+      empreendimento: imovel.Empreendimento,
+      versaoAtual: imovel.__v
+    });
 
     // 📸 Processamento AVANÇADO de fotos
     if (dadosAtualizados.Foto) {
+      console.log('📸 Processando fotos...');
       let fotosProcessadas = [];
-
-      // 1. Converter para array se necessário
+      
       if (Array.isArray(dadosAtualizados.Foto)) {
-        fotosProcessadas = dadosAtualizados.Foto.map((foto, index) => ({
-          ...foto,
-          // Garantir ordem numérica válida
-          ordem: typeof foto.ordem === 'number' ? foto.ordem : index,
-          // Manter destaque existente ou definir padrão
-          Destaque: foto.Destaque || "Nao",
-          // Preservar campos importantes
-          Codigo: foto.Codigo || `photo-${Date.now()}-${index}`,
-          _id: foto._id || undefined
-        }));
+        console.log('📸 Fotos em formato array:', dadosAtualizados.Foto.length);
+        
+        // Processar cada foto
+        fotosProcessadas = dadosAtualizados.Foto.map((foto, index) => {
+          const ordemFinal = typeof foto.ordem === 'number' ? foto.ordem : index;
+          const fotoProcessada = {
+            Codigo: foto.Codigo || `photo-${Date.now()}-${index}`,
+            Foto: foto.Foto || '',
+            Destaque: foto.Destaque || "Nao",
+            ordem: ordemFinal,
+            _id: foto._id || undefined
+          };
+
+          // Preservar campos adicionais
+          ['Ordem', 'ORDEM', 'Descricao', 'Alt'].forEach(campo => {
+            if (foto[campo]) fotoProcessada[campo] = foto[campo];
+          });
+
+          return fotoProcessada;
+        });
+
+        // Ordenar fotos
+        fotosProcessadas.sort((a, b) => a.ordem - b.ordem);
+      } else if (typeof dadosAtualizados.Foto === 'object') {
+        console.log('📸 Convertendo objeto de fotos para array...');
+        fotosProcessadas = Object.entries(dadosAtualizados.Foto)
+          .sort(([a], [b]) => parseInt(a) - parseInt(b))
+          .map(([key, foto], index) => ({
+            ...foto,
+            Codigo: key,
+            ordem: foto.ordem !== undefined ? foto.ordem : index
+          }));
       }
 
-      // 2. Ordenar pelas posições
-      fotosProcessadas.sort((a, b) => a.ordem - b.ordem);
-
-      // 3. Tratamento especial para imóveis vendidos
+      // Tratamento especial para imóveis vendidos
       const isVendido = dadosAtualizados.Status === "Vendido" || imovel.Status === "Vendido";
       if (isVendido) {
-        // Garantir que a primeira foto seja destaque
         if (fotosProcessadas.length > 0 && fotosProcessadas[0].Destaque !== "Sim") {
           fotosProcessadas[0].Destaque = "Sim";
         }
-        
-        // Prevenir remoção de fotos em vendidos
-        fotosProcessadas = fotosProcessadas.filter(foto => 
-          !foto._markedForDeletion
-        );
+        fotosProcessadas = fotosProcessadas.filter(foto => !foto._markedForDeletion);
       }
 
-      // 4. Aplicar ao payload
       dadosAtualizados.Foto = fotosProcessadas;
+      console.log('📸 Fotos processadas:', fotosProcessadas.length);
+    }
+
+    // 🎥 Processamento de vídeos
+    if (dadosAtualizados.Video) {
+      console.log('🎥 Processando vídeos...');
+      dadosAtualizados.Video = Array.isArray(dadosAtualizados.Video) 
+        ? dadosAtualizados.Video 
+        : Object.values(dadosAtualizados.Video || {});
+      console.log('🎥 Vídeos processados:', dadosAtualizados.Video.length);
     }
 
     // ✨ Atualização segura dos campos
@@ -80,13 +159,22 @@ export async function PUT(request, { params }) {
       }
     });
 
+    // Marcar arrays como modificados
+    ['Foto', 'Video'].forEach(campo => {
+      if (dadosAtualizados[campo]) imovel.markModified(campo);
+    });
+
     // 💾 Salvamento otimizado
-    const imovelAtualizado = await imovel.save({
+    console.log('💾 Salvando documento no MongoDB...');
+    const imovelAtualizado = await imovel.save({ 
       validateBeforeSave: false,
       timestamps: false
     });
 
-    // 📬 Resposta padronizada
+    console.log('✅ Documento salvo com sucesso!');
+    console.groupEnd();
+
+    // 🎉 Resposta de sucesso
     return NextResponse.json({
       status: 200,
       success: true,
@@ -99,13 +187,14 @@ export async function PUT(request, { params }) {
           Destaque: f.Destaque
         })),
         Status: imovelAtualizado.Status,
-        updatedAt: new Date()
+        updatedAt: new Date().toISOString()
       },
       message: "Imóvel atualizado com sucesso"
     });
 
   } catch (error) {
-    console.error("Erro na atualização:", error);
+    console.error('❌ Erro na atualização:', error);
+    console.groupEnd();
     
     // 🛑 Tratamento de erros específicos
     let status = 500;
@@ -117,10 +206,16 @@ export async function PUT(request, { params }) {
     } else if (error.code === 11000) {
       status = 409;
       message = "Código do imóvel já existe";
+    } else if (error.name === 'CastError') {
+      status = 400;
+      message = "ID do imóvel inválido";
+    } else if (error.name === 'VersionError') {
+      status = 409;
+      message = "Conflito de versão. Recarregue e tente novamente.";
     }
 
     return NextResponse.json(
-      { status, success: false, message },
+      { status, success: false, message, error: error.message },
       { status }
     );
   }
