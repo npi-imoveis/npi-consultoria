@@ -7,23 +7,35 @@ export async function GET(request, { params }) {
     await connectToDatabase();
     const { id } = params;
     
-    let imovel = await Imovel.findOne({ Codigo: id });
+    console.log('📥 GET - Buscando imóvel:', id);
+    
+    // 🔥 BUSCA INTELIGENTE: Codigo primeiro, depois _id
+    let imovel;
+    
+    // Primeiro: tentar buscar por Codigo (campo personalizado)
+    imovel = await Imovel.findOne({ Codigo: id });
+    
+    // Segundo: se não encontrou e parece ser ObjectId, tentar por _id
     if (!imovel && id.match(/^[0-9a-fA-F]{24}$/)) {
       imovel = await Imovel.findById(id);
     }
     
     if (!imovel) {
+      console.log('❌ GET - Imóvel não encontrado:', id);
       return NextResponse.json(
         { status: 404, message: "Imóvel não encontrado" },
         { status: 404 }
       );
     }
     
+    console.log('✅ GET - Imóvel encontrado:', imovel.Codigo);
+    
     return NextResponse.json({
       status: 200,
       data: imovel,
     });
   } catch (error) {
+    console.error("❌ GET - Erro ao buscar imóvel:", error);
     return NextResponse.json(
       { status: 500, message: "Erro ao buscar imóvel", error: error.message },
       { status: 500 }
@@ -31,6 +43,7 @@ export async function GET(request, { params }) {
   }
 }
 
+// 🔥 PUT COMPLETO E OTIMIZADO
 export async function PUT(request, { params }) {
   const { id } = params;
 
