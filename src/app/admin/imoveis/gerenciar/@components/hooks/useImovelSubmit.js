@@ -96,7 +96,7 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create", imove
         let result;
 
         if (formData.Automacao) {
-          result = await criarImovel(formData.Codigo, payload);
+          result = await criarImovel(payload); // ✅ CORRIGIDO: Removido formData.Codigo
           if (result && result.success) {
             setSuccess("Imóvel cadastrado com sucesso!");
             setIsModalOpen(true);
@@ -151,7 +151,7 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create", imove
           }
         } else {
           // Em modo de criação, chamar o serviço de cadastro
-          result = await criarImovel(formData.Codigo, payload);
+          result = await criarImovel(payload); // ✅ CORRIGIDO: Removido formData.Codigo
 
           if (result && result.success) {
             setSuccess("Imóvel cadastrado com sucesso!");
