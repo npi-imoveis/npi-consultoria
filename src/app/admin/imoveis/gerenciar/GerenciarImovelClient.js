@@ -145,25 +145,25 @@ export default function GerenciarImovelClient() {
   if (Array.isArray(imovelSelecionado.Foto)) {
     console.log('📸 Fotos já em formato array:', imovelSelecionado.Foto.length);
     
-    fotosProcessadas = imovelSelecionado.Foto.map((foto, index) => {
-      // 🔥 GARANTIR CÓDIGO ÚNICO - CRÍTICO!
-      let codigoUnico = foto.Codigo;
-      
-      // Se não tem código ou é inválido, gerar um único
-      if (!codigoUnico || codigoUnico.trim() === '') {
-        codigoUnico = `photo-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${index}`;
-        console.log(`📸 Código gerado para foto ${index}:`, codigoUnico);
-      }
-      
-      return {
-        ...foto,
-        Codigo: codigoUnico, // 🔥 CÓDIGO ÚNICO GARANTIDO
-        Destaque: foto.Destaque || "Nao",
-        Ordem: foto.Ordem || index + 1,
-        // 🔥 CRUCIAL: Preservar campo 'ordem' se existir
-        ordem: foto.ordem !== undefined && foto.ordem !== null ? foto.ordem : undefined
-      };
-    });
+   fotosProcessadas = imovelSelecionado.Foto.map((foto, index) => {
+  // 🔥 GARANTIR CÓDIGO ÚNICO - CRÍTICO!
+  let codigoUnico = foto.Codigo;
+  
+  // Se não tem código ou é inválido, gerar um único
+  if (!codigoUnico || codigoUnico.trim() === '') {
+    codigoUnico = `photo-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${index}`;
+    console.log(`📸 Código gerado para foto ${index}:`, codigoUnico);
+  }
+  
+  return {
+    ...foto,
+    Codigo: codigoUnico, // 🔥 CÓDIGO ÚNICO GARANTIDO
+    Destaque: foto.Destaque || "Nao",
+    Ordem: foto.Ordem || index + 1,
+    // 🔥 CRÍTICO: SÓ preservar campo 'ordem' se for um NÚMERO VÁLIDO
+    ...(typeof foto.ordem === 'number' && !isNaN(foto.ordem) ? { ordem: foto.ordem } : {})
+  };
+});
     
     // 🔍 VERIFICAR CÓDIGOS DUPLICADOS
     const codigos = fotosProcessadas.map(f => f.Codigo);
