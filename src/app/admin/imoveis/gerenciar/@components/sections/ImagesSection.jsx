@@ -17,88 +17,39 @@ const ImagesSection = memo(({
   setImageAsHighlight,
   changeImagePosition,
   validation,
-  onUpdatePhotos // 🔥 NOVA PROP para atualizar fotos no componente pai
+  onUpdatePhotos // Para atualizar fotos no componente pai
 }) => {
   const [downloadingPhotos, setDownloadingPhotos] = useState(false);
-  const [localPhotoOrder, setLocalPhotoOrder] = useState(null);
   
-  // 🔥 DETECTAR ORDEM MANUAL IMEDIATAMENTE
-  const hasManualOrder = useMemo(() => {
-    if (!formData?.Foto || formData.Foto.length === 0) return false;
-    
-    const todasTemOrdem = formData.Foto.every(foto => 
-      foto.ordem !== undefined && foto.ordem !== null
-    );
-    
-    if (todasTemOrdem) {
-      const ordensSorted = [...formData.Foto]
-        .sort((a, b) => (a.ordem || 0) - (b.ordem || 0))
-        .map(f => f.ordem);
-      
-      const isSequential = ordensSorted.every((ordem, index) => ordem === index);
-      
-      if (isSequential) {
-        console.log('🎯 ORDEM MANUAL DETECTADA NO INÍCIO');
-        return true;
-      }
-    }
-    
-    return false;
-  }, [formData?.Foto]);
-
-  // 🎯 ORDEM: LOCAL > MANUAL SALVA > INTELIGENTE
+  // 🎯 ORDEM INTELIGENTE UNIFICADA - Sempre usa photoSorter como base
   const sortedPhotos = useMemo(() => {
     if (!Array.isArray(formData?.Foto) || formData.Foto.length === 0) {
       return [];
     }
 
-    // 1. Se há ordem local (usuário acabou de alterar), usar ela
-    if (localPhotoOrder) {
-      console.log('📝 ADMIN: Usando ordem local (alterada pelo usuário)');
-      return localPhotoOrder;
-    }
-
-    // 2. Se tem ordem manual salva, usar ela
-    if (hasManualOrder) {
-      console.log('📝 ADMIN: Usando ordem manual salva no banco');
-      const fotosOrdenadas = [...formData.Foto].sort((a, b) => 
-        (a.ordem || 0) - (b.ordem || 0)
-      );
-      return fotosOrdenadas;
-    }
-
-    // 3. Usar ordem inteligente
     try {
-      console.log('📝 ADMIN: Usando ordem inteligente (photoSorter)');
+      console.log('📸 ADMIN: Aplicando ordem inteligente unificada');
       
-      const fotosComCodigosOriginais = formData.Foto.map((foto, index) => ({
-        ...foto,
-        codigoOriginal: foto.Codigo || foto.codigo || `temp-${index}`
-      }));
+      // Sempre usar photoSorter - ele já detecta se há ordem manual e preserva
+      const fotosOrdenadas = photoSorter.ordenarFotos(formData.Foto, formData.Codigo || 'temp');
       
-      // Sempre remover campos ORDEM para forçar análise inteligente
-      const fotosTemp = fotosComCodigosOriginais.map(foto => {
-        const { Ordem, ordem, ORDEM, codigoOriginal, ...fotoLimpa } = foto;
-        return { ...fotoLimpa, codigoOriginal };
-      });
-      
-      const fotosOrdenadas = photoSorter.ordenarFotos(fotosTemp, formData.Codigo || 'temp');
-      
-      const resultado = fotosOrdenadas.map((foto, index) => ({
-        ...foto,
-        Codigo: foto.codigoOriginal,
-        ordem: index, // 🔥 Adicionar ordem mesmo na ordem inteligente
-        codigoOriginal: undefined
-      }));
-
-      console.log('✅ ADMIN: Ordem inteligente aplicada:', resultado.length, 'fotos');
-      return resultado;
+      console.log('✅ ADMIN: Ordem inteligente aplicada:', fotosOrdenadas.length, 'fotos');
+      return fotosOrdenadas;
 
     } catch (error) {
       console.error('❌ ADMIN: Erro na ordenação:', error);
       return [...formData.Foto];
     }
-  }, [formData?.Foto, formData?.Codigo, localPhotoOrder, hasManualOrder]);
+  }, [formData?.Foto, formData?.Codigo]);
+
+  // 🔍 Verificar se há ajustes manuais na ordem inteligente
+  const temAjustesNaOrdem = useMemo(() => {
+    if (!sortedPhotos || sortedPhotos.length === 0) return false;
+    
+    return sortedPhotos.some(foto => 
+      typeof foto.Ordem === 'number' && foto.tipoOrdenacao === 'manual'
+    );
+  }, [sortedPhotos]);
 
   const baixarTodasImagens = async (imagens = []) => {
     if (!Array.isArray(imagens)) return;
@@ -146,8 +97,6 @@ const ImagesSection = memo(({
       try {
         new URL(imageUrl.trim());
         addSingleImage(imageUrl.trim());
-        // Reset ordem local quando adicionar nova foto
-        setLocalPhotoOrder(null);
       } catch {
         alert('URL inválida.');
       }
@@ -164,8 +113,6 @@ const ImagesSection = memo(({
         const reader = new FileReader();
         reader.onload = (e) => {
           updateImage(codigo, e.target.result);
-          // Reset ordem local quando trocar foto
-          setLocalPhotoOrder(null);
         };
         reader.readAsDataURL(file);
       }
@@ -173,12 +120,12 @@ const ImagesSection = memo(({
     fileInput.click();
   };
 
-  // 🔥 REORDENAÇÃO MELHORADA COM PERSISTÊNCIA GARANTIDA
+  // 🎯 REORDENAÇÃO SIMPLIFICADA - Sempre na ordem inteligente
   const handlePositionChange = async (codigo, newPosition) => {
     const position = parseInt(newPosition);
     const currentIndex = sortedPhotos.findIndex(p => p.Codigo === codigo);
     
-    console.log('🔄 ADMIN: Reordenação solicitada:', {
+    console.log('🔄 ADMIN: Reordenação na ordem inteligente:', {
       codigo,
       posicaoAtual: currentIndex + 1,
       novaPosicao: position,
@@ -187,69 +134,52 @@ const ImagesSection = memo(({
     
     if (!isNaN(position) && position > 0 && position <= sortedPhotos.length && (position - 1) !== currentIndex) {
       
-      // 🎯 1. REORDENAÇÃO VISUAL INSTANTÂNEA
+      // 1. Reorganizar array
       const novaOrdem = [...sortedPhotos];
       const fotoMovida = novaOrdem[currentIndex];
       
       novaOrdem.splice(currentIndex, 1);
       novaOrdem.splice(position - 1, 0, fotoMovida);
       
-      // 🔥 CRÍTICO: Adicionar campo ordem em TODAS as fotos
-      const novaOrdemComIndices = novaOrdem.map((foto, index) => ({
+      // 2. Adicionar campo ordem manual em TODAS as fotos
+      const fotosComOrdem = novaOrdem.map((foto, index) => ({
         ...foto,
-        ordem: index // índice 0-based
+        Ordem: index, // índice 0-based
+        tipoOrdenacao: 'manual' // Marcar como ajuste manual na ordem inteligente
       }));
       
-      setLocalPhotoOrder(novaOrdemComIndices);
+      console.log('✅ ADMIN: Nova ordem aplicada (ordem inteligente + ajustes)');
       
-      console.log('✅ ADMIN: Reordenação visual aplicada');
-      
-      // 🎯 2. ATUALIZAR NO COMPONENTE PAI IMEDIATAMENTE
+      // 3. Atualizar no componente pai IMEDIATAMENTE
       if (typeof onUpdatePhotos === 'function') {
         console.log('💾 ADMIN: Atualizando fotos no componente pai...');
-        onUpdatePhotos(novaOrdemComIndices);
-      } else {
-        console.warn('⚠️ ADMIN: onUpdatePhotos não disponível - use o botão SALVAR');
+        onUpdatePhotos(fotosComOrdem);
       }
       
-      // 🎯 3. TENTATIVAS DE PERSISTÊNCIA NO BANCO (opcional, para redundância)
-      let sucessoPersistencia = false;
-      
-      // MÉTODO 1: Função existente
+      // 4. Tentar persistir no banco (função opcional do componente pai)
       if (typeof changeImagePosition === 'function') {
         try {
-          console.log('💾 ADMIN: Tentando changeImagePosition...');
-          const resultado = await Promise.resolve(changeImagePosition(codigo, position));
-          if (resultado !== false && resultado !== null) {
-            sucessoPersistencia = true;
-          }
+          console.log('💾 ADMIN: Persistindo nova ordem no banco...');
+          await Promise.resolve(changeImagePosition(codigo, position));
         } catch (error) {
-          console.error('❌ ADMIN: changeImagePosition falhou:', error);
+          console.error('❌ ADMIN: Erro ao persistir nova ordem:', error);
         }
-      }
-      
-      // Se não conseguiu persistir, avisar o usuário
-      if (!sucessoPersistencia && !onUpdatePhotos) {
-        console.warn('⚠️ ADMIN: Mudança aplicada apenas visualmente. Use SALVAR para persistir.');
       }
     }
   };
 
   const handleRemoveImage = (codigo) => {
     removeImage(codigo);
-    // Reset ordem quando remover foto
-    setLocalPhotoOrder(null);
   };
 
   const handleResetOrder = () => {
-    console.log('🔄 ADMIN: Resetando para ordem inteligente...');
+    console.log('🔄 ADMIN: Resetando para ordem inteligente pura...');
     photoSorter.limparCache();
-    setLocalPhotoOrder(null);
     
-    // Atualizar no componente pai removendo campo ordem
+    // Remover campos de ordem manual das fotos
     if (typeof onUpdatePhotos === 'function' && formData?.Foto) {
       const fotosSemOrdem = formData.Foto.map(foto => {
-        const { ordem, ...fotoLimpa } = foto;
+        const { Ordem, ordem, tipoOrdenacao, ...fotoLimpa } = foto;
         return fotoLimpa;
       });
       onUpdatePhotos(fotosSemOrdem);
@@ -294,7 +224,7 @@ const ImagesSection = memo(({
                   type="button"
                   onClick={handleResetOrder}
                   className="px-3 py-1.5 text-sm bg-purple-600 hover:bg-purple-700 text-white rounded-md transition-colors"
-                  title="Voltar para ordem inteligente"
+                  title="Voltar para ordem inteligente pura"
                 >
                   🔄 Resetar Ordem
                 </button>
@@ -324,30 +254,24 @@ const ImagesSection = memo(({
           </div>
         </div>
 
-        {/* INDICADOR DE MODO */}
+        {/* INDICADOR SIMPLIFICADO - Apenas 2 estados */}
         <div className={`p-3 rounded-md text-sm border-l-4 ${
-          localPhotoOrder
-            ? 'bg-orange-50 border-orange-400 text-orange-700'
-            : hasManualOrder
+          temAjustesNaOrdem
             ? 'bg-blue-50 border-blue-400 text-blue-700'
             : 'bg-green-50 border-green-400 text-green-700'
         }`}>
           <p>
             <strong>
-              {localPhotoOrder
-                ? '✋ ORDEM PERSONALIZADA (não salva)' 
-                : hasManualOrder
-                ? '💾 ORDEM MANUAL SALVA'
-                : '🤖 ORDEM INTELIGENTE (PhotoSorter)'
+              {temAjustesNaOrdem
+                ? '🎯 ORDEM INTELIGENTE + Ajustes Manuais' 
+                : '🤖 ORDEM INTELIGENTE Pura'
               }
             </strong>
           </p>
           <p className="text-xs mt-1">
-            {localPhotoOrder
-              ? '📸 Você alterou a ordem. Clique em SALVAR para persistir as mudanças.'
-              : hasManualOrder
-              ? '📸 Ordem definida manualmente e salva no banco. Use "Resetar Ordem" para voltar à ordem inteligente.'
-              : '📸 Fotos organizadas automaticamente. Use os selects para personalizar a ordem.'
+            {temAjustesNaOrdem
+              ? '📸 Ordem inteligente com ajustes personalizados. Use "Resetar Ordem" para voltar à ordem pura.'
+              : '📸 Fotos organizadas automaticamente pelo PhotoSorter. Use os selects para fazer ajustes.'
             }
           </p>
         </div>
@@ -372,6 +296,11 @@ const ImagesSection = memo(({
                   <div className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded">
                     {index + 1}°
                   </div>
+                  {photo.tipoOrdenacao === 'manual' && (
+                    <span className="absolute bottom-2 left-2 bg-blue-500 text-white text-xs px-2 py-1 rounded">
+                      AJUSTADO
+                    </span>
+                  )}
                 </div>
 
                 <div className="p-3 space-y-3">
