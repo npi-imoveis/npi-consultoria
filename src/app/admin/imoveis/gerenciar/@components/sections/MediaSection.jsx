@@ -1,47 +1,22 @@
 "use client";
 
-import { memo, useState, useEffect } from 'react';
+import { memo } from 'react';
 import FormSection from '../FormSection';
 
 const MediaSection = ({ formData, displayValues, onChange }) => {
   
-  // 🎯 Estados locais sincronizados com formData (evita interferência)
-  const [localTour360, setLocalTour360] = useState('');
-  const [localVideoId, setLocalVideoId] = useState('');
-  const [isInitialized, setIsInitialized] = useState(false);
+  // 🎯 Valores atuais dos campos
+  const tour360Value = displayValues?.Tour360 || formData?.Tour360 || "";
+  const videoIdValue = formData?.Video?.["1"]?.Video || "";
 
-  // 🔄 Sincronizar com props quando mudarem (mas só uma vez)
-  useEffect(() => {
-    if (!isInitialized) {
-      const tour360Value = displayValues?.Tour360 || formData?.Tour360 || '';
-      const videoIdValue = formData?.Video?.["1"]?.Video || '';
-      
-      setLocalTour360(tour360Value);
-      setLocalVideoId(videoIdValue);
-      setIsInitialized(true);
-      
-      console.log('🔄 MediaSection inicializado:', { tour360Value, videoIdValue });
-    }
-  }, [formData, displayValues, isInitialized]);
-
-  // 🚀 Handler para Tour 360 - Atualiza local E pai
+  // 🚀 Handler para Tour 360
   const handleTour360Change = (e) => {
-    const value = e.target.value;
-    
-    // 1. Atualização LOCAL imediata (garante responsividade)
-    setLocalTour360(value);
-    
-    // 2. Atualização no COMPONENTE PAI (com debounce/batch)
     if (typeof onChange === 'function') {
-      try {
-        onChange("Tour360", value);
-      } catch (error) {
-        console.error('Erro ao atualizar Tour360:', error);
-      }
+      onChange("Tour360", e.target.value);
     }
   };
 
-  // 🚀 Handler para Video ID - Atualiza local E pai
+  // 🚀 Handler para Video ID com extrator inteligente
   const handleVideoIdChange = (e) => {
     const value = e.target.value;
     
@@ -71,25 +46,17 @@ const MediaSection = ({ formData, displayValues, onChange }) => {
 
     const cleanId = extractYouTubeId(value);
     
-    // 1. Atualização LOCAL imediata
-    setLocalVideoId(cleanId);
-    
-    // 2. Atualização no COMPONENTE PAI
     if (typeof onChange === 'function') {
-      try {
-        // Estrutura aninhada esperada
-        const videoData = {
-          ...formData?.Video,
-          "1": {
-            ...formData?.Video?.["1"],
-            Video: cleanId
-          }
-        };
-        
-        onChange("Video", videoData);
-      } catch (error) {
-        console.error('Erro ao atualizar Video:', error);
-      }
+      // Estrutura aninhada correta
+      const videoData = {
+        ...formData?.Video,
+        "1": {
+          ...formData?.Video?.["1"],
+          Video: cleanId
+        }
+      };
+      
+      onChange("Video", videoData);
     }
   };
 
@@ -104,7 +71,7 @@ const MediaSection = ({ formData, displayValues, onChange }) => {
           </label>
           <input
             type="text"
-            value={localTour360}
+            value={tour360Value}
             onChange={handleTour360Change}
             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm 
                        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
@@ -120,7 +87,7 @@ const MediaSection = ({ formData, displayValues, onChange }) => {
           </label>
           <input
             type="text"
-            value={localVideoId}
+            value={videoIdValue}
             onChange={handleVideoIdChange}
             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm 
                        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
@@ -129,12 +96,12 @@ const MediaSection = ({ formData, displayValues, onChange }) => {
           />
           
           {/* Preview do vídeo */}
-          {localVideoId && localVideoId.length > 5 && (
+          {videoIdValue && videoIdValue.length > 5 && (
             <div className="mt-3">
               <p className="text-xs text-gray-500 mb-2">Preview:</p>
               <div className="relative aspect-video w-full max-w-xs">
                 <iframe
-                  src={`https://www.youtube.com/embed/${localVideoId}`}
+                  src={`https://www.youtube.com/embed/${videoIdValue}`}
                   className="w-full h-full rounded border"
                   frameBorder="0"
                   allowFullScreen
