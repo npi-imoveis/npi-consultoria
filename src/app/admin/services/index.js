@@ -119,9 +119,10 @@ export async function getCorretores(params = {}, page = 1, limit = 12) {
       timeout: 25000, // Timeout de 25 segundos
     });
 
+
     // Extrair dados e informações de paginação da resposta
-    const data = response.data.data || [];
-    const paginacao = response.data.paginacao || {};
+    const data = response.data.corretores || [];
+    const paginacao = response.data.pagination || {};
 
     // Garantir que todos os valores de paginação sejam números válidos
     const totalItems = ensureNumber(paginacao.totalItems, data.length);
@@ -173,7 +174,7 @@ export async function getCorretores(params = {}, page = 1, limit = 12) {
   }
 }
 
-export async function getProprietarios(params = {}, page = 1, limit = 12) {
+export async function getProprietarios(page = 1, limit = 12) {
   try {
     // Garantir que page e limit sejam números válidos
     const validPage = ensureNumber(page, 1);
