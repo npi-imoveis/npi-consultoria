@@ -137,7 +137,9 @@ export default function GerenciarImovelClient() {
       };
 
       // 🔥 PROCESSAMENTO DE FOTOS OTIMIZADO - PRESERVAR ORDEM
-     const processPhotos = () => {
+     // 🔧 SUBSTITUIR TODA A FUNÇÃO processPhotos() por esta versão:
+
+const processPhotos = () => {
   if (!imovelSelecionado.Foto) return [];
   
   let fotosProcessadas = [];
@@ -145,25 +147,34 @@ export default function GerenciarImovelClient() {
   if (Array.isArray(imovelSelecionado.Foto)) {
     console.log('📸 Fotos já em formato array:', imovelSelecionado.Foto.length);
     
-   fotosProcessadas = imovelSelecionado.Foto.map((foto, index) => {
-  // 🔥 GARANTIR CÓDIGO ÚNICO - CRÍTICO!
-  let codigoUnico = foto.Codigo;
-  
-  // Se não tem código ou é inválido, gerar um único
-  if (!codigoUnico || codigoUnico.trim() === '') {
-    codigoUnico = `photo-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${index}`;
-    console.log(`📸 Código gerado para foto ${index}:`, codigoUnico);
-  }
-  
-  return {
-    ...foto,
-    Codigo: codigoUnico, // 🔥 CÓDIGO ÚNICO GARANTIDO
-    Destaque: foto.Destaque || "Nao",
-    Ordem: foto.Ordem || index + 1,
-    // 🔥 CRÍTICO: SÓ preservar campo 'ordem' se for um NÚMERO VÁLIDO
-    ...(typeof foto.ordem === 'number' && !isNaN(foto.ordem) ? { ordem: foto.ordem } : {})
-  };
-});
+    fotosProcessadas = imovelSelecionado.Foto.map((foto, index) => {
+      // 🔥 GARANTIR CÓDIGO ÚNICO - CRÍTICO!
+      let codigoUnico = foto.Codigo;
+      
+      // Se não tem código ou é inválido, gerar um único
+      if (!codigoUnico || codigoUnico.trim() === '') {
+        codigoUnico = `photo-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${index}`;
+        console.log(`📸 Código gerado para foto ${index}:`, codigoUnico);
+      }
+      
+      // 🔥 MONTAR OBJETO SEM CAMPOS UNDEFINED
+      const novaFoto = {
+        ...foto,
+        Codigo: codigoUnico,
+        Destaque: foto.Destaque || "Nao",
+        Ordem: foto.Ordem || index + 1
+      };
+      
+      // 🔥 CRÍTICO: SÓ adicionar campo 'ordem' se for NÚMERO VÁLIDO
+      if (typeof foto.ordem === 'number' && !isNaN(foto.ordem) && foto.ordem >= 0) {
+        novaFoto.ordem = foto.ordem;
+        console.log(`📊 Ordem preservada para foto ${index}: ${foto.ordem}`);
+      } else {
+        console.log(`📊 Campo ordem removido para foto ${index} (era: ${foto.ordem})`);
+      }
+      
+      return novaFoto;
+    });
     
     // 🔍 VERIFICAR CÓDIGOS DUPLICADOS
     const codigos = fotosProcessadas.map(f => f.Codigo);
@@ -184,34 +195,47 @@ export default function GerenciarImovelClient() {
       });
     }
     
-    // Se tem campo 'ordem' em alguma foto, ordenar por ele
-    const temOrdem = fotosProcessadas.some(f => f.ordem !== undefined && f.ordem !== null);
-    if (temOrdem) {
-      console.log('📸 Ordenando fotos pelo campo "ordem"');
+    // 🔍 VERIFICAR SE TEM CAMPO ORDEM VÁLIDO
+    const temOrdemValida = fotosProcessadas.some(f => 
+      typeof f.ordem === 'number' && !isNaN(f.ordem) && f.ordem >= 0
+    );
+    
+    if (temOrdemValida) {
+      console.log('📸 Ordenando fotos pelo campo "ordem" VÁLIDO');
       fotosProcessadas.sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
+    } else {
+      console.log('📸 Nenhuma ordem válida encontrada - mantendo ordem original');
     }
     
   } else if (typeof imovelSelecionado.Foto === "object") {
     console.log('📸 Convertendo fotos de objeto para array');
     
-    fotosProcessadas = Object.keys(imovelSelecionado.Foto).map((key, index) => ({
-      ...imovelSelecionado.Foto[key],
-      Codigo: key || `photo-obj-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${index}`, // 🔥 CÓDIGO ÚNICO
-      Destaque: imovelSelecionado.Foto[key].Destaque || "Nao",
-      Ordem: imovelSelecionado.Foto[key].Ordem || index + 1,
-      // Preservar ordem se existir
-      ordem: imovelSelecionado.Foto[key].ordem !== undefined 
-        ? imovelSelecionado.Foto[key].ordem 
-        : undefined
-    }));
+    fotosProcessadas = Object.keys(imovelSelecionado.Foto).map((key, index) => {
+      const foto = imovelSelecionado.Foto[key];
+      const novaFoto = {
+        ...foto,
+        Codigo: key || `photo-obj-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${index}`,
+        Destaque: foto.Destaque || "Nao",
+        Ordem: foto.Ordem || index + 1
+      };
+      
+      // SÓ preservar ordem se for válida
+      if (typeof foto.ordem === 'number' && !isNaN(foto.ordem) && foto.ordem >= 0) {
+        novaFoto.ordem = foto.ordem;
+      }
+      
+      return novaFoto;
+    });
   }
   
   console.log('📸 Fotos processadas:', {
     total: fotosProcessadas.length,
     codigosUnicos: new Set(fotosProcessadas.map(f => f.Codigo)).size,
+    temCampoOrdem: fotosProcessadas.filter(f => typeof f.ordem === 'number').length,
     primeirasFotosOrdem: fotosProcessadas.slice(0, 3).map(f => ({ 
       codigo: f.Codigo, 
       destaque: f.Destaque,
+      temOrdem: typeof f.ordem === 'number',
       ordem: f.ordem,
       Ordem: f.Ordem
     }))
