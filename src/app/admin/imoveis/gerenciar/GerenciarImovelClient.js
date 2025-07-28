@@ -31,7 +31,6 @@ export default function GerenciarImovelClient() {
   const [showVincularImovel, setShowVincularImovel] = useState(false);
   const [isDesativando, setIsDesativando] = useState(false);
   const [downloadingPhotos, setDownloadingPhotos] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
   const router = useRouter();
 
   const imovelSelecionado = useImovelStore((state) => state.imovelSelecionado);
@@ -60,31 +59,15 @@ export default function GerenciarImovelClient() {
     handleImagesUploaded,
   } = useImovelForm();
 
-  const { handleSubmit, isSaving, error, success, setError, setSuccess } = useImovelSubmit(
+      const { handleSubmit, isSaving, error, success, setError, setSuccess } = useImovelSubmit(
     formData,
     setIsModalOpen,
     mode,
-    imovelSelecionado?._id
+    imovelSelecionado?._id // <--- ADICIONE ESTA LINHA
   );
 
-  const { handleFileUpload } = useImageUpload(updateImage, setSuccess, setError);
 
-  // 🔥 FUNÇÃO DE ATUALIZAÇÃO DE FOTOS OTIMIZADA
-  const handleUpdatePhotos = (fotosAtualizadas) => {
-    console.log('📸 PARENT: Atualizando fotos no formData');
-    console.log('📸 Total:', fotosAtualizadas.length);
-    console.log('📸 Primeiras ordens:', fotosAtualizadas.slice(0, 3).map(f => ({ 
-      codigo: f.Codigo, 
-      ordem: f.ordem 
-    })));
-    
-    setFormData(prev => ({
-      ...prev,
-      Foto: fotosAtualizadas
-    }));
-    
-    setHasChanges(true);
-  };
+  const { handleFileUpload } = useImageUpload(updateImage, setSuccess, setError);
 
   const downloadAllPhotos = async () => {
     if (!formData.Foto || formData.Foto.length === 0) {
@@ -118,11 +101,8 @@ export default function GerenciarImovelClient() {
     }
   };
 
-  // 🔥 USEEFFECT OTIMIZADO PARA CARREGAMENTO INICIAL
   useEffect(() => {
     if (imovelSelecionado && mode === "edit") {
-      console.group('🏠 Carregando dados do imóvel para edição');
-      
       const formatMonetaryDisplayValues = () => {
         const displayObj = {};
         ["ValorAntigo", "ValorAluguelSite", "ValorCondominio", "ValorIptu"].forEach((field) => {
@@ -136,105 +116,27 @@ export default function GerenciarImovelClient() {
         return displayObj;
       };
 
-      // 🔥 PROCESSAMENTO DE FOTOS OTIMIZADO - PRESERVAR ORDEM
-     // 🔧 SUBSTITUIR TODA A FUNÇÃO processPhotos() por esta versão:
-
-const processPhotos = () => {
-  if (!imovelSelecionado.Foto) return [];
-  
-  let fotosProcessadas = [];
-  
-  if (Array.isArray(imovelSelecionado.Foto)) {
-    console.log('📸 Fotos já em formato array:', imovelSelecionado.Foto.length);
-    
-    fotosProcessadas = imovelSelecionado.Foto.map((foto, index) => {
-      // 🔥 GARANTIR CÓDIGO ÚNICO
-      let codigoUnico = foto.Codigo;
-      if (!codigoUnico || codigoUnico.trim() === '') {
-        codigoUnico = `photo-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${index}`;
-        console.log(`📸 Código gerado para foto ${index}:`, codigoUnico);
-      }
-      
-      // 🔥 MONTAR OBJETO LIMPO - SEM campos ordem inválidos
-      const novaFoto = {
-        ...foto,
-        Codigo: codigoUnico,
-        Destaque: foto.Destaque || "Nao",
-        Ordem: foto.Ordem && foto.Ordem > 0 ? foto.Ordem : index + 1  // 🔥 Garantir Ordem válida
-      };
-      
-      // 🚨 CRÍTICO: NÃO PRESERVAR campo 'ordem' para forçar ordem inteligente
-      // Remove qualquer campo 'ordem' que possa confundir o PhotoSorter
-      delete novaFoto.ordem;
-      
-      console.log(`📊 Foto ${index}: Código=${codigoUnico}, Ordem=${novaFoto.Ordem}, semCampoOrdem=true`);
-      
-      return novaFoto;
-    });
-    
-    // 🔍 VERIFICAR CÓDIGOS DUPLICADOS
-    const codigos = fotosProcessadas.map(f => f.Codigo);
-    const duplicados = codigos.filter((codigo, index) => codigos.indexOf(codigo) !== index);
-    
-    if (duplicados.length > 0) {
-      console.error('🚨 CÓDIGOS DUPLICADOS - CORRIGINDO:', duplicados);
-      fotosProcessadas = fotosProcessadas.map((foto, index) => {
-        const isDuplicated = codigos.filter(c => c === foto.Codigo).length > 1;
-        if (isDuplicated) {
-          const novoCodigo = `photo-fixed-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${index}`;
-          console.log(`🔧 Corrigindo: ${foto.Codigo} → ${novoCodigo}`);
-          return { ...foto, Codigo: novoCodigo };
+      const processPhotos = () => {
+        if (!imovelSelecionado.Foto) return [];
+        if (Array.isArray(imovelSelecionado.Foto)) {
+          return imovelSelecionado.Foto.map((foto, index) => ({
+            ...foto,
+            Codigo: `photo-${Date.now()}-${index}`,
+            Destaque: foto.Destaque || "Nao",
+            Ordem: foto.Ordem || index + 1,
+          }));
         }
-        return foto;
-      });
-    }
-    
-    // 🚨 FORÇAR QUE NÃO TEM ORDEM MANUAL - para PhotoSorter usar ordem inteligente
-    console.log('📸 FORÇANDO ordem inteligente - removidos todos os campos "ordem"');
-    
-  } else if (typeof imovelSelecionado.Foto === "object") {
-    console.log('📸 Convertendo fotos de objeto para array');
-    
-    fotosProcessadas = Object.keys(imovelSelecionado.Foto).map((key, index) => {
-      const foto = imovelSelecionado.Foto[key];
-      const novaFoto = {
-        ...foto,
-        Codigo: key || `photo-obj-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${index}`,
-        Destaque: foto.Destaque || "Nao",
-        Ordem: foto.Ordem && foto.Ordem > 0 ? foto.Ordem : index + 1
+        if (typeof imovelSelecionado.Foto === "object") {
+          return Object.keys(imovelSelecionado.Foto).map((key, index) => ({
+            ...imovelSelecionado.Foto[key],
+            Codigo: key,
+            Destaque: imovelSelecionado.Foto[key].Destaque || "Nao",
+            Ordem: imovelSelecionado.Foto[key].Ordem || index + 1,
+          }));
+        }
+        return [];
       };
-      
-      // Remover campo ordem para forçar ordem inteligente
-      delete novaFoto.ordem;
-      
-      return novaFoto;
-    });
-  }
-  
-  console.log('📸 Fotos processadas (LIMPAS):', {
-    total: fotosProcessadas.length,
-    codigosUnicos: new Set(fotosProcessadas.map(f => f.Codigo)).size,
-    temCampoOrdem: fotosProcessadas.filter(f => f.hasOwnProperty('ordem')).length,  // Deve ser 0
-    primeirasOrdens: fotosProcessadas.slice(0, 3).map(f => ({ 
-      codigo: f.Codigo.substring(0, 10) + '...', 
-      Ordem: f.Ordem,
-      temCampoOrdem: f.hasOwnProperty('ordem')  // Deve ser false
-    }))
-  });
-  
-  // 🔍 VERIFICAÇÃO FINAL
-  const codigosFinal = fotosProcessadas.map(f => f.Codigo);
-  const duplicadosFinal = codigosFinal.filter((codigo, index) => codigosFinal.indexOf(codigo) !== index);
-  
-  if (duplicadosFinal.length > 0) {
-    console.error('🚨 CÓDIGOS DUPLICADOS:', duplicadosFinal);
-  } else {
-    console.log('✅ Códigos únicos + SEM campo ordem = PhotoSorter vai usar ordem inteligente');
-  }
-  
-  return fotosProcessadas;
-};
-      
+
       const processVideos = () => {
         if (!imovelSelecionado.Video) return {};
         const videosObj = {};
@@ -248,36 +150,22 @@ const processPhotos = () => {
         return videosObj;
       };
 
-      const dadosProcessados = {
+      setFormData({
         ...imovelSelecionado,
         Foto: processPhotos(),
         Video: processVideos(),
         Slug: formatterSlug(imovelSelecionado.Empreendimento || ""),
-      };
-
-      console.log('📋 Dados finais para formData:', {
-        codigo: dadosProcessados.Codigo,
-        totalFotos: dadosProcessados.Foto?.length,
-        primeirasOrdens: dadosProcessados.Foto?.slice(0, 3).map(f => f.ordem)
       });
 
-      setFormData(dadosProcessados);
       setDisplayValues(formatMonetaryDisplayValues());
-      
-      console.groupEnd();
     }
   }, [imovelSelecionado, mode, setFormData, setDisplayValues]);
 
   useEffect(() => {
     return () => {
-      // Cleanup se necessário
+      // Não limpamos ao desmontar para manter o estado
     };
   }, []);
-
-  const handleChangeWithTracking = (e) => {
-    handleChange(e);
-    setHasChanges(true);
-  };
 
   const handleFileInputChange = (e) => {
     const files = e.target.files;
@@ -285,7 +173,6 @@ const processPhotos = () => {
       const codigo = fileInputRef.current.getAttribute("data-codigo");
       handleFileUpload(codigo, files[0]);
       e.target.value = "";
-      setHasChanges(true);
     }
   };
 
@@ -297,12 +184,6 @@ const processPhotos = () => {
   };
 
   const handleCancel = () => {
-    if (hasChanges && typeof window !== 'undefined') {
-      if (!window.confirm("Há alterações não salvas. Deseja realmente sair?")) {
-        return;
-      }
-    }
-    
     const redirectPath = imovelSelecionado && imovelSelecionado.Automacao === false
       ? "/admin/imoveis"
       : "/admin/automacao";
@@ -356,22 +237,6 @@ const processPhotos = () => {
     } finally {
       setIsDesativando(false);
     }
-  };
-
-  // 🔥 SUBMIT OTIMIZADO
-  const handleSubmitWithOrder = async (e) => {
-    e.preventDefault();
-    
-    console.log('🚀 Submit iniciado - Estado das fotos:', {
-      totalFotos: formData.Foto?.length,
-      primeirasOrdens: formData.Foto?.slice(0, 3).map(f => ({ 
-        codigo: f.Codigo, 
-        ordem: f.ordem 
-      }))
-    });
-    
-    setHasChanges(false);
-    await handleSubmit(e);
   };
 
   const title = () => {
@@ -457,7 +322,7 @@ const processPhotos = () => {
           </div>
         </div>
 
-        <form onSubmit={handleSubmitWithOrder} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-8">
           {showProprietarios && (
             <ProprietariosSection id={formData.Codigo} key="proprietarios-section" />
           )}
@@ -465,7 +330,7 @@ const processPhotos = () => {
             <VincularImovelSection
               formData={formData}
               displayValues={displayValues}
-              onChange={handleChangeWithTracking}
+              onChange={handleChange}
               validation={validation}
               key="vincular-section"
             />
@@ -474,7 +339,7 @@ const processPhotos = () => {
           <BasicInfoSection
             formData={{ ...formData, Ativo: formData.Ativo || "Sim" }}
             displayValues={displayValues}
-            onChange={handleChangeWithTracking}
+            onChange={handleChange}
             validation={validation}
             key="basic-info-section"
           />
@@ -482,7 +347,7 @@ const processPhotos = () => {
           <LocationSection
             formData={formData}
             displayValues={displayValues}
-            onChange={handleChangeWithTracking}
+            onChange={handleChange}
             validation={validation}
             key="location-section"
           />
@@ -490,35 +355,35 @@ const processPhotos = () => {
           <FeaturesSection
             formData={formData}
             displayValues={displayValues}
-            onChange={handleChangeWithTracking}
+            onChange={handleChange}
             key="features-section"
           />
 
           <ValuesSection
             formData={formData}
             displayValues={displayValues}
-            onChange={handleChangeWithTracking}
+            onChange={handleChange}
             key="values-section"
           />
 
           <BrokerSection
             formData={formData}
             displayValues={displayValues}
-            onChange={handleChangeWithTracking}
+            onChange={handleChange}
             key="broker-section"
           />
 
           <DescriptionSection
             formData={formData}
             displayValues={displayValues}
-            onChange={handleChangeWithTracking}
+            onChange={handleChange}
             key="description-section"
           />
 
           <MediaSection
             formData={formData}
             displayValues={displayValues}
-            onChange={handleChangeWithTracking}
+            onChange={handleChange}
             key="media-section"
           />
 
@@ -534,7 +399,6 @@ const processPhotos = () => {
             setImageAsHighlight={setImageAsHighlight}
             changeImagePosition={changeImagePosition}
             validation={validation}
-            onUpdatePhotos={handleUpdatePhotos}
             key="images-section"
           />
 
@@ -549,7 +413,6 @@ const processPhotos = () => {
             isValid={validation.isFormValid}
             isEditMode={mode === "edit"}
             onCancel={handleCancel}
-            hasChanges={hasChanges}
             key="form-footer"
           />
         </form>
