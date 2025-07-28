@@ -5,193 +5,16 @@ function ensureNumber(value, defaultValue) {
   return Number.isFinite(num) ? num : defaultValue;
 }
 
-// 馃敟 FUN脟脙O CORRIGIDA: Atualizar im贸vel (ROTA CORRETA)
-export async function atualizarImovel(codigo, dadosImovel) {
-  try {
-    console.group('馃摛 Service: Atualizando im贸vel');
-    console.log('C贸digo:', codigo);
-    console.log('Dados:', {
-      empreendimento: dadosImovel.Empreendimento,
-      totalFotos: Array.isArray(dadosImovel.Foto) ? dadosImovel.Foto.length : 'N茫o array',
-      primeirasFotosOrdem: Array.isArray(dadosImovel.Foto) 
-        ? dadosImovel.Foto.slice(0, 3).map(f => ({ codigo: f.Codigo, ordem: f.ordem }))
-        : 'N/A'
-    });
-
-    // 馃敟 ROTA CORRIGIDA: /admin/imoveis/ em vez de /imoveis/
-        const response = await axiosClient.put(`/admin/imoveis/${codigo}`, dadosImovel, {
-      timeout: 30000,
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    });
-
-    console.log('馃摜 Service: Resposta recebida:', {
-      status: response.status,
-      success: response.data?.success
-    });
-    console.groupEnd();
-
-    if (response && response.status >= 200 && response.status < 300) {
-      return {
-        success: true,
-        data: response.data,
-        message: response.data?.message || "Im贸vel atualizado com sucesso",
-      };
-    } else {
-      console.error("Service: Erro na resposta ao atualizar im贸vel", response);
-      return {
-        success: false,
-        message: response.data?.message || "Erro ao atualizar im贸vel",
-      };
-    }
-  } catch (error) {
-    console.error("Service: Erro ao atualizar im贸vel:", error);
-    console.groupEnd();
-    
-    if (error.code === "ERR_NETWORK") {
-      return {
-        success: false,
-        message: "Erro de conex茫o com o servidor. Tente novamente mais tarde.",
-        error: "Erro de conex茫o",
-      };
-    }
-
-    return {
-      success: false,
-      message: error.response?.data?.message || "Erro ao atualizar im贸vel",
-      error: error.response?.data?.error || error.message || "Erro desconhecido",
-    };
-  }
-}
-
-// 馃敟 FUN脟脙O CORRIGIDA: Criar im贸vel (ROTA CORRETA)
-export async function criarImovel(codigo, dadosImovel) {
-  try {
-    console.group('馃摛 Service: Criando im贸vel');
-    console.log('C贸digo:', codigo);
-    console.log('Dados:', {
-      empreendimento: dadosImovel.Empreendimento,
-      totalFotos: Array.isArray(dadosImovel.Foto) ? dadosImovel.Foto.length : 'N茫o array'
-    });
-
-    // 馃敟 ROTA CORRIGIDA: /admin/imoveis em vez de /admin/imoveis
-    const response = await axiosClient.post(`/admin/imoveis`, {
-      Codigo: codigo,
-      ...dadosImovel
-    }, {
-      timeout: 30000,
-      headers: {
-        'Content-Type': 'application/json',
-      }
-    });
-
-    console.log('馃摜 Service: Resposta recebida:', {
-      status: response.status,
-      success: response.data?.success
-    });
-    console.groupEnd();
-
-    return {
-      success: response.data?.success || response.status >= 200 && response.status < 300,
-      message: response.data?.message || "Im贸vel criado com sucesso",
-      data: response.data?.data || null,
-    };
-  } catch (error) {
-    console.error("Service: Erro ao criar im贸vel:", error);
-    console.groupEnd();
-
-    if (error.code === "ERR_NETWORK") {
-      return {
-        success: false,
-        message: "Erro de conex茫o com o servidor. Tente novamente mais tarde.",
-        error: "Erro de conex茫o",
-      };
-    }
-
-    return {
-      success: false,
-      message: error.response?.data?.message || "Erro ao criar im贸vel",
-      error: error.response?.data?.error || error.message || "Erro desconhecido",
-    };
-  }
-}
-
-// 馃敟 FUN脟脙O OTIMIZADA: Buscar im贸vel por ID (ROTA CORRETA)
-export const getImovelById = async (codigo) => {
-  try {
-    console.log('馃摜 Service: Buscando im贸vel:', codigo);
-    
-    // 馃敟 ROTA CORRIGIDA: /admin/imoveis/ 
-    const response = await axiosClient.get(`/admin/imoveis/${codigo}`, {
-      timeout: 25000
-    });
-    
-    if (response && response.data) {
-      console.log('鉁?Service: Im贸vel encontrado:', {
-        codigo: response.data.data?.Codigo,
-        totalFotos: Array.isArray(response.data.data?.Foto) ? response.data.data.Foto.length : 'N茫o array'
-      });
-      
-      return {
-        success: true,
-        data: response.data?.data || response.data
-      };
-    }
-    
-    return {
-      success: false,
-      error: "Dados n茫o encontrados na resposta"
-    };
-  } catch (error) {
-    console.error("Erro ao buscar im贸vel:", error);
-    return {
-      success: false,
-      error: error.response?.data?.message || error.message || "Erro ao buscar im贸vel"
-    };
-  }
-};
-
-// Fun莽茫o para desativar im贸vel (ROTA CORRIGIDA)
-export async function desativarImovel(codigo) {
-  try {
-    // 馃敟 ROTA CORRIGIDA: /admin/imoveis/
-    const response = await axiosClient.patch(`/admin/imoveis/${codigo}/desativar`, {}, {
-      timeout: 25000,
-    });
-
-    return {
-      success: response.data?.success || response.status >= 200 && response.status < 300,
-      message: response.data?.message || "Im贸vel desativado com sucesso",
-    };
-  } catch (error) {
-    console.error("Service: Erro ao desativar im贸vel:", error);
-
-    if (error.code === "ERR_NETWORK") {
-      return {
-        success: false,
-        message: "Erro de conex茫o com o servidor. Tente novamente mais tarde.",
-        error: "Erro de conex茫o",
-      };
-    }
-
-    return {
-      success: false,
-      message: error.response?.data?.message || "Erro ao desativar im贸vel",
-      error: error.response?.data?.error || error.message || "Erro desconhecido",
-    };
-  }
-}
-
-// === MANTER TODAS AS OUTRAS FUN脟脮ES INALTERADAS ===
-
 export async function getImovelByIdAutomacao(codigo) {
   try {
+    // Garantir que estamos buscando pelo Codigo
     const response = await axiosClient.get(`/automacao/${codigo}`, {
-      timeout: 25000,
+      timeout: 25000, // Timeout de 25 segundos
     });
 
+    // Verificar se a resposta contém dados válidos
     if (response && response.data) {
+      // Verificar se os dados estão em data.data
       if (response.data.data) {
         return response.data;
       } else {
@@ -205,30 +28,35 @@ export async function getImovelByIdAutomacao(codigo) {
       return {
         data: null,
         status: 503,
-        error: "Erro de conex茫o com o servidor. Tente novamente mais tarde.",
+        error: "Erro de conexão com o servidor. Tente novamente mais tarde.",
       };
     }
     return {
       data: null,
       status: error.response?.status || 500,
-      error: error.response?.data?.error || "Erro ao buscar im贸vel",
+      error: error.response?.data?.error || "Erro ao buscar imóvel",
     };
   }
 }
 
 export async function getImoveisAutomacao(params = {}, page = 1, limit = 12) {
   try {
+    // Garantir que page e limit sejam números válidos
     const validPage = ensureNumber(page, 1);
     const validLimit = ensureNumber(limit, 12);
+
+    // Construir a URL com os parâmetros de paginação
     const url = `/automacao?page=${validPage}&limit=${validLimit}`;
 
     const response = await axiosClient.get(url, {
-      timeout: 25000,
+      timeout: 25000, // Timeout de 25 segundos
     });
 
+    // Extrair dados e informações de paginação da resposta
     const data = response.data.data || [];
     const paginacao = response.data.paginacao || {};
 
+    // Garantir que todos os valores de paginação sejam números válidos
     const totalItems = ensureNumber(paginacao.totalItems, data.length);
     const totalPages = ensureNumber(
       paginacao.totalPages,
@@ -247,13 +75,14 @@ export async function getImoveisAutomacao(params = {}, page = 1, limit = 12) {
       },
     };
   } catch (error) {
-    console.error("Erro ao buscar im贸veis:", error);
+    console.error("Erro ao buscar imóveis:", error);
 
+    // Tratamento específico para erros de rede
     if (error.code === "ERR_NETWORK") {
-      console.warn("Erro de rede na comunica莽茫o com a API. Retornando array vazio.");
+      console.warn("Erro de rede na comunicação com a API. Retornando array vazio.");
       return {
         imoveis: [],
-        error: "Erro de conex茫o com o servidor. Tente novamente mais tarde.",
+        error: "Erro de conexão com o servidor. Tente novamente mais tarde.",
         pagination: {
           totalItems: 0,
           totalPages: 1,
@@ -263,9 +92,10 @@ export async function getImoveisAutomacao(params = {}, page = 1, limit = 12) {
       };
     }
 
+    // Em caso de outros erros, retornamos um objeto com estrutura válida
     return {
       imoveis: [],
-      error: error.response?.data?.error || "Erro ao buscar im贸veis",
+      error: error.response?.data?.error || "Erro ao buscar imóveis",
       pagination: {
         totalItems: 0,
         totalPages: 1,
@@ -276,78 +106,24 @@ export async function getImoveisAutomacao(params = {}, page = 1, limit = 12) {
   }
 }
 
-export async function atualizarImovelAutomacao(codigo, dadosImovel) {
-  try {
-    const response = await axiosClient.post(`/automacao/${codigo}`, dadosImovel, {
-      timeout: 25000,
-    });
-
-    return {
-      success: response.data?.success || false,
-      message: response.data?.message || "Im贸vel atualizado com sucesso",
-      data: response.data?.data || null,
-    };
-  } catch (error) {
-    console.error(`Servi莽o: Erro ao atualizar im贸vel ${codigo}:`, error);
-
-    if (error.code === "ERR_NETWORK") {
-      return {
-        success: false,
-        message: "Erro de conex茫o com o servidor. Tente novamente mais tarde.",
-        error: "Erro de conex茫o",
-      };
-    }
-
-    return {
-      success: false,
-      message: error.response?.data?.message || "Erro ao atualizar im贸vel",
-      error: error.response?.data?.error || "Erro desconhecido",
-    };
-  }
-}
-
-export async function excluirImovelAutomacao(codigo) {
-  try {
-    const response = await axiosClient.delete(`/automacao/${codigo}`, {
-      timeout: 25000,
-    });
-
-    return {
-      success: response.data?.success || false,
-      message: response.data?.message || "Im贸vel exclu铆do com sucesso",
-    };
-  } catch (error) {
-    console.error(`Servi莽o: Erro ao excluir im贸vel ${codigo}:`, error);
-
-    if (error.code === "ERR_NETWORK") {
-      return {
-        success: false,
-        message: "Erro de conex茫o com o servidor. Tente novamente mais tarde.",
-        error: "Erro de conex茫o",
-      };
-    }
-
-    return {
-      success: false,
-      message: error.response?.data?.message || "Erro ao excluir im贸vel",
-      error: error.response?.data?.error || "Erro desconhecido",
-    };
-  }
-}
-
 export async function getCorretores(params = {}, page = 1, limit = 12) {
   try {
+    // Garantir que page e limit sejam números válidos
     const validPage = ensureNumber(page, 1);
     const validLimit = ensureNumber(limit, 12);
+
+    // Construir a URL com os parâmetros de paginação
     const url = `/admin/corretores?page=${validPage}&limit=${validLimit}`;
 
     const response = await axiosClient.get(url, {
-      timeout: 25000,
+      timeout: 25000, // Timeout de 25 segundos
     });
 
-    const data = response.data.corretores || [];
-    const paginacao = response.data.pagination || {};
+    // Extrair dados e informações de paginação da resposta
+    const data = response.data.data || [];
+    const paginacao = response.data.paginacao || {};
 
+    // Garantir que todos os valores de paginação sejam números válidos
     const totalItems = ensureNumber(paginacao.totalItems, data.length);
     const totalPages = ensureNumber(
       paginacao.totalPages,
@@ -368,11 +144,12 @@ export async function getCorretores(params = {}, page = 1, limit = 12) {
   } catch (error) {
     console.error("Erro ao buscar corretores:", error);
 
+    // Tratamento específico para erros de rede
     if (error.code === "ERR_NETWORK") {
-      console.warn("Erro de rede na comunica莽茫o com a API. Retornando array vazio.");
+      console.warn("Erro de rede na comunicação com a API. Retornando array vazio.");
       return {
         corretores: [],
-        error: "Erro de conex茫o com o servidor. Tente novamente mais tarde.",
+        error: "Erro de conexão com o servidor. Tente novamente mais tarde.",
         pagination: {
           totalItems: 0,
           totalPages: 1,
@@ -382,6 +159,7 @@ export async function getCorretores(params = {}, page = 1, limit = 12) {
       };
     }
 
+    // Em caso de outros erros, retornamos um objeto com estrutura válida
     return {
       corretores: [],
       error: error.response?.data?.error || "Erro ao buscar corretores",
@@ -395,78 +173,24 @@ export async function getCorretores(params = {}, page = 1, limit = 12) {
   }
 }
 
-export async function getCorretorById(id) {
+export async function getProprietarios(params = {}, page = 1, limit = 12) {
   try {
-    const response = await axiosClient.get(`/admin/corretores?id=${id}`, {
-      timeout: 25000,
-    });
-
-    if (response && response.data && response.data.status === 200) {
-      return {
-        success: true,
-        data: response.data,
-      };
-    }
-    return { success: false, error: "Corretor n茫o encontrado" };
-  } catch (error) {
-    console.error(`Servi莽o: Erro ao buscar corretor ${id}:`, error);
-    return {
-      success: false,
-      error: error.response?.data?.error || "Erro ao buscar corretor",
-    };
-  }
-}
-
-export async function atualizarCorretor(id, dadosCorretor) {
-  try {
-    const response = await axiosClient.put(
-      `/admin/corretores`,
-      {
-        id,
-        ...dadosCorretor,
-      },
-      {
-        timeout: 25000,
-      }
-    );
-
-    return {
-      success: response.data?.success || false,
-      message: response.data?.message || "Corretor atualizado com sucesso",
-      data: response.data?.data || null,
-    };
-  } catch (error) {
-    console.error(`Servi莽o: Erro ao atualizar corretor ${id}:`, error);
-
-    if (error.code === "ERR_NETWORK") {
-      return {
-        success: false,
-        message: "Erro de conex茫o com o servidor. Tente novamente mais tarde.",
-        error: "Erro de conex茫o",
-      };
-    }
-
-    return {
-      success: false,
-      message: error.response?.data?.message || "Erro ao atualizar corretor",
-      error: error.response?.data?.error || "Erro desconhecido",
-    };
-  }
-}
-
-export async function getProprietarios(page = 1, limit = 12) {
-  try {
+    // Garantir que page e limit sejam números válidos
     const validPage = ensureNumber(page, 1);
     const validLimit = ensureNumber(limit, 12);
+
+    // Construir a URL com os parâmetros de paginação
     const url = `/admin/proprietarios?page=${validPage}&limit=${validLimit}`;
 
     const response = await axiosClient.get(url, {
-      timeout: 25000,
+      timeout: 25000, // Timeout de 25 segundos
     });
 
+    // Extrair dados e informações de paginação da resposta
     const data = response.data.data || [];
     const paginacao = response.data.paginacao || {};
 
+    // Garantir que todos os valores de paginação sejam números válidos
     const totalItems = ensureNumber(paginacao.totalItems, data.length);
     const totalPages = ensureNumber(
       paginacao.totalPages,
@@ -487,11 +211,12 @@ export async function getProprietarios(page = 1, limit = 12) {
   } catch (error) {
     console.error("Erro ao buscar proprietarios:", error);
 
+    // Tratamento específico para erros de rede
     if (error.code === "ERR_NETWORK") {
-      console.warn("Erro de rede na comunica莽茫o com a API. Retornando array vazio.");
+      console.warn("Erro de rede na comunicação com a API. Retornando array vazio.");
       return {
         proprietarios: [],
-        error: "Erro de conex茫o com o servidor. Tente novamente mais tarde.",
+        error: "Erro de conexão com o servidor. Tente novamente mais tarde.",
         pagination: {
           totalItems: 0,
           totalPages: 1,
@@ -501,6 +226,7 @@ export async function getProprietarios(page = 1, limit = 12) {
       };
     }
 
+    // Em caso de outros erros, retornamos um objeto com estrutura válida
     return {
       proprietarios: [],
       error: error.response?.data?.error || "Erro ao buscar proprietarios",
@@ -526,33 +252,12 @@ export async function getProprietarioById(id) {
         data: response.data.data,
       };
     }
-    return { success: false, error: "Propriet谩rio n茫o encontrado" };
+    return { success: false, error: "Proprietário não encontrado" };
   } catch (error) {
-    console.error(`Servi莽o: Erro ao buscar propriet谩rio ${id}:`, error);
+    console.error(`Serviço: Erro ao buscar proprietário ${id}:`, error);
     return {
       success: false,
-      error: error.response?.data?.error || "Erro ao buscar propriet谩rio",
-    };
-  }
-}
-
-export async function getProprietario(id) {
-  try {
-    const response = await axiosClient.get(`/admin/proprietario?id=${id}`, {
-      timeout: 25000,
-    });
-
-    if (response && response.data && response.data.status === 200) {
-      return {
-        success: true,
-        data: response.data.data,
-      };
-    }
-  } catch (error) {
-    console.error("Erro ao buscar propriet谩rio:", error);
-    return {
-      success: false,
-      error: error.response?.data?.error || "Erro ao buscar propriet谩rio",
+      error: error.response?.data?.error || "Erro ao buscar proprietário",
     };
   }
 }
@@ -572,86 +277,144 @@ export async function atualizarProprietario(id, dadosProprietario) {
 
     return {
       success: response.data?.success || false,
-      message: response.data?.message || "Propriet谩rio atualizado com sucesso",
+      message: response.data?.message || "Proprietário atualizado com sucesso",
       data: response.data?.data || null,
     };
   } catch (error) {
-    console.error(`Servi莽o: Erro ao atualizar propriet谩rio ${id}:`, error);
+    console.error(`Serviço: Erro ao atualizar proprietário ${id}:`, error);
 
     if (error.code === "ERR_NETWORK") {
       return {
         success: false,
-        message: "Erro de conex茫o com o servidor. Tente novamente mais tarde.",
-        error: "Erro de conex茫o",
+        message: "Erro de conexão com o servidor. Tente novamente mais tarde.",
+        error: "Erro de conexão",
       };
     }
 
     return {
       success: false,
-      message: error.response?.data?.message || "Erro ao atualizar propriet谩rio",
+      message: error.response?.data?.message || "Erro ao atualizar proprietário",
       error: error.response?.data?.error || "Erro desconhecido",
     };
   }
 }
 
-export async function updateProprietario(id, dadosProprietario) {
+export async function atualizarImovelAutomacao(codigo, dadosImovel) {
   try {
-    const response = await axiosClient.put(`/admin/proprietario?id=${id}`, dadosProprietario, {
-      timeout: 25000,
+    const response = await axiosClient.post(`/automacao/${codigo}`, dadosImovel, {
+      timeout: 25000, // Timeout de 25 segundos
     });
 
     return {
-      success: response.data?.status === 200,
-      message: response.data?.message || "Propriet谩rio atualizado com sucesso",
+      success: response.data?.success || false,
+      message: response.data?.message || "Imóvel atualizado com sucesso",
       data: response.data?.data || null,
     };
   } catch (error) {
-    console.error(`Servi莽o: Erro ao atualizar propriet谩rio ${id}:`, error);
+    console.error(`Serviço: Erro ao atualizar imóvel ${codigo}:`, error);
 
     if (error.code === "ERR_NETWORK") {
       return {
         success: false,
-        message: "Erro de conex茫o com o servidor. Tente novamente mais tarde.",
-        error: "Erro de conex茫o",
+        message: "Erro de conexão com o servidor. Tente novamente mais tarde.",
+        error: "Erro de conexão",
       };
     }
 
     return {
       success: false,
-      message: error.response?.data?.message || "Erro ao atualizar propriet谩rio",
+      message: error.response?.data?.message || "Erro ao atualizar imóvel",
       error: error.response?.data?.error || "Erro desconhecido",
     };
   }
 }
 
-export async function adicionarProprietario(id, dadosProprietario) {
+export async function excluirImovelAutomacao(codigo) {
   try {
-    const response = await axiosClient.post(`/admin/proprietario?id=${id}`, dadosProprietario, {
-      timeout: 25000,
+    const response = await axiosClient.delete(`/automacao/${codigo}`, {
+      timeout: 25000, // Timeout de 25 segundos
     });
 
     return {
-      success: response.data?.status === 201,
-      message: response.data?.message || "Propriet谩rio criado com sucesso",
-      data: response.data?.data || null,
+      success: response.data?.success || false,
+      message: response.data?.message || "Imóvel excluído com sucesso",
     };
   } catch (error) {
-    console.error(`Servi莽o: Erro ao criar propriet谩rio ${id}:`, error);
+    console.error(`Serviço: Erro ao excluir imóvel ${codigo}:`, error);
 
     if (error.code === "ERR_NETWORK") {
       return {
         success: false,
-        message: "Erro de conex茫o com o servidor. Tente novamente mais tarde.",
-        error: "Erro de conex茫o",
+        message: "Erro de conexão com o servidor. Tente novamente mais tarde.",
+        error: "Erro de conexão",
       };
     }
 
     return {
       success: false,
-      message: error.response?.data?.message || "Erro ao criar propriet谩rio",
+      message: error.response?.data?.message || "Erro ao excluir imóvel",
       error: error.response?.data?.error || "Erro desconhecido",
     };
-  }  
+  }
+}
+
+export async function atualizarCorretor(id, dadosCorretor) {
+  try {
+    const response = await axiosClient.put(
+      `/admin/corretores`,
+      {
+        id,
+        ...dadosCorretor,
+      },
+      {
+        timeout: 25000,
+      }
+    );
+
+    return {
+      success: response.data?.success || false,
+      message: response.data?.message || "Corretor atualizado com sucesso",
+      data: response.data?.data || null,
+    };
+  } catch (error) {
+    console.error(`Serviço: Erro ao atualizar corretor ${id}:`, error);
+
+    if (error.code === "ERR_NETWORK") {
+      return {
+        success: false,
+        message: "Erro de conexão com o servidor. Tente novamente mais tarde.",
+        error: "Erro de conexão",
+      };
+    }
+
+    return {
+      success: false,
+      message: error.response?.data?.message || "Erro ao atualizar corretor",
+      error: error.response?.data?.error || "Erro desconhecido",
+    };
+  }
+}
+
+export async function getCorretorById(id) {
+  try {
+    const response = await axiosClient.get(`/admin/corretores?id=${id}`, {
+      timeout: 25000,
+    });
+
+    if (response && response.data && response.data.status === 200) {
+      return {
+        success: true,
+        data: response.data,
+      };
+    }
+    return { success: false, error: "Corretor não encontrado" };
+  } catch (error) {
+    console.error(`Serviço: Erro ao buscar corretor ${id}:`, error);
+    return {
+      success: false,
+      error: error.response?.data?.error || "Erro ao buscar corretor",
+    };
+  }
 }
 
 export async function getVinculos(id) {
@@ -667,7 +430,7 @@ export async function getVinculos(id) {
       };
     }
   } catch (error) {
-    console.error(`Servi莽o: Erro ao buscar vinculos ${id}:`, error);
+    console.error(`Serviço: Erro ao buscar vinculos ${id}:`, error);
     return {
       success: false,
       error: error.response?.data?.error || "Erro ao buscar vinculos",
@@ -695,3 +458,99 @@ export async function getDashboard() {
     };
   }
 }
+
+export async function getProprietario(id) {
+  try {
+    const response = await axiosClient.get(`/admin/proprietario?id=${id}`, {
+      timeout: 25000,
+    });
+
+    if (response && response.data && response.data.status === 200) {
+      return {
+        success: true,
+        data: response.data.data,
+      };
+    }
+  } catch (error) {
+    console.error("Erro ao buscar dados do dashboard:", error);
+    return {
+      success: false,
+      error: error.response?.data?.error || "Erro ao buscar dados do dashboard",
+    };
+  }
+}
+
+export async function updateProprietario(id, dadosProprietario) {
+  try {
+    const response = await axiosClient.put(`/admin/proprietario?id=${id}`, dadosProprietario, {
+      timeout: 25000,
+    });
+
+    return {
+      success: response.data?.status === 200,
+      message: response.data?.message || "Proprietário atualizado com sucesso",
+      data: response.data?.data || null,
+    };
+  } catch (error) {
+    console.error(`Serviço: Erro ao atualizar proprietário ${id}:`, error);
+
+    if (error.code === "ERR_NETWORK") {
+      return {
+        success: false,
+        message: "Erro de conexão com o servidor. Tente novamente mais tarde.",
+        error: "Erro de conexão",
+      };
+    }
+
+    return {
+      success: false,
+      message: error.response?.data?.message || "Erro ao atualizar proprietário",
+      error: error.response?.data?.error || "Erro desconhecido",
+    };
+  }
+}
+
+export async function adicionarProprietario(id, dadosProprietario) {
+  try {
+    const response = await axiosClient.post(`/admin/proprietario?id=${id}`, dadosProprietario, {
+      timeout: 25000,
+    });
+
+    return {
+      success: response.data?.status === 201,
+      message: response.data?.message || "Proprietário criado com sucesso",
+      data: response.data?.data || null,
+    };
+  } catch (error) {
+    console.error(`Serviço: Erro ao criar proprietário ${id}:`, error);
+
+    if (error.code === "ERR_NETWORK") {
+      return {
+        success: false,
+        message: "Erro de conexão com o servidor. Tente novamente mais tarde.",
+        error: "Erro de conexão",
+      };
+    }
+
+    return {
+      success: false,
+      message: error.response?.data?.message || "Erro ao criar proprietário",
+      error: error.response?.data?.error || "Erro desconhecido",
+    };
+  }  
+}
+export const getImovelById = async (codigo) => {
+  try {
+    const response = await axiosClient.get(`admin/imoveis/${codigo}`);
+    return {
+      success: true,
+      data: response.data?.data || response.data
+    };
+  } catch (error) {
+    console.error("Erro ao buscar imóvel:", error);
+    return {
+      success: false,
+      error: error.response?.data?.message || error.message || "Erro ao buscar imóvel"
+    };
+  }
+};
