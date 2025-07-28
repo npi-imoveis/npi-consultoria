@@ -148,30 +148,26 @@ const processPhotos = () => {
     console.log('📸 Fotos já em formato array:', imovelSelecionado.Foto.length);
     
     fotosProcessadas = imovelSelecionado.Foto.map((foto, index) => {
-      // 🔥 GARANTIR CÓDIGO ÚNICO - CRÍTICO!
+      // 🔥 GARANTIR CÓDIGO ÚNICO
       let codigoUnico = foto.Codigo;
-      
-      // Se não tem código ou é inválido, gerar um único
       if (!codigoUnico || codigoUnico.trim() === '') {
         codigoUnico = `photo-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${index}`;
         console.log(`📸 Código gerado para foto ${index}:`, codigoUnico);
       }
       
-      // 🔥 MONTAR OBJETO SEM CAMPOS UNDEFINED
+      // 🔥 MONTAR OBJETO LIMPO - SEM campos ordem inválidos
       const novaFoto = {
         ...foto,
         Codigo: codigoUnico,
         Destaque: foto.Destaque || "Nao",
-        Ordem: foto.Ordem || index + 1
+        Ordem: foto.Ordem && foto.Ordem > 0 ? foto.Ordem : index + 1  // 🔥 Garantir Ordem válida
       };
       
-      // 🔥 CRÍTICO: SÓ adicionar campo 'ordem' se for NÚMERO VÁLIDO
-      if (typeof foto.ordem === 'number' && !isNaN(foto.ordem) && foto.ordem >= 0) {
-        novaFoto.ordem = foto.ordem;
-        console.log(`📊 Ordem preservada para foto ${index}: ${foto.ordem}`);
-      } else {
-        console.log(`📊 Campo ordem removido para foto ${index} (era: ${foto.ordem})`);
-      }
+      // 🚨 CRÍTICO: NÃO PRESERVAR campo 'ordem' para forçar ordem inteligente
+      // Remove qualquer campo 'ordem' que possa confundir o PhotoSorter
+      delete novaFoto.ordem;
+      
+      console.log(`📊 Foto ${index}: Código=${codigoUnico}, Ordem=${novaFoto.Ordem}, semCampoOrdem=true`);
       
       return novaFoto;
     });
@@ -181,31 +177,20 @@ const processPhotos = () => {
     const duplicados = codigos.filter((codigo, index) => codigos.indexOf(codigo) !== index);
     
     if (duplicados.length > 0) {
-      console.error('🚨 CÓDIGOS DUPLICADOS DETECTADOS - CORRIGINDO:', duplicados);
-      
-      // Corrigir códigos duplicados
+      console.error('🚨 CÓDIGOS DUPLICADOS - CORRIGINDO:', duplicados);
       fotosProcessadas = fotosProcessadas.map((foto, index) => {
         const isDuplicated = codigos.filter(c => c === foto.Codigo).length > 1;
         if (isDuplicated) {
           const novoCodigo = `photo-fixed-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${index}`;
-          console.log(`🔧 Corrigindo código duplicado: ${foto.Codigo} → ${novoCodigo}`);
+          console.log(`🔧 Corrigindo: ${foto.Codigo} → ${novoCodigo}`);
           return { ...foto, Codigo: novoCodigo };
         }
         return foto;
       });
     }
     
-    // 🔍 VERIFICAR SE TEM CAMPO ORDEM VÁLIDO
-    const temOrdemValida = fotosProcessadas.some(f => 
-      typeof f.ordem === 'number' && !isNaN(f.ordem) && f.ordem >= 0
-    );
-    
-    if (temOrdemValida) {
-      console.log('📸 Ordenando fotos pelo campo "ordem" VÁLIDO');
-      fotosProcessadas.sort((a, b) => (a.ordem || 0) - (b.ordem || 0));
-    } else {
-      console.log('📸 Nenhuma ordem válida encontrada - mantendo ordem original');
-    }
+    // 🚨 FORÇAR QUE NÃO TEM ORDEM MANUAL - para PhotoSorter usar ordem inteligente
+    console.log('📸 FORÇANDO ordem inteligente - removidos todos os campos "ordem"');
     
   } else if (typeof imovelSelecionado.Foto === "object") {
     console.log('📸 Convertendo fotos de objeto para array');
@@ -216,28 +201,24 @@ const processPhotos = () => {
         ...foto,
         Codigo: key || `photo-obj-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${index}`,
         Destaque: foto.Destaque || "Nao",
-        Ordem: foto.Ordem || index + 1
+        Ordem: foto.Ordem && foto.Ordem > 0 ? foto.Ordem : index + 1
       };
       
-      // SÓ preservar ordem se for válida
-      if (typeof foto.ordem === 'number' && !isNaN(foto.ordem) && foto.ordem >= 0) {
-        novaFoto.ordem = foto.ordem;
-      }
+      // Remover campo ordem para forçar ordem inteligente
+      delete novaFoto.ordem;
       
       return novaFoto;
     });
   }
   
-  console.log('📸 Fotos processadas:', {
+  console.log('📸 Fotos processadas (LIMPAS):', {
     total: fotosProcessadas.length,
     codigosUnicos: new Set(fotosProcessadas.map(f => f.Codigo)).size,
-    temCampoOrdem: fotosProcessadas.filter(f => typeof f.ordem === 'number').length,
-    primeirasFotosOrdem: fotosProcessadas.slice(0, 3).map(f => ({ 
-      codigo: f.Codigo, 
-      destaque: f.Destaque,
-      temOrdem: typeof f.ordem === 'number',
-      ordem: f.ordem,
-      Ordem: f.Ordem
+    temCampoOrdem: fotosProcessadas.filter(f => f.hasOwnProperty('ordem')).length,  // Deve ser 0
+    primeirasOrdens: fotosProcessadas.slice(0, 3).map(f => ({ 
+      codigo: f.Codigo.substring(0, 10) + '...', 
+      Ordem: f.Ordem,
+      temCampoOrdem: f.hasOwnProperty('ordem')  // Deve ser false
     }))
   });
   
@@ -246,9 +227,9 @@ const processPhotos = () => {
   const duplicadosFinal = codigosFinal.filter((codigo, index) => codigosFinal.indexOf(codigo) !== index);
   
   if (duplicadosFinal.length > 0) {
-    console.error('🚨 AINDA HÁ CÓDIGOS DUPLICADOS:', duplicadosFinal);
+    console.error('🚨 CÓDIGOS DUPLICADOS:', duplicadosFinal);
   } else {
-    console.log('✅ Todos os códigos são únicos após processamento');
+    console.log('✅ Códigos únicos + SEM campo ordem = PhotoSorter vai usar ordem inteligente');
   }
   
   return fotosProcessadas;
