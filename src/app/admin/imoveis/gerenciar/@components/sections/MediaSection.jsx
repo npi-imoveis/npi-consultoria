@@ -1,62 +1,22 @@
+// 🧪 TESTE ISOLADO - Cole isso TEMPORARIAMENTE no seu componente pai
+
 "use client";
 
-import { memo } from 'react';
+import { memo, useState } from 'react';
 import FormSection from '../FormSection';
 
-const MediaSection = ({ formData, displayValues, onChange }) => {
+const MediaSectionIsolated = () => {
+  const [tour360, setTour360] = useState('');
+  const [videoId, setVideoId] = useState('');
   
-  // 🎯 Handlers específicos para cada campo
-  const handleTour360Change = (e) => {
-    onChange("Tour360", e.target.value);
-  };
-
-  const handleVideoIdChange = (e) => {
-    const value = e.target.value;
-    
-    // 🚀 EXTRATOR INTELIGENTE: Aceita URL ou ID
-    const extractYouTubeId = (input) => {
-      if (!input) return '';
-      
-      // Se já é só o ID (sem youtube.com), manter
-      if (!input.includes('youtube.com') && !input.includes('youtu.be')) {
-        return input;
-      }
-      
-      // Extrair ID de URLs do YouTube
-      const patterns = [
-        /(?:youtube\.com\/watch\?v=)([^&\n?#]+)/,
-        /(?:youtu\.be\/)([^&\n?#]+)/,
-        /(?:youtube\.com\/embed\/)([^&\n?#]+)/
-      ];
-      
-      for (const pattern of patterns) {
-        const match = input.match(pattern);
-        if (match) return match[1];
-      }
-      
-      return input; // Fallback: retornar como está
-    };
-
-    const videoId = extractYouTubeId(value);
-    
-    // 🔥 ESTRUTURA CORRETA para vídeo aninhado
-    const videoData = {
-      ...formData.Video,
-      "1": {
-        ...formData.Video?.["1"],
-        Video: videoId
-      }
-    };
-    
-    onChange("Video", videoData);
-  };
-
-  // 🎯 Valores atuais dos campos
-  const tour360Value = displayValues?.Tour360 || formData?.Tour360 || "";
-  const videoIdValue = formData?.Video?.["1"]?.Video || "";
-
   return (
-    <FormSection title="Mídia">
+    <FormSection title="Mídia - TESTE ISOLADO">
+      
+      <div className="p-4 bg-red-50 border border-red-200 rounded mb-4">
+        <p className="text-red-700 font-bold">🧪 TESTE ISOLADO</p>
+        <p className="text-sm">Se conseguir digitar aqui, o problema é interferência de outros componentes</p>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         
         {/* Tour 360° */}
@@ -66,13 +26,18 @@ const MediaSection = ({ formData, displayValues, onChange }) => {
           </label>
           <input
             type="text"
-            value={tour360Value}
-            onChange={handleTour360Change}
+            value={tour360}
+            onChange={(e) => {
+              console.log('🎯 TESTE: Tour360 digitando:', e.target.value);
+              setTour360(e.target.value);
+            }}
             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm 
-                       focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                       transition-colors"
+                       focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             placeholder="https://..."
           />
+          <p className="text-xs text-green-600 mt-1">
+            ✅ Digitação funcionando: "{tour360}"
+          </p>
         </div>
 
         {/* Vídeo YouTube */}
@@ -82,42 +47,31 @@ const MediaSection = ({ formData, displayValues, onChange }) => {
           </label>
           <input
             type="text"
-            value={videoIdValue}
-            onChange={handleVideoIdChange}
+            value={videoId}
+            onChange={(e) => {
+              console.log('🎯 TESTE: VideoId digitando:', e.target.value);
+              setVideoId(e.target.value);
+            }}
             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm 
-                       focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
-                       transition-colors"
-            placeholder="Ex: mdcsckJg7rc ou URL completa"
+                       focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="Ex: mdcsckJg7rc"
           />
-          
-          {/* Preview do vídeo */}
-          {videoIdValue && (
-            <div className="mt-2">
-              <p className="text-xs text-gray-500 mb-1">Preview:</p>
-              <div className="relative aspect-video w-full max-w-xs">
-                <iframe
-                  src={`https://www.youtube.com/embed/${videoIdValue}`}
-                  className="w-full h-full rounded border"
-                  frameBorder="0"
-                  allowFullScreen
-                  title="Preview do YouTube"
-                />
-              </div>
-            </div>
-          )}
+          <p className="text-xs text-green-600 mt-1">
+            ✅ Digitação funcionando: "{videoId}"
+          </p>
         </div>
 
       </div>
 
-      {/* Dicas de uso */}
-      <div className="mt-4 p-3 bg-blue-50 rounded-md">
-        <p className="text-sm text-blue-700">
-          💡 <strong>Dica:</strong> Para o vídeo do YouTube, você pode colar a URL completa 
-          (ex: https://www.youtube.com/watch?v=mdcsckJg7rc) ou apenas o ID (mdcsckJg7rc).
+      <div className="mt-4 p-3 bg-green-50 rounded-md">
+        <p className="text-sm text-green-700">
+          <strong>TESTE:</strong> Se conseguir digitar aqui mas não no MediaSection normal, 
+          o problema é interferência de outros componentes ou do estado compartilhado.
         </p>
       </div>
+
     </FormSection>
   );
 };
 
-export default memo(MediaSection);
+export default memo(MediaSectionIsolated);
