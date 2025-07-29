@@ -555,3 +555,74 @@ export const getImovelById = async (codigo) => {
     };
   }
 };
+
+export async function atualizarImovel(id, dadosImovel) {
+  try {
+    console.log('🔄 atualizarImovel chamado:', { id, dadosImovel });
+    console.log('🎥 Video sendo enviado:', dadosImovel.Video);
+    
+    const response = await axiosClient.put(`/admin/imoveis/${id}`, dadosImovel, {
+      timeout: 25000,
+    });
+
+    console.log('🔄 Resposta da API:', response.data);
+
+    return {
+      success: response.data?.success || response.status === 200,
+      message: response.data?.message || "Imóvel atualizado com sucesso",
+      data: response.data?.data || null,
+    };
+  } catch (error) {
+    console.error(`❌ Erro ao atualizar imóvel ${id}:`, error);
+
+    if (error.code === "ERR_NETWORK") {
+      return {
+        success: false,
+        message: "Erro de conexão com o servidor. Tente novamente mais tarde.",
+        error: "Erro de conexão",
+      };
+    }
+
+    return {
+      success: false,
+      message: error.response?.data?.message || "Erro ao atualizar imóvel",
+      error: error.response?.data?.error || "Erro desconhecido",
+    };
+  }
+}
+
+// ✅ TAMBÉM ADICIONE A FUNÇÃO criarImovel SE NÃO EXISTIR
+export async function criarImovel(codigo, dadosImovel) {
+  try {
+    console.log('🔄 criarImovel chamado:', { codigo, dadosImovel });
+    console.log('🎥 Video sendo enviado:', dadosImovel.Video);
+    
+    const response = await axiosClient.post(`/admin/imoveis`, dadosImovel, {
+      timeout: 25000,
+    });
+
+    console.log('🔄 Resposta da API:', response.data);
+
+    return {
+      success: response.data?.success || response.status === 201,
+      message: response.data?.message || "Imóvel criado com sucesso",
+      data: response.data?.data || null,
+    };
+  } catch (error) {
+    console.error(`❌ Erro ao criar imóvel ${codigo}:`, error);
+
+    if (error.code === "ERR_NETWORK") {
+      return {
+        success: false,
+        message: "Erro de conexão com o servidor. Tente novamente mais tarde.",
+        error: "Erro de conexão",
+      };
+    }
+
+    return {
+      success: false,
+      message: error.response?.data?.message || "Erro ao criar imóvel",
+      error: error.response?.data?.error || "Erro desconhecido",
+    };
+  }
+}
