@@ -391,7 +391,7 @@ export default async function CondominioPage({ params }) {
 
       {condominio.FichaTecnica && <FichaTecnica condominio={condominio} />}
       {condominio.DescricaoDiferenciais && <DiferenciaisCondominio condominio={condominio} />}
-      {condominio.DetalhesCondominio && <DetalhesCondominio condominio={condominio} />}
+      {condominio.DestaquesDiferenciais && <DetalhesCondominio imovel={condominio} />}
       {condominio.DestaquesLazer && <Lazer condominio={condominio} />}
       {condominio.Video && Object.keys(condominio.Video).length > 0 && (
         <VideoCondominio condominio={condominio} />
