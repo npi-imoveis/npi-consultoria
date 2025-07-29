@@ -168,8 +168,8 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create", imove
           }
         } else {
           console.log('➕ Modo Criação');
-          // ✅ CORRIGIDO: Não passar Codigo para criarImovel
-          result = await criarImovel(payload);
+          // ✅ PRESERVADO: Manter chamada original com Codigo
+          result = await criarImovel(formData.Codigo, payload);
 
           if (result && result.success) {
             setSuccess("Imóvel cadastrado com sucesso!");
