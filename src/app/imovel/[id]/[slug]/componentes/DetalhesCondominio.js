@@ -6,7 +6,7 @@ export default function DetalhesCondominio({ imovel }) {
         if (!text) return '';
         return text.replace(/\n/g, '<br />');
     };
-
+    
     return (
         <div className="bg-white container mx-auto p-4 md:p-10 mt-4 border-t-2">
             <h2 className="text-xl font-bold text-black" id="sobre-condominio">
