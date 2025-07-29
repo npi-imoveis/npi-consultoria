@@ -17,7 +17,7 @@ export default function DiferenciaisCondominio({ condominio }) {
     return (
         <div className="bg-white rounded-lg container mx-auto p-10 mt-4">
             <h2 className="text-xl font-bold text-black">
-                Diferenciais do Condomínio {condominio.Empreendimento}
+                Sobre o Condomínio {condominio.Empreendimento}
             </h2>
             <div
                 className="text-sm mt-6 whitespace-pre-line"
