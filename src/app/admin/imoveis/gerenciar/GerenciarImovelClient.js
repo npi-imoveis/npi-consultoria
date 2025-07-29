@@ -136,19 +136,39 @@ export default function GerenciarImovelClient() {
         }
         return [];
       };
+// 🔧 SUBSTITUIR a função processVideos (linhas 113-123) por esta versão corrigida:
 
-      const processVideos = () => {
-        if (!imovelSelecionado.Video) return {};
-        const videosObj = {};
-        if (Array.isArray(imovelSelecionado.Video)) {
-          imovelSelecionado.Video.forEach((video) => {
-            if (video.Codigo) {
-              videosObj[video.Codigo] = { ...video };
-            }
-          });
-        }
-        return videosObj;
-      };
+const processVideos = () => {
+  if (!imovelSelecionado.Video) return {};
+  
+  // 🎯 CORRIGIDO: Lidar com a estrutura real Video.1.Video
+  if (typeof imovelSelecionado.Video === 'object' && !Array.isArray(imovelSelecionado.Video)) {
+    // Estrutura: { "1": { Video: "id-youtube" } }
+    return imovelSelecionado.Video;
+  }
+  
+  // 🔄 FALLBACK: Se for array (estrutura antiga), converter
+  if (Array.isArray(imovelSelecionado.Video)) {
+    const videosObj = {};
+    imovelSelecionado.Video.forEach((video, index) => {
+      if (video.Video) {
+        videosObj[index + 1] = { Video: video.Video };
+      }
+    });
+    return videosObj;
+  }
+  
+  // 🛡️ FALLBACK: Se for string direta, assumir como primeiro vídeo
+  if (typeof imovelSelecionado.Video === 'string') {
+    return {
+      "1": {
+        Video: imovelSelecionado.Video
+      }
+    };
+  }
+  
+  return {};
+};
 
       setFormData({
         ...imovelSelecionado,
