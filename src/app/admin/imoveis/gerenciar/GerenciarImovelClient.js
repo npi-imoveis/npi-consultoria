@@ -136,8 +136,6 @@ export default function GerenciarImovelClient() {
         }
         return [];
       };
-// 🔧 SUBSTITUIR a função processVideos (linhas 113-123) por esta versão corrigida:
-
 const processVideos = () => {
   if (!imovelSelecionado.Video) return {};
   
@@ -166,6 +164,9 @@ const processVideos = () => {
       }
     };
   }
+  
+  return {};
+};
   
   return {};
 };
