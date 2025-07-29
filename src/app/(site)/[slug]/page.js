@@ -259,7 +259,7 @@ export default async function CondominioPage({ params }) {
       "@context": "https://schema.org",
       "@type": "VideoObject",
       "name": `Vídeo de apresentação - ${condominio.Empreendimento}`,
-      "description": `Conheça o ${condominio.Empreendimento} em ${condominio.BairroComercial}, ${condominio.Cidade}. ${condominio.Categoria} com ${condominio.DormitoriosAntigo} quartos, ${condominio.MetragemAnt}, ${condominio.VagasAntigo} vagas.`,
+      "description": `Conheça o ${condominio.Empreendimento} em ${condominio.BairroComercial}, ${condominio.Cidade}. ${condominio.Categoria} com ${condominio.DormitoriosAntigo} quartos, ${condominio.MetragemAnt} m2, ${condominio.VagasAntigo} vagas.`,
       "thumbnailUrl": `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
       "uploadDate": modifiedDate,
       "contentUrl": `https://www.youtube.com/watch?v=${videoId}`,
