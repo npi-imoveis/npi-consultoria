@@ -59,7 +59,7 @@ async function initializeVisionClient() {
   // Você vai precisar criar essas credenciais no Google Cloud
   const client = new vision.ImageAnnotatorClient({
     projectId: process.env.GOOGLE_CLOUD_PROJECT_ID,
-    keyFilename: process.env.GOOGLE_CLOUD_KEY_FILE, // caminho para o arquivo JSON
+    credentials: JSON.parse(process.env.GOOGLE_CLOUD_CREDENTIALS)
     // OU usar variável de ambiente:
     // credentials: JSON.parse(process.env.GOOGLE_CLOUD_CREDENTIALS)
   });
