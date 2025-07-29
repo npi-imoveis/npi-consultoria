@@ -335,14 +335,14 @@ export default async function CondominioPage({ params }) {
               <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-3 gap-3 mt-4 mb-8">
                 {condominio.ValorAluguelSite && (
                   <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
-                    <h4 className="text-zinc-600 text-[10px] font-bold">Aluguel:</h4>
+                    <h2 className="text-zinc-600 text-[10px] font-bold">Aluguel:</h2>
                     <h2 className="text-black font-semibold text-[10px]">R$ {condominio.ValorAluguelSite}</h2>
                   </div>
                 )}
 
                 {/* Este é o bloco do Valor de Venda. O erro estava aqui. */}
                 <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
-                  <h4 className="text-zinc-600 text-[10px] font-bold">Venda:</h4>
+                  <h2 className="text-zinc-600 text-[10px] font-bold">Preço:</h2>
                   <h2 className="text-black font-semibold text-[10px]">R$ {condominio.ValorAntigo}</h2>
                 </div>
                 {/* A linha 132 do erro anterior (onde estava o ')}') foi removida aqui. */}
