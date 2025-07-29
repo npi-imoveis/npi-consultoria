@@ -8,7 +8,7 @@ const MediaSection = ({ formData, displayValues, onChange }) => {
   // 🎯 Estados locais sincronizados com formData (evita interferência)
   const [localTour360, setLocalTour360] = useState('');
   const [localVideoId, setLocalVideoId] = useState('');
-  const [isInitialized, setIsInitialized] = useState(false);
+  const [isInitialized, setIsInitconst handleVideoIdChangeialized] = useState(false);
 
   // 🔄 Sincronizar com props quando mudarem (mas só uma vez)
   useEffect(() => {
@@ -43,7 +43,26 @@ const MediaSection = ({ formData, displayValues, onChange }) => {
 
   // 🚀 Handler para Video ID - Atualiza local E pai
   const handleVideoIdChange = (e) => {
-    const value = e.target.value;
+  const videoId = e.target.value;
+  console.log('🎬 handleVideoIdChange chamado:', videoId);
+  
+  setVideoIdValue(videoId);
+  
+  const videoData = {
+    "1": {
+      Video: videoId
+    }
+  };
+  
+  console.log('🎬 MediaSection criando videoData:', videoData);
+  console.log('🎬 Chamando onChange com:', "Video", videoData);
+  console.log('🎬 onChange é função?', typeof onChange === 'function');
+  
+  // ✅ Esta linha está executando?
+  onChange("Video", videoData);
+  
+  console.log('🎬 onChange executado com sucesso!');
+};
     
     // Extrator de ID do YouTube (aceita URL ou ID)
     const extractYouTubeId = (input) => {
