@@ -58,8 +58,16 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create", imove
 
   // ✅ MEMOIZAR preparePayload para estabilizar dependência
   const preparePayload = useMemo(() => {
-    return (data) => {
-      console.log('🔧 Preparando payload:', data);
+  return (data) => {
+    console.log('🔧 Preparando payload:', data);
+    
+    // 🧪 TESTE ESPECÍFICO DO VIDEO
+    console.log('🎥 ANÁLISE DETALHADA DO VIDEO:');
+    console.log('🎥 data.Video:', data.Video);
+    console.log('🎥 typeof data.Video:', typeof data.Video);
+    console.log('🎥 data.Video === undefined:', data.Video === undefined);
+    console.log('🎥 data.Video === null:', data.Video === null);
+    console.log('🎥 Object.keys(data):', Object.keys(data));
       
       // Converter o objeto de fotos para um array
       const fotosArray = data.Foto ? Object.values(data.Foto) : [];
