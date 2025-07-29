@@ -1,5 +1,4 @@
 "use client";
-
 const formatarHtml = (htmlString) => {
     if (!htmlString) return "";
     // Sanitize the input by removing any HTML tags first
@@ -11,11 +10,8 @@ const formatarHtml = (htmlString) => {
         .join('<br />');
     return formattedString;
 };
-
 export default function DiferenciaisCondominio({ condominio }) {
     const diferenciasCondominio = formatarHtml(condominio.DescricaoDiferenciais);
-    const destaqueseDiferenciais = formatarHtml(condominio.DestaquesDiferenciais);
-
     return (
         <div className="bg-white rounded-lg container mx-auto p-10 mt-4">
             <h2 className="text-xl font-bold text-black">
@@ -25,19 +21,6 @@ export default function DiferenciaisCondominio({ condominio }) {
                 className="text-sm mt-6 whitespace-pre-line"
                 dangerouslySetInnerHTML={{ __html: diferenciasCondominio }}
             />
-            
-            {/* ✅ ADICIONAR ESTA SEÇÃO: */}
-            {condominio.DestaquesDiferenciais && (
-                <div className="mt-8 pt-8 border-t-2">
-                    <h3 className="text-xl font-bold text-black">
-                        Destaques e Diferenciais
-                    </h3>
-                    <div
-                        className="text-sm mt-6 whitespace-pre-line"
-                        dangerouslySetInnerHTML={{ __html: destaqueseDiferenciais }}
-                    />
-                </div>
-            )}
         </div>
     );
 }
