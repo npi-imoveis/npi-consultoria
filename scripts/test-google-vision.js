@@ -1,9 +1,20 @@
-// scripts/test-google-vision.js - TESTE GRATUITO COM 1000 FOTOS
+// scripts/test-google-vision.js - CORREÇÃO PARA VERCEL
 
 require('dotenv').config();
 const vision = require('@google-cloud/vision');
 const { MongoClient } = require('mongodb');
 
+// 🔧 SETUP DO GOOGLE VISION - VERSÃO VERCEL
+async function initializeVisionClient() {
+  // 🎯 MUDANÇA PRINCIPAL: Usar credentials em vez de keyFilename
+  const client = new vision.ImageAnnotatorClient({
+    projectId: process.env.GOOGLE_CLOUD_PROJECT_ID,
+    credentials: JSON.parse(process.env.GOOGLE_CLOUD_CREDENTIALS) // ← CORREÇÃO AQUI
+  });
+  
+  console.log('✅ Google Vision Client inicializado');
+  return client;
+}
 // 🎯 MAPEAMENTO DOS RESULTADOS GOOGLE PARA PORTUGUÊS
 const VISION_TO_PORTUGUESE = {
   // Ambientes principais
