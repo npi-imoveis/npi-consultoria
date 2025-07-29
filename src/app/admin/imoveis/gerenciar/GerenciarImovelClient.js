@@ -137,11 +137,24 @@ export default function GerenciarImovelClient() {
         return [];
       };
 const processVideos = () => {
-  if (!imovelSelecionado.Video) return {};
+  console.log('🐛 DEBUG processVideos - DADOS RECEBIDOS:', {
+    'imovelSelecionado completo': imovelSelecionado,
+    'imovelSelecionado.Video RAW': imovelSelecionado.Video,
+    'tipo': typeof imovelSelecionado.Video,
+    'isArray': Array.isArray(imovelSelecionado.Video),
+    'isObject': typeof imovelSelecionado.Video === 'object',
+    'keys': imovelSelecionado.Video ? Object.keys(imovelSelecionado.Video) : 'sem keys',
+    'JSON.stringify': JSON.stringify(imovelSelecionado.Video)
+  });
+  
+  if (!imovelSelecionado.Video) {
+    console.log('❌ Video é falsy, retornando {}');
+    return {};
+  }
   
   // 🎯 CORRIGIDO: Lidar com a estrutura real Video.1.Video
   if (typeof imovelSelecionado.Video === 'object' && !Array.isArray(imovelSelecionado.Video)) {
-    // Estrutura: { "1": { Video: "id-youtube" } }
+    console.log('✅ Usando estrutura objeto:', imovelSelecionado.Video);
     return imovelSelecionado.Video;
   }
   
@@ -153,21 +166,22 @@ const processVideos = () => {
         videosObj[index + 1] = { Video: video.Video };
       }
     });
+    console.log('🔄 Convertido de array:', videosObj);
     return videosObj;
   }
   
   // 🛡️ FALLBACK: Se for string direta, assumir como primeiro vídeo
   if (typeof imovelSelecionado.Video === 'string') {
-    return {
+    const videoObj = {
       "1": {
         Video: imovelSelecionado.Video
       }
     };
+    console.log('🛡️ Convertido de string:', videoObj);
+    return videoObj;
   }
   
-  return {};
-};
-  
+  console.log('❓ Tipo desconhecido, retornando {}');
   return {};
 };
 
