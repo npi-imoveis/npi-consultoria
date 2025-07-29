@@ -1,20 +1,9 @@
-// scripts/test-google-vision.js - CORREÇÃO PARA VERCEL
+// scripts/test-google-vision.js - VERSÃO CORRIGIDA PARA VERCEL
 
 require('dotenv').config();
 const vision = require('@google-cloud/vision');
 const { MongoClient } = require('mongodb');
 
-// 🔧 SETUP DO GOOGLE VISION - VERSÃO VERCEL
-async function initializeVisionClient() {
-  // 🎯 MUDANÇA PRINCIPAL: Usar credentials em vez de keyFilename
-  const client = new vision.ImageAnnotatorClient({
-    projectId: process.env.GOOGLE_CLOUD_PROJECT_ID,
-    credentials: JSON.parse(process.env.GOOGLE_CLOUD_CREDENTIALS) // ← CORREÇÃO AQUI
-  });
-  
-  console.log('✅ Google Vision Client inicializado');
-  return client;
-}
 // 🎯 MAPEAMENTO DOS RESULTADOS GOOGLE PARA PORTUGUÊS
 const VISION_TO_PORTUGUESE = {
   // Ambientes principais
@@ -54,14 +43,12 @@ const VISION_TO_PORTUGUESE = {
   'Architecture': 'Detalhe Arquitetônico'
 };
 
-// 🔧 SETUP DO GOOGLE VISION
+// 🔧 SETUP DO GOOGLE VISION - VERSÃO VERCEL (ÚNICA!)
 async function initializeVisionClient() {
-  // Você vai precisar criar essas credenciais no Google Cloud
+  // 🎯 USAR CREDENTIALS EM VEZ DE KEYFILENAME PARA VERCEL
   const client = new vision.ImageAnnotatorClient({
     projectId: process.env.GOOGLE_CLOUD_PROJECT_ID,
     credentials: JSON.parse(process.env.GOOGLE_CLOUD_CREDENTIALS)
-    // OU usar variável de ambiente:
-    // credentials: JSON.parse(process.env.GOOGLE_CLOUD_CREDENTIALS)
   });
   
   console.log('✅ Google Vision Client inicializado');
@@ -163,7 +150,12 @@ async function testarComMilFotos() {
     
     if (fotos.length === 0) {
       console.log('⚠️  Nenhuma foto encontrada para análise');
-      return;
+      return {
+        processadas: 0,
+        detectadas: 0,
+        falhas: 0,
+        ambientes: {}
+      };
     }
     
     // 3. Processar fotos com rate limiting
@@ -246,8 +238,11 @@ async function testarComMilFotos() {
       console.log(`⚠️  Precisão de ${precisao}% - Talvez não compense`);
     }
     
+    return resultados;
+    
   } catch (error) {
     console.error('❌ Erro geral:', error);
+    throw error;
   } finally {
     if (mongoClient) await mongoClient.close();
   }
@@ -290,7 +285,7 @@ function sleep(ms) {
 // 🚀 EXECUTAR TESTE
 async function main() {
   try {
-    await testarComMilFotos();
+    const resultado = await testarComMilFotos();
     await testarAltAtualizado();
     
     console.log('\n✅ Teste concluído!');
@@ -299,16 +294,20 @@ async function main() {
     console.log('   2. Se aprovado, processar as 139k restantes');
     console.log('   3. Integrar com ImageGallery');
     
+    return resultado;
+    
   } catch (error) {
     console.error('❌ Erro fatal:', error);
+    throw error;
   }
-  
-  process.exit(0);
 }
 
 // Executar se chamado diretamente
 if (require.main === module) {
-  main();
+  main().then(() => process.exit(0)).catch(err => {
+    console.error(err);
+    process.exit(1);
+  });
 }
 
 module.exports = {
