@@ -12,7 +12,6 @@ import { ImoveisRelacionados } from "./componentes/related-properties";
 import SobreCondominio from "./componentes/SobreCondominio";
 import FichaTecnica from "./componentes/FichaTecnica";
 import DiferenciaisCondominio from "./componentes/DiferenciaisCondominio";
-import DetalhesCondominio from "./componentes/DetalhesCondominio";
 import Lazer from "./componentes/Lazer";
 import VideoCondominio from "./componentes/VideoCondominio";
 import TourVirtual from "./componentes/TourVirtual";
