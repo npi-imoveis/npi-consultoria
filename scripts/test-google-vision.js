@@ -12,11 +12,13 @@ const VISION_TO_PORTUGUESE = {
   'Living room': 'Sala de Estar',
   'Bedroom': 'Dormitório',
   'Balcony': 'Varanda',
+  'Grill on the balcony': 'Churrasqueira na Varanda',
   'Dining room': 'Sala de Jantar',
   'Office': 'Escritório',
 
   // Áreas externas  
   'Swimming pool': 'Piscina',
+  'Indoor pool': 'Piscina Coberta',
   'Garden': 'Jardim',
   'Garage': 'Garagem',
   'Building': 'Fachada',
@@ -26,7 +28,7 @@ const VISION_TO_PORTUGUESE = {
   // Áreas condominiais
   'Gym': 'Academia',
   'Playground': 'Playground',
-  'Tennis court': 'Quadra Esportiva',
+  'Tennis court': 'Quadra de Tênis',
   'Basketball court': 'Quadra Esportiva',
   'Sauna': 'Sauna',
   'Recreation room': 'Salão de Festas',
