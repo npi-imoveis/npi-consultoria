@@ -57,9 +57,29 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create", imove
   }, []);
 
   // ✅ MEMOIZAR preparePayload para estabilizar dependência
-     const preparePayload = useMemo(() => {
-     return (data) => {
-     console.log('🔧 Preparando payload:', data);
+  const preparePayload = useMemo(() => {
+    return (data) => {
+      console.log('🔧 Preparando payload:', data);
+      
+      // 🧪 DEBUG DETALHADO DO VIDEO
+      console.log('🎥 ANÁLISE DETALHADA DO VIDEO:');
+      console.log('🎥 data.Video:', data.Video);
+      console.log('🎥 typeof data.Video:', typeof data.Video);
+      console.log('🎥 data.Video === undefined:', data.Video === undefined);
+      console.log('🎥 data.Video === null:', data.Video === null);
+      console.log('🎥 Object.keys(data):', Object.keys(data));
+      
+      // 🧪 DEBUG ESPECÍFICO DA ESTRUTURA VIDEO
+      if (data.Video) {
+        console.log('🎥 Video existe! Estrutura:');
+        console.log('🎥 Object.keys(data.Video):', Object.keys(data.Video));
+        console.log('🎥 data.Video["1"]:', data.Video["1"]);
+        if (data.Video["1"]) {
+          console.log('🎥 data.Video["1"].Video:', data.Video["1"].Video);
+        }
+      } else {
+        console.log('🎥 Video NÃO existe ou é falsy');
+      }
           
       // Converter o objeto de fotos para um array
       const fotosArray = data.Foto ? Object.values(data.Foto) : [];
@@ -67,8 +87,13 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create", imove
       // ✅ CORRIGIDO: Manter estrutura Video como objeto
       let videoData = data.Video || {};
       
+      // 🧪 DEBUG DO PROCESSAMENTO DO VIDEO
+      console.log('🎥 videoData inicial:', videoData);
+      console.log('🎥 videoData é array?', Array.isArray(data.Video));
+      
       // Se Video for array (estrutura antiga), converter para objeto
       if (Array.isArray(data.Video)) {
+        console.log('🎥 Convertendo Video de array para objeto...');
         const videosObj = {};
         data.Video.forEach((video, index) => {
           if (video.Video) {
@@ -76,7 +101,15 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create", imove
           }
         });
         videoData = videosObj;
+        console.log('🎥 Video convertido:', videoData);
       }
+
+      // 🧪 DEBUG FINAL DO VIDEO
+      console.log('🎥 videoData final:', videoData);
+      console.log('🎥 Object.keys(videoData):', Object.keys(videoData));
+      console.log('🎥 Object.keys(videoData).length:', Object.keys(videoData).length);
+      console.log('🎥 Condição > 0?', Object.keys(videoData).length > 0);
+      console.log('🎥 Video será enviado?', Object.keys(videoData).length > 0 ? 'SIM' : 'NÃO (undefined)');
 
       const payload = {
         ...data,
@@ -87,7 +120,11 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create", imove
         Video: Object.keys(videoData).length > 0 ? videoData : undefined, // ✅ Manter como objeto
       };
       
+      // 🧪 DEBUG DO PAYLOAD FINAL
       console.log('📦 Payload preparado:', payload);
+      console.log('📦 payload.Video:', payload.Video);
+      console.log('📦 payload.Video === undefined:', payload.Video === undefined);
+      
       return payload;
     };
   }, []);
@@ -96,6 +133,11 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create", imove
   const handleSubmit = useCallback(
     async (e) => {
       console.log('🚀 handleSubmit chamado!', { formData, mode, imovelId });
+      
+      // 🧪 DEBUG ESPECÍFICO DO FORMDATA RECEBIDO
+      console.log('🚀 FormData recebido no handleSubmit:');
+      console.log('🚀 formData.Video:', formData.Video);
+      console.log('🚀 typeof formData.Video:', typeof formData.Video);
       
       e.preventDefault();
       setIsSaving(true);
@@ -140,6 +182,11 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create", imove
         } else if (mode === "edit") {
           console.log('✏️ Modo Edição', { imovelId });
           
+          // 🧪 DEBUG DA REQUISIÇÃO DE ATUALIZAÇÃO
+          console.log('🔄 Enviando para atualizarImovel:');
+          console.log('🔄 ID:', imovelId || formData.Codigo);
+          console.log('🔄 Payload.Video:', payload.Video);
+          
           // ✅ CORRIGIDO: Usar Codigo se imovelId não estiver disponível
           const id = imovelId || formData.Codigo;
           if (!id) {
@@ -147,6 +194,9 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create", imove
           }
           
           result = await atualizarImovel(id, payload);
+
+          // 🧪 DEBUG DO RESULTADO DA API
+          console.log('🔄 Resultado da atualizarImovel:', result);
 
           try {
             const { user, timestamp } = await getCurrentUserAndDate();
@@ -206,7 +256,10 @@ export const useImovelSubmit = (formData, setIsModalOpen, mode = "create", imove
     hasHandleSubmit: typeof handleSubmit === 'function',
     formDataKeys: formData ? Object.keys(formData).length : 0,
     mode,
-    imovelId
+    imovelId,
+    // 🧪 DEBUG DO VIDEO NO HOOK
+    videoExists: formData?.Video !== undefined,
+    videoValue: formData?.Video
   });
 
   return {
