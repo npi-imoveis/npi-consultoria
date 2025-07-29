@@ -12,7 +12,7 @@ import { ImoveisRelacionados } from "./componentes/related-properties";
 import SobreCondominio from "./componentes/SobreCondominio";
 import FichaTecnica from "./componentes/FichaTecnica";
 import DiferenciaisCondominio from "./componentes/DiferenciaisCondominio";
-import DetalhesDiferenciais from "./componentes/DetalhesCondominio";
+import DetalhesCondominio from "./componentes/DetalhesCondominio";
 import Lazer from "./componentes/Lazer";
 import VideoCondominio from "./componentes/VideoCondominio";
 import TourVirtual from "./componentes/TourVirtual";
@@ -391,7 +391,7 @@ export default async function CondominioPage({ params }) {
 
       {condominio.FichaTecnica && <FichaTecnica condominio={condominio} />}
       {condominio.DescricaoDiferenciais && <DiferenciaisCondominio condominio={condominio} />}
-      {condominio.DestaquesDiferenciais && <DestaquesDiferenciais condominio={condominio} />}
+      {condominio.DetalhesCondominio && <DetalhesCondominio condominio={condominio} />}
       {condominio.DestaquesLazer && <Lazer condominio={condominio} />}
       {condominio.Video && Object.keys(condominio.Video).length > 0 && (
         <VideoCondominio condominio={condominio} />
