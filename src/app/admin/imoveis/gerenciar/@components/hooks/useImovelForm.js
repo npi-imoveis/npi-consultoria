@@ -274,148 +274,187 @@ export const useImovelForm = () => {
     }
   }, [debouncedFetchCoordinates]);
 
-  // O handleChange vem logo em seguida...
-  const handleChange = useCallback((e) => {
-  if (!e || !e.target) return;
-  
-  const { name, value } = e.target;
+  // ✅ FUNÇÃO handleChange CORRIGIDA - ACEITA AMBOS OS FORMATOS
+  const handleChange = useCallback((fieldOrEvent, valueOrUndefined) => {
+    console.log('🔄 useImovelForm.handleChange chamado:', { fieldOrEvent, valueOrUndefined });
+    
+    // ✅ DETECTAR se é chamada direta (field, value) ou evento (e.target)
+    let name, value;
+    
+    if (typeof fieldOrEvent === 'string' && valueOrUndefined !== undefined) {
+      // 🎯 CHAMADA DIRETA: onChange("Video", videoData)
+      name = fieldOrEvent;
+      value = valueOrUndefined;
+      console.log('🎯 Chamada direta detectada:', { name, value });
+    } else if (fieldOrEvent?.target) {
+      // 🎯 EVENTO: onChange(e) onde e.target.name e e.target.value
+      name = fieldOrEvent.target.name;
+      value = fieldOrEvent.target.value;
+      console.log('🎯 Evento detectado:', { name, value });
+    } else {
+      console.error('❌ handleChange: formato inválido:', { fieldOrEvent, valueOrUndefined });
+      return;
+    }
 
-  // Tratamento específico para campos numéricos
+    // Debug específico para Video
+    if (name === "Video") {
+      console.log('🎥 PROCESSANDO VIDEO no useImovelForm:');
+      console.log('🎥 Field:', name);
+      console.log('🎥 Value recebido:', value);
+      console.log('🎥 Tipo do value:', typeof value);
+      console.log('🎥 Value é objeto?', typeof value === 'object' && value !== null);
+      console.log('🎥 Keys do value:', value ? Object.keys(value) : 'N/A');
+    }
+
+    // ✅ SE FOR CAMPO VIDEO, ATUALIZAR DIRETAMENTE
+    if (name === "Video") {
+      console.log('🎥 Atualizando Video diretamente no formData');
+      setFormData(prev => {
+        const updated = { ...prev, Video: value };
+        console.log('🎥 FormData ANTES da atualização:', prev.Video);
+        console.log('🎥 FormData DEPOIS da atualização:', updated.Video);
+        return updated;
+      });
+      console.log('🎥 Video atualizado com sucesso!');
+      return;
+    }
+
+    // ✅ RESTO DO CÓDIGO ORIGINAL PERMANECE IGUAL
+    
+    // Tratamento específico para campos numéricos
     const numericFields = ['Dormitorios', 'Suites', 'Vagas', 'BanheiroSocialQtd'];
     if (numericFields.includes(name)) {
-    const numericValue = value.replace(/\D/g, '');
-    setFormData(prev => ({ ...prev, [name]: numericValue }));
-    return;
-  }
+      const numericValue = value.replace(/\D/g, '');
+      setFormData(prev => ({ ...prev, [name]: numericValue }));
+      return;
+    }
 
-  // Handler específico para campos numéricos (Dormitórios, Suítes, Vagas)
-  const handleNumericField = (fieldName, fieldValue) => {
-    const numericValue = fieldValue.replace(/\D/g, '');
-    setFormData(prev => ({ ...prev, [fieldName]: numericValue }));
-  };
+    // Handler específico para campos numéricos (Dormitórios, Suítes, Vagas)
+    const handleNumericField = (fieldName, fieldValue) => {
+      const numericValue = fieldValue.replace(/\D/g, '');
+      setFormData(prev => ({ ...prev, [fieldName]: numericValue }));
+    };
 
-  // Verifica se é um campo numérico
-  if (numericFields.includes(name)) {
-    handleNumericField(name, value);
-    return; // Sai da função após processar
-  }
+    // Verifica se é um campo numérico
+    if (numericFields.includes(name)) {
+      handleNumericField(name, value);
+      return; // Sai da função após processar
+    }
 
-  // Handlers para campos monetários
-  const handleMonetaryField = (fieldName, fieldValue) => {
-    const numericValue = parseCurrency(fieldValue);
-    setFormData(prev => ({ ...prev, [fieldName]: numericValue }));
-    setDisplayValues(prev => ({ 
-      ...prev, 
-      [fieldName]: formatCurrencyInput(fieldValue) 
-    }));
-  };
-
-  // Campos monetários
-  const monetaryFields = ['ValorAntigo', 'ValorAluguelSite', 'ValorCondominio', 'ValorIptu'];
-
-  // Verifica se é um campo monetário
-  if (monetaryFields.includes(name)) {
-    handleMonetaryField(name, value);
-    return; // Sai da função após processar
-  }
-
-  // Handlers especiais
-  const specialHandlers = {
-    DataEntrega: () => setFormData(prev => ({ ...prev, [name]: maskDate(value) })),
-    CEP: () => {
-      const formattedCEP = value.replace(/\D/g, "").slice(0, 8);
-      setFormData(prev => ({ ...prev, [name]: formattedCEP }));
-      if (formattedCEP.length === 8) fetchAddress(formattedCEP);
-    },
-    Empreendimento: () => {
-      setFormData(prev => ({ 
+    // Handlers para campos monetários
+    const handleMonetaryField = (fieldName, fieldValue) => {
+      const numericValue = parseCurrency(fieldValue);
+      setFormData(prev => ({ ...prev, [fieldName]: numericValue }));
+      setDisplayValues(prev => ({ 
         ...prev, 
-        [name]: value, 
-        Slug: formatterSlug(value) || prev.Slug 
+        [fieldName]: formatCurrencyInput(fieldValue) 
       }));
-    },
-    IdCorretor: () => {
-      setFormData(prev => ({
-        ...prev,
-        [name]: value,
-        Corretor: "",
-        EmailCorretor: "",
-        CelularCorretor: "",
-        Imobiliaria: "",
-        isLoadingCorretor: true,
-        corretorError: null
-      }));
+    };
 
-      if (value?.trim()) {
-        getCorretorById(value.trim())
-          .then(corretor => {
-            if (corretor) {
+    // Campos monetários
+    const monetaryFields = ['ValorAntigo', 'ValorAluguelSite', 'ValorCondominio', 'ValorIptu'];
+
+    // Verifica se é um campo monetário
+    if (monetaryFields.includes(name)) {
+      handleMonetaryField(name, value);
+      return; // Sai da função após processar
+    }
+
+    // Handlers especiais
+    const specialHandlers = {
+      DataEntrega: () => setFormData(prev => ({ ...prev, [name]: maskDate(value) })),
+      CEP: () => {
+        const formattedCEP = value.replace(/\D/g, "").slice(0, 8);
+        setFormData(prev => ({ ...prev, [name]: formattedCEP }));
+        if (formattedCEP.length === 8) fetchAddress(formattedCEP);
+      },
+      Empreendimento: () => {
+        setFormData(prev => ({ 
+          ...prev, 
+          [name]: value, 
+          Slug: formatterSlug(value) || prev.Slug 
+        }));
+      },
+      IdCorretor: () => {
+        setFormData(prev => ({
+          ...prev,
+          [name]: value,
+          Corretor: "",
+          EmailCorretor: "",
+          CelularCorretor: "",
+          Imobiliaria: "",
+          isLoadingCorretor: true,
+          corretorError: null
+        }));
+
+        if (value?.trim()) {
+          getCorretorById(value.trim())
+            .then(corretor => {
+              if (corretor) {
+                setFormData(prev => ({
+                  ...prev,
+                  Corretor: corretor.Nome || "",
+                  EmailCorretor: corretor.Email || "",
+                  CelularCorretor: corretor.Celular || "",
+                  Imobiliaria: corretor.Imobiliaria || "",
+                  isLoadingCorretor: false
+                }));
+              }
+            })
+            .catch(error => {
+              console.error("Erro ao buscar corretor:", error);
               setFormData(prev => ({
                 ...prev,
-                Corretor: corretor.Nome || "",
-                EmailCorretor: corretor.Email || "",
-                CelularCorretor: corretor.Celular || "",
-                Imobiliaria: corretor.Imobiliaria || "",
+                corretorError: "Corretor não encontrado",
                 isLoadingCorretor: false
               }));
-            }
-          })
-          .catch(error => {
-            console.error("Erro ao buscar corretor:", error);
-            setFormData(prev => ({
-              ...prev,
-              corretorError: "Corretor não encontrado",
-              isLoadingCorretor: false
-            }));
-          });
+            });
+        }
       }
+    };
+
+    // Verifica se é um campo especial
+    if (specialHandlers[name]) {
+      specialHandlers[name]();
+      return; // Sai da função após processar
     }
-  };
 
-  // Verifica se é um campo especial
-  if (specialHandlers[name]) {
-    specialHandlers[name]();
-    return; // Sai da função após processar
-  }
+    // Caso padrão para todos os outros campos
+    setFormData(prev => ({ ...prev, [name]: value }));
+  }, [maskDate, fetchAddress, parseCurrency, formatCurrencyInput]);
 
-  // Caso padrão para todos os outros campos
-  setFormData(prev => ({ ...prev, [name]: value }));
-}, [maskDate, fetchAddress, parseCurrency, formatCurrencyInput]);
   // Funções de manipulação de imagens
   const addImage = useCallback(() => setShowImageModal(true), []);
   
-  // ...código original permanece...
+  const addSingleImage = useCallback((url) => {
+    if (!url?.trim()) return;
 
-const addSingleImage = useCallback((url) => {
-  if (!url?.trim()) return;
-
-  const cleanUrl = (() => {
-    try {
-      const parsed = new URL(url);
-      if (parsed.pathname.startsWith("/_next/image")) {
-        const innerUrl = parsed.searchParams.get("url");
-        return decodeURIComponent(innerUrl || url);
+    const cleanUrl = (() => {
+      try {
+        const parsed = new URL(url);
+        if (parsed.pathname.startsWith("/_next/image")) {
+          const innerUrl = parsed.searchParams.get("url");
+          return decodeURIComponent(innerUrl || url);
+        }
+        return url;
+      } catch {
+        return url;
       }
-      return url;
-    } catch {
-      return url;
-    }
-  })();
+    })();
 
-  setFormData(prev => ({
-    ...prev,
-    Foto: [
-      ...(Array.isArray(prev.Foto) ? prev.Foto : []),
-      {
-        Codigo: `img-${Date.now()}`,
-        Foto: cleanUrl.trim(),
-        Destaque: "Nao",
-        Ordem: (Array.isArray(prev.Foto) ? prev.Foto.length + 1 : 1)
-      }
-    ]
-  }));
-}, []);
-
+    setFormData(prev => ({
+      ...prev,
+      Foto: [
+        ...(Array.isArray(prev.Foto) ? prev.Foto : []),
+        {
+          Codigo: `img-${Date.now()}`,
+          Foto: cleanUrl.trim(),
+          Destaque: "Nao",
+          Ordem: (Array.isArray(prev.Foto) ? prev.Foto.length + 1 : 1)
+        }
+      ]
+    }));
+  }, []);
 
   const updateImage = useCallback((codigo, newUrl) => {
     if (!codigo || !newUrl?.trim()) return;
