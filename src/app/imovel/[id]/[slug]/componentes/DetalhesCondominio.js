@@ -22,7 +22,7 @@ export default function DetalhesCondominio({ imovel }) {
             {imovel.DestaquesDiferenciais && (
                 <div className="my-8 border-t-2 pt-8">
                     <h3 className="text-xl font-bold text-black" id="diferenciais">
-                        Diferenciais do Condomínio
+                        Destaques e Diferenciais
                     </h3>
                     <p
                         className="my-8 text-zinc-600 text-base"
