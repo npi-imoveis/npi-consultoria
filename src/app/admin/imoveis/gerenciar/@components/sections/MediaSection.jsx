@@ -8,7 +8,7 @@ const MediaSection = ({ formData, displayValues, onChange }) => {
   // 🎯 Estados locais sincronizados com formData (evita interferência)
   const [localTour360, setLocalTour360] = useState('');
   const [localVideoId, setLocalVideoId] = useState('');
-  const [isInitialized, setIsInitconst handleVideoIdChangeialized] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false); // ✅ CORRIGIDO: Nome da função
 
   // 🔄 Sincronizar com props quando mudarem (mas só uma vez)
   useEffect(() => {
@@ -41,28 +41,10 @@ const MediaSection = ({ formData, displayValues, onChange }) => {
     }
   };
 
-  // 🚀 Handler para Video ID - Atualiza local E pai
+  // ✅ CORRIGIDO: Handler para Video ID completo e funcional
   const handleVideoIdChange = (e) => {
-  const videoId = e.target.value;
-  console.log('🎬 handleVideoIdChange chamado:', videoId);
-  
-  setVideoIdValue(videoId);
-  
-  const videoData = {
-    "1": {
-      Video: videoId
-    }
-  };
-  
-  console.log('🎬 MediaSection criando videoData:', videoData);
-  console.log('🎬 Chamando onChange com:', "Video", videoData);
-  console.log('🎬 onChange é função?', typeof onChange === 'function');
-  
-  // ✅ Esta linha está executando?
-  onChange("Video", videoData);
-  
-  console.log('🎬 onChange executado com sucesso!');
-};
+    const value = e.target.value;
+    console.log('🎬 handleVideoIdChange chamado:', value);
     
     // Extrator de ID do YouTube (aceita URL ou ID)
     const extractYouTubeId = (input) => {
@@ -89,26 +71,33 @@ const MediaSection = ({ formData, displayValues, onChange }) => {
     };
 
     const cleanId = extractYouTubeId(value);
+    console.log('🎬 ID limpo extraído:', cleanId);
     
     // 1. Atualização LOCAL imediata
-    setLocalVideoId(cleanId);
+    setLocalVideoId(cleanId); // ✅ CORRIGIDO: Era setVideoIdValue
     
     // 2. Atualização no COMPONENTE PAI
     if (typeof onChange === 'function') {
       try {
-        // Estrutura aninhada esperada
+        // ✅ CORRIGIDO: Estrutura simplificada e correta
         const videoData = {
-          ...formData?.Video,
           "1": {
-            ...formData?.Video?.["1"],
             Video: cleanId
           }
         };
         
+        console.log('🎬 MediaSection criando videoData:', videoData);
+        console.log('🎬 Chamando onChange com:', "Video", videoData);
+        console.log('🎬 onChange é função?', typeof onChange === 'function');
+        
         onChange("Video", videoData);
+        
+        console.log('🎬 onChange executado com sucesso!');
       } catch (error) {
-        console.error('Erro ao atualizar Video:', error);
+        console.error('❌ Erro ao atualizar Video:', error);
       }
+    } else {
+      console.error('❌ onChange não é uma função:', typeof onChange);
     }
   };
 
@@ -140,7 +129,7 @@ const MediaSection = ({ formData, displayValues, onChange }) => {
           <input
             type="text"
             value={localVideoId}
-            onChange={handleVideoIdChange}
+            onChange={handleVideoIdChange} // ✅ CONECTADO ao handler corrigido
             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm 
                        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
                        transition-colors"
