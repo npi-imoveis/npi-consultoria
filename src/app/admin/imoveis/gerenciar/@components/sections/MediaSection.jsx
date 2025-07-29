@@ -50,8 +50,11 @@ const MediaSection = ({ formData, displayValues, onChange }) => {
     const extractYouTubeId = (input) => {
       if (!input) return '';
       
+      console.log('🎬 Extraindo ID de:', input);
+      
       // Se não tem youtube.com/youtu.be, assumir que já é ID
       if (!input.includes('youtube.com') && !input.includes('youtu.be')) {
+        console.log('🎬 Assumindo que é ID direto:', input);
         return input;
       }
       
@@ -64,9 +67,13 @@ const MediaSection = ({ formData, displayValues, onChange }) => {
       
       for (const pattern of patterns) {
         const match = input.match(pattern);
-        if (match) return match[1];
+        if (match) {
+          console.log('🎬 ID extraído com pattern:', match[1]);
+          return match[1];
+        }
       }
       
+      console.log('🎬 Nenhum pattern funcionou, usando input original:', input);
       return input;
     };
 
