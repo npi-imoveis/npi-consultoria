@@ -12,6 +12,75 @@ import FiltersImoveisAdmin from "./components/filters";
 import { TrashIcon } from "lucide-react";
 import ModalDelete from "../components/modal-delete";
 
+// Função para calcular relevância do resultado
+const calculateRelevance = (imovel, searchTerm) => {
+  if (!searchTerm || !imovel) return 0;
+  
+  const term = searchTerm.toLowerCase().trim();
+  let score = 0;
+  
+  // Pontuação para diferentes campos
+  const fields = [
+    { field: imovel.Codigo?.toString().toLowerCase(), weight: 100 }, // Código tem maior peso
+    { field: imovel.Empreendimento?.toLowerCase(), weight: 80 },     // Empreendimento peso alto
+    { field: imovel.Endereco?.toLowerCase(), weight: 60 },          // Endereço peso médio
+    { field: imovel.Bairro?.toLowerCase(), weight: 40 },            // Bairro peso menor
+    { field: imovel.Cidade?.toLowerCase(), weight: 30 },            // Cidade peso menor
+  ];
+  
+  fields.forEach(({ field, weight }) => {
+    if (field) {
+      // Match exato recebe pontuação máxima
+      if (field === term) {
+        score += weight * 10;
+      }
+      // Match no início da string recebe pontuação alta
+      else if (field.startsWith(term)) {
+        score += weight * 5;
+      }
+      // Match em qualquer lugar recebe pontuação média
+      else if (field.includes(term)) {
+        score += weight * 2;
+      }
+      // Match de palavras individuais
+      else {
+        const termWords = term.split(' ');
+        const fieldWords = field.split(' ');
+        
+        termWords.forEach(termWord => {
+          fieldWords.forEach(fieldWord => {
+            if (fieldWord.includes(termWord) && termWord.length > 2) {
+              score += weight * 0.5;
+            }
+          });
+        });
+      }
+    }
+  });
+  
+  return score;
+};
+
+// Função para ordenar resultados por relevância
+const sortByRelevance = (imoveis, searchTerm) => {
+  if (!searchTerm || !Array.isArray(imoveis)) return imoveis;
+  
+  return [...imoveis].sort((a, b) => {
+    const scoreA = calculateRelevance(a, searchTerm);
+    const scoreB = calculateRelevance(b, searchTerm);
+    
+    // Ordenação decrescente por relevância
+    if (scoreB !== scoreA) {
+      return scoreB - scoreA;
+    }
+    
+    // Em caso de empate, manter ordem por código
+    const codigoA = parseInt(a.Codigo) || 0;
+    const codigoB = parseInt(b.Codigo) || 0;
+    return codigoA - codigoB;
+  });
+};
+
 export default function AdminImoveis() {
   const router = useRouter();
   const [imoveis, setImoveis] = useState([]);
@@ -60,6 +129,13 @@ export default function AdminImoveis() {
           newPaginationData = data.pagination;
           console.log("📥 Dados da API de busca livre recebidos:", data);
           console.log("📊 Paginação da API de busca livre (newPaginationData):", newPaginationData);
+          
+          // 🔥 MODIFICAÇÃO: Aplicar ordenação por relevância apenas na primeira página
+          if (page === 1 && responseData.length > 1) {
+            responseData = sortByRelevance(responseData, search);
+            console.log("✨ Resultados ordenados por relevância para:", search);
+          }
+          
         } else {
           responseData = [];
           newPaginationData = {
