@@ -74,7 +74,7 @@ const INITIAL_FORM_DATA = {
   EmailCorretor: "",
   CelularCorretor: "",
   Imobiliaria: "",
-  Video: {},
+  Video: null, // ✅ CORREÇÃO: Mudado de {} para null
   Foto: [],
   isLoadingCEP: false,
   isLoadingCorretor: false,
@@ -306,11 +306,26 @@ export const useImovelForm = () => {
       console.log('🎥 Keys do value:', value ? Object.keys(value) : 'N/A');
     }
 
-    // ✅ SE FOR CAMPO VIDEO, ATUALIZAR DIRETAMENTE
+    // ✅ SE FOR CAMPO VIDEO, ATUALIZAR COM VALIDAÇÃO DE REMOÇÃO
     if (name === "Video") {
       console.log('🎥 Atualizando Video diretamente no formData');
+      
+      // ✅ NOVA LÓGICA: Se value é falsy, vazio ou objeto vazio, setar como null
+      let processedValue = value;
+      
+      // Verificar se o vídeo está sendo removido
+      if (!value || 
+          value === "" || 
+          value === null || 
+          value === undefined ||
+          (typeof value === 'object' && value !== null && Object.keys(value).length === 0) ||
+          (typeof value === 'object' && value !== null && !value.url && !value.provider && !value.videoId)) {
+        processedValue = null;
+        console.log('🎥 Video sendo REMOVIDO - setando como null');
+      }
+      
       setFormData(prev => {
-        const updated = { ...prev, Video: value };
+        const updated = { ...prev, Video: processedValue };
         console.log('🎥 FormData ANTES da atualização:', prev.Video);
         console.log('🎥 FormData DEPOIS da atualização:', updated.Video);
         return updated;
@@ -587,6 +602,7 @@ export const useImovelForm = () => {
     setFormData(prev => ({
       ...INITIAL_FORM_DATA,
       Codigo: keepCode ? prev.Codigo : "",
+      Video: null, // ✅ CORREÇÃO: Garantir que Video seja null no reset
     }));
     
     setDisplayValues({
@@ -599,7 +615,7 @@ export const useImovelForm = () => {
     if (!keepCode) {
       generateRandomCode().then(code => {
         setNewImovelCode(code);
-        setFormData(prev => ({ ...prev, Codigo: code }));
+        setFormData(prev => ({ ...prev, Codigo: code, Video: null })); // ✅ CORREÇÃO: Video null também aqui
       });
     }
   }, []);
