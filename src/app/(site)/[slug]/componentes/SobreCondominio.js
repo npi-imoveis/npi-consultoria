@@ -134,11 +134,17 @@ function DetalhesCondominioMelhorado({ condominio, expanded, setExpanded }) {
                     
                     {/* 🎯 TEXTO COM LAYOUT MELHORADO quando expanded */}
                     <div className={`mt-4 text-gray-700 ${expanded ? 'block' : 'line-clamp-3'}`}>
-                        <div className={expanded ? 'columns-1 md:columns-2 lg:columns-2 gap-8 text-justify' : ''}>
-                            <h4 className={`text-xs ${expanded ? 'leading-relaxed' : ''}`}>
+                        {expanded ? (
+                            <div className="columns-1 md:columns-2 lg:columns-2 gap-8">
+                                <h4 className="text-xs leading-relaxed whitespace-pre-line text-justify break-words">
+                                    {condominio.DescricaoUnidades}
+                                </h4>
+                            </div>
+                        ) : (
+                            <h4 className="text-xs whitespace-pre-line">
                                 {condominio.DescricaoUnidades}
                             </h4>
-                        </div>
+                        )}
                     </div>
                 </div>
             ) : (
