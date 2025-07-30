@@ -493,43 +493,43 @@ export default function AdminImoveis() {
                 <tr>
                   <th
                     scope="col"
-                    className="px-6 bg-gray-50 py-3 text-left text-[10px] font-bold  uppercase tracking-wider"
+                    className="px-4 bg-gray-50 py-3 text-left text-[10px] font-bold uppercase tracking-wider"
                   >
                     Código
                   </th>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-[10px] font-bold  uppercase tracking-wider"
+                    className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider"
                   >
                     Ativo
                   </th>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-[10px] font-bold  uppercase tracking-wider"
+                    className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider"
                   >
                     Empreendimento
                   </th>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-[10px] font-bold  uppercase tracking-wider"
+                    className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider"
                   >
                     Categoria
                   </th>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-[10px] font-bold  uppercase tracking-wider"
+                    className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider"
                   >
                     Área Privativa
                   </th>
                   <th
                     scope="col"
-                    className="px-6 py-3 text-left text-[10px] font-bold uppercase tracking-wider min-w-[140px]"
+                    className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider min-w-[130px]"
                   >
                     Valor (ValorAntigo)
                   </th>
                   <th
                     scope="col"
-                    className="px-6 py-4 text-left text-[10px] font-bold  uppercase tracking-wider sticky right-0 bg-gray-50"
+                    className="px-4 py-4 text-left text-[10px] font-bold uppercase tracking-wider sticky right-0 bg-gray-50 min-w-[120px]"
                   >
                     Ações
                   </th>
@@ -542,7 +542,7 @@ export default function AdminImoveis() {
                     .fill(null)
                     .map((_, index) => (
                       <tr key={`loading-${index}`}>
-                        <td colSpan={7} className="w-full px-6 py-4 whitespace-nowrap">
+                        <td colSpan={7} className="w-full px-4 py-4 whitespace-nowrap">
                           <div className="w-full animate-pulse flex space-x-4">
                             <div className="h-4 w-full bg-gray-200 rounded "></div>
                           </div>
@@ -553,10 +553,10 @@ export default function AdminImoveis() {
                   // Dados dos imóveis
                   imoveis.map((imovel) => (
                     <tr key={imovel.Codigo || imovel._id} className="hover:bg-gray-50">
-                      <td className="px-6 bg-gray-50 py-4 whitespace-nowrap text-[10px] text-gray-900 font-bold">
+                      <td className="px-4 bg-gray-50 py-4 whitespace-nowrap text-[10px] text-gray-900 font-bold">
                         {imovel.Codigo || "-"}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
+                      <td className="px-4 py-4 whitespace-nowrap">
                         <span
                           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium ${
                             imovel.Ativo === "Sim"
@@ -567,29 +567,38 @@ export default function AdminImoveis() {
                           {imovel.Ativo || "-"}
                         </span>
                       </td>
-                      <td className="px-6 font-bold py-4 whitespace-nowrap text-[10px] text-zinc-700">
+                      <td className="px-4 font-bold py-4 whitespace-nowrap text-[10px] text-zinc-700">
                         {imovel.Empreendimento || "-"}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700">
+                      <td className="px-4 py-4 whitespace-nowrap text-[10px] text-zinc-700">
                         {imovel.Categoria || "-"}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700">
+                      <td className="px-4 py-4 whitespace-nowrap text-[10px] text-zinc-700">
                         {formatarArea(imovel.AreaPrivativa)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700 min-w-[140px]">
+                      <td className="px-4 py-4 whitespace-nowrap text-[10px] text-zinc-700 min-w-[130px]">
                         {formatarValor(imovel.ValorAntigo)}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-[10px] text-zinc-700 sticky right-0 bg-white">
-                        <div className="flex items-center space-x-3">
+                      <td className="px-4 py-4 whitespace-nowrap text-[10px] text-zinc-700 sticky right-0 bg-white min-w-[120px]">
+                        <div className="flex items-center space-x-1">
+                          <a
+                            href={`/imovel-${imovel.Codigo}/${imovel.Slug || 'detalhes'}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-800 bg-gray-100 p-1.5 rounded-md"
+                            title="Ver no site"
+                          >
+                            <EyeIcon className="h-4 w-4" />
+                          </a>
                           <button
-                            className="text-black hover:text-indigo-900 bg-gray-100 p-2 rounded-md"
+                            className="text-black hover:text-indigo-900 bg-gray-100 p-1.5 rounded-md"
                             title="Editar"
                             onClick={() => handleEdit(imovel.Codigo)}
                           >
-                            <PencilSquareIcon className="h-5 w-5" />
+                            <PencilSquareIcon className="h-4 w-4" />
                           </button>
                           <button
-                            className="text-red-500 font-bold hover:text-red-400 bg-gray-100 p-2 rounded-md"
+                            className="text-red-500 font-bold hover:text-red-400 bg-gray-100 p-1.5 rounded-md"
                             title="Deletar"
                             onClick={() => handleDelete(imovel.Codigo)}
                           >
@@ -602,7 +611,7 @@ export default function AdminImoveis() {
                 ) : (
                   // Nenhum resultado encontrado
                   <tr>
-                    <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
+                    <td colSpan={7} className="px-4 py-4 text-center text-gray-500">
                       Nenhum imóvel encontrado.
                     </td>
                   </tr>
