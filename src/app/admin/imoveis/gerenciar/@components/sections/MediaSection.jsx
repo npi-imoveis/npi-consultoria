@@ -8,7 +8,7 @@ const MediaSection = ({ formData, displayValues, onChange }) => {
   // 🎯 Estados locais sincronizados com formData (evita interferência)
   const [localTour360, setLocalTour360] = useState('');
   const [localVideoId, setLocalVideoId] = useState('');
-  const [isInitialized, setIsInitialized] = useState(false); // ✅ CORRIGIDO: Nome da função
+  const [isInitialized, setIsInitialized] = useState(false);
 
   // 🔄 Sincronizar com props quando mudarem (mas só uma vez)
   useEffect(() => {
@@ -23,6 +23,39 @@ const MediaSection = ({ formData, displayValues, onChange }) => {
       console.log('🔄 MediaSection inicializado:', { tour360Value, videoIdValue });
     }
   }, [formData, displayValues, isInitialized]);
+
+  // ✅ NOVA FUNÇÃO: Extrair ID do Matterport
+  const extractMatterportId = (url) => {
+    if (!url || typeof url !== 'string') return null;
+    
+    try {
+      // Patterns do Matterport
+      const patterns = [
+        /my\.matterport\.com\/show\/\?m=([^&\n?#]+)/,  // URL padrão
+        /matterport\.com\/.*[?&]m=([^&\n?#]+)/,        // Variações
+        /\/show\/\?m=([^&\n?#]+)/                      // Relativo
+      ];
+      
+      for (const pattern of patterns) {
+        const match = url.match(pattern);
+        if (match && match[1]) {
+          console.log('🏗️ Matterport ID extraído:', match[1]);
+          return match[1];
+        }
+      }
+      
+      console.log('🏗️ Nenhum pattern do Matterport encontrado em:', url);
+      return null;
+    } catch (error) {
+      console.error('Erro ao extrair ID do Matterport:', error);
+      return null;
+    }
+  };
+
+  // ✅ NOVA FUNÇÃO: Verificar se URL é válida do Matterport
+  const isValidMatterportUrl = (url) => {
+    return extractMatterportId(url) !== null;
+  };
 
   // 🚀 Handler para Tour 360 - Atualiza local E pai
   const handleTour360Change = (e) => {
@@ -41,7 +74,7 @@ const MediaSection = ({ formData, displayValues, onChange }) => {
     }
   };
 
-  // ✅ CORRIGIDO: Handler para Video ID completo e funcional
+  // ✅ Handler para Video ID completo e funcional
   const handleVideoIdChange = (e) => {
     const value = e.target.value;
     console.log('🎬 handleVideoIdChange chamado:', value);
@@ -81,12 +114,11 @@ const MediaSection = ({ formData, displayValues, onChange }) => {
     console.log('🎬 ID limpo extraído:', cleanId);
     
     // 1. Atualização LOCAL imediata
-    setLocalVideoId(cleanId); // ✅ CORRIGIDO: Era setVideoIdValue
+    setLocalVideoId(cleanId);
     
     // 2. Atualização no COMPONENTE PAI
     if (typeof onChange === 'function') {
       try {
-        // ✅ CORRIGIDO: Estrutura simplificada e correta
         const videoData = {
           "1": {
             Video: cleanId
@@ -108,6 +140,9 @@ const MediaSection = ({ formData, displayValues, onChange }) => {
     }
   };
 
+  // ✅ NOVA VARIÁVEL: ID extraído do Matterport para preview
+  const matterportId = extractMatterportId(localTour360);
+
   return (
     <FormSection title="Mídia">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -124,8 +159,34 @@ const MediaSection = ({ formData, displayValues, onChange }) => {
             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm 
                        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
                        transition-colors"
-            placeholder="https://..."
+            placeholder="https://my.matterport.com/show/?m=..."
           />
+          
+          {/* ✅ NOVO: Preview do Tour 360 */}
+          {matterportId && (
+            <div className="mt-3">
+              <p className="text-xs text-gray-500 mb-2">Preview:</p>
+              <div className="relative aspect-video w-full max-w-xs">
+                <iframe
+                  src={`https://my.matterport.com/show/?m=${matterportId}&play=1&qs=1&applicationKey=industry`}
+                  className="w-full h-full rounded border"
+                  frameBorder="0"
+                  allowFullScreen
+                  title="Preview do Tour 360°"
+                  allow="xr-spatial-tracking"
+                />
+              </div>
+            </div>
+          )}
+          
+          {/* ✅ NOVO: Indicador de URL inválida */}
+          {localTour360 && localTour360.length > 10 && !matterportId && (
+            <div className="mt-2">
+              <p className="text-xs text-amber-600">
+                ⚠️ URL do Matterport não reconhecida. Verifique o formato.
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Vídeo YouTube */}
@@ -136,7 +197,7 @@ const MediaSection = ({ formData, displayValues, onChange }) => {
           <input
             type="text"
             value={localVideoId}
-            onChange={handleVideoIdChange} // ✅ CONECTADO ao handler corrigido
+            onChange={handleVideoIdChange}
             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm 
                        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500
                        transition-colors"
@@ -162,10 +223,11 @@ const MediaSection = ({ formData, displayValues, onChange }) => {
 
       </div>
 
-      {/* Dica */}
+      {/* Dica atualizada */}
       <div className="mt-4 p-3 bg-blue-50 rounded-md">
         <p className="text-sm text-blue-700">
-          💡 <strong>Dica:</strong> Para o vídeo do YouTube, você pode colar a URL completa ou apenas o ID.
+          💡 <strong>Dica:</strong> Para o vídeo do YouTube, você pode colar a URL completa ou apenas o ID. 
+          Para o Tour 360°, use o link completo do Matterport.
         </p>
       </div>
     </FormSection>
