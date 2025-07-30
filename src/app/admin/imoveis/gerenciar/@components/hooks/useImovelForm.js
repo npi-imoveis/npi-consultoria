@@ -85,7 +85,7 @@ const INITIAL_FORM_DATA = {
 export const useImovelForm = () => {
   const provider = useRef(new OpenStreetMapProvider());
   const fileInputRef = useRef(null);
-  const autoSaveTimeoutRef = useRef(null);
+
   const imovelSelecionado = useImovelStore((state) => state.imovelSelecionado);
   const isAutomacao = imovelSelecionado?.Automacao === true;
 
@@ -99,7 +99,6 @@ export const useImovelForm = () => {
 
   const [newImovelCode, setNewImovelCode] = useState("");
   const [showImageModal, setShowImageModal] = useState(false);
-  const [isAutoSaving, setIsAutoSaving] = useState(false);
   const [validation, setValidation] = useState({
     isFormValid: false,
     photoCount: 0,
@@ -143,8 +142,8 @@ export const useImovelForm = () => {
     });
   }, []);
 
-  // ✅ FUNÇÃO CORRIGIDA: Detectar, corrigir E SALVAR automaticamente
-  const corrigirEnderecoIncompleto = useCallback(async (endereco, cep, shouldAutoSave = true) => {
+  // ✅ FUNÇÃO CORRIGIDA: Detectar e corrigir endereços (SEM salvamento automático por ora)
+  const corrigirEnderecoIncompleto = useCallback(async (endereco, cep) => {
     if (!endereco || !cep) return false;
     
     // Lista de prefixos válidos de logradouro
@@ -168,7 +167,6 @@ export const useImovelForm = () => {
     
     // Se não tem prefixo, consultar ViaCEP para corrigir
     console.log('🔧 MIGRAÇÃO: Endereço incompleto detectado:', endereco, '- CEP:', cep);
-    console.log('🏠 Imóvel:', formData.Codigo);
     
     const cleanCep = cep.replace(/\D/g, "");
     if (cleanCep.length !== 8) return false;
@@ -184,6 +182,7 @@ export const useImovelForm = () => {
       if (data.logradouro && data.logradouro.toLowerCase() !== enderecoLower) {
         console.log('📊 MIGRAÇÃO - ANTES:', endereco);
         console.log('📊 MIGRAÇÃO - DEPOIS:', data.logradouro);
+        console.log('💡 INSTRUÇÃO: Clique em ATUALIZAR IMÓVEL para salvar a correção');
         
         // Buscar coordenadas para o endereço corrigido
         let coords = null;
@@ -198,67 +197,16 @@ export const useImovelForm = () => {
           console.error("Erro ao buscar coordenadas:", error);
         }
         
-        // 🎯 Preparar dados corrigidos
-        const dadosCorrigidos = {
-          Endereco: data.logradouro,
-          Bairro: data.bairro || formData.Bairro,
-          Cidade: data.localidade || formData.Cidade,
-          UF: data.uf || formData.UF,
-          Latitude: coords?.latitude || formData.Latitude,
-          Longitude: coords?.longitude || formData.Longitude,
-        };
-        
-        // Atualizar formData local primeiro
+        // 🎯 Atualizar formData local apenas
         setFormData(prev => ({
           ...prev,
-          ...dadosCorrigidos
+          Endereco: data.logradouro,
+          Bairro: data.bairro || prev.Bairro,
+          Cidade: data.localidade || prev.Cidade,
+          UF: data.uf || prev.UF,
+          Latitude: coords?.latitude || prev.Latitude,
+          Longitude: coords?.longitude || prev.Longitude,
         }));
-        
-        // 🚀 SALVAMENTO AUTOMÁTICO COM DEBOUNCE
-        if (shouldAutoSave && formData.Codigo) {
-          // Cancelar salvamento anterior se existir
-          if (autoSaveTimeoutRef.current) {
-            clearTimeout(autoSaveTimeoutRef.current);
-          }
-          
-          // Agendar salvamento com delay
-          autoSaveTimeoutRef.current = setTimeout(async () => {
-            setIsAutoSaving(true);
-            console.log('💾 SALVAMENTO AUTOMÁTICO: Iniciando correção da migração...');
-            
-            try {
-              // Import dinâmico para evitar dependência circular
-              const { atualizarImovel } = await import('@/app/admin/services/admin');
-              
-              // Preparar dados completos para salvamento
-              const dadosCompletos = {
-                ...formData,
-                ...dadosCorrigidos
-              };
-              
-              console.log('💾 SALVAMENTO AUTOMÁTICO: Dados sendo enviados para correção da migração');
-              
-              // Salvar no backend
-              const resultado = await atualizarImovel(dadosCompletos);
-              
-              if (resultado.success) {
-                console.log('✅ MIGRAÇÃO: Endereço corrigido e salvo com sucesso!');
-                console.log('📈 PROGRESSO: Mais um imóvel da migração com dados completos');
-                
-                // Opcional: Mostrar notificação de sucesso
-                // toast.success('📍 Endereço da migração corrigido automaticamente!');
-              } else {
-                console.error('❌ MIGRAÇÃO: Falha ao salvar correção:', resultado);
-              }
-              
-            } catch (error) {
-              console.error('❌ MIGRAÇÃO: Erro ao salvar endereço corrigido:', error);
-            } finally {
-              setIsAutoSaving(false);
-              autoSaveTimeoutRef.current = null;
-            }
-          }, 2000); // Aguardar 2s antes de salvar para garantir estabilidade
-        }
         
         return true; // Indica que foi corrigido
       }
@@ -267,12 +215,9 @@ export const useImovelForm = () => {
     }
     
     return false;
-  }, [formData]); // ✅ Dependência necessária para o salvamento
+  }, []);
 
-  // ✅ FUNÇÃO ADICIONAL: Permitir correção manual SEM salvamento automático
-  const corrigirEnderecoManual = useCallback(async (endereco, cep) => {
-    return await corrigirEnderecoIncompleto(endereco, cep, false); // shouldAutoSave = false
-  }, [corrigirEnderecoIncompleto]);
+
 
   // Inicialização do formulário
   useEffect(() => {
@@ -306,12 +251,12 @@ export const useImovelForm = () => {
             ValorIptu: formatCurrencyInput(imovelSelecionado.ValorIptu?.toString() || "0")
           });
           
-          // ✅ CORREÇÃO AUTOMÁTICA DA MIGRAÇÃO com salvamento automático
+          // ✅ CORREÇÃO AUTOMÁTICA DA MIGRAÇÃO (apenas frontend por ora)
           if (imovelSelecionado.Endereco && imovelSelecionado.CEP) {
             setTimeout(() => {
               console.log('🔍 MIGRAÇÃO: Verificando se endereço precisa de correção...');
-              corrigirEnderecoIncompleto(imovelSelecionado.Endereco, imovelSelecionado.CEP, true);
-            }, 3000); // Aguardar 3s para garantir que formData esteja totalmente inicializado
+              corrigirEnderecoIncompleto(imovelSelecionado.Endereco, imovelSelecionado.CEP);
+            }, 2000); // Aguardar 2s para garantir que formData esteja totalmente inicializado
           }
           
           return;
@@ -333,7 +278,7 @@ export const useImovelForm = () => {
     };
 
     initializeForm();
-  }, [isAutomacao, imovelSelecionado?.Codigo, formatCurrencyInput, corrigirEnderecoIncompleto]);
+  }, [isAutomacao, imovelSelecionado?.Codigo, formatCurrencyInput]);
 
   useEffect(() => {
     if (!formData.Codigo) return;
@@ -345,14 +290,7 @@ export const useImovelForm = () => {
     return () => clearTimeout(timer);
   }, [formData]);
 
-  // Cleanup do timeout ao desmontar componente
-  useEffect(() => {
-    return () => {
-      if (autoSaveTimeoutRef.current) {
-        clearTimeout(autoSaveTimeoutRef.current);
-      }
-    };
-  }, []);
+
 
   // Funções auxiliares
   const maskDate = useCallback((value) => {
@@ -750,12 +688,6 @@ export const useImovelForm = () => {
       localStorage.removeItem('imovelFormDraft');
     }
     
-    // Limpar timeout de auto-save se existir
-    if (autoSaveTimeoutRef.current) {
-      clearTimeout(autoSaveTimeoutRef.current);
-      autoSaveTimeoutRef.current = null;
-    }
-    
     setFormData(prev => ({
       ...INITIAL_FORM_DATA,
       Codigo: keepCode ? prev.Codigo : "",
@@ -768,8 +700,6 @@ export const useImovelForm = () => {
       ValorCondominio: "R$ 0",
       ValorIptu: "R$ 0",
     });
-    
-    setIsAutoSaving(false);
     
     if (!keepCode) {
       generateRandomCode().then(code => {
@@ -802,9 +732,7 @@ export const useImovelForm = () => {
     formatCurrency,
     parseCurrency,
     formatCurrencyInput,
-    isAutoSaving, // ✅ NOVO: Status do salvamento automático
-    corrigirEnderecoIncompleto, // ✅ Correção com salvamento automático
-    corrigirEnderecoManual // ✅ NOVO: Correção manual sem salvamento
+    corrigirEnderecoIncompleto // ✅ Correção automática no frontend
   };
 };
 
