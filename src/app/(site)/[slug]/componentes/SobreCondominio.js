@@ -51,59 +51,48 @@ export default function SobreCondominio({ condominio }) {
     // 🎯 PROCESSAR FOTOS COM A MESMA ORDENAÇÃO DO RESTO DO SISTEMA
     const fotosOrdenadas = processarFotosCondominio(condominio.Foto, condominio.Codigo);
     
+    // Estado para controlar se o texto está expandido
+    const [expanded, setExpanded] = useState(false);
+    
     return (
         <div className="bg-white rounded-lg container mx-auto p-10 mt-4">
             <h2 className="text-xl font-bold text-black">
                 Mais sobre {condominio.Categoria} {condominio.Empreendimento}
             </h2>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-10">
-                {/* 🎯 MANTER layout="grid" (padrão) para 4 fotos na seção "Mais sobre" */}
-                <ImageGallery 
-                    fotos={fotosOrdenadas}
-                    title={condominio.Empreendimento}
-                    shareUrl={`${process.env.NEXT_PUBLIC_SITE_URL || ''}`}
-                    shareTitle={`Confira as fotos: ${condominio.Empreendimento}`}
-                />
-                <DetalhesCondominioSobre condominio={condominio} />
+            
+            {/* 🎯 LAYOUT CONDICIONAL: Grid 2 colunas quando collapsed, layout vertical quando expanded */}
+            <div className={`mt-10 ${expanded ? 'space-y-6' : 'grid grid-cols-1 lg:grid-cols-2 gap-6'}`}>
+                
+                {/* 🎯 GALERIA - sempre no topo quando expanded */}
+                <div className={expanded ? 'w-full' : ''}>
+                    <ImageGallery 
+                        fotos={fotosOrdenadas}
+                        title={condominio.Empreendimento}
+                        shareUrl={`${process.env.NEXT_PUBLIC_SITE_URL || ''}`}
+                        shareTitle={`Confira as fotos: ${condominio.Empreendimento}`}
+                    />
+                </div>
+                
+                {/* 🎯 DETALHES - aproveita melhor o espaço quando expanded */}
+                <div className={expanded ? 'w-full' : ''}>
+                    <DetalhesCondominioMelhorado 
+                        condominio={condominio} 
+                        expanded={expanded}
+                        setExpanded={setExpanded}
+                    />
+                </div>
+                
             </div>
         </div>
     );
 }
 
-// Função que retorna o maior número de vagas do condomínio
-function getMaxVagas(condominio) {
-    const vagasProps = [
-        "Vagas",
-        "Vagas1",
-        "Vagas2",
-        "Vagas3",
-        "Vagas4",
-        "Vagas5",
-        "Vagas6",
-        "Vagas7",
-        "Vagas8",
-    ];
-
-    let maxVagas = 0;
-
-    vagasProps.forEach((prop) => {
-        if (condominio[prop]) {
-            const vagasValue = parseInt(condominio[prop]);
-            if (!isNaN(vagasValue) && vagasValue > maxVagas) {
-                maxVagas = vagasValue;
-            }
-        }
-    });
-
-    return maxVagas;
-}
-
-function DetalhesCondominio({ condominio }) {
-    const [expanded, setExpanded] = useState(false);
+// 🎯 COMPONENTE MELHORADO - agora recebe o estado expanded como prop
+function DetalhesCondominioMelhorado({ condominio, expanded, setExpanded }) {
     const maxVagas = getMaxVagas(condominio);
 
     return (
-        <div className="max-w-lg mx-auto p-6 text-black font-sans">
+        <div className={`mx-auto p-6 text-black font-sans ${expanded ? 'max-w-full' : 'max-w-lg'}`}>
             <h1 className="font-semibold">
                 {condominio.Categoria} {condominio.Status}
             </h1>
@@ -142,8 +131,14 @@ function DetalhesCondominio({ condominio }) {
                     >
                         <span className="text-xs font-bold uppercase">{expanded ? "Ver menos" : "Ver mais"}</span>
                     </button>
-                    <div className={`mt-2 text-gray-700 ${expanded ? "block" : "line-clamp-3"}`}>
-                        <h4 className="text-xs">{condominio.DescricaoUnidades}</h4>
+                    
+                    {/* 🎯 TEXTO COM LAYOUT MELHORADO quando expanded */}
+                    <div className={`mt-4 text-gray-700 ${expanded ? 'block' : 'line-clamp-3'}`}>
+                        <div className={expanded ? 'columns-1 md:columns-2 lg:columns-2 gap-8 text-justify' : ''}>
+                            <h4 className={`text-xs ${expanded ? 'leading-relaxed' : ''}`}>
+                                {condominio.DescricaoUnidades}
+                            </h4>
+                        </div>
                     </div>
                 </div>
             ) : (
@@ -153,4 +148,33 @@ function DetalhesCondominio({ condominio }) {
             )}
         </div>
     );
+}
+
+// Função que retorna o maior número de vagas do condomínio
+function getMaxVagas(condominio) {
+    const vagasProps = [
+        "Vagas",
+        "Vagas1",
+        "Vagas2",
+        "Vagas3",
+        "Vagas4",
+        "Vagas5",
+        "Vagas6",
+        "Vagas7",
+        "Vagas8",
+    ];
+
+    let maxVagas = 0;
+
+    vagasProps.forEach((prop) => {
+        if (condominio[prop]) {
+            const vagasValue = parseInt(condominio[prop]);
+            if (!isNaN(vagasValue) && vagasValue > maxVagas) {
+                maxVagas = vagasValue;
+            }
+        }
+    });
+
+    return maxVagas;
+
 }
