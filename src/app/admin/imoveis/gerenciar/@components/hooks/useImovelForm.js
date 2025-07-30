@@ -74,7 +74,7 @@ const INITIAL_FORM_DATA = {
   EmailCorretor: "",
   CelularCorretor: "",
   Imobiliaria: "",
-  Video: null,
+  Video: null, // ✅ CORREÇÃO: Mudado de {} para null
   Foto: [],
   isLoadingCEP: false,
   isLoadingCorretor: false,
@@ -85,7 +85,6 @@ const INITIAL_FORM_DATA = {
 export const useImovelForm = () => {
   const provider = useRef(new OpenStreetMapProvider());
   const fileInputRef = useRef(null);
-
   const imovelSelecionado = useImovelStore((state) => state.imovelSelecionado);
   const isAutomacao = imovelSelecionado?.Automacao === true;
 
@@ -142,90 +141,7 @@ export const useImovelForm = () => {
     });
   }, []);
 
-  // ✅ FUNÇÃO UTILITÁRIA: Separar endereço completo em tipo + nome
-  const separarEndereco = useCallback((enderecoCompleto) => {
-    if (!enderecoCompleto || typeof enderecoCompleto !== 'string') {
-      return { TipoEndereco: '', Endereco: '' };
-    }
-
-    const prefixosValidos = [
-      'rua', 'avenida', 'alameda', 'travessa', 'praça', 'largo', 'rodovia',
-      'estrada', 'via', 'quadra', 'setor', 'conjunto', 'vila', 'jardim',
-      'parque', 'residencial', 'condomínio', 'loteamento'
-    ];
-
-    const enderecoLower = enderecoCompleto.toLowerCase().trim();
-    
-    for (const prefixo of prefixosValidos) {
-      if (enderecoLower.startsWith(prefixo + ' ')) {
-        return {
-          TipoEndereco: prefixo.charAt(0).toUpperCase() + prefixo.slice(1),
-          Endereco: enderecoCompleto.substring(prefixo.length + 1).trim()
-        };
-      }
-    }
-
-    // Se não encontrou prefixo, assume como Rua
-    return {
-      TipoEndereco: 'Rua',
-      Endereco: enderecoCompleto.trim()
-    };
-  }, []);
-
-  // ✅ FUNÇÃO UTILITÁRIA: Juntar tipo + nome em endereço completo
-  const juntarEndereco = useCallback((tipoEndereco, endereco) => {
-    if (!tipoEndereco && !endereco) return '';
-    if (!tipoEndereco) return endereco || '';
-    if (!endereco) return tipoEndereco || '';
-    return `${tipoEndereco.trim()} ${endereco.trim()}`.trim();
-  }, []);
-
-  // ✅ FUNÇÃO UTILITÁRIA: Preparar dados para envio ao backend
-  const prepararDadosParaEnvio = useCallback((dados) => {
-    const dadosParaEnvio = { ...dados };
-    
-    // Separar Endereco completo em TipoEndereco + Endereco para o backend
-    if (dadosParaEnvio.Endereco && typeof dadosParaEnvio.Endereco === 'string') {
-      const { TipoEndereco, Endereco } = separarEndereco(dadosParaEnvio.Endereco);
-      dadosParaEnvio.TipoEndereco = TipoEndereco;
-      dadosParaEnvio.Endereco = Endereco;
-      
-      console.log('🔧 PREPARANDO DADOS PARA BACKEND:');
-      console.log('📍 Endereco original (frontend):', dados.Endereco);
-      console.log('📍 TipoEndereco (backend):', TipoEndereco);
-      console.log('📍 Endereco (backend):', Endereco);
-    }
-    
-    return dadosParaEnvio;
-  }, [separarEndereco]);
-
-  // ✅ FUNÇÃO UTILITÁRIA: Processar dados recebidos do backend
-  const processarDadosRecebidos = useCallback((dados) => {
-    if (!dados) return dados;
-    
-    const dadosProcessados = { ...dados };
-    
-    // Juntar TipoEndereco + Endereco em campo único para o frontend
-    if (dados.TipoEndereco || dados.Endereco) {
-      const enderecoCompleto = juntarEndereco(dados.TipoEndereco, dados.Endereco);
-      dadosProcessados.Endereco = enderecoCompleto;
-      
-      console.log('🔧 PROCESSANDO DADOS DO BACKEND:');
-      console.log('📍 TipoEndereco (backend):', dados.TipoEndereco);
-      console.log('📍 Endereco (backend):', dados.Endereco);
-      console.log('📍 Endereco completo (frontend):', enderecoCompleto);
-    }
-    
-    // 🎯 PRESERVAR FOTOS EXATAMENTE COMO VIERAM DO BACKEND
-    if (dados.Foto && Array.isArray(dados.Foto)) {
-      dadosProcessados.Foto = [...dados.Foto]; // Cópia exata sem modificação
-      console.log('📸 FOTOS PRESERVADAS:', dadosProcessados.Foto.length, 'fotos mantidas intactas');
-    }
-    
-    return dadosProcessados;
-  }, [juntarEndereco]);
-
-  // ✅ FUNÇÃO CORRIGIDA: Detectar e corrigir endereços (SEM salvamento automático por ora)
+  // ✅ NOVA FUNÇÃO: Detectar e corrigir endereços incompletos da migração
   const corrigirEnderecoIncompleto = useCallback(async (endereco, cep) => {
     if (!endereco || !cep) return false;
     
@@ -249,7 +165,7 @@ export const useImovelForm = () => {
     }
     
     // Se não tem prefixo, consultar ViaCEP para corrigir
-    console.log('🔧 MIGRAÇÃO: Endereço incompleto detectado:', endereco, '- CEP:', cep);
+    console.log('🔧 CORREÇÃO CEP: Endereço incompleto detectado:', endereco, '- CEP:', cep);
     
     const cleanCep = cep.replace(/\D/g, "");
     if (cleanCep.length !== 8) return false;
@@ -263,9 +179,7 @@ export const useImovelForm = () => {
       
       // Verificar se o endereço da API é diferente e mais completo
       if (data.logradouro && data.logradouro.toLowerCase() !== enderecoLower) {
-        console.log('📊 MIGRAÇÃO - ANTES:', endereco);
-        console.log('📊 MIGRAÇÃO - DEPOIS:', data.logradouro);
-        console.log('💡 INSTRUÇÃO: Clique em ATUALIZAR IMÓVEL para salvar a correção');
+        console.log('✅ CORREÇÃO CEP: Endereço corrigido:', endereco, '→', data.logradouro);
         
         // Buscar coordenadas para o endereço corrigido
         let coords = null;
@@ -280,7 +194,7 @@ export const useImovelForm = () => {
           console.error("Erro ao buscar coordenadas:", error);
         }
         
-        // 🎯 Atualizar formData local apenas
+        // Atualizar formData com endereço corrigido
         setFormData(prev => ({
           ...prev,
           Endereco: data.logradouro,
@@ -294,13 +208,11 @@ export const useImovelForm = () => {
         return true; // Indica que foi corrigido
       }
     } catch (error) {
-      console.error('Erro ao corrigir endereço da migração:', error);
+      console.error('Erro ao corrigir endereço:', error);
     }
     
     return false;
   }, []);
-
-
 
   // Inicialização do formulário
   useEffect(() => {
@@ -321,24 +233,11 @@ export const useImovelForm = () => {
 
         // Caso 2: Edição de imóvel existente (manter código original)
         if (imovelSelecionado?.Codigo && !isAutomacao) {
-          // 🎯 PROCESSAR apenas o endereço, preservar fotos intactas
-          const enderecoCompleto = juntarEndereco(
-            imovelSelecionado.TipoEndereco, 
-            imovelSelecionado.Endereco
-          );
-          
           setFormData(prev => ({
             ...prev,
-            ...imovelSelecionado, // ✅ Dados originais preservados
-            Endereco: enderecoCompleto, // ✅ Apenas endereço processado
+            ...imovelSelecionado,
             CodigoOriginal: imovelSelecionado.Codigo
           }));
-          
-          console.log('🔧 ENDEREÇO PROCESSADO NO CARREGAMENTO:');
-          console.log('📍 TipoEndereco (backend):', imovelSelecionado.TipoEndereco);
-          console.log('📍 Endereco (backend):', imovelSelecionado.Endereco);
-          console.log('📍 Endereco completo (frontend):', enderecoCompleto);
-          console.log('📸 FOTOS PRESERVADAS:', imovelSelecionado.Foto?.length || 0, 'fotos intactas');
           
           setDisplayValues({
             ValorAntigo: formatCurrencyInput(imovelSelecionado.ValorAntigo?.toString() || "0"),
@@ -347,12 +246,13 @@ export const useImovelForm = () => {
             ValorIptu: formatCurrencyInput(imovelSelecionado.ValorIptu?.toString() || "0")
           });
           
-          // ✅ CORREÇÃO AUTOMÁTICA DA MIGRAÇÃO (apenas frontend por ora)
+          // ✅ NOVA FUNCIONALIDADE: Correção automática de endereços incompletos da migração
+          // Detecta endereços sem prefixo (ex: "Benedito Lapin" → "Rua Benedito Lapin")
+          // Funciona consultando o ViaCEP usando o CEP já existente no imóvel
           if (imovelSelecionado.Endereco && imovelSelecionado.CEP) {
             setTimeout(() => {
-              console.log('🔍 MIGRAÇÃO: Verificando se endereço precisa de correção...');
               corrigirEnderecoIncompleto(imovelSelecionado.Endereco, imovelSelecionado.CEP);
-            }, 2000); // Aguardar 2s para garantir que formData esteja totalmente inicializado
+            }, 1000); // Aguardar 1s para não interferir com inicialização
           }
           
           return;
@@ -374,7 +274,7 @@ export const useImovelForm = () => {
     };
 
     initializeForm();
-  }, [isAutomacao, imovelSelecionado?.Codigo, formatCurrencyInput, juntarEndereco]);
+  }, [isAutomacao, imovelSelecionado?.Codigo, formatCurrencyInput]);
 
   useEffect(() => {
     if (!formData.Codigo) return;
@@ -385,8 +285,6 @@ export const useImovelForm = () => {
     
     return () => clearTimeout(timer);
   }, [formData]);
-
-
 
   // Funções auxiliares
   const maskDate = useCallback((value) => {
@@ -440,7 +338,7 @@ export const useImovelForm = () => {
       const coords = await debouncedFetchCoordinates(data);
       setFormData(prev => ({
         ...prev,
-        Endereco: data.logradouro || prev.Endereco, // Backend cuida da separação
+        Endereco: data.logradouro || prev.Endereco,
         Bairro: data.bairro || prev.Bairro,
         Cidade: data.localidade || prev.Cidade,
         UF: data.uf || prev.UF,
@@ -519,6 +417,8 @@ export const useImovelForm = () => {
       return;
     }
 
+    // ✅ RESTO DO CÓDIGO ORIGINAL PERMANECE IGUAL
+    
     // Tratamento específico para campos numéricos
     const numericFields = ['Dormitorios', 'Suites', 'Vagas', 'BanheiroSocialQtd'];
     if (numericFields.includes(name)) {
@@ -564,9 +464,7 @@ export const useImovelForm = () => {
       CEP: () => {
         const formattedCEP = value.replace(/\D/g, "").slice(0, 8);
         setFormData(prev => ({ ...prev, [name]: formattedCEP }));
-        if (formattedCEP.length === 8) {
-          fetchAddress(formattedCEP);
-        }
+        if (formattedCEP.length === 8) fetchAddress(formattedCEP);
       },
       Empreendimento: () => {
         setFormData(prev => ({ 
@@ -787,20 +685,20 @@ export const useImovelForm = () => {
     setFormData(prev => ({
       ...INITIAL_FORM_DATA,
       Codigo: keepCode ? prev.Codigo : "",
-      Video: null,
+      Video: null, // ✅ CORREÇÃO: Garantir que Video seja null no reset
     }));
     
     setDisplayValues({
-      ValorAntigo: "R$ 0",
-      ValorAluguelSite: "R$ 0",
-      ValorCondominio: "R$ 0",
-      ValorIptu: "R$ 0",
+      ValorAntigo: "R$ 0,00",
+      ValorAluguelSite: "R$ 0,00",
+      ValorCondominio: "R$ 0,00",
+      ValorIptu: "R$ 0,00",
     });
     
     if (!keepCode) {
       generateRandomCode().then(code => {
         setNewImovelCode(code);
-        setFormData(prev => ({ ...prev, Codigo: code, Video: null }));
+        setFormData(prev => ({ ...prev, Codigo: code, Video: null })); // ✅ CORREÇÃO: Video null também aqui
       });
     }
   }, []);
@@ -828,11 +726,7 @@ export const useImovelForm = () => {
     formatCurrency,
     parseCurrency,
     formatCurrencyInput,
-    corrigirEnderecoIncompleto, // ✅ Correção automática no frontend
-    prepararDadosParaEnvio, // ✅ NOVO: Preparar dados pro backend (separar endereço)
-    processarDadosRecebidos, // ✅ NOVO: Processar dados do backend (juntar endereço)
-    separarEndereco, // ✅ NOVO: Função utilitária
-    juntarEndereco // ✅ NOVO: Função utilitária
+    corrigirEnderecoIncompleto // ✅ NOVA FUNÇÃO EXPOSTA para uso manual se necessário
   };
 };
 
