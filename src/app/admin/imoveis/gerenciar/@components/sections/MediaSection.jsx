@@ -9,6 +9,7 @@ const MediaSection = ({ formData, displayValues, onChange }) => {
   const [localTour360, setLocalTour360] = useState('');
   const [localVideoId, setLocalVideoId] = useState('');
   const [isInitialized, setIsInitialized] = useState(false);
+  const [showFullTourPreview, setShowFullTourPreview] = useState(false); // ✅ NOVO: Controle do preview completo
 
   // 🔄 Sincronizar com props quando mudarem (mas só uma vez)
   useEffect(() => {
@@ -162,20 +163,91 @@ const MediaSection = ({ formData, displayValues, onChange }) => {
             placeholder="https://my.matterport.com/show/?m=..."
           />
           
-          {/* ✅ NOVO: Preview do Tour 360 */}
+          {/* ✅ NOVO: Thumbnail do Tour 360 (LEVE) */}
           {matterportId && (
             <div className="mt-3">
               <p className="text-xs text-gray-500 mb-2">Preview:</p>
-              <div className="relative aspect-video w-full max-w-xs">
-                <iframe
-                  src={`https://my.matterport.com/show/?m=${matterportId}&play=1&qs=1&applicationKey=industry`}
-                  className="w-full h-full rounded border"
-                  frameBorder="0"
-                  allowFullScreen
-                  title="Preview do Tour 360°"
-                  allow="xr-spatial-tracking"
-                />
+              <div className="relative aspect-video w-full max-w-xs group">
+                <div 
+                  className="relative w-full h-full rounded border overflow-hidden cursor-pointer bg-gray-100"
+                  onClick={() => window.open(`https://my.matterport.com/show/?m=${matterportId}`, '_blank')}
+                >
+                  {/* Thumbnail do Matterport */}
+                  <img
+                    src={`https://cdn-2.matterport.com/apifs/models/${matterportId}/images/poster.jpg`}
+                    alt="Preview do Tour 360°"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      // Fallback: imagem genérica se não conseguir carregar
+                      e.target.style.display = 'none';
+                      e.target.nextElementSibling.style.display = 'flex';
+                    }}
+                  />
+                  
+                  {/* Fallback: placeholder quando thumbnail não carrega */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white hidden">
+                    <div className="text-center">
+                      <div className="text-2xl mb-2">🏠</div>
+                      <div className="text-sm font-medium">Tour Virtual 360°</div>
+                    </div>
+                  </div>
+                  
+                  {/* Overlay com botão play */}
+                  <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="bg-white bg-opacity-90 rounded-full p-3">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" className="w-6 h-6 text-blue-600">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    </div>
+                  </div>
+                  
+                  {/* Badge "360°" */}
+                  <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs px-2 py-1 rounded font-medium">
+                    360°
+                  </div>
+                </div>
+                
+                <p className="text-xs text-gray-400 mt-1">
+                  Clique para abrir o tour virtual
+                  {!showFullTourPreview && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowFullTourPreview(true);
+                      }}
+                      className="ml-2 text-blue-600 hover:text-blue-800 underline"
+                    >
+                      • Preview completo
+                    </button>
+                  )}
+                </p>
               </div>
+              
+              {/* Preview completo (apenas se solicitado) */}
+              {showFullTourPreview && (
+                <div className="mt-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs text-gray-500">Preview completo:</p>
+                    <button
+                      type="button"
+                      onClick={() => setShowFullTourPreview(false)}
+                      className="text-xs text-red-600 hover:text-red-800"
+                    >
+                      ✕ Fechar
+                    </button>
+                  </div>
+                  <div className="relative aspect-video w-full max-w-sm">
+                    <iframe
+                      src={`https://my.matterport.com/show/?m=${matterportId}&play=1&qs=1`}
+                      className="w-full h-full rounded border"
+                      frameBorder="0"
+                      allowFullScreen
+                      title="Preview completo do Tour 360°"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           )}
           
@@ -227,7 +299,7 @@ const MediaSection = ({ formData, displayValues, onChange }) => {
       <div className="mt-4 p-3 bg-blue-50 rounded-md">
         <p className="text-sm text-blue-700">
           💡 <strong>Dica:</strong> Para o vídeo do YouTube, você pode colar a URL completa ou apenas o ID. 
-          Para o Tour 360°, use o link completo do Matterport.
+          Para o Tour 360°, use o link completo do Matterport - será exibido um thumbnail leve para não sobrecarregar a página.
         </p>
       </div>
     </FormSection>
