@@ -35,6 +35,7 @@ const processarHtmlDescricao = (htmlString) => {
 };
 
 // 🎯 FUNÇÃO PARA ORDENAR FOTOS (igual à da página principal)
+// ✅ FUNÇÃO CORRIGIDA: Igual ao ImageGallery
 function processarFotosCondominio(fotos, codigoCondominio) {
   if (!Array.isArray(fotos) || fotos.length === 0) {
     return [];
@@ -46,20 +47,21 @@ function processarFotosCondominio(fotos, codigoCondominio) {
       codigo: codigoCondominio
     });
     
-    // 🎯 FORÇAR photoSorter a usar SEMPRE Análise Inteligente
-    const fotosTemp = fotos.map(foto => {
-      // Remover campos ORDEM para forçar análise inteligente
+    // 🔥 SEMPRE LIMPAR CAMPOS ORDEM PARA FORÇAR ANÁLISE INTELIGENTE (igual ImageGallery)
+    const fotosLimpas = fotos.map(foto => {
       const { Ordem, ordem, ORDEM, ...fotoSemOrdem } = foto;
       return fotoSemOrdem;
     });
     
-    // USAR photoSorter.ordenarFotos() - IGUAL AO RESTO DO SISTEMA
-    const fotosOrdenadas = photoSorter.ordenarFotos(fotosTemp, codigoCondominio || 'sobre-condominio');
+    console.log('🧹 SOBRE-CONDOMÍNIO: Campos ORDEM removidos para forçar análise inteligente');
     
-    console.log('✅ SOBRE-CONDOMÍNIO: Ordenação finalizada:', {
+    // USAR photoSorter.ordenarFotos() - SEMPRE ANÁLISE INTELIGENTE
+    const fotosOrdenadas = photoSorter.ordenarFotos(fotosLimpas, codigoCondominio || 'sobre-condominio');
+    
+    console.log('✅ SOBRE-CONDOMÍNIO: Análise inteligente aplicada:', {
       totalFotos: fotosOrdenadas.length,
       primeira: fotosOrdenadas[0]?.Foto?.split('/').pop()?.substring(0, 30) + '...',
-      metodo: 'photoSorter.ordenarFotos() - CONSISTENTE COM O SISTEMA'
+      metodo: 'ANÁLISE INTELIGENTE (campos ORDEM removidos)'
     });
 
     return fotosOrdenadas;
