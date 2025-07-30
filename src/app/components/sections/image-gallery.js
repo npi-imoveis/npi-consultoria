@@ -21,6 +21,24 @@ function useIsMobile() {
   return isMobile;
 }
 
+// 🎯 HOOK PARA DETECTAR ORIENTAÇÃO DA FOTO PRINCIPAL
+function useImageOrientation(src) {
+  const [isVertical, setIsVertical] = useState(false);
+  
+  useEffect(() => {
+    if (!src) return;
+    
+    const img = new Image();
+    img.onload = () => {
+      // Detecta se foto é significativamente mais alta que larga
+      setIsVertical(img.height > img.width * 1.3);
+    };
+    img.src = src;
+  }, [src]);
+  
+  return isVertical;
+}
+
 export function ImageGallery({ 
   // Props para página de IMÓVEL (modo original)
   imovel,
@@ -113,6 +131,9 @@ export function ImageGallery({
     }
   }, [processedData, isImovelMode]);
 
+  // 🎯 DETECTAR ORIENTAÇÃO DA FOTO PRINCIPAL
+  const isMainImageVertical = useImageOrientation(images[0]?.Foto);
+
   // 🔍 DEBUG
   const debugInfo = useMemo(() => {
     if (!debugMode || !processedData.fotos) return null;
@@ -204,7 +225,11 @@ export function ImageGallery({
             blurDataURL={images[0].blurDataURL || "/placeholder.png"}
             loading="eager"
             priority={true}
-            className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-105"
+            className={`w-full object-cover transition-transform duration-300 ease-in-out hover:scale-105 ${
+              isMainImageVertical 
+                ? 'h-[500px] max-h-[500px]' // 🎯 FOTO VERTICAL: altura limitada
+                : 'h-full' // 🎯 FOTO HORIZONTAL: altura natural
+            }`}
           />
 
           {/* 🏷️ Indicador de destaque */}
@@ -229,7 +254,11 @@ export function ImageGallery({
       ) : (
         // LAYOUT GRID: Grid tradicional com foto principal + thumbnails
         <div className="grid grid-cols-1 md:grid-cols-2 gap-1 w-full">
-          <div className="col-span-1 h-[410px] cursor-pointer relative" onClick={() => openModal()}>
+          <div className={`col-span-1 cursor-pointer relative ${
+            isMainImageVertical 
+              ? 'h-[500px]' // 🎯 FOTO VERTICAL: altura limitada para não criar espaço vazio
+              : 'h-[410px]' // 🎯 FOTO HORIZONTAL: altura padrão
+          }`} onClick={() => openModal()}>
             <div className="w-full h-full overflow-hidden">
               <Image
                 src={images[0].Foto}
