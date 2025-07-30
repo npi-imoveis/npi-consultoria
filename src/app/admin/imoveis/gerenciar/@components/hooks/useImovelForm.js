@@ -1,739 +1,388 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import { formatterSlug } from "@/app/utils/formatter-slug";
-import { OpenStreetMapProvider } from "leaflet-geosearch";
-import { REQUIRED_FIELDS } from "../FieldGroup";
-import useImovelStore from "@/app/admin/store/imovelStore";
-import { getCorretorById } from "@/app/admin/services/corretor";
-import { generateUniqueCode } from "@/app/utils/idgenerate";
-
-// Implementação alternativa do debounce
-const debounce = (func, wait) => {
-  let timeout;
-  return function executedFunction(...args) {
-    const later = () => {
-      clearTimeout(timeout);
-      func(...args);
-    };
-    clearTimeout(timeout);
-    timeout = setTimeout(later, wait);
-  };
-};
-
-export const generateRandomCode = async () => {
-  return generateUniqueCode();
-};
-
-const MAX_MONETARY_VALUE = 999999999;
-
-const INITIAL_FORM_DATA = {
-  Codigo: "",
-  CodigoOriginal: "",
-  Empreendimento: "",
-  TituloSite: "",
-  Categoria: "Apartamento",
-  Situacao: "PRONTO NOVO",
-  Status: "VENDA",
-  Slug: "",
-  Destacado: "Não",
-  Condominio: "Não",
-  CondominioDestaque: "Não",
-  Ativo: "Sim",
-  Construtora: "",
-  Endereco: "",
-  Numero: "",
-  Complemento: "",
-  Bairro: "",
-  BairroComercial: "",
-  Cidade: "",
-  UF: "",
-  CEP: "",
-  Latitude: "",
-  Longitude: "",
-  Regiao: "",
-  AreaPrivativa: "",
-  AreaTotal: "",
-  Dormitorios: "",
-  Suites: "",
-  BanheiroSocialQtd: "",
-  Vagas: "",
-  DataEntrega: "",
-  AnoConstrucao: "",
-  ValorAntigo: "0",
-  ValorAluguelSite: "0",
-  ValorCondominio: "0",
-  ValorIptu: "0",
-  DescricaoUnidades: "",
-  DescricaoDiferenciais: "",
-  DestaquesDiferenciais: "",
-  DestaquesLazer: "",
-  DestaquesLocalizacao: "",
-  FichaTecnica: "",
-  Tour360: "",
-  IdCorretor: "",
-  Corretor: "",
-  EmailCorretor: "",
-  CelularCorretor: "",
-  Imobiliaria: "",
-  Video: null,
-  Foto: [],
-  isLoadingCEP: false,
-  isLoadingCorretor: false,
-  cepError: null,
-  corretorError: null
-};
-
-export const useImovelForm = () => {
-  const provider = useRef(new OpenStreetMapProvider());
-  const fileInputRef = useRef(null);
-
-  const imovelSelecionado = useImovelStore((state) => state.imovelSelecionado);
-  const isAutomacao = imovelSelecionado?.Automacao === true;
-
-  const [formData, setFormData] = useState(INITIAL_FORM_DATA);
-  const [displayValues, setDisplayValues] = useState({
-    ValorAntigo: "R$ 0",
-    ValorAluguelSite: "R$ 0",
-    ValorCondominio: "R$ 0",
-    ValorIptu: "R$ 0",
-  });
-
-  const [newImovelCode, setNewImovelCode] = useState("");
-  const [showImageModal, setShowImageModal] = useState(false);
-  const [validation, setValidation] = useState({
-    isFormValid: false,
-    photoCount: 0,
-    requiredPhotoCount: 5,
-    fieldValidation: {},
-  });
-
-  // Funções de formatação monetária SEM decimais
-  const formatCurrency = useCallback((value) => {
-    const num = typeof value === 'string' 
-      ? parseInt(value.replace(/\D/g, ''), 10) 
-      : Math.floor(Number(value || 0));
-
-    return isNaN(num) 
-      ? "R$ 0" 
-      : num.toLocaleString("pt-BR", { 
-          style: "currency", 
-          currency: "BRL",
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 0
-        });
-  }, []);
-
-  const parseCurrency = useCallback((value) => {
-    const digitsOnly = (value?.toString() || "").replace(/\D/g, '');
-    const intValue = parseInt(digitsOnly || "0", 10);
-    const safeValue = Math.min(Math.max(intValue, 0), MAX_MONETARY_VALUE);
-    
-    return isNaN(safeValue) ? "0" : safeValue.toString();
-  }, []);
-
-  const formatCurrencyInput = useCallback((value) => {
-    const digitsOnly = (value?.toString() || "").replace(/\D/g, '');
-    const intValue = parseInt(digitsOnly || "0", 10);
-    
-    return intValue.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    });
-  }, []);
-
-  // ✅ FUNÇÃO CORRIGIDA: Detectar e corrigir endereços (SEM salvamento automático por ora)
-  const corrigirEnderecoIncompleto = useCallback(async (endereco, cep) => {
-    if (!endereco || !cep) return false;
-    
-    // Lista de prefixos válidos de logradouro
-    const prefixosValidos = [
-      'rua', 'avenida', 'alameda', 'travessa', 'praça', 'largo', 'rodovia',
-      'estrada', 'via', 'quadra', 'setor', 'conjunto', 'vila', 'jardim',
-      'parque', 'residencial', 'condomínio', 'loteamento'
-    ];
-    
-    // Verificar se o endereço já tem um prefixo válido
-    const enderecoLower = endereco.toLowerCase().trim();
-    const temPrefixo = prefixosValidos.some(prefixo => 
-      enderecoLower.startsWith(prefixo + ' ')
-    );
-    
-    // Se já tem prefixo, não precisa corrigir
-    if (temPrefixo) {
-      console.log('✅ CORREÇÃO CEP: Endereço já está completo:', endereco);
-      return false;
+{
+    "status": 200,
+    "success": true,
+    "message": "Imóvel atualizado com sucesso",
+    "data": {
+        "_id": "67f6ef52bbb18c501a8865db",
+        "AnoConstrucao": "2010",
+        "AreaPrivativa": "152",
+        "AreaTotal": "0",
+        "Bairro": "Itaim Bibi",
+        "BairroComercial": "Itaim Bibi",
+        "Banheiro7": "0",
+        "Banheiro8": "0",
+        "BanheiroSocialQtd": "4",
+        "Banheiros1": "0",
+        "Banheiros2": "0",
+        "Banheiros3": "0",
+        "Banheiros4": "0",
+        "Banheiros5": "0",
+        "Banheiros6": "0",
+        "Bloco": "",
+        "CEP": "04532-040",
+        "Categoria": "Apartamento",
+        "CategoriaDois": "",
+        "CategoriaTres": "",
+        "Cidade": "São Paulo",
+        "Codigo": "173",
+        "Complemento": "",
+        "Construtora": "Lindenberg",
+        "DataEntrega": "31/01/2010",
+        "DataHoraAtualizacao": "2024-12-16 16:13:59",
+        "DescricaoDiferenciais": "O condomínio Lindenberg Id Itaim foi construído em 2010 (há 12 anos)pela empresa Lindenberg. O condomínio residencial Lindenberg Id Itaim é composto por uma torre única,  é apropriado para quem busca lazer sem sair de casa e fica localizado em Rua Benedito Lapin no bairro Vila Olímpia em São Paulo.",
+        "DescricaoUnidades": "Elegante apartamento no coração do Itaim Bibi com 152 m², 3 suítes e 3 vagas, que oferecem o máximo de conforto para você e sua família!\r\n\r\nA sala de estar espaçosa é dividida em dois ambientes, apresenta um planejamento inteligente na área de jantar e um elegante painel na sala de estar, com uma linda varanda gourmet, completamente fechada com vidros e jardim vertical que empresta uma atmosfera acolhedora ao ambiente. Equipado com sistema de som ambiente, receptor e TV, o apartamento ostenta piso em madeira e ar condicionado em todos os cômodos.\r\n\r\nCom três suítes elegantemente decoradas, dotadas de armários planejados, um lavabo e um hall social privativo, este espaço oferece conforto e privacidade em cada detalhe. A cozinha, completamente equipada e integrada à sala. Além disso, conta com uma área de serviço completa, incluindo dependência para funcionária. O apartamento dispõe ainda de três vagas de garagem e um depósito privativo para sua conveniência.\r\n\r\nO Lindenberg Id Itaim oferece uma ampla gama de opções de lazer para todos os gostos e idades, incluindo uma piscina coberta e aquecida, academia, sauna, piscina infantil, playground, brinquedoteca, espaço de coworking, sala de reunião e um salão de festas para celebrar momentos especiais.\r\n\r\nA localização é excepcional, com proximidade a várias comodidades, como o Hospital Sancta Maggiore, o Grupo Escolar Martim Francisco, o DeRose Method Itaim, a Escola Estadual Ludovina Credidio Peixoto, a Escola Lourenço Castanho e a Praça Pereira Coutinho. Além disso, o bairro oferece uma variedade de restaurantes e cafés que complementam a vida urbana.\r\n\r\nVenha agendar sua visita o quanto antes!\r\n\r\nEdificio Lindenberg Id Itaim - Itaim Bibi\r\nCondomínio Edifício Lindenberg Id Itaim\r\nCondomínio Lindenberg Id Itaim - Rua Benedito Lapin, 197\r\nR. Benedito Lapin, 197 - Itaim BibiSão Paulo - SP, 04532-040",
+        "DestaquesDiferenciais": "Piscina\r\nArmário \r\nBanheiro\r\nDespensa\r\nSala\r\nChurrasqueira\r\nSauna\r\nElevador Privativo\r\nAr-Condicionado\r\nArmário na Área de Serviço\r\nLavanderia\r\nCozinha\r\nArmário no Quarto\r\nArmário Cozinha\r\nCloset\r\nTaco de madeira\r\nAquecimento Elétrico\r\nSala de estar\r\nArmário Suíte\r\nSala de Jantar\r\nAndar Alto",
+        "DestaquesLazer": "No ID Lindenberg temos Lazer com Churrasqueira, Espaço Gourmet, Espaço Zen, Esquina, Jardim, Piscina, Piscina Aquecida, Piscina Infantil, Playground, Sala De Ginástica, Salão De Festa, Salão De Jogos, Sauna e Vestiário.",
+        "DestaquesLocalizacao": "Localizado na zona oeste da cidade de São Paulo, o Itaim Bibi é um excelente lugar para morar, trabalhar ou mesmo passear. Com uma área de quase 10km2 e 81.730 moradores, o bairro é rico em lojas comerciais, boa gastronomia e atrações culturais, além de ter fácil acesso pelas avenidas Nações Unidas, Brigadeiro Faria Lima, Nove de Julho, Cidade Jardim, São Gabriel e Presidente Juscelino Kubitschek.\r\n\r\nEdificio Lindenberg Id Itaim - Itaim Bibi\r\nCondomínio Edifício Lindenberg Id Itaim\r\nCondomínio Lindenberg Id Itaim - Rua Benedito Lapin, 197\r\nR. Benedito Lapin, 197 - Itaim BibiSão Paulo - SP, 04532-040",
+        "Dormitorio2": "0",
+        "Dormitorio3": "0",
+        "Dormitorio4": "0",
+        "Dormitorio5": "0",
+        "Dormitorio6": "0",
+        "Dormitorio7": "0",
+        "Dormitorio8": "0",
+        "Dormitorios": "3",
+        "DormitoriosAntigo": "3",
+        "Empreendimento": "Lindenberg Id Itaim",
+        "Endereco": "Benedito Lapin",
+        "FaixaPreco1": "t) Consulte",
+        "FaixaPreco2": "",
+        "FaixaPreco3": "",
+        "FaixaPreco4": "",
+        "FaixaPreco5": "",
+        "FaixaPreco6": "",
+        "FaixaPreco7": "",
+        "FaixaPreco8": "",
+        "FichaTecnica": "Construção..................2010\r\nRealização................Lindenberg\r\nTorres..........................1\r\nMetragens ( m² ).........151m² a 244m²",
+        "FinalidadeStatus": {
+            "VENDA": true
+        },
+        "Foto": [
+            {
+                "Codigo": "photo-1753903409611-0",
+                "FotoPequena": "https://cdn.vistahost.com.br/npinegoc/vista.imobi/fotos/381/iOU8s9Y1_38165f374bd4b1ee_p.jpg",
+                "Foto": "https://npi-imoveis.s3.sa-east-1.amazonaws.com/imagens_baixadas/iOU8s9Y1_38165f374bd4b1ee.jpg",
+                "Destaque": "Nao",
+                "Tipo": "",
+                "Descricao": "",
+                "Ordem": 1
+            },
+            {
+                "Codigo": "photo-1753903409611-1",
+                "FotoPequena": "https://cdn.vistahost.com.br/npinegoc/vista.imobi/fotos/381/iOU8s9Y1_38165f374bf30a3c_p.jpg",
+                "Foto": "https://npi-imoveis.s3.sa-east-1.amazonaws.com/imagens_baixadas/iOU8s9Y1_38165f374bf30a3c.jpg",
+                "Destaque": "Nao",
+                "Tipo": "",
+                "Descricao": "",
+                "Ordem": 2
+            },
+            {
+                "Codigo": "photo-1753903409611-2",
+                "FotoPequena": "https://cdn.vistahost.com.br/npinegoc/vista.imobi/fotos/381/iOU8s9Y1_38165f374c148c3d_p.jpg",
+                "Foto": "https://npi-imoveis.s3.sa-east-1.amazonaws.com/imagens_baixadas/iOU8s9Y1_38165f374c148c3d.jpg",
+                "Destaque": "Nao",
+                "Tipo": "",
+                "Descricao": "",
+                "Ordem": 3
+            },
+            {
+                "Codigo": "photo-1753903409611-3",
+                "FotoPequena": "https://cdn.vistahost.com.br/npinegoc/vista.imobi/fotos/381/iOU8s9Y1_38165f374c373cd0_p.jpg",
+                "Foto": "https://npi-imoveis.s3.sa-east-1.amazonaws.com/imagens_baixadas/iOU8s9Y1_38165f374c373cd0.jpg",
+                "Destaque": "Nao",
+                "Tipo": "",
+                "Descricao": "",
+                "Ordem": 4
+            },
+            {
+                "Codigo": "photo-1753903409611-4",
+                "FotoPequena": "https://cdn.vistahost.com.br/npinegoc/vista.imobi/fotos/381/iOU8s9Y1_38165f374c582f87_p.jpg",
+                "Foto": "https://npi-imoveis.s3.sa-east-1.amazonaws.com/imagens_baixadas/iOU8s9Y1_38165f374c582f87.jpg",
+                "Destaque": "Nao",
+                "Tipo": "",
+                "Descricao": "",
+                "Ordem": 5
+            },
+            {
+                "Codigo": "photo-1753903409611-5",
+                "FotoPequena": "https://cdn.vistahost.com.br/npinegoc/vista.imobi/fotos/381/i57i56Wg14cV3Jqzg72_38166c3766fd42c6_p.jpg",
+                "Foto": "https://npi-imoveis.s3.sa-east-1.amazonaws.com/imagens_baixadas/i57i56Wg14cV3Jqzg72_38166c3766fd42c6.jpg",
+                "Destaque": "Nao",
+                "Tipo": "",
+                "Descricao": "",
+                "Ordem": 6
+            },
+            {
+                "Codigo": "photo-1753903409611-6",
+                "FotoPequena": "https://cdn.vistahost.com.br/npinegoc/vista.imobi/fotos/381/i57i56Wg14cV3Jqzg72_38166c37671e780e_p.jpg",
+                "Foto": "https://npi-imoveis.s3.sa-east-1.amazonaws.com/imagens_baixadas/i57i56Wg14cV3Jqzg72_38166c37671e780e.jpg",
+                "Destaque": "Nao",
+                "Tipo": "",
+                "Descricao": "",
+                "Ordem": 7
+            },
+            {
+                "Codigo": "photo-1753903409611-7",
+                "FotoPequena": "https://cdn.vistahost.com.br/npinegoc/vista.imobi/fotos/381/i57i56Wg14cV3Jqzg72_38166c37673ef60c_p.jpg",
+                "Foto": "https://npi-imoveis.s3.sa-east-1.amazonaws.com/imagens_baixadas/i57i56Wg14cV3Jqzg72_38166c37673ef60c.jpg",
+                "Destaque": "Nao",
+                "Tipo": "",
+                "Descricao": "",
+                "Ordem": 8
+            },
+            {
+                "Codigo": "photo-1753903409611-8",
+                "FotoPequena": "https://cdn.vistahost.com.br/npinegoc/vista.imobi/fotos/381/i57i56Wg14cV3Jqzg72_38166c3767618258_p.jpg",
+                "Foto": "https://npi-imoveis.s3.sa-east-1.amazonaws.com/imagens_baixadas/i57i56Wg14cV3Jqzg72_38166c3767618258.jpg",
+                "Destaque": "Sim",
+                "Tipo": "",
+                "Descricao": "",
+                "Ordem": 9
+            },
+            {
+                "Codigo": "photo-1753903409611-9",
+                "FotoPequena": "https://cdn.vistahost.com.br/npinegoc/vista.imobi/fotos/381/i57i56Wg14cV3Jqzg72_38166c37678144a0_p.jpg",
+                "Foto": "https://npi-imoveis.s3.sa-east-1.amazonaws.com/imagens_baixadas/i57i56Wg14cV3Jqzg72_38166c37678144a0.jpg",
+                "Destaque": "Nao",
+                "Tipo": "",
+                "Descricao": "",
+                "Ordem": 10
+            },
+            {
+                "Codigo": "photo-1753903409611-10",
+                "FotoPequena": "https://cdn.vistahost.com.br/npinegoc/vista.imobi/fotos/381/i57i56Wg14cV3Jqzg72_38166c37679e53ca_p.jpg",
+                "Foto": "https://npi-imoveis.s3.sa-east-1.amazonaws.com/imagens_baixadas/i57i56Wg14cV3Jqzg72_38166c37679e53ca.jpg",
+                "Destaque": "Nao",
+                "Tipo": "",
+                "Descricao": "",
+                "Ordem": 11
+            },
+            {
+                "Codigo": "photo-1753903409611-11",
+                "FotoPequena": "https://cdn.vistahost.com.br/npinegoc/vista.imobi/fotos/381/i57i56Wg14cV3Jqzg72_38166c3767c1d909_p.jpg",
+                "Foto": "https://npi-imoveis.s3.sa-east-1.amazonaws.com/imagens_baixadas/i57i56Wg14cV3Jqzg72_38166c3767c1d909.jpg",
+                "Destaque": "Nao",
+                "Tipo": "",
+                "Descricao": "",
+                "Ordem": 12
+            },
+            {
+                "Codigo": "photo-1753903409611-12",
+                "FotoPequena": "https://cdn.vistahost.com.br/npinegoc/vista.imobi/fotos/381/i57i56Wg14cV3Jqzg72_38166c3767e1eae3_p.jpg",
+                "Foto": "https://npi-imoveis.s3.sa-east-1.amazonaws.com/imagens_baixadas/i57i56Wg14cV3Jqzg72_38166c3767e1eae3.jpg",
+                "Destaque": "Nao",
+                "Tipo": "",
+                "Descricao": "",
+                "Ordem": 13
+            },
+            {
+                "Codigo": "photo-1753903409611-13",
+                "FotoPequena": "https://cdn.vistahost.com.br/npinegoc/vista.imobi/fotos/381/i57i56Wg14cV3Jqzg72_38166c37680376d6_p.jpg",
+                "Foto": "https://npi-imoveis.s3.sa-east-1.amazonaws.com/imagens_baixadas/i57i56Wg14cV3Jqzg72_38166c37680376d6.jpg",
+                "Destaque": "Nao",
+                "Tipo": "",
+                "Descricao": "",
+                "Ordem": 14
+            },
+            {
+                "Codigo": "photo-1753903409611-14",
+                "FotoPequena": "https://cdn.vistahost.com.br/npinegoc/vista.imobi/fotos/381/i57i56Wg14cV3Jqzg72_38166c376824fbce_p.jpg",
+                "Foto": "https://npi-imoveis.s3.sa-east-1.amazonaws.com/imagens_baixadas/i57i56Wg14cV3Jqzg72_38166c376824fbce.jpg",
+                "Destaque": "Nao",
+                "Tipo": "",
+                "Descricao": "",
+                "Ordem": 15
+            },
+            {
+                "Codigo": "photo-1753903409611-15",
+                "FotoPequena": "https://cdn.vistahost.com.br/npinegoc/vista.imobi/fotos/381/i57i56Wg14cV3Jqzg72_38166c3768427ac5_p.jpg",
+                "Foto": "https://npi-imoveis.s3.sa-east-1.amazonaws.com/imagens_baixadas/i57i56Wg14cV3Jqzg72_38166c3768427ac5.jpg",
+                "Destaque": "Nao",
+                "Tipo": "",
+                "Descricao": "",
+                "Ordem": 16
+            },
+            {
+                "Codigo": "photo-1753903409611-16",
+                "FotoPequena": "https://cdn.vistahost.com.br/npinegoc/vista.imobi/fotos/381/i57i56Wg14cV3Jqzg72_38166c37686034f9_p.jpg",
+                "Foto": "https://npi-imoveis.s3.sa-east-1.amazonaws.com/imagens_baixadas/i57i56Wg14cV3Jqzg72_38166c37686034f9.jpg",
+                "Destaque": "Nao",
+                "Tipo": "",
+                "Descricao": "",
+                "Ordem": 17
+            },
+            {
+                "Codigo": "photo-1753903409611-17",
+                "FotoPequena": "https://cdn.vistahost.com.br/npinegoc/vista.imobi/fotos/381/i57i56Wg14cV3Jqzg72_38166c376881049d_p.jpg",
+                "Foto": "https://npi-imoveis.s3.sa-east-1.amazonaws.com/imagens_baixadas/i57i56Wg14cV3Jqzg72_38166c376881049d.jpg",
+                "Destaque": "Nao",
+                "Tipo": "",
+                "Descricao": "",
+                "Ordem": 18
+            },
+            {
+                "Codigo": "photo-1753903409611-18",
+                "FotoPequena": "https://cdn.vistahost.com.br/npinegoc/vista.imobi/fotos/381/i57i56Wg14cV3Jqzg72_38166c37689d3218_p.jpg",
+                "Foto": "https://npi-imoveis.s3.sa-east-1.amazonaws.com/imagens_baixadas/i57i56Wg14cV3Jqzg72_38166c37689d3218.jpg",
+                "Destaque": "Nao",
+                "Tipo": "",
+                "Descricao": "",
+                "Ordem": 19
+            },
+            {
+                "Codigo": "photo-1753903409611-19",
+                "FotoPequena": "https://cdn.vistahost.com.br/npinegoc/vista.imobi/fotos/381/i57i56Wg14cV3Jqzg72_38166c3768c09ca9_p.jpg",
+                "Foto": "https://npi-imoveis.s3.sa-east-1.amazonaws.com/imagens_baixadas/i57i56Wg14cV3Jqzg72_38166c3768c09ca9.jpg",
+                "Destaque": "Nao",
+                "Tipo": "",
+                "Descricao": "",
+                "Ordem": 20
+            },
+            {
+                "Codigo": "photo-1753903409611-20",
+                "FotoPequena": "https://cdn.vistahost.com.br/npinegoc/vista.imobi/fotos/381/i57i56Wg14cV3Jqzg72_38166c3768e0fd06_p.jpg",
+                "Foto": "https://npi-imoveis.s3.sa-east-1.amazonaws.com/imagens_baixadas/i57i56Wg14cV3Jqzg72_38166c3768e0fd06.jpg",
+                "Destaque": "Nao",
+                "Tipo": "",
+                "Descricao": "",
+                "Ordem": 21
+            },
+            {
+                "Codigo": "photo-1753903409611-21",
+                "FotoPequena": "https://cdn.vistahost.com.br/npinegoc/vista.imobi/fotos/381/i57i56Wg14cV3Jqzg72_38166c3768fe1eef_p.jpg",
+                "Foto": "https://npi-imoveis.s3.sa-east-1.amazonaws.com/imagens_baixadas/i57i56Wg14cV3Jqzg72_38166c3768fe1eef.jpg",
+                "Destaque": "Nao",
+                "Tipo": "",
+                "Descricao": "",
+                "Ordem": 22
+            },
+            {
+                "Codigo": "photo-1753903409611-22",
+                "FotoPequena": "https://cdn.vistahost.com.br/npinegoc/vista.imobi/fotos/381/i57i56Wg14cV3Jqzg72_38166c37691dd2b3_p.jpg",
+                "Foto": "https://npi-imoveis.s3.sa-east-1.amazonaws.com/imagens_baixadas/i57i56Wg14cV3Jqzg72_38166c37691dd2b3.jpg",
+                "Destaque": "Nao",
+                "Tipo": "",
+                "Descricao": "",
+                "Ordem": 23
+            },
+            {
+                "Codigo": "photo-1753903409611-23",
+                "FotoPequena": "https://cdn.vistahost.com.br/npinegoc/vista.imobi/fotos/381/i57i56Wg14cV3Jqzg72_38166c37693f247c_p.jpg",
+                "Foto": "https://npi-imoveis.s3.sa-east-1.amazonaws.com/imagens_baixadas/i57i56Wg14cV3Jqzg72_38166c37693f247c.jpg",
+                "Destaque": "Nao",
+                "Tipo": "",
+                "Descricao": "",
+                "Ordem": 24
+            },
+            {
+                "Codigo": "photo-1753903409611-24",
+                "FotoPequena": "https://cdn.vistahost.com.br/npinegoc/vista.imobi/fotos/381/i57i56Wg14cV3Jqzg72_38166c37695d06f7_p.jpg",
+                "Foto": "https://npi-imoveis.s3.sa-east-1.amazonaws.com/imagens_baixadas/i57i56Wg14cV3Jqzg72_38166c37695d06f7.jpg",
+                "Destaque": "Nao",
+                "Tipo": "",
+                "Descricao": "",
+                "Ordem": 25
+            },
+            {
+                "Codigo": "photo-1753903409611-25",
+                "FotoPequena": "https://cdn.vistahost.com.br/npinegoc/vista.imobi/fotos/381/i57i56Wg14cV3Jqzg72_38166c37697abac7_p.jpg",
+                "Foto": "https://npi-imoveis.s3.sa-east-1.amazonaws.com/imagens_baixadas/i57i56Wg14cV3Jqzg72_38166c37697abac7.jpg",
+                "Destaque": "Nao",
+                "Tipo": "",
+                "Descricao": "",
+                "Ordem": 26
+            },
+            {
+                "Codigo": "photo-1753903409611-26",
+                "FotoPequena": "https://cdn.vistahost.com.br/npinegoc/vista.imobi/fotos/381/i57i56Wg14cV3Jqzg72_38166c37699a8df5_p.jpg",
+                "Foto": "https://npi-imoveis.s3.sa-east-1.amazonaws.com/imagens_baixadas/i57i56Wg14cV3Jqzg72_38166c37699a8df5.jpg",
+                "Destaque": "Nao",
+                "Tipo": "",
+                "Descricao": "",
+                "Ordem": 27
+            },
+            {
+                "Codigo": "photo-1753903409611-27",
+                "FotoPequena": "https://cdn.vistahost.com.br/npinegoc/vista.imobi/fotos/381/i57i56Wg14cV3Jqzg72_38166c3769b93fe6_p.jpg",
+                "Foto": "https://npi-imoveis.s3.sa-east-1.amazonaws.com/imagens_baixadas/i57i56Wg14cV3Jqzg72_38166c3769b93fe6.jpg",
+                "Destaque": "Nao",
+                "Tipo": "",
+                "Descricao": "",
+                "Ordem": 28
+            }
+        ],
+        "FotoEmpreendimento": [],
+        "Latitude": "-23.5874583",
+        "Longitude": "-46.6736216",
+        "Metragem1": "f) 151 m² a 180 m²",
+        "Metragem2": "",
+        "Metragem3": "",
+        "Metragem4": "",
+        "Metragem5": "",
+        "Metragem6": "",
+        "Metragem7": "",
+        "Metragem8": "",
+        "MetragemAnt": "152",
+        "MetragemAnt2": "",
+        "MetragemAnt3": "",
+        "MetragemAnt4": "",
+        "MetragemAnt5": "",
+        "MetragemAnt6": "",
+        "MetragemAnt7": "",
+        "MetragemAnt8": "",
+        "Numero": "197",
+        "Situacao": "PRONTO USADO",
+        "Status": "VENDA",
+        "SuiteAntigo": "3",
+        "Suites": "3",
+        "Suites2": "0",
+        "Suites3": "0",
+        "Suites4": "0",
+        "Suites5": "0",
+        "Suites6": "0",
+        "Suites7": "0",
+        "Suites8": "0",
+        "TipoEndereco": "Rua",
+        "TituloSite": "Lindenberg ID Itaim - Apartamento no Itaim | NPi Imóveis.",
+        "Tour360": "",
+        "UF": "SP",
+        "Vagas": "3",
+        "Vagas1": "0",
+        "Vagas2": "0",
+        "Vagas3": "0",
+        "Vagas4": "0",
+        "Vagas5": "0",
+        "Vagas6": "0",
+        "Vagas7": "0",
+        "Vagas8": "0",
+        "VagasAntigo": "3",
+        "ValorAluguel2": "0",
+        "ValorAluguel3": "0",
+        "ValorAluguel5": "0",
+        "ValorAluguel6": "0",
+        "ValorAluguel7": "0",
+        "ValorAluguel8": "0",
+        "ValorAluguelSite": "",
+        "ValorAluguel_4": "0",
+        "ValorAntigo": "4.250.000",
+        "ValorCobertura": "0",
+        "ValorCobertura2": "0",
+        "ValorCondominio": "3571",
+        "ValorDiaria": "0",
+        "ValorGarden": "0",
+        "ValorGarden2": "0",
+        "ValorIptu": "1004",
+        "ValorLocacao": "",
+        "ValorVenda": "4250000",
+        "ValorVenda2": "0",
+        "ValorVenda3": "0",
+        "ValorVenda4": "0",
+        "Video": [],
+        "Slug": "lindenberg-id-itaim",
+        "Condominio": "Sim",
+        "Ativo": "Sim",
+        "CondominioDestaque": "Não",
+        "Automacao": false,
+        "updatedAt": "2025-07-30T19:23:47.800Z"
     }
-    
-    // Se não tem prefixo, consultar ViaCEP para corrigir
-    console.log('🔧 MIGRAÇÃO: Endereço incompleto detectado:', endereco, '- CEP:', cep);
-    
-    const cleanCep = cep.replace(/\D/g, "");
-    if (cleanCep.length !== 8) return false;
-    
-    try {
-      const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
-      if (!response.ok) return false;
-      
-      const data = await response.json();
-      if (data.erro || !data.logradouro) return false;
-      
-      // Verificar se o endereço da API é diferente e mais completo
-      if (data.logradouro && data.logradouro.toLowerCase() !== enderecoLower) {
-        console.log('📊 MIGRAÇÃO - ANTES:', endereco);
-        console.log('📊 MIGRAÇÃO - DEPOIS:', data.logradouro);
-        console.log('💡 INSTRUÇÃO: Clique em ATUALIZAR IMÓVEL para salvar a correção');
-        
-        // Buscar coordenadas para o endereço corrigido
-        let coords = null;
-        try {
-          const query = `${data.logradouro}, ${data.bairro}, ${data.localidade}, ${data.uf}`;
-          const results = await provider.current.search({ query });
-          coords = results[0] ? { 
-            latitude: results[0].y?.toString() || "", 
-            longitude: results[0].x?.toString() || "" 
-          } : null;
-        } catch (error) {
-          console.error("Erro ao buscar coordenadas:", error);
-        }
-        
-        // 🎯 Atualizar formData local apenas
-        setFormData(prev => ({
-          ...prev,
-          Endereco: data.logradouro,
-          Bairro: data.bairro || prev.Bairro,
-          Cidade: data.localidade || prev.Cidade,
-          UF: data.uf || prev.UF,
-          Latitude: coords?.latitude || prev.Latitude,
-          Longitude: coords?.longitude || prev.Longitude,
-        }));
-        
-        return true; // Indica que foi corrigido
-      }
-    } catch (error) {
-      console.error('Erro ao corrigir endereço da migração:', error);
-    }
-    
-    return false;
-  }, []);
-
-
-
-  // Inicialização do formulário
-  useEffect(() => {
-    const initializeForm = async () => {
-      try {
-        // Caso 1: Imóvel de automação (sempre gerar novo código)
-        if (isAutomacao) {
-          const newCode = await generateRandomCode();
-          setNewImovelCode(newCode);
-          setFormData(prev => ({
-            ...prev,
-            ...imovelSelecionado,
-            Codigo: newCode,
-            CodigoOriginal: ''
-          }));
-          return;
-        }
-
-        // Caso 2: Edição de imóvel existente (manter código original)
-        if (imovelSelecionado?.Codigo && !isAutomacao) {
-          setFormData(prev => ({
-            ...prev,
-            ...imovelSelecionado,
-            CodigoOriginal: imovelSelecionado.Codigo
-          }));
-          
-          setDisplayValues({
-            ValorAntigo: formatCurrencyInput(imovelSelecionado.ValorAntigo?.toString() || "0"),
-            ValorAluguelSite: formatCurrencyInput(imovelSelecionado.ValorAluguelSite?.toString() || "0"),
-            ValorCondominio: formatCurrencyInput(imovelSelecionado.ValorCondominio?.toString() || "0"),
-            ValorIptu: formatCurrencyInput(imovelSelecionado.ValorIptu?.toString() || "0")
-          });
-          
-          // ✅ CORREÇÃO AUTOMÁTICA DA MIGRAÇÃO (apenas frontend por ora)
-          if (imovelSelecionado.Endereco && imovelSelecionado.CEP) {
-            setTimeout(() => {
-              console.log('🔍 MIGRAÇÃO: Verificando se endereço precisa de correção...');
-              corrigirEnderecoIncompleto(imovelSelecionado.Endereco, imovelSelecionado.CEP);
-            }, 2000); // Aguardar 2s para garantir que formData esteja totalmente inicializado
-          }
-          
-          return;
-        }
-
-        // Caso 3: Novo imóvel (gerar novo código)
-        if (!imovelSelecionado) {
-          const newCode = await generateRandomCode();
-          setNewImovelCode(newCode);
-          setFormData(prev => ({
-            ...prev,
-            Codigo: newCode,
-            CodigoOriginal: newCode
-          }));
-        }
-      } catch (error) {
-        console.error("Erro ao inicializar formulário:", error);
-      }
-    };
-
-    initializeForm();
-  }, [isAutomacao, imovelSelecionado?.Codigo, formatCurrencyInput]);
-
-  useEffect(() => {
-    if (!formData.Codigo) return;
-    
-    const timer = setTimeout(() => {
-      localStorage.setItem('imovelFormDraft', JSON.stringify(formData));
-    }, 500);
-    
-    return () => clearTimeout(timer);
-  }, [formData]);
-
-
-
-  // Funções auxiliares
-  const maskDate = useCallback((value) => {
-    if (!value) return "";
-    return value
-      .replace(/\D/g, "")
-      .slice(0, 8)
-      .replace(/^(\d{2})(\d)/, "$1/$2")
-      .replace(/^(\d{2})\/(\d{2})(\d)/, "$1/$2/$3");
-  }, []);
-
-  const debouncedFetchCoordinates = useCallback(
-    debounce(async (address) => {
-      if (!address) return null;
-      
-      try {
-        const query = `${address.logradouro}, ${address.bairro}, ${address.localidade}, ${address.uf}`;
-        const results = await provider.current.search({ query });
-        return results[0] ? { 
-          latitude: results[0].y?.toString() || "", 
-          longitude: results[0].x?.toString() || "" 
-        } : null;
-      } catch (error) {
-        console.error("Erro ao buscar coordenadas:", error);
-        return null;
-      }
-    }, 500),
-    []
-  );
-
-  const fetchAddress = useCallback(async (cep) => {
-    const cleanCep = (cep || "").replace(/\D/g, "");
-    if (cleanCep.length !== 8) return;
-
-    setFormData(prev => ({ ...prev, isLoadingCEP: true, cepError: null }));
-
-    try {
-      const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
-      if (!response.ok) throw new Error("Erro na resposta da API");
-      
-      const data = await response.json();
-      if (data.erro) {
-        setFormData(prev => ({ 
-          ...prev, 
-          cepError: "CEP não encontrado",
-          isLoadingCEP: false 
-        }));
-        return;
-      }
-
-      const coords = await debouncedFetchCoordinates(data);
-      setFormData(prev => ({
-        ...prev,
-        Endereco: data.logradouro || prev.Endereco,
-        Bairro: data.bairro || prev.Bairro,
-        Cidade: data.localidade || prev.Cidade,
-        UF: data.uf || prev.UF,
-        Latitude: coords?.latitude || prev.Latitude,
-        Longitude: coords?.longitude || prev.Longitude,
-        isLoadingCEP: false,
-        cepError: null
-      }));
-    } catch (error) {
-      console.error("Erro ao buscar endereço:", error);
-      setFormData(prev => ({ 
-        ...prev, 
-        cepError: "Falha ao consultar CEP",
-        isLoadingCEP: false 
-      }));
-    }
-  }, [debouncedFetchCoordinates]);
-
-  // ✅ FUNÇÃO handleChange CORRIGIDA - ACEITA AMBOS OS FORMATOS
-  const handleChange = useCallback((fieldOrEvent, valueOrUndefined) => {
-    console.log('🔄 useImovelForm.handleChange chamado:', { fieldOrEvent, valueOrUndefined });
-    
-    // ✅ DETECTAR se é chamada direta (field, value) ou evento (e.target)
-    let name, value;
-    
-    if (typeof fieldOrEvent === 'string' && valueOrUndefined !== undefined) {
-      // 🎯 CHAMADA DIRETA: onChange("Video", videoData)
-      name = fieldOrEvent;
-      value = valueOrUndefined;
-      console.log('🎯 Chamada direta detectada:', { name, value });
-    } else if (fieldOrEvent?.target) {
-      // 🎯 EVENTO: onChange(e) onde e.target.name e e.target.value
-      name = fieldOrEvent.target.name;
-      value = fieldOrEvent.target.value;
-      console.log('🎯 Evento detectado:', { name, value });
-    } else {
-      console.error('❌ handleChange: formato inválido:', { fieldOrEvent, valueOrUndefined });
-      return;
-    }
-
-    // Debug específico para Video
-    if (name === "Video") {
-      console.log('🎥 PROCESSANDO VIDEO no useImovelForm:');
-      console.log('🎥 Field:', name);
-      console.log('🎥 Value recebido:', value);
-      console.log('🎥 Tipo do value:', typeof value);
-      console.log('🎥 Value é objeto?', typeof value === 'object' && value !== null);
-      console.log('🎥 Keys do value:', value ? Object.keys(value) : 'N/A');
-    }
-
-    // ✅ SE FOR CAMPO VIDEO, ATUALIZAR COM VALIDAÇÃO DE REMOÇÃO
-    if (name === "Video") {
-      console.log('🎥 Atualizando Video diretamente no formData');
-      
-      // ✅ NOVA LÓGICA: Se value é falsy, vazio ou objeto vazio, setar como null
-      let processedValue = value;
-      
-      // Verificar se o vídeo está sendo removido
-      if (!value || 
-          value === "" || 
-          value === null || 
-          value === undefined ||
-          (typeof value === 'object' && value !== null && Object.keys(value).length === 0) ||
-          (typeof value === 'object' && value !== null && !value.url && !value.provider && !value.videoId)) {
-        processedValue = null;
-        console.log('🎥 Video sendo REMOVIDO - setando como null');
-      }
-      
-      setFormData(prev => {
-        const updated = { ...prev, Video: processedValue };
-        console.log('🎥 FormData ANTES da atualização:', prev.Video);
-        console.log('🎥 FormData DEPOIS da atualização:', updated.Video);
-        return updated;
-      });
-      console.log('🎥 Video atualizado com sucesso!');
-      return;
-    }
-
-    // Tratamento específico para campos numéricos
-    const numericFields = ['Dormitorios', 'Suites', 'Vagas', 'BanheiroSocialQtd'];
-    if (numericFields.includes(name)) {
-      const numericValue = value.replace(/\D/g, '');
-      setFormData(prev => ({ ...prev, [name]: numericValue }));
-      return;
-    }
-
-    // Handler específico para campos numéricos (Dormitórios, Suítes, Vagas)
-    const handleNumericField = (fieldName, fieldValue) => {
-      const numericValue = fieldValue.replace(/\D/g, '');
-      setFormData(prev => ({ ...prev, [fieldName]: numericValue }));
-    };
-
-    // Verifica se é um campo numérico
-    if (numericFields.includes(name)) {
-      handleNumericField(name, value);
-      return; // Sai da função após processar
-    }
-
-    // Handlers para campos monetários
-    const handleMonetaryField = (fieldName, fieldValue) => {
-      const numericValue = parseCurrency(fieldValue);
-      setFormData(prev => ({ ...prev, [fieldName]: numericValue }));
-      setDisplayValues(prev => ({ 
-        ...prev, 
-        [fieldName]: formatCurrencyInput(fieldValue) 
-      }));
-    };
-
-    // Campos monetários
-    const monetaryFields = ['ValorAntigo', 'ValorAluguelSite', 'ValorCondominio', 'ValorIptu'];
-
-    // Verifica se é um campo monetário
-    if (monetaryFields.includes(name)) {
-      handleMonetaryField(name, value);
-      return; // Sai da função após processar
-    }
-
-    // Handlers especiais
-    const specialHandlers = {
-      DataEntrega: () => setFormData(prev => ({ ...prev, [name]: maskDate(value) })),
-      CEP: () => {
-        const formattedCEP = value.replace(/\D/g, "").slice(0, 8);
-        setFormData(prev => ({ ...prev, [name]: formattedCEP }));
-        if (formattedCEP.length === 8) {
-          fetchAddress(formattedCEP);
-        }
-      },
-      Empreendimento: () => {
-        setFormData(prev => ({ 
-          ...prev, 
-          [name]: value, 
-          Slug: formatterSlug(value) || prev.Slug 
-        }));
-      },
-      IdCorretor: () => {
-        setFormData(prev => ({
-          ...prev,
-          [name]: value,
-          Corretor: "",
-          EmailCorretor: "",
-          CelularCorretor: "",
-          Imobiliaria: "",
-          isLoadingCorretor: true,
-          corretorError: null
-        }));
-
-        if (value?.trim()) {
-          getCorretorById(value.trim())
-            .then(corretor => {
-              if (corretor) {
-                setFormData(prev => ({
-                  ...prev,
-                  Corretor: corretor.Nome || "",
-                  EmailCorretor: corretor.Email || "",
-                  CelularCorretor: corretor.Celular || "",
-                  Imobiliaria: corretor.Imobiliaria || "",
-                  isLoadingCorretor: false
-                }));
-              }
-            })
-            .catch(error => {
-              console.error("Erro ao buscar corretor:", error);
-              setFormData(prev => ({
-                ...prev,
-                corretorError: "Corretor não encontrado",
-                isLoadingCorretor: false
-              }));
-            });
-        }
-      }
-    };
-
-    // Verifica se é um campo especial
-    if (specialHandlers[name]) {
-      specialHandlers[name]();
-      return; // Sai da função após processar
-    }
-
-    // Caso padrão para todos os outros campos
-    setFormData(prev => ({ ...prev, [name]: value }));
-  }, [maskDate, fetchAddress, parseCurrency, formatCurrencyInput]);
-
-  // Funções de manipulação de imagens
-  const addImage = useCallback(() => setShowImageModal(true), []);
-  
-  const addSingleImage = useCallback((url) => {
-    if (!url?.trim()) return;
-
-    const cleanUrl = (() => {
-      try {
-        const parsed = new URL(url);
-        if (parsed.pathname.startsWith("/_next/image")) {
-          const innerUrl = parsed.searchParams.get("url");
-          return decodeURIComponent(innerUrl || url);
-        }
-        return url;
-      } catch {
-        return url;
-      }
-    })();
-
-    setFormData(prev => ({
-      ...prev,
-      Foto: [
-        ...(Array.isArray(prev.Foto) ? prev.Foto : []),
-        {
-          Codigo: `img-${Date.now()}`,
-          Foto: cleanUrl.trim(),
-          Destaque: "Nao",
-          Ordem: (Array.isArray(prev.Foto) ? prev.Foto.length + 1 : 1)
-        }
-      ]
-    }));
-  }, []);
-
-  const updateImage = useCallback((codigo, newUrl) => {
-    if (!codigo || !newUrl?.trim()) return;
-    
-    setFormData(prev => ({
-      ...prev,
-      Foto: Array.isArray(prev.Foto) 
-        ? prev.Foto.map(img => 
-            img.Codigo === codigo ? { ...img, Foto: newUrl.trim() } : img
-          )
-        : []
-    }));
-  }, []);
-
-  const removeImage = useCallback((codigo) => {
-    if (!codigo) return;
-    
-    setFormData(prev => ({
-      ...prev,
-      Foto: Array.isArray(prev.Foto)
-        ? prev.Foto
-            .filter(img => img.Codigo !== codigo)
-            .map((img, i) => ({ ...img, Ordem: i + 1 }))
-        : []
-    }));
-  }, []);
-
-  const removeAllImages = useCallback(() => {
-    if (typeof window === 'undefined') return;
-    if (!confirm("⚠️ Tem certeza que deseja remover TODAS as imagens?")) return;
-    if (!confirm("🚨 Esta ação é irreversível! Confirmar remoção total?")) return;
-    
-    setFormData(prev => ({ ...prev, Foto: [] }));
-  }, []);
-
-  const setImageAsHighlight = useCallback((codigo) => {
-    if (!codigo) return;
-    
-    setFormData(prev => ({
-      ...prev,
-      Foto: Array.isArray(prev.Foto)
-        ? prev.Foto.map(img => ({
-            ...img,
-            Destaque: img.Codigo === codigo ? "Sim" : "Nao"
-          }))
-        : []
-    }));
-  }, []);
-
-  const changeImagePosition = useCallback((codigo, newPos) => {
-    if (!codigo || !Number.isInteger(newPos) || newPos < 1) return;
-    
-    setFormData(prev => {
-      if (!Array.isArray(prev.Foto)) return prev;
-      
-      const sorted = [...prev.Foto].sort((a, b) => (a.Ordem || 0) - (b.Ordem || 0));
-      const currentIdx = sorted.findIndex(img => img.Codigo === codigo);
-      if (currentIdx === -1) return prev;
-
-      const [moved] = sorted.splice(currentIdx, 1);
-      const adjustedPos = Math.min(Math.max(newPos, 1), sorted.length + 1);
-      sorted.splice(adjustedPos - 1, 0, moved);
-      
-      return {
-        ...prev,
-        Foto: sorted.map((img, idx) => ({ ...img, Ordem: idx + 1 }))
-      };
-    });
-  }, []);
-
-  const handleImagesUploaded = useCallback((images = []) => {
-    if (!Array.isArray(images)) return;
-    
-    setFormData(prev => {
-      const current = Array.isArray(prev.Foto) ? prev.Foto : [];
-      return {
-        ...prev,
-        Foto: [
-          ...current,
-          ...images
-            .filter(img => img?.Foto || img?.url)
-            .map((img, idx) => ({
-              Codigo: `img-upload-${Date.now()}-${idx}`,
-              Foto: img.Foto || img.url,
-              Destaque: "Nao",
-              Ordem: current.length + idx + 1
-            }))
-        ]
-      };
-    });
-  }, []);
-
-  // Validação do formulário
-  useEffect(() => {
-    const fieldValidation = {};
-    let isValid = true;
-
-    REQUIRED_FIELDS.forEach((field) => {
-      if (!INITIAL_FORM_DATA.hasOwnProperty(field)) {
-        console.warn(`Campo obrigatório não encontrado: ${field}`);
-        return;
-      }
-      
-      const value = formData[field];
-      const valid = (typeof value === 'string' && value.trim() !== '') || 
-                    (typeof value === 'number' && !isNaN(value)) || 
-                    (Array.isArray(value) && value.length > 0);
-      
-      fieldValidation[field] = valid;
-      if (!valid) isValid = false;
-    });
-
-    const photoCount = Array.isArray(formData.Foto) ? formData.Foto.length : 0;
-    const hasEnoughPhotos = photoCount >= validation.requiredPhotoCount;
-
-    setValidation(prev => ({
-      ...prev,
-      isFormValid: isValid && hasEnoughPhotos,
-      photoCount,
-      fieldValidation,
-    }));
-  }, [formData, validation.requiredPhotoCount]);
-
-  // Reset do formulário
-  const resetForm = useCallback((keepCode = false) => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('imovelFormDraft');
-    }
-    
-    setFormData(prev => ({
-      ...INITIAL_FORM_DATA,
-      Codigo: keepCode ? prev.Codigo : "",
-      Video: null,
-    }));
-    
-    setDisplayValues({
-      ValorAntigo: "R$ 0",
-      ValorAluguelSite: "R$ 0",
-      ValorCondominio: "R$ 0",
-      ValorIptu: "R$ 0",
-    });
-    
-    if (!keepCode) {
-      generateRandomCode().then(code => {
-        setNewImovelCode(code);
-        setFormData(prev => ({ ...prev, Codigo: code, Video: null }));
-      });
-    }
-  }, []);
-
-  return {
-    formData,
-    setFormData,
-    displayValues,
-    setDisplayValues,
-    handleChange,
-    newImovelCode,
-    fileInputRef,
-    showImageModal,
-    setShowImageModal,
-    addImage,
-    addSingleImage,
-    updateImage,
-    removeImage,
-    removeAllImages,
-    setImageAsHighlight,
-    changeImagePosition,
-    validation,
-    handleImagesUploaded,
-    resetForm,
-    formatCurrency,
-    parseCurrency,
-    formatCurrencyInput,
-    corrigirEnderecoIncompleto // ✅ Correção automática no frontend
-  };
-};
-
-export default useImovelForm;
+}
