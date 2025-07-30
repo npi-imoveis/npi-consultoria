@@ -82,7 +82,25 @@ const INITIAL_FORM_DATA = {
   corretorError: null
 };
 
-export const useImovelForm = () => {
+/*
+ * Hook para gerenciar formulário de imóveis
+ * 
+ * @param {Function} onAutoSave - Callback opcional para salvamento automático após correção de endereço
+ *                                Deve retornar Promise<boolean> indicando sucesso/falha do salvamento
+ *                                Recebe objeto: { enderecoAntigo, enderecoNovo, motivo }
+ * 
+ * Exemplo de uso:
+ * const { formData, handleChange, ... } = useImovelForm(async (dados) => {
+ *   try {
+ *     const resultado = await salvarImovel(formData);
+ *     return resultado.success;
+ *   } catch (error) {
+ *     console.error('Erro ao salvar:', error);
+ *     return false;
+ *   }
+ * });
+ */
+export const useImovelForm = (onAutoSave) => {
   const provider = useRef(new OpenStreetMapProvider());
   const fileInputRef = useRef(null);
   const imovelSelecionado = useImovelStore((state) => state.imovelSelecionado);
@@ -141,8 +159,63 @@ export const useImovelForm = () => {
     });
   }, []);
 
+  // ✅ FUNÇÃO UTILITÁRIA: Mostrar notificações visuais
+  const mostrarNotificacao = useCallback((titulo, subtitulo, tipo = 'success') => {
+    if (typeof window === 'undefined') return;
+    
+    const cores = {
+      success: '#10b981',
+      warning: '#f59e0b', 
+      info: '#3b82f6',
+      error: '#ef4444'
+    };
+    
+    const notification = document.createElement('div');
+    notification.innerHTML = `
+      <div style="
+        position: fixed; 
+        top: 20px; 
+        right: 20px; 
+        background: ${cores[tipo]}; 
+        color: white; 
+        padding: 12px 20px; 
+        border-radius: 8px; 
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 9999;
+        font-size: 14px;
+        font-weight: 500;
+        max-width: 400px;
+        animation: slideInRight 0.3s ease-out;
+      ">
+        ${titulo}
+        ${subtitulo ? `<div style="font-size: 12px; opacity: 0.9; margin-top: 4px;">${subtitulo}</div>` : ''}
+      </div>
+      <style>
+        @keyframes slideInRight {
+          from { transform: translateX(100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
+        }
+        @keyframes slideOutRight {
+          from { transform: translateX(0); opacity: 1; }
+          to { transform: translateX(100%); opacity: 0; }
+        }
+      </style>
+    `;
+    
+    document.body.appendChild(notification.firstElementChild);
+    
+    // Remover notificação após 5 segundos
+    setTimeout(() => {
+      const notif = document.querySelector('[style*="position: fixed"][style*="top: 20px"][style*="right: 20px"]');
+      if (notif) {
+        notif.style.animation = 'slideOutRight 0.3s ease-in forwards';
+        setTimeout(() => notif.remove(), 300);
+      }
+    }, 5000);
+  }, []);
+
   // ✅ NOVA FUNÇÃO: Detectar e corrigir endereços incompletos da migração
-  const corrigirEnderecoIncompleto = useCallback(async (endereco, cep) => {
+  const corrigirEnderecoIncompleto = useCallback(async (endereco, cep, autoSave = false) => {
     if (!endereco || !cep) return false;
     
     // Lista de prefixos válidos de logradouro
@@ -205,6 +278,38 @@ export const useImovelForm = () => {
           Longitude: coords?.longitude || prev.Longitude,
         }));
         
+        // ✅ NOVA FUNCIONALIDADE: Salvamento automático após correção
+        if (autoSave && typeof onAutoSave === 'function') {
+          setTimeout(async () => {
+            console.log('💾 CORREÇÃO CEP: Iniciando salvamento automático...');
+            
+            try {
+              // Chamar função de salvamento fornecida pelo componente pai
+              const resultado = await onAutoSave({
+                enderecoAntigo: endereco,
+                enderecoNovo: data.logradouro,
+                motivo: 'correção automática de endereço incompleto'
+              });
+              
+              if (resultado) {
+                // Feedback visual de sucesso
+                mostrarNotificacao(`✅ Endereço corrigido e salvo automaticamente!`, `${endereco} → ${data.logradouro}`, 'success');
+              } else {
+                // Feedback visual de erro
+                mostrarNotificacao(`⚠️ Endereço corrigido, mas falha ao salvar`, `Por favor, salve manualmente`, 'warning');
+              }
+            } catch (error) {
+              console.error('Erro no salvamento automático:', error);
+              mostrarNotificacao(`⚠️ Endereço corrigido, mas falha ao salvar`, `Por favor, salve manualmente`, 'warning');
+            }
+          }, 1500); // Aguardar 1.5s para garantir que o formData foi atualizado
+        } else if (autoSave) {
+          // Se não há callback, apenas mostrar que foi corrigido
+          setTimeout(() => {
+            mostrarNotificacao(`✅ Endereço corrigido automaticamente!`, `${endereco} → ${data.logradouro}`, 'info');
+          }, 500);
+        }
+        
         return true; // Indica que foi corrigido
       }
     } catch (error) {
@@ -212,7 +317,7 @@ export const useImovelForm = () => {
     }
     
     return false;
-  }, []);
+  }, [mostrarNotificacao, onAutoSave]); // ✅ Dependências atualizadas
 
   // Inicialização do formulário
   useEffect(() => {
@@ -249,9 +354,10 @@ export const useImovelForm = () => {
           // ✅ NOVA FUNCIONALIDADE: Correção automática de endereços incompletos da migração
           // Detecta endereços sem prefixo (ex: "Benedito Lapin" → "Rua Benedito Lapin")
           // Funciona consultando o ViaCEP usando o CEP já existente no imóvel
+          // ✅ COM SALVAMENTO AUTOMÁTICO
           if (imovelSelecionado.Endereco && imovelSelecionado.CEP) {
             setTimeout(() => {
-              corrigirEnderecoIncompleto(imovelSelecionado.Endereco, imovelSelecionado.CEP);
+              corrigirEnderecoIncompleto(imovelSelecionado.Endereco, imovelSelecionado.CEP, true); // ✅ autoSave = true
             }, 1000); // Aguardar 1s para não interferir com inicialização
           }
           
@@ -731,3 +837,33 @@ export const useImovelForm = () => {
 };
 
 export default useImovelForm;
+
+/*
+ * ✅ EXEMPLO DE USO NO COMPONENTE PAI:
+ * 
+ * import useImovelForm from './useImovelForm';
+ * import { salvarImovel } from './services/imovel';
+ * 
+ * function ImovelFormComponent() {
+ *   // Função de salvamento que será chamada automaticamente
+ *   const handleAutoSave = async (dadosCorrecao) => {
+ *     try {
+ *       console.log('Salvamento automático acionado:', dadosCorrecao);
+ *       
+ *       // Aqui você usa sua função de salvamento existente
+ *       const resultado = await salvarImovel(formData);
+ *       
+ *       // Retornar true se salvou com sucesso, false caso contrário
+ *       return resultado && resultado.success;
+ *     } catch (error) {
+ *       console.error('Erro no salvamento automático:', error);
+ *       return false; // Indica falha
+ *     }
+ *   };
+ *   
+ *   // Hook com callback de salvamento automático
+ *   const { formData, handleChange, ...rest } = useImovelForm(handleAutoSave);
+ *   
+ *   // Resto do seu componente...
+ * }
+ */
