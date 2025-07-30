@@ -141,6 +141,79 @@ export const useImovelForm = () => {
     });
   }, []);
 
+  // ✅ NOVA FUNÇÃO: Detectar e corrigir endereços incompletos da migração
+  const corrigirEnderecoIncompleto = useCallback(async (endereco, cep) => {
+    if (!endereco || !cep) return false;
+    
+    // Lista de prefixos válidos de logradouro
+    const prefixosValidos = [
+      'rua', 'avenida', 'alameda', 'travessa', 'praça', 'largo', 'rodovia',
+      'estrada', 'via', 'quadra', 'setor', 'conjunto', 'vila', 'jardim',
+      'parque', 'residencial', 'condomínio', 'loteamento'
+    ];
+    
+    // Verificar se o endereço já tem um prefixo válido
+    const enderecoLower = endereco.toLowerCase().trim();
+    const temPrefixo = prefixosValidos.some(prefixo => 
+      enderecoLower.startsWith(prefixo + ' ')
+    );
+    
+    // Se já tem prefixo, não precisa corrigir
+    if (temPrefixo) {
+      console.log('✅ CORREÇÃO CEP: Endereço já está completo:', endereco);
+      return false;
+    }
+    
+    // Se não tem prefixo, consultar ViaCEP para corrigir
+    console.log('🔧 CORREÇÃO CEP: Endereço incompleto detectado:', endereco, '- CEP:', cep);
+    
+    const cleanCep = cep.replace(/\D/g, "");
+    if (cleanCep.length !== 8) return false;
+    
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+      if (!response.ok) return false;
+      
+      const data = await response.json();
+      if (data.erro || !data.logradouro) return false;
+      
+      // Verificar se o endereço da API é diferente e mais completo
+      if (data.logradouro && data.logradouro.toLowerCase() !== enderecoLower) {
+        console.log('✅ CORREÇÃO CEP: Endereço corrigido:', endereco, '→', data.logradouro);
+        
+        // Buscar coordenadas para o endereço corrigido
+        let coords = null;
+        try {
+          const query = `${data.logradouro}, ${data.bairro}, ${data.localidade}, ${data.uf}`;
+          const results = await provider.current.search({ query });
+          coords = results[0] ? { 
+            latitude: results[0].y?.toString() || "", 
+            longitude: results[0].x?.toString() || "" 
+          } : null;
+        } catch (error) {
+          console.error("Erro ao buscar coordenadas:", error);
+        }
+        
+        // Atualizar formData com endereço corrigido
+        setFormData(prev => ({
+          ...prev,
+          Endereco: data.logradouro,
+          Bairro: data.bairro || prev.Bairro,
+          Cidade: data.localidade || prev.Cidade,
+          UF: data.uf || prev.UF,
+          Latitude: coords?.latitude || prev.Latitude,
+          Longitude: coords?.longitude || prev.Longitude,
+        }));
+        
+        return true; // Indica que foi corrigido
+      }
+    } catch (error) {
+      console.error('Erro ao corrigir endereço:', error);
+    }
+    
+    return false;
+  }, []);
+
   // Inicialização do formulário
   useEffect(() => {
     const initializeForm = async () => {
@@ -172,6 +245,16 @@ export const useImovelForm = () => {
             ValorCondominio: formatCurrencyInput(imovelSelecionado.ValorCondominio?.toString() || "0"),
             ValorIptu: formatCurrencyInput(imovelSelecionado.ValorIptu?.toString() || "0")
           });
+          
+          // ✅ NOVA FUNCIONALIDADE: Correção automática de endereços incompletos da migração
+          // Detecta endereços sem prefixo (ex: "Benedito Lapin" → "Rua Benedito Lapin")
+          // Funciona consultando o ViaCEP usando o CEP já existente no imóvel
+          if (imovelSelecionado.Endereco && imovelSelecionado.CEP) {
+            setTimeout(() => {
+              corrigirEnderecoIncompleto(imovelSelecionado.Endereco, imovelSelecionado.CEP);
+            }, 1000); // Aguardar 1s para não interferir com inicialização
+          }
+          
           return;
         }
 
@@ -642,7 +725,8 @@ export const useImovelForm = () => {
     resetForm,
     formatCurrency,
     parseCurrency,
-    formatCurrencyInput
+    formatCurrencyInput,
+    corrigirEnderecoIncompleto // ✅ NOVA FUNÇÃO EXPOSTA para uso manual se necessário
   };
 };
 
