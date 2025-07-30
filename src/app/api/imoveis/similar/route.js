@@ -77,35 +77,97 @@ export async function GET(request) {
       }
     }
 
-    // Buscar imóveis com área privativa semelhante, no mesmo bairro, excluindo o próprio imóvel de referência
-    const filtroBase = {
-      Codigo: { $ne: id },
-      Bairro: imovelReferencia.Bairro,
-      AreaPrivativa: { $exists: true, $ne: "" },
-      ValorAntigo: { $nin: ["0", ""] },
-    };
+    // 🚀 BUSCA PRIORITÁRIA: MESMO CONDOMÍNIO/EMPREENDIMENTO (filtros mais flexíveis)
+    let imoveisSimilares = [];
+    
+    if (imovelReferencia.Empreendimento) {
+      console.log(`🏢 Buscando no mesmo condomínio: ${imovelReferencia.Empreendimento}`);
+      
+      const filtroMesmoCondominio = {
+        Codigo: { $ne: id },
+        Empreendimento: imovelReferencia.Empreendimento,
+        // 🎯 FILTROS MAIS FLEXÍVEIS PARA MESMO CONDOMÍNIO
+        ValorAntigo: { $nin: ["0", ""] }, // Só garantir que tem preço
+        // Remover filtros de categoria e área para mesmo condomínio
+      };
 
-    // 🆕 ADICIONAR FILTRO DE CATEGORIA (MESMO TIPO)
-    if (imovelReferencia.Categoria) {
-      filtroBase.Categoria = imovelReferencia.Categoria;
+      imoveisSimilares = await Imovel.find(filtroMesmoCondominio)
+        .limit(15) // Limite maior para mesmo condomínio
+        .lean();
+      
+      console.log(`🏢 Encontrados ${imoveisSimilares.length} no mesmo condomínio`);
     }
 
-    const imoveisSimilares = await Imovel.find(filtroBase)
-      .limit(20)
-      .lean();
+    // 🔍 BUSCA SECUNDÁRIA: MESMO BAIRRO (se precisar de mais resultados)
+    if (imoveisSimilares.length < 8) {
+      console.log(`🔍 Expandindo busca para mesmo bairro (atual: ${imoveisSimilares.length})`);
+      
+      const filtroMesmoBairro = {
+        Codigo: { $ne: id },
+        Bairro: imovelReferencia.Bairro,
+        AreaPrivativa: { $exists: true, $ne: "" },
+        ValorAntigo: { $nin: ["0", ""] },
+      };
 
-    // Filtrar os resultados em JavaScript para garantir a conversão correta
+      // 🆕 ADICIONAR FILTRO DE CATEGORIA APENAS PARA BUSCA NO BAIRRO
+      if (imovelReferencia.Categoria) {
+        filtroMesmoBairro.Categoria = imovelReferencia.Categoria;
+      }
+
+      const codigosExistentes = new Set(imoveisSimilares.map(i => i.Codigo));
+      
+      const mesmoBairro = await Imovel.find(filtroMesmoBairro)
+        .limit(20)
+        .lean();
+
+      // Adicionar apenas os que não estão na lista do mesmo condomínio
+      const novosDoBairro = mesmoBairro.filter(i => !codigosExistentes.has(i.Codigo));
+      imoveisSimilares = [...imoveisSimilares, ...novosDoBairro];
+      
+      console.log(`🔍 Total após busca no bairro: ${imoveisSimilares.length}`);
+    }
+
+    // Filtrar os resultados em JavaScript
     const filtrados = imoveisSimilares
       .filter((imovel) => {
         try {
-          // Filtro de área (original)
+          // 🏢 LÓGICA ESPECIAL: Se é do mesmo condomínio, aplicar filtros mais flexíveis
+          const mesmoCondominio = imovel.Empreendimento === imovelReferencia.Empreendimento;
+          
+          if (mesmoCondominio) {
+            // Para mesmo condomínio: só validar que tem área válida (sem limite de ±20%)
+            const areaString = imovel.AreaPrivativa.toString()
+              .replace(/[^\d.,]/g, "")
+              .replace(",", ".");
+            const area = parseFloat(areaString);
+            const temAreaValida = !isNaN(area) && area > 0;
+            
+            // Para preço: usar faixa mais ampla (±50% ao invés de ±30%)
+            if (precoMinimo && precoMaximo && imovel.ValorAntigo) {
+              const precoString = imovel.ValorAntigo.toString()
+                .replace(/[^\d.,]/g, "")
+                .replace(",", ".");
+              const preco = parseFloat(precoString);
+              
+              if (!isNaN(preco) && preco > 0) {
+                const precoMinimoFlexivel = precoMinimo * 0.7; // ±50% mais flexível
+                const precoMaximoFlexivel = precoMaximo * 1.3;
+                const precoValido = preco >= precoMinimoFlexivel && preco <= precoMaximoFlexivel;
+                return temAreaValida && precoValido;
+              }
+            }
+            
+            return temAreaValida;
+          }
+          
+          // 🎯 LÓGICA NORMAL: Para imóveis de outros condomínios, usar filtros originais
           const areaString = imovel.AreaPrivativa.toString()
             .replace(/[^\d.,]/g, "")
             .replace(",", ".");
           const area = parseFloat(areaString);
           const areaValida = !isNaN(area) && area >= areaMinima && area <= areaMaxima;
           
-          // 🆕 FILTRO DE PREÇO EM JAVASCRIPT (mais seguro)
+          // Filtro de preço normal (±30%)
           if (precoMinimo && precoMaximo && imovel.ValorAntigo) {
             const precoString = imovel.ValorAntigo.toString()
               .replace(/[^\d.,]/g, "")
@@ -124,21 +186,23 @@ export async function GET(request) {
         }
       });
 
-    // 🆕 ORDENAÇÃO POR RELEVÂNCIA
+    // 🆕 ORDENAÇÃO POR RELEVÂNCIA COM PRIORIDADE PARA MESMO CONDOMÍNIO
     const comScore = filtrados.map(imovel => {
       let score = 0;
       
-      // Mesmo bairro (já garantido pelo filtro): +10 pontos base
-      score += 10;
-      
-      // Mesma categoria (já garantido pelo filtro): +20 pontos base
-      if (imovel.Categoria === imovelReferencia.Categoria) {
-        score += 20;
+      // 🏢 MESMO CONDOMÍNIO/EMPREENDIMENTO: PRIORIDADE MÁXIMA (+50 pontos)
+      if (imovel.Empreendimento === imovelReferencia.Empreendimento) {
+        score += 50;
       }
       
-      // Mesmo condomínio/empreendimento: +30 pontos
-      if (imovel.Empreendimento === imovelReferencia.Empreendimento) {
-        score += 30;
+      // Mesmo bairro: +10 pontos base
+      if (imovel.Bairro === imovelReferencia.Bairro) {
+        score += 10;
+      }
+      
+      // Mesma categoria: +20 pontos
+      if (imovel.Categoria === imovelReferencia.Categoria) {
+        score += 20;
       }
       
       // Quartos similares (±1): +15 pontos
@@ -180,10 +244,16 @@ export async function GET(request) {
       return { ...imovel, similarityScore: score };
     });
 
-    // Ordenar por score (maior para menor) e pegar os 10 melhores
+    // Ordenar por score (maior para menor) e pegar os 12 melhores
     const resultadosOrdenados = comScore
       .sort((a, b) => b.similarityScore - a.similarityScore)
-      .slice(0, 10);
+      .slice(0, 12); // 🆕 Aumentei para 12 para garantir que capture todos do mesmo condomínio
+
+    console.log(`✅ Retornando ${resultadosOrdenados.length} imóveis similares`);
+    
+    // Debug: quantos são do mesmo condomínio
+    const mesmoCond = resultadosOrdenados.filter(i => i.Empreendimento === imovelReferencia.Empreendimento).length;
+    console.log(`🏢 Destes, ${mesmoCond} são do mesmo condomínio`);
 
     return NextResponse.json({
       status: 200,
