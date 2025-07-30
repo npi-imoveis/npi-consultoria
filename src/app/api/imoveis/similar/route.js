@@ -90,42 +90,6 @@ export async function GET(request) {
       filtroBase.Categoria = imovelReferencia.Categoria;
     }
 
-    // 🆕 ADICIONAR FILTRO DE FAIXA DE PREÇO
-    if (precoMinimo && precoMaximo) {
-      filtroBase.$expr = {
-        $and: [
-          { 
-            $gte: [
-              { 
-                $toDouble: {
-                  $replaceAll: {
-                    input: { $replaceAll: { input: "$ValorAntigo", find: ",", replacement: "." } },
-                    find: { $regexFind: { input: "$ValorAntigo", regex: "[^\\d.]" } },
-                    replacement: ""
-                  }
-                }
-              }, 
-              precoMinimo 
-            ] 
-          },
-          { 
-            $lte: [
-              { 
-                $toDouble: {
-                  $replaceAll: {
-                    input: { $replaceAll: { input: "$ValorAntigo", find: ",", replacement: "." } },
-                    find: { $regexFind: { input: "$ValorAntigo", regex: "[^\\d.]" } },
-                    replacement: ""
-                  }
-                }
-              }, 
-              precoMaximo 
-            ] 
-          }
-        ]
-      };
-    }
-
     const imoveisSimilares = await Imovel.find(filtroBase)
       .limit(20)
       .lean();
@@ -134,11 +98,27 @@ export async function GET(request) {
     const filtrados = imoveisSimilares
       .filter((imovel) => {
         try {
+          // Filtro de área (original)
           const areaString = imovel.AreaPrivativa.toString()
             .replace(/[^\d.,]/g, "")
             .replace(",", ".");
           const area = parseFloat(areaString);
-          return !isNaN(area) && area >= areaMinima && area <= areaMaxima;
+          const areaValida = !isNaN(area) && area >= areaMinima && area <= areaMaxima;
+          
+          // 🆕 FILTRO DE PREÇO EM JAVASCRIPT (mais seguro)
+          if (precoMinimo && precoMaximo && imovel.ValorAntigo) {
+            const precoString = imovel.ValorAntigo.toString()
+              .replace(/[^\d.,]/g, "")
+              .replace(",", ".");
+            const preco = parseFloat(precoString);
+            
+            if (!isNaN(preco)) {
+              const precoValido = preco >= precoMinimo && preco <= precoMaximo;
+              return areaValida && precoValido;
+            }
+          }
+          
+          return areaValida;
         } catch (e) {
           return false;
         }
