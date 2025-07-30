@@ -163,48 +163,60 @@ const MediaSection = ({ formData, displayValues, onChange }) => {
             placeholder="https://my.matterport.com/show/?m=..."
           />
           
-          {/* ✅ NOVO: Thumbnail do Tour 360 (LEVE) */}
+          {/* ✅ NOVO: Thumbnail do Tour 360 (DESIGN ELEGANTE) */}
           {matterportId && (
             <div className="mt-3">
               <p className="text-xs text-gray-500 mb-2">Preview:</p>
               <div className="relative aspect-video w-full max-w-xs group">
                 <div 
-                  className="relative w-full h-full rounded border overflow-hidden cursor-pointer bg-gray-100"
+                  className="relative w-full h-full rounded-lg shadow-md overflow-hidden cursor-pointer bg-gradient-to-br from-gray-100 to-gray-200 border border-gray-300 hover:shadow-lg transition-all duration-300"
                   onClick={() => window.open(`https://my.matterport.com/show/?m=${matterportId}`, '_blank')}
                 >
-                  {/* Thumbnail do Matterport */}
+                  {/* Thumbnail do Matterport (com fallback para placeholder local) */}
                   <img
                     src={`https://cdn-2.matterport.com/apifs/models/${matterportId}/images/poster.jpg`}
                     alt="Preview do Tour 360°"
                     className="w-full h-full object-cover"
                     onError={(e) => {
-                      // Fallback: imagem genérica se não conseguir carregar
-                      e.target.style.display = 'none';
-                      e.target.nextElementSibling.style.display = 'flex';
+                      // Fallback 1: Tentar imagem local do projeto
+                      e.target.src = '/assets/images/tour_placeholder.jpg';
+                      e.target.onerror = () => {
+                        // Fallback 2: Esconder imagem e mostrar placeholder elegante
+                        e.target.style.display = 'none';
+                        e.target.parentElement.querySelector('.fallback-placeholder').style.display = 'flex';
+                      };
                     }}
                   />
                   
-                  {/* Fallback: placeholder quando thumbnail não carrega */}
-                  <div className="absolute inset-0 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white hidden">
+                  {/* Fallback elegante: placeholder quando nenhuma imagem carrega */}
+                  <div className="fallback-placeholder absolute inset-0 bg-gradient-to-br from-gray-400 via-gray-500 to-gray-600 flex items-center justify-center text-white hidden">
                     <div className="text-center">
-                      <div className="text-2xl mb-2">🏠</div>
-                      <div className="text-sm font-medium">Tour Virtual 360°</div>
+                      <div className="mb-3">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" className="w-8 h-8 mx-auto opacity-80">
+                          <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 1H5C3.89 1 3 1.89 3 3V21C3 22.1 3.89 23 5 23H19C20.1 23 21 22.1 21 21V9M19 9H14V4H5V19L8.5 15.5L11 18L14.5 14.5L19 19V9Z" />
+                        </svg>
+                      </div>
+                      <div className="text-sm font-medium opacity-90">Tour Virtual 360°</div>
+                      <div className="text-xs opacity-70 mt-1">Matterport</div>
                     </div>
                   </div>
                   
-                  {/* Overlay com botão play */}
-                  <div className="absolute inset-0 bg-black bg-opacity-20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <div className="bg-white bg-opacity-90 rounded-full p-3">
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" className="w-6 h-6 text-blue-600">
+                  {/* Overlay com botão play (design refinado) */}
+                  <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300">
+                    <div className="bg-white/90 backdrop-blur-sm rounded-full p-4 shadow-lg transform group-hover:scale-110 transition-transform duration-200">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" className="w-5 h-5 text-gray-700">
                         <path d="M8 5v14l11-7z" />
                       </svg>
                     </div>
                   </div>
                   
-                  {/* Badge "360°" */}
-                  <div className="absolute top-2 right-2 bg-blue-600 text-white text-xs px-2 py-1 rounded font-medium">
+                  {/* Badge "360°" (design elegante) */}
+                  <div className="absolute top-3 right-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white text-xs px-2.5 py-1 rounded-full font-medium shadow-sm">
                     360°
                   </div>
+                  
+                  {/* Borda sutil de hover */}
+                  <div className="absolute inset-0 rounded-lg border-2 border-transparent group-hover:border-gray-400/30 transition-colors duration-300"></div>
                 </div>
                 
                 <p className="text-xs text-gray-400 mt-1">
