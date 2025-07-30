@@ -216,6 +216,12 @@ export const useImovelForm = () => {
       console.log('📍 Endereco completo (frontend):', enderecoCompleto);
     }
     
+    // 🎯 PRESERVAR FOTOS EXATAMENTE COMO VIERAM DO BACKEND
+    if (dados.Foto && Array.isArray(dados.Foto)) {
+      dadosProcessados.Foto = [...dados.Foto]; // Cópia exata sem modificação
+      console.log('📸 FOTOS PRESERVADAS:', dadosProcessados.Foto.length, 'fotos mantidas intactas');
+    }
+    
     return dadosProcessados;
   }, [juntarEndereco]);
 
@@ -315,14 +321,24 @@ export const useImovelForm = () => {
 
         // Caso 2: Edição de imóvel existente (manter código original)
         if (imovelSelecionado?.Codigo && !isAutomacao) {
-          // 🎯 PROCESSAR dados recebidos do backend (juntar TipoEndereco + Endereco)
-          const dadosProcessados = processarDadosRecebidos(imovelSelecionado);
+          // 🎯 PROCESSAR apenas o endereço, preservar fotos intactas
+          const enderecoCompleto = juntarEndereco(
+            imovelSelecionado.TipoEndereco, 
+            imovelSelecionado.Endereco
+          );
           
           setFormData(prev => ({
             ...prev,
-            ...dadosProcessados,
+            ...imovelSelecionado, // ✅ Dados originais preservados
+            Endereco: enderecoCompleto, // ✅ Apenas endereço processado
             CodigoOriginal: imovelSelecionado.Codigo
           }));
+          
+          console.log('🔧 ENDEREÇO PROCESSADO NO CARREGAMENTO:');
+          console.log('📍 TipoEndereco (backend):', imovelSelecionado.TipoEndereco);
+          console.log('📍 Endereco (backend):', imovelSelecionado.Endereco);
+          console.log('📍 Endereco completo (frontend):', enderecoCompleto);
+          console.log('📸 FOTOS PRESERVADAS:', imovelSelecionado.Foto?.length || 0, 'fotos intactas');
           
           setDisplayValues({
             ValorAntigo: formatCurrencyInput(imovelSelecionado.ValorAntigo?.toString() || "0"),
@@ -358,7 +374,7 @@ export const useImovelForm = () => {
     };
 
     initializeForm();
-  }, [isAutomacao, imovelSelecionado?.Codigo, formatCurrencyInput, processarDadosRecebidos]);
+  }, [isAutomacao, imovelSelecionado?.Codigo, formatCurrencyInput, juntarEndereco]);
 
   useEffect(() => {
     if (!formData.Codigo) return;
