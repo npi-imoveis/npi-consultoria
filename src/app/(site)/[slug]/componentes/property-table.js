@@ -1,5 +1,4 @@
 "use client";
-
 import { formatterSlug } from "@/app/utils/formatter-slug";
 import { formatterValue } from "@/app/utils/formatter-value";
 
@@ -38,7 +37,6 @@ export function PropertyTable({ imoveisRelacionados, isLoading }) {
           {imoveisFiltrados.map((imovel, index) => {
             const slug = formatterSlug(imovel.Empreendimento);
             const href = `/imovel-${imovel.Codigo}/${slug}`;
-
             return (
               <tr
                 key={index}
@@ -53,7 +51,14 @@ export function PropertyTable({ imoveisRelacionados, isLoading }) {
                     ? "R$ " + imovel.ValorAntigo
                     : formatterValue(imovel.ValorAluguelSite)}
                 </td>
-                <td className="p-3">{imovel.MetragemAnt || imovel.AreaPrivativa} m² </td>
+                <td className="p-3">
+                  {(() => {
+                    const metragem = imovel.MetragemAnt || imovel.AreaPrivativa;
+                    return metragem && metragem.toString().includes('m²') 
+                      ? metragem 
+                      : `${metragem} m²`;
+                  })()}
+                </td>
                 <td className="p-3">{imovel.DormitoriosAntigo}</td>
                 <td className="p-3">{imovel.SuiteAntigo}</td>
                 <td className="p-3">{imovel.VagasAntigo}</td>
