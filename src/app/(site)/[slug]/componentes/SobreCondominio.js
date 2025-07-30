@@ -34,7 +34,7 @@ const processarHtmlDescricao = (htmlString) => {
         .replace(/<i>/g, '<i class="italic text-gray-800">');
 };
 
-// 🎯 FUNÇÃO PARA ORDENAR FOTOS (igual à da página principal)
+// 🎯 FUNÇÃO PARA ORDENAR FOTOS (CORRIGIDA - RESPEITA ORDEM MANUAL)
 function processarFotosCondominio(fotos, codigoCondominio) {
   if (!Array.isArray(fotos) || fotos.length === 0) {
     return [];
@@ -46,26 +46,45 @@ function processarFotosCondominio(fotos, codigoCondominio) {
       codigo: codigoCondominio
     });
     
-    // 🎯 FORÇAR photoSorter a usar SEMPRE Análise Inteligente
-    const fotosTemp = fotos.map(foto => {
-      // Remover campos ORDEM para forçar análise inteligente
-      const { Ordem, ordem, ORDEM, ...fotoSemOrdem } = foto;
-      return fotoSemOrdem;
+    // ✅ CORREÇÃO: Verificar se as fotos têm ordenação manual válida
+    const temOrdemManual = fotos.some(foto => {
+      const ordem = foto.Ordem || foto.ordem || foto.ORDEM;
+      return ordem && !isNaN(parseInt(ordem)) && parseInt(ordem) > 0;
     });
     
-    // USAR photoSorter.ordenarFotos() - IGUAL AO RESTO DO SISTEMA
-    const fotosOrdenadas = photoSorter.ordenarFotos(fotosTemp, codigoCondominio || 'sobre-condominio');
+    let fotosProcessadas;
+    
+    if (temOrdemManual) {
+      // ✅ SE TEM ORDEM MANUAL: Respeitar a ordenação do admin
+      console.log('📝 SOBRE-CONDOMÍNIO: Ordem manual detectada - usando ordenação do admin');
+      fotosProcessadas = [...fotos].sort((a, b) => {
+        const ordemA = parseInt(a.Ordem || a.ordem || a.ORDEM || 999);
+        const ordemB = parseInt(b.Ordem || b.ordem || b.ORDEM || 999);
+        return ordemA - ordemB;
+      });
+    } else {
+      // ✅ SE NÃO TEM ORDEM MANUAL: Usar análise inteligente
+      console.log('📝 SOBRE-CONDOMÍNIO: Ordem manual não encontrada - usando análise inteligente');
+      const fotosTemp = fotos.map(foto => {
+        // Remover campos ORDEM apenas quando não há ordem manual
+        const { Ordem, ordem, ORDEM, ...fotoSemOrdem } = foto;
+        return fotoSemOrdem;
+      });
+      
+      fotosProcessadas = photoSorter.ordenarFotos(fotosTemp, codigoCondominio || 'sobre-condominio');
+    }
     
     console.log('✅ SOBRE-CONDOMÍNIO: Ordenação finalizada:', {
-      totalFotos: fotosOrdenadas.length,
-      primeira: fotosOrdenadas[0]?.Foto?.split('/').pop()?.substring(0, 30) + '...',
-      metodo: 'photoSorter.ordenarFotos() - CONSISTENTE COM O SISTEMA'
+      totalFotos: fotosProcessadas.length,
+      primeira: fotosProcessadas[0]?.Foto?.split('/').pop()?.substring(0, 30) + '...',
+      metodo: temOrdemManual ? 'ORDEM MANUAL (Admin)' : 'ANÁLISE INTELIGENTE (photoSorter)',
+      ordemRespeitada: temOrdemManual
     });
 
-    return fotosOrdenadas;
+    return fotosProcessadas;
 
   } catch (error) {
-    console.error('❌ SOBRE-CONDOMÍNIO: Erro ao usar photoSorter:', error);
+    console.error('❌ SOBRE-CONDOMÍNIO: Erro ao processar fotos:', error);
     return fotos; // Fallback seguro
   }
 }
