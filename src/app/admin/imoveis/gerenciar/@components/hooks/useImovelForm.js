@@ -322,9 +322,20 @@ export const useImovelForm = () => {
 
         // Caso 2: Edição de imóvel existente (manter código original)
         if (imovelSelecionado?.Codigo && !isAutomacao) {
+          // 🎯 JUNTAR TipoEndereco + Endereco no carregamento inicial
+          const enderecoCompleto = imovelSelecionado.TipoEndereco && imovelSelecionado.Endereco
+            ? `${imovelSelecionado.TipoEndereco} ${imovelSelecionado.Endereco}`.trim()
+            : imovelSelecionado.Endereco || '';
+            
+          console.log('🔧 CARREGAMENTO INICIAL:');
+          console.log('📍 TipoEndereco (backend):', imovelSelecionado.TipoEndereco);
+          console.log('📍 Endereco (backend):', imovelSelecionado.Endereco);
+          console.log('📍 Endereco completo (frontend):', enderecoCompleto);
+          
           setFormData(prev => ({
             ...prev,
             ...imovelSelecionado,
+            Endereco: enderecoCompleto, // ✅ Campo unificado para o frontend
             CodigoOriginal: imovelSelecionado.Codigo
           }));
           
