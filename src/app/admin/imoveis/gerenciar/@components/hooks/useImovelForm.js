@@ -40,6 +40,7 @@ const INITIAL_FORM_DATA = {
   Ativo: "Sim",
   Construtora: "",
   Endereco: "",
+  TipoEndereco: "",
   Numero: "",
   Complemento: "",
   Bairro: "",
@@ -74,7 +75,7 @@ const INITIAL_FORM_DATA = {
   EmailCorretor: "",
   CelularCorretor: "",
   Imobiliaria: "",
-  Video: null, // ✅ CORREÇÃO: Mudado de {} para null
+  Video: null,
   Foto: [],
   isLoadingCEP: false,
   isLoadingCorretor: false,
@@ -85,6 +86,7 @@ const INITIAL_FORM_DATA = {
 export const useImovelForm = () => {
   const provider = useRef(new OpenStreetMapProvider());
   const fileInputRef = useRef(null);
+
   const imovelSelecionado = useImovelStore((state) => state.imovelSelecionado);
   const isAutomacao = imovelSelecionado?.Automacao === true;
 
@@ -141,7 +143,90 @@ export const useImovelForm = () => {
     });
   }, []);
 
-  // ✅ NOVA FUNÇÃO: Detectar e corrigir endereços incompletos
+  // ✅ FUNÇÃO UTILITÁRIA: Separar endereço completo em tipo + nome
+  const separarEndereco = useCallback((enderecoCompleto) => {
+    if (!enderecoCompleto || typeof enderecoCompleto !== 'string') {
+      return { TipoEndereco: '', Endereco: '' };
+    }
+
+    const prefixosValidos = [
+      'rua', 'avenida', 'alameda', 'travessa', 'praça', 'largo', 'rodovia',
+      'estrada', 'via', 'quadra', 'setor', 'conjunto', 'vila', 'jardim',
+      'parque', 'residencial', 'condomínio', 'loteamento'
+    ];
+
+    const enderecoLower = enderecoCompleto.toLowerCase().trim();
+    
+    for (const prefixo of prefixosValidos) {
+      if (enderecoLower.startsWith(prefixo + ' ')) {
+        return {
+          TipoEndereco: prefixo.charAt(0).toUpperCase() + prefixo.slice(1),
+          Endereco: enderecoCompleto.substring(prefixo.length + 1).trim()
+        };
+      }
+    }
+
+    // Se não encontrou prefixo, assume como Rua
+    return {
+      TipoEndereco: 'Rua',
+      Endereco: enderecoCompleto.trim()
+    };
+  }, []);
+
+  // ✅ FUNÇÃO UTILITÁRIA: Juntar tipo + nome em endereço completo
+  const juntarEndereco = useCallback((tipoEndereco, endereco) => {
+    if (!tipoEndereco && !endereco) return '';
+    if (!tipoEndereco) return endereco || '';
+    if (!endereco) return tipoEndereco || '';
+    return `${tipoEndereco.trim()} ${endereco.trim()}`.trim();
+  }, []);
+
+  // ✅ FUNÇÃO UTILITÁRIA: Preparar dados para envio ao backend
+  const prepararDadosParaEnvio = useCallback((dados) => {
+    const dadosParaEnvio = { ...dados };
+    
+    // Separar Endereco completo em TipoEndereco + Endereco para o backend
+    if (dadosParaEnvio.Endereco && typeof dadosParaEnvio.Endereco === 'string') {
+      const { TipoEndereco, Endereco } = separarEndereco(dadosParaEnvio.Endereco);
+      dadosParaEnvio.TipoEndereco = TipoEndereco;
+      dadosParaEnvio.Endereco = Endereco;
+      
+      console.log('🔧 PREPARANDO DADOS PARA BACKEND:');
+      console.log('📍 Endereco original (frontend):', dados.Endereco);
+      console.log('📍 TipoEndereco (backend):', TipoEndereco);
+      console.log('📍 Endereco (backend):', Endereco);
+    }
+    
+    return dadosParaEnvio;
+  }, [separarEndereco]);
+
+  // ✅ FUNÇÃO UTILITÁRIA: Processar dados recebidos do backend
+  const processarDadosRecebidos = useCallback((dados) => {
+    if (!dados) return dados;
+    
+    const dadosProcessados = { ...dados };
+    
+    // Juntar TipoEndereco + Endereco em campo único para o frontend
+    if (dados.TipoEndereco || dados.Endereco) {
+      const enderecoCompleto = juntarEndereco(dados.TipoEndereco, dados.Endereco);
+      dadosProcessados.Endereco = enderecoCompleto;
+      
+      console.log('🔧 PROCESSANDO DADOS DO BACKEND:');
+      console.log('📍 TipoEndereco (backend):', dados.TipoEndereco);
+      console.log('📍 Endereco (backend):', dados.Endereco);
+      console.log('📍 Endereco completo (frontend):', enderecoCompleto);
+    }
+    
+    // 🎯 PRESERVAR FOTOS EXATAMENTE COMO VIERAM DO BACKEND
+    if (dados.Foto && Array.isArray(dados.Foto)) {
+      dadosProcessados.Foto = [...dados.Foto]; // Cópia exata sem modificação
+      console.log('📸 FOTOS PRESERVADAS:', dadosProcessados.Foto.length, 'fotos mantidas intactas');
+    }
+    
+    return dadosProcessados;
+  }, [juntarEndereco]);
+
+  // ✅ FUNÇÃO CORRIGIDA: Detectar e corrigir endereços (SEM salvamento automático por ora)
   const corrigirEnderecoIncompleto = useCallback(async (endereco, cep) => {
     if (!endereco || !cep) return false;
     
@@ -165,7 +250,7 @@ export const useImovelForm = () => {
     }
     
     // Se não tem prefixo, consultar ViaCEP para corrigir
-    console.log('🔧 CORREÇÃO CEP: Endereço incompleto detectado:', endereco, '- CEP:', cep);
+    console.log('🔧 MIGRAÇÃO: Endereço incompleto detectado:', endereco, '- CEP:', cep);
     
     const cleanCep = cep.replace(/\D/g, "");
     if (cleanCep.length !== 8) return false;
@@ -179,7 +264,9 @@ export const useImovelForm = () => {
       
       // Verificar se o endereço da API é diferente e mais completo
       if (data.logradouro && data.logradouro.toLowerCase() !== enderecoLower) {
-        console.log('✅ CORREÇÃO CEP: Endereço corrigido:', endereco, '→', data.logradouro);
+        console.log('📊 MIGRAÇÃO - ANTES:', endereco);
+        console.log('📊 MIGRAÇÃO - DEPOIS:', data.logradouro);
+        console.log('💡 INSTRUÇÃO: Clique em ATUALIZAR IMÓVEL para salvar a correção');
         
         // Buscar coordenadas para o endereço corrigido
         let coords = null;
@@ -194,7 +281,7 @@ export const useImovelForm = () => {
           console.error("Erro ao buscar coordenadas:", error);
         }
         
-        // Atualizar formData com endereço corrigido
+        // 🎯 Atualizar formData local apenas
         setFormData(prev => ({
           ...prev,
           Endereco: data.logradouro,
@@ -208,11 +295,13 @@ export const useImovelForm = () => {
         return true; // Indica que foi corrigido
       }
     } catch (error) {
-      console.error('Erro ao corrigir endereço:', error);
+      console.error('Erro ao corrigir endereço da migração:', error);
     }
     
     return false;
-  }, []); // ✅ Sem dependências pois usa apenas provider.current e setFormData
+  }, []);
+
+
 
   // Inicialização do formulário
   useEffect(() => {
@@ -246,13 +335,12 @@ export const useImovelForm = () => {
             ValorIptu: formatCurrencyInput(imovelSelecionado.ValorIptu?.toString() || "0")
           });
           
-          // ✅ NOVA FUNCIONALIDADE: Correção automática de endereços incompletos
-          // Detecta endereços sem prefixo (ex: "Benedito Lapin" → "Rua Benedito Lapin")
-          // Funciona consultando o ViaCEP usando o CEP já existente no imóvel
+          // ✅ CORREÇÃO AUTOMÁTICA DA MIGRAÇÃO (apenas frontend por ora)
           if (imovelSelecionado.Endereco && imovelSelecionado.CEP) {
             setTimeout(() => {
+              console.log('🔍 MIGRAÇÃO: Verificando se endereço precisa de correção...');
               corrigirEnderecoIncompleto(imovelSelecionado.Endereco, imovelSelecionado.CEP);
-            }, 1000); // Aguardar 1s para não interferir com inicialização
+            }, 2000); // Aguardar 2s para garantir que formData esteja totalmente inicializado
           }
           
           return;
@@ -274,7 +362,7 @@ export const useImovelForm = () => {
     };
 
     initializeForm();
-  }, [isAutomacao, imovelSelecionado?.Codigo, formatCurrencyInput]); // ✅ corrigirEnderecoIncompleto não precisa de dependência
+  }, [isAutomacao, imovelSelecionado?.Codigo, formatCurrencyInput]);
 
   useEffect(() => {
     if (!formData.Codigo) return;
@@ -285,6 +373,8 @@ export const useImovelForm = () => {
     
     return () => clearTimeout(timer);
   }, [formData]);
+
+
 
   // Funções auxiliares
   const maskDate = useCallback((value) => {
@@ -336,9 +426,33 @@ export const useImovelForm = () => {
       }
 
       const coords = await debouncedFetchCoordinates(data);
+      
+      // 🎯 CORREÇÃO: Separar o endereço nos campos que o backend espera
+      const enderecoCompleto = data.logradouro || '';
+      const prefixosValidos = [
+        'rua', 'avenida', 'alameda', 'travessa', 'praça', 'largo', 'rodovia',
+        'estrada', 'via', 'quadra', 'setor', 'conjunto', 'vila', 'jardim',
+        'parque', 'residencial', 'condomínio', 'loteamento'
+      ];
+      
+      let tipoEndereco = '';
+      let endereco = enderecoCompleto;
+      
+      if (enderecoCompleto) {
+        const enderecoLower = enderecoCompleto.toLowerCase();
+        for (const prefixo of prefixosValidos) {
+          if (enderecoLower.startsWith(prefixo + ' ')) {
+            tipoEndereco = prefixo.charAt(0).toUpperCase() + prefixo.slice(1);
+            endereco = enderecoCompleto.substring(prefixo.length + 1).trim();
+            break;
+          }
+        }
+      }
+      
       setFormData(prev => ({
         ...prev,
-        Endereco: data.logradouro || prev.Endereco,
+        TipoEndereco: tipoEndereco || prev.TipoEndereco,
+        Endereco: endereco || prev.Endereco,
         Bairro: data.bairro || prev.Bairro,
         Cidade: data.localidade || prev.Cidade,
         UF: data.uf || prev.UF,
@@ -417,8 +531,6 @@ export const useImovelForm = () => {
       return;
     }
 
-    // ✅ RESTO DO CÓDIGO ORIGINAL PERMANECE IGUAL
-    
     // Tratamento específico para campos numéricos
     const numericFields = ['Dormitorios', 'Suites', 'Vagas', 'BanheiroSocialQtd'];
     if (numericFields.includes(name)) {
@@ -521,7 +633,7 @@ export const useImovelForm = () => {
 
     // Caso padrão para todos os outros campos
     setFormData(prev => ({ ...prev, [name]: value }));
-  }, [maskDate, fetchAddress, parseCurrency, formatCurrencyInput]); // ✅ corrigirEnderecoIncompleto removido das dependências
+  }, [maskDate, fetchAddress, parseCurrency, formatCurrencyInput]);
 
   // Funções de manipulação de imagens
   const addImage = useCallback(() => setShowImageModal(true), []);
@@ -687,20 +799,20 @@ export const useImovelForm = () => {
     setFormData(prev => ({
       ...INITIAL_FORM_DATA,
       Codigo: keepCode ? prev.Codigo : "",
-      Video: null, // ✅ CORREÇÃO: Garantir que Video seja null no reset
+      Video: null,
     }));
     
     setDisplayValues({
-      ValorAntigo: "R$ 0,00",
-      ValorAluguelSite: "R$ 0,00",
-      ValorCondominio: "R$ 0,00",
-      ValorIptu: "R$ 0,00",
+      ValorAntigo: "R$ 0",
+      ValorAluguelSite: "R$ 0",
+      ValorCondominio: "R$ 0",
+      ValorIptu: "R$ 0",
     });
     
     if (!keepCode) {
       generateRandomCode().then(code => {
         setNewImovelCode(code);
-        setFormData(prev => ({ ...prev, Codigo: code, Video: null })); // ✅ CORREÇÃO: Video null também aqui
+        setFormData(prev => ({ ...prev, Codigo: code, Video: null }));
       });
     }
   }, []);
@@ -728,7 +840,7 @@ export const useImovelForm = () => {
     formatCurrency,
     parseCurrency,
     formatCurrencyInput,
-    corrigirEnderecoIncompleto // ✅ NOVA FUNÇÃO EXPOSTA para uso manual se necessário
+    corrigirEnderecoIncompleto // ✅ Correção automática (separa campos para backend)
   };
 };
 
