@@ -11,59 +11,39 @@ const DetalhesCondominioSobre = dynamic(() => import('./DetalhesCondominioSobre'
     loading: () => <div className="w-full h-64 bg-zinc-100 animate-pulse rounded-lg"></div>
 });
 
-// ✅ NOVA FUNÇÃO: Processar HTML e aplicar estilos às tags
-const processarHtmlDescricao = (htmlString) => {
-    if (!htmlString) return '';
-    
-    return htmlString
-        // Processar tags de heading com classes Tailwind
-        .replace(/<h2>/g, '<h2 class="text-lg font-bold text-gray-900 mt-6 mb-3 leading-tight">')
-        .replace(/<h3>/g, '<h3 class="text-base font-semibold text-gray-800 mt-5 mb-2 leading-tight">')
-        .replace(/<h4>/g, '<h4 class="text-sm font-medium text-gray-700 mt-4 mb-2">')
-        .replace(/<h5>/g, '<h5 class="text-sm font-medium text-gray-600 mt-3 mb-1">')
-        // Processar parágrafos
-        .replace(/<p>/g, '<p class="text-sm text-gray-700 mb-3 leading-relaxed">')
-        // Processar listas
-        .replace(/<ul>/g, '<ul class="text-sm text-gray-700 mb-3 ml-4 space-y-1">')
-        .replace(/<ol>/g, '<ol class="text-sm text-gray-700 mb-3 ml-4 space-y-1">')
-        .replace(/<li>/g, '<li class="leading-relaxed">')
-        // Processar texto em negrito e itálico
-        .replace(/<strong>/g, '<strong class="font-semibold text-gray-900">')
-        .replace(/<b>/g, '<b class="font-semibold text-gray-900">')
-        .replace(/<em>/g, '<em class="italic text-gray-800">')
-        .replace(/<i>/g, '<i class="italic text-gray-800">');
-};
-
-// ✅ FUNÇÃO SIMPLES: Apenas ordena por Ordem (como era antes)
+// 🎯 FUNÇÃO PARA ORDENAR FOTOS (igual à da página principal)
 function processarFotosCondominio(fotos, codigoCondominio) {
   if (!Array.isArray(fotos) || fotos.length === 0) {
     return [];
   }
 
   try {
-    console.log('📝 SOBRE-CONDOMÍNIO: Ordenando fotos por campo Ordem...', {
+    console.log('📝 SOBRE-CONDOMÍNIO: Iniciando ordenação com photoSorter...', {
       totalFotos: fotos.length,
       codigo: codigoCondominio
     });
     
-    // ✅ SIMPLES: Apenas ordenar pelas fotos como vêm do admin
-    const fotosOrdenadas = [...fotos].sort((a, b) => {
-      const ordemA = parseInt(a.Ordem || a.ordem || a.ORDEM || 999);
-      const ordemB = parseInt(b.Ordem || b.ordem || b.ORDEM || 999);
-      return ordemA - ordemB;
+    // 🎯 FORÇAR photoSorter a usar SEMPRE Análise Inteligente
+    const fotosTemp = fotos.map(foto => {
+      // Remover campos ORDEM para forçar análise inteligente
+      const { Ordem, ordem, ORDEM, ...fotoSemOrdem } = foto;
+      return fotoSemOrdem;
     });
     
-    console.log('✅ SOBRE-CONDOMÍNIO: Fotos ordenadas por Ordem do admin:', {
+    // USAR photoSorter.ordenarFotos() - IGUAL AO RESTO DO SISTEMA
+    const fotosOrdenadas = photoSorter.ordenarFotos(fotosTemp, codigoCondominio || 'sobre-condominio');
+    
+    console.log('✅ SOBRE-CONDOMÍNIO: Ordenação finalizada:', {
       totalFotos: fotosOrdenadas.length,
       primeira: fotosOrdenadas[0]?.Foto?.split('/').pop()?.substring(0, 30) + '...',
-      ordemPrimeira: fotosOrdenadas[0]?.Ordem || fotosOrdenadas[0]?.ordem || 'N/A'
+      metodo: 'photoSorter.ordenarFotos() - CONSISTENTE COM O SISTEMA'
     });
 
     return fotosOrdenadas;
 
   } catch (error) {
-    console.error('❌ SOBRE-CONDOMÍNIO: Erro ao ordenar fotos:', error);
-    return fotos; // Fallback seguro - fotos na ordem original
+    console.error('❌ SOBRE-CONDOMÍNIO: Erro ao usar photoSorter:', error);
+    return fotos; // Fallback seguro
   }
 }
 
@@ -152,24 +132,18 @@ function DetalhesCondominioMelhorado({ condominio, expanded, setExpanded }) {
                         <span className="text-xs font-bold uppercase">{expanded ? "Ver menos" : "Ver mais"}</span>
                     </button>
                     
-                    {/* ✅ CORREÇÃO: Usar dangerouslySetInnerHTML para renderizar HTML */}
+                    {/* 🎯 TEXTO COM LAYOUT MELHORADO quando expanded */}
                     <div className={`mt-4 text-gray-700 ${expanded ? 'block' : 'line-clamp-3'}`}>
                         {expanded ? (
                             <div className="columns-1 md:columns-2 lg:columns-2 gap-8">
-                                <div 
-                                    className="text-sm leading-relaxed text-justify break-words prose prose-sm max-w-none"
-                                    dangerouslySetInnerHTML={{ 
-                                        __html: processarHtmlDescricao(condominio.DescricaoUnidades) 
-                                    }}
-                                />
+                                <h4 className="text-xs leading-relaxed whitespace-pre-line text-justify break-words">
+                                    {condominio.DescricaoUnidades}
+                                </h4>
                             </div>
                         ) : (
-                            <div 
-                                className="text-sm line-clamp-3 prose prose-sm max-w-none"
-                                dangerouslySetInnerHTML={{ 
-                                    __html: processarHtmlDescricao(condominio.DescricaoUnidades) 
-                                }}
-                            />
+                            <h4 className="text-xs whitespace-pre-line">
+                                {condominio.DescricaoUnidades}
+                            </h4>
                         )}
                     </div>
                 </div>
@@ -208,4 +182,5 @@ function getMaxVagas(condominio) {
     });
 
     return maxVagas;
+
 }
