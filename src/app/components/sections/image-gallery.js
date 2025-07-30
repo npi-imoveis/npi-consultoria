@@ -21,30 +21,6 @@ function useIsMobile() {
   return isMobile;
 }
 
-// 🎯 HOOK PARA DETECTAR ORIENTAÇÃO DA FOTO PRINCIPAL
-function useImageOrientation(src) {
-  const [isVertical, setIsVertical] = useState(false);
-  
-  useEffect(() => {
-    if (!src) {
-      setIsVertical(false);
-      return;
-    }
-    
-    const img = new Image();
-    img.onload = () => {
-      // Detecta se foto é significativamente mais alta que larga
-      setIsVertical(img.height > img.width * 1.3);
-    };
-    img.onerror = () => {
-      setIsVertical(false);
-    };
-    img.src = src;
-  }, [src]);
-  
-  return isVertical;
-}
-
 export function ImageGallery({ 
   // Props para página de IMÓVEL (modo original)
   imovel,
@@ -137,9 +113,6 @@ export function ImageGallery({
     }
   }, [processedData, isImovelMode]);
 
-  // 🎯 DETECTAR ORIENTAÇÃO DA FOTO PRINCIPAL (só se há imagens)
-  const isMainImageVertical = useImageOrientation(images.length > 0 ? images[0]?.Foto : null);
-
   // 🔍 DEBUG
   const debugInfo = useMemo(() => {
     if (!debugMode || !processedData.fotos) return null;
@@ -202,21 +175,6 @@ export function ImageGallery({
     }
   };
 
-  // 🎯 CLASSES PARA FOTO PRINCIPAL BASEADAS NA ORIENTAÇÃO
-  const getMainImageClasses = (baseClasses) => {
-    if (isMainImageVertical) {
-      return `${baseClasses} h-[500px] max-h-[500px]`; // Foto vertical limitada
-    }
-    return baseClasses; // Foto horizontal/quadrada normal
-  };
-
-  const getMainContainerHeight = () => {
-    if (isMainImageVertical) {
-      return 'h-[500px]'; // Container limitado para foto vertical
-    }
-    return 'h-[410px]'; // Container padrão
-  };
-
   return (
     <>
       {/* 🔍 DEBUG INFO */}
@@ -246,7 +204,7 @@ export function ImageGallery({
             blurDataURL={images[0].blurDataURL || "/placeholder.png"}
             loading="eager"
             priority={true}
-            className={getMainImageClasses("w-full object-cover transition-transform duration-300 ease-in-out hover:scale-105")}
+            className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-105"
           />
 
           {/* 🏷️ Indicador de destaque */}
@@ -271,7 +229,7 @@ export function ImageGallery({
       ) : (
         // LAYOUT GRID: Grid tradicional com foto principal + thumbnails
         <div className="grid grid-cols-1 md:grid-cols-2 gap-1 w-full">
-          <div className={`col-span-1 cursor-pointer relative ${getMainContainerHeight()}`} onClick={() => openModal()}>
+          <div className="col-span-1 h-[410px] cursor-pointer relative" onClick={() => openModal()}>
             <div className="w-full h-full overflow-hidden">
               <Image
                 src={images[0].Foto}
