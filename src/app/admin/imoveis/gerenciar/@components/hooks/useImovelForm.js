@@ -141,7 +141,7 @@ export const useImovelForm = () => {
     });
   }, []);
 
-  // ✅ NOVA FUNÇÃO: Detectar e corrigir endereços incompletos da migração
+  // ✅ NOVA FUNÇÃO: Detectar e corrigir endereços incompletos
   const corrigirEnderecoIncompleto = useCallback(async (endereco, cep) => {
     if (!endereco || !cep) return false;
     
@@ -212,7 +212,7 @@ export const useImovelForm = () => {
     }
     
     return false;
-  }, []);
+  }, []); // ✅ Sem dependências pois usa apenas provider.current e setFormData
 
   // Inicialização do formulário
   useEffect(() => {
@@ -246,7 +246,7 @@ export const useImovelForm = () => {
             ValorIptu: formatCurrencyInput(imovelSelecionado.ValorIptu?.toString() || "0")
           });
           
-          // ✅ NOVA FUNCIONALIDADE: Correção automática de endereços incompletos da migração
+          // ✅ NOVA FUNCIONALIDADE: Correção automática de endereços incompletos
           // Detecta endereços sem prefixo (ex: "Benedito Lapin" → "Rua Benedito Lapin")
           // Funciona consultando o ViaCEP usando o CEP já existente no imóvel
           if (imovelSelecionado.Endereco && imovelSelecionado.CEP) {
@@ -274,7 +274,7 @@ export const useImovelForm = () => {
     };
 
     initializeForm();
-  }, [isAutomacao, imovelSelecionado?.Codigo, formatCurrencyInput]);
+  }, [isAutomacao, imovelSelecionado?.Codigo, formatCurrencyInput]); // ✅ corrigirEnderecoIncompleto não precisa de dependência
 
   useEffect(() => {
     if (!formData.Codigo) return;
@@ -464,7 +464,9 @@ export const useImovelForm = () => {
       CEP: () => {
         const formattedCEP = value.replace(/\D/g, "").slice(0, 8);
         setFormData(prev => ({ ...prev, [name]: formattedCEP }));
-        if (formattedCEP.length === 8) fetchAddress(formattedCEP);
+        if (formattedCEP.length === 8) {
+          fetchAddress(formattedCEP);
+        }
       },
       Empreendimento: () => {
         setFormData(prev => ({ 
@@ -519,7 +521,7 @@ export const useImovelForm = () => {
 
     // Caso padrão para todos os outros campos
     setFormData(prev => ({ ...prev, [name]: value }));
-  }, [maskDate, fetchAddress, parseCurrency, formatCurrencyInput]);
+  }, [maskDate, fetchAddress, parseCurrency, formatCurrencyInput]); // ✅ corrigirEnderecoIncompleto removido das dependências
 
   // Funções de manipulação de imagens
   const addImage = useCallback(() => setShowImageModal(true), []);
