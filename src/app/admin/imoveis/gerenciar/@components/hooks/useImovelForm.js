@@ -74,7 +74,7 @@ const INITIAL_FORM_DATA = {
   EmailCorretor: "",
   CelularCorretor: "",
   Imobiliaria: "",
-  Video: null,
+  Video: null, // ✅ CORREÇÃO: Mudado de {} para null
   Foto: [],
   isLoadingCEP: false,
   isLoadingCorretor: false,
@@ -82,34 +82,11 @@ const INITIAL_FORM_DATA = {
   corretorError: null
 };
 
-/*
- * Hook para gerenciar formulário de imóveis
- * 
- * @param {Function} onAutoSave - Callback opcional para salvamento automático após correção de endereço
- *                                Deve retornar Promise<boolean> indicando sucesso/falha do salvamento
- *                                Recebe objeto: { enderecoAntigo, enderecoNovo, motivo }
- * 
- * Exemplo de uso:
- * const { formData, handleChange, ... } = useImovelForm(async (dados) => {
- *   try {
- *     const resultado = await salvarImovel(formData);
- *     return resultado.success;
- *   } catch (error) {
- *     console.error('Erro ao salvar:', error);
- *     return false;
- *   }
- * });
- */
-export const useImovelForm = (onAutoSave) => {
+export const useImovelForm = () => {
   const provider = useRef(new OpenStreetMapProvider());
   const fileInputRef = useRef(null);
   const imovelSelecionado = useImovelStore((state) => state.imovelSelecionado);
   const isAutomacao = imovelSelecionado?.Automacao === true;
-
-  // 🎯 REFS PARA CONTROLE DE PROTEÇÃO
-  const correcaoEnderecoExecutada = useRef(false);
-  const ultimaMudancaFotos = useRef(0);
-  const ultimoSalvamentoLocalStorage = useRef(0);
 
   const [formData, setFormData] = useState(INITIAL_FORM_DATA);
   const [displayValues, setDisplayValues] = useState({
@@ -164,85 +141,9 @@ export const useImovelForm = (onAutoSave) => {
     });
   }, []);
 
-  // ✅ FUNÇÃO UTILITÁRIA: Mostrar notificações visuais
-  const mostrarNotificacao = useCallback((titulo, subtitulo, tipo = 'success') => {
-    if (typeof window === 'undefined') return;
-    
-    const cores = {
-      success: '#10b981',
-      warning: '#f59e0b', 
-      info: '#3b82f6',
-      error: '#ef4444'
-    };
-    
-    const notification = document.createElement('div');
-    notification.innerHTML = `
-      <div style="
-        position: fixed; 
-        top: 20px; 
-        right: 20px; 
-        background: ${cores[tipo]}; 
-        color: white; 
-        padding: 12px 20px; 
-        border-radius: 8px; 
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        z-index: 9999;
-        font-size: 14px;
-        font-weight: 500;
-        max-width: 400px;
-        animation: slideInRight 0.3s ease-out;
-      ">
-        ${titulo}
-        ${subtitulo ? `<div style="font-size: 12px; opacity: 0.9; margin-top: 4px;">${subtitulo}</div>` : ''}
-      </div>
-      <style>
-        @keyframes slideInRight {
-          from { transform: translateX(100%); opacity: 0; }
-          to { transform: translateX(0); opacity: 1; }
-        }
-        @keyframes slideOutRight {
-          from { transform: translateX(0); opacity: 1; }
-          to { transform: translateX(100%); opacity: 0; }
-        }
-      </style>
-    `;
-    
-    document.body.appendChild(notification.firstElementChild);
-    
-    // Remover notificação após 5 segundos
-    setTimeout(() => {
-      const notif = document.querySelector('[style*="position: fixed"][style*="top: 20px"][style*="right: 20px"]');
-      if (notif) {
-        notif.style.animation = 'slideOutRight 0.3s ease-in forwards';
-        setTimeout(() => notif.remove(), 300);
-      }
-    }, 5000);
-  }, []);
-
-  // ✅ NOVA FUNÇÃO: Detectar e corrigir endereços incompletos da migração
-  const corrigirEnderecoIncompleto = useCallback(async (endereco, cep, autoSave = false) => {
-    // 🛡️ PROTEÇÃO 1: Não executar mais de uma vez
-    if (correcaoEnderecoExecutada.current) {
-      console.log('🛡️ CORREÇÃO CEP: Já executada anteriormente - pulando');
-      return false;
-    }
-    
-    // 🛡️ PROTEÇÃO 2: Não executar se fotos foram alteradas recentemente (últimos 15 segundos)
-    const tempoDesdeUltimaMudanca = Date.now() - ultimaMudancaFotos.current;
-    if (ultimaMudancaFotos.current > 0 && tempoDesdeUltimaMudanca < 15000) {
-      console.log('🛡️ CORREÇÃO CEP: Fotos alteradas recentemente - pulando para preservar mudanças manuais');
-      return false;
-    }
-    
-    if (!endereco || !cep) {
-      console.log('🛡️ CORREÇÃO CEP: Endereço ou CEP inválido');
-      return false;
-    }
-    
-    console.log('🔧 CORREÇÃO CEP: Iniciando análise...', { endereco, cep });
-    
-    // Marcar como executada ANTES de começar
-    correcaoEnderecoExecutada.current = true;
+  // ✅ NOVA FUNÇÃO: Detectar e corrigir endereços incompletos
+  const corrigirEnderecoIncompleto = useCallback(async (endereco, cep) => {
+    if (!endereco || !cep) return false;
     
     // Lista de prefixos válidos de logradouro
     const prefixosValidos = [
@@ -267,10 +168,7 @@ export const useImovelForm = (onAutoSave) => {
     console.log('🔧 CORREÇÃO CEP: Endereço incompleto detectado:', endereco, '- CEP:', cep);
     
     const cleanCep = cep.replace(/\D/g, "");
-    if (cleanCep.length !== 8) {
-      console.log('❌ CORREÇÃO CEP: CEP inválido');
-      return false;
-    }
+    if (cleanCep.length !== 8) return false;
     
     try {
       const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
@@ -293,81 +191,32 @@ export const useImovelForm = (onAutoSave) => {
             longitude: results[0].x?.toString() || "" 
           } : null;
         } catch (error) {
-          console.error("CORREÇÃO CEP: Erro ao buscar coordenadas:", error);
+          console.error("Erro ao buscar coordenadas:", error);
         }
         
-        // 🎯 ATUALIZAÇÃO SUPER ESPECÍFICA - APENAS CAMPOS DE ENDEREÇO
-        setFormData(prevFormData => {
-          console.log('🔧 CORREÇÃO CEP: Atualizando APENAS campos de endereço...');
-          console.log('🔧 CORREÇÃO CEP: Fotos ANTES:', prevFormData.Foto?.length);
-          console.log('🔧 CORREÇÃO CEP: Primeira foto ANTES:', prevFormData.Foto?.[0]?.Codigo?.substring(0, 15));
-          
-          const updated = {
-            ...prevFormData, // ✅ MANTER TUDO EXATAMENTE COMO ESTÁ
-            // Atualizar APENAS campos específicos de endereço
-            Endereco: data.logradouro,
-            Bairro: data.bairro || prevFormData.Bairro,
-            Cidade: data.localidade || prevFormData.Cidade,
-            UF: data.uf || prevFormData.UF,
-            Latitude: coords?.latitude || prevFormData.Latitude,
-            Longitude: coords?.longitude || prevFormData.Longitude
-            // ✅ CRÍTICO: NÃO TOCAR EM MAIS NADA - especialmente Foto, Video, etc.
-          };
-          
-          console.log('🔧 CORREÇÃO CEP: Fotos DEPOIS:', updated.Foto?.length);
-          console.log('🔧 CORREÇÃO CEP: Primeira foto DEPOIS:', updated.Foto?.[0]?.Codigo?.substring(0, 15));
-          console.log('🔧 CORREÇÃO CEP: Arrays são idênticos?', prevFormData.Foto === updated.Foto);
-          
-          return updated;
-        });
-        
-        // ✅ SALVAMENTO AUTOMÁTICO MELHORADO
-        if (autoSave && typeof onAutoSave === 'function') {
-          setTimeout(async () => {
-            console.log('💾 CORREÇÃO CEP: Iniciando salvamento automático...');
-            
-            try {
-              const resultado = await onAutoSave({
-                enderecoAntigo: endereco,
-                enderecoNovo: data.logradouro,
-                motivo: 'correção automática de endereço incompleto'
-              });
-              
-              if (resultado) {
-                mostrarNotificacao(`✅ Endereço corrigido e salvo automaticamente!`, `${endereco} → ${data.logradouro}`, 'success');
-              } else {
-                mostrarNotificacao(`⚠️ Endereço corrigido, mas falha ao salvar`, `Por favor, salve manualmente`, 'warning');
-              }
-            } catch (error) {
-              console.error('CORREÇÃO CEP: Erro no salvamento automático:', error);
-              mostrarNotificacao(`⚠️ Endereço corrigido, mas falha ao salvar`, `Por favor, salve manualmente`, 'warning');
-            }
-          }, 3000); // 🎯 3 segundos para garantir que formData foi atualizado
-        } else if (autoSave) {
-          // Se não há callback, apenas mostrar que foi corrigido
-          setTimeout(() => {
-            mostrarNotificacao(`✅ Endereço corrigido automaticamente!`, `${endereco} → ${data.logradouro}`, 'info');
-          }, 1000);
-        }
+        // Atualizar formData com endereço corrigido
+        setFormData(prev => ({
+          ...prev,
+          Endereco: data.logradouro,
+          Bairro: data.bairro || prev.Bairro,
+          Cidade: data.localidade || prev.Cidade,
+          UF: data.uf || prev.UF,
+          Latitude: coords?.latitude || prev.Latitude,
+          Longitude: coords?.longitude || prev.Longitude,
+        }));
         
         return true; // Indica que foi corrigido
       }
     } catch (error) {
-      console.error('CORREÇÃO CEP: Erro ao corrigir endereço:', error);
+      console.error('Erro ao corrigir endereço:', error);
     }
     
     return false;
-  }, [mostrarNotificacao, onAutoSave]);
+  }, []); // ✅ Sem dependências pois usa apenas provider.current e setFormData
 
   // Inicialização do formulário
   useEffect(() => {
     const initializeForm = async () => {
-      console.log('🚀 INICIALIZAÇÃO: Iniciando formulário...', { 
-        isAutomacao, 
-        codigoImovel: imovelSelecionado?.Codigo,
-        timestamp: new Date().toISOString()
-      });
-
       try {
         // Caso 1: Imóvel de automação (sempre gerar novo código)
         if (isAutomacao) {
@@ -384,11 +233,6 @@ export const useImovelForm = (onAutoSave) => {
 
         // Caso 2: Edição de imóvel existente (manter código original)
         if (imovelSelecionado?.Codigo && !isAutomacao) {
-          console.log('📝 INICIALIZAÇÃO: Carregando imóvel existente:', imovelSelecionado.Codigo);
-          console.log('📸 INICIALIZAÇÃO: Fotos do imóvel:', imovelSelecionado.Foto?.length || 0);
-          console.log('📸 INICIALIZAÇÃO: Primeira foto:', imovelSelecionado.Foto?.[0]?.Codigo?.substring(0, 15));
-          console.log('📸 INICIALIZAÇÃO: Ordem das fotos:', imovelSelecionado.Foto?.map(f => ({ C: f.Codigo?.substring(0, 10), O: f.Ordem })));
-          
           setFormData(prev => ({
             ...prev,
             ...imovelSelecionado,
@@ -402,14 +246,13 @@ export const useImovelForm = (onAutoSave) => {
             ValorIptu: formatCurrencyInput(imovelSelecionado.ValorIptu?.toString() || "0")
           });
           
-          // ✅ CORREÇÃO AUTOMÁTICA COM DELAY E PROTEÇÃO TOTAL
+          // ✅ NOVA FUNCIONALIDADE: Correção automática de endereços incompletos
+          // Detecta endereços sem prefixo (ex: "Benedito Lapin" → "Rua Benedito Lapin")
+          // Funciona consultando o ViaCEP usando o CEP já existente no imóvel
           if (imovelSelecionado.Endereco && imovelSelecionado.CEP) {
-            console.log('⏰ INICIALIZAÇÃO: Agendando correção de endereço em 8 segundos...');
             setTimeout(() => {
-              console.log('🔧 INICIALIZAÇÃO: Executando correção de endereço...');
-              console.log('🔧 INICIALIZAÇÃO: Fotos no momento da correção:', formData.Foto?.length);
-              corrigirEnderecoIncompleto(imovelSelecionado.Endereco, imovelSelecionado.CEP, true);
-            }, 8000); // 🎯 8 segundos para garantir inicialização completa
+              corrigirEnderecoIncompleto(imovelSelecionado.Endereco, imovelSelecionado.CEP);
+            }, 1000); // Aguardar 1s para não interferir com inicialização
           }
           
           return;
@@ -426,44 +269,19 @@ export const useImovelForm = (onAutoSave) => {
           }));
         }
       } catch (error) {
-        console.error("INICIALIZAÇÃO: Erro ao inicializar formulário:", error);
+        console.error("Erro ao inicializar formulário:", error);
       }
     };
 
-    // Reset das refs quando muda o imóvel
-    correcaoEnderecoExecutada.current = false;
-    ultimaMudancaFotos.current = 0;
-    ultimoSalvamentoLocalStorage.current = 0;
-
     initializeForm();
-  }, [isAutomacao, imovelSelecionado?.Codigo, formatCurrencyInput, corrigirEnderecoIncompleto]);
+  }, [isAutomacao, imovelSelecionado?.Codigo, formatCurrencyInput]); // ✅ corrigirEnderecoIncompleto não precisa de dependência
 
-  // ✅ SALVAMENTO NO LOCALSTORAGE OTIMIZADO COM PROTEÇÃO
   useEffect(() => {
     if (!formData.Codigo) return;
     
-    // Debounce para evitar salvamentos excessivos
     const timer = setTimeout(() => {
-      try {
-        const agora = Date.now();
-        
-        // Evitar salvamentos muito frequentes (mínimo 2 segundos entre salvamentos)
-        if (agora - ultimoSalvamentoLocalStorage.current < 2000) {
-          return;
-        }
-        
-        localStorage.setItem('imovelFormDraft', JSON.stringify(formData));
-        ultimoSalvamentoLocalStorage.current = agora;
-        
-        console.log('💾 LOCALSTORAGE: Draft salvo', { 
-          codigo: formData.Codigo?.substring(0, 10), 
-          fotos: formData.Foto?.length || 0,
-          timestamp: new Date().toISOString()
-        });
-      } catch (error) {
-        console.error('❌ LOCALSTORAGE: Erro ao salvar draft:', error);
-      }
-    }, 1500); // 1.5 segundos de debounce
+      localStorage.setItem('imovelFormDraft', JSON.stringify(formData));
+    }, 500);
     
     return () => clearTimeout(timer);
   }, [formData]);
@@ -541,7 +359,7 @@ export const useImovelForm = (onAutoSave) => {
 
   // ✅ FUNÇÃO handleChange CORRIGIDA - ACEITA AMBOS OS FORMATOS
   const handleChange = useCallback((fieldOrEvent, valueOrUndefined) => {
-    console.log('🔄 handleChange chamado:', { field: typeof fieldOrEvent === 'string' ? fieldOrEvent : fieldOrEvent?.target?.name, timestamp: Date.now() });
+    console.log('🔄 useImovelForm.handleChange chamado:', { fieldOrEvent, valueOrUndefined });
     
     // ✅ DETECTAR se é chamada direta (field, value) ou evento (e.target)
     let name, value;
@@ -550,24 +368,21 @@ export const useImovelForm = (onAutoSave) => {
       // 🎯 CHAMADA DIRETA: onChange("Video", videoData)
       name = fieldOrEvent;
       value = valueOrUndefined;
+      console.log('🎯 Chamada direta detectada:', { name, value });
     } else if (fieldOrEvent?.target) {
       // 🎯 EVENTO: onChange(e) onde e.target.name e e.target.value
       name = fieldOrEvent.target.name;
       value = fieldOrEvent.target.value;
+      console.log('🎯 Evento detectado:', { name, value });
     } else {
       console.error('❌ handleChange: formato inválido:', { fieldOrEvent, valueOrUndefined });
       return;
     }
 
-    // 🎯 MARCAR TIMESTAMP PARA CAMPOS IMPORTANTES (especialmente fotos/vídeo)
-    if (name === 'Foto' || name === 'Video') {
-      ultimaMudancaFotos.current = Date.now();
-      console.log('📸 handleChange: Mudança em mídia detectada - timestamp atualizado');
-    }
-
     // Debug específico para Video
     if (name === "Video") {
-      console.log('🎥 PROCESSANDO VIDEO no handleChange:');
+      console.log('🎥 PROCESSANDO VIDEO no useImovelForm:');
+      console.log('🎥 Field:', name);
       console.log('🎥 Value recebido:', value);
       console.log('🎥 Tipo do value:', typeof value);
       console.log('🎥 Value é objeto?', typeof value === 'object' && value !== null);
@@ -578,7 +393,7 @@ export const useImovelForm = (onAutoSave) => {
     if (name === "Video") {
       console.log('🎥 Atualizando Video diretamente no formData');
       
-      // ✅ LÓGICA: Se value é falsy, vazio ou objeto vazio, setar como null
+      // ✅ NOVA LÓGICA: Se value é falsy, vazio ou objeto vazio, setar como null
       let processedValue = value;
       
       // Verificar se o vídeo está sendo removido
@@ -594,14 +409,16 @@ export const useImovelForm = (onAutoSave) => {
       
       setFormData(prev => {
         const updated = { ...prev, Video: processedValue };
-        console.log('🎥 FormData Video ANTES:', prev.Video);
-        console.log('🎥 FormData Video DEPOIS:', updated.Video);
+        console.log('🎥 FormData ANTES da atualização:', prev.Video);
+        console.log('🎥 FormData DEPOIS da atualização:', updated.Video);
         return updated;
       });
       console.log('🎥 Video atualizado com sucesso!');
       return;
     }
 
+    // ✅ RESTO DO CÓDIGO ORIGINAL PERMANECE IGUAL
+    
     // Tratamento específico para campos numéricos
     const numericFields = ['Dormitorios', 'Suites', 'Vagas', 'BanheiroSocialQtd'];
     if (numericFields.includes(name)) {
@@ -610,16 +427,35 @@ export const useImovelForm = (onAutoSave) => {
       return;
     }
 
-    // Campos monetários
-    const monetaryFields = ['ValorAntigo', 'ValorAluguelSite', 'ValorCondominio', 'ValorIptu'];
-    if (monetaryFields.includes(name)) {
-      const numericValue = parseCurrency(value);
-      setFormData(prev => ({ ...prev, [name]: numericValue }));
+    // Handler específico para campos numéricos (Dormitórios, Suítes, Vagas)
+    const handleNumericField = (fieldName, fieldValue) => {
+      const numericValue = fieldValue.replace(/\D/g, '');
+      setFormData(prev => ({ ...prev, [fieldName]: numericValue }));
+    };
+
+    // Verifica se é um campo numérico
+    if (numericFields.includes(name)) {
+      handleNumericField(name, value);
+      return; // Sai da função após processar
+    }
+
+    // Handlers para campos monetários
+    const handleMonetaryField = (fieldName, fieldValue) => {
+      const numericValue = parseCurrency(fieldValue);
+      setFormData(prev => ({ ...prev, [fieldName]: numericValue }));
       setDisplayValues(prev => ({ 
         ...prev, 
-        [name]: formatCurrencyInput(value) 
+        [fieldName]: formatCurrencyInput(fieldValue) 
       }));
-      return;
+    };
+
+    // Campos monetários
+    const monetaryFields = ['ValorAntigo', 'ValorAluguelSite', 'ValorCondominio', 'ValorIptu'];
+
+    // Verifica se é um campo monetário
+    if (monetaryFields.includes(name)) {
+      handleMonetaryField(name, value);
+      return; // Sai da função após processar
     }
 
     // Handlers especiais
@@ -628,7 +464,9 @@ export const useImovelForm = (onAutoSave) => {
       CEP: () => {
         const formattedCEP = value.replace(/\D/g, "").slice(0, 8);
         setFormData(prev => ({ ...prev, [name]: formattedCEP }));
-        if (formattedCEP.length === 8) fetchAddress(formattedCEP);
+        if (formattedCEP.length === 8) {
+          fetchAddress(formattedCEP);
+        }
       },
       Empreendimento: () => {
         setFormData(prev => ({ 
@@ -678,20 +516,18 @@ export const useImovelForm = (onAutoSave) => {
     // Verifica se é um campo especial
     if (specialHandlers[name]) {
       specialHandlers[name]();
-      return;
+      return; // Sai da função após processar
     }
 
     // Caso padrão para todos os outros campos
     setFormData(prev => ({ ...prev, [name]: value }));
-  }, [maskDate, fetchAddress, parseCurrency, formatCurrencyInput]);
+  }, [maskDate, fetchAddress, parseCurrency, formatCurrencyInput]); // ✅ corrigirEnderecoIncompleto removido das dependências
 
   // Funções de manipulação de imagens
   const addImage = useCallback(() => setShowImageModal(true), []);
   
   const addSingleImage = useCallback((url) => {
     if (!url?.trim()) return;
-
-    ultimaMudancaFotos.current = Date.now(); // 🎯 Marcar mudança
 
     const cleanUrl = (() => {
       try {
@@ -706,33 +542,22 @@ export const useImovelForm = (onAutoSave) => {
       }
     })();
 
-    setFormData(prev => {
-      const currentFotos = Array.isArray(prev.Foto) ? prev.Foto : [];
-      const newFoto = {
-        Codigo: `img-${Date.now()}`,
-        Foto: cleanUrl.trim(),
-        Destaque: "Nao",
-        Ordem: currentFotos.length + 1
-      };
-      
-      console.log('📸 addSingleImage: Adicionando foto', { 
-        codigo: newFoto.Codigo.substring(0, 15), 
-        ordem: newFoto.Ordem,
-        totalAntes: currentFotos.length,
-        totalDepois: currentFotos.length + 1
-      });
-      
-      return {
-        ...prev,
-        Foto: [...currentFotos, newFoto]
-      };
-    });
+    setFormData(prev => ({
+      ...prev,
+      Foto: [
+        ...(Array.isArray(prev.Foto) ? prev.Foto : []),
+        {
+          Codigo: `img-${Date.now()}`,
+          Foto: cleanUrl.trim(),
+          Destaque: "Nao",
+          Ordem: (Array.isArray(prev.Foto) ? prev.Foto.length + 1 : 1)
+        }
+      ]
+    }));
   }, []);
 
   const updateImage = useCallback((codigo, newUrl) => {
     if (!codigo || !newUrl?.trim()) return;
-    
-    ultimaMudancaFotos.current = Date.now(); // 🎯 Marcar mudança
     
     setFormData(prev => ({
       ...prev,
@@ -742,34 +567,19 @@ export const useImovelForm = (onAutoSave) => {
           )
         : []
     }));
-
-    console.log('📸 updateImage: Foto atualizada', { codigo: codigo.substring(0, 15) });
   }, []);
 
   const removeImage = useCallback((codigo) => {
     if (!codigo) return;
     
-    ultimaMudancaFotos.current = Date.now(); // 🎯 Marcar mudança
-    
-    setFormData(prev => {
-      const fotosFiltered = Array.isArray(prev.Foto)
-        ? prev.Foto.filter(img => img.Codigo !== codigo)
-        : [];
-      
-      // Reordenar após remoção
-      const fotosReordenadas = fotosFiltered.map((img, i) => ({ ...img, Ordem: i + 1 }));
-      
-      console.log('📸 removeImage: Foto removida e lista reordenada', { 
-        codigoRemovido: codigo.substring(0, 15),
-        totalAntes: prev.Foto?.length || 0,
-        totalDepois: fotosReordenadas.length
-      });
-      
-      return {
-        ...prev,
-        Foto: fotosReordenadas
-      };
-    });
+    setFormData(prev => ({
+      ...prev,
+      Foto: Array.isArray(prev.Foto)
+        ? prev.Foto
+            .filter(img => img.Codigo !== codigo)
+            .map((img, i) => ({ ...img, Ordem: i + 1 }))
+        : []
+    }));
   }, []);
 
   const removeAllImages = useCallback(() => {
@@ -777,18 +587,11 @@ export const useImovelForm = (onAutoSave) => {
     if (!confirm("⚠️ Tem certeza que deseja remover TODAS as imagens?")) return;
     if (!confirm("🚨 Esta ação é irreversível! Confirmar remoção total?")) return;
     
-    ultimaMudancaFotos.current = Date.now(); // 🎯 Marcar mudança
-    
-    setFormData(prev => {
-      console.log('📸 removeAllImages: Todas as fotos removidas', { totalAntes: prev.Foto?.length || 0 });
-      return { ...prev, Foto: [] };
-    });
+    setFormData(prev => ({ ...prev, Foto: [] }));
   }, []);
 
   const setImageAsHighlight = useCallback((codigo) => {
     if (!codigo) return;
-    
-    ultimaMudancaFotos.current = Date.now(); // 🎯 Marcar mudança
     
     setFormData(prev => ({
       ...prev,
@@ -799,124 +602,47 @@ export const useImovelForm = (onAutoSave) => {
           }))
         : []
     }));
-
-    console.log('📸 setImageAsHighlight: Foto marcada como destaque', { codigo: codigo.substring(0, 15) });
   }, []);
 
-  // ✅ FUNÇÃO changeImagePosition COMPLETAMENTE CORRIGIDA COM PROTEÇÃO TOTAL
   const changeImagePosition = useCallback((codigo, newPos) => {
-    console.log('🔄 MUDANÇA DE POSIÇÃO INICIADA:', {
-      timestamp: new Date().toISOString(),
-      codigo: codigo?.substring(0, 15),
-      newPos,
-      formDataFotosAtual: formData.Foto?.length
-    });
-
-    if (!codigo || !Number.isInteger(newPos) || newPos < 1) {
-      console.error('❌ MUDANÇA DE POSIÇÃO: Parâmetros inválidos', { codigo, newPos });
-      return;
-    }
-    
-    // 🎯 MARCAR TIMESTAMP DA ÚLTIMA MUDANÇA DE FOTOS
-    ultimaMudancaFotos.current = Date.now();
-    console.log('📸 changeImagePosition: Timestamp de mudança atualizado');
+    if (!codigo || !Number.isInteger(newPos) || newPos < 1) return;
     
     setFormData(prev => {
-      if (!Array.isArray(prev.Foto)) {
-        console.error('❌ MUDANÇA DE POSIÇÃO: prev.Foto não é array', prev.Foto);
-        return prev;
-      }
+      if (!Array.isArray(prev.Foto)) return prev;
       
-      console.log('📸 MUDANÇA DE POSIÇÃO: Estado ANTES:', {
-        totalFotos: prev.Foto.length,
-        fotos: prev.Foto.map(f => ({ 
-          Codigo: f.Codigo?.substring(0, 10), 
-          Ordem: f.Ordem, 
-          Nome: f.Foto?.split('/').pop()?.substring(0, 15) 
-        }))
-      });
-      
-      // Ordenar por Ordem atual antes de manipular
       const sorted = [...prev.Foto].sort((a, b) => (a.Ordem || 0) - (b.Ordem || 0));
       const currentIdx = sorted.findIndex(img => img.Codigo === codigo);
-      
-      if (currentIdx === -1) {
-        console.error('❌ MUDANÇA DE POSIÇÃO: Foto não encontrada', { 
-          codigo: codigo.substring(0, 15), 
-          disponíveis: sorted.map(f => f.Codigo?.substring(0, 10))
-        });
-        return prev;
-      }
+      if (currentIdx === -1) return prev;
 
-      // Remover foto da posição atual
       const [moved] = sorted.splice(currentIdx, 1);
-      
-      // Ajustar nova posição dentro dos limites
       const adjustedPos = Math.min(Math.max(newPos, 1), sorted.length + 1);
-      
-      // Inserir na nova posição
       sorted.splice(adjustedPos - 1, 0, moved);
       
-      // Reordenar todas as fotos com nova sequência
-      const newFotos = sorted.map((img, idx) => ({ ...img, Ordem: idx + 1 }));
-      
-      console.log('✅ MUDANÇA DE POSIÇÃO: Estado DEPOIS:', {
-        totalFotos: newFotos.length,
-        fotoMovida: { 
-          codigo: moved.Codigo?.substring(0, 10), 
-          posicaoAntiga: currentIdx + 1, 
-          posicaoNova: adjustedPos 
-        },
-        fotos: newFotos.map(f => ({ 
-          Codigo: f.Codigo?.substring(0, 10), 
-          Ordem: f.Ordem, 
-          Nome: f.Foto?.split('/').pop()?.substring(0, 15) 
-        }))
-      });
-      
-      const updated = { ...prev, Foto: newFotos };
-      
-      // 🎯 SALVAR NO LOCALSTORAGE IMEDIATAMENTE APÓS MUDANÇA DE POSIÇÃO
-      setTimeout(() => {
-        try {
-          localStorage.setItem('imovelFormDraft', JSON.stringify(updated));
-          console.log('💾 changeImagePosition: Draft salvo no localStorage imediatamente');
-        } catch (error) {
-          console.error('❌ changeImagePosition: Erro ao salvar draft:', error);
-        }
-      }, 200);
-      
-      return updated;
+      return {
+        ...prev,
+        Foto: sorted.map((img, idx) => ({ ...img, Ordem: idx + 1 }))
+      };
     });
-    
-    console.log('✅ MUDANÇA DE POSIÇÃO: Processo finalizado com sucesso');
-  }, [formData.Foto]);
+  }, []);
 
   const handleImagesUploaded = useCallback((images = []) => {
     if (!Array.isArray(images)) return;
     
-    ultimaMudancaFotos.current = Date.now(); // 🎯 Marcar mudança
-    
     setFormData(prev => {
       const current = Array.isArray(prev.Foto) ? prev.Foto : [];
-      const newImages = images
-        .filter(img => img?.Foto || img?.url)
-        .map((img, idx) => ({
-          Codigo: `img-upload-${Date.now()}-${idx}`,
-          Foto: img.Foto || img.url,
-          Destaque: "Nao",
-          Ordem: current.length + idx + 1
-        }));
-      
-      console.log('📸 handleImagesUploaded: Fotos adicionadas', { 
-        novasImagens: newImages.length,
-        totalAntes: current.length,
-        totalDepois: current.length + newImages.length
-      });
-      
       return {
         ...prev,
-        Foto: [...current, ...newImages]
+        Foto: [
+          ...current,
+          ...images
+            .filter(img => img?.Foto || img?.url)
+            .map((img, idx) => ({
+              Codigo: `img-upload-${Date.now()}-${idx}`,
+              Foto: img.Foto || img.url,
+              Destaque: "Nao",
+              Ordem: current.length + idx + 1
+            }))
+        ]
       };
     });
   }, []);
@@ -958,32 +684,25 @@ export const useImovelForm = (onAutoSave) => {
       localStorage.removeItem('imovelFormDraft');
     }
     
-    // Reset das refs
-    correcaoEnderecoExecutada.current = false;
-    ultimaMudancaFotos.current = 0;
-    ultimoSalvamentoLocalStorage.current = 0;
-    
     setFormData(prev => ({
       ...INITIAL_FORM_DATA,
       Codigo: keepCode ? prev.Codigo : "",
-      Video: null,
+      Video: null, // ✅ CORREÇÃO: Garantir que Video seja null no reset
     }));
     
     setDisplayValues({
-      ValorAntigo: "R$ 0",
-      ValorAluguelSite: "R$ 0",
-      ValorCondominio: "R$ 0",
-      ValorIptu: "R$ 0",
+      ValorAntigo: "R$ 0,00",
+      ValorAluguelSite: "R$ 0,00",
+      ValorCondominio: "R$ 0,00",
+      ValorIptu: "R$ 0,00",
     });
     
     if (!keepCode) {
       generateRandomCode().then(code => {
         setNewImovelCode(code);
-        setFormData(prev => ({ ...prev, Codigo: code, Video: null }));
+        setFormData(prev => ({ ...prev, Codigo: code, Video: null })); // ✅ CORREÇÃO: Video null também aqui
       });
     }
-
-    console.log('🔄 resetForm: Formulário resetado', { keepCode });
   }, []);
 
   return {
@@ -1002,50 +721,15 @@ export const useImovelForm = (onAutoSave) => {
     removeImage,
     removeAllImages,
     setImageAsHighlight,
-    changeImagePosition, // ✅ Função completamente corrigida
+    changeImagePosition,
     validation,
     handleImagesUploaded,
     resetForm,
     formatCurrency,
     parseCurrency,
     formatCurrencyInput,
-    corrigirEnderecoIncompleto // ✅ Função exposta para uso manual se necessário
+    corrigirEnderecoIncompleto // ✅ NOVA FUNÇÃO EXPOSTA para uso manual se necessário
   };
 };
 
 export default useImovelForm;
-
-/*
- * ✅ CHANGELOG DAS CORREÇÕES IMPLEMENTADAS:
- * 
- * 1. 🛡️ PROTEÇÃO TOTAL contra correção de endereço interferindo nas fotos
- *    - Refs para controlar execução única e timestamps
- *    - Proteção de 15 segundos após mudanças manuais
- *    - Logs detalhados para debug
- * 
- * 2. 🔧 changeImagePosition COMPLETAMENTE REESCRITA
- *    - Validação rigorosa de parâmetros
- *    - Logs detalhados do processo
- *    - Salvamento imediato no localStorage
- *    - Preservação total da ordem definida pelo usuário
- * 
- * 3. 📸 TODAS as funções de manipulação de fotos atualizadas
- *    - Timestamp tracking para proteção
- *    - Logs detalhados para debug
- *    - Preservação da integridade dos dados
- * 
- * 4. 💾 LOCALSTORAGE otimizado
- *    - Debounce inteligente
- *    - Proteção contra salvamentos excessivos
- *    - Salvamento imediato após mudanças críticas
- * 
- * 5. 🎥 handleChange melhorado
- *    - Suporte para chamadas diretas e eventos
- *    - Tratamento especial para Video
- *    - Timestamp tracking para campos importantes
- * 
- * 6. 📊 SISTEMA DE LOGS completo
- *    - Debug detalhado em todas as operações
- *    - Rastreamento de timestamps
- *    - Validação de estados
- */
