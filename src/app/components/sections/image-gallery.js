@@ -21,6 +21,23 @@ function useIsMobile() {
   return isMobile;
 }
 
+// 🎯 ADIÇÃO 1: Hook para detectar foto vertical (APENAS esta função adicionada)
+function useIsVertical(src) {
+  const [isVertical, setIsVertical] = useState(false);
+  
+  useEffect(() => {
+    if (!src) return;
+    
+    const img = new Image();
+    img.onload = () => {
+      setIsVertical(img.height > img.width * 1.3);
+    };
+    img.src = src;
+  }, [src]);
+  
+  return isVertical;
+}
+
 export function ImageGallery({ 
   // Props para página de IMÓVEL (modo original)
   imovel,
@@ -112,6 +129,9 @@ export function ImageGallery({
       }));
     }
   }, [processedData, isImovelMode]);
+
+  // 🎯 ADIÇÃO 2: Detectar orientação da primeira foto (APENAS esta linha adicionada)
+  const isMainVertical = useIsVertical(images[0]?.Foto);
 
   // 🔍 DEBUG
   const debugInfo = useMemo(() => {
@@ -229,7 +249,8 @@ export function ImageGallery({
       ) : (
         // LAYOUT GRID: Grid tradicional com foto principal + thumbnails
         <div className="grid grid-cols-1 md:grid-cols-2 gap-1 w-full">
-          <div className="col-span-1 h-[410px] cursor-pointer relative" onClick={() => openModal()}>
+          {/* 🎯 ADIÇÃO 3: APENAS mudança na classe do container da foto principal */}
+          <div className={`col-span-1 cursor-pointer relative ${isMainVertical ? 'h-[500px]' : 'h-[410px]'}`} onClick={() => openModal()}>
             <div className="w-full h-full overflow-hidden">
               <Image
                 src={images[0].Foto}
