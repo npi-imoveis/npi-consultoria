@@ -1,5 +1,4 @@
 "use client";
-
 import { formatterValue } from "@/app/utils/formatter-value";
 import { formatterNumber } from "./../../../utils/formatter-number";
 
@@ -18,7 +17,6 @@ export function PropertyTableOwner({ imovel }) {
       Suites: imovel.SuiteAntigo,
       Vagas: imovel.VagasAntigo,
     },
-
     {
       Categoria: imovel.ValorVenda2 && "Apartamento",
       Valor: imovel.ValorVenda2,
@@ -27,7 +25,6 @@ export function PropertyTableOwner({ imovel }) {
       Suites: imovel.Suites2,
       Vagas: imovel.Vagas2,
     },
-
     {
       Categoria: imovel.ValorCobertura && "Cobertura",
       Valor: imovel.ValorCobertura,
@@ -89,7 +86,14 @@ export function PropertyTableOwner({ imovel }) {
                   <h2 className="text-black font-semibold text-[10px]">{item.Categoria}</h2>
                 </td>
                 <td className="p-3 font-semibold text-[9px]">{formatterNumber(item.Valor)}</td>
-                <td className="p-3">{item.Metragem}</td>
+                <td className="p-3">
+                  {(() => {
+                    const metragem = item.Metragem;
+                    return metragem && metragem.toString().includes('m²') 
+                      ? metragem 
+                      : `${metragem} m²`;
+                  })()}
+                </td>
                 <td className="p-3">{item.Dormitorios}</td>
                 <td className="p-3">{item.Suites}</td>
                 <td className="p-3">{item.Vagas}</td>
