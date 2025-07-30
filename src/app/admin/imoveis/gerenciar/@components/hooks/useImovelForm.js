@@ -267,7 +267,7 @@ export const useImovelForm = (onAutoSave) => {
           console.error("Erro ao buscar coordenadas:", error);
         }
         
-        // Atualizar formData com endereço corrigido
+        // Atualizar formData com endereço corrigido (PRESERVANDO fotos atuais)
         setFormData(prev => ({
           ...prev,
           Endereco: data.logradouro,
@@ -276,6 +276,8 @@ export const useImovelForm = (onAutoSave) => {
           UF: data.uf || prev.UF,
           Latitude: coords?.latitude || prev.Latitude,
           Longitude: coords?.longitude || prev.Longitude,
+          // ✅ CRÍTICO: NÃO sobrescrever outros campos que podem ter mudado
+          // Especialmente Foto, Video, e outros campos do formulário
         }));
         
         // ✅ NOVA FUNCIONALIDADE: Salvamento automático após correção
