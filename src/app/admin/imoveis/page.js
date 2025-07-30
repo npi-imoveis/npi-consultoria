@@ -314,6 +314,32 @@ export default function AdminImoveis() {
     }
   };
 
+  // Função para verificar se imóvel está ativo
+  const verificarImovelAtivo = (imovel) => {
+    // Verificar se tem valor válido
+    const valor = imovel.ValorAntigo;
+    let temValor = false;
+    
+    if (valor !== null && valor !== undefined && valor !== "") {
+      if (typeof valor === "number") {
+        temValor = valor > 0;
+      } else if (typeof valor === "string") {
+        const cleanedValue = valor.replace(/\./g, '').replace(',', '.');
+        const valorNumerico = parseFloat(cleanedValue);
+        temValor = !isNaN(valorNumerico) && valorNumerico > 0;
+      }
+    }
+    
+    // Se tem valor válido e o campo Ativo não é explicitamente "Não", considera ativo
+    const ativoExplicito = imovel.Ativo?.toString().toLowerCase();
+    const estaAtivo = temValor && ativoExplicito !== "não" && ativoExplicito !== "nao";
+    
+    return {
+      ativo: estaAtivo,
+      texto: estaAtivo ? "Sim" : "Não"
+    };
+  };
+
   // Função para formatar valores monetários - CORRIGIDA PARA FORMATO BRASILEIRO
   const formatarValor = (valor) => {
     if (valor === null || valor === undefined || valor === "") {
@@ -557,15 +583,20 @@ export default function AdminImoveis() {
                         {imovel.Codigo || "-"}
                       </td>
                       <td className="px-4 py-4 whitespace-nowrap">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium ${
-                            imovel.Ativo === "Sim"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-red-100 text-red-800"
-                          }`}
-                        >
-                          {imovel.Ativo || "-"}
-                        </span>
+                        {(() => {
+                          const statusImovel = verificarImovelAtivo(imovel);
+                          return (
+                            <span
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium ${
+                                statusImovel.ativo
+                                  ? "bg-green-100 text-green-800"
+                                  : "bg-red-100 text-red-800"
+                              }`}
+                            >
+                              {statusImovel.texto}
+                            </span>
+                          );
+                        })()}
                       </td>
                       <td className="px-4 font-bold py-4 whitespace-nowrap text-[10px] text-zinc-700">
                         {imovel.Empreendimento || "-"}
