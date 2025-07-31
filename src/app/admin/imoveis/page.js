@@ -724,6 +724,25 @@ export default function AdminImoveis() {
 
   return (
     <AuthCheck>
+      {/* ✅ ADICIONADO: CSS para ocultar botão de música apenas no admin */}
+      <style jsx global>{`
+        /* Ocultar botão de música/play no admin */
+        [class*="music"], [class*="play"], [class*="audio"], 
+        button[style*="position: fixed"], 
+        div[style*="position: fixed"][style*="bottom"], 
+        .fixed.bottom-4, .fixed.bottom-6, .fixed.bottom-8,
+        button.fixed, div.fixed.bottom-0, div.fixed.bottom-4,
+        [style*="z-index: 50"], [style*="z-index: 100"] {
+          display: none !important;
+        }
+        
+        /* Específico para botões circulares no canto inferior direito */
+        button[style*="border-radius"][style*="position: fixed"][style*="right"],
+        div[style*="border-radius"][style*="position: fixed"][style*="right"] {
+          display: none !important;
+        }
+      `}</style>
+      
       {isModalOpen && (
         <ModalDelete
           id={codigoImovel}
