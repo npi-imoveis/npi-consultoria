@@ -82,6 +82,85 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     fetchBairros();
   }, [cidadeSelecionada, categoriaSelecionada]);
 
+  // ✅ ADICIONADO: useEffect para restaurar filtros do cache
+  useEffect(() => {
+    const restoreFiltersFromCache = () => {
+      try {
+        const savedFilters = localStorage.getItem("admin_appliedFilters");
+        
+        if (savedFilters) {
+          const parsedFilters = JSON.parse(savedFilters);
+          console.log('[FILTERS CACHE] Restaurando filtros salvos:', parsedFilters);
+          
+          // Restaurar estados básicos
+          if (parsedFilters.Categoria) {
+            setCategoriaSelecionada(parsedFilters.Categoria);
+            setFilters(prev => ({ ...prev, categoria: parsedFilters.Categoria }));
+          }
+          
+          if (parsedFilters.Status) {
+            setFilters(prev => ({ ...prev, status: parsedFilters.Status }));
+          }
+          
+          if (parsedFilters.Ativo) {
+            setFilters(prev => ({ ...prev, cadastro: parsedFilters.Ativo }));
+          }
+          
+          if (parsedFilters.Cidade) {
+            setCidadeSelecionada(parsedFilters.Cidade);
+          }
+          
+          // ✅ RESTAURAR SITUAÇÕES MÚLTIPLAS
+          if (parsedFilters.Situacao) {
+            if (Array.isArray(parsedFilters.Situacao)) {
+              setSituacoesSelecionadas(parsedFilters.Situacao);
+              console.log('[FILTERS CACHE] Situações restauradas:', parsedFilters.Situacao);
+            } else if (typeof parsedFilters.Situacao === 'string') {
+              // Se vier como string (do backend), converter para array
+              const situacoesArray = parsedFilters.Situacao.split(',').map(s => s.trim());
+              setSituacoesSelecionadas(situacoesArray);
+              console.log('[FILTERS CACHE] Situações convertidas de string:', situacoesArray);
+            } else {
+              // Situação única (compatibilidade)
+              setFilters(prev => ({ ...prev, situacao: parsedFilters.Situacao }));
+            }
+          }
+          
+          // Restaurar bairros se existirem
+          if (parsedFilters.bairros && Array.isArray(parsedFilters.bairros)) {
+            setBairrosSelecionados(parsedFilters.bairros);
+          }
+          
+          // Restaurar valores numéricos
+          if (parsedFilters.ValorMin) {
+            setValorMin(typeof parsedFilters.ValorMin === 'number' ? parsedFilters.ValorMin : parseFloat(parsedFilters.ValorMin));
+          }
+          
+          if (parsedFilters.ValorMax) {
+            setValorMax(typeof parsedFilters.ValorMax === 'number' ? parsedFilters.ValorMax : parseFloat(parsedFilters.ValorMax));
+          }
+          
+          if (parsedFilters.AreaMin) {
+            setAreaMin(typeof parsedFilters.AreaMin === 'number' ? parsedFilters.AreaMin : parseInt(parsedFilters.AreaMin));
+          }
+          
+          if (parsedFilters.AreaMax) {
+            setAreaMax(typeof parsedFilters.AreaMax === 'number' ? parsedFilters.AreaMax : parseInt(parsedFilters.AreaMax));
+          }
+          
+          console.log('[FILTERS CACHE] Todos os filtros restaurados com sucesso');
+        }
+      } catch (error) {
+        console.error('[FILTERS CACHE] Erro ao restaurar filtros:', error);
+      }
+    };
+    
+    // Aguardar um pouco para garantir que os dados das APIs foram carregados
+    const timeoutId = setTimeout(restoreFiltersFromCache, 100);
+    
+    return () => clearTimeout(timeoutId);
+  }, []);
+
   // ✅ MODIFICADO: Fechar dropdowns ao clicar fora
   useEffect(() => {
     function handleClickOutside(event) {
