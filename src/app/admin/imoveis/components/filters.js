@@ -10,6 +10,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
   const [categorias, setCategorias] = useState([]);
   const [cidades, setCidades] = useState([]);
   const [bairros, setBairros] = useState([]);
+  const [situacoesDisponiveis, setSituacoesDisponiveis] = useState([]); // ✅ ADICIONADO
 
   // Estados de seleção
   const [categoriaSelecionada, setCategoriaSelecionada] = useState("");
@@ -36,28 +37,41 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     bairros: "",
   });
 
-  // ✅ ADICIONADO: Opções de situação
+  // ✅ ADICIONADO: Opções de situação (verificar se estão corretas)
   const situacaoOptions = [
-    "EM CONSTRUÇÃO",
+    "EM CONSTRUÇÃO",    // ← Verificar se é exatamente assim no banco
     "LANÇAMENTO", 
     "PRÉ-LANÇAMENTO",
     "PRONTO NOVO",
     "PRONTO USADO"
   ];
 
-  // Buscar categorias e cidades ao carregar
+  // ✅ ADICIONADO: Log das opções para debug
+  useEffect(() => {
+    console.log("🏗️ Opções de situação disponíveis:", situacaoOptions);
+  }, []);
+
+  // Buscar categorias, cidades e situações ao carregar
   useEffect(() => {
     async function fetchFilterData() {
       try {
-        const [catResponse, cidResponse] = await Promise.all([
+        const [catResponse, cidResponse, sitResponse] = await Promise.all([
           getImoveisByFilters("Categoria"),
           getImoveisByFilters("Cidade"),
+          getImoveisByFilters("Situacao"), // ✅ ADICIONADO: Buscar situações da API
         ]);
 
         setCategorias(catResponse.data || []);
         setCidades(cidResponse.data || []);
+        setSituacoesDisponiveis(sitResponse.data || []); // ✅ ADICIONADO
+        
+        // ✅ ADICIONADO: Log das situações do banco
+        console.log("🏗️ Situações do banco de dados:", sitResponse.data);
+        console.log("🏗️ Situações hardcoded:", situacaoOptions);
       } catch (error) {
         console.error("Erro ao buscar filtros:", error);
+        // Se der erro, usar as opções hardcoded
+        setSituacoesDisponiveis(situacaoOptions);
       }
     }
     fetchFilterData();
@@ -226,8 +240,9 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     bairro.toLowerCase().includes(bairroFilter.toLowerCase())
   );
 
-  // ✅ ADICIONADO: Filtrar situações pela pesquisa
-  const situacoesFiltradas = situacaoOptions.filter((situacao) =>
+  // ✅ ADICIONADO: Filtrar situações pela pesquisa (usar situações da API ou fallback)
+  const situacoesParaUsar = situacoesDisponiveis.length > 0 ? situacoesDisponiveis : situacaoOptions;
+  const situacoesFiltradas = situacoesParaUsar.filter((situacao) =>
     situacao.toLowerCase().includes(situacaoFilter.toLowerCase())
   );
 
@@ -271,6 +286,14 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       AreaMin: areaMin,
       AreaMax: areaMax,
     };
+
+    // ✅ ADICIONADO: Debug detalhado para situação
+    console.log("🔍 DEBUG SITUAÇÃO:");
+    console.log("- situacoesSelecionadas:", situacoesSelecionadas);
+    console.log("- situacoesSelecionadas.length:", situacoesSelecionadas.length);
+    console.log("- filters.situacao:", filters.situacao);
+    console.log("- filtersToApply.Situacao:", filtersToApply.Situacao);
+    console.log("- Tipo da Situacao:", typeof filtersToApply.Situacao);
 
     // Log para diagnóstico
     console.log("Filtros completos enviados para API:", filtersToApply);
