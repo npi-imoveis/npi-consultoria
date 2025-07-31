@@ -4,19 +4,18 @@ import { useEffect, useState, useRef } from "react";
 export default function FiltersImoveisAdmin({ onFilter }) {
   // Refs para os dropdowns
   const bairrosRef = useRef(null);
-  const situacaoRef = useRef(null); // ✅ ADICIONADO: Ref para situação
+  const situacaoRef = useRef(null); // ← ADICIONADO: Ref para situação
 
   // Estados principais
   const [categorias, setCategorias] = useState([]);
   const [cidades, setCidades] = useState([]);
   const [bairros, setBairros] = useState([]);
-  const [situacoesDisponiveis, setSituacoesDisponiveis] = useState([]); // ✅ ADICIONADO
 
   // Estados de seleção
   const [categoriaSelecionada, setCategoriaSelecionada] = useState("");
   const [cidadeSelecionada, setCidadeSelecionada] = useState("");
   const [bairrosSelecionados, setBairrosSelecionados] = useState([]);
-  const [situacoesSelecionadas, setSituacoesSelecionadas] = useState([]); // ✅ ADICIONADO
+  const [situacoesSelecionadas, setSituacoesSelecionadas] = useState([]); // ← ADICIONADO
   const [valorMin, setValorMin] = useState(null);
   const [valorMax, setValorMax] = useState(null);
   const [areaMin, setAreaMin] = useState(null);
@@ -25,53 +24,40 @@ export default function FiltersImoveisAdmin({ onFilter }) {
   // Estados de UI
   const [bairroFilter, setBairroFilter] = useState("");
   const [bairrosExpanded, setBairrosExpanded] = useState(false);
-  const [situacaoFilter, setSituacaoFilter] = useState(""); // ✅ ADICIONADO
-  const [situacaoExpanded, setSituacaoExpanded] = useState(false); // ✅ ADICIONADO
+  const [situacaoFilter, setSituacaoFilter] = useState(""); // ← ADICIONADO
+  const [situacaoExpanded, setSituacaoExpanded] = useState(false); // ← ADICIONADO
 
   // Estado para outros filtros
   const [filters, setFilters] = useState({
     categoria: "",
     status: "",
-    situacao: "",
+    situacao: "", // Manter para compatibilidade
     cadastro: "",
     bairros: "",
   });
 
-  // ✅ ADICIONADO: Opções de situação (verificar se estão corretas)
+  // ✅ ADICIONADO: Opções de situação
   const situacaoOptions = [
-    "EM CONSTRUÇÃO",    // ← Verificar se é exatamente assim no banco
+    "EM CONSTRUÇÃO",
     "LANÇAMENTO", 
     "PRÉ-LANÇAMENTO",
     "PRONTO NOVO",
     "PRONTO USADO"
   ];
 
-  // ✅ ADICIONADO: Log das opções para debug
-  useEffect(() => {
-    console.log("🏗️ Opções de situação disponíveis:", situacaoOptions);
-  }, []);
-
-  // Buscar categorias, cidades e situações ao carregar
+  // Buscar categorias e cidades ao carregar
   useEffect(() => {
     async function fetchFilterData() {
       try {
-        const [catResponse, cidResponse, sitResponse] = await Promise.all([
+        const [catResponse, cidResponse] = await Promise.all([
           getImoveisByFilters("Categoria"),
           getImoveisByFilters("Cidade"),
-          getImoveisByFilters("Situacao"), // ✅ ADICIONADO: Buscar situações da API
         ]);
 
         setCategorias(catResponse.data || []);
         setCidades(cidResponse.data || []);
-        setSituacoesDisponiveis(sitResponse.data || []); // ✅ ADICIONADO
-        
-        // ✅ ADICIONADO: Log das situações do banco
-        console.log("🏗️ Situações do banco de dados:", sitResponse.data);
-        console.log("🏗️ Situações hardcoded:", situacaoOptions);
       } catch (error) {
         console.error("Erro ao buscar filtros:", error);
-        // Se der erro, usar as opções hardcoded
-        setSituacoesDisponiveis(situacaoOptions);
       }
     }
     fetchFilterData();
@@ -175,7 +161,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     return () => clearTimeout(timeoutId);
   }, []);
 
-  // ✅ MODIFICADO: Fechar dropdown de bairros e situação ao clicar fora
+  // ✅ MODIFICADO: Fechar dropdowns ao clicar fora
   useEffect(() => {
     function handleClickOutside(event) {
       if (bairrosRef.current && !bairrosRef.current.contains(event.target)) {
@@ -187,16 +173,16 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       }
     }
 
-    if (bairrosExpanded || situacaoExpanded) { // ← MODIFICADO
+    if (bairrosExpanded || situacaoExpanded) { // ← MODIFICADO: incluir situacaoExpanded
       document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [bairrosExpanded, situacaoExpanded]); // ← MODIFICADO
+  }, [bairrosExpanded, situacaoExpanded]); // ← MODIFICADO: incluir situacaoExpanded
 
-  // Funções utilitárias para formatação (MANTER EXATAMENTE IGUAIS)
+  // Funções utilitárias para formatação (MANTER TODAS)
   const formatarParaReal = (valor) => {
     if (valor === null || valor === undefined || valor === 0) return "";
     try {
@@ -240,9 +226,8 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     bairro.toLowerCase().includes(bairroFilter.toLowerCase())
   );
 
-  // ✅ ADICIONADO: Filtrar situações pela pesquisa (usar situações da API ou fallback)
-  const situacoesParaUsar = situacoesDisponiveis.length > 0 ? situacoesDisponiveis : situacaoOptions;
-  const situacoesFiltradas = situacoesParaUsar.filter((situacao) =>
+  // ✅ ADICIONADO: Filtrar situações pela pesquisa
+  const situacoesFiltradas = situacaoOptions.filter((situacao) =>
     situacao.toLowerCase().includes(situacaoFilter.toLowerCase())
   );
 
@@ -286,14 +271,6 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       AreaMin: areaMin,
       AreaMax: areaMax,
     };
-
-    // ✅ ADICIONADO: Debug detalhado para situação
-    console.log("🔍 DEBUG SITUAÇÃO:");
-    console.log("- situacoesSelecionadas:", situacoesSelecionadas);
-    console.log("- situacoesSelecionadas.length:", situacoesSelecionadas.length);
-    console.log("- filters.situacao:", filters.situacao);
-    console.log("- filtersToApply.Situacao:", filtersToApply.Situacao);
-    console.log("- Tipo da Situacao:", typeof filtersToApply.Situacao);
 
     // Log para diagnóstico
     console.log("Filtros completos enviados para API:", filtersToApply);
@@ -450,7 +427,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Bairros dropdown com pesquisa e seleção múltipla (MANTER EXATAMENTE IGUAL - SEM TAGS!) */}
+        {/* Bairros dropdown com pesquisa e seleção múltipla (MANTER EXATAMENTE IGUAL) */}
         <div ref={bairrosRef}>
           <label htmlFor="bairros" className="text-xs text-gray-500 block mb-2">
             Bairros
@@ -523,7 +500,24 @@ export default function FiltersImoveisAdmin({ onFilter }) {
             )}
           </div>
 
-          {/* IMPORTANTE: NÃO INCLUIR TAGS DE BAIRROS - MANTER SÓ O CONTADOR NO CAMPO */}
+          {bairrosSelecionados.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1">
+              {bairrosSelecionados.map((bairro) => (
+                <div
+                  key={bairro}
+                  className="bg-gray-100 rounded-full px-2 py-1 text-[10px] flex items-center"
+                >
+                  {bairro}
+                  <button
+                    onClick={() => handleBairroChange(bairro)}
+                    className="ml-1 text-gray-500 hover:text-black"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Faixa de Valores (MANTER EXATAMENTE IGUAL) */}
