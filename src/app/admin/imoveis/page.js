@@ -200,10 +200,17 @@ export default function AdminImoveis() {
         const response = await getImoveisDashboard(apiFilters, page, 30);
         if (response && response.data) {
           responseData = response.data;
+          
+          // ✅ CORRIGIDO: Garantir que a paginação tenha todos os campos necessários
+          const paginacaoAPI = response.paginacao || {};
           newPaginationData = {
-            ...response.paginacao,
+            totalItems: paginacaoAPI.totalItems || paginacaoAPI.total || responseData.length || 0,
+            totalPages: paginacaoAPI.totalPages || Math.ceil((paginacaoAPI.totalItems || paginacaoAPI.total || responseData.length || 0) / 30),
+            currentPage: page,
             itemsPerPage: 30,
           };
+          console.log("📊 Paginação dos filtros:", newPaginationData);
+          console.log("📊 Response paginacao original:", response.paginacao);
         } else {
           responseData = [];
           newPaginationData = {
@@ -226,6 +233,7 @@ export default function AdminImoveis() {
       setImoveis(responseData);
       setPagination(newPaginationData);
       console.log("✅ Estado de imóveis e paginação atualizado. Imóveis count:", responseData.length, "Paginação atual:", newPaginationData);
+      console.log("🔍 DEBUG: totalItems final:", newPaginationData.totalItems);
 
     } catch (error) {
       console.error("Erro ao carregar imóveis:", error);
@@ -321,7 +329,7 @@ export default function AdminImoveis() {
     setSearchTerm("");
     setCurrentPage(1);
     setFilters({}); // Limpar filtros também
-    clearSearchState(); // Limpar estado salvo
+    clearSearchState(); // Limpar estado salvo de busca
     clearFiltersState(); // ✅ ADICIONADO: Limpar cache de filtros
     loadImoveis(1, ""); // Carregar todos os imóveis sem busca ou filtro
   };
@@ -585,7 +593,7 @@ export default function AdminImoveis() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                     </svg>
                     <span className="text-sm font-medium text-blue-900">
-                      {pagination.totalItems} {pagination.totalItems === 1 ? 'imóvel encontrado' : 'imóveis encontrados'}
+                      {pagination.totalItems || imoveis.length} {(pagination.totalItems || imoveis.length) === 1 ? 'imóvel encontrado' : 'imóveis encontrados'}
                     </span>
                   </div>
                   
@@ -636,7 +644,8 @@ export default function AdminImoveis() {
                       clearSearch();
                     } else {
                       setFilters({});
-                      clearFiltersState();
+                      setCurrentPage(1);
+                      clearFiltersState(); // ✅ ADICIONADO: Limpar cache
                       loadImoveis(1, "");
                     }
                   }}
