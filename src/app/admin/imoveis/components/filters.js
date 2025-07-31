@@ -389,83 +389,48 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     });
   };
 
-  // ✅ FUNÇÃO CORRIGIDA: Normalizar situações para API com debug ULTRA-DETALHADO
+  // ✅ TESTE 1: Normalizar situações para API - APENAS PRIMEIRA VARIAÇÃO
   const normalizarSituacaoParaAPI = (situacoesSelecionadas) => {
-    console.log("🚨 ===== NORMALIZAÇÃO SITUAÇÃO - INÍCIO =====");
+    console.log("🚨 ===== TESTE 1 - PRIMEIRA VARIAÇÃO =====");
     
     if (!Array.isArray(situacoesSelecionadas) || situacoesSelecionadas.length === 0) {
-      console.log('🔍 [API SITUAÇÃO] ❌ Nenhuma situação selecionada ou array inválido');
-      console.log('🔍 [API SITUAÇÃO] Tipo:', typeof situacoesSelecionadas);
-      console.log('🔍 [API SITUAÇÃO] Valor:', situacoesSelecionadas);
+      console.log('❌ [API SITUAÇÃO] Nenhuma situação selecionada');
       return undefined;
     }
 
-    console.log('📋 [API SITUAÇÃO] Situações selecionadas na UI:', situacoesSelecionadas);
-    console.log('📋 [API SITUAÇÃO] Total selecionadas:', situacoesSelecionadas.length);
+    console.log('📋 [API SITUAÇÃO] Situações selecionadas:', situacoesSelecionadas);
     
-    console.log('🗺️ [API SITUAÇÃO] Mapeamento disponível:');
     const chavesMapeamento = Object.keys(situacoesMapeamento);
-    console.log('🗺️ [API SITUAÇÃO] Total de chaves no mapeamento:', chavesMapeamento.length);
-    
     if (chavesMapeamento.length === 0) {
-      console.log('❌ [API SITUAÇÃO] MAPEAMENTO VAZIO! Usando valores originais');
-      return situacoesSelecionadas;
+      console.log('❌ [API SITUAÇÃO] MAPEAMENTO VAZIO!');
+      return situacoesSelecionadas[0]; // Retorna primeira situação selecionada
     }
-    
-    chavesMapeamento.forEach(chave => {
-      const variacoes = situacoesMapeamento[chave];
-      console.log(`   "${chave}" → [${variacoes.join(', ')}] (${variacoes.length} variações)`);
-    });
 
     const todasVariacoes = [];
     
-    situacoesSelecionadas.forEach((sitSelecionada, index) => {
-      console.log(`🔍 [API SITUAÇÃO] === Processando item ${index} ===`);
-      console.log(`🔍 [API SITUAÇÃO] Situação selecionada: "${sitSelecionada}"`);
-      console.log(`🔍 [API SITUAÇÃO] Tipo: ${typeof sitSelecionada}`);
-      
+    situacoesSelecionadas.forEach((sitSelecionada) => {
       const chaveParaBusca = sitSelecionada.toLowerCase().trim();
-      console.log(`🔑 [API SITUAÇÃO] Chave para busca: "${chaveParaBusca}"`);
       
-      // Debug: verificar se a chave existe no mapeamento
-      const chaveExiste = situacoesMapeamento.hasOwnProperty(chaveParaBusca);
-      console.log(`🔍 [API SITUAÇÃO] Chave existe no mapeamento? ${chaveExiste}`);
-      
-      if (chaveExiste) {
+      if (situacoesMapeamento.hasOwnProperty(chaveParaBusca)) {
         const variacoes = situacoesMapeamento[chaveParaBusca];
-        console.log(`✅ [API SITUAÇÃO] ENCONTRADO! ${variacoes.length} variações:`, variacoes);
-        
-        // Debug cada variação antes de adicionar
-        variacoes.forEach((variacao, vIndex) => {
-          console.log(`   ${vIndex}: "${variacao}" (tipo: ${typeof variacao})`);
-        });
-        
+        console.log(`✅ [API SITUAÇÃO] "${sitSelecionada}" → ${variacoes.length} variações:`, variacoes);
         todasVariacoes.push(...variacoes);
-        console.log(`✅ [API SITUAÇÃO] Variações adicionadas. Total acumulado: ${todasVariacoes.length}`);
       } else {
-        console.log(`❌ [API SITUAÇÃO] NÃO ENCONTRADO no mapeamento!`);
-        console.log(`❌ [API SITUAÇÃO] Chaves disponíveis:`, chavesMapeamento);
-        console.log(`❌ [API SITUAÇÃO] Usando valor original: "${sitSelecionada}"`);
+        console.log(`❌ [API SITUAÇÃO] "${sitSelecionada}" não encontrada, usando original`);
         todasVariacoes.push(sitSelecionada);
       }
-      
-      console.log(`🔍 [API SITUAÇÃO] === Fim processamento item ${index} ===`);
     });
 
-    // Remover duplicatas
     const variacoesUnicas = [...new Set(todasVariacoes)];
     
-    console.log("🎯 [API SITUAÇÃO] ===== RESULTADO FINAL =====");
-    console.log("📊 [API SITUAÇÃO] Todas as variações (com duplicatas):", todasVariacoes);
-    console.log("📊 [API SITUAÇÃO] Variações únicas:", variacoesUnicas);
-    console.log("📈 [API SITUAÇÃO] Resumo:");
-    console.log(`   - Selecionadas: ${situacoesSelecionadas.length}`);
-    console.log(`   - Total expandido: ${todasVariacoes.length}`);
-    console.log(`   - Únicas finais: ${variacoesUnicas.length}`);
+    // ✅ TESTE 1: Apenas a primeira variação
+    const primeiraVariacao = variacoesUnicas[0];
+    console.log("🧪 [TESTE 1] Variações encontradas:", variacoesUnicas);
+    console.log("🧪 [TESTE 1] Enviando APENAS primeira variação:", primeiraVariacao);
+    console.log("💡 [HIPÓTESE] API não suporta múltiplas situações");
+    console.log("🚨 ===== TESTE 1 - FIM =====");
     
-    console.log("🚨 ===== NORMALIZAÇÃO SITUAÇÃO - FIM =====");
-
-    return variacoesUnicas;
+    return primeiraVariacao; // String única, não array
   };
 
   // ✅ MANTIDO: Normalizar bairros para API (funcionando)
@@ -492,7 +457,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
   // handleFilters com debug
   const handleFilters = () => {
     console.log("🚨 ================================");
-    console.log("🚨 APLICANDO FILTROS - VERSÃO CORRIGIDA SITUAÇÃO");
+    console.log("🚨 APLICANDO FILTROS - TESTE 1");
     console.log("🚨 ================================");
     
     const filtersToApply = {
@@ -519,8 +484,9 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     console.log("📤 FILTROS FINAIS ENVIADOS PARA API:");
     console.log(JSON.stringify(filtersForAPI, null, 2));
 
-    if (Array.isArray(filtersForAPI.Situacao)) {
-      console.log("🎯 SITUAÇÕES COMO STRING PARA API:", filtersForAPI.Situacao.join(','));
+    if (filtersForAPI.Situacao) {
+      console.log("🎯 SITUAÇÃO ENVIADA PARA API:", filtersForAPI.Situacao);
+      console.log("🎯 TIPO DA SITUAÇÃO:", typeof filtersForAPI.Situacao);
     }
 
     console.log("🚨 ================================");
@@ -596,7 +562,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           value={filters.status}
         />
         
-        {/* ✅ DROPDOWN DE SITUAÇÃO COM DEBUG ULTRA-DETALHADO */}
+        {/* ✅ DROPDOWN DE SITUAÇÃO */}
         <div ref={situacaoRef} className="relative">
           <label htmlFor="situacao" className="text-xs text-gray-500 block mb-2">
             situacao
@@ -637,7 +603,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
                     </div>
                     
                     <div className="px-2 py-1 text-[9px] text-gray-400 border-b border-gray-100">
-                      Debug: {situacoesReais.length} situações ({Object.keys(situacoesMapeamento).length} chaves mapeadas)
+                      TESTE 1: {situacoesReais.length} situações ({Object.keys(situacoesMapeamento).length} chaves mapeadas)
                     </div>
                     
                     {situacoesFiltradas.map((situacao, index) => {
@@ -837,7 +803,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           className="bg-gray-200 font-bold rounded-md text-zinc-600 hover:bg-zinc-300 p-2"
           onClick={handleFilters}
         >
-          Filtrar
+          Filtrar (TESTE 1)
         </button>
         <button
           className="bg-red-100 font-bold rounded-md text-red-600 hover:bg-red-200 p-2"
