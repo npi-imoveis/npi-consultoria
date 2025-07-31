@@ -4,18 +4,19 @@ import { useEffect, useState, useRef } from "react";
 export default function FiltersImoveisAdmin({ onFilter }) {
   // Refs para os dropdowns
   const bairrosRef = useRef(null);
-  const situacaoRef = useRef(null); // ← ADICIONADO: Ref para situação
+  const situacaoRef = useRef(null);
 
   // Estados principais
   const [categorias, setCategorias] = useState([]);
   const [cidades, setCidades] = useState([]);
   const [bairros, setBairros] = useState([]);
+  const [situacoesReais, setSituacoesReais] = useState([]); // ✅ ADICIONADO: Situações do banco
 
   // Estados de seleção
   const [categoriaSelecionada, setCategoriaSelecionada] = useState("");
   const [cidadeSelecionada, setCidadeSelecionada] = useState("");
   const [bairrosSelecionados, setBairrosSelecionados] = useState([]);
-  const [situacoesSelecionadas, setSituacoesSelecionadas] = useState([]); // ← ADICIONADO
+  const [situacoesSelecionadas, setSituacoesSelecionadas] = useState([]);
   const [valorMin, setValorMin] = useState(null);
   const [valorMax, setValorMax] = useState(null);
   const [areaMin, setAreaMin] = useState(null);
@@ -23,21 +24,21 @@ export default function FiltersImoveisAdmin({ onFilter }) {
 
   // Estados de UI
   const [bairroFilter, setBairroFilter] = useState("");
+  const [situacaoFilter, setSituacaoFilter] = useState("");
   const [bairrosExpanded, setBairrosExpanded] = useState(false);
-  const [situacaoFilter, setSituacaoFilter] = useState(""); // ← ADICIONADO
-  const [situacaoExpanded, setSituacaoExpanded] = useState(false); // ← ADICIONADO
+  const [situacaoExpanded, setSituacaoExpanded] = useState(false);
 
   // Estado para outros filtros
   const [filters, setFilters] = useState({
     categoria: "",
     status: "",
-    situacao: "", // Manter para compatibilidade
+    situacao: "",
     cadastro: "",
     bairros: "",
   });
 
-  // ✅ ADICIONADO: Opções de situação
-  const situacaoOptions = [
+  // ✅ ADICIONADO: Opções de situação HARDCODED (fallback)
+  const situacaoOptionsHardcoded = [
     "EM CONSTRUÇÃO",
     "LANÇAMENTO", 
     "PRÉ-LANÇAMENTO",
@@ -45,19 +46,58 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     "PRONTO USADO"
   ];
 
-  // Buscar categorias e cidades ao carregar
+  // ✅ MODIFICADO: Buscar situações reais da API
   useEffect(() => {
     async function fetchFilterData() {
       try {
-        const [catResponse, cidResponse] = await Promise.all([
+        console.log("🏗️ Buscando dados dos filtros...");
+        
+        const [catResponse, cidResponse, sitResponse] = await Promise.all([
           getImoveisByFilters("Categoria"),
           getImoveisByFilters("Cidade"),
+          getImoveisByFilters("Situacao") // ✅ ADICIONADO: Buscar situações reais
         ]);
 
         setCategorias(catResponse.data || []);
         setCidades(cidResponse.data || []);
+        
+        // ✅ ADICIONADO: Debug das situações do banco
+        console.log("🏗️ Situações do banco de dados:", sitResponse?.data || []);
+        console.log("🏗️ Situações hardcoded:", situacaoOptionsHardcoded);
+        
+        if (sitResponse?.data && Array.isArray(sitResponse.data) && sitResponse.data.length > 0) {
+          console.log("✅ Usando situações do banco de dados");
+          setSituacoesReais(sitResponse.data);
+        } else {
+          console.log("⚠️ Usando situações hardcoded como fallback");
+          setSituacoesReais(situacaoOptionsHardcoded);
+        }
+
+        // ✅ ADICIONADO: Comparação detalhada
+        console.log("🔍 COMPARAÇÃO SITUAÇÕES:");
+        console.log("  - Do banco:", sitResponse?.data);
+        console.log("  - Hardcoded:", situacaoOptionsHardcoded);
+        
+        if (sitResponse?.data) {
+          const diferencas = situacaoOptionsHardcoded.filter(h => 
+            !sitResponse.data.some(b => b.toLowerCase() === h.toLowerCase())
+          );
+          if (diferencas.length > 0) {
+            console.log("🚨 SITUAÇÕES HARDCODED NÃO ENCONTRADAS NO BANCO:", diferencas);
+          }
+          
+          const extras = sitResponse.data.filter(b => 
+            !situacaoOptionsHardcoded.some(h => h.toLowerCase() === b.toLowerCase())
+          );
+          if (extras.length > 0) {
+            console.log("📋 SITUAÇÕES DO BANCO NÃO HARDCODED:", extras);
+          }
+        }
+
       } catch (error) {
-        console.error("Erro ao buscar filtros:", error);
+        console.error("❌ Erro ao buscar filtros:", error);
+        console.log("⚠️ Usando todas as opções hardcoded devido ao erro");
+        setSituacoesReais(situacaoOptionsHardcoded);
       }
     }
     fetchFilterData();
@@ -167,20 +207,19 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       if (bairrosRef.current && !bairrosRef.current.contains(event.target)) {
         setBairrosExpanded(false);
       }
-      // ADICIONADO: Controle para situação
       if (situacaoRef.current && !situacaoRef.current.contains(event.target)) {
         setSituacaoExpanded(false);
       }
     }
 
-    if (bairrosExpanded || situacaoExpanded) { // ← MODIFICADO: incluir situacaoExpanded
+    if (bairrosExpanded || situacaoExpanded) {
       document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [bairrosExpanded, situacaoExpanded]); // ← MODIFICADO: incluir situacaoExpanded
+  }, [bairrosExpanded, situacaoExpanded]);
 
   // Funções utilitárias para formatação (MANTER TODAS)
   const formatarParaReal = (valor) => {
@@ -226,8 +265,8 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     bairro.toLowerCase().includes(bairroFilter.toLowerCase())
   );
 
-  // ✅ ADICIONADO: Filtrar situações pela pesquisa
-  const situacoesFiltradas = situacaoOptions.filter((situacao) =>
+  // ✅ MODIFICADO: Filtrar situações usando situações reais
+  const situacoesFiltradas = situacoesReais.filter((situacao) =>
     situacao.toLowerCase().includes(situacaoFilter.toLowerCase())
   );
 
@@ -238,7 +277,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     );
   };
 
-  // ✅ ADICIONADO: Handler para situação
+  // ✅ ADICIONADO: Handler para situação com debug
   const handleSituacaoChange = (situacao) => {
     setSituacoesSelecionadas((prev) => {
       const isSelected = prev.includes(situacao);
@@ -246,25 +285,33 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         ? prev.filter((s) => s !== situacao) 
         : [...prev, situacao];
       
-      console.log('[DEBUG] Situação alterada:', situacao, 'Selecionadas:', newSituacoes);
+      console.log('🔍 [DEBUG SITUAÇÃO] Situação alterada:', situacao);
+      console.log('🔍 [DEBUG SITUAÇÃO] Era selecionada?', isSelected);
+      console.log('🔍 [DEBUG SITUAÇÃO] Novas situações selecionadas:', newSituacoes);
+      
       return newSituacoes;
     });
   };
 
-  // ✅ MODIFICADO: handleFilters para incluir situações múltiplas
+  // ✅ MODIFICADO: handleFilters com debug extremamente detalhado
   const handleFilters = () => {
-    // Log para diagnóstico
-    console.log("Bairros selecionados (original):", bairrosSelecionados);
-    console.log("Situações selecionadas:", situacoesSelecionadas); // ← ADICIONADO
+    console.log("🚨 =========================");
+    console.log("🚨 DEBUG FILTROS - INÍCIO");
+    console.log("🚨 =========================");
+    
+    // Debug detalhado dos estados
+    console.log("📋 Estados atuais:");
+    console.log("  - Bairros selecionados:", bairrosSelecionados);
+    console.log("  - Situações selecionadas:", situacoesSelecionadas);
+    console.log("  - Situações reais disponíveis:", situacoesReais);
+    console.log("  - Filters state:", filters);
 
     const filtersToApply = {
       Categoria: filters.categoria || categoriaSelecionada,
       Status: filters.status,
-      Situacao: situacoesSelecionadas.length > 0 ? situacoesSelecionadas : filters.situacao || undefined, // ← MODIFICADO
+      Situacao: situacoesSelecionadas.length > 0 ? situacoesSelecionadas : filters.situacao || undefined,
       Ativo: filters.cadastro,
       Cidade: cidadeSelecionada,
-      // Para o admin, envie Bairro (singular) ao invés de Bairros
-      // Isso está alinhado com a implementação em admin/imoveis/page.js
       bairros: bairrosSelecionados.length > 0 ? bairrosSelecionados : undefined,
       ValorMin: valorMin,
       ValorMax: valorMax,
@@ -272,17 +319,42 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       AreaMax: areaMax,
     };
 
-    // Log para diagnóstico
-    console.log("Filtros completos enviados para API:", filtersToApply);
+    console.log("🔍 DEBUG SITUAÇÃO:");
+    console.log("  - situacoesSelecionadas.length:", situacoesSelecionadas.length);
+    console.log("  - situacoesSelecionadas:", situacoesSelecionadas);
+    console.log("  - Tipo de situacoesSelecionadas:", typeof situacoesSelecionadas);
+    console.log("  - É array?", Array.isArray(situacoesSelecionadas));
+    
+    if (situacoesSelecionadas.length > 0) {
+      console.log("  - Situações individuais:");
+      situacoesSelecionadas.forEach((sit, index) => {
+        console.log(`    ${index}: "${sit}" (tipo: ${typeof sit}, length: ${sit.length})`);
+      });
+    }
+
+    console.log("🚨 FILTROS FINAIS que serão enviados:");
+    Object.keys(filtersToApply).forEach(key => {
+      const value = filtersToApply[key];
+      console.log(`  - ${key}:`, value, `(tipo: ${typeof value})`);
+      if (Array.isArray(value)) {
+        console.log(`    └─ Array com ${value.length} itens:`, value);
+      }
+    });
+
+    console.log("🚨 =========================");
+    console.log("🚨 DEBUG FILTROS - FIM");
+    console.log("🚨 =========================");
 
     if (onFilter) {
-      console.log("Chamando onFilter com os parâmetros acima");
+      console.log("📤 Chamando onFilter com os parâmetros acima");
       onFilter(filtersToApply);
     }
   };
 
   // ✅ MODIFICADO: handleClearFilters para incluir situações
   const handleClearFilters = () => {
+    console.log("🧹 Limpando todos os filtros...");
+    
     setFilters({
       categoria: "",
       status: "",
@@ -292,9 +364,9 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     setCategoriaSelecionada("");
     setCidadeSelecionada("");
     setBairrosSelecionados([]);
-    setSituacoesSelecionadas([]); // ← ADICIONADO
+    setSituacoesSelecionadas([]);
     setBairroFilter("");
-    setSituacaoFilter(""); // ← ADICIONADO
+    setSituacaoFilter("");
     setValorMin(null);
     setValorMax(null);
     setAreaMin(null);
@@ -318,6 +390,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           onChange={(e) => setFilters({ ...filters, cadastro: e.target.value })}
           value={filters.cadastro}
         />
+        
         <SelectFilter
           name="categoria"
           options={categorias.map((cat) => ({ value: cat, label: cat }))}
@@ -328,6 +401,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           }}
           value={filters.categoria || categoriaSelecionada}
         />
+        
         <SelectFilter
           name="status"
           options={[
@@ -344,7 +418,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           value={filters.status}
         />
         
-        {/* ✅ SUBSTITUÍDO: Multi-select de situação no lugar do SelectFilter */}
+        {/* ✅ MODIFICADO: Multi-select de situação usando situações reais */}
         <div ref={situacaoRef} className="relative">
           <label htmlFor="situacao" className="text-xs text-gray-500 block mb-2">
             situacao
@@ -383,6 +457,12 @@ export default function FiltersImoveisAdmin({ onFilter }) {
                         Limpar todos
                       </button>
                     </div>
+                    
+                    {/* ✅ ADICIONADO: Debug info no dropdown */}
+                    <div className="px-2 py-1 text-[9px] text-gray-400 border-b border-gray-100">
+                      Debug: {situacoesReais.length} situações disponíveis
+                    </div>
+                    
                     {situacoesFiltradas.map((situacao) => (
                       <div key={situacao} className="flex items-center px-2 py-1 hover:bg-gray-50">
                         <input
