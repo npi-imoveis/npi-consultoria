@@ -4,7 +4,7 @@ import { useEffect, useState, useRef } from "react";
 export default function FiltersImoveisAdmin({ onFilter }) {
   // Refs para os dropdowns
   const bairrosRef = useRef(null);
-  const situacaoRef = useRef(null); // ← ADICIONADO: Ref para situação
+  const situacaoRef = useRef(null); // ✅ ADICIONADO: Ref para situação
 
   // Estados principais
   const [categorias, setCategorias] = useState([]);
@@ -15,7 +15,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
   const [categoriaSelecionada, setCategoriaSelecionada] = useState("");
   const [cidadeSelecionada, setCidadeSelecionada] = useState("");
   const [bairrosSelecionados, setBairrosSelecionados] = useState([]);
-  const [situacoesSelecionadas, setSituacoesSelecionadas] = useState([]); // ← ADICIONADO
+  const [situacoesSelecionadas, setSituacoesSelecionadas] = useState([]); // ✅ ADICIONADO
   const [valorMin, setValorMin] = useState(null);
   const [valorMax, setValorMax] = useState(null);
   const [areaMin, setAreaMin] = useState(null);
@@ -24,14 +24,14 @@ export default function FiltersImoveisAdmin({ onFilter }) {
   // Estados de UI
   const [bairroFilter, setBairroFilter] = useState("");
   const [bairrosExpanded, setBairrosExpanded] = useState(false);
-  const [situacaoFilter, setSituacaoFilter] = useState(""); // ← ADICIONADO
-  const [situacaoExpanded, setSituacaoExpanded] = useState(false); // ← ADICIONADO
+  const [situacaoFilter, setSituacaoFilter] = useState(""); // ✅ ADICIONADO
+  const [situacaoExpanded, setSituacaoExpanded] = useState(false); // ✅ ADICIONADO
 
   // Estado para outros filtros
   const [filters, setFilters] = useState({
     categoria: "",
     status: "",
-    situacao: "", // Manter para compatibilidade
+    situacao: "",
     cadastro: "",
     bairros: "",
   });
@@ -161,7 +161,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     return () => clearTimeout(timeoutId);
   }, []);
 
-  // ✅ MODIFICADO: Fechar dropdowns ao clicar fora
+  // ✅ MODIFICADO: Fechar dropdown de bairros e situação ao clicar fora
   useEffect(() => {
     function handleClickOutside(event) {
       if (bairrosRef.current && !bairrosRef.current.contains(event.target)) {
@@ -173,16 +173,16 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       }
     }
 
-    if (bairrosExpanded || situacaoExpanded) { // ← MODIFICADO: incluir situacaoExpanded
+    if (bairrosExpanded || situacaoExpanded) { // ← MODIFICADO
       document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [bairrosExpanded, situacaoExpanded]); // ← MODIFICADO: incluir situacaoExpanded
+  }, [bairrosExpanded, situacaoExpanded]); // ← MODIFICADO
 
-  // Funções utilitárias para formatação (MANTER TODAS)
+  // Funções utilitárias para formatação (MANTER EXATAMENTE IGUAIS)
   const formatarParaReal = (valor) => {
     if (valor === null || valor === undefined || valor === 0) return "";
     try {
@@ -427,7 +427,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Bairros dropdown com pesquisa e seleção múltipla (MANTER EXATAMENTE IGUAL) */}
+        {/* Bairros dropdown com pesquisa e seleção múltipla (MANTER EXATAMENTE IGUAL - SEM TAGS!) */}
         <div ref={bairrosRef}>
           <label htmlFor="bairros" className="text-xs text-gray-500 block mb-2">
             Bairros
@@ -500,24 +500,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
             )}
           </div>
 
-          {bairrosSelecionados.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-1">
-              {bairrosSelecionados.map((bairro) => (
-                <div
-                  key={bairro}
-                  className="bg-gray-100 rounded-full px-2 py-1 text-[10px] flex items-center"
-                >
-                  {bairro}
-                  <button
-                    onClick={() => handleBairroChange(bairro)}
-                    className="ml-1 text-gray-500 hover:text-black"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
+          {/* IMPORTANTE: NÃO INCLUIR TAGS DE BAIRROS - MANTER SÓ O CONTADOR NO CAMPO */}
         </div>
 
         {/* Faixa de Valores (MANTER EXATAMENTE IGUAL) */}
