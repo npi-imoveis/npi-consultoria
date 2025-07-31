@@ -46,7 +46,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     "PRONTO USADO"
   ];
 
-  // ✅ MODIFICADO: Buscar situações reais da API
+  // ✅ MODIFICADO: Buscar situações reais da API com deduplicação
   useEffect(() => {
     async function fetchFilterData() {
       try {
@@ -61,13 +61,15 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         setCategorias(catResponse.data || []);
         setCidades(cidResponse.data || []);
         
-        // ✅ ADICIONADO: Debug das situações do banco
-        console.log("🏗️ Situações do banco de dados:", sitResponse?.data || []);
+        // ✅ ADICIONADO: Debug das situações do banco com deduplicação
+        console.log("🏗️ Situações brutas do banco de dados:", sitResponse?.data || []);
         console.log("🏗️ Situações hardcoded:", situacaoOptionsHardcoded);
         
         if (sitResponse?.data && Array.isArray(sitResponse.data) && sitResponse.data.length > 0) {
-          console.log("✅ Usando situações do banco de dados");
-          setSituacoesReais(sitResponse.data);
+          // ✅ DEDUPLICAÇÃO: Remover duplicatas e valores vazios
+          const situacoesUnicas = [...new Set(sitResponse.data.filter(s => s && s.trim() !== ''))];
+          console.log("✅ Situações únicas após deduplicação:", situacoesUnicas);
+          setSituacoesReais(situacoesUnicas);
         } else {
           console.log("⚠️ Usando situações hardcoded como fallback");
           setSituacoesReais(situacaoOptionsHardcoded);
@@ -75,19 +77,20 @@ export default function FiltersImoveisAdmin({ onFilter }) {
 
         // ✅ ADICIONADO: Comparação detalhada
         console.log("🔍 COMPARAÇÃO SITUAÇÕES:");
-        console.log("  - Do banco:", sitResponse?.data);
+        console.log("  - Do banco (após deduplicação):", sitResponse?.data ? [...new Set(sitResponse.data)] : []);
         console.log("  - Hardcoded:", situacaoOptionsHardcoded);
         
         if (sitResponse?.data) {
+          const situacoesBanco = [...new Set(sitResponse.data)];
           const diferencas = situacaoOptionsHardcoded.filter(h => 
-            !sitResponse.data.some(b => b.toLowerCase() === h.toLowerCase())
+            !situacoesBanco.some(b => b && b.toLowerCase().trim() === h.toLowerCase().trim())
           );
           if (diferencas.length > 0) {
             console.log("🚨 SITUAÇÕES HARDCODED NÃO ENCONTRADAS NO BANCO:", diferencas);
           }
           
-          const extras = sitResponse.data.filter(b => 
-            !situacaoOptionsHardcoded.some(h => h.toLowerCase() === b.toLowerCase())
+          const extras = situacoesBanco.filter(b => 
+            b && !situacaoOptionsHardcoded.some(h => h.toLowerCase().trim() === b.toLowerCase().trim())
           );
           if (extras.length > 0) {
             console.log("📋 SITUAÇÕES DO BANCO NÃO HARDCODED:", extras);
@@ -277,8 +280,53 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     );
   };
 
+  // ✅ ADICIONADO: Função para normalizar situações e evitar problemas de compatibilidade
+  const normalizarSituacaoParaAPI = (situacoesSelecionadas) => {
+    if (!Array.isArray(situacoesSelecionadas) || situacoesSelecionadas.length === 0) {
+      return undefined;
+    }
+
+    // Normalizar cada situação selecionada para corresponder exatamente ao banco
+    const situacoesNormalizadas = situacoesSelecionadas.map(sitSelecionada => {
+      // Primeiro: tentar match exato
+      const matchExato = situacoesReais.find(sitReal => 
+        sitReal && sitReal === sitSelecionada
+      );
+      if (matchExato) return matchExato;
+
+      // Segundo: tentar match case-insensitive
+      const matchCaseInsensitive = situacoesReais.find(sitReal => 
+        sitReal && sitReal.toLowerCase().trim() === sitSelecionada.toLowerCase().trim()
+      );
+      if (matchCaseInsensitive) return matchCaseInsensitive;
+
+      // Terceiro: retornar original se não encontrar match
+      console.log(`⚠️ Situação "${sitSelecionada}" não encontrada no banco, usando valor original`);
+      return sitSelecionada;
+    });
+
+    console.log("🔄 NORMALIZAÇÃO DAS SITUAÇÕES:");
+    console.log("  - Original:", situacoesSelecionadas);
+    console.log("  - Normalizada:", situacoesNormalizadas);
+
+    return situacoesNormalizadas;
+  };
+
   // ✅ ADICIONADO: Handler para situação com debug
   const handleSituacaoChange = (situacao) => {
+    setSituacoesSelecionadas((prev) => {
+      const isSelected = prev.includes(situacao);
+      const newSituacoes = isSelected 
+        ? prev.filter((s) => s !== situacao) 
+        : [...prev, situacao];
+      
+      console.log('🔍 [DEBUG SITUAÇÃO] Situação alterada:', situacao);
+      console.log('🔍 [DEBUG SITUAÇÃO] Era selecionada?', isSelected);
+      console.log('🔍 [DEBUG SITUAÇÃO] Novas situações selecionadas:', newSituacoes);
+      
+      return newSituacoes;
+    });
+  };
     setSituacoesSelecionadas((prev) => {
       const isSelected = prev.includes(situacao);
       const newSituacoes = isSelected 
@@ -309,7 +357,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     const filtersToApply = {
       Categoria: filters.categoria || categoriaSelecionada,
       Status: filters.status,
-      Situacao: situacoesSelecionadas.length > 0 ? situacoesSelecionadas : filters.situacao || undefined,
+      Situacao: normalizarSituacaoParaAPI(situacoesSelecionadas) || filters.situacao || undefined,
       Ativo: filters.cadastro,
       Cidade: cidadeSelecionada,
       bairros: bairrosSelecionados.length > 0 ? bairrosSelecionados : undefined,
@@ -319,7 +367,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       AreaMax: areaMax,
     };
 
-    console.log("🔍 DEBUG SITUAÇÃO:");
+    console.log("🔍 DEBUG SITUAÇÃO DETALHADO:");
     console.log("  - situacoesSelecionadas.length:", situacoesSelecionadas.length);
     console.log("  - situacoesSelecionadas:", situacoesSelecionadas);
     console.log("  - Tipo de situacoesSelecionadas:", typeof situacoesSelecionadas);
@@ -329,6 +377,20 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       console.log("  - Situações individuais:");
       situacoesSelecionadas.forEach((sit, index) => {
         console.log(`    ${index}: "${sit}" (tipo: ${typeof sit}, length: ${sit.length})`);
+      });
+      
+      // ✅ ADICIONADO: Verificar se as situações selecionadas existem nas disponíveis
+      console.log("🔍 VERIFICAÇÃO DE COMPATIBILIDADE:");
+      situacoesSelecionadas.forEach(sitSelecionada => {
+        const existe = situacoesReais.some(sitReal => 
+          sitReal && sitReal.toLowerCase().trim() === sitSelecionada.toLowerCase().trim()
+        );
+        console.log(`  - "${sitSelecionada}" existe no banco? ${existe ? '✅ SIM' : '❌ NÃO'}`);
+        if (!existe) {
+          console.log(`    💡 Situações similares no banco:`, situacoesReais.filter(s => 
+            s && s.toLowerCase().includes(sitSelecionada.toLowerCase().substring(0, 3))
+          ));
+        }
       });
     }
 
@@ -340,6 +402,15 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         console.log(`    └─ Array com ${value.length} itens:`, value);
       }
     });
+
+    // ✅ ADICIONADO: Simulação de como será convertido no backend
+    if (Array.isArray(filtersToApply.Situacao) && filtersToApply.Situacao.length > 0) {
+      const situacaoParaAPI = filtersToApply.Situacao.join(',');
+      console.log("🔄 CONVERSÃO PARA API:");
+      console.log(`  - Array original:`, filtersToApply.Situacao);
+      console.log(`  - String para API: "${situacaoParaAPI}"`);
+      console.log(`  - Comprimento da string:`, situacaoParaAPI.length);
+    }
 
     console.log("🚨 =========================");
     console.log("🚨 DEBUG FILTROS - FIM");
@@ -460,23 +531,29 @@ export default function FiltersImoveisAdmin({ onFilter }) {
                     
                     {/* ✅ ADICIONADO: Debug info no dropdown */}
                     <div className="px-2 py-1 text-[9px] text-gray-400 border-b border-gray-100">
-                      Debug: {situacoesReais.length} situações disponíveis
+                      Debug: {situacoesReais.length} situações ({situacoesFiltradas.length} filtradas)
                     </div>
                     
-                    {situacoesFiltradas.map((situacao) => (
-                      <div key={situacao} className="flex items-center px-2 py-1 hover:bg-gray-50">
+                    {situacoesFiltradas.map((situacao, index) => (
+                      <div key={`${situacao}-${index}`} className="flex items-center px-2 py-1 hover:bg-gray-50">
                         <input
                           type="checkbox"
-                          id={`situacao-${situacao}`}
+                          id={`situacao-${situacao}-${index}`}
                           checked={situacoesSelecionadas.includes(situacao)}
                           onChange={() => handleSituacaoChange(situacao)}
                           className="mr-2 h-4 w-4"
                         />
                         <label
-                          htmlFor={`situacao-${situacao}`}
-                          className="text-xs cursor-pointer flex-1"
+                          htmlFor={`situacao-${situacao}-${index}`}
+                          className="text-xs cursor-pointer flex-1 flex justify-between"
                         >
-                          {situacao}
+                          <span>{situacao}</span>
+                          {/* ✅ ADICIONADO: Mostrar se é duplicata */}
+                          {situacoesReais.filter(s => s === situacao).length > 1 && (
+                            <span className="text-red-500 text-[8px] font-bold">
+                              DUP
+                            </span>
+                          )}
                         </label>
                       </div>
                     ))}
