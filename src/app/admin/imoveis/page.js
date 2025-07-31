@@ -183,11 +183,24 @@ export default function AdminImoveis() {
         const filtersToUse = customFilters || filters;
         const apiFilters = { ...filtersToUse };
 
-        // ✅ ADICIONADO: Conversão de array para string se necessário (APENAS para Situacao)
+        // 🚨 DEBUG SITUAÇÃO: Log detalhado antes da conversão
+        console.log("🔍 DEBUG SITUAÇÃO - Filtros originais:", filtersToUse);
+        console.log("🔍 DEBUG SITUAÇÃO - apiFilters.Situacao antes:", apiFilters.Situacao);
+        console.log("🔍 DEBUG SITUAÇÃO - Tipo:", typeof apiFilters.Situacao);
+        console.log("🔍 DEBUG SITUAÇÃO - É array?", Array.isArray(apiFilters.Situacao));
+
+        // ✅ MODIFICADO: Conversão de array para string com debug detalhado
         if (Array.isArray(apiFilters.Situacao) && apiFilters.Situacao.length > 0) {
-          console.log('[DEBUG] Convertendo situações de array para string:', apiFilters.Situacao);
+          console.log('🔍 [DEBUG SITUAÇÃO] Convertendo situações de array para string:', apiFilters.Situacao);
+          console.log('🔍 [DEBUG SITUAÇÃO] Situações individuais:', apiFilters.Situacao.map((s, i) => `${i}: "${s}"`));
+          
           apiFilters.Situacao = apiFilters.Situacao.join(',');
-          console.log('[DEBUG] Situacao convertida para API:', apiFilters.Situacao);
+          
+          console.log('🔍 [DEBUG SITUAÇÃO] Situacao convertida para API:', apiFilters.Situacao);
+          console.log('🔍 [DEBUG SITUACAO] Tipo final:', typeof apiFilters.Situacao);
+          console.log('🔍 [DEBUG SITUACAO] Comprimento da string:', apiFilters.Situacao.length);
+        } else if (apiFilters.Situacao) {
+          console.log('🔍 [DEBUG SITUAÇÃO] Situacao não é array ou está vazia:', apiFilters.Situacao);
         }
 
         if (apiFilters.ValorMin) {
@@ -197,7 +210,16 @@ export default function AdminImoveis() {
           apiFilters.ValorMax = apiFilters.ValorMax.toString();
         }
 
+        // 🚨 LOG FINAL DOS FILTROS ENVIADOS PARA API
+        console.log('🚨 [DEBUG FINAL] Filtros que serão enviados para getImoveisDashboard:', apiFilters);
+        console.log('🚨 [DEBUG FINAL] Especificamente Situacao:', apiFilters.Situacao);
+
         const response = await getImoveisDashboard(apiFilters, page, 30);
+        
+        // 🚨 DEBUG: Log da resposta da API
+        console.log('📥 [DEBUG SITUAÇÃO] Resposta da API getImoveisDashboard:', response);
+        console.log('📥 [DEBUG SITUAÇÃO] Dados retornados:', response?.data?.length || 0, 'imóveis');
+        
         if (response && response.data) {
           responseData = response.data;
           
@@ -657,143 +679,129 @@ export default function AdminImoveis() {
             </div>
           )}
 
-          {/* Tabela de imóveis */}
-          <div className="relative overflow-x-auto shadow-sm">
-            <table className="min-w-full divide-y divide-gray-200 table-fixed">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th
-                    scope="col"
-                    className="px-4 bg-gray-50 py-3 text-left text-[10px] font-bold uppercase tracking-wider"
-                  >
-                    Código
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider"
-                  >
-                    Ativo
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider"
-                  >
-                    Empreendimento
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider"
-                  >
-                    Categoria
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider"
-                  >
-                    Área Privativa
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider min-w-[130px]"
-                  >
-                    Valor (ValorAntigo)
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-4 py-4 text-left text-[10px] font-bold uppercase tracking-wider sticky right-0 bg-gray-50 min-w-[120px]"
-                  >
-                    Ações
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {isLoading ? (
-                  // Linha de carregamento
-                  Array(10)
-                    .fill(null)
-                    .map((_, index) => (
-                      <tr key={`loading-${index}`}>
-                        <td colSpan={7} className="w-full px-4 py-4 whitespace-nowrap">
-                          <div className="w-full animate-pulse flex space-x-4">
-                            <div className="h-4 w-full bg-gray-200 rounded "></div>
-                          </div>
+          {/* 🚨 LAYOUT CORRIGIDO: Tabela de imóveis com cálculo de largura apropriado */}
+          <div className="overflow-x-auto">
+            <div className="inline-block min-w-full align-middle">
+              <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+                <table className="min-w-full divide-y divide-gray-300">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th scope="col" className="px-3 py-3.5 text-left text-xs font-semibold text-gray-900 uppercase tracking-wide w-20">
+                        Código
+                      </th>
+                      <th scope="col" className="px-3 py-3.5 text-left text-xs font-semibold text-gray-900 uppercase tracking-wide w-16">
+                        Ativo
+                      </th>
+                      <th scope="col" className="px-3 py-3.5 text-left text-xs font-semibold text-gray-900 uppercase tracking-wide">
+                        Empreendimento
+                      </th>
+                      <th scope="col" className="px-3 py-3.5 text-left text-xs font-semibold text-gray-900 uppercase tracking-wide w-32">
+                        Categoria
+                      </th>
+                      <th scope="col" className="px-3 py-3.5 text-left text-xs font-semibold text-gray-900 uppercase tracking-wide w-24">
+                        Área Privativa
+                      </th>
+                      <th scope="col" className="px-3 py-3.5 text-left text-xs font-semibold text-gray-900 uppercase tracking-wide w-36">
+                        Valor (ValorAntigo)
+                      </th>
+                      <th scope="col" className="relative px-3 py-3.5 w-28">
+                        <span className="sr-only">Ações</span>
+                        <span className="text-xs font-semibold text-gray-900 uppercase tracking-wide">Ações</span>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200 bg-white">
+                    {isLoading ? (
+                      // Linha de carregamento
+                      Array(10)
+                        .fill(null)
+                        .map((_, index) => (
+                          <tr key={`loading-${index}`}>
+                            <td colSpan={7} className="px-3 py-4 whitespace-nowrap">
+                              <div className="animate-pulse flex space-x-4">
+                                <div className="h-4 bg-gray-200 rounded flex-1"></div>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                    ) : imoveis.length > 0 ? (
+                      // Dados dos imóveis
+                      imoveis.map((imovel) => (
+                        <tr key={imovel.Codigo || imovel._id} className="hover:bg-gray-50">
+                          <td className="whitespace-nowrap px-3 py-4 text-xs font-medium text-gray-900">
+                            {imovel.Codigo || "-"}
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-4 text-xs text-gray-500">
+                            {(() => {
+                              const statusImovel = verificarImovelAtivo(imovel);
+                              return (
+                                <span
+                                  className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                                    statusImovel.ativo
+                                      ? "bg-green-100 text-green-800"
+                                      : "bg-red-100 text-red-800"
+                                  }`}
+                                >
+                                  {statusImovel.texto}
+                                </span>
+                              );
+                            })()}
+                          </td>
+                          <td className="px-3 py-4 text-xs font-medium text-gray-900">
+                            <div className="max-w-xs truncate">
+                              {imovel.Empreendimento || "-"}
+                            </div>
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-4 text-xs text-gray-500">
+                            {imovel.Categoria || "-"}
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-4 text-xs text-gray-500">
+                            {formatarArea(imovel.AreaPrivativa)}
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-4 text-xs text-gray-500">
+                            {formatarValor(imovel.ValorAntigo)}
+                          </td>
+                          <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-xs font-medium sm:pr-3">
+                            <div className="flex items-center justify-end space-x-2">
+                              <a
+                                href={`/imovel-${imovel.Codigo}/${imovel.Slug || 'detalhes'}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:text-blue-900 p-1.5 rounded-md hover:bg-gray-100"
+                                title="Ver no site"
+                              >
+                                <EyeIcon className="h-4 w-4" />
+                              </a>
+                              <button
+                                className="text-indigo-600 hover:text-indigo-900 p-1.5 rounded-md hover:bg-gray-100"
+                                title="Editar"
+                                onClick={() => handleEdit(imovel.Codigo)}
+                              >
+                                <PencilSquareIcon className="h-4 w-4" />
+                              </button>
+                              <button
+                                className="text-red-600 hover:text-red-900 p-1.5 rounded-md hover:bg-gray-100"
+                                title="Deletar"
+                                onClick={() => handleDelete(imovel.Codigo)}
+                              >
+                                <TrashIcon className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))
+                    ) : (
+                      // Nenhum resultado encontrado
+                      <tr>
+                        <td colSpan={7} className="px-3 py-12 text-center text-sm text-gray-500">
+                          Nenhum imóvel encontrado.
                         </td>
                       </tr>
-                    ))
-                ) : imoveis.length > 0 ? (
-                  // Dados dos imóveis
-                  imoveis.map((imovel) => (
-                    <tr key={imovel.Codigo || imovel._id} className="hover:bg-gray-50">
-                      <td className="px-4 bg-gray-50 py-4 whitespace-nowrap text-[10px] text-gray-900 font-bold">
-                        {imovel.Codigo || "-"}
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap">
-                        {(() => {
-                          const statusImovel = verificarImovelAtivo(imovel);
-                          return (
-                            <span
-                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium ${
-                                statusImovel.ativo
-                                  ? "bg-green-100 text-green-800"
-                                  : "bg-red-100 text-red-800"
-                              }`}
-                            >
-                              {statusImovel.texto}
-                            </span>
-                          );
-                        })()}
-                      </td>
-                      <td className="px-4 font-bold py-4 whitespace-nowrap text-[10px] text-zinc-700">
-                        {imovel.Empreendimento || "-"}
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-[10px] text-zinc-700">
-                        {imovel.Categoria || "-"}
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-[10px] text-zinc-700">
-                        {formatarArea(imovel.AreaPrivativa)}
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-[10px] text-zinc-700 min-w-[130px]">
-                        {formatarValor(imovel.ValorAntigo)}
-                      </td>
-                      <td className="px-4 py-4 whitespace-nowrap text-[10px] text-zinc-700 sticky right-0 bg-white min-w-[120px]">
-                        <div className="flex items-center space-x-1">
-                          <a
-                            href={`/imovel-${imovel.Codigo}/${imovel.Slug || 'detalhes'}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-800 bg-gray-100 p-1.5 rounded-md"
-                            title="Ver no site"
-                          >
-                            <EyeIcon className="h-4 w-4" />
-                          </a>
-                          <button
-                            className="text-black hover:text-indigo-900 bg-gray-100 p-1.5 rounded-md"
-                            title="Editar"
-                            onClick={() => handleEdit(imovel.Codigo)}
-                          >
-                            <PencilSquareIcon className="h-4 w-4" />
-                          </button>
-                          <button
-                            className="text-red-500 font-bold hover:text-red-400 bg-gray-100 p-1.5 rounded-md"
-                            title="Deletar"
-                            onClick={() => handleDelete(imovel.Codigo)}
-                          >
-                            <TrashIcon className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  // Nenhum resultado encontrado
-                  <tr>
-                    <td colSpan={7} className="px-4 py-4 text-center text-gray-500">
-                      Nenhum imóvel encontrado.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
           </div>
 
           {/* Paginação Inline Simples */}
