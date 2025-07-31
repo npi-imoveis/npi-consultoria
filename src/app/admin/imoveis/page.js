@@ -679,34 +679,33 @@ export default function AdminImoveis() {
             </div>
           )}
 
-          {/* 🚨 LAYOUT CORRIGIDO: Tabela de imóveis com cálculo de largura apropriado */}
+          {/* 🚨 LAYOUT ULTRA COMPACTO: Tabela otimizada para evitar encavalamento */}
           <div className="overflow-x-auto">
             <div className="inline-block min-w-full align-middle">
               <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
-                <table className="min-w-full divide-y divide-gray-300">
+                <table className="min-w-full divide-y divide-gray-300 table-fixed">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th scope="col" className="px-3 py-3.5 text-left text-xs font-semibold text-gray-900 uppercase tracking-wide w-20">
+                      <th scope="col" className="w-16 px-2 py-2 text-left text-[9px] font-bold text-gray-900 uppercase tracking-tight">
                         Código
                       </th>
-                      <th scope="col" className="px-3 py-3.5 text-left text-xs font-semibold text-gray-900 uppercase tracking-wide w-16">
+                      <th scope="col" className="w-12 px-1 py-2 text-left text-[9px] font-bold text-gray-900 uppercase tracking-tight">
                         Ativo
                       </th>
-                      <th scope="col" className="px-3 py-3.5 text-left text-xs font-semibold text-gray-900 uppercase tracking-wide">
+                      <th scope="col" className="w-auto px-2 py-2 text-left text-[9px] font-bold text-gray-900 uppercase tracking-tight">
                         Empreendimento
                       </th>
-                      <th scope="col" className="px-3 py-3.5 text-left text-xs font-semibold text-gray-900 uppercase tracking-wide w-32">
+                      <th scope="col" className="w-20 px-1 py-2 text-left text-[9px] font-bold text-gray-900 uppercase tracking-tight">
                         Categoria
                       </th>
-                      <th scope="col" className="px-3 py-3.5 text-left text-xs font-semibold text-gray-900 uppercase tracking-wide w-24">
-                        Área Privativa
+                      <th scope="col" className="w-16 px-1 py-2 text-left text-[9px] font-bold text-gray-900 uppercase tracking-tight">
+                        Área
                       </th>
-                      <th scope="col" className="px-3 py-3.5 text-left text-xs font-semibold text-gray-900 uppercase tracking-wide w-36">
-                        Valor (ValorAntigo)
+                      <th scope="col" className="w-24 px-1 py-2 text-left text-[9px] font-bold text-gray-900 uppercase tracking-tight">
+                        Valor
                       </th>
-                      <th scope="col" className="relative px-3 py-3.5 w-28">
-                        <span className="sr-only">Ações</span>
-                        <span className="text-xs font-semibold text-gray-900 uppercase tracking-wide">Ações</span>
+                      <th scope="col" className="w-20 px-1 py-2 text-center text-[9px] font-bold text-gray-900 uppercase tracking-tight">
+                        Ações
                       </th>
                     </tr>
                   </thead>
@@ -717,9 +716,9 @@ export default function AdminImoveis() {
                         .fill(null)
                         .map((_, index) => (
                           <tr key={`loading-${index}`}>
-                            <td colSpan={7} className="px-3 py-4 whitespace-nowrap">
-                              <div className="animate-pulse flex space-x-4">
-                                <div className="h-4 bg-gray-200 rounded flex-1"></div>
+                            <td colSpan={7} className="px-2 py-3 whitespace-nowrap">
+                              <div className="animate-pulse flex space-x-2">
+                                <div className="h-3 bg-gray-200 rounded flex-1"></div>
                               </div>
                             </td>
                           </tr>
@@ -728,15 +727,15 @@ export default function AdminImoveis() {
                       // Dados dos imóveis
                       imoveis.map((imovel) => (
                         <tr key={imovel.Codigo || imovel._id} className="hover:bg-gray-50">
-                          <td className="whitespace-nowrap px-3 py-4 text-xs font-medium text-gray-900">
+                          <td className="w-16 px-2 py-2 text-[9px] font-bold text-gray-900 whitespace-nowrap">
                             {imovel.Codigo || "-"}
                           </td>
-                          <td className="whitespace-nowrap px-3 py-4 text-xs text-gray-500">
+                          <td className="w-12 px-1 py-2 text-[8px] text-gray-500 whitespace-nowrap">
                             {(() => {
                               const statusImovel = verificarImovelAtivo(imovel);
                               return (
                                 <span
-                                  className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                                  className={`inline-flex items-center rounded-full px-1.5 py-0.5 text-[8px] font-medium ${
                                     statusImovel.ativo
                                       ? "bg-green-100 text-green-800"
                                       : "bg-red-100 text-red-800"
@@ -747,44 +746,48 @@ export default function AdminImoveis() {
                               );
                             })()}
                           </td>
-                          <td className="px-3 py-4 text-xs font-medium text-gray-900">
-                            <div className="max-w-xs truncate">
+                          <td className="w-auto px-2 py-2 text-[9px] font-medium text-gray-900">
+                            <div className="truncate" style={{ maxWidth: '200px' }}>
                               {imovel.Empreendimento || "-"}
                             </div>
                           </td>
-                          <td className="whitespace-nowrap px-3 py-4 text-xs text-gray-500">
-                            {imovel.Categoria || "-"}
+                          <td className="w-20 px-1 py-2 text-[8px] text-gray-500 whitespace-nowrap">
+                            <div className="truncate">
+                              {imovel.Categoria || "-"}
+                            </div>
                           </td>
-                          <td className="whitespace-nowrap px-3 py-4 text-xs text-gray-500">
+                          <td className="w-16 px-1 py-2 text-[8px] text-gray-500 whitespace-nowrap">
                             {formatarArea(imovel.AreaPrivativa)}
                           </td>
-                          <td className="whitespace-nowrap px-3 py-4 text-xs text-gray-500">
-                            {formatarValor(imovel.ValorAntigo)}
+                          <td className="w-24 px-1 py-2 text-[8px] text-gray-500 whitespace-nowrap">
+                            <div className="truncate">
+                              {formatarValor(imovel.ValorAntigo)}
+                            </div>
                           </td>
-                          <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-xs font-medium sm:pr-3">
-                            <div className="flex items-center justify-end space-x-2">
+                          <td className="w-20 px-1 py-2 text-center">
+                            <div className="flex items-center justify-center space-x-1">
                               <a
                                 href={`/imovel-${imovel.Codigo}/${imovel.Slug || 'detalhes'}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-blue-600 hover:text-blue-900 p-1.5 rounded-md hover:bg-gray-100"
+                                className="text-blue-600 hover:text-blue-900 p-0.5 rounded hover:bg-gray-100"
                                 title="Ver no site"
                               >
-                                <EyeIcon className="h-4 w-4" />
+                                <EyeIcon className="h-3 w-3" />
                               </a>
                               <button
-                                className="text-indigo-600 hover:text-indigo-900 p-1.5 rounded-md hover:bg-gray-100"
+                                className="text-indigo-600 hover:text-indigo-900 p-0.5 rounded hover:bg-gray-100"
                                 title="Editar"
                                 onClick={() => handleEdit(imovel.Codigo)}
                               >
-                                <PencilSquareIcon className="h-4 w-4" />
+                                <PencilSquareIcon className="h-3 w-3" />
                               </button>
                               <button
-                                className="text-red-600 hover:text-red-900 p-1.5 rounded-md hover:bg-gray-100"
+                                className="text-red-600 hover:text-red-900 p-0.5 rounded hover:bg-gray-100"
                                 title="Deletar"
                                 onClick={() => handleDelete(imovel.Codigo)}
                               >
-                                <TrashIcon className="h-4 w-4" />
+                                <TrashIcon className="h-3 w-3" />
                               </button>
                             </div>
                           </td>
@@ -793,7 +796,7 @@ export default function AdminImoveis() {
                     ) : (
                       // Nenhum resultado encontrado
                       <tr>
-                        <td colSpan={7} className="px-3 py-12 text-center text-sm text-gray-500">
+                        <td colSpan={7} className="px-2 py-8 text-center text-xs text-gray-500">
                           Nenhum imóvel encontrado.
                         </td>
                       </tr>
