@@ -38,7 +38,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     bairros: "",
   });
 
-  // ✅ ADICIONADO: Estado para armazenar mapeamentos localmente (mais confiável que window)
+  // ✅ Estados para armazenar mapeamentos localmente
   const [situacoesMapeamento, setSituacoesMapeamento] = useState({});
   const [bairrosMapeamento, setBairrosMapeamento] = useState({});
 
@@ -51,11 +51,27 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     "PRONTO USADO"
   ];
 
-  // ✅ CORRIGIDO: Buscar categorias, cidades e situações com lógica de mapeamento corrigida
+  // ✅ FUNÇÃO CORRIGIDA: Capitalização correta para nomes próprios
+  const capitalizarNomesProprios = (texto) => {
+    if (!texto || typeof texto !== 'string') return texto;
+    
+    return texto.split(' ').map(palavra => {
+      if (palavra.length === 0) return palavra;
+      return palavra.charAt(0).toUpperCase() + palavra.slice(1).toLowerCase();
+    }).join(' ');
+  };
+
+  // ✅ FUNÇÃO CORRIGIDA: Normalizar chave para mapeamento (sempre lowercase)
+  const criarChaveMapeamento = (texto) => {
+    if (!texto || typeof texto !== 'string') return '';
+    return texto.toLowerCase().trim();
+  };
+
+  // ✅ CORRIGIDO: Buscar situações com lógica de mapeamento ROBUSTA
   useEffect(() => {
     async function fetchFilterData() {
       try {
-        console.log("🏗️ Buscando dados dos filtros...");
+        console.log("🏗️ [SITUAÇÃO] Iniciando busca de situações...");
         
         const [catResponse, cidResponse, sitResponse] = await Promise.all([
           getImoveisByFilters("Categoria"),
@@ -67,40 +83,58 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         setCidades(cidResponse.data || []);
         
         if (sitResponse?.data && Array.isArray(sitResponse.data) && sitResponse.data.length > 0) {
-          const situacoesBrutas = sitResponse.data.filter(s => s && s.trim() !== '');
+          const situacoesBrutas = sitResponse.data.filter(s => s && s.toString().trim() !== '');
           
-          console.log("🔍 [SITUAÇÃO] Situações brutas do backend:", situacoesBrutas);
+          console.log("📥 [SITUAÇÃO] Situações brutas do backend:", situacoesBrutas);
           
-          // ✅ LÓGICA CORRIGIDA: Criar mapeamento consistente
-          const mapeamentoTemp = {};
-          const situacoesUnicasSet = new Set();
+          // ✅ LÓGICA CORRIGIDA: Mapeamento robusto e consistente
+          const novoMapeamento = {};
+          const situacoesParaUI = new Set();
           
-          // Primeira passada: identificar situações únicas e criar mapeamento
+          // Primeira passada: criar mapeamento por chave normalizada
           situacoesBrutas.forEach(situacaoOriginal => {
-            const chaveNormalizada = situacaoOriginal.toLowerCase().trim();
+            const chave = criarChaveMapeamento(situacaoOriginal);
             
-            // Inicializar array se não existir
-            if (!mapeamentoTemp[chaveNormalizada]) {
-              mapeamentoTemp[chaveNormalizada] = [];
+            if (!novoMapeamento[chave]) {
+              novoMapeamento[chave] = [];
             }
             
-            // Adicionar a situação original ao mapeamento
-            if (!mapeamentoTemp[chaveNormalizada].includes(situacaoOriginal)) {
-              mapeamentoTemp[chaveNormalizada].push(situacaoOriginal);
+            // Adicionar situação original se ainda não existir
+            if (!novoMapeamento[chave].includes(situacaoOriginal)) {
+              novoMapeamento[chave].push(situacaoOriginal);
             }
-            
-            // Adicionar versão unificada (primeira letra maiúscula, resto minúscula)
-            const situacaoUnificada = situacaoOriginal.charAt(0).toUpperCase() + situacaoOriginal.slice(1).toLowerCase();
-            situacoesUnicasSet.add(situacaoUnificada);
           });
           
-          const situacoesUnicas = Array.from(situacoesUnicasSet).sort();
+          // Segunda passada: criar versões para UI (uma por chave)
+          Object.keys(novoMapeamento).forEach(chave => {
+            const situacoesGrupo = novoMapeamento[chave];
+            
+            // Escolher a "melhor" versão para mostrar na UI
+            let melhorVersao = situacoesGrupo[0]; // padrão: primeira
+            
+            // Preferir versões com capitalização adequada
+            const versaoCapitalizada = situacoesGrupo.find(s => 
+              s === capitalizarNomesProprios(s)
+            );
+            
+            if (versaoCapitalizada) {
+              melhorVersao = versaoCapitalizada;
+            } else {
+              // Se não encontrar, criar versão capitalizada
+              melhorVersao = capitalizarNomesProprios(situacoesGrupo[0]);
+            }
+            
+            situacoesParaUI.add(melhorVersao);
+          });
           
-          console.log("✅ [SITUAÇÃO] Situações únicas criadas:", situacoesUnicas);
-          console.log("🗺️ [SITUAÇÃO] Mapeamento criado:", mapeamentoTemp);
+          const situacoesFinais = Array.from(situacoesParaUI).sort();
           
-          setSituacoesReais(situacoesUnicas);
-          setSituacoesMapeamento(mapeamentoTemp);
+          console.log("✅ [SITUAÇÃO] Situações finais para UI:", situacoesFinais);
+          console.log("🗺️ [SITUAÇÃO] Mapeamento criado:", novoMapeamento);
+          console.log("📊 [SITUAÇÃO] Resumo:", Object.keys(novoMapeamento).length, "chaves únicas");
+          
+          setSituacoesReais(situacoesFinais);
+          setSituacoesMapeamento(novoMapeamento);
           
         } else {
           console.log("⚠️ [SITUAÇÃO] Usando situações hardcoded como fallback");
@@ -109,7 +143,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         }
 
       } catch (error) {
-        console.error("❌ Erro ao buscar filtros:", error);
+        console.error("❌ [SITUAÇÃO] Erro ao buscar filtros:", error);
         setSituacoesReais(situacaoOptionsHardcoded);
         setSituacoesMapeamento({});
       }
@@ -117,7 +151,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     fetchFilterData();
   }, []);
 
-  // ✅ CORRIGIDO: Buscar bairros com lógica de mapeamento corrigida
+  // ✅ CORRIGIDO: Buscar bairros com lógica de mapeamento ROBUSTA
   useEffect(() => {
     async function fetchBairros() {
       if (!cidadeSelecionada) {
@@ -128,44 +162,65 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       }
 
       try {
+        console.log("🏘️ [BAIRROS] Iniciando busca de bairros para:", cidadeSelecionada);
+        
         const response = await getBairrosPorCidade(cidadeSelecionada, categoriaSelecionada);
         const bairrosBrutos = response?.data || [];
         
-        console.log("🏘️ [BAIRROS] Bairros brutos:", bairrosBrutos);
+        console.log("📥 [BAIRROS] Bairros brutos do backend:", bairrosBrutos);
         
         if (bairrosBrutos.length > 0) {
-          // ✅ LÓGICA CORRIGIDA: Criar mapeamento consistente para bairros
-          const mapeamentoTempBairros = {};
-          const bairrosUnicosSet = new Set();
+          // ✅ LÓGICA CORRIGIDA: Mapeamento robusto e consistente para bairros
+          const novoMapeamentoBairros = {};
+          const bairrosParaUI = new Set();
           
+          // Primeira passada: criar mapeamento por chave normalizada
           bairrosBrutos.forEach(bairroOriginal => {
-            if (bairroOriginal && bairroOriginal.trim() !== '') {
-              const chaveNormalizada = bairroOriginal.toLowerCase().trim();
+            if (bairroOriginal && bairroOriginal.toString().trim() !== '') {
+              const chave = criarChaveMapeamento(bairroOriginal);
               
-              // Inicializar array se não existir
-              if (!mapeamentoTempBairros[chaveNormalizada]) {
-                mapeamentoTempBairros[chaveNormalizada] = [];
+              if (!novoMapeamentoBairros[chave]) {
+                novoMapeamentoBairros[chave] = [];
               }
               
-              // Adicionar o bairro original ao mapeamento
-              if (!mapeamentoTempBairros[chaveNormalizada].includes(bairroOriginal)) {
-                mapeamentoTempBairros[chaveNormalizada].push(bairroOriginal);
+              // Adicionar bairro original se ainda não existir
+              if (!novoMapeamentoBairros[chave].includes(bairroOriginal)) {
+                novoMapeamentoBairros[chave].push(bairroOriginal);
               }
-              
-              // Criar versão unificada (Title Case)
-              const bairroUnificado = bairroOriginal.charAt(0).toUpperCase() + bairroOriginal.slice(1).toLowerCase();
-              bairrosUnicosSet.add(bairroUnificado);
             }
           });
           
-          const bairrosUnicos = Array.from(bairrosUnicosSet).sort();
+          // Segunda passada: criar versões para UI (uma por chave)
+          Object.keys(novoMapeamentoBairros).forEach(chave => {
+            const bairrosGrupo = novoMapeamentoBairros[chave];
+            
+            // Escolher a "melhor" versão para mostrar na UI
+            let melhorVersao = bairrosGrupo[0]; // padrão: primeira
+            
+            // Preferir versões com capitalização adequada (Title Case)
+            const versaoCapitalizada = bairrosGrupo.find(b => 
+              b === capitalizarNomesProprios(b)
+            );
+            
+            if (versaoCapitalizada) {
+              melhorVersao = versaoCapitalizada;
+            } else {
+              // Se não encontrar, criar versão capitalizada
+              melhorVersao = capitalizarNomesProprios(bairrosGrupo[0]);
+            }
+            
+            bairrosParaUI.add(melhorVersao);
+          });
           
-          console.log("✅ [BAIRROS] Bairros únicos:", bairrosUnicos);
-          console.log("🗺️ [BAIRROS] Mapeamento criado:", mapeamentoTempBairros);
+          const bairrosFinais = Array.from(bairrosParaUI).sort();
           
-          setBairrosReais(bairrosUnicos);
-          setBairros(bairrosUnicos);
-          setBairrosMapeamento(mapeamentoTempBairros);
+          console.log("✅ [BAIRROS] Bairros finais para UI:", bairrosFinais);
+          console.log("🗺️ [BAIRROS] Mapeamento criado:", novoMapeamentoBairros);
+          console.log("📊 [BAIRROS] Resumo:", Object.keys(novoMapeamentoBairros).length, "chaves únicas");
+          
+          setBairrosReais(bairrosFinais);
+          setBairros(bairrosFinais);
+          setBairrosMapeamento(novoMapeamentoBairros);
           
         } else {
           setBairros([]);
@@ -339,9 +394,9 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         ? prev.filter((s) => s !== situacao) 
         : [...prev, situacao];
       
-      console.log('🔍 [SITUAÇÃO] Situação alterada:', situacao);
-      console.log('🔍 [SITUAÇÃO] Era selecionada?', isSelected);
-      console.log('🔍 [SITUAÇÃO] Novas situações selecionadas:', newSituacoes);
+      console.log('🔍 [SITUAÇÃO UI] Situação alterada:', situacao);
+      console.log('🔍 [SITUAÇÃO UI] Era selecionada?', isSelected);
+      console.log('🔍 [SITUAÇÃO UI] Novas situações selecionadas:', newSituacoes);
       
       return newSituacoes;
     });
@@ -354,23 +409,28 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       return undefined;
     }
 
-    console.log('🚀 [API SITUAÇÃO] Iniciando normalização das situações:', situacoesSelecionadas);
-    console.log('🗺️ [API SITUAÇÃO] Mapeamento disponível:', situacoesMapeamento);
+    console.log('🚀 [API SITUAÇÃO] ===== INÍCIO NORMALIZAÇÃO =====');
+    console.log('📋 [API SITUAÇÃO] Situações selecionadas na UI:', situacoesSelecionadas);
+    console.log('🗺️ [API SITUAÇÃO] Mapeamento disponível:');
+    Object.keys(situacoesMapeamento).forEach(chave => {
+      console.log(`   "${chave}" → [${situacoesMapeamento[chave].join(', ')}]`);
+    });
 
     const todasVariacoes = [];
     
     situacoesSelecionadas.forEach(sitSelecionada => {
-      const chaveNormalizada = sitSelecionada.toLowerCase().trim();
+      const chave = criarChaveMapeamento(sitSelecionada);
       
-      console.log(`🔍 [API SITUAÇÃO] Processando "${sitSelecionada}" -> chave: "${chaveNormalizada}"`);
+      console.log(`🔍 [API SITUAÇÃO] Processando "${sitSelecionada}"`);
+      console.log(`🔑 [API SITUAÇÃO] Chave gerada: "${chave}"`);
       
       // Buscar no mapeamento usando a chave normalizada
-      if (situacoesMapeamento[chaveNormalizada] && situacoesMapeamento[chaveNormalizada].length > 0) {
-        const variacoes = situacoesMapeamento[chaveNormalizada];
-        console.log(`✅ [API SITUAÇÃO] Encontradas ${variacoes.length} variações para "${sitSelecionada}":`, variacoes);
+      if (situacoesMapeamento[chave] && situacoesMapeamento[chave].length > 0) {
+        const variacoes = situacoesMapeamento[chave];
+        console.log(`✅ [API SITUAÇÃO] ENCONTRADO! ${variacoes.length} variações:`, variacoes);
         todasVariacoes.push(...variacoes);
       } else {
-        console.log(`⚠️ [API SITUAÇÃO] Mapeamento não encontrado para "${sitSelecionada}", usando valor original`);
+        console.log(`❌ [API SITUAÇÃO] NÃO ENCONTRADO no mapeamento. Usando valor original: "${sitSelecionada}"`);
         todasVariacoes.push(sitSelecionada);
       }
     });
@@ -378,8 +438,10 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     // Remover duplicatas
     const variacoesUnicas = [...new Set(todasVariacoes)];
     
-    console.log("🎯 [API SITUAÇÃO] Situações finais após normalização:", variacoesUnicas);
-    console.log("📊 [API SITUAÇÃO] Total: Selecionadas =", situacoesSelecionadas.length, "| Expandidas =", variacoesUnicas.length);
+    console.log("🎯 [API SITUAÇÃO] ===== RESULTADO FINAL =====");
+    console.log("📊 [API SITUAÇÃO] Variações únicas:", variacoesUnicas);
+    console.log("📈 [API SITUAÇÃO] Total expandido:", variacoesUnicas.length, "de", situacoesSelecionadas.length, "selecionadas");
+    console.log('🚀 [API SITUAÇÃO] ===== FIM NORMALIZAÇÃO =====');
 
     return variacoesUnicas;
   };
@@ -391,23 +453,28 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       return undefined;
     }
 
-    console.log('🚀 [API BAIRROS] Iniciando normalização dos bairros:', bairrosSelecionados);
-    console.log('🗺️ [API BAIRROS] Mapeamento disponível:', bairrosMapeamento);
+    console.log('🚀 [API BAIRROS] ===== INÍCIO NORMALIZAÇÃO =====');
+    console.log('📋 [API BAIRROS] Bairros selecionados na UI:', bairrosSelecionados);
+    console.log('🗺️ [API BAIRROS] Mapeamento disponível:');
+    Object.keys(bairrosMapeamento).forEach(chave => {
+      console.log(`   "${chave}" → [${bairrosMapeamento[chave].join(', ')}]`);
+    });
 
     const todasVariacoes = [];
     
     bairrosSelecionados.forEach(bairroSelecionado => {
-      const chaveNormalizada = bairroSelecionado.toLowerCase().trim();
+      const chave = criarChaveMapeamento(bairroSelecionado);
       
-      console.log(`🔍 [API BAIRROS] Processando "${bairroSelecionado}" -> chave: "${chaveNormalizada}"`);
+      console.log(`🔍 [API BAIRROS] Processando "${bairroSelecionado}"`);
+      console.log(`🔑 [API BAIRROS] Chave gerada: "${chave}"`);
       
       // Buscar no mapeamento usando a chave normalizada
-      if (bairrosMapeamento[chaveNormalizada] && bairrosMapeamento[chaveNormalizada].length > 0) {
-        const variacoes = bairrosMapeamento[chaveNormalizada];
-        console.log(`✅ [API BAIRROS] Encontradas ${variacoes.length} variações para "${bairroSelecionado}":`, variacoes);
+      if (bairrosMapeamento[chave] && bairrosMapeamento[chave].length > 0) {
+        const variacoes = bairrosMapeamento[chave];
+        console.log(`✅ [API BAIRROS] ENCONTRADO! ${variacoes.length} variações:`, variacoes);
         todasVariacoes.push(...variacoes);
       } else {
-        console.log(`⚠️ [API BAIRROS] Mapeamento não encontrado para "${bairroSelecionado}", usando valor original`);
+        console.log(`❌ [API BAIRROS] NÃO ENCONTRADO no mapeamento. Usando valor original: "${bairroSelecionado}"`);
         todasVariacoes.push(bairroSelecionado);
       }
     });
@@ -415,22 +482,25 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     // Remover duplicatas
     const variacoesUnicas = [...new Set(todasVariacoes)];
     
-    console.log("🎯 [API BAIRROS] Bairros finais após normalização:", variacoesUnicas);
+    console.log("🎯 [API BAIRROS] ===== RESULTADO FINAL =====");
+    console.log("📊 [API BAIRROS] Variações únicas:", variacoesUnicas); 
+    console.log("📈 [API BAIRROS] Total expandido:", variacoesUnicas.length, "de", bairrosSelecionados.length, "selecionados");
+    console.log('🚀 [API BAIRROS] ===== FIM NORMALIZAÇÃO =====');
     
     return variacoesUnicas;
   };
 
-  // ✅ FUNÇÃO PRINCIPAL CORRIGIDA: handleFilters com debug otimizado
+  // ✅ FUNÇÃO PRINCIPAL: handleFilters com debug detalhado
   const handleFilters = () => {
     console.log("🚨 ================================");
-    console.log("🚨 APLICANDO FILTROS CORRIGIDOS");
+    console.log("🚨 APLICANDO FILTROS - VERSÃO CORRIGIDA");
     console.log("🚨 ================================");
     
     console.log("📋 Estado atual dos filtros:");
     console.log("  - Situações selecionadas:", situacoesSelecionadas);
     console.log("  - Bairros selecionados:", bairrosSelecionados);
-    console.log("  - Mapeamento situações disponível:", Object.keys(situacoesMapeamento).length > 0);
-    console.log("  - Mapeamento bairros disponível:", Object.keys(bairrosMapeamento).length > 0);
+    console.log("  - Mapeamento situações keys:", Object.keys(situacoesMapeamento));
+    console.log("  - Mapeamento bairros keys:", Object.keys(bairrosMapeamento));
 
     const filtersToApply = {
       Categoria: filters.categoria || categoriaSelecionada,
@@ -586,12 +656,12 @@ export default function FiltersImoveisAdmin({ onFilter }) {
                     </div>
                     
                     <div className="px-2 py-1 text-[9px] text-gray-400 border-b border-gray-100">
-                      Debug: {situacoesReais.length} situações ({Object.keys(situacoesMapeamento).length} mapeadas)
+                      Debug: {situacoesReais.length} situações ({Object.keys(situacoesMapeamento).length} chaves mapeadas)
                     </div>
                     
                     {situacoesFiltradas.map((situacao, index) => {
-                      const chaveNormalizada = situacao.toLowerCase().trim();
-                      const variacoes = situacoesMapeamento[chaveNormalizada] || [];
+                      const chave = criarChaveMapeamento(situacao);
+                      const variacoes = situacoesMapeamento[chave] || [];
                       
                       return (
                         <div key={`${situacao}-${index}`} className="flex items-center px-2 py-1 hover:bg-gray-50">
@@ -685,12 +755,12 @@ export default function FiltersImoveisAdmin({ onFilter }) {
                     </div>
                     
                     <div className="px-2 py-1 text-[9px] text-gray-400 border-b border-gray-100">
-                      Debug: {bairrosReais.length} bairros ({Object.keys(bairrosMapeamento).length} mapeados)
+                      Debug: {bairrosReais.length} bairros ({Object.keys(bairrosMapeamento).length} chaves mapeadas)
                     </div>
                     
                     {bairrosFiltrados.map((bairro, index) => {
-                      const chaveNormalizada = bairro.toLowerCase().trim();
-                      const variacoes = bairrosMapeamento[chaveNormalizada] || [];
+                      const chave = criarChaveMapeamento(bairro);
+                      const variacoes = bairrosMapeamento[chave] || [];
                       
                       return (
                         <div key={`${bairro}-${index}`} className="flex items-center px-2 py-1 hover:bg-gray-50">
