@@ -38,6 +38,10 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     bairros: "",
   });
 
+  // ✅ ADICIONADO: Estado para armazenar mapeamentos localmente (mais confiável que window)
+  const [situacoesMapeamento, setSituacoesMapeamento] = useState({});
+  const [bairrosMapeamento, setBairrosMapeamento] = useState({});
+
   // Opções de situação
   const situacaoOptionsHardcoded = [
     "EM CONSTRUÇÃO",
@@ -47,7 +51,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     "PRONTO USADO"
   ];
 
-  // Buscar categorias, cidades e situações ao carregar
+  // ✅ CORRIGIDO: Buscar categorias, cidades e situações com lógica de mapeamento corrigida
   useEffect(() => {
     async function fetchFilterData() {
       try {
@@ -63,56 +67,63 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         setCidades(cidResponse.data || []);
         
         if (sitResponse?.data && Array.isArray(sitResponse.data) && sitResponse.data.length > 0) {
-          // Unificação simples para eliminar duplicatas
           const situacoesBrutas = sitResponse.data.filter(s => s && s.trim() !== '');
           
-          console.log("🔍 Situações brutas:", situacoesBrutas);
+          console.log("🔍 [SITUAÇÃO] Situações brutas do backend:", situacoesBrutas);
           
-          const situacoesUnicas = [];
-          const chavesSeen = new Set();
+          // ✅ LÓGICA CORRIGIDA: Criar mapeamento consistente
+          const mapeamentoTemp = {};
+          const situacoesUnicasSet = new Set();
           
-          situacoesBrutas.forEach(sit => {
-            const chaveNormalizada = sit.toLowerCase().trim();
-            if (!chavesSeen.has(chaveNormalizada)) {
-              chavesSeen.add(chaveNormalizada);
-              // Usar sempre a versão em MAIÚSCULA
-              situacoesUnicas.push(sit.toUpperCase());
+          // Primeira passada: identificar situações únicas e criar mapeamento
+          situacoesBrutas.forEach(situacaoOriginal => {
+            const chaveNormalizada = situacaoOriginal.toLowerCase().trim();
+            
+            // Inicializar array se não existir
+            if (!mapeamentoTemp[chaveNormalizada]) {
+              mapeamentoTemp[chaveNormalizada] = [];
             }
+            
+            // Adicionar a situação original ao mapeamento
+            if (!mapeamentoTemp[chaveNormalizada].includes(situacaoOriginal)) {
+              mapeamentoTemp[chaveNormalizada].push(situacaoOriginal);
+            }
+            
+            // Adicionar versão unificada (primeira letra maiúscula, resto minúscula)
+            const situacaoUnificada = situacaoOriginal.charAt(0).toUpperCase() + situacaoOriginal.slice(1).toLowerCase();
+            situacoesUnicasSet.add(situacaoUnificada);
           });
           
-          console.log("✅ Situações únicas após unificação:", situacoesUnicas);
+          const situacoesUnicas = Array.from(situacoesUnicasSet).sort();
+          
+          console.log("✅ [SITUAÇÃO] Situações únicas criadas:", situacoesUnicas);
+          console.log("🗺️ [SITUAÇÃO] Mapeamento criado:", mapeamentoTemp);
+          
           setSituacoesReais(situacoesUnicas);
-          
-          // Mapeamento simples: chave normalizada → todas as variações originais
-          window.situacoesMapeamento = {};
-          situacoesUnicas.forEach(sitUnica => {
-            const chave = sitUnica.toLowerCase().trim();
-            const variacoesOriginais = situacoesBrutas.filter(original => 
-              original.toLowerCase().trim() === chave
-            );
-            window.situacoesMapeamento[chave] = variacoesOriginais;
-          });
+          setSituacoesMapeamento(mapeamentoTemp);
           
         } else {
-          console.log("⚠️ Usando situações hardcoded como fallback");
+          console.log("⚠️ [SITUAÇÃO] Usando situações hardcoded como fallback");
           setSituacoesReais(situacaoOptionsHardcoded);
+          setSituacoesMapeamento({});
         }
 
       } catch (error) {
         console.error("❌ Erro ao buscar filtros:", error);
-        console.log("⚠️ Usando todas as opções hardcoded devido ao erro");
         setSituacoesReais(situacaoOptionsHardcoded);
+        setSituacoesMapeamento({});
       }
     }
     fetchFilterData();
   }, []);
 
-  // Buscar bairros com unificação case-insensitive
+  // ✅ CORRIGIDO: Buscar bairros com lógica de mapeamento corrigida
   useEffect(() => {
     async function fetchBairros() {
       if (!cidadeSelecionada) {
         setBairros([]);
         setBairrosReais([]);
+        setBairrosMapeamento({});
         return;
       }
 
@@ -120,47 +131,52 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         const response = await getBairrosPorCidade(cidadeSelecionada, categoriaSelecionada);
         const bairrosBrutos = response?.data || [];
         
-        console.log("🏘️ Bairros brutos:", bairrosBrutos);
+        console.log("🏘️ [BAIRROS] Bairros brutos:", bairrosBrutos);
         
         if (bairrosBrutos.length > 0) {
-          // Unificação simples para bairros
-          const bairrosUnicos = [];
-          const chavesSeen = new Set();
+          // ✅ LÓGICA CORRIGIDA: Criar mapeamento consistente para bairros
+          const mapeamentoTempBairros = {};
+          const bairrosUnicosSet = new Set();
           
-          bairrosBrutos.forEach(bairro => {
-            if (bairro && bairro.trim() !== '') {
-              const chaveNormalizada = bairro.toLowerCase().trim();
-              if (!chavesSeen.has(chaveNormalizada)) {
-                chavesSeen.add(chaveNormalizada);
-                // Usar formato Title Case
-                const titleCase = bairro.charAt(0).toUpperCase() + bairro.slice(1).toLowerCase();
-                bairrosUnicos.push(titleCase);
+          bairrosBrutos.forEach(bairroOriginal => {
+            if (bairroOriginal && bairroOriginal.trim() !== '') {
+              const chaveNormalizada = bairroOriginal.toLowerCase().trim();
+              
+              // Inicializar array se não existir
+              if (!mapeamentoTempBairros[chaveNormalizada]) {
+                mapeamentoTempBairros[chaveNormalizada] = [];
               }
+              
+              // Adicionar o bairro original ao mapeamento
+              if (!mapeamentoTempBairros[chaveNormalizada].includes(bairroOriginal)) {
+                mapeamentoTempBairros[chaveNormalizada].push(bairroOriginal);
+              }
+              
+              // Criar versão unificada (Title Case)
+              const bairroUnificado = bairroOriginal.charAt(0).toUpperCase() + bairroOriginal.slice(1).toLowerCase();
+              bairrosUnicosSet.add(bairroUnificado);
             }
           });
           
-          console.log("✅ Bairros únicos:", bairrosUnicos);
+          const bairrosUnicos = Array.from(bairrosUnicosSet).sort();
+          
+          console.log("✅ [BAIRROS] Bairros únicos:", bairrosUnicos);
+          console.log("🗺️ [BAIRROS] Mapeamento criado:", mapeamentoTempBairros);
+          
           setBairrosReais(bairrosUnicos);
           setBairros(bairrosUnicos);
-          
-          // Mapeamento simples para bairros
-          window.bairrosMapeamento = {};
-          bairrosUnicos.forEach(bairroUnico => {
-            const chave = bairroUnico.toLowerCase().trim();
-            const variacoesOriginais = bairrosBrutos.filter(original => 
-              original.toLowerCase().trim() === chave
-            );
-            window.bairrosMapeamento[chave] = variacoesOriginais;
-          });
+          setBairrosMapeamento(mapeamentoTempBairros);
           
         } else {
           setBairros([]);
           setBairrosReais([]);
+          setBairrosMapeamento({});
         }
       } catch (error) {
-        console.error("Erro ao buscar bairros:", error);
+        console.error("❌ [BAIRROS] Erro ao buscar bairros:", error);
         setBairros([]);
         setBairrosReais([]);
+        setBairrosMapeamento({});
       }
     }
     fetchBairros();
@@ -323,79 +339,98 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         ? prev.filter((s) => s !== situacao) 
         : [...prev, situacao];
       
-      console.log('🔍 [DEBUG SITUAÇÃO] Situação alterada:', situacao);
-      console.log('🔍 [DEBUG SITUAÇÃO] Era selecionada?', isSelected);
-      console.log('🔍 [DEBUG SITUAÇÃO] Novas situações selecionadas:', newSituacoes);
+      console.log('🔍 [SITUAÇÃO] Situação alterada:', situacao);
+      console.log('🔍 [SITUAÇÃO] Era selecionada?', isSelected);
+      console.log('🔍 [SITUAÇÃO] Novas situações selecionadas:', newSituacoes);
       
       return newSituacoes;
     });
   };
 
-  // Função para expandir situações de forma simples
+  // ✅ FUNÇÃO PRINCIPAL CORRIGIDA: Normalizar situações para API
   const normalizarSituacaoParaAPI = (situacoesSelecionadas) => {
     if (!Array.isArray(situacoesSelecionadas) || situacoesSelecionadas.length === 0) {
+      console.log('🔍 [API SITUAÇÃO] Nenhuma situação selecionada');
       return undefined;
     }
+
+    console.log('🚀 [API SITUAÇÃO] Iniciando normalização das situações:', situacoesSelecionadas);
+    console.log('🗺️ [API SITUAÇÃO] Mapeamento disponível:', situacoesMapeamento);
 
     const todasVariacoes = [];
     
     situacoesSelecionadas.forEach(sitSelecionada => {
-      const chave = sitSelecionada.toLowerCase().trim();
+      const chaveNormalizada = sitSelecionada.toLowerCase().trim();
       
-      // Buscar no mapeamento
-      if (window.situacoesMapeamento && window.situacoesMapeamento[chave]) {
-        const variacoes = window.situacoesMapeamento[chave];
-        console.log(`🔍 Expandindo "${sitSelecionada}" para:`, variacoes);
+      console.log(`🔍 [API SITUAÇÃO] Processando "${sitSelecionada}" -> chave: "${chaveNormalizada}"`);
+      
+      // Buscar no mapeamento usando a chave normalizada
+      if (situacoesMapeamento[chaveNormalizada] && situacoesMapeamento[chaveNormalizada].length > 0) {
+        const variacoes = situacoesMapeamento[chaveNormalizada];
+        console.log(`✅ [API SITUAÇÃO] Encontradas ${variacoes.length} variações para "${sitSelecionada}":`, variacoes);
         todasVariacoes.push(...variacoes);
       } else {
-        console.log(`⚠️ Usando valor original: "${sitSelecionada}"`);
+        console.log(`⚠️ [API SITUAÇÃO] Mapeamento não encontrado para "${sitSelecionada}", usando valor original`);
         todasVariacoes.push(sitSelecionada);
       }
     });
 
+    // Remover duplicatas
     const variacoesUnicas = [...new Set(todasVariacoes)];
-    console.log("🚀 Situações finais para API:", variacoesUnicas);
+    
+    console.log("🎯 [API SITUAÇÃO] Situações finais após normalização:", variacoesUnicas);
+    console.log("📊 [API SITUAÇÃO] Total: Selecionadas =", situacoesSelecionadas.length, "| Expandidas =", variacoesUnicas.length);
 
     return variacoesUnicas;
   };
 
-  // Função para expandir bairros de forma simples
+  // ✅ FUNÇÃO CORRIGIDA: Normalizar bairros para API
   const normalizarBairrosParaAPI = (bairrosSelecionados) => {
     if (!Array.isArray(bairrosSelecionados) || bairrosSelecionados.length === 0) {
+      console.log('🏘️ [API BAIRROS] Nenhum bairro selecionado');
       return undefined;
     }
+
+    console.log('🚀 [API BAIRROS] Iniciando normalização dos bairros:', bairrosSelecionados);
+    console.log('🗺️ [API BAIRROS] Mapeamento disponível:', bairrosMapeamento);
 
     const todasVariacoes = [];
     
     bairrosSelecionados.forEach(bairroSelecionado => {
-      const chave = bairroSelecionado.toLowerCase().trim();
+      const chaveNormalizada = bairroSelecionado.toLowerCase().trim();
       
-      // Buscar no mapeamento
-      if (window.bairrosMapeamento && window.bairrosMapeamento[chave]) {
-        const variacoes = window.bairrosMapeamento[chave];
-        console.log(`🏘️ Expandindo "${bairroSelecionado}" para:`, variacoes);
+      console.log(`🔍 [API BAIRROS] Processando "${bairroSelecionado}" -> chave: "${chaveNormalizada}"`);
+      
+      // Buscar no mapeamento usando a chave normalizada
+      if (bairrosMapeamento[chaveNormalizada] && bairrosMapeamento[chaveNormalizada].length > 0) {
+        const variacoes = bairrosMapeamento[chaveNormalizada];
+        console.log(`✅ [API BAIRROS] Encontradas ${variacoes.length} variações para "${bairroSelecionado}":`, variacoes);
         todasVariacoes.push(...variacoes);
       } else {
-        console.log(`⚠️ Usando valor original do bairro: "${bairroSelecionado}"`);
+        console.log(`⚠️ [API BAIRROS] Mapeamento não encontrado para "${bairroSelecionado}", usando valor original`);
         todasVariacoes.push(bairroSelecionado);
       }
     });
 
+    // Remover duplicatas
     const variacoesUnicas = [...new Set(todasVariacoes)];
-    console.log("🚀 Bairros finais para API:", variacoesUnicas);
-
+    
+    console.log("🎯 [API BAIRROS] Bairros finais após normalização:", variacoesUnicas);
+    
     return variacoesUnicas;
   };
 
-  // handleFilters simplificado com debug mínimo
+  // ✅ FUNÇÃO PRINCIPAL CORRIGIDA: handleFilters com debug otimizado
   const handleFilters = () => {
-    console.log("🚨 =========================");
-    console.log("🚨 APLICANDO FILTROS");
-    console.log("🚨 =========================");
+    console.log("🚨 ================================");
+    console.log("🚨 APLICANDO FILTROS CORRIGIDOS");
+    console.log("🚨 ================================");
     
-    console.log("📋 Filtros aplicados:");
-    console.log("  - Situações:", situacoesSelecionadas);
-    console.log("  - Bairros:", bairrosSelecionados);
+    console.log("📋 Estado atual dos filtros:");
+    console.log("  - Situações selecionadas:", situacoesSelecionadas);
+    console.log("  - Bairros selecionados:", bairrosSelecionados);
+    console.log("  - Mapeamento situações disponível:", Object.keys(situacoesMapeamento).length > 0);
+    console.log("  - Mapeamento bairros disponível:", Object.keys(bairrosMapeamento).length > 0);
 
     const filtersToApply = {
       Categoria: filters.categoria || categoriaSelecionada,
@@ -410,37 +445,38 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       AreaMax: areaMax,
     };
 
-    if (situacoesSelecionadas.length > 0) {
-      const situacoesExpandidas = normalizarSituacaoParaAPI(situacoesSelecionadas);
-      console.log("🚀 Situações que serão enviadas:", situacoesExpandidas);
+    // Remover campos undefined para clareza
+    const filtersForAPI = {};
+    Object.keys(filtersToApply).forEach(key => {
+      if (filtersToApply[key] !== undefined && filtersToApply[key] !== null && filtersToApply[key] !== '') {
+        filtersForAPI[key] = filtersToApply[key];
+      }
+    });
+
+    console.log("📤 FILTROS FINAIS ENVIADOS PARA API:");
+    console.log(JSON.stringify(filtersForAPI, null, 2));
+
+    if (Array.isArray(filtersForAPI.Situacao)) {
+      console.log("🎯 SITUAÇÕES COMO STRING PARA API:", filtersForAPI.Situacao.join(','));
     }
 
-    if (bairrosSelecionados.length > 0) {
-      const bairrosExpandidos = normalizarBairrosParaAPI(bairrosSelecionados);
-      console.log("🏘️ Bairros que serão enviados:", bairrosExpandidos);
+    if (Array.isArray(filtersForAPI.bairros)) {
+      console.log("🏘️ BAIRROS COMO STRING PARA API:", filtersForAPI.bairros.join(','));
     }
 
-    console.log("🚨 Filtros enviados para API:", Object.keys(filtersToApply).filter(key => filtersToApply[key] !== undefined));
-
-    if (Array.isArray(filtersToApply.Situacao) && filtersToApply.Situacao.length > 0) {
-      console.log("📤 Situações para API:", filtersToApply.Situacao.join(','));
-    }
-
-    if (Array.isArray(filtersToApply.bairros) && filtersToApply.bairros.length > 0) {
-      console.log("📤 Bairros para API:", filtersToApply.bairros.join(','));
-    }
-
-    console.log("🚨 =========================");
+    console.log("🚨 ================================");
 
     if (onFilter) {
-      console.log("📤 Chamando onFilter");
+      console.log("📡 Executando callback onFilter...");
       onFilter(filtersToApply);
+    } else {
+      console.error("❌ Callback onFilter não encontrado!");
     }
   };
 
   // handleClearFilters simplificado
   const handleClearFilters = () => {
-    console.log("🧹 Limpando filtros...");
+    console.log("🧹 Limpando todos os filtros...");
     
     setFilters({
       categoria: "",
@@ -459,9 +495,9 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     setAreaMin(null);
     setAreaMax(null);
 
-    // Limpar mapeamentos
-    if (window.bairrosMapeamento) delete window.bairrosMapeamento;
-    if (window.situacoesMapeamento) delete window.situacoesMapeamento;
+    // Limpar mapeamentos locais
+    setSituacoesMapeamento({});
+    setBairrosMapeamento({});
 
     if (onFilter) {
       onFilter({});
@@ -509,7 +545,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           value={filters.status}
         />
         
-        {/* Multi-select de situação usando situações reais */}
+        {/* ✅ DROPDOWN DE SITUAÇÃO CORRIGIDO */}
         <div ref={situacaoRef} className="relative">
           <label htmlFor="situacao" className="text-xs text-gray-500 block mb-2">
             situacao
@@ -550,32 +586,36 @@ export default function FiltersImoveisAdmin({ onFilter }) {
                     </div>
                     
                     <div className="px-2 py-1 text-[9px] text-gray-400 border-b border-gray-100">
-                      Debug: {situacoesReais.length} situações unificadas ({situacoesFiltradas.length} filtradas)
+                      Debug: {situacoesReais.length} situações ({Object.keys(situacoesMapeamento).length} mapeadas)
                     </div>
                     
-                    {situacoesFiltradas.map((situacao, index) => (
-                      <div key={`${situacao}-${index}`} className="flex items-center px-2 py-1 hover:bg-gray-50">
-                        <input
-                          type="checkbox"
-                          id={`situacao-${situacao}-${index}`}
-                          checked={situacoesSelecionadas.includes(situacao)}
-                          onChange={() => handleSituacaoChange(situacao)}
-                          className="mr-2 h-4 w-4"
-                        />
-                        <label
-                          htmlFor={`situacao-${situacao}-${index}`}
-                          className="text-xs cursor-pointer flex-1 flex justify-between"
-                        >
-                          <span>{situacao}</span>
-                          {window.situacoesMapeamento && window.situacoesMapeamento[situacao.toLowerCase().trim()] && 
-                           window.situacoesMapeamento[situacao.toLowerCase().trim()].length > 1 && (
-                            <span className="text-blue-500 text-[8px] font-bold" title={`${window.situacoesMapeamento[situacao.toLowerCase().trim()].length} variações no banco`}>
-                              {window.situacoesMapeamento[situacao.toLowerCase().trim()].length}x
-                            </span>
-                          )}
-                        </label>
-                      </div>
-                    ))}
+                    {situacoesFiltradas.map((situacao, index) => {
+                      const chaveNormalizada = situacao.toLowerCase().trim();
+                      const variacoes = situacoesMapeamento[chaveNormalizada] || [];
+                      
+                      return (
+                        <div key={`${situacao}-${index}`} className="flex items-center px-2 py-1 hover:bg-gray-50">
+                          <input
+                            type="checkbox"
+                            id={`situacao-${situacao}-${index}`}
+                            checked={situacoesSelecionadas.includes(situacao)}
+                            onChange={() => handleSituacaoChange(situacao)}
+                            className="mr-2 h-4 w-4"
+                          />
+                          <label
+                            htmlFor={`situacao-${situacao}-${index}`}
+                            className="text-xs cursor-pointer flex-1 flex justify-between"
+                          >
+                            <span>{situacao}</span>
+                            {variacoes.length > 1 && (
+                              <span className="text-blue-500 text-[8px] font-bold" title={`${variacoes.length} variações: ${variacoes.join(', ')}`}>
+                                {variacoes.length}x
+                              </span>
+                            )}
+                          </label>
+                        </div>
+                      );
+                    })}
                   </>
                 ) : (
                   <div className="px-2 py-1 text-xs text-gray-500">
@@ -603,7 +643,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Bairros dropdown com pesquisa e seleção múltipla */}
+        {/* ✅ DROPDOWN DE BAIRROS CORRIGIDO */}
         <div ref={bairrosRef}>
           <label htmlFor="bairros" className="text-xs text-gray-500 block mb-2">
             Bairros
@@ -645,32 +685,36 @@ export default function FiltersImoveisAdmin({ onFilter }) {
                     </div>
                     
                     <div className="px-2 py-1 text-[9px] text-gray-400 border-b border-gray-100">
-                      Debug: {bairrosReais.length} bairros unificados ({bairrosFiltrados.length} filtrados)
+                      Debug: {bairrosReais.length} bairros ({Object.keys(bairrosMapeamento).length} mapeados)
                     </div>
                     
-                    {bairrosFiltrados.map((bairro, index) => (
-                      <div key={`${bairro}-${index}`} className="flex items-center px-2 py-1 hover:bg-gray-50">
-                        <input
-                          type="checkbox"
-                          id={`bairro-${bairro}-${index}`}
-                          checked={bairrosSelecionados.includes(bairro)}
-                          onChange={() => handleBairroChange(bairro)}
-                          className="mr-2 h-4 w-4"
-                        />
-                        <label
-                          htmlFor={`bairro-${bairro}-${index}`}
-                          className="text-xs cursor-pointer flex-1 flex justify-between"
-                        >
-                          <span>{bairro}</span>
-                          {window.bairrosMapeamento && window.bairrosMapeamento[bairro.toLowerCase().trim()] && 
-                           window.bairrosMapeamento[bairro.toLowerCase().trim()].length > 1 && (
-                            <span className="text-green-500 text-[8px] font-bold" title={`${window.bairrosMapeamento[bairro.toLowerCase().trim()].length} variações no banco`}>
-                              {window.bairrosMapeamento[bairro.toLowerCase().trim()].length}x
-                            </span>
-                          )}
-                        </label>
-                      </div>
-                    ))}
+                    {bairrosFiltrados.map((bairro, index) => {
+                      const chaveNormalizada = bairro.toLowerCase().trim();
+                      const variacoes = bairrosMapeamento[chaveNormalizada] || [];
+                      
+                      return (
+                        <div key={`${bairro}-${index}`} className="flex items-center px-2 py-1 hover:bg-gray-50">
+                          <input
+                            type="checkbox"
+                            id={`bairro-${bairro}-${index}`}
+                            checked={bairrosSelecionados.includes(bairro)}
+                            onChange={() => handleBairroChange(bairro)}
+                            className="mr-2 h-4 w-4"
+                          />
+                          <label
+                            htmlFor={`bairro-${bairro}-${index}`}
+                            className="text-xs cursor-pointer flex-1 flex justify-between"
+                          >
+                            <span>{bairro}</span>
+                            {variacoes.length > 1 && (
+                              <span className="text-green-500 text-[8px] font-bold" title={`${variacoes.length} variações: ${variacoes.join(', ')}`}>
+                                {variacoes.length}x
+                              </span>
+                            )}
+                          </label>
+                        </div>
+                      );
+                    })}
                   </>
                 ) : (
                   <div className="px-2 py-1 text-xs text-gray-500">
