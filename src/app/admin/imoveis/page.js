@@ -82,30 +82,50 @@ const calcularDiasDesdeAtualizacao = (dataAtualizacao) => {
   }
 };
 
-// ✅ ADICIONADO: Função para determinar a cor da linha baseada na data de atualização
-const getRowColorClass = (imovel) => {
+// ✅ MODIFICADO: Função para obter badge colorido baseado na data de atualização
+const getStatusBadge = (imovel) => {
   // Campos possíveis para data de atualização (ordem de prioridade)
   const dataAtualizacao = imovel.updatedAt || imovel.DataAtualizacao || imovel.DataModificacao || imovel.lastModified || imovel.updated_at;
   
   const diasDesdeAtualizacao = calcularDiasDesdeAtualizacao(dataAtualizacao);
   
   if (diasDesdeAtualizacao === null) {
-    // Se não há data de atualização, usar cor neutra
-    return 'bg-gray-50';
+    // Se não há data de atualização, badge cinza
+    return {
+      color: 'bg-gray-400',
+      text: '?',
+      title: 'Data de atualização não disponível'
+    };
   }
   
   if (diasDesdeAtualizacao >= 90) {
-    return 'bg-purple-50 hover:bg-purple-100'; // Roxo - mais de 90 dias
+    return {
+      color: 'bg-purple-500',
+      text: '90+',
+      title: `Atualizado há ${diasDesdeAtualizacao} dias (mais de 90 dias)`
+    };
   } else if (diasDesdeAtualizacao >= 70) {
-    return 'bg-red-50 hover:bg-red-100'; // Vermelho - mais de 70 dias
+    return {
+      color: 'bg-red-500',
+      text: '70+',
+      title: `Atualizado há ${diasDesdeAtualizacao} dias (mais de 70 dias)`
+    };
   } else if (diasDesdeAtualizacao >= 50) {
-    return 'bg-yellow-50 hover:bg-yellow-100'; // Amarelo - mais de 50 dias
+    return {
+      color: 'bg-yellow-500',
+      text: '50+',
+      title: `Atualizado há ${diasDesdeAtualizacao} dias (mais de 50 dias)`
+    };
   } else {
-    return 'bg-white hover:bg-gray-50'; // Sem cor - atualizado recentemente
+    return {
+      color: 'bg-green-500',
+      text: 'OK',
+      title: `Atualizado há ${diasDesdeAtualizacao} dias (recente)`
+    };
   }
 };
 
-// ✅ ADICIONADO: Função para obter texto do status de atualização
+// ✅ ADICIONADO: Função para obter texto do status de atualização (para logs/debug)
 const getStatusAtualizacao = (imovel) => {
   const dataAtualizacao = imovel.updatedAt || imovel.DataAtualizacao || imovel.DataModificacao || imovel.lastModified || imovel.updated_at;
   const diasDesdeAtualizacao = calcularDiasDesdeAtualizacao(dataAtualizacao);
@@ -760,32 +780,46 @@ export default function AdminImoveis() {
             </div>
           )}
 
-          {/* ✅ ADICIONADO: Legenda do sistema de cores por data de atualização */}
+          {/* ✅ MODIFICADO: Legenda do sistema de badges coloridos por data de atualização */}
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-1">
                 <svg className="h-4 w-4 text-gray-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                <span className="text-xs font-medium text-gray-700">Status de Atualização:</span>
+                <span className="text-xs font-medium text-gray-700">Status de Atualização (badge ao lado do código):</span>
               </div>
               
               <div className="flex items-center space-x-3 text-[10px]">
                 <div className="flex items-center space-x-1">
-                  <div className="w-3 h-3 bg-white border border-gray-300 rounded"></div>
+                  <div className="w-6 h-4 bg-green-500 rounded-sm flex items-center justify-center">
+                    <span className="text-white text-[8px] font-bold">OK</span>
+                  </div>
                   <span className="text-gray-600">Recente</span>
                 </div>
                 <div className="flex items-center space-x-1">
-                  <div className="w-3 h-3 bg-yellow-200 rounded"></div>
+                  <div className="w-6 h-4 bg-yellow-500 rounded-sm flex items-center justify-center">
+                    <span className="text-white text-[8px] font-bold">50+</span>
+                  </div>
                   <span className="text-gray-600">50+ dias</span>
                 </div>
                 <div className="flex items-center space-x-1">
-                  <div className="w-3 h-3 bg-red-200 rounded"></div>
+                  <div className="w-6 h-4 bg-red-500 rounded-sm flex items-center justify-center">
+                    <span className="text-white text-[8px] font-bold">70+</span>
+                  </div>
                   <span className="text-gray-600">70+ dias</span>
                 </div>
                 <div className="flex items-center space-x-1">
-                  <div className="w-3 h-3 bg-purple-200 rounded"></div>
+                  <div className="w-6 h-4 bg-purple-500 rounded-sm flex items-center justify-center">
+                    <span className="text-white text-[8px] font-bold">90+</span>
+                  </div>
                   <span className="text-gray-600">90+ dias</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <div className="w-6 h-4 bg-gray-400 rounded-sm flex items-center justify-center">
+                    <span className="text-white text-[8px] font-bold">?</span>
+                  </div>
+                  <span className="text-gray-600">Sem data</span>
                 </div>
               </div>
             </div>
@@ -838,13 +872,22 @@ export default function AdminImoveis() {
                     ) : imoveis.length > 0 ? (
                       // Dados dos imóveis
                       imoveis.map((imovel) => {
-                        const rowColorClass = getRowColorClass(imovel);
-                        const statusAtualizacao = getStatusAtualizacao(imovel);
+                        const statusBadge = getStatusBadge(imovel);
                         
                         return (
-                          <tr key={imovel.Codigo || imovel._id} className={rowColorClass} title={`Última atualização: ${statusAtualizacao}`}>
+                          <tr key={imovel.Codigo || imovel._id} className="hover:bg-gray-50">
                             <td className="w-20 px-3 py-3 text-[10px] font-bold text-gray-900 whitespace-nowrap">
-                              {imovel.Codigo || "-"}
+                              <div className="flex items-center space-x-2">
+                                <span>{imovel.Codigo || "-"}</span>
+                                <div 
+                                  className={`w-6 h-4 ${statusBadge.color} rounded-sm flex items-center justify-center`}
+                                  title={statusBadge.title}
+                                >
+                                  <span className="text-white text-[8px] font-bold">
+                                    {statusBadge.text}
+                                  </span>
+                                </div>
+                              </div>
                             </td>
                             <td className="w-14 px-2 py-3 text-[9px] text-gray-500 whitespace-nowrap">
                               {(() => {
