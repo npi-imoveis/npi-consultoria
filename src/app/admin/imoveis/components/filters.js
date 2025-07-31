@@ -336,25 +336,6 @@ export default function FiltersImoveisAdmin({ onFilter }) {
               </div>
             )}
           </div>
-
-          {situacoesSelecionadas.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-1">
-              {situacoesSelecionadas.map((situacao) => (
-                <div
-                  key={situacao}
-                  className="bg-gray-100 rounded-full px-2 py-1 text-[10px] flex items-center"
-                >
-                  {situacao}
-                  <button
-                    onClick={() => handleSituacaoChange(situacao)}
-                    className="ml-1 text-gray-500 hover:text-black"
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
         </div>
 
         <SelectFilter
