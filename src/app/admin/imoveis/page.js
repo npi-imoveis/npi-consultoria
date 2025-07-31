@@ -112,7 +112,37 @@ export default function AdminImoveis() {
     localStorage.removeItem("admin_searchPagination");
   };
 
-  // loadImoveis function is already well-defined to handle search and filters
+  // ✅ ADICIONADO: Funções de cache para filtros
+  const saveFiltersState = (appliedFilters, results, paginationData) => {
+    localStorage.setItem("admin_appliedFilters", JSON.stringify(appliedFilters));
+    localStorage.setItem("admin_filterResults", JSON.stringify(results));
+    localStorage.setItem("admin_filterPagination", JSON.stringify(paginationData));
+    console.log('[CACHE] Filtros salvos:', appliedFilters);
+  };
+
+  const clearFiltersState = () => {
+    localStorage.removeItem("admin_appliedFilters");
+    localStorage.removeItem("admin_filterResults");
+    localStorage.removeItem("admin_filterPagination");
+    console.log('[CACHE] Cache de filtros limpo');
+  };
+
+  const getFiltersState = () => {
+    const savedFilters = localStorage.getItem("admin_appliedFilters");
+    const savedResults = localStorage.getItem("admin_filterResults");
+    const savedPagination = localStorage.getItem("admin_filterPagination");
+    
+    if (savedFilters && savedResults && savedPagination) {
+      return {
+        filters: JSON.parse(savedFilters),
+        results: JSON.parse(savedResults),
+        pagination: JSON.parse(savedPagination)
+      };
+    }
+    return null;
+  };
+
+  // ✅ MODIFICADO: loadImoveis com cache de filtros
   const loadImoveis = async (page = 1, search = "", customFilters = null) => {
     console.log("🔍 loadImoveis chamado. Página:", page, "Busca:", search, "Filtros:", customFilters);
     setIsLoading(true);
@@ -148,10 +178,19 @@ export default function AdminImoveis() {
 
         // Salvar o estado da busca livre APÓS a requisição da API
         saveSearchState(search, responseData, newPaginationData);
+        // ✅ ADICIONADO: Limpar cache de filtros quando há busca livre
+        clearFiltersState();
 
       } else {
         const filtersToUse = customFilters || filters;
         const apiFilters = { ...filtersToUse };
+
+        // ✅ ADICIONADO: Conversão de array para string se necessário
+        if (Array.isArray(apiFilters.Situacao) && apiFilters.Situacao.length > 0) {
+          console.log('[DEBUG] Convertendo situações de array para string:', apiFilters.Situacao);
+          apiFilters.Situacao = apiFilters.Situacao.join(',');
+          console.log('[DEBUG] Situacao convertida para API:', apiFilters.Situacao);
+        }
 
         if (apiFilters.ValorMin) {
           apiFilters.ValorMin = apiFilters.ValorMin.toString();
@@ -176,6 +215,12 @@ export default function AdminImoveis() {
             itemsPerPage: 30,
           };
         }
+        
+        // ✅ ADICIONADO: Salvar cache de filtros quando não há busca livre
+        if (Object.keys(apiFilters).length > 0) {
+          saveFiltersState(filtersToUse, responseData, newPaginationData);
+        }
+        
         // Limpar o estado da busca livre se não for uma busca livre
         clearSearchState();
       }
@@ -199,21 +244,25 @@ export default function AdminImoveis() {
     }
   };
 
-  // Initial load useEffect - Modificado para restaurar e depois revalidar
+  // ✅ MODIFICADO: useEffect inicial com cache de filtros
   useEffect(() => {
-    const savedTerm = localStorage.getItem("admin_searchTerm");
-    const savedResults = localStorage.getItem("admin_searchResults");
-    const savedPagination = localStorage.getItem("admin_searchPagination");
+    const savedSearchTerm = localStorage.getItem("admin_searchTerm");
+    const savedSearchResults = localStorage.getItem("admin_searchResults");
+    const savedSearchPagination = localStorage.getItem("admin_searchPagination");
+    
+    const savedFiltersState = getFiltersState();
     
     let initialPage = 1;
     let initialSearchTerm = "";
     let initialImoveis = [];
     let initialPagination = { totalItems: 0, totalPages: 1, currentPage: 1, itemsPerPage: 30 };
+    let initialFilters = {};
 
-    if (savedTerm && savedResults && savedPagination) {
-      initialSearchTerm = savedTerm;
-      initialImoveis = JSON.parse(savedResults);
-      initialPagination = JSON.parse(savedPagination);
+    // ✅ PRIORIDADE 1: Restaurar busca livre se existir
+    if (savedSearchTerm && savedSearchResults && savedSearchPagination) {
+      initialSearchTerm = savedSearchTerm;
+      initialImoveis = JSON.parse(savedSearchResults);
+      initialPagination = JSON.parse(savedSearchPagination);
       initialPage = initialPagination.currentPage || 1;
 
       // Exibe os dados do cache imediatamente para uma UX mais rápida
@@ -221,11 +270,28 @@ export default function AdminImoveis() {
       setImoveis(initialImoveis);
       setPagination(initialPagination);
       setIsLoading(true); // Mantém o loading para a requisição da API
+      
+      console.log('[CACHE] Busca livre restaurada:', initialSearchTerm);
+    }
+    // ✅ PRIORIDADE 2: Restaurar filtros se não houver busca livre
+    else if (savedFiltersState) {
+      initialFilters = savedFiltersState.filters;
+      initialImoveis = savedFiltersState.results;
+      initialPagination = savedFiltersState.pagination;
+      initialPage = initialPagination.currentPage || 1;
+
+      // Exibe os dados do cache imediatamente
+      setFilters(initialFilters);
+      setImoveis(initialImoveis);
+      setPagination(initialPagination);
+      setIsLoading(true);
+      
+      console.log('[CACHE] Filtros restaurados:', initialFilters);
     }
     
     // Sempre chama loadImoveis para buscar dados frescos,
     // seja com o termo salvo ou para carregar todos os imóveis
-    loadImoveis(initialPage, initialSearchTerm);
+    loadImoveis(initialPage, initialSearchTerm, Object.keys(initialFilters).length > 0 ? initialFilters : undefined);
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Dependência vazia para rodar apenas na montagem
@@ -258,16 +324,17 @@ export default function AdminImoveis() {
     loadImoveis(1, searchTerm); // Trigger search with current term
   };
 
-  // Função para limpar a busca
+  // ✅ MODIFICADO: clearSearch com cache de filtros
   const clearSearch = () => {
     setSearchTerm("");
     setCurrentPage(1);
     setFilters({}); // Limpar filtros também
-    clearSearchState(); // Limpar estado salvo
+    clearSearchState(); // Limpar estado salvo de busca
+    clearFiltersState(); // ✅ ADICIONADO: Limpar cache de filtros
     loadImoveis(1, ""); // Carregar todos os imóveis sem busca ou filtro
   };
 
-  // Handler para os filtros
+  // ✅ MODIFICADO: handleFilterApply com limpeza de busca livre
   const handleFilterApply = (newFilters) => {
     const processedFilters = { ...newFilters };
 
@@ -281,9 +348,15 @@ export default function AdminImoveis() {
       }
     });
 
+    console.log('[DEBUG] Filtros aplicados via handleFilterApply:', processedFilters);
+
     setIsFilteringManually(true);
     setFilters(processedFilters);
     setCurrentPage(1);
+    
+    // ✅ ADICIONADO: Limpar busca livre ao aplicar filtros
+    setSearchTerm("");
+    clearSearchState();
 
     loadImoveis(1, "", processedFilters);
   };
