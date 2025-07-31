@@ -10,8 +10,8 @@ export default function FiltersImoveisAdmin({ onFilter }) {
   const [categorias, setCategorias] = useState([]);
   const [cidades, setCidades] = useState([]);
   const [bairros, setBairros] = useState([]);
-  const [bairrosReais, setBairrosReais] = useState([]); // ✅ ADICIONADO: Bairros unificados
-  const [situacoesReais, setSituacoesReais] = useState([]); // ✅ ADICIONADO: Situações do banco
+  const [bairrosReais, setBairrosReais] = useState([]);
+  const [situacoesReais, setSituacoesReais] = useState([]);
 
   // Estados de seleção
   const [categoriaSelecionada, setCategoriaSelecionada] = useState("");
@@ -38,7 +38,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     bairros: "",
   });
 
-  // ✅ ADICIONADO: Opções de situação HARDCODED (fallback)
+  // Opções de situação
   const situacaoOptionsHardcoded = [
     "EM CONSTRUÇÃO",
     "LANÇAMENTO", 
@@ -47,7 +47,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     "PRONTO USADO"
   ];
 
-  // ✅ MODIFICADO: Buscar situações reais da API com unificação case-insensitive
+  // Buscar categorias, cidades e situações ao carregar
   useEffect(() => {
     async function fetchFilterData() {
       try {
@@ -56,23 +56,18 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         const [catResponse, cidResponse, sitResponse] = await Promise.all([
           getImoveisByFilters("Categoria"),
           getImoveisByFilters("Cidade"),
-          getImoveisByFilters("Situacao") // ✅ ADICIONADO: Buscar situações reais
+          getImoveisByFilters("Situacao")
         ]);
 
         setCategorias(catResponse.data || []);
         setCidades(cidResponse.data || []);
         
-        // ✅ ADICIONADO: Debug das situações do banco com unificação inteligente
-        console.log("🏗️ Situações brutas do banco de dados:", sitResponse?.data || []);
-        console.log("🏗️ Situações hardcoded:", situacaoOptionsHardcoded);
-        
         if (sitResponse?.data && Array.isArray(sitResponse.data) && sitResponse.data.length > 0) {
-          // ✅ UNIFICAÇÃO CIRÚRGICA: Apenas remover duplicatas case-insensitive
+          // Unificação simples para eliminar duplicatas
           const situacoesBrutas = sitResponse.data.filter(s => s && s.trim() !== '');
           
           console.log("🔍 Situações brutas:", situacoesBrutas);
           
-          // ✅ UNIFICAÇÃO SIMPLES E EFICAZ
           const situacoesUnicas = [];
           const chavesSeen = new Set();
           
@@ -88,7 +83,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           console.log("✅ Situações únicas após unificação:", situacoesUnicas);
           setSituacoesReais(situacoesUnicas);
           
-          // ✅ MAPEAMENTO SIMPLES: chave normalizada → todas as variações originais
+          // Mapeamento simples: chave normalizada → todas as variações originais
           window.situacoesMapeamento = {};
           situacoesUnicas.forEach(sitUnica => {
             const chave = sitUnica.toLowerCase().trim();
@@ -112,7 +107,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     fetchFilterData();
   }, []);
 
-  // ✅ MODIFICADO: Buscar bairros com unificação case-insensitive
+  // Buscar bairros com unificação case-insensitive
   useEffect(() => {
     async function fetchBairros() {
       if (!cidadeSelecionada) {
@@ -125,12 +120,10 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         const response = await getBairrosPorCidade(cidadeSelecionada, categoriaSelecionada);
         const bairrosBrutos = response?.data || [];
         
-        console.log("🏘️ Bairros brutos do banco:", bairrosBrutos);
+        console.log("🏘️ Bairros brutos:", bairrosBrutos);
         
         if (bairrosBrutos.length > 0) {
-          console.log("🏘️ Bairros brutos:", bairrosBrutos);
-          
-          // ✅ UNIFICAÇÃO SIMPLES PARA BAIRROS
+          // Unificação simples para bairros
           const bairrosUnicos = [];
           const chavesSeen = new Set();
           
@@ -150,7 +143,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           setBairrosReais(bairrosUnicos);
           setBairros(bairrosUnicos);
           
-          // ✅ MAPEAMENTO SIMPLES PARA BAIRROS
+          // Mapeamento simples para bairros
           window.bairrosMapeamento = {};
           bairrosUnicos.forEach(bairroUnico => {
             const chave = bairroUnico.toLowerCase().trim();
@@ -173,7 +166,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     fetchBairros();
   }, [cidadeSelecionada, categoriaSelecionada]);
 
-  // ✅ ADICIONADO: useEffect para restaurar filtros do cache
+  // useEffect para restaurar filtros do cache
   useEffect(() => {
     const restoreFiltersFromCache = () => {
       try {
@@ -201,7 +194,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
             setCidadeSelecionada(parsedFilters.Cidade);
           }
           
-          // ✅ RESTAURAR SITUAÇÕES MÚLTIPLAS
+          // Restaurar situações múltiplas
           if (parsedFilters.Situacao) {
             if (Array.isArray(parsedFilters.Situacao)) {
               setSituacoesSelecionadas(parsedFilters.Situacao);
@@ -252,7 +245,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     return () => clearTimeout(timeoutId);
   }, []);
 
-  // ✅ MODIFICADO: Fechar dropdowns ao clicar fora
+  // Fechar dropdowns ao clicar fora
   useEffect(() => {
     function handleClickOutside(event) {
       if (bairrosRef.current && !bairrosRef.current.contains(event.target)) {
@@ -272,7 +265,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     };
   }, [bairrosExpanded, situacaoExpanded]);
 
-  // Funções utilitárias para formatação (MANTER TODAS)
+  // Funções utilitárias para formatação
   const formatarParaReal = (valor) => {
     if (valor === null || valor === undefined || valor === 0) return "";
     try {
@@ -294,29 +287,23 @@ export default function FiltersImoveisAdmin({ onFilter }) {
   };
 
   const formatarArea = (valor) => {
-    // Retornar apenas o número inteiro, sem formatação
     return valor ? valor.toString() : "";
   };
 
   const converterAreaParaNumero = (areaFormatada) => {
     if (!areaFormatada || areaFormatada.trim() === "") return null;
-
-    // Permitir apenas números inteiros (remover qualquer caractere não numérico)
     const apenasNumeros = areaFormatada.replace(/[^\d]/g, "");
-
     if (apenasNumeros === "") return null;
-
-    // Limitar a 4 dígitos máximo e converter para número
     const numeroLimitado = apenasNumeros.slice(0, 4);
     return parseInt(numeroLimitado, 10) || null;
   };
 
-  // ✅ MODIFICADO: Filtrar bairros usando bairros unificados
+  // Filtrar bairros usando bairros unificados
   const bairrosFiltrados = bairrosReais.filter((bairro) =>
     bairro.toLowerCase().includes(bairroFilter.toLowerCase())
   );
 
-  // ✅ MODIFICADO: Filtrar situações usando situações reais
+  // Filtrar situações usando situações reais
   const situacoesFiltradas = situacoesReais.filter((situacao) =>
     situacao.toLowerCase().includes(situacaoFilter.toLowerCase())
   );
@@ -328,42 +315,28 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     );
   };
 
-  // ✅ CIRÚRGICO: Função para expandir bairros de forma simples
-  const normalizarBairrosParaAPI = (bairrosSelecionados) => {
-    if (!Array.isArray(bairrosSelecionados) || bairrosSelecionados.length === 0) {
-      return undefined;
-    }
-
-    // ✅ EXPANSÃO SIMPLES: Para cada bairro selecionado, incluir todas as variações
-    const todasVariacoes = [];
-    
-    bairrosSelecionados.forEach(bairroSelecionado => {
-      const chave = bairroSelecionado.toLowerCase().trim();
+  // Handler para situação com debug
+  const handleSituacaoChange = (situacao) => {
+    setSituacoesSelecionadas((prev) => {
+      const isSelected = prev.includes(situacao);
+      const newSituacoes = isSelected 
+        ? prev.filter((s) => s !== situacao) 
+        : [...prev, situacao];
       
-      // Buscar no mapeamento
-      if (window.bairrosMapeamento && window.bairrosMapeamento[chave]) {
-        const variacoes = window.bairrosMapeamento[chave];
-        console.log(`🏘️ Expandindo "${bairroSelecionado}" para:`, variacoes);
-        todasVariacoes.push(...variacoes);
-      } else {
-        console.log(`⚠️ Usando valor original do bairro: "${bairroSelecionado}"`);
-        todasVariacoes.push(bairroSelecionado);
-      }
+      console.log('🔍 [DEBUG SITUAÇÃO] Situação alterada:', situacao);
+      console.log('🔍 [DEBUG SITUAÇÃO] Era selecionada?', isSelected);
+      console.log('🔍 [DEBUG SITUAÇÃO] Novas situações selecionadas:', newSituacoes);
+      
+      return newSituacoes;
     });
-
-    // Remover duplicatas
-    const variacoesUnicas = [...new Set(todasVariacoes)];
-    console.log("🚀 Bairros finais para API:", variacoesUnicas);
-
-    return variacoesUnicas;
   };
-  // ✅ CIRÚRGICO: Função para expandir situações de forma simples
+
+  // Função para expandir situações de forma simples
   const normalizarSituacaoParaAPI = (situacoesSelecionadas) => {
     if (!Array.isArray(situacoesSelecionadas) || situacoesSelecionadas.length === 0) {
       return undefined;
     }
 
-    // ✅ EXPANSÃO SIMPLES: Para cada situação selecionada, incluir todas as variações
     const todasVariacoes = [];
     
     situacoesSelecionadas.forEach(sitSelecionada => {
@@ -380,49 +353,46 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       }
     });
 
-    // Remover duplicatas
     const variacoesUnicas = [...new Set(todasVariacoes)];
     console.log("🚀 Situações finais para API:", variacoesUnicas);
 
     return variacoesUnicas;
   };
 
-  // ✅ ADICIONADO: Handler para situação com debug
-  const handleSituacaoChange = (situacao) => {
-    setSituacoesSelecionadas((prev) => {
-      const isSelected = prev.includes(situacao);
-      const newSituacoes = isSelected 
-        ? prev.filter((s) => s !== situacao) 
-        : [...prev, situacao];
+  // Função para expandir bairros de forma simples
+  const normalizarBairrosParaAPI = (bairrosSelecionados) => {
+    if (!Array.isArray(bairrosSelecionados) || bairrosSelecionados.length === 0) {
+      return undefined;
+    }
+
+    const todasVariacoes = [];
+    
+    bairrosSelecionados.forEach(bairroSelecionado => {
+      const chave = bairroSelecionado.toLowerCase().trim();
       
-      console.log('🔍 [DEBUG SITUAÇÃO] Situação alterada:', situacao);
-      console.log('🔍 [DEBUG SITUAÇÃO] Era selecionada?', isSelected);
-      console.log('🔍 [DEBUG SITUAÇÃO] Novas situações selecionadas:', newSituacoes);
-      
-      return newSituacoes;
+      // Buscar no mapeamento
+      if (window.bairrosMapeamento && window.bairrosMapeamento[chave]) {
+        const variacoes = window.bairrosMapeamento[chave];
+        console.log(`🏘️ Expandindo "${bairroSelecionado}" para:`, variacoes);
+        todasVariacoes.push(...variacoes);
+      } else {
+        console.log(`⚠️ Usando valor original do bairro: "${bairroSelecionado}"`);
+        todasVariacoes.push(bairroSelecionado);
+      }
     });
-  };
-    setSituacoesSelecionadas((prev) => {
-      const isSelected = prev.includes(situacao);
-      const newSituacoes = isSelected 
-        ? prev.filter((s) => s !== situacao) 
-        : [...prev, situacao];
-      
-      console.log('🔍 [DEBUG SITUAÇÃO] Situação alterada:', situacao);
-      console.log('🔍 [DEBUG SITUAÇÃO] Era selecionada?', isSelected);
-      console.log('🔍 [DEBUG SITUAÇÃO] Novas situações selecionadas:', newSituacoes);
-      
-      return newSituacoes;
-    });
+
+    const variacoesUnicas = [...new Set(todasVariacoes)];
+    console.log("🚀 Bairros finais para API:", variacoesUnicas);
+
+    return variacoesUnicas;
   };
 
-  // ✅ CIRÚRGICO: handleFilters simplificado com debug mínimo
+  // handleFilters simplificado com debug mínimo
   const handleFilters = () => {
     console.log("🚨 =========================");
     console.log("🚨 APLICANDO FILTROS");
     console.log("🚨 =========================");
     
-    // ✅ SIMPLIFICADO: Debug básico dos estados
     console.log("📋 Filtros aplicados:");
     console.log("  - Situações:", situacoesSelecionadas);
     console.log("  - Bairros:", bairrosSelecionados);
@@ -440,24 +410,18 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       AreaMax: areaMax,
     };
 
-    // ✅ SIMPLIFICADO: Debug das situações
     if (situacoesSelecionadas.length > 0) {
-      // ✅ SIMPLIFICADO: Preview da expansão
       const situacoesExpandidas = normalizarSituacaoParaAPI(situacoesSelecionadas);
       console.log("🚀 Situações que serão enviadas:", situacoesExpandidas);
     }
 
-    // ✅ SIMPLIFICADO: Debug para bairros
     if (bairrosSelecionados.length > 0) {
       const bairrosExpandidos = normalizarBairrosParaAPI(bairrosSelecionados);
       console.log("🏘️ Bairros que serão enviados:", bairrosExpandidos);
     }
-    }
 
-    // ✅ SIMPLIFICADO: Log final dos filtros
     console.log("🚨 Filtros enviados para API:", Object.keys(filtersToApply).filter(key => filtersToApply[key] !== undefined));
 
-    // ✅ SIMPLIFICADO: Logs de conversão para API
     if (Array.isArray(filtersToApply.Situacao) && filtersToApply.Situacao.length > 0) {
       console.log("📤 Situações para API:", filtersToApply.Situacao.join(','));
     }
@@ -474,7 +438,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     }
   };
 
-  // ✅ CIRÚRGICO: handleClearFilters simplificado
+  // handleClearFilters simplificado
   const handleClearFilters = () => {
     console.log("🧹 Limpando filtros...");
     
@@ -545,7 +509,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           value={filters.status}
         />
         
-        {/* ✅ MODIFICADO: Multi-select de situação usando situações reais */}
+        {/* Multi-select de situação usando situações reais */}
         <div ref={situacaoRef} className="relative">
           <label htmlFor="situacao" className="text-xs text-gray-500 block mb-2">
             situacao
@@ -585,9 +549,8 @@ export default function FiltersImoveisAdmin({ onFilter }) {
                       </button>
                     </div>
                     
-                    {/* ✅ ADICIONADO: Debug info no dropdown */}
                     <div className="px-2 py-1 text-[9px] text-gray-400 border-b border-gray-100">
-                      Debug: {situacoesReais.length} situações ({situacoesFiltradas.length} filtradas)
+                      Debug: {situacoesReais.length} situações unificadas ({situacoesFiltradas.length} filtradas)
                     </div>
                     
                     {situacoesFiltradas.map((situacao, index) => (
@@ -604,10 +567,10 @@ export default function FiltersImoveisAdmin({ onFilter }) {
                           className="text-xs cursor-pointer flex-1 flex justify-between"
                         >
                           <span>{situacao}</span>
-                          {/* ✅ ADICIONADO: Mostrar se é duplicata */}
-                          {situacoesReais.filter(s => s === situacao).length > 1 && (
-                            <span className="text-red-500 text-[8px] font-bold">
-                              DUP
+                          {window.situacoesMapeamento && window.situacoesMapeamento[situacao.toLowerCase().trim()] && 
+                           window.situacoesMapeamento[situacao.toLowerCase().trim()].length > 1 && (
+                            <span className="text-blue-500 text-[8px] font-bold" title={`${window.situacoesMapeamento[situacao.toLowerCase().trim()].length} variações no banco`}>
+                              {window.situacoesMapeamento[situacao.toLowerCase().trim()].length}x
                             </span>
                           )}
                         </label>
@@ -640,7 +603,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Bairros dropdown com pesquisa e seleção múltipla (MANTER EXATAMENTE IGUAL) */}
+        {/* Bairros dropdown com pesquisa e seleção múltipla */}
         <div ref={bairrosRef}>
           <label htmlFor="bairros" className="text-xs text-gray-500 block mb-2">
             Bairros
@@ -681,7 +644,6 @@ export default function FiltersImoveisAdmin({ onFilter }) {
                       </button>
                     </div>
                     
-                    {/* ✅ ADICIONADO: Debug info no dropdown de bairros */}
                     <div className="px-2 py-1 text-[9px] text-gray-400 border-b border-gray-100">
                       Debug: {bairrosReais.length} bairros unificados ({bairrosFiltrados.length} filtrados)
                     </div>
@@ -700,7 +662,6 @@ export default function FiltersImoveisAdmin({ onFilter }) {
                           className="text-xs cursor-pointer flex-1 flex justify-between"
                         >
                           <span>{bairro}</span>
-                          {/* ✅ CORRIGIDO: Mostrar quantas variações tem no banco */}
                           {window.bairrosMapeamento && window.bairrosMapeamento[bairro.toLowerCase().trim()] && 
                            window.bairrosMapeamento[bairro.toLowerCase().trim()].length > 1 && (
                             <span className="text-green-500 text-[8px] font-bold" title={`${window.bairrosMapeamento[bairro.toLowerCase().trim()].length} variações no banco`}>
@@ -725,11 +686,9 @@ export default function FiltersImoveisAdmin({ onFilter }) {
               </div>
             )}
           </div>
-
-          {/* ✅ REMOVIDO: Tags de bairros selecionados para limpar a interface */}
         </div>
 
-        {/* Faixa de Valores (MANTER EXATAMENTE IGUAL) */}
+        {/* Faixa de Valores */}
         <div>
           <label className="text-xs text-gray-500 block mb-2">Faixa de Valor</label>
           <div className="flex gap-2">
@@ -750,7 +709,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           </div>
         </div>
 
-        {/* Faixa de Área (MANTER EXATAMENTE IGUAL) */}
+        {/* Faixa de Área */}
         <div>
           <label className="text-xs text-gray-500 block mb-2">Área do Imóvel</label>
           <div className="flex gap-2">
@@ -759,7 +718,6 @@ export default function FiltersImoveisAdmin({ onFilter }) {
               placeholder="Área Mínima"
               value={areaMin ? formatarArea(areaMin) : ""}
               onChange={(e) => {
-                // Aplicar validação de números inteiros diretamente
                 const valor = e.target.value.replace(/[^\d]/g, "").slice(0, 4);
                 setAreaMin(valor ? parseInt(valor, 10) : null);
               }}
@@ -770,7 +728,6 @@ export default function FiltersImoveisAdmin({ onFilter }) {
               placeholder="Área Máxima"
               value={areaMax ? formatarArea(areaMax) : ""}
               onChange={(e) => {
-                // Aplicar validação de números inteiros diretamente
                 const valor = e.target.value.replace(/[^\d]/g, "").slice(0, 4);
                 setAreaMax(valor ? parseInt(valor, 10) : null);
               }}
