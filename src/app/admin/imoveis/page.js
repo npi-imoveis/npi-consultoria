@@ -82,33 +82,64 @@ const calcularDiasDesdeAtualizacao = (dataAtualizacao) => {
   }
 };
 
-// ✅ MODIFICADO: Função para obter badge colorido com mais campos de data e cor preta
-const getStatusBadge = (imovel) => {
-  // ✅ EXPANDIDO: Mais campos possíveis para data de atualização (ordem de prioridade)
-  const dataAtualizacao = imovel.updatedAt || 
-                         imovel.DataAtualizacao || 
-                         imovel.DataModificacao || 
-                         imovel.DataUltimaAtualizacao ||
-                         imovel.lastModified || 
-                         imovel.updated_at ||
-                         imovel.data_atualizacao ||
-                         imovel.dataAtualizacao ||
-                         imovel.UltimaAtualizacao ||
-                         imovel.LastUpdate ||
-                         imovel.ModifiedDate ||
-                         imovel.UpdatedDate;
-  
-  // ✅ DEBUG: Log para identificar qual campo está sendo usado
-  if (dataAtualizacao) {
-    console.log(`[DEBUG DATA] Imóvel ${imovel.Codigo}: Data encontrada: ${dataAtualizacao}`);
-  } else {
-    console.log(`[DEBUG DATA] Imóvel ${imovel.Codigo}: Nenhuma data encontrada. Campos disponíveis:`, Object.keys(imovel).filter(key => key.toLowerCase().includes('data') || key.toLowerCase().includes('update') || key.toLowerCase().includes('modified')));
+// ✅ SUPER EXPANDIDO: Função para detectar qualquer campo que contenha data
+const detectarCampoComData = (imovel) => {
+  // Lista completa de possíveis nomes de campos (incluindo português e variações)
+  const camposPossiveis = [
+    'updatedAt', 'DataAtualizacao', 'DataModificacao', 'DataUltimaAtualizacao',
+    'lastModified', 'updated_at', 'data_atualizacao', 'dataAtualizacao',
+    'UltimaAtualizacao', 'LastUpdate', 'ModifiedDate', 'UpdatedDate',
+    'Data de Atualização', 'Data_de_Atualizacao', 'DataDeAtualizacao',
+    'dataModificacao', 'data_modificacao', 'ultimaAtualizacao',
+    'dataUltimaModificacao', 'DataUltimaModificacao', 'data_ultima_modificacao',
+    'createdAt', 'created_at', 'DataCriacao', 'data_criacao', 'dataCriacao',
+    'DataCadastro', 'data_cadastro', 'dataCadastro', 'DataInclusao',
+    'ModifiedOn', 'UpdatedOn', 'CreatedOn', 'timestamp', 'Timestamp',
+    'date', 'Date', 'datetime', 'DateTime', 'data', 'Data'
+  ];
+
+  // Primeiro: verificar campos conhecidos
+  for (const campo of camposPossiveis) {
+    if (imovel[campo]) {
+      const testDate = new Date(imovel[campo]);
+      if (!isNaN(testDate.getTime())) {
+        console.log(`[DETECTOU DATA] Imóvel ${imovel.Codigo}: Campo "${campo}" = ${imovel[campo]}`);
+        return imovel[campo];
+      }
+    }
   }
-  
+
+  // Segundo: buscar por qualquer campo que contenha uma data válida
+  for (const [key, value] of Object.entries(imovel)) {
+    if (value && typeof value === 'string') {
+      // Verificar se o valor parece ser uma data
+      if (value.match(/^\d{4}-\d{2}-\d{2}/) || 
+          value.match(/^\d{2}\/\d{2}\/\d{4}/) || 
+          value.match(/^\d{4}\/\d{2}\/\d{2}/)) {
+        const testDate = new Date(value);
+        if (!isNaN(testDate.getTime())) {
+          console.log(`[DETECTOU DATA PATTERN] Imóvel ${imovel.Codigo}: Campo "${key}" = ${value}`);
+          return value;
+        }
+      }
+    }
+  }
+
+  console.log(`[SEM DATA] Imóvel ${imovel.Codigo}: Nenhuma data detectada`);
+  return null;
+};
+
+// ✅ MODIFICADO: Função para obter badge usando detecção inteligente de data
+const getStatusBadge = (imovel) => {
+  const dataAtualizacao = detectarCampoComData(imovel);
   const diasDesdeAtualizacao = calcularDiasDesdeAtualizacao(dataAtualizacao);
   
   if (diasDesdeAtualizacao === null) {
-    // Se não há data de atualização, badge cinza
+    // Debug detalhado para imóveis sem data
+    console.log(`[DEBUG SEM DATA] Imóvel ${imovel.Codigo}:`);
+    console.log('- Todos os campos:', Object.keys(imovel));
+    console.log('- Campos com string:', Object.entries(imovel).filter(([k,v]) => typeof v === 'string').map(([k,v]) => `${k}: ${v}`));
+    
     return {
       color: 'bg-gray-400',
       text: '?',
@@ -116,7 +147,7 @@ const getStatusBadge = (imovel) => {
     };
   }
   
-  // ✅ ADICIONADO: Cor preta para mais de 120 dias
+  // ✅ Sistema de cores com nova cor preta
   if (diasDesdeAtualizacao >= 120) {
     return {
       color: 'bg-black',
@@ -150,21 +181,9 @@ const getStatusBadge = (imovel) => {
   }
 };
 
-// ✅ ADICIONADO: Função para obter texto do status de atualização com campos expandidos
+// ✅ MODIFICADO: Função para obter texto do status usando detecção inteligente
 const getStatusAtualizacao = (imovel) => {
-  const dataAtualizacao = imovel.updatedAt || 
-                         imovel.DataAtualizacao || 
-                         imovel.DataModificacao || 
-                         imovel.DataUltimaAtualizacao ||
-                         imovel.lastModified || 
-                         imovel.updated_at ||
-                         imovel.data_atualizacao ||
-                         imovel.dataAtualizacao ||
-                         imovel.UltimaAtualizacao ||
-                         imovel.LastUpdate ||
-                         imovel.ModifiedDate ||
-                         imovel.UpdatedDate;
-                         
+  const dataAtualizacao = detectarCampoComData(imovel);
   const diasDesdeAtualizacao = calcularDiasDesdeAtualizacao(dataAtualizacao);
   
   if (diasDesdeAtualizacao === null) return 'Data não disponível';
@@ -177,7 +196,7 @@ const getStatusAtualizacao = (imovel) => {
   return `${Math.floor(diasDesdeAtualizacao / 30)} meses atrás`;
 };
 
-// ✅ MODIFICADO: Função para ordenar por relevância + data com mais campos
+// ✅ MODIFICADO: Função para ordenar usando detecção inteligente de data
 const sortByRelevance = (imoveis, searchTerm) => {
   if (!Array.isArray(imoveis)) return imoveis;
   
@@ -193,32 +212,9 @@ const sortByRelevance = (imoveis, searchTerm) => {
       }
     }
     
-    // ✅ EXPANDIDO: Ordenação por data de atualização com mais campos (mais recente primeiro)
-    const dataA = a.updatedAt || 
-                 a.DataAtualizacao || 
-                 a.DataModificacao || 
-                 a.DataUltimaAtualizacao ||
-                 a.lastModified || 
-                 a.updated_at ||
-                 a.data_atualizacao ||
-                 a.dataAtualizacao ||
-                 a.UltimaAtualizacao ||
-                 a.LastUpdate ||
-                 a.ModifiedDate ||
-                 a.UpdatedDate;
-                 
-    const dataB = b.updatedAt || 
-                 b.DataAtualizacao || 
-                 b.DataModificacao || 
-                 b.DataUltimaAtualizacao ||
-                 b.lastModified || 
-                 b.updated_at ||
-                 b.data_atualizacao ||
-                 b.dataAtualizacao ||
-                 b.UltimaAtualizacao ||
-                 b.LastUpdate ||
-                 b.ModifiedDate ||
-                 b.UpdatedDate;
+    // ✅ USANDO DETECÇÃO INTELIGENTE: Ordenação por data de atualização
+    const dataA = detectarCampoComData(a);
+    const dataB = detectarCampoComData(b);
     
     if (dataA && dataB) {
       const dateA = new Date(dataA);
