@@ -82,10 +82,28 @@ const calcularDiasDesdeAtualizacao = (dataAtualizacao) => {
   }
 };
 
-// ✅ MODIFICADO: Função para obter badge colorido baseado na data de atualização
+// ✅ MODIFICADO: Função para obter badge colorido com mais campos de data e cor preta
 const getStatusBadge = (imovel) => {
-  // Campos possíveis para data de atualização (ordem de prioridade)
-  const dataAtualizacao = imovel.updatedAt || imovel.DataAtualizacao || imovel.DataModificacao || imovel.lastModified || imovel.updated_at;
+  // ✅ EXPANDIDO: Mais campos possíveis para data de atualização (ordem de prioridade)
+  const dataAtualizacao = imovel.updatedAt || 
+                         imovel.DataAtualizacao || 
+                         imovel.DataModificacao || 
+                         imovel.DataUltimaAtualizacao ||
+                         imovel.lastModified || 
+                         imovel.updated_at ||
+                         imovel.data_atualizacao ||
+                         imovel.dataAtualizacao ||
+                         imovel.UltimaAtualizacao ||
+                         imovel.LastUpdate ||
+                         imovel.ModifiedDate ||
+                         imovel.UpdatedDate;
+  
+  // ✅ DEBUG: Log para identificar qual campo está sendo usado
+  if (dataAtualizacao) {
+    console.log(`[DEBUG DATA] Imóvel ${imovel.Codigo}: Data encontrada: ${dataAtualizacao}`);
+  } else {
+    console.log(`[DEBUG DATA] Imóvel ${imovel.Codigo}: Nenhuma data encontrada. Campos disponíveis:`, Object.keys(imovel).filter(key => key.toLowerCase().includes('data') || key.toLowerCase().includes('update') || key.toLowerCase().includes('modified')));
+  }
   
   const diasDesdeAtualizacao = calcularDiasDesdeAtualizacao(dataAtualizacao);
   
@@ -98,7 +116,14 @@ const getStatusBadge = (imovel) => {
     };
   }
   
-  if (diasDesdeAtualizacao >= 90) {
+  // ✅ ADICIONADO: Cor preta para mais de 120 dias
+  if (diasDesdeAtualizacao >= 120) {
+    return {
+      color: 'bg-black',
+      text: '120+',
+      title: `Atualizado há ${diasDesdeAtualizacao} dias (mais de 120 dias)`
+    };
+  } else if (diasDesdeAtualizacao >= 90) {
     return {
       color: 'bg-purple-500',
       text: '90+',
@@ -125,9 +150,21 @@ const getStatusBadge = (imovel) => {
   }
 };
 
-// ✅ ADICIONADO: Função para obter texto do status de atualização (para logs/debug)
+// ✅ ADICIONADO: Função para obter texto do status de atualização com campos expandidos
 const getStatusAtualizacao = (imovel) => {
-  const dataAtualizacao = imovel.updatedAt || imovel.DataAtualizacao || imovel.DataModificacao || imovel.lastModified || imovel.updated_at;
+  const dataAtualizacao = imovel.updatedAt || 
+                         imovel.DataAtualizacao || 
+                         imovel.DataModificacao || 
+                         imovel.DataUltimaAtualizacao ||
+                         imovel.lastModified || 
+                         imovel.updated_at ||
+                         imovel.data_atualizacao ||
+                         imovel.dataAtualizacao ||
+                         imovel.UltimaAtualizacao ||
+                         imovel.LastUpdate ||
+                         imovel.ModifiedDate ||
+                         imovel.UpdatedDate;
+                         
   const diasDesdeAtualizacao = calcularDiasDesdeAtualizacao(dataAtualizacao);
   
   if (diasDesdeAtualizacao === null) return 'Data não disponível';
@@ -140,7 +177,7 @@ const getStatusAtualizacao = (imovel) => {
   return `${Math.floor(diasDesdeAtualizacao / 30)} meses atrás`;
 };
 
-// ✅ MODIFICADO: Função para ordenar por data de atualização + relevância
+// ✅ MODIFICADO: Função para ordenar por relevância + data com mais campos
 const sortByRelevance = (imoveis, searchTerm) => {
   if (!Array.isArray(imoveis)) return imoveis;
   
@@ -156,18 +193,46 @@ const sortByRelevance = (imoveis, searchTerm) => {
       }
     }
     
-    // Ordenação secundária por data de atualização (mais recente primeiro)
-    const dataA = a.updatedAt || a.DataAtualizacao || a.DataModificacao || a.lastModified || a.updated_at;
-    const dataB = b.updatedAt || b.DataAtualizacao || b.DataModificacao || b.lastModified || b.updated_at;
+    // ✅ EXPANDIDO: Ordenação por data de atualização com mais campos (mais recente primeiro)
+    const dataA = a.updatedAt || 
+                 a.DataAtualizacao || 
+                 a.DataModificacao || 
+                 a.DataUltimaAtualizacao ||
+                 a.lastModified || 
+                 a.updated_at ||
+                 a.data_atualizacao ||
+                 a.dataAtualizacao ||
+                 a.UltimaAtualizacao ||
+                 a.LastUpdate ||
+                 a.ModifiedDate ||
+                 a.UpdatedDate;
+                 
+    const dataB = b.updatedAt || 
+                 b.DataAtualizacao || 
+                 b.DataModificacao || 
+                 b.DataUltimaAtualizacao ||
+                 b.lastModified || 
+                 b.updated_at ||
+                 b.data_atualizacao ||
+                 b.dataAtualizacao ||
+                 b.UltimaAtualizacao ||
+                 b.LastUpdate ||
+                 b.ModifiedDate ||
+                 b.UpdatedDate;
     
     if (dataA && dataB) {
       const dateA = new Date(dataA);
       const dateB = new Date(dataB);
       
       if (!isNaN(dateA.getTime()) && !isNaN(dateB.getTime())) {
-        return dateB - dateA; // Mais recente primeiro
+        // ✅ MAIS RECENTE PRIMEIRO (dateB - dateA = decrescente)
+        return dateB - dateA;
       }
     }
+    
+    // Se apenas um tem data, priorizar o que tem data
+    if (dataA && !dataB) return -1;
+    if (!dataA && dataB) return 1;
     
     // Fallback: ordenar por código
     const codigoA = parseInt(a.Codigo) || 0;
@@ -355,6 +420,20 @@ export default function AdminImoveis() {
 
       setImoveis(responseData);
       setPagination(newPaginationData);
+      
+      // ✅ ADICIONADO: Debug para identificar campos de data disponíveis
+      if (responseData.length > 0) {
+        const exemploImovel = responseData[0];
+        console.log("🔍 [DEBUG DATA] Exemplo de imóvel e seus campos relacionados a data:");
+        console.log("- Código:", exemploImovel.Codigo);
+        console.log("- Todos os campos:", Object.keys(exemploImovel));
+        console.log("- Campos com 'data':", Object.keys(exemploImovel).filter(key => key.toLowerCase().includes('data')));
+        console.log("- Campos com 'update':", Object.keys(exemploImovel).filter(key => key.toLowerCase().includes('update')));
+        console.log("- Campos com 'modified':", Object.keys(exemploImovel).filter(key => key.toLowerCase().includes('modified')));
+        console.log("- Campos com 'ultima':", Object.keys(exemploImovel).filter(key => key.toLowerCase().includes('ultima')));
+        console.log("- Objeto completo do primeiro imóvel:", exemploImovel);
+      }
+      
       console.log("✅ Estado de imóveis e paginação atualizado. Imóveis count:", responseData.length, "Paginação atual:", newPaginationData);
       console.log("🔍 DEBUG: totalItems final:", newPaginationData.totalItems);
 
@@ -780,7 +859,7 @@ export default function AdminImoveis() {
             </div>
           )}
 
-          {/* ✅ MODIFICADO: Legenda do sistema de badges coloridos por data de atualização */}
+          {/* ✅ MODIFICADO: Legenda com cor preta para 120+ dias */}
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-1">
@@ -814,6 +893,12 @@ export default function AdminImoveis() {
                     <span className="text-white text-[8px] font-bold">90+</span>
                   </div>
                   <span className="text-gray-600">90+ dias</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <div className="w-6 h-4 bg-black rounded-sm flex items-center justify-center">
+                    <span className="text-white text-[8px] font-bold">120+</span>
+                  </div>
+                  <span className="text-gray-600">120+ dias</span>
                 </div>
                 <div className="flex items-center space-x-1">
                   <div className="w-6 h-4 bg-gray-400 rounded-sm flex items-center justify-center">
