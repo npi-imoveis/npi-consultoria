@@ -266,7 +266,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         />
         
         {/* ✅ SUBSTITUÍDO: Multi-select de situação no lugar do SelectFilter */}
-        <div ref={situacaoRef}>
+        <div ref={situacaoRef} className="relative">
           <label htmlFor="situacao" className="text-xs text-gray-500 block mb-2">
             situacao
           </label>
@@ -287,7 +287,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
             )}
 
             {situacaoExpanded && (
-              <div className="absolute z-10 w-full mt-1 border border-gray-200 rounded-md bg-white max-h-40 overflow-y-auto">
+              <div className="absolute z-50 w-full mt-1 border border-gray-200 rounded-md bg-white max-h-40 overflow-y-auto shadow-lg">
                 {situacoesFiltradas.length > 0 ? (
                   <>
                     <div className="flex justify-between border-b border-gray-100 px-2 py-1">
