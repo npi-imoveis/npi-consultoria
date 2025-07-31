@@ -61,20 +61,95 @@ const calculateRelevance = (imovel, searchTerm) => {
   return score;
 };
 
-// Função para ordenar resultados por relevância
+// ✅ ADICIONADO: Função para calcular dias desde a última atualização
+const calcularDiasDesdeAtualizacao = (dataAtualizacao) => {
+  if (!dataAtualizacao) return null;
+  
+  try {
+    const dataAtual = new Date();
+    const dataUpdate = new Date(dataAtualizacao);
+    
+    // Verificar se a data é válida
+    if (isNaN(dataUpdate.getTime())) return null;
+    
+    const diferencaMs = dataAtual - dataUpdate;
+    const diferencaDias = Math.floor(diferencaMs / (1000 * 60 * 60 * 24));
+    
+    return diferencaDias;
+  } catch (error) {
+    console.error('Erro ao calcular dias desde atualização:', error);
+    return null;
+  }
+};
+
+// ✅ ADICIONADO: Função para determinar a cor da linha baseada na data de atualização
+const getRowColorClass = (imovel) => {
+  // Campos possíveis para data de atualização (ordem de prioridade)
+  const dataAtualizacao = imovel.updatedAt || imovel.DataAtualizacao || imovel.DataModificacao || imovel.lastModified || imovel.updated_at;
+  
+  const diasDesdeAtualizacao = calcularDiasDesdeAtualizacao(dataAtualizacao);
+  
+  if (diasDesdeAtualizacao === null) {
+    // Se não há data de atualização, usar cor neutra
+    return 'bg-gray-50';
+  }
+  
+  if (diasDesdeAtualizacao >= 90) {
+    return 'bg-purple-50 hover:bg-purple-100'; // Roxo - mais de 90 dias
+  } else if (diasDesdeAtualizacao >= 70) {
+    return 'bg-red-50 hover:bg-red-100'; // Vermelho - mais de 70 dias
+  } else if (diasDesdeAtualizacao >= 50) {
+    return 'bg-yellow-50 hover:bg-yellow-100'; // Amarelo - mais de 50 dias
+  } else {
+    return 'bg-white hover:bg-gray-50'; // Sem cor - atualizado recentemente
+  }
+};
+
+// ✅ ADICIONADO: Função para obter texto do status de atualização
+const getStatusAtualizacao = (imovel) => {
+  const dataAtualizacao = imovel.updatedAt || imovel.DataAtualizacao || imovel.DataModificacao || imovel.lastModified || imovel.updated_at;
+  const diasDesdeAtualizacao = calcularDiasDesdeAtualizacao(dataAtualizacao);
+  
+  if (diasDesdeAtualizacao === null) return 'Data não disponível';
+  
+  if (diasDesdeAtualizacao === 0) return 'Atualizado hoje';
+  if (diasDesdeAtualizacao === 1) return 'Atualizado ontem';
+  if (diasDesdeAtualizacao <= 7) return `${diasDesdeAtualizacao} dias atrás`;
+  if (diasDesdeAtualizacao <= 30) return `${diasDesdeAtualizacao} dias atrás`;
+  if (diasDesdeAtualizacao <= 60) return `${Math.floor(diasDesdeAtualizacao / 7)} semanas atrás`;
+  return `${Math.floor(diasDesdeAtualizacao / 30)} meses atrás`;
+};
+
+// ✅ MODIFICADO: Função para ordenar por data de atualização + relevância
 const sortByRelevance = (imoveis, searchTerm) => {
-  if (!searchTerm || !Array.isArray(imoveis)) return imoveis;
+  if (!Array.isArray(imoveis)) return imoveis;
   
   return [...imoveis].sort((a, b) => {
-    const scoreA = calculateRelevance(a, searchTerm);
-    const scoreB = calculateRelevance(b, searchTerm);
-    
-    // Ordenação decrescente por relevância
-    if (scoreB !== scoreA) {
-      return scoreB - scoreA;
+    // Se há termo de busca, priorizar relevância
+    if (searchTerm) {
+      const scoreA = calculateRelevance(a, searchTerm);
+      const scoreB = calculateRelevance(b, searchTerm);
+      
+      // Ordenação decrescente por relevância
+      if (scoreB !== scoreA) {
+        return scoreB - scoreA;
+      }
     }
     
-    // Em caso de empate, manter ordem por código
+    // Ordenação secundária por data de atualização (mais recente primeiro)
+    const dataA = a.updatedAt || a.DataAtualizacao || a.DataModificacao || a.lastModified || a.updated_at;
+    const dataB = b.updatedAt || b.DataAtualizacao || b.DataModificacao || b.lastModified || b.updated_at;
+    
+    if (dataA && dataB) {
+      const dateA = new Date(dataA);
+      const dateB = new Date(dataB);
+      
+      if (!isNaN(dateA.getTime()) && !isNaN(dateB.getTime())) {
+        return dateB - dateA; // Mais recente primeiro
+      }
+    }
+    
+    // Fallback: ordenar por código
     const codigoA = parseInt(a.Codigo) || 0;
     const codigoB = parseInt(b.Codigo) || 0;
     return codigoA - codigoB;
@@ -241,6 +316,12 @@ export default function AdminImoveis() {
             currentPage: 1,
             itemsPerPage: 30,
           };
+        }
+
+        // ✅ MODIFICADO: Aplicar ordenação por data para filtros também
+        if (responseData.length > 1) {
+          responseData = sortByRelevance(responseData, ""); // Sem termo de busca = ordena por data
+          console.log("📅 Resultados dos filtros ordenados por data de atualização");
         }
 
         // ✅ ADICIONADO: Salvar cache de filtros quando não há busca livre
@@ -679,6 +760,37 @@ export default function AdminImoveis() {
             </div>
           )}
 
+          {/* ✅ ADICIONADO: Legenda do sistema de cores por data de atualização */}
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-1">
+                <svg className="h-4 w-4 text-gray-500 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-xs font-medium text-gray-700">Status de Atualização:</span>
+              </div>
+              
+              <div className="flex items-center space-x-3 text-[10px]">
+                <div className="flex items-center space-x-1">
+                  <div className="w-3 h-3 bg-white border border-gray-300 rounded"></div>
+                  <span className="text-gray-600">Recente</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <div className="w-3 h-3 bg-yellow-200 rounded"></div>
+                  <span className="text-gray-600">50+ dias</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <div className="w-3 h-3 bg-red-200 rounded"></div>
+                  <span className="text-gray-600">70+ dias</span>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <div className="w-3 h-3 bg-purple-200 rounded"></div>
+                  <span className="text-gray-600">90+ dias</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* 🚨 LAYOUT OTIMIZADO: Espaçamento ajustado sem desperdício */}
           <div className="overflow-x-auto">
             <div className="inline-block min-w-full align-middle">
@@ -725,74 +837,79 @@ export default function AdminImoveis() {
                         ))
                     ) : imoveis.length > 0 ? (
                       // Dados dos imóveis
-                      imoveis.map((imovel) => (
-                        <tr key={imovel.Codigo || imovel._id} className="hover:bg-gray-50">
-                          <td className="w-20 px-3 py-3 text-[10px] font-bold text-gray-900 whitespace-nowrap">
-                            {imovel.Codigo || "-"}
-                          </td>
-                          <td className="w-14 px-2 py-3 text-[9px] text-gray-500 whitespace-nowrap">
-                            {(() => {
-                              const statusImovel = verificarImovelAtivo(imovel);
-                              return (
-                                <span
-                                  className={`inline-flex items-center rounded-full px-2 py-1 text-[9px] font-medium ${
-                                    statusImovel.ativo
-                                      ? "bg-green-100 text-green-800"
-                                      : "bg-red-100 text-red-800"
-                                  }`}
+                      imoveis.map((imovel) => {
+                        const rowColorClass = getRowColorClass(imovel);
+                        const statusAtualizacao = getStatusAtualizacao(imovel);
+                        
+                        return (
+                          <tr key={imovel.Codigo || imovel._id} className={rowColorClass} title={`Última atualização: ${statusAtualizacao}`}>
+                            <td className="w-20 px-3 py-3 text-[10px] font-bold text-gray-900 whitespace-nowrap">
+                              {imovel.Codigo || "-"}
+                            </td>
+                            <td className="w-14 px-2 py-3 text-[9px] text-gray-500 whitespace-nowrap">
+                              {(() => {
+                                const statusImovel = verificarImovelAtivo(imovel);
+                                return (
+                                  <span
+                                    className={`inline-flex items-center rounded-full px-2 py-1 text-[9px] font-medium ${
+                                      statusImovel.ativo
+                                        ? "bg-green-100 text-green-800"
+                                        : "bg-red-100 text-red-800"
+                                    }`}
+                                  >
+                                    {statusImovel.texto}
+                                  </span>
+                                );
+                              })()}
+                            </td>
+                            <td className="px-3 py-3 text-[10px] font-medium text-gray-900">
+                              <div className="truncate">
+                                {imovel.Empreendimento || "-"}
+                              </div>
+                            </td>
+                            <td className="w-28 px-2 py-3 text-[10px] text-gray-600 whitespace-nowrap">
+                              <div className="truncate">
+                                {imovel.Categoria || "-"}
+                              </div>
+                            </td>
+                            <td className="w-20 px-2 py-3 text-[10px] text-gray-600 whitespace-nowrap">
+                              {formatarArea(imovel.AreaPrivativa)}
+                            </td>
+                            <td className="w-32 px-2 py-3 text-[10px] text-gray-600 whitespace-nowrap">
+                              <div className="truncate">
+                                {formatarValor(imovel.ValorAntigo)}
+                              </div>
+                            </td>
+                            <td className="w-24 px-2 py-3 text-center">
+                              <div className="flex items-center justify-center space-x-1.5">
+                                <a
+                                  href={`/imovel-${imovel.Codigo}/${imovel.Slug || 'detalhes'}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-gray-100"
+                                  title="Ver no site"
                                 >
-                                  {statusImovel.texto}
-                                </span>
-                              );
-                            })()}
-                          </td>
-                          <td className="px-3 py-3 text-[10px] font-medium text-gray-900">
-                            <div className="truncate">
-                              {imovel.Empreendimento || "-"}
-                            </div>
-                          </td>
-                          <td className="w-28 px-2 py-3 text-[10px] text-gray-600 whitespace-nowrap">
-                            <div className="truncate">
-                              {imovel.Categoria || "-"}
-                            </div>
-                          </td>
-                          <td className="w-20 px-2 py-3 text-[10px] text-gray-600 whitespace-nowrap">
-                            {formatarArea(imovel.AreaPrivativa)}
-                          </td>
-                          <td className="w-32 px-2 py-3 text-[10px] text-gray-600 whitespace-nowrap">
-                            <div className="truncate">
-                              {formatarValor(imovel.ValorAntigo)}
-                            </div>
-                          </td>
-                          <td className="w-24 px-2 py-3 text-center">
-                            <div className="flex items-center justify-center space-x-1.5">
-                              <a
-                                href={`/imovel-${imovel.Codigo}/${imovel.Slug || 'detalhes'}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-gray-100"
-                                title="Ver no site"
-                              >
-                                <EyeIcon className="h-3.5 w-3.5" />
-                              </a>
-                              <button
-                                className="text-indigo-600 hover:text-indigo-900 p-1 rounded hover:bg-gray-100"
-                                title="Editar"
-                                onClick={() => handleEdit(imovel.Codigo)}
-                              >
-                                <PencilSquareIcon className="h-3.5 w-3.5" />
-                              </button>
-                              <button
-                                className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-gray-100"
-                                title="Deletar"
-                                onClick={() => handleDelete(imovel.Codigo)}
-                              >
-                                <TrashIcon className="h-3.5 w-3.5" />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))
+                                  <EyeIcon className="h-3.5 w-3.5" />
+                                </a>
+                                <button
+                                  className="text-indigo-600 hover:text-indigo-900 p-1 rounded hover:bg-gray-100"
+                                  title="Editar"
+                                  onClick={() => handleEdit(imovel.Codigo)}
+                                >
+                                  <PencilSquareIcon className="h-3.5 w-3.5" />
+                                </button>
+                                <button
+                                  className="text-red-600 hover:text-red-900 p-1 rounded hover:bg-gray-100"
+                                  title="Deletar"
+                                  onClick={() => handleDelete(imovel.Codigo)}
+                                >
+                                  <TrashIcon className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
                     ) : (
                       // Nenhum resultado encontrado
                       <tr>
