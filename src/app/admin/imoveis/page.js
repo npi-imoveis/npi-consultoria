@@ -575,6 +575,79 @@ export default function AdminImoveis() {
             <FiltersImoveisAdmin onFilter={handleFilterApply} />
           </div>
 
+          {/* ✅ ADICIONADO: Indicador de resultados filtrados */}
+          {(Object.keys(filters).length > 0 || searchTerm) && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <div className="flex items-center">
+                    <svg className="h-5 w-5 text-blue-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                    </svg>
+                    <span className="text-sm font-medium text-blue-900">
+                      {pagination.totalItems} {pagination.totalItems === 1 ? 'imóvel encontrado' : 'imóveis encontrados'}
+                    </span>
+                  </div>
+                  
+                  {/* Mostrar filtros ativos */}
+                  <div className="flex flex-wrap gap-2">
+                    {searchTerm && (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        Busca: "{searchTerm}"
+                      </span>
+                    )}
+                    {filters.Categoria && (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        {filters.Categoria}
+                      </span>
+                    )}
+                    {filters.Status && (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                        {filters.Status}
+                      </span>
+                    )}
+                    {Array.isArray(filters.Situacao) && filters.Situacao.length > 0 && (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                        {filters.Situacao.length === 1 ? filters.Situacao[0] : `${filters.Situacao.length} situações`}
+                      </span>
+                    )}
+                    {filters.Cidade && (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                        {filters.Cidade}
+                      </span>
+                    )}
+                    {filters.bairros && Array.isArray(filters.bairros) && filters.bairros.length > 0 && (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-pink-100 text-pink-800">
+                        {filters.bairros.length} {filters.bairros.length === 1 ? 'bairro' : 'bairros'}
+                      </span>
+                    )}
+                    {(filters.ValorMin || filters.ValorMax) && (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                        Valor: {filters.ValorMin ? `R$ ${filters.ValorMin.toLocaleString()}` : '0'} - {filters.ValorMax ? `R$ ${filters.ValorMax.toLocaleString()}` : '∞'}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Botão para limpar filtros */}
+                <button
+                  onClick={() => {
+                    if (searchTerm) {
+                      clearSearch();
+                    } else {
+                      setFilters({});
+                      clearFiltersState();
+                      loadImoveis(1, "");
+                    }
+                  }}
+                  className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  Limpar {searchTerm ? 'busca' : 'filtros'}
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Tabela de imóveis */}
           <div className="relative overflow-x-auto shadow-sm">
             <table className="min-w-full divide-y divide-gray-200 table-fixed">
