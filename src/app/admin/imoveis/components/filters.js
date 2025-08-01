@@ -597,159 +597,100 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     console.log("✅ [CLEAR] Limpeza completa finalizada!");
   };
 
-  // ✅ NOVA FUNÇÃO: Investigar imóveis com situação problemática (MIGRAÇÃO)
-  const investigarImoveisSemSituacao = async () => {
-    console.log("🔍 ===== INVESTIGAÇÃO: IMÓVEIS SEM SITUAÇÃO (MIGRAÇÃO) =====");
+  // ✅ NOVA FUNÇÃO: Investigar problemas de migração (SIMPLES)
+  const investigarMigracao = async () => {
+    console.log("🔍 ===== INVESTIGAÇÃO SIMPLES: MIGRAÇÃO =====");
     
     try {
-      // ✅ Importar a função getImoveisDashboard do arquivo correto
+      // Importar a função necessária
       const { getImoveisDashboard } = await import("../services/imoveis");
       
-      // ✅ PASSO 1: Buscar TODOS os imóveis sem filtro para comparar
-      console.log("📡 1. Buscando TODOS os imóveis (amostra)...");
-      const responseTodos = await getImoveisDashboard({}, 1, 50); // Amostra de 50
-      const todosImoveis = responseTodos?.data || [];
-      const totalGeral = responseTodos?.paginacao?.totalItems || 0;
+      // Buscar amostra de 100 imóveis
+      console.log("📡 Buscando amostra de 100 imóveis...");
+      const response = await getImoveisDashboard({}, 1, 100);
+      const imoveis = response?.data || [];
+      const total = response?.paginacao?.totalItems || 0;
       
-      console.log(`📊 Total geral de imóveis: ${totalGeral}`);
-      console.log(`📊 Amostra analisada: ${todosImoveis.length} imóveis`);
+      console.log(`📊 Total geral: ${total} imóveis`);
+      console.log(`📊 Amostra: ${imoveis.length} imóveis`);
       
-      // ✅ PASSO 2: Analisar situações na amostra
-      const situacoesProblematicas = [];
-      const contadorProblemas = {
-        nulo: 0,
-        vazio: 0,
-        espacos: 0,
-        undefined: 0,
-        stringNull: 0,
-        numero: 0,
-        outros: 0
+      // Analisar situações
+      let problemasEncontrados = 0;
+      const tiposProblemas = {
+        'NULL': 0,
+        'Vazio ""': 0,
+        'Espaços': 0,
+        'undefined': 0,
+        'Outros': 0
       };
       
-      console.log("\n🔍 2. Analisando situações na amostra:");
+      console.log("\n🔍 Analisando situações...");
       
-      todosImoveis.forEach((imovel, index) => {
+      imoveis.forEach((imovel, i) => {
         const situacao = imovel.Situacao;
-        let problema = null;
+        let temProblema = false;
         
-        // ✅ Detectar tipos de problemas
         if (situacao === null) {
-          problema = 'nulo';
-          contadorProblemas.nulo++;
+          tiposProblemas['NULL']++;
+          temProblema = true;
         } else if (situacao === undefined) {
-          problema = 'undefined';
-          contadorProblemas.undefined++;
+          tiposProblemas['undefined']++;
+          temProblema = true;
         } else if (situacao === '') {
-          problema = 'vazio';
-          contadorProblemas.vazio++;
+          tiposProblemas['Vazio ""']++;
+          temProblema = true;
         } else if (typeof situacao === 'string' && situacao.trim() === '') {
-          problema = 'espacos';
-          contadorProblemas.espacos++;
-        } else if (situacao === 'null' || situacao === 'NULL') {
-          problema = 'stringNull';
-          contadorProblemas.stringNull++;
-        } else if (typeof situacao === 'number') {
-          problema = 'numero';
-          contadorProblemas.numero++;
-        } else if (situacao && typeof situacao === 'string' && situacao.length > 0) {
-          // Situação aparenta ser válida
-          return;
-        } else {
-          problema = 'outros';
-          contadorProblemas.outros++;
+          tiposProblemas['Espaços']++;
+          temProblema = true;
+        } else if (!situacao || (typeof situacao !== 'string')) {
+          tiposProblemas['Outros']++;
+          temProblema = true;
         }
         
-        if (problema) {
-          situacoesProblematicas.push({
-            codigo: imovel.Codigo,
-            situacao: situacao,
-            tipo: problema,
-            valor: JSON.stringify(situacao)
-          });
-          
-          if (situacoesProblematicas.length <= 10) { // Mostrar apenas os primeiros 10
-            console.log(`   ${index + 1}. Código ${imovel.Codigo}: "${situacao}" (${problema})`);
+        if (temProblema) {
+          problemasEncontrados++;
+          if (problemasEncontrados <= 5) { // Mostrar apenas os primeiros 5
+            console.log(`   ${i+1}. Código ${imovel.Codigo}: situação = ${JSON.stringify(situacao)}`);
           }
         }
       });
       
-      console.log("\n📊 RESUMO DOS PROBLEMAS NA AMOSTRA:");
-      Object.entries(contadorProblemas).forEach(([tipo, count]) => {
-        if (count > 0) {
-          console.log(`   ${tipo}: ${count} imóveis`);
+      console.log("\n📊 RESUMO DOS PROBLEMAS:");
+      Object.entries(tiposProblemas).forEach(([tipo, qtd]) => {
+        if (qtd > 0) {
+          console.log(`   ${tipo}: ${qtd} imóveis`);
         }
       });
       
-      const totalProblematicos = Object.values(contadorProblemas).reduce((a, b) => a + b, 0);
-      console.log(`\n🚨 Total com problemas na amostra: ${totalProblematicos}/${todosImoveis.length}`);
+      console.log(`\n🚨 Total com problemas: ${problemasEncontrados}/${imoveis.length}`);
       
-      // ✅ PASSO 3: Estimar impacto no total geral
-      if (totalProblematicos > 0 && todosImoveis.length > 0) {
-        const percentualProblematico = (totalProblematicos / todosImoveis.length) * 100;
-        const estimativaTotal = Math.round((totalGeral * percentualProblematico) / 100);
+      // Estimar impacto
+      if (problemasEncontrados > 0) {
+        const percentual = (problemasEncontrados / imoveis.length) * 100;
+        const estimativa = Math.round((total * percentual) / 100);
         
-        console.log(`\n💡 ESTIMATIVA TOTAL DE IMÓVEIS COM PROBLEMAS:`);
-        console.log(`   Percentual na amostra: ${percentualProblematico.toFixed(1)}%`);
-        console.log(`   Estimativa no total: ${estimativaTotal} imóveis`);
+        console.log(`\n💡 ESTIMATIVA TOTAL:`);
+        console.log(`   Percentual problemático: ${percentual.toFixed(1)}%`);
+        console.log(`   Estimativa total: ${estimativa} imóveis`);
         
-        if (estimativaTotal >= 80) {
-          console.log(`🎯 BINGO! Estes ${estimativaTotal} imóveis com situação problemática`);
-          console.log(`   podem explicar os 96 imóveis faltando!`);
-        } else if (estimativaTotal >= 40) {
-          console.log(`⚠️ Estes ${estimativaTotal} imóveis explicam PARTE dos 96 faltando.`);
+        if (estimativa >= 80) {
+          console.log(`🎯 BINGO! Estes ${estimativa} imóveis podem ser os 96 faltando!`);
+          console.log(`\n🔧 SOLUÇÃO: Execute este SQL no banco:`);
+          console.log(`   UPDATE imoveis SET situacao = 'SEM SITUAÇÃO' WHERE situacao IS NULL;`);
+          console.log(`   UPDATE imoveis SET situacao = 'SEM SITUAÇÃO' WHERE situacao = '';`);
+          console.log(`   UPDATE imoveis SET situacao = 'SEM SITUAÇÃO' WHERE TRIM(situacao) = '';`);
         } else {
-          console.log(`❓ Poucos problemas encontrados. Causa pode estar em outro lugar.`);
+          console.log(`⚠️ Poucos problemas encontrados. Causa pode estar em outro lugar.`);
         }
       } else {
-        console.log(`✅ Nenhum problema encontrado na amostra.`);
-        console.log(`❓ Os 96 imóveis faltando podem ter outra causa.`);
+        console.log(`✅ Nenhum problema de migração encontrado na amostra.`);
       }
       
-      return {
-        totalProblematicos,
-        contadorProblemas,
-        situacoesProblematicas: situacoesProblematicas.slice(0, 10)
-      };
-      
     } catch (error) {
-      console.error("❌ Erro na investigação:", error);
+      console.error("❌ Erro:", error);
     }
     
     console.log("🔍 ===== FIM INVESTIGAÇÃO MIGRAÇÃO =====");
-  };
-
-  // ✅ NOVA FUNÇÃO: Sugerir correções para problemas de migração
-  const sugerirCorrecaoMigracao = () => {
-    console.log("🔧 ===== SUGESTÃO: CORREÇÃO DE MIGRAÇÃO =====");
-    
-    console.log("📋 PROBLEMAS IDENTIFICADOS:");
-    console.log("   1. Imóveis com situacao = NULL");
-    console.log("   2. Imóveis com situacao = '' (vazia)");
-    console.log("   3. Imóveis com situacao = '   ' (espaços)");
-    console.log("   4. Imóveis com situacao = 'null' (string)");
-    
-    console.log("\n🔧 SOLUÇÕES RECOMENDADAS:");
-    
-    console.log("\n1️⃣ CORREÇÃO NO BANCO DE DADOS:");
-    console.log("   UPDATE imoveis SET situacao = 'SEM SITUAÇÃO' WHERE situacao IS NULL;");
-    console.log("   UPDATE imoveis SET situacao = 'SEM SITUAÇÃO' WHERE situacao = '';");
-    console.log("   UPDATE imoveis SET situacao = 'SEM SITUAÇÃO' WHERE TRIM(situacao) = '';");
-    console.log("   UPDATE imoveis SET situacao = 'SEM SITUAÇÃO' WHERE situacao = 'null';");
-    
-    console.log("\n2️⃣ CORREÇÃO NA API (getImoveisDashboard):");
-    console.log("   - Modificar consulta para incluir imóveis com situacao NULL");
-    console.log("   - Tratar valores NULL como categoria especial");
-    console.log("   - Implementar filtro SituacaoInclusiva");
-    
-    console.log("\n3️⃣ CORREÇÃO NO FRONTEND:");
-    console.log("   - Adicionar opção 'SEM SITUAÇÃO' na lista de filtros");
-    console.log("   - Permitir busca por imóveis sem situação definida");
-    
-    console.log("\n🎯 RESULTADO ESPERADO:");
-    console.log("   Com essas correções, o filtro deve retornar ~5549 imóveis");
-    console.log("   incluindo os 96 imóveis que tinham situação problemática.");
-    
-    console.log("🔧 ===== FIM SUGESTÃO =====");
   };
 
   return (
@@ -1029,8 +970,8 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         </div>
       </div>
 
-      {/* ✅ SEÇÃO DOS BOTÕES MODIFICADA COM 4 BOTÕES */}
-      <div className="grid grid-cols-4 gap-2 mt-2">
+      {/* ✅ SEÇÃO DOS BOTÕES MODIFICADA COM BOTÃO DE MIGRAÇÃO */}
+      <div className="grid grid-cols-3 gap-3 mt-2">
         <button
           className="bg-gray-200 font-bold rounded-md text-zinc-600 hover:bg-zinc-300 p-2 text-xs"
           onClick={handleFilters}
@@ -1040,16 +981,9 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         
         <button
           className="bg-purple-500 font-bold rounded-md text-white hover:bg-purple-600 p-2 text-xs"
-          onClick={investigarImoveisSemSituacao}
+          onClick={investigarMigracao}
         >
           🔍 Migração
-        </button>
-        
-        <button
-          className="bg-blue-500 font-bold rounded-md text-white hover:bg-blue-600 p-2 text-xs"
-          onClick={sugerirCorrecaoMigracao}
-        >
-          🔧 Soluções
         </button>
         
         <button
