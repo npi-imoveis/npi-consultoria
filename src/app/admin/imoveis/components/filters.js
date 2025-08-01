@@ -588,107 +588,127 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     console.log("✅ [CLEAR] Limpeza completa finalizada!");
   };
 
-  // ✅ FUNÇÃO CORRIGIDA: Investigar problemas de migração (usando função que funciona)
-  const investigarMigracao = async () => {
-    console.log("🔍 ===== INVESTIGAÇÃO SIMPLES: MIGRAÇÃO =====");
+  // ✅ FUNÇÃO NOVA: Investigar TODAS as situações do banco (sem filtros)
+  const investigarTodasSituacoes = async () => {
+    console.log("🔍 ===== INVESTIGAÇÃO PROFUNDA: TODAS AS SITUAÇÕES =====");
     
     try {
-      // Usar a função getImoveisDashboard que sabemos que funciona
-      console.log("📡 Buscando amostra usando getImoveisDashboard...");
+      console.log("📡 Buscando amostra grande de imóveis...");
       
-      // Buscar uma amostra grande sem filtros específicos
-      const response = await g({}, 1, 100); // g é a função getImoveisDashboard
-      const imoveis = response?.data || [];
-      const total = imoveis.length;
-      const totalGeral = response?.paginacao?.totalItems || 0;
+      // Buscar várias páginas para ter amostra representativa
+      const paginas = [1, 2, 3, 4, 5]; // 5 páginas = ~150 imóveis
+      let todosImoveis = [];
       
-      console.log(`📊 Total geral: ${totalGeral} imóveis`);
-      console.log(`📊 Amostra analisada: ${total} imóveis`);
+      for (const pagina of paginas) {
+        try {
+          const response = await g({}, pagina, 30); // 30 por página
+          const imoveis = response?.data || [];
+          todosImoveis.push(...imoveis);
+          console.log(`📄 Página ${pagina}: ${imoveis.length} imóveis`);
+        } catch (error) {
+          console.log(`⚠️ Erro na página ${pagina}:`, error.message);
+        }
+      }
       
-      if (total === 0) {
-        console.log("⚠️ Nenhum imóvel retornado na amostra");
+      console.log(`📊 Total coletado: ${todosImoveis.length} imóveis`);
+      
+      if (todosImoveis.length === 0) {
+        console.log("❌ Nenhum imóvel coletado");
         return;
       }
       
-      // Analisar situações
-      let problemasEncontrados = 0;
-      const tiposProblemas = {
-        'NULL': 0,
-        'Vazio ""': 0,
-        'Espaços': 0,
-        'undefined': 0,
-        'Outros': 0
-      };
+      // Mapear TODAS as situações únicas encontradas
+      const situacoesUnicas = new Set();
+      const situacoesComDetalhes = {};
       
-      console.log("\n🔍 Analisando situações...");
+      console.log("\n🔍 Analisando TODAS as situações encontradas...");
       
-      imoveis.forEach((imovel, i) => {
+      todosImoveis.forEach((imovel, i) => {
         const situacao = imovel.Situacao;
-        let temProblema = false;
         
-        if (situacao === null) {
-          tiposProblemas['NULL']++;
-          temProblema = true;
-        } else if (situacao === undefined) {
-          tiposProblemas['undefined']++;
-          temProblema = true;
-        } else if (situacao === '') {
-          tiposProblemas['Vazio ""']++;
-          temProblema = true;
-        } else if (typeof situacao === 'string' && situacao.trim() === '') {
-          tiposProblemas['Espaços']++;
-          temProblema = true;
-        } else if (!situacao || (typeof situacao !== 'string')) {
-          tiposProblemas['Outros']++;
-          temProblema = true;
-        }
-        
-        if (temProblema) {
-          problemasEncontrados++;
-          if (problemasEncontrados <= 5) { // Mostrar apenas os primeiros 5
-            console.log(`   ${i+1}. Código ${imovel.Codigo || imovel.codigo || 'N/A'}: situação = ${JSON.stringify(situacao)}`);
+        if (situacao !== null && situacao !== undefined && situacao !== '') {
+          const situacaoStr = String(situacao).trim();
+          
+          if (situacaoStr !== '') {
+            situacoesUnicas.add(situacaoStr);
+            
+            // Contar frequência
+            if (!situacoesComDetalhes[situacaoStr]) {
+              situacoesComDetalhes[situacaoStr] = {
+                valor: situacaoStr,
+                count: 0,
+                exemplos: []
+              };
+            }
+            
+            situacoesComDetalhes[situacaoStr].count++;
+            
+            // Guardar alguns códigos de exemplo
+            if (situacoesComDetalhes[situacaoStr].exemplos.length < 3) {
+              situacoesComDetalhes[situacaoStr].exemplos.push(imovel.Codigo);
+            }
           }
         }
       });
       
-      console.log("\n📊 RESUMO DOS PROBLEMAS:");
-      Object.entries(tiposProblemas).forEach(([tipo, qtd]) => {
-        if (qtd > 0) {
-          console.log(`   ${tipo}: ${qtd} imóveis`);
-        }
+      const situacoesArray = Array.from(situacoesUnicas).sort();
+      
+      console.log(`\n📊 TOTAL DE SITUAÇÕES ÚNICAS ENCONTRADAS: ${situacoesArray.length}`);
+      console.log("\n📋 LISTA COMPLETA DE SITUAÇÕES:");
+      
+      situacoesArray.forEach((situacao, index) => {
+        const detalhes = situacoesComDetalhes[situacao];
+        console.log(`   ${index + 1}. "${situacao}" (${detalhes.count}x) - Ex: ${detalhes.exemplos.join(', ')}`);
       });
       
-      console.log(`\n🚨 Total com problemas na amostra: ${problemasEncontrados}/${total}`);
+      // Comparar com situações da interface
+      console.log(`\n🔍 SITUAÇÕES NA INTERFACE: ${situacoesReais.length}`);
+      console.log("📋 Situações da interface:", situacoesReais);
       
-      // Estimar impacto no total
-      if (problemasEncontrados > 0 && totalGeral > 0) {
-        const percentual = (problemasEncontrados / total) * 100;
-        const estimativaTotal = Math.round((totalGeral * percentual) / 100);
+      // Encontrar situações que estão no banco mas NÃO na interface
+      const situacoesFaltando = situacoesArray.filter(situacao => {
+        // Verificar se esta situação do banco está na interface
+        return !situacoesReais.some(interfaceSit => 
+          interfaceSit.toLowerCase().trim() === situacao.toLowerCase().trim()
+        );
+      });
+      
+      console.log(`\n🚨 SITUAÇÕES OCULTAS (no banco, mas NÃO na interface): ${situacoesFaltando.length}`);
+      
+      if (situacoesFaltando.length > 0) {
+        console.log("🎯 ESTAS SÃO AS SITUAÇÕES PERDIDAS:");
+        situacoesFaltando.forEach((situacao, index) => {
+          const detalhes = situacoesComDetalhes[situacao];
+          console.log(`   ${index + 1}. "${situacao}" (${detalhes.count}x imóveis) - Ex: ${detalhes.exemplos.join(', ')}`);
+        });
         
-        console.log(`\n💡 ESTIMATIVA TOTAL:`);
-        console.log(`   Percentual problemático: ${percentual.toFixed(1)}%`);
-        console.log(`   Estimativa de imóveis com problema: ${estimativaTotal} imóveis`);
-        console.log(`   Imóveis perdidos esperados: 54 imóveis (5549 - 5495)`);
+        // Estimar quantos imóveis essas situações representam
+        const imoveisEstimados = situacoesFaltando.reduce((total, situacao) => {
+          return total + situacoesComDetalhes[situacao].count;
+        }, 0);
         
-        if (estimativaTotal >= 40) {
-          console.log(`🎯 POSSÍVEL CAUSA! ${estimativaTotal} imóveis problemáticos podem explicar os 54 faltando!`);
-          console.log(`\n🔧 SOLUÇÃO SQL:`);
-          console.log(`   UPDATE imoveis SET situacao = 'SEM SITUAÇÃO' WHERE situacao IS NULL OR situacao = '' OR TRIM(situacao) = '';`);
-        } else {
-          console.log(`⚠️ Poucos problemas encontrados (${estimativaTotal}). Os 54 imóveis podem estar em outro filtro.`);
+        const percentualAmostra = (imoveisEstimados / todosImoveis.length) * 100;
+        const estimativaTotal = Math.round((5553 * percentualAmostra) / 100);
+        
+        console.log(`\n💡 ESTIMATIVA DO IMPACTO:`);
+        console.log(`   Imóveis com situações ocultas na amostra: ${imoveisEstimados}/${todosImoveis.length}`);
+        console.log(`   Percentual: ${percentualAmostra.toFixed(1)}%`);
+        console.log(`   Estimativa no total: ${estimativaTotal} imóveis`);
+        console.log(`   Imóveis faltando nos filtros: 58 imóveis`);
+        
+        if (estimativaTotal >= 50) {
+          console.log(`🎯 BINGO! ${estimativaTotal} imóveis com situações ocultas podem explicar os 58 faltando!`);
         }
       } else {
-        console.log(`✅ Nenhum problema de situação encontrado na amostra.`);
-        console.log(`💡 Os 54 imóveis faltando podem estar em outros campos (Categoria, Status, Ativo, etc.)`);
+        console.log("✅ Todas as situações do banco estão na interface");
+        console.log("🤔 O problema pode estar em outro campo ou lógica de filtro");
       }
       
     } catch (error) {
       console.error("❌ Erro na investigação:", error);
-      console.log("💡 Investigação manual: No banco de dados, execute:");
-      console.log("   SELECT COUNT(*) FROM imoveis WHERE situacao IS NULL OR situacao = '' OR TRIM(situacao) = '';");
     }
     
-    console.log("🔍 ===== FIM INVESTIGAÇÃO MIGRAÇÃO =====");
+    console.log("🔍 ===== FIM INVESTIGAÇÃO PROFUNDA =====");
   };
       
       // Analisar situações
@@ -1058,9 +1078,9 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         
         <button
           className="bg-purple-500 font-bold rounded-md text-white hover:bg-purple-600 p-2 text-xs"
-          onClick={investigarMigracao}
+          onClick={investigarTodasSituacoes}
         >
-          🔍 Migração
+          🔬 Investigação Profunda
         </button>
         
         <button
