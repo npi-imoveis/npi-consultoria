@@ -369,57 +369,37 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     });
   };
 
-  // ✅ DEFINITIVO: Lógica igual aos bairros (retorna array que será convertido para string em loadImoveis)
+  // ✅ TESTE: Forçar apenas LANÇAMENTO maiúscula para testar
   const normalizarSituacaoParaAPI = (situacoesSelecionadas) => {
-    console.log("🚨 ===== SITUAÇÃO API (DEFINITIVO) =====");
-    console.log("🔥 [API SITUAÇÃO] FUNÇÃO CHAMADA! Parâmetros recebidos:", situacoesSelecionadas);
-    console.log("🔥 [API SITUAÇÃO] Tipo dos parâmetros:", typeof situacoesSelecionadas);
-    console.log("🔥 [API SITUAÇÃO] É array?", Array.isArray(situacoesSelecionadas));
+    console.log("🧪 ===== TESTE: FORÇANDO SÓ MAIÚSCULA =====");
     
     if (!Array.isArray(situacoesSelecionadas) || situacoesSelecionadas.length === 0) {
-      console.log('❌ [API SITUAÇÃO] Nenhuma situação selecionada ou não é array');
-      console.log('❌ [API SITUAÇÃO] Retornando undefined');
       return undefined;
     }
 
-    console.log('📋 [API SITUAÇÃO] Situações selecionadas na UI:', situacoesSelecionadas);
-    console.log('📋 [API SITUAÇÃO] Mapeamento disponível:', Object.keys(situacoesMapeamento).length, 'chaves');
-    console.log('📋 [API SITUAÇÃO] Chaves do mapeamento:', Object.keys(situacoesMapeamento));
-    console.log('📋 [API SITUAÇÃO] Mapeamento completo:', situacoesMapeamento);
+    console.log('📋 [TESTE] Situações selecionadas:', situacoesSelecionadas);
     
-    // ✅ LÓGICA IDÊNTICA AOS BAIRROS
-    const todasVariacoesSituacao = [];
+    // 🧪 TESTE: Se usuário selecionou qualquer coisa com "lançamento", enviar só "LANÇAMENTO"
+    const temLancamento = situacoesSelecionadas.some(s => 
+      s.toLowerCase().includes('lançamento')
+    );
     
-    situacoesSelecionadas.forEach((situacaoSelecionada, index) => {
+    if (temLancamento) {
+      console.log('🧪 [TESTE] Detectou lançamento, enviando SÓ "LANÇAMENTO" maiúscula');
+      return ["LANÇAMENTO"];
+    }
+    
+    // Para outras situações, usar lógica normal (só primeira variação)
+    const situacoesLimpas = situacoesSelecionadas.map(situacaoSelecionada => {
       const chave = situacaoSelecionada.toLowerCase().trim();
-      
-      console.log(`🔍 [API SITUAÇÃO] [${index}] Processando: "${situacaoSelecionada}" → chave: "${chave}"`);
-      
       if (situacoesMapeamento[chave] && situacoesMapeamento[chave].length > 0) {
-        console.log(`✅ [API SITUAÇÃO] [${index}] MAPEAMENTO ENCONTRADO: ${situacoesMapeamento[chave].length} variações`);
-        console.log(`   Variações: [${situacoesMapeamento[chave].join(', ')}]`);
-        todasVariacoesSituacao.push(...situacoesMapeamento[chave]);
-        console.log(`   Adicionadas ao array resultado. Total atual: ${todasVariacoesSituacao.length}`);
-      } else {
-        console.log(`⚠️ [API SITUAÇÃO] [${index}] SEM MAPEAMENTO para chave "${chave}"`);
-        console.log(`   Chaves disponíveis no mapeamento:`, Object.keys(situacoesMapeamento));
-        console.log(`   Usando valor original: "${situacaoSelecionada}"`);
-        todasVariacoesSituacao.push(situacaoSelecionada);
-        console.log(`   Adicionado valor original. Total atual: ${todasVariacoesSituacao.length}`);
+        return situacoesMapeamento[chave][0]; // Primeira variação apenas
       }
+      return situacaoSelecionada;
     });
-
-    // Remover duplicatas (igual aos bairros)
-    const situacoesFinais = [...new Set(todasVariacoesSituacao)];
     
-    console.log("🎯 [API SITUAÇÃO] RESULTADO FINAL (array que será convertido para string):");
-    console.log("   Array antes de remover duplicatas:", todasVariacoesSituacao);
-    console.log("   Array final (sem duplicatas):", situacoesFinais);
-    console.log("   Preview string que será criada:", situacoesFinais.join(','));
-    console.log("   Total de variações enviadas:", situacoesFinais.length);
-    console.log("🚨 ===== SITUAÇÃO API (DEFINITIVO) - FIM =====");
-    
-    return situacoesFinais;
+    console.log('🧪 [TESTE] Resultado final:', situacoesLimpas);
+    return situacoesLimpas;
   };
 
   // ✅ MANTIDO: Normalizar bairros para API (funcionando)
@@ -444,8 +424,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
   };
 
   // handleFilters com debug
-    const handleFilters = () => {
-    console.log("🆘 TESTE: handleFilters foi chamado!");
+  const handleFilters = () => {
     console.log("🚨 ================================");
     console.log("🚨 APLICANDO FILTROS - SITUAÇÃO DEFINITIVA");
     console.log("🚨 ================================");
