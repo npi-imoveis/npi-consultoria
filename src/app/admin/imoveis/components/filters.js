@@ -389,9 +389,9 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     });
   };
 
-  // ✅ TESTE 2: Normalizar situações para API - ARRAY DIRETO (SEM CONVERSÃO PARA STRING)
+  // ✅ TESTE 3: Normalizar situações para API - STRING COM PIPE (|)
   const normalizarSituacaoParaAPI = (situacoesSelecionadas) => {
-    console.log("🚨 ===== TESTE 2 - ARRAY DIRETO =====");
+    console.log("🚨 ===== TESTE 3 - STRING COM PIPE =====");
     
     if (!Array.isArray(situacoesSelecionadas) || situacoesSelecionadas.length === 0) {
       console.log('❌ [API SITUAÇÃO] Nenhuma situação selecionada');
@@ -402,8 +402,8 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     
     const chavesMapeamento = Object.keys(situacoesMapeamento);
     if (chavesMapeamento.length === 0) {
-      console.log('❌ [API SITUAÇÃO] MAPEAMENTO VAZIO! Retornando array original');
-      return situacoesSelecionadas; // Retorna array original
+      console.log('❌ [API SITUAÇÃO] MAPEAMENTO VAZIO! Retornando string com pipe das originais');
+      return situacoesSelecionadas.join('|'); // Pipe das originais
     }
 
     const todasVariacoes = [];
@@ -422,13 +422,14 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     });
 
     const variacoesUnicas = [...new Set(todasVariacoes)];
+    const stringComPipe = variacoesUnicas.join('|');
     
-    console.log("🧪 [TESTE 2] Variações encontradas:", variacoesUnicas);
-    console.log("🧪 [TESTE 2] Enviando como ARRAY DIRETO (não convertendo para string)");
-    console.log("💡 [HIPÓTESE] API espera receber array, não string");
-    console.log("🚨 ===== TESTE 2 - FIM =====");
+    console.log("🧪 [TESTE 3] Variações encontradas:", variacoesUnicas);
+    console.log("🧪 [TESTE 3] String com PIPE:", stringComPipe);
+    console.log("💡 [HIPÓTESE] API usa pipe (|) como separador em vez de vírgula");
+    console.log("🚨 ===== TESTE 3 - FIM =====");
     
-    return variacoesUnicas; // RETORNA ARRAY, NÃO STRING
+    return stringComPipe; // String com pipe: "PRONTO NOVO|Pronto Novo"
   };
 
   // ✅ MANTIDO: Normalizar bairros para API (funcionando)
@@ -455,7 +456,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
   // handleFilters com debug
   const handleFilters = () => {
     console.log("🚨 ================================");
-    console.log("🚨 APLICANDO FILTROS - TESTE 2");
+    console.log("🚨 APLICANDO FILTROS - TESTE 3");
     console.log("🚨 ================================");
     
     const filtersToApply = {
@@ -485,10 +486,10 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     if (filtersForAPI.Situacao) {
       console.log("🎯 SITUAÇÃO ENVIADA PARA API:", filtersForAPI.Situacao);
       console.log("🎯 TIPO DA SITUAÇÃO:", typeof filtersForAPI.Situacao);
-      console.log("🎯 É ARRAY?:", Array.isArray(filtersForAPI.Situacao));
-      if (Array.isArray(filtersForAPI.Situacao)) {
-        console.log("🎯 TAMANHO DO ARRAY:", filtersForAPI.Situacao.length);
-        console.log("🎯 ELEMENTOS DO ARRAY:", filtersForAPI.Situacao);
+      console.log("🎯 É STRING?:", typeof filtersForAPI.Situacao === 'string');
+      if (typeof filtersForAPI.Situacao === 'string') {
+        console.log("🎯 CONTÉM PIPE?:", filtersForAPI.Situacao.includes('|'));
+        console.log("🎯 COMPRIMENTO DA STRING:", filtersForAPI.Situacao.length);
       }
     }
 
@@ -499,7 +500,11 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     }
   };
 
+  // ✅ CORRIGIDO: handleClearFilters com limpeza completa do cache
   const handleClearFilters = () => {
+    console.log("🧹 [CLEAR] Iniciando limpeza completa dos filtros...");
+    
+    // Limpar estados dos filtros
     setFilters({
       categoria: "",
       status: "",
@@ -519,9 +524,28 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     setSituacoesMapeamento({});
     setBairrosMapeamento({});
 
+    // ✅ LIMPEZA COMPLETA DO CACHE DO LOCALSTORAGE
+    console.log("🧹 [CLEAR] Limpando cache do localStorage...");
+    
+    // Limpar todos os caches relacionados aos filtros
+    localStorage.removeItem("admin_appliedFilters");
+    localStorage.removeItem("admin_filterResults");
+    localStorage.removeItem("admin_filterPagination");
+    
+    // Limpar também cache de busca livre se existir
+    localStorage.removeItem("admin_searchTerm");
+    localStorage.removeItem("admin_searchResults");
+    localStorage.removeItem("admin_searchPagination");
+    
+    console.log("✅ [CLEAR] Cache limpo com sucesso!");
+    console.log("🔄 [CLEAR] Aplicando filtros vazios...");
+
+    // Aplicar filtros vazios
     if (onFilter) {
       onFilter({});
     }
+    
+    console.log("✅ [CLEAR] Limpeza completa finalizada!");
   };
 
   return (
@@ -606,7 +630,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
                     </div>
                     
                     <div className="px-2 py-1 text-[9px] text-gray-400 border-b border-gray-100">
-                      TESTE 2: {situacoesReais.length} situações ({Object.keys(situacoesMapeamento).length} chaves mapeadas)
+                      TESTE 3: {situacoesReais.length} situações ({Object.keys(situacoesMapeamento).length} chaves mapeadas)
                     </div>
                     
                     {situacoesFiltradas.map((situacao, index) => {
@@ -806,13 +830,13 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           className="bg-gray-200 font-bold rounded-md text-zinc-600 hover:bg-zinc-300 p-2"
           onClick={handleFilters}
         >
-          Filtrar (TESTE 2)
+          Filtrar (TESTE 3)
         </button>
         <button
           className="bg-red-100 font-bold rounded-md text-red-600 hover:bg-red-200 p-2"
           onClick={handleClearFilters}
         >
-          Limpar
+          Limpar (+ Cache)
         </button>
       </div>
     </div>
