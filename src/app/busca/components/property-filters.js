@@ -5,7 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import { getImoveisSimilares } from "@/app/services";
 import CardImovel from "@/app/components/ui/card-imovel";
 
-export function SimilarProperties({ id }) {
+// ✅ CORREÇÃO: Mudar para default export
+export default function PropertyFilters({ id }) {
   const [imoveis, setImoveis] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
