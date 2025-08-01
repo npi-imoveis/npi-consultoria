@@ -120,9 +120,14 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           Object.keys(novoMapeamento).forEach(chave => {
             const situacoesGrupo = novoMapeamento[chave];
             
-            // ✅ EXCLUSÃO: Pular chave "pronto para morar"
+            // ✅ TESTE: INCLUIR "pronto para morar" temporariamente
             if (chave === "pronto para morar") {
-              console.log(`   🚫 EXCLUINDO chave "${chave}" da interface`);
+              console.log(`   🧪 TESTE: Incluindo chave "${chave}" temporariamente para investigação`);
+              // Usar a primeira variação disponível para o teste
+              if (situacoesGrupo.length > 0) {
+                situacoesParaUI.add(situacoesGrupo[0]);
+                console.log(`   🧪 TESTE: Adicionado "${situacoesGrupo[0]}" à interface`);
+              }
               return;
             }
             
@@ -404,19 +409,11 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         console.log(`✅ [API SITUAÇÃO] [${index}] MAPEAMENTO ENCONTRADO: ${situacoesMapeamento[chave].length} variações`);
         console.log(`   Variações originais: [${situacoesMapeamento[chave].join(', ')}]`);
         
-        // ✅ VERSÃO INCLUSIVA: Incluir TODAS as variações, exceto "pronto para morar" específico
+        // ✅ VERSÃO INCLUSIVA: Incluir TODAS as variações, inclusive "pronto para morar" para teste
         const variacoesValidas = situacoesMapeamento[chave].filter(variacao => {
-          // ✅ EXCLUIR apenas "pronto para morar" exato (não outras variações com "pronto")
-          const ehProntoParaMorarExato = variacao.toLowerCase().trim() === 'pronto para morar';
-          
-          if (ehProntoParaMorarExato) {
-            console.log(`   🚫 EXCLUINDO: "${variacao}" (pronto para morar específico)`);
-            return false;
-          }
-          
-          // ✅ INCLUIR TUDO: maiúsculas, minúsculas, mistas
-          console.log(`   ✅ INCLUINDO: "${variacao}"`);
-          return true;
+          // ✅ TESTE: NÃO excluir "pronto para morar" para investigação
+          console.log(`   ✅ INCLUINDO (TESTE): "${variacao}"`);
+          return true; // Incluir tudo para o teste
         });
         
         if (variacoesValidas.length > 0) {
@@ -428,15 +425,9 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       } else {
         console.log(`⚠️ [API SITUAÇÃO] [${index}] SEM MAPEAMENTO para "${chave}"`);
         
-        // ✅ VERIFICAR se não é "pronto para morar" antes de adicionar
-        const ehProntoParaMorarExato = situacaoSelecionada.toLowerCase().trim() === 'pronto para morar';
-        
-        if (!ehProntoParaMorarExato) {
-          console.log(`   ✅ Valor original "${situacaoSelecionada}" incluído`);
-          todasVariacoesSituacao.push(situacaoSelecionada);
-        } else {
-          console.log(`   🚫 Valor original "${situacaoSelecionada}" excluído (pronto para morar)`);
-        }
+        // ✅ TESTE: NÃO verificar "pronto para morar", incluir tudo
+        console.log(`   ✅ Valor original "${situacaoSelecionada}" incluído (TESTE)`);
+        todasVariacoesSituacao.push(situacaoSelecionada);
       }
     });
 
@@ -861,7 +852,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
                     </div>
                     
                     <div className="px-2 py-1 text-[9px] text-gray-400 border-b border-gray-100">
-                      🔓 VERSÃO INCLUSIVA: {situacoesReais.length} situações ({Object.keys(situacoesMapeamento).length} chaves mapeadas)
+                      🧪 TESTE INCLUSIVO: {situacoesReais.length} situações ({Object.keys(situacoesMapeamento).length} chaves mapeadas)
                     </div>
                     
                     {situacoesFiltradas.map((situacao, index) => {
