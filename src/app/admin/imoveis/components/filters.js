@@ -444,7 +444,8 @@ export default function FiltersImoveisAdmin({ onFilter }) {
   };
 
   // handleFilters com debug
-  const handleFilters = () => {
+    const handleFilters = () => {
+    console.log("🆘 TESTE: handleFilters foi chamado!");
     console.log("🚨 ================================");
     console.log("🚨 APLICANDO FILTROS - SITUAÇÃO DEFINITIVA");
     console.log("🚨 ================================");
