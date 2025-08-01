@@ -369,37 +369,50 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     });
   };
 
-  // ✅ TESTE: Forçar apenas LANÇAMENTO maiúscula para testar
+  // ✅ CORRIGIDO: Processar TODAS as situações selecionadas corretamente
   const normalizarSituacaoParaAPI = (situacoesSelecionadas) => {
-    console.log("🧪 ===== TESTE: FORÇANDO SÓ MAIÚSCULA =====");
+    console.log("🚨 ===== SITUAÇÃO API (CORRIGIDA PARA TODAS) =====");
     
     if (!Array.isArray(situacoesSelecionadas) || situacoesSelecionadas.length === 0) {
+      console.log('❌ [API SITUAÇÃO] Nenhuma situação selecionada');
       return undefined;
     }
 
-    console.log('📋 [TESTE] Situações selecionadas:', situacoesSelecionadas);
+    console.log('📋 [API SITUAÇÃO] Situações selecionadas na UI:', situacoesSelecionadas);
+    console.log('📋 [API SITUAÇÃO] Total selecionadas:', situacoesSelecionadas.length);
+    console.log('📋 [API SITUAÇÃO] Mapeamento disponível:', Object.keys(situacoesMapeamento).length, 'chaves');
     
-    // 🧪 TESTE: Se usuário selecionou qualquer coisa com "lançamento", enviar só "LANÇAMENTO"
-    const temLancamento = situacoesSelecionadas.some(s => 
-      s.toLowerCase().includes('lançamento')
-    );
+    const todasVariacoesSituacao = [];
     
-    if (temLancamento) {
-      console.log('🧪 [TESTE] Detectou lançamento, enviando SÓ "LANÇAMENTO" maiúscula');
-      return ["LANÇAMENTO"];
-    }
-    
-    // Para outras situações, usar lógica normal (só primeira variação)
-    const situacoesLimpas = situacoesSelecionadas.map(situacaoSelecionada => {
+    situacoesSelecionadas.forEach((situacaoSelecionada, index) => {
       const chave = situacaoSelecionada.toLowerCase().trim();
+      
+      console.log(`🔍 [API SITUAÇÃO] [${index}] Processando: "${situacaoSelecionada}" → chave: "${chave}"`);
+      
       if (situacoesMapeamento[chave] && situacoesMapeamento[chave].length > 0) {
-        return situacoesMapeamento[chave][0]; // Primeira variação apenas
+        console.log(`✅ [API SITUAÇÃO] [${index}] MAPEAMENTO ENCONTRADO: ${situacoesMapeamento[chave].length} variações`);
+        console.log(`   Variações: [${situacoesMapeamento[chave].join(', ')}]`);
+        
+        // ✅ PEGAR PRIMEIRA VARIAÇÃO (que sabemos que existe)
+        const primeiraVariacao = situacoesMapeamento[chave][0];
+        todasVariacoesSituacao.push(primeiraVariacao);
+        console.log(`   ✅ Usando primeira variação: "${primeiraVariacao}"`);
+      } else {
+        console.log(`⚠️ [API SITUAÇÃO] [${index}] SEM MAPEAMENTO para "${chave}", usando original`);
+        todasVariacoesSituacao.push(situacaoSelecionada);
       }
-      return situacaoSelecionada;
     });
+
+    // Remover duplicatas
+    const situacoesFinais = [...new Set(todasVariacoesSituacao)];
     
-    console.log('🧪 [TESTE] Resultado final:', situacoesLimpas);
-    return situacoesLimpas;
+    console.log("🎯 [API SITUAÇÃO] RESULTADO FINAL:");
+    console.log("   Situações processadas:", situacoesFinais);
+    console.log("   Total situações enviadas:", situacoesFinais.length);
+    console.log("   Preview string:", situacoesFinais.join(','));
+    console.log("🚨 ===== SITUAÇÃO API (CORRIGIDA PARA TODAS) - FIM =====");
+    
+    return situacoesFinais;
   };
 
   // ✅ MANTIDO: Normalizar bairros para API (funcionando)
