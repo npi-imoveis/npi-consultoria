@@ -107,6 +107,31 @@ export const useImovelForm = () => {
     fieldValidation: {},
   });
 
+  // 🎥 FUNÇÃO UTILITÁRIA: Verificar se vídeo está vazio/removido
+  const isVideoEmpty = useCallback((videoValue) => {
+    // Verificações robustas para detectar vídeo vazio
+    if (videoValue === null || videoValue === undefined) return true;
+    if (videoValue === "" || videoValue === false) return true;
+    
+    // Se é objeto
+    if (typeof videoValue === 'object') {
+      // Objeto vazio
+      if (Object.keys(videoValue).length === 0) return true;
+      
+      // Verificar se todas as propriedades relevantes estão vazias
+      const hasValidContent = Object.values(videoValue).some(val => {
+        if (typeof val === 'object' && val !== null) {
+          return val.Video || val.url || val.videoId;
+        }
+        return val && val !== "";
+      });
+      
+      return !hasValidContent;
+    }
+    
+    return false;
+  }, []);
+
   // Funções de formatação monetária SEM decimais
   const formatCurrency = useCallback((value) => {
     const num = typeof value === 'string' 
@@ -197,8 +222,14 @@ export const useImovelForm = () => {
       console.log('📍 Endereco (backend):', Endereco);
     }
     
+    // 🎥 GARANTIR QUE VÍDEO VAZIO SEJA ENVIADO COMO NULL
+    if (isVideoEmpty(dadosParaEnvio.Video)) {
+      dadosParaEnvio.Video = null;
+      console.log('🎥 BACKEND: Video vazio convertido para null');
+    }
+    
     return dadosParaEnvio;
-  }, [separarEndereco]);
+  }, [separarEndereco, isVideoEmpty]);
 
   // ✅ FUNÇÃO UTILITÁRIA: Processar dados recebidos do backend
   const processarDadosRecebidos = useCallback((dados) => {
@@ -223,8 +254,14 @@ export const useImovelForm = () => {
       console.log('📸 FOTOS PRESERVADAS:', dadosProcessados.Foto.length, 'fotos mantidas intactas');
     }
     
+    // 🎥 PROCESSAR VÍDEO DO BACKEND
+    if (isVideoEmpty(dados.Video)) {
+      dadosProcessados.Video = null;
+      console.log('🎥 FRONTEND: Video vazio do backend convertido para null');
+    }
+    
     return dadosProcessados;
-  }, [juntarEndereco]);
+  }, [juntarEndereco, isVideoEmpty]);
 
   // ✅ FUNÇÃO CORRIGIDA: Detectar e corrigir endereços (SEM salvamento automático por ora)
   const corrigirEnderecoIncompleto = useCallback(async (endereco, cep) => {
@@ -301,8 +338,6 @@ export const useImovelForm = () => {
     return false;
   }, []);
 
-
-
   // Inicialização do formulário
   useEffect(() => {
     const initializeForm = async () => {
@@ -322,20 +357,12 @@ export const useImovelForm = () => {
 
         // Caso 2: Edição de imóvel existente (manter código original)
         if (imovelSelecionado?.Codigo && !isAutomacao) {
-          // 🎯 JUNTAR TipoEndereco + Endereco no carregamento inicial
-          const enderecoCompleto = imovelSelecionado.TipoEndereco && imovelSelecionado.Endereco
-            ? `${imovelSelecionado.TipoEndereco} ${imovelSelecionado.Endereco}`.trim()
-            : imovelSelecionado.Endereco || '';
-            
-          console.log('🔧 CARREGAMENTO INICIAL:');
-          console.log('📍 TipoEndereco (backend):', imovelSelecionado.TipoEndereco);
-          console.log('📍 Endereco (backend):', imovelSelecionado.Endereco);
-          console.log('📍 Endereco completo (frontend):', enderecoCompleto);
+          // 🎯 PROCESSAR DADOS DO BACKEND COM FUNÇÃO UTILITÁRIA
+          const dadosProcessados = processarDadosRecebidos(imovelSelecionado);
           
           setFormData(prev => ({
             ...prev,
-            ...imovelSelecionado,
-            Endereco: enderecoCompleto, // ✅ Campo unificado para o frontend
+            ...dadosProcessados,
             CodigoOriginal: imovelSelecionado.Codigo
           }));
           
@@ -373,7 +400,7 @@ export const useImovelForm = () => {
     };
 
     initializeForm();
-  }, [isAutomacao, imovelSelecionado?.Codigo, formatCurrencyInput]);
+  }, [isAutomacao, imovelSelecionado?.Codigo, formatCurrencyInput, processarDadosRecebidos]);
 
   useEffect(() => {
     if (!formData.Codigo) return;
@@ -384,8 +411,6 @@ export const useImovelForm = () => {
     
     return () => clearTimeout(timer);
   }, [formData]);
-
-
 
   // Funções auxiliares
   const maskDate = useCallback((value) => {
@@ -482,7 +507,7 @@ export const useImovelForm = () => {
     }
   }, [debouncedFetchCoordinates]);
 
-  // ✅ FUNÇÃO handleChange CORRIGIDA - ACEITA AMBOS OS FORMATOS
+  // ✅ FUNÇÃO handleChange ULTRA-CORRIGIDA
   const handleChange = useCallback((fieldOrEvent, valueOrUndefined) => {
     console.log('🔄 useImovelForm.handleChange chamado:', { fieldOrEvent, valueOrUndefined });
     
@@ -504,32 +529,21 @@ export const useImovelForm = () => {
       return;
     }
 
-    // Debug específico para Video
+    // 🎥 PROCESSAMENTO ESPECÍFICO PARA VIDEO COM LÓGICA ULTRA-ROBUSTA
     if (name === "Video") {
       console.log('🎥 PROCESSANDO VIDEO no useImovelForm:');
       console.log('🎥 Field:', name);
       console.log('🎥 Value recebido:', value);
       console.log('🎥 Tipo do value:', typeof value);
-      console.log('🎥 Value é objeto?', typeof value === 'object' && value !== null);
-      console.log('🎥 Keys do value:', value ? Object.keys(value) : 'N/A');
-    }
-
-    // ✅ SE FOR CAMPO VIDEO, ATUALIZAR COM VALIDAÇÃO DE REMOÇÃO
-    if (name === "Video") {
-      console.log('🎥 Atualizando Video diretamente no formData');
       
-      // ✅ NOVA LÓGICA: Se value é falsy, vazio ou objeto vazio, setar como null
+      // 🎯 LÓGICA ULTRA-ROBUSTA: Determinar se vídeo deve ser null
       let processedValue = value;
       
-      // Verificar se o vídeo está sendo removido
-      if (!value || 
-          value === "" || 
-          value === null || 
-          value === undefined ||
-          (typeof value === 'object' && value !== null && Object.keys(value).length === 0) ||
-          (typeof value === 'object' && value !== null && !value.url && !value.provider && !value.videoId)) {
+      if (isVideoEmpty(value)) {
         processedValue = null;
-        console.log('🎥 Video sendo REMOVIDO - setando como null');
+        console.log('🎥 Video sendo REMOVIDO - setando como null (detectado por isVideoEmpty)');
+      } else {
+        console.log('🎥 Video sendo MANTIDO - valor válido detectado');
       }
       
       setFormData(prev => {
@@ -644,7 +658,7 @@ export const useImovelForm = () => {
 
     // Caso padrão para todos os outros campos
     setFormData(prev => ({ ...prev, [name]: value }));
-  }, [maskDate, fetchAddress, parseCurrency, formatCurrencyInput]);
+  }, [maskDate, fetchAddress, parseCurrency, formatCurrencyInput, isVideoEmpty]);
 
   // Funções de manipulação de imagens
   const addImage = useCallback(() => setShowImageModal(true), []);
@@ -851,7 +865,10 @@ export const useImovelForm = () => {
     formatCurrency,
     parseCurrency,
     formatCurrencyInput,
-    corrigirEnderecoIncompleto // ✅ Correção automática (separa campos para backend)
+    corrigirEnderecoIncompleto,
+    prepararDadosParaEnvio, // ✅ Nova função utilitária exportada
+    processarDadosRecebidos, // ✅ Nova função utilitária exportada
+    isVideoEmpty // ✅ Nova função utilitária exportada
   };
 };
 
