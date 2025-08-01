@@ -86,6 +86,123 @@ function convertBrazilianDateToISO(brazilianDate, imovelData) {
   }
 }
 
+// ✅ NOVA FUNÇÃO: Validação cirúrgica do vídeo YouTube
+function temVideoYouTubeValido(videoObj) {
+  try {
+    // Verificações básicas
+    if (!videoObj || typeof videoObj !== 'object' || Array.isArray(videoObj)) {
+      return false;
+    }
+    
+    const keys = Object.keys(videoObj);
+    if (keys.length === 0) {
+      return false;
+    }
+    
+    // Extrair valor do vídeo
+    let videoValue = null;
+    const values = Object.values(videoObj);
+    
+    if (values.length > 0) {
+      const firstValue = values[0];
+      if (firstValue && typeof firstValue === 'object') {
+        videoValue = firstValue.Video || firstValue.url || firstValue.videoId || firstValue.id;
+      } else if (firstValue && typeof firstValue === 'string') {
+        videoValue = firstValue;
+      }
+    }
+    
+    if (!videoValue) {
+      videoValue = videoObj.Video || videoObj.url || videoObj.videoId || videoObj.id;
+    }
+    
+    if (!videoValue || typeof videoValue !== 'string') {
+      return false;
+    }
+    
+    const trimmed = videoValue.trim();
+    if (trimmed === '') {
+      return false;
+    }
+    
+    // Validar se é YouTube válido (padrões básicos)
+    const youtubePatterns = [
+      /^[a-zA-Z0-9_-]{11}$/,                                          // VideoId direto
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/,  // URL padrão
+      /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/,                    // URL embed
+      /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/                    // URL shorts
+    ];
+    
+    return youtubePatterns.some(pattern => pattern.test(trimmed));
+  } catch (error) {
+    console.error('Erro na validação do vídeo:', error);
+    return false;
+  }
+}
+
+// ✅ NOVA FUNÇÃO: Obter URL da imagem otimizada para WhatsApp
+function getWhatsAppOptimizedImageUrl(imovelFotos) {
+  console.log('📱 [WHATSAPP-IMG] Processando fotos para WhatsApp:', imovelFotos);
+  
+  try {
+    // Caso 1: Array de fotos
+    if (Array.isArray(imovelFotos) && imovelFotos.length > 0) {
+      const primeiraFoto = imovelFotos[0];
+      
+      // Se a primeira foto é um objeto
+      if (primeiraFoto && typeof primeiraFoto === 'object') {
+        // Prioridade: Foto completa > FotoPequena > FotoMedia > qualquer propriedade de imagem
+        const imageUrl = primeiraFoto.Foto || 
+                        primeiraFoto.FotoPequena || 
+                        primeiraFoto.FotoMedia || 
+                        primeiraFoto.FotoGrande ||
+                        primeiraFoto.url ||
+                        primeiraFoto.src;
+        
+        if (imageUrl && typeof imageUrl === 'string') {
+          console.log('📱 [WHATSAPP-IMG] ✅ URL de objeto array:', imageUrl);
+          return imageUrl;
+        }
+      }
+      
+      // Se a primeira foto é uma string direta
+      if (typeof primeiraFoto === 'string') {
+        console.log('📱 [WHATSAPP-IMG] ✅ URL string direta:', primeiraFoto);
+        return primeiraFoto;
+      }
+    }
+    
+    // Caso 2: String direta de foto
+    if (typeof imovelFotos === 'string' && imovelFotos.trim() !== '') {
+      console.log('📱 [WHATSAPP-IMG] ✅ URL string:', imovelFotos);
+      return imovelFotos;
+    }
+    
+    // Caso 3: Objeto único com propriedades de imagem
+    if (imovelFotos && typeof imovelFotos === 'object' && !Array.isArray(imovelFotos)) {
+      const imageUrl = imovelFotos.Foto || 
+                     imovelFotos.FotoPequena || 
+                     imovelFotos.FotoMedia ||
+                     imovelFotos.url ||
+                     imovelFotos.src;
+      
+      if (imageUrl && typeof imageUrl === 'string') {
+        console.log('📱 [WHATSAPP-IMG] ✅ URL de objeto único:', imageUrl);
+        return imageUrl;
+      }
+    }
+    
+    // Fallback: Imagem padrão
+    const fallbackUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/og-image.png`;
+    console.log('📱 [WHATSAPP-IMG] ⚠️ Usando fallback:', fallbackUrl);
+    return fallbackUrl;
+    
+  } catch (error) {
+    console.error('📱 [WHATSAPP-IMG] ❌ Erro ao processar imagem:', error);
+    return `${process.env.NEXT_PUBLIC_SITE_URL}/og-image.png`;
+  }
+}
+
 // Configuração de revalidação
 export const revalidate = 0;
 
@@ -128,9 +245,10 @@ export async function generateMetadata({ params }) {
     const description = `${imovel.Empreendimento}, ${imovel.Categoria} à venda no bairro ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.DormitoriosAntigo} dormitórios, ${imovel.SuiteAntigo} suítes, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt} m2. Preço: ${imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}.`;
     const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
     
-    const imageUrl = Array.isArray(imovel.Foto) && imovel.Foto.length > 0 
-      ? (imovel.Foto[0].Foto || imovel.Foto[0].FotoPequena || imovel.Foto[0])
-      : imovel.Foto || `${process.env.NEXT_PUBLIC_SITE_URL}/og-image.png`;
+    // ✅ CORREÇÃO WHATSAPP: URL de imagem otimizada
+    const imageUrl = getWhatsAppOptimizedImageUrl(imovel.Foto);
+    
+    console.log('📱 [WHATSAPP-META] URL final da imagem para WhatsApp:', imageUrl);
 
     return {
       title,
@@ -152,10 +270,11 @@ export async function generateMetadata({ params }) {
         title,
         description,
         url: currentUrl,
-        type: "website",
+        type: "article", // ✅ CORREÇÃO: "article" é melhor para WhatsApp que "website"
         siteName: "NPI Consultoria",
         publishedTime: modifiedDate,
         modifiedTime: modifiedDate,
+        locale: "pt_BR", // ✅ ADIÇÃO: Importante para WhatsApp brasileiro
         images: [
           {
             url: imageUrl,
@@ -163,10 +282,19 @@ export async function generateMetadata({ params }) {
             height: 630,
             alt: title,
             type: "image/jpeg",
+          },
+          // ✅ ADIÇÃO: Imagem secundária como fallback
+          {
+            url: `${process.env.NEXT_PUBLIC_SITE_URL}/og-image.png`,
+            width: 1200,
+            height: 630,
+            alt: "NPI Consultoria - Imóveis",
+            type: "image/png",
           }
         ],
-        // ✅ Meta tags OpenGraph adicionais
+        // ✅ Meta tags OpenGraph adicionais otimizadas para WhatsApp
         updated_time: modifiedDate,
+        "image:alt": title, // ✅ ADIÇÃO: Alt text específico para WhatsApp
       },
       twitter: {
         card: "summary_large_image",
@@ -181,6 +309,7 @@ export async function generateMetadata({ params }) {
           }
         ],
       },
+      // ✅ ADIÇÕES ESPECÍFICAS para WhatsApp Web e Mobile
       other: {
         'article:published_time': modifiedDate,
         'article:modified_time': modifiedDate,
@@ -188,10 +317,21 @@ export async function generateMetadata({ params }) {
         'article:section': 'Imobiliário',
         'article:tag': `${imovel.Categoria}, ${imovel.BairroComercial}, ${imovel.Cidade}, imóvel à venda`,
         'og:updated_time': modifiedDate,
+        'og:image:secure_url': imageUrl, // ✅ IMPORTANTE: HTTPS para WhatsApp
+        'og:image:type': 'image/jpeg',
+        'og:image:width': '1200',
+        'og:image:height': '630',
+        'og:image:alt': title,
+        'og:locale': 'pt_BR',
+        'og:locale:alternate': 'pt_BR',
         'last-modified': modifiedDate,
         'date': modifiedDate,
         'DC.date.modified': modifiedDate,
         'DC.date.created': modifiedDate,
+        // ✅ Meta tags específicas para WhatsApp Business API
+        'whatsapp:title': title,
+        'whatsapp:description': description,
+        'whatsapp:image': imageUrl,
       },
     };
   } catch (error) {
@@ -262,6 +402,11 @@ export default async function ImovelPage({ params }) {
       }
     };
 
+    // ✅ DEBUG: Logs para verificação
+    console.log('🎥 [VIDEO-DEBUG] Dados do vídeo:', imovel.Video);
+    console.log('🎥 [VIDEO-DEBUG] Vídeo válido?', temVideoYouTubeValido(imovel.Video));
+    console.log('📱 [WHATSAPP-DEBUG] URL da imagem:', getWhatsAppOptimizedImageUrl(imovel.Foto));
+
     return (
       <section className="w-full bg-white pb-32 pt-20">
         {/* Structured Data para o imóvel */}
@@ -296,9 +441,12 @@ export default async function ImovelPage({ params }) {
             <FichaTecnica imovel={imovel} />
             <DetalhesCondominio imovel={imovel} />
             <Lazer imovel={imovel} />
-            {imovel.Video && Object.keys(imovel.Video).length > 0 && (
+            
+            {/* ✅ CORREÇÃO APLICADA: Validação rigorosa do vídeo YouTube */}
+            {temVideoYouTubeValido(imovel.Video) && (
               <VideoCondominio imovel={imovel} />
             )}
+            
             {imovel.Tour360 && <TourVirtual link={imovel.Tour360} titulo={imovel.Empreendimento} />}
             <SimilarProperties id={imovel.Codigo} />
             <LocalizacaoCondominio imovel={imovel} />
