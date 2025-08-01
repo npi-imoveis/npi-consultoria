@@ -369,9 +369,9 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     });
   };
 
-  // ✅ CORRIGIDO: Processar TODAS as situações selecionadas corretamente
+  // ✅ CORRIGIDO: Processar TODAS as situações + FILTRAR apenas MAIÚSCULAS
   const normalizarSituacaoParaAPI = (situacoesSelecionadas) => {
-    console.log("🚨 ===== SITUAÇÃO API (CORRIGIDA PARA TODAS) =====");
+    console.log("🚨 ===== SITUAÇÃO API (SÓ MAIÚSCULAS) =====");
     
     if (!Array.isArray(situacoesSelecionadas) || situacoesSelecionadas.length === 0) {
       console.log('❌ [API SITUAÇÃO] Nenhuma situação selecionada');
@@ -380,7 +380,6 @@ export default function FiltersImoveisAdmin({ onFilter }) {
 
     console.log('📋 [API SITUAÇÃO] Situações selecionadas na UI:', situacoesSelecionadas);
     console.log('📋 [API SITUAÇÃO] Total selecionadas:', situacoesSelecionadas.length);
-    console.log('📋 [API SITUAÇÃO] Mapeamento disponível:', Object.keys(situacoesMapeamento).length, 'chaves');
     
     const todasVariacoesSituacao = [];
     
@@ -391,12 +390,23 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       
       if (situacoesMapeamento[chave] && situacoesMapeamento[chave].length > 0) {
         console.log(`✅ [API SITUAÇÃO] [${index}] MAPEAMENTO ENCONTRADO: ${situacoesMapeamento[chave].length} variações`);
-        console.log(`   Variações: [${situacoesMapeamento[chave].join(', ')}]`);
+        console.log(`   Variações originais: [${situacoesMapeamento[chave].join(', ')}]`);
         
-        // ✅ PEGAR PRIMEIRA VARIAÇÃO (que sabemos que existe)
-        const primeiraVariacao = situacoesMapeamento[chave][0];
-        todasVariacoesSituacao.push(primeiraVariacao);
-        console.log(`   ✅ Usando primeira variação: "${primeiraVariacao}"`);
+        // ✅ FILTRAR: Manter apenas variações TOTALMENTE em MAIÚSCULAS
+        const variacoesMaiusculas = situacoesMapeamento[chave].filter(variacao => {
+          // Verificar se a variação está totalmente em maiúsculas
+          const ehMaiuscula = variacao === variacao.toUpperCase() && variacao.trim() !== "";
+          console.log(`   🔍 Testando "${variacao}": ${ehMaiuscula ? '✅ MAIÚSCULA' : '❌ não maiúscula'}`);
+          return ehMaiuscula;
+        });
+        
+        if (variacoesMaiusculas.length > 0) {
+          todasVariacoesSituacao.push(...variacoesMaiusculas);
+          console.log(`   ✅ Adicionadas ${variacoesMaiusculas.length} variações maiúsculas: [${variacoesMaiusculas.join(', ')}]`);
+        } else {
+          console.log(`   ⚠️ Nenhuma variação em maiúscula, usando original: "${situacaoSelecionada}"`);
+          todasVariacoesSituacao.push(situacaoSelecionada);
+        }
       } else {
         console.log(`⚠️ [API SITUAÇÃO] [${index}] SEM MAPEAMENTO para "${chave}", usando original`);
         todasVariacoesSituacao.push(situacaoSelecionada);
@@ -406,11 +416,10 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     // Remover duplicatas
     const situacoesFinais = [...new Set(todasVariacoesSituacao)];
     
-    console.log("🎯 [API SITUAÇÃO] RESULTADO FINAL:");
-    console.log("   Situações processadas:", situacoesFinais);
+    console.log("🎯 [API SITUAÇÃO] RESULTADO FINAL (APENAS MAIÚSCULAS):");
+    console.log("   Situações filtradas:", situacoesFinais);
     console.log("   Total situações enviadas:", situacoesFinais.length);
-    console.log("   Preview string:", situacoesFinais.join(','));
-    console.log("🚨 ===== SITUAÇÃO API (CORRIGIDA PARA TODAS) - FIM =====");
+    console.log("🚨 ===== SITUAÇÃO API (SÓ MAIÚSCULAS) - FIM =====");
     
     return situacoesFinais;
   };
