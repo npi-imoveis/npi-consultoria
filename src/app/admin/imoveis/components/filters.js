@@ -451,10 +451,11 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     const situacaoProcessada = normalizarSituacaoParaAPI(situacoesSelecionadas);
     console.log("🔥 [FILTROS] RESULTADO da normalizarSituacaoParaAPI:", situacaoProcessada);
     
+    // ✅ TESTE: Manter como ARRAY em vez de converter para string
     const filtersToApply = {
       Categoria: filters.categoria || categoriaSelecionada,
       Status: filters.status,
-      Situacao: situacaoProcessada || filters.situacao || undefined,
+      Situacao: situacaoProcessada || filters.situacao || undefined, // MANTER COMO ARRAY
       Ativo: filters.cadastro,
       Cidade: cidadeSelecionada,
       bairros: normalizarBairrosParaAPI(bairrosSelecionados) || undefined,
