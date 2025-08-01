@@ -61,11 +61,11 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     }).join(' ');
   };
 
-  // ✅ CORRIGIDO: useEffect para situações com debug ULTRA-DETALHADO
+  // ✅ useEffect para situações - CORRIGIDO para usar a mesma lógica dos bairros
   useEffect(() => {
     async function fetchFilterData() {
       try {
-        console.log("🚨 ===== DEBUG SITUAÇÃO - INÍCIO =====");
+        console.log("🚨 ===== DEBUG SITUAÇÃO - INÍCIO (CORRIGIDA) =====");
         
         const [catResponse, cidResponse, sitResponse] = await Promise.all([
           getImoveisByFilters("Categoria"),
@@ -84,83 +84,57 @@ export default function FiltersImoveisAdmin({ onFilter }) {
             console.log(`   ${i}: "${sit}" (tipo: ${typeof sit})`);
           });
           
-          // ✅ NOVA LÓGICA ULTRA-SIMPLIFICADA
-          console.log("🔄 [SITUAÇÃO] Iniciando processo de mapeamento...");
+          // ✅ APLICAR A MESMA LÓGICA DOS BAIRROS (que funciona!)
+          console.log("🔄 [SITUAÇÃO] Aplicando lógica igual aos bairros...");
           
           const novoMapeamento = {};
-          const situacoesParaInterface = [];
+          const situacoesParaUI = new Set();
           
-          // Fase 1: Agrupar por chave normalizada
-          situacoesBrutas.forEach((situacaoOriginal, index) => {
-            const chaveNormalizada = situacaoOriginal.toLowerCase().trim();
-            
-            console.log(`🔍 [SITUAÇÃO] Processando item ${index}:`);
-            console.log(`   Original: "${situacaoOriginal}"`);
-            console.log(`   Chave normalizada: "${chaveNormalizada}"`);
-            
-            if (!novoMapeamento[chaveNormalizada]) {
-              novoMapeamento[chaveNormalizada] = [];
-              console.log(`   ✅ Nova chave criada: "${chaveNormalizada}"`);
-            }
-            
-            // Adicionar apenas se não existir
-            if (!novoMapeamento[chaveNormalizada].includes(situacaoOriginal)) {
-              novoMapeamento[chaveNormalizada].push(situacaoOriginal);
-              console.log(`   ✅ Situação adicionada ao mapeamento`);
-            } else {
-              console.log(`   ⚠️ Situação já existe no mapeamento`);
+          // Criar mapeamento por chave normalizada (igual aos bairros)
+          situacoesBrutas.forEach(situacaoOriginal => {
+            if (situacaoOriginal && situacaoOriginal.toString().trim() !== '') {
+              const chave = situacaoOriginal.toLowerCase().trim();
+              
+              if (!novoMapeamento[chave]) {
+                novoMapeamento[chave] = [];
+              }
+              
+              if (!novoMapeamento[chave].includes(situacaoOriginal)) {
+                novoMapeamento[chave].push(situacaoOriginal);
+              }
             }
           });
           
-          console.log("📊 [SITUAÇÃO] Mapeamento completo criado:");
+          console.log("📊 [SITUAÇÃO] Mapeamento criado:");
           Object.keys(novoMapeamento).forEach(chave => {
             console.log(`   "${chave}" → [${novoMapeamento[chave].join(', ')}] (${novoMapeamento[chave].length} variações)`);
           });
           
-          // Fase 2: Criar versões para interface (uma por chave)
+          // Criar versões para UI (igual aos bairros)
           Object.keys(novoMapeamento).forEach(chave => {
             const situacoesGrupo = novoMapeamento[chave];
             
-            // Escolher a "melhor" versão para mostrar na interface
-            // Prioridade: versão já bem capitalizada > primeira versão > capitalizada manualmente
-            let versaoParaInterface;
-            
             // Buscar versão já capitalizada corretamente
-            const versaoCapitalizada = situacoesGrupo.find(s => {
-              const palavras = s.split(' ');
-              return palavras.every(palavra => 
-                palavra.charAt(0) === palavra.charAt(0).toUpperCase() &&
-                palavra.slice(1) === palavra.slice(1).toLowerCase()
-              );
-            });
+            const versaoCapitalizada = situacoesGrupo.find(s => 
+              s === capitalizarNomesProprios(s)
+            );
             
-            if (versaoCapitalizada) {
-              versaoParaInterface = versaoCapitalizada;
-              console.log(`   🎯 Para chave "${chave}": usando versão já capitalizada "${versaoCapitalizada}"`);
-            } else {
-              // Capitalizar manualmente a primeira versão
-              versaoParaInterface = situacoesGrupo[0].split(' ').map(palavra => 
-                palavra.charAt(0).toUpperCase() + palavra.slice(1).toLowerCase()
-              ).join(' ');
-              console.log(`   🎯 Para chave "${chave}": capitalizando primeira versão "${situacoesGrupo[0]}" → "${versaoParaInterface}"`);
-            }
-            
-            situacoesParaInterface.push(versaoParaInterface);
+            const melhorVersao = versaoCapitalizada || capitalizarNomesProprios(situacoesGrupo[0]);
+            situacoesParaUI.add(melhorVersao);
           });
           
-          // Ordenar situações para interface
-          situacoesParaInterface.sort();
+          const situacoesFinais = Array.from(situacoesParaUI).sort();
           
           console.log("🎨 [SITUAÇÃO] Situações FINAIS para interface:");
-          situacoesParaInterface.forEach((sit, i) => {
+          situacoesFinais.forEach((sit, i) => {
             console.log(`   ${i}: "${sit}"`);
           });
           
           console.log("💾 [SITUAÇÃO] Salvando estados...");
-          setSituacoesReais(situacoesParaInterface);
+          setSituacoesReais(situacoesFinais);
           setSituacoesMapeamento(novoMapeamento);
           
-          console.log("🚨 ===== DEBUG SITUAÇÃO - SUCESSO =====");
+          console.log("🚨 ===== DEBUG SITUAÇÃO - SUCESSO (CORRIGIDA) =====");
           
         } else {
           console.log("⚠️ [SITUAÇÃO] Sem dados do backend, usando hardcoded");
@@ -389,9 +363,9 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     });
   };
 
-  // ✅ TESTE 4: SEM MAPEAMENTO - ENVIAR EXATAMENTE O QUE FOI SELECIONADO
+  // ✅ CORRIGIDO: Aplicar a mesma lógica dos bairros para situações
   const normalizarSituacaoParaAPI = (situacoesSelecionadas) => {
-    console.log("🚨 ===== TESTE 4 - SEM MAPEAMENTO =====");
+    console.log("🚨 ===== SITUAÇÃO API (CORRIGIDA) =====");
     
     if (!Array.isArray(situacoesSelecionadas) || situacoesSelecionadas.length === 0) {
       console.log('❌ [API SITUAÇÃO] Nenhuma situação selecionada');
@@ -400,28 +374,31 @@ export default function FiltersImoveisAdmin({ onFilter }) {
 
     console.log('📋 [API SITUAÇÃO] Situações selecionadas:', situacoesSelecionadas);
     
-    // ✅ TESTE 4: IGNORAR MAPEAMENTO COMPLETAMENTE
-    console.log("🧪 [TESTE 4] IGNORANDO MAPEAMENTO - Enviando exatamente o que foi selecionado");
-    console.log("💡 [HIPÓTESE] O problema está no mapeamento/expansão, não no formato");
+    // ✅ APLICAR A MESMA LÓGICA DOS BAIRROS (que funciona!)
+    const todasVariacoesSituacao = [];
     
-    // Vamos testar diferentes formatos SEM usar mapeamento:
+    situacoesSelecionadas.forEach(situacaoSelecionada => {
+      const chave = situacaoSelecionada.toLowerCase().trim();
+      
+      console.log(`🔍 [API SITUAÇÃO] Processando situação: "${situacaoSelecionada}"`);
+      console.log(`🔍 [API SITUAÇÃO] Chave normalizada: "${chave}"`);
+      
+      if (situacoesMapeamento[chave] && situacoesMapeamento[chave].length > 0) {
+        console.log(`✅ [API SITUAÇÃO] Encontrou ${situacoesMapeamento[chave].length} variações:`, situacoesMapeamento[chave]);
+        todasVariacoesSituacao.push(...situacoesMapeamento[chave]);
+      } else {
+        console.log(`⚠️ [API SITUAÇÃO] Sem mapeamento, usando valor original`);
+        todasVariacoesSituacao.push(situacaoSelecionada);
+      }
+    });
+
+    // Remover duplicatas
+    const situacoesFinais = [...new Set(todasVariacoesSituacao)];
     
-    // Formato A: Primeira situação como string
-    const formatoA = situacoesSelecionadas[0];
-    console.log("🧪 [TESTE 4A] Primeira situação como string:", formatoA);
+    console.log("🎯 [API SITUAÇÃO] Variações finais para API:", situacoesFinais);
+    console.log("🚨 ===== SITUAÇÃO API (CORRIGIDA) - FIM =====");
     
-    // Formato B: Todas as situações com vírgula
-    const formatoB = situacoesSelecionadas.join(',');
-    console.log("🧪 [TESTE 4B] Todas as situações com vírgula:", formatoB);
-    
-    // Formato C: Array direto das selecionadas
-    const formatoC = situacoesSelecionadas;
-    console.log("🧪 [TESTE 4C] Array direto das selecionadas:", formatoC);
-    
-    console.log("🚀 [TESTE 4] Enviando FORMATO A (primeira situação selecionada SEM expansão)");
-    console.log("🚨 ===== TESTE 4 - FIM =====");
-    
-    return formatoA; // APENAS a primeira situação, SEM expansão
+    return situacoesFinais;
   };
 
   // ✅ MANTIDO: Normalizar bairros para API (funcionando)
@@ -448,7 +425,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
   // handleFilters com debug
   const handleFilters = () => {
     console.log("🚨 ================================");
-    console.log("🚨 APLICANDO FILTROS - TESTE 4");
+    console.log("🚨 APLICANDO FILTROS - SITUAÇÃO CORRIGIDA");
     console.log("🚨 ================================");
     
     const filtersToApply = {
@@ -476,8 +453,9 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     console.log(JSON.stringify(filtersForAPI, null, 2));
 
     if (filtersForAPI.Situacao) {
-      console.log("🎯 SITUAÇÃO ENVIADA PARA API (SEM MAPEAMENTO):", filtersForAPI.Situacao);
+      console.log("🎯 SITUAÇÃO ENVIADA PARA API (CORRIGIDA):", filtersForAPI.Situacao);
       console.log("🎯 TIPO DA SITUAÇÃO:", typeof filtersForAPI.Situacao);
+      console.log("🎯 É ARRAY:", Array.isArray(filtersForAPI.Situacao));
       console.log("🎯 COMPRIMENTO:", filtersForAPI.Situacao.length);
     }
 
@@ -577,7 +555,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           value={filters.status}
         />
         
-        {/* ✅ DROPDOWN DE SITUAÇÃO */}
+        {/* ✅ DROPDOWN DE SITUAÇÃO CORRIGIDO */}
         <div ref={situacaoRef} className="relative">
           <label htmlFor="situacao" className="text-xs text-gray-500 block mb-2">
             situacao
@@ -618,7 +596,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
                     </div>
                     
                     <div className="px-2 py-1 text-[9px] text-gray-400 border-b border-gray-100">
-                      TESTE 4: {situacoesReais.length} situações (SEM MAPEAMENTO)
+                      ✅ CORRIGIDO: {situacoesReais.length} situações ({Object.keys(situacoesMapeamento).length} chaves mapeadas)
                     </div>
                     
                     {situacoesFiltradas.map((situacao, index) => {
@@ -640,8 +618,8 @@ export default function FiltersImoveisAdmin({ onFilter }) {
                           >
                             <span>{situacao}</span>
                             {variacoes.length > 1 && (
-                              <span className="text-orange-500 text-[8px] font-bold" title={`TESTE 4: Ignorando mapeamento (${variacoes.length} variações disponíveis)`}>
-                                T4
+                              <span className="text-green-500 text-[8px] font-bold" title={`${variacoes.length} variações: ${variacoes.join(', ')}`}>
+                                {variacoes.length}x
                               </span>
                             )}
                           </label>
@@ -818,7 +796,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           className="bg-gray-200 font-bold rounded-md text-zinc-600 hover:bg-zinc-300 p-2"
           onClick={handleFilters}
         >
-          Filtrar (TESTE 4)
+          Filtrar ✅ CORRIGIDO
         </button>
         <button
           className="bg-red-100 font-bold rounded-md text-red-600 hover:bg-red-200 p-2"
