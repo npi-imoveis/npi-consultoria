@@ -372,32 +372,40 @@ export default function FiltersImoveisAdmin({ onFilter }) {
   // ✅ DEFINITIVO: Lógica igual aos bairros (retorna array que será convertido para string em loadImoveis)
   const normalizarSituacaoParaAPI = (situacoesSelecionadas) => {
     console.log("🚨 ===== SITUAÇÃO API (DEFINITIVO) =====");
+    console.log("🔥 [API SITUAÇÃO] FUNÇÃO CHAMADA! Parâmetros recebidos:", situacoesSelecionadas);
+    console.log("🔥 [API SITUAÇÃO] Tipo dos parâmetros:", typeof situacoesSelecionadas);
+    console.log("🔥 [API SITUAÇÃO] É array?", Array.isArray(situacoesSelecionadas));
     
     if (!Array.isArray(situacoesSelecionadas) || situacoesSelecionadas.length === 0) {
-      console.log('❌ [API SITUAÇÃO] Nenhuma situação selecionada');
+      console.log('❌ [API SITUAÇÃO] Nenhuma situação selecionada ou não é array');
+      console.log('❌ [API SITUAÇÃO] Retornando undefined');
       return undefined;
     }
 
     console.log('📋 [API SITUAÇÃO] Situações selecionadas na UI:', situacoesSelecionadas);
     console.log('📋 [API SITUAÇÃO] Mapeamento disponível:', Object.keys(situacoesMapeamento).length, 'chaves');
+    console.log('📋 [API SITUAÇÃO] Chaves do mapeamento:', Object.keys(situacoesMapeamento));
+    console.log('📋 [API SITUAÇÃO] Mapeamento completo:', situacoesMapeamento);
     
     // ✅ LÓGICA IDÊNTICA AOS BAIRROS
     const todasVariacoesSituacao = [];
     
-    situacoesSelecionadas.forEach(situacaoSelecionada => {
+    situacoesSelecionadas.forEach((situacaoSelecionada, index) => {
       const chave = situacaoSelecionada.toLowerCase().trim();
       
-      console.log(`🔍 [API SITUAÇÃO] Processando: "${situacaoSelecionada}" → chave: "${chave}"`);
+      console.log(`🔍 [API SITUAÇÃO] [${index}] Processando: "${situacaoSelecionada}" → chave: "${chave}"`);
       
       if (situacoesMapeamento[chave] && situacoesMapeamento[chave].length > 0) {
-        console.log(`✅ [API SITUAÇÃO] MAPEAMENTO ENCONTRADO: ${situacoesMapeamento[chave].length} variações`);
+        console.log(`✅ [API SITUAÇÃO] [${index}] MAPEAMENTO ENCONTRADO: ${situacoesMapeamento[chave].length} variações`);
         console.log(`   Variações: [${situacoesMapeamento[chave].join(', ')}]`);
         todasVariacoesSituacao.push(...situacoesMapeamento[chave]);
+        console.log(`   Adicionadas ao array resultado. Total atual: ${todasVariacoesSituacao.length}`);
       } else {
-        console.log(`⚠️ [API SITUAÇÃO] SEM MAPEAMENTO para "${chave}", usando valor original`);
-        // Debug: mostrar todas as chaves disponíveis
+        console.log(`⚠️ [API SITUAÇÃO] [${index}] SEM MAPEAMENTO para chave "${chave}"`);
         console.log(`   Chaves disponíveis no mapeamento:`, Object.keys(situacoesMapeamento));
+        console.log(`   Usando valor original: "${situacaoSelecionada}"`);
         todasVariacoesSituacao.push(situacaoSelecionada);
+        console.log(`   Adicionado valor original. Total atual: ${todasVariacoesSituacao.length}`);
       }
     });
 
@@ -405,8 +413,9 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     const situacoesFinais = [...new Set(todasVariacoesSituacao)];
     
     console.log("🎯 [API SITUAÇÃO] RESULTADO FINAL (array que será convertido para string):");
-    console.log("   Array:", situacoesFinais);
-    console.log("   Preview string:", situacoesFinais.join(','));
+    console.log("   Array antes de remover duplicatas:", todasVariacoesSituacao);
+    console.log("   Array final (sem duplicatas):", situacoesFinais);
+    console.log("   Preview string que será criada:", situacoesFinais.join(','));
     console.log("   Total de variações enviadas:", situacoesFinais.length);
     console.log("🚨 ===== SITUAÇÃO API (DEFINITIVO) - FIM =====");
     
@@ -442,11 +451,17 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     
     console.log("📋 [FILTROS] Situações selecionadas na interface:", situacoesSelecionadas);
     console.log("📋 [FILTROS] Total de situações selecionadas:", situacoesSelecionadas.length);
+    console.log("📋 [FILTROS] Mapeamento disponível:", Object.keys(situacoesMapeamento));
+    
+    // ✅ FORÇA A CHAMADA da função com debug extra
+    console.log("🔥 [FILTROS] CHAMANDO normalizarSituacaoParaAPI...");
+    const situacaoProcessada = normalizarSituacaoParaAPI(situacoesSelecionadas);
+    console.log("🔥 [FILTROS] RESULTADO da normalizarSituacaoParaAPI:", situacaoProcessada);
     
     const filtersToApply = {
       Categoria: filters.categoria || categoriaSelecionada,
       Status: filters.status,
-      Situacao: normalizarSituacaoParaAPI(situacoesSelecionadas) || filters.situacao || undefined,
+      Situacao: situacaoProcessada || filters.situacao || undefined,
       Ativo: filters.cadastro,
       Cidade: cidadeSelecionada,
       bairros: normalizarBairrosParaAPI(bairrosSelecionados) || undefined,
