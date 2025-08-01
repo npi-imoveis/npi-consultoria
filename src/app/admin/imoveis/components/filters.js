@@ -389,9 +389,9 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     });
   };
 
-  // ✅ TESTE 3: Normalizar situações para API - STRING COM PIPE (|)
+  // ✅ TESTE 4: SEM MAPEAMENTO - ENVIAR EXATAMENTE O QUE FOI SELECIONADO
   const normalizarSituacaoParaAPI = (situacoesSelecionadas) => {
-    console.log("🚨 ===== TESTE 3 - STRING COM PIPE =====");
+    console.log("🚨 ===== TESTE 4 - SEM MAPEAMENTO =====");
     
     if (!Array.isArray(situacoesSelecionadas) || situacoesSelecionadas.length === 0) {
       console.log('❌ [API SITUAÇÃO] Nenhuma situação selecionada');
@@ -400,36 +400,28 @@ export default function FiltersImoveisAdmin({ onFilter }) {
 
     console.log('📋 [API SITUAÇÃO] Situações selecionadas:', situacoesSelecionadas);
     
-    const chavesMapeamento = Object.keys(situacoesMapeamento);
-    if (chavesMapeamento.length === 0) {
-      console.log('❌ [API SITUAÇÃO] MAPEAMENTO VAZIO! Retornando string com pipe das originais');
-      return situacoesSelecionadas.join('|'); // Pipe das originais
-    }
-
-    const todasVariacoes = [];
+    // ✅ TESTE 4: IGNORAR MAPEAMENTO COMPLETAMENTE
+    console.log("🧪 [TESTE 4] IGNORANDO MAPEAMENTO - Enviando exatamente o que foi selecionado");
+    console.log("💡 [HIPÓTESE] O problema está no mapeamento/expansão, não no formato");
     
-    situacoesSelecionadas.forEach((sitSelecionada) => {
-      const chaveParaBusca = sitSelecionada.toLowerCase().trim();
-      
-      if (situacoesMapeamento.hasOwnProperty(chaveParaBusca)) {
-        const variacoes = situacoesMapeamento[chaveParaBusca];
-        console.log(`✅ [API SITUAÇÃO] "${sitSelecionada}" → ${variacoes.length} variações:`, variacoes);
-        todasVariacoes.push(...variacoes);
-      } else {
-        console.log(`❌ [API SITUAÇÃO] "${sitSelecionada}" não encontrada, usando original`);
-        todasVariacoes.push(sitSelecionada);
-      }
-    });
-
-    const variacoesUnicas = [...new Set(todasVariacoes)];
-    const stringComPipe = variacoesUnicas.join('|');
+    // Vamos testar diferentes formatos SEM usar mapeamento:
     
-    console.log("🧪 [TESTE 3] Variações encontradas:", variacoesUnicas);
-    console.log("🧪 [TESTE 3] String com PIPE:", stringComPipe);
-    console.log("💡 [HIPÓTESE] API usa pipe (|) como separador em vez de vírgula");
-    console.log("🚨 ===== TESTE 3 - FIM =====");
+    // Formato A: Primeira situação como string
+    const formatoA = situacoesSelecionadas[0];
+    console.log("🧪 [TESTE 4A] Primeira situação como string:", formatoA);
     
-    return stringComPipe; // String com pipe: "PRONTO NOVO|Pronto Novo"
+    // Formato B: Todas as situações com vírgula
+    const formatoB = situacoesSelecionadas.join(',');
+    console.log("🧪 [TESTE 4B] Todas as situações com vírgula:", formatoB);
+    
+    // Formato C: Array direto das selecionadas
+    const formatoC = situacoesSelecionadas;
+    console.log("🧪 [TESTE 4C] Array direto das selecionadas:", formatoC);
+    
+    console.log("🚀 [TESTE 4] Enviando FORMATO A (primeira situação selecionada SEM expansão)");
+    console.log("🚨 ===== TESTE 4 - FIM =====");
+    
+    return formatoA; // APENAS a primeira situação, SEM expansão
   };
 
   // ✅ MANTIDO: Normalizar bairros para API (funcionando)
@@ -456,7 +448,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
   // handleFilters com debug
   const handleFilters = () => {
     console.log("🚨 ================================");
-    console.log("🚨 APLICANDO FILTROS - TESTE 3");
+    console.log("🚨 APLICANDO FILTROS - TESTE 4");
     console.log("🚨 ================================");
     
     const filtersToApply = {
@@ -484,13 +476,9 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     console.log(JSON.stringify(filtersForAPI, null, 2));
 
     if (filtersForAPI.Situacao) {
-      console.log("🎯 SITUAÇÃO ENVIADA PARA API:", filtersForAPI.Situacao);
+      console.log("🎯 SITUAÇÃO ENVIADA PARA API (SEM MAPEAMENTO):", filtersForAPI.Situacao);
       console.log("🎯 TIPO DA SITUAÇÃO:", typeof filtersForAPI.Situacao);
-      console.log("🎯 É STRING?:", typeof filtersForAPI.Situacao === 'string');
-      if (typeof filtersForAPI.Situacao === 'string') {
-        console.log("🎯 CONTÉM PIPE?:", filtersForAPI.Situacao.includes('|'));
-        console.log("🎯 COMPRIMENTO DA STRING:", filtersForAPI.Situacao.length);
-      }
+      console.log("🎯 COMPRIMENTO:", filtersForAPI.Situacao.length);
     }
 
     console.log("🚨 ================================");
@@ -630,7 +618,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
                     </div>
                     
                     <div className="px-2 py-1 text-[9px] text-gray-400 border-b border-gray-100">
-                      TESTE 3: {situacoesReais.length} situações ({Object.keys(situacoesMapeamento).length} chaves mapeadas)
+                      TESTE 4: {situacoesReais.length} situações (SEM MAPEAMENTO)
                     </div>
                     
                     {situacoesFiltradas.map((situacao, index) => {
@@ -652,8 +640,8 @@ export default function FiltersImoveisAdmin({ onFilter }) {
                           >
                             <span>{situacao}</span>
                             {variacoes.length > 1 && (
-                              <span className="text-blue-500 text-[8px] font-bold" title={`${variacoes.length} variações: ${variacoes.join(', ')}`}>
-                                {variacoes.length}x
+                              <span className="text-orange-500 text-[8px] font-bold" title={`TESTE 4: Ignorando mapeamento (${variacoes.length} variações disponíveis)`}>
+                                T4
                               </span>
                             )}
                           </label>
@@ -830,7 +818,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           className="bg-gray-200 font-bold rounded-md text-zinc-600 hover:bg-zinc-300 p-2"
           onClick={handleFilters}
         >
-          Filtrar (TESTE 3)
+          Filtrar (TESTE 4)
         </button>
         <button
           className="bg-red-100 font-bold rounded-md text-red-600 hover:bg-red-200 p-2"
