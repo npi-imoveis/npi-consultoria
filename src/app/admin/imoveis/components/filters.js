@@ -1,5 +1,4 @@
 import { getBairrosPorCidade, getImoveisByFilters } from "@/app/services";
-import { getImoveisDashboard } from "@/app/services/imoveis";
 import { useEffect, useState, useRef } from "react";
 
 export default function FiltersImoveisAdmin({ onFilter }) {
@@ -598,19 +597,25 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     console.log("✅ [CLEAR] Limpeza completa finalizada!");
   };
 
-  // ✅ NOVA FUNÇÃO: Investigar problemas de migração (VERSÃO CORRIGIDA SEM IMPORT DINÂMICO)
+  // ✅ FUNÇÃO CORRIGIDA: Investigar problemas de migração (usando getImoveisByFilters)
   const investigarMigracao = async () => {
     console.log("🔍 ===== INVESTIGAÇÃO SIMPLES: MIGRAÇÃO =====");
     
     try {
-      // Usar a função já importada no topo do arquivo
-      console.log("📡 Buscando amostra de 100 imóveis...");
-      const response = await getImoveisDashboard({}, 1, 100);
-      const imoveis = response?.data || [];
-      const total = response?.paginacao?.totalItems || 0;
+      // Usar getImoveisByFilters sem parâmetros para buscar amostra
+      console.log("📡 Buscando amostra usando getImoveisByFilters...");
+      const response = await getImoveisByFilters();
       
-      console.log(`📊 Total geral: ${total} imóveis`);
-      console.log(`📊 Amostra: ${imoveis.length} imóveis`);
+      // Assumindo que a resposta tem uma estrutura similar
+      const imoveis = response?.data || [];
+      const total = imoveis.length;
+      
+      console.log(`📊 Total da amostra: ${total} imóveis`);
+      
+      if (total === 0) {
+        console.log("⚠️ Nenhum imóvel retornado na amostra");
+        return;
+      }
       
       // Analisar situações
       let problemasEncontrados = 0;
@@ -648,7 +653,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         if (temProblema) {
           problemasEncontrados++;
           if (problemasEncontrados <= 5) { // Mostrar apenas os primeiros 5
-            console.log(`   ${i+1}. Código ${imovel.Codigo}: situação = ${JSON.stringify(situacao)}`);
+            console.log(`   ${i+1}. Código ${imovel.Codigo || imovel.codigo || 'N/A'}: situação = ${JSON.stringify(situacao)}`);
           }
         }
       });
@@ -660,33 +665,32 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         }
       });
       
-      console.log(`\n🚨 Total com problemas: ${problemasEncontrados}/${imoveis.length}`);
+      console.log(`\n🚨 Total com problemas: ${problemasEncontrados}/${total}`);
       
       // Estimar impacto
       if (problemasEncontrados > 0) {
-        const percentual = (problemasEncontrados / imoveis.length) * 100;
-        const estimativa = Math.round((total * percentual) / 100);
+        const percentual = (problemasEncontrados / total) * 100;
         
-        console.log(`\n💡 ESTIMATIVA TOTAL:`);
+        console.log(`\n💡 ANÁLISE:`);
         console.log(`   Percentual problemático: ${percentual.toFixed(1)}%`);
-        console.log(`   Estimativa total: ${estimativa} imóveis`);
+        console.log(`   Problemas encontrados: ${problemasEncontrados} imóveis`);
         
-        if (estimativa >= 80) {
-          console.log(`🎯 BINGO! Estes ${estimativa} imóveis podem ser os 96 faltando!`);
-          console.log(`\n🔧 SOLUÇÃO: Execute este SQL no banco:`);
-          console.log(`   UPDATE imoveis SET situacao = 'SEM SITUAÇÃO' WHERE situacao IS NULL;`);
-          console.log(`   UPDATE imoveis SET situacao = 'SEM SITUAÇÃO' WHERE situacao = '';`);
-          console.log(`   UPDATE imoveis SET situacao = 'SEM SITUAÇÃO' WHERE TRIM(situacao) = '';`);
+        if (problemasEncontrados >= 50) {
+          console.log(`🎯 POSSÍVEL CAUSA! Estes ${problemasEncontrados} problemas podem explicar os imóveis faltando!`);
+          console.log(`\n🔧 SOLUÇÃO SUGERIDA: Execute este SQL no banco:`);
+          console.log(`   UPDATE imoveis SET situacao = 'SEM SITUAÇÃO' WHERE situacao IS NULL OR situacao = '' OR TRIM(situacao) = '';`);
         } else {
-          console.log(`⚠️ Poucos problemas encontrados. Causa pode estar em outro lugar.`);
+          console.log(`⚠️ Poucos problemas encontrados na amostra.`);
         }
       } else {
         console.log(`✅ Nenhum problema de migração encontrado na amostra.`);
       }
       
     } catch (error) {
-      console.error("❌ Erro:", error);
-      console.log("⚠️ Não foi possível executar a investigação. Verifique se a função getImoveisDashboard está disponível.");
+      console.error("❌ Erro na investigação:", error);
+      console.log("⚠️ Não foi possível executar a investigação completa.");
+      console.log("💡 Verifique se há imóveis com situação NULL/vazia no banco de dados:");
+      console.log("   SELECT COUNT(*) FROM imoveis WHERE situacao IS NULL OR situacao = '' OR TRIM(situacao) = '';");
     }
     
     console.log("🔍 ===== FIM INVESTIGAÇÃO MIGRAÇÃO =====");
@@ -969,7 +973,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         </div>
       </div>
 
-      {/* ✅ SEÇÃO DOS BOTÕES MODIFICADA COM BOTÃO DE MIGRAÇÃO */}
+      {/* ✅ SEÇÃO DOS BOTÕES CORRIGIDA COM BOTÃO DE MIGRAÇÃO */}
       <div className="grid grid-cols-3 gap-3 mt-2">
         <button
           className="bg-gray-200 font-bold rounded-md text-zinc-600 hover:bg-zinc-300 p-2 text-xs"
