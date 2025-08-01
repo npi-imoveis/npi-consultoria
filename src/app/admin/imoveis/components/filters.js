@@ -1,4 +1,5 @@
 import { getBairrosPorCidade, getImoveisByFilters } from "@/app/services";
+import { getImoveisDashboard } from "@/app/services/imoveis";
 import { useEffect, useState, useRef } from "react";
 
 export default function FiltersImoveisAdmin({ onFilter }) {
@@ -597,15 +598,12 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     console.log("✅ [CLEAR] Limpeza completa finalizada!");
   };
 
-  // ✅ NOVA FUNÇÃO: Investigar problemas de migração (SIMPLES)
+  // ✅ NOVA FUNÇÃO: Investigar problemas de migração (VERSÃO CORRIGIDA SEM IMPORT DINÂMICO)
   const investigarMigracao = async () => {
     console.log("🔍 ===== INVESTIGAÇÃO SIMPLES: MIGRAÇÃO =====");
     
     try {
-      // Importar a função necessária
-      const { getImoveisDashboard } = await import("../services/imoveis");
-      
-      // Buscar amostra de 100 imóveis
+      // Usar a função já importada no topo do arquivo
       console.log("📡 Buscando amostra de 100 imóveis...");
       const response = await getImoveisDashboard({}, 1, 100);
       const imoveis = response?.data || [];
@@ -688,6 +686,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       
     } catch (error) {
       console.error("❌ Erro:", error);
+      console.log("⚠️ Não foi possível executar a investigação. Verifique se a função getImoveisDashboard está disponível.");
     }
     
     console.log("🔍 ===== FIM INVESTIGAÇÃO MIGRAÇÃO =====");
