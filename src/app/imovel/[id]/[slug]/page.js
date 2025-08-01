@@ -589,9 +589,7 @@ export default async function ImovelPage({ params }) {
             <Lazer imovel={imovel} />
             
             {/* ✅ CORREÇÃO ULTRA-RIGOROSA: Validação YouTube extremamente rígida */}
-            {temVideoYouTubeValido(imovel.Video) && (
-              <VideoCondominio imovel={imovel} />
-            )}
+            {false && <VideoCondominio imovel={imovel} />}
             
             {imovel.Tour360 && <TourVirtual link={imovel.Tour360} titulo={imovel.Empreendimento} />}
             <SimilarProperties id={imovel.Codigo} />
