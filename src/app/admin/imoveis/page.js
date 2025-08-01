@@ -346,19 +346,7 @@ export default function AdminImoveis() {
         console.log("🔍 DEBUG SITUAÇÃO - É array?", Array.isArray(apiFilters.Situacao));
 
         // ✅ MODIFICADO: Conversão de array para string com debug detalhado
-        if (Array.isArray(apiFilters.Situacao) && apiFilters.Situacao.length > 0) {
-          console.log('🔍 [DEBUG SITUAÇÃO] Convertendo situações de array para string:', apiFilters.Situacao);
-          console.log('🔍 [DEBUG SITUAÇÃO] Situações individuais:', apiFilters.Situacao.map((s, i) => `${i}: "${s}"`));
-          
-          apiFilters.Situacao = apiFilters.Situacao.join(',');
-          
-          console.log('🔍 [DEBUG SITUAÇÃO] Situacao convertida para API:', apiFilters.Situacao);
-          console.log('🔍 [DEBUG SITUACAO] Tipo final:', typeof apiFilters.Situacao);
-          console.log('🔍 [DEBUG SITUACAO] Comprimento da string:', apiFilters.Situacao.length);
-        } else if (apiFilters.Situacao) {
-          console.log('🔍 [DEBUG SITUAÇÃO] Situacao não é array ou está vazia:', apiFilters.Situacao);
-        }
-
+       
         if (apiFilters.ValorMin) {
           apiFilters.ValorMin = apiFilters.ValorMin.toString();
         }
