@@ -389,9 +389,9 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     });
   };
 
-  // ✅ TESTE 1: Normalizar situações para API - APENAS PRIMEIRA VARIAÇÃO
+  // ✅ TESTE 2: Normalizar situações para API - ARRAY DIRETO (SEM CONVERSÃO PARA STRING)
   const normalizarSituacaoParaAPI = (situacoesSelecionadas) => {
-    console.log("🚨 ===== TESTE 1 - PRIMEIRA VARIAÇÃO =====");
+    console.log("🚨 ===== TESTE 2 - ARRAY DIRETO =====");
     
     if (!Array.isArray(situacoesSelecionadas) || situacoesSelecionadas.length === 0) {
       console.log('❌ [API SITUAÇÃO] Nenhuma situação selecionada');
@@ -402,8 +402,8 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     
     const chavesMapeamento = Object.keys(situacoesMapeamento);
     if (chavesMapeamento.length === 0) {
-      console.log('❌ [API SITUAÇÃO] MAPEAMENTO VAZIO!');
-      return situacoesSelecionadas[0]; // Retorna primeira situação selecionada
+      console.log('❌ [API SITUAÇÃO] MAPEAMENTO VAZIO! Retornando array original');
+      return situacoesSelecionadas; // Retorna array original
     }
 
     const todasVariacoes = [];
@@ -423,14 +423,12 @@ export default function FiltersImoveisAdmin({ onFilter }) {
 
     const variacoesUnicas = [...new Set(todasVariacoes)];
     
-    // ✅ TESTE 1: Apenas a primeira variação
-    const primeiraVariacao = variacoesUnicas[0];
-    console.log("🧪 [TESTE 1] Variações encontradas:", variacoesUnicas);
-    console.log("🧪 [TESTE 1] Enviando APENAS primeira variação:", primeiraVariacao);
-    console.log("💡 [HIPÓTESE] API não suporta múltiplas situações");
-    console.log("🚨 ===== TESTE 1 - FIM =====");
+    console.log("🧪 [TESTE 2] Variações encontradas:", variacoesUnicas);
+    console.log("🧪 [TESTE 2] Enviando como ARRAY DIRETO (não convertendo para string)");
+    console.log("💡 [HIPÓTESE] API espera receber array, não string");
+    console.log("🚨 ===== TESTE 2 - FIM =====");
     
-    return primeiraVariacao; // String única, não array
+    return variacoesUnicas; // RETORNA ARRAY, NÃO STRING
   };
 
   // ✅ MANTIDO: Normalizar bairros para API (funcionando)
@@ -457,7 +455,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
   // handleFilters com debug
   const handleFilters = () => {
     console.log("🚨 ================================");
-    console.log("🚨 APLICANDO FILTROS - TESTE 1");
+    console.log("🚨 APLICANDO FILTROS - TESTE 2");
     console.log("🚨 ================================");
     
     const filtersToApply = {
@@ -487,6 +485,11 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     if (filtersForAPI.Situacao) {
       console.log("🎯 SITUAÇÃO ENVIADA PARA API:", filtersForAPI.Situacao);
       console.log("🎯 TIPO DA SITUAÇÃO:", typeof filtersForAPI.Situacao);
+      console.log("🎯 É ARRAY?:", Array.isArray(filtersForAPI.Situacao));
+      if (Array.isArray(filtersForAPI.Situacao)) {
+        console.log("🎯 TAMANHO DO ARRAY:", filtersForAPI.Situacao.length);
+        console.log("🎯 ELEMENTOS DO ARRAY:", filtersForAPI.Situacao);
+      }
     }
 
     console.log("🚨 ================================");
@@ -603,7 +606,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
                     </div>
                     
                     <div className="px-2 py-1 text-[9px] text-gray-400 border-b border-gray-100">
-                      TESTE 1: {situacoesReais.length} situações ({Object.keys(situacoesMapeamento).length} chaves mapeadas)
+                      TESTE 2: {situacoesReais.length} situações ({Object.keys(situacoesMapeamento).length} chaves mapeadas)
                     </div>
                     
                     {situacoesFiltradas.map((situacao, index) => {
@@ -803,7 +806,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           className="bg-gray-200 font-bold rounded-md text-zinc-600 hover:bg-zinc-300 p-2"
           onClick={handleFilters}
         >
-          Filtrar (TESTE 1)
+          Filtrar (TESTE 2)
         </button>
         <button
           className="bg-red-100 font-bold rounded-md text-red-600 hover:bg-red-200 p-2"
