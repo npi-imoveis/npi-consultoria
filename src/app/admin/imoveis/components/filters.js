@@ -597,62 +597,108 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     console.log("✅ [CLEAR] Limpeza completa finalizada!");
   };
 
-  // ✅ FUNÇÃO CORRIGIDA: Investigar problemas de migração (usando busca com filtro mínimo)
+  // ✅ FUNÇÃO CORRIGIDA: Investigar problemas de migração (usando função que funciona)
   const investigarMigracao = async () => {
     console.log("🔍 ===== INVESTIGAÇÃO SIMPLES: MIGRAÇÃO =====");
     
     try {
-      // Usar getImoveisByFilters com busca por situações para pegar uma amostra maior
-      console.log("📡 Buscando amostra de todos os imóveis via situações...");
+      // Usar a função getImoveisDashboard que sabemos que funciona
+      console.log("📡 Buscando amostra usando getImoveisDashboard...");
       
-      // Buscar todos os tipos de situação para ter amostra ampla
-      const todasSituacoes = await getImoveisByFilters("Situacao");
-      console.log("📋 Situações disponíveis:", todasSituacoes?.data?.length || 0);
-      
-      // Agora buscar uma amostra usando todas as situações encontradas
-      let imoveis = [];
-      let tentativas = 0;
-      
-      // Tentar buscar com filtro de categoria primeiro (maior amostra)
-      try {
-        console.log("📡 Tentativa 1: Buscando por categoria...");
-        const responseCategorias = await getImoveisByFilters("Categoria");
-        if (responseCategorias?.data && responseCategorias.data.length > 0) {
-          // Pegar a primeira categoria e buscar imóveis dela
-          const primeiraCategoria = responseCategorias.data[0];
-          console.log(`📡 Buscando imóveis da categoria: ${primeiraCategoria}`);
-          
-          const responseImoveis = await getImoveisByFilters("", "", { Categoria: primeiraCategoria });
-          imoveis = responseImoveis?.data || [];
-          console.log(`📊 Encontrados ${imoveis.length} imóveis na categoria ${primeiraCategoria}`);
-        }
-      } catch (error) {
-        console.log("⚠️ Erro na busca por categoria:", error.message);
-      }
-      
-      // Se não conseguiu pela categoria, tentar abordagem diferente
-      if (imoveis.length === 0) {
-        console.log("📡 Tentativa 2: Buscando imóveis usando página direta...");
-        try {
-          // Tentar usar a função de dashboard diretamente
-          const responseAlternativo = await fetch('/api/admin/imoveis?page=1&limit=100');
-          const dadosAlternativos = await responseAlternativo.json();
-          imoveis = dadosAlternativos?.data || [];
-          console.log(`📊 Encontrados ${imoveis.length} imóveis via API direta`);
-        } catch (error) {
-          console.log("⚠️ Erro na busca alternativa:", error.message);
-        }
-      }
-      
+      // Buscar uma amostra grande sem filtros específicos
+      const response = await g({}, 1, 100); // g é a função getImoveisDashboard
+      const imoveis = response?.data || [];
       const total = imoveis.length;
-      console.log(`📊 Total final da amostra: ${total} imóveis`);
+      const totalGeral = response?.paginacao?.totalItems || 0;
+      
+      console.log(`📊 Total geral: ${totalGeral} imóveis`);
+      console.log(`📊 Amostra analisada: ${total} imóveis`);
       
       if (total === 0) {
         console.log("⚠️ Nenhum imóvel retornado na amostra");
-        console.log("💡 Sugestão: Verifique se a API está funcionando corretamente");
-        console.log("💡 Execute no banco: SELECT COUNT(*) FROM imoveis WHERE situacao IS NULL OR situacao = '';");
         return;
       }
+      
+      // Analisar situações
+      let problemasEncontrados = 0;
+      const tiposProblemas = {
+        'NULL': 0,
+        'Vazio ""': 0,
+        'Espaços': 0,
+        'undefined': 0,
+        'Outros': 0
+      };
+      
+      console.log("\n🔍 Analisando situações...");
+      
+      imoveis.forEach((imovel, i) => {
+        const situacao = imovel.Situacao;
+        let temProblema = false;
+        
+        if (situacao === null) {
+          tiposProblemas['NULL']++;
+          temProblema = true;
+        } else if (situacao === undefined) {
+          tiposProblemas['undefined']++;
+          temProblema = true;
+        } else if (situacao === '') {
+          tiposProblemas['Vazio ""']++;
+          temProblema = true;
+        } else if (typeof situacao === 'string' && situacao.trim() === '') {
+          tiposProblemas['Espaços']++;
+          temProblema = true;
+        } else if (!situacao || (typeof situacao !== 'string')) {
+          tiposProblemas['Outros']++;
+          temProblema = true;
+        }
+        
+        if (temProblema) {
+          problemasEncontrados++;
+          if (problemasEncontrados <= 5) { // Mostrar apenas os primeiros 5
+            console.log(`   ${i+1}. Código ${imovel.Codigo || imovel.codigo || 'N/A'}: situação = ${JSON.stringify(situacao)}`);
+          }
+        }
+      });
+      
+      console.log("\n📊 RESUMO DOS PROBLEMAS:");
+      Object.entries(tiposProblemas).forEach(([tipo, qtd]) => {
+        if (qtd > 0) {
+          console.log(`   ${tipo}: ${qtd} imóveis`);
+        }
+      });
+      
+      console.log(`\n🚨 Total com problemas na amostra: ${problemasEncontrados}/${total}`);
+      
+      // Estimar impacto no total
+      if (problemasEncontrados > 0 && totalGeral > 0) {
+        const percentual = (problemasEncontrados / total) * 100;
+        const estimativaTotal = Math.round((totalGeral * percentual) / 100);
+        
+        console.log(`\n💡 ESTIMATIVA TOTAL:`);
+        console.log(`   Percentual problemático: ${percentual.toFixed(1)}%`);
+        console.log(`   Estimativa de imóveis com problema: ${estimativaTotal} imóveis`);
+        console.log(`   Imóveis perdidos esperados: 54 imóveis (5549 - 5495)`);
+        
+        if (estimativaTotal >= 40) {
+          console.log(`🎯 POSSÍVEL CAUSA! ${estimativaTotal} imóveis problemáticos podem explicar os 54 faltando!`);
+          console.log(`\n🔧 SOLUÇÃO SQL:`);
+          console.log(`   UPDATE imoveis SET situacao = 'SEM SITUAÇÃO' WHERE situacao IS NULL OR situacao = '' OR TRIM(situacao) = '';`);
+        } else {
+          console.log(`⚠️ Poucos problemas encontrados (${estimativaTotal}). Os 54 imóveis podem estar em outro filtro.`);
+        }
+      } else {
+        console.log(`✅ Nenhum problema de situação encontrado na amostra.`);
+        console.log(`💡 Os 54 imóveis faltando podem estar em outros campos (Categoria, Status, Ativo, etc.)`);
+      }
+      
+    } catch (error) {
+      console.error("❌ Erro na investigação:", error);
+      console.log("💡 Investigação manual: No banco de dados, execute:");
+      console.log("   SELECT COUNT(*) FROM imoveis WHERE situacao IS NULL OR situacao = '' OR TRIM(situacao) = '';");
+    }
+    
+    console.log("🔍 ===== FIM INVESTIGAÇÃO MIGRAÇÃO =====");
+  };
       
       // Analisar situações
       let problemasEncontrados = 0;
