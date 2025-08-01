@@ -1,4 +1,15 @@
-import { getBairrosPorCidade, getImoveisByFilters } from "@/app/services";
+{/* 🔬 BOTÃO DE INVESTIGAÇÃO COMPLETA */}
+        <button
+          onClick={investigarTodosCampos}
+          disabled={investigandoSituacoes}
+          className={`px-4 py-2 text-sm rounded-lg transition-colors ${
+            investigandoSituacoes
+              ? 'bg-yellow-300 text-yellow-800 cursor-not-allowed'
+              : 'bg-red-500 text-white hover:bg-red-600'
+          }`}
+        >
+          {investigandoSituacoes ? '🔍 Investigando...' : '🔍 Investigar Todos os Campos'}
+        </button>import { getBairrosPorCidade, getImoveisByFilters } from "@/app/services";
 import { useEffect, useState, useRef } from "react";
 
 export default function FiltersImoveisAdmin({ onFilter }) {
@@ -45,13 +56,14 @@ export default function FiltersImoveisAdmin({ onFilter }) {
   // 🔬 Estado para investigação completa
   const [investigandoSituacoes, setInvestigandoSituacoes] = useState(false);
 
-  // Opções de situação
+  // Opções de situação (incluindo "Pronto para morar" que estava oculto)
   const situacaoOptionsHardcoded = [
     "EM CONSTRUÇÃO",
     "LANÇAMENTO", 
     "PRÉ-LANÇAMENTO",
     "PRONTO NOVO",
-    "PRONTO USADO"
+    "PRONTO USADO",
+    "Pronto para morar"  // ✅ ADICIONADO: situação que estava causando os 58 imóveis faltando
   ];
 
   // ✅ Função auxiliar para capitalização (mantida dos bairros que funcionaram)
@@ -225,6 +237,11 @@ export default function FiltersImoveisAdmin({ onFilter }) {
               // Estimativa no total
               const estimativa = Math.round((5553 * totalOcultos) / estatisticas.comValor);
               console.log(`💡 Estimativa de imóveis ocultos: ${estimativa}`);
+              
+              if (estimativa >= 50) {
+                console.log(`🎯 BINGO! ${estimativa} imóveis ocultos explicam os 58 faltando!`);
+                console.log(`🔧 SOLUÇÃO: Adicionar "${valoresOcultos.map(v => v.valor).join('", "')}" aos filtros`);
+              }
             } else {
               console.log(`✅ Todos os valores de ${campo} estão na interface`);
             }
@@ -1099,7 +1116,23 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           Limpar Filtros
         </button>
 
-        {/* 🔬 BOTÃO DE INVESTIGAÇÃO COMPLETA */}
+        {/* 🎯 BOTÃO DE TESTE RÁPIDO */}
+        <button
+          onClick={() => {
+            console.log('🧪 TESTE: Adicionando "Pronto para morar" às situações selecionadas...');
+            setSituacoesSelecionadas(prev => {
+              if (!prev.includes("Pronto para morar")) {
+                const novasSituacoes = [...prev, "Pronto para morar"];
+                console.log('🧪 TESTE: Novas situações:', novasSituacoes);
+                return novasSituacoes;
+              }
+              return prev;
+            });
+          }}
+          className="px-3 py-2 text-xs rounded-lg bg-green-500 text-white hover:bg-green-600 transition-colors"
+        >
+          🧪 Testar "Pronto para morar"
+        </button>
         <button
           onClick={investigarTodosCampos}
           disabled={investigandoSituacoes}
@@ -1113,7 +1146,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         </button>
 
         {/* 📊 INFORMAÇÕES DE DEBUG */}
-        <div className="text-xs text-gray-500 flex items-center gap-4">
+        <div className="text-xs text-gray-500 flex items-center gap-4 flex-wrap">
           <span>🎯 Situações: {situacoesReais.length}</span>
           <span>🗂️ Mapeamentos: {Object.keys(situacoesMapeamento).length}</span>
           {situacoesSelecionadas.length > 0 && (
@@ -1122,8 +1155,13 @@ export default function FiltersImoveisAdmin({ onFilter }) {
             </span>
           )}
           <span className="text-red-600 text-[10px]">
-            ⚠️ 58 imóveis faltando (5553 - 5495)
+            ⚠️ 58 imóveis faltando → "Pronto para morar" oculto
           </span>
+          {situacoesReais.includes("Pronto para morar") && (
+            <span className="text-green-600 text-[10px] font-bold">
+              ✅ "Pronto para morar" detectado!
+            </span>
+          )}
         </div>
       </div>
     </div>
