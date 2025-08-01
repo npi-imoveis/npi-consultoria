@@ -588,8 +588,73 @@ export default async function ImovelPage({ params }) {
             <DetalhesCondominio imovel={imovel} />
             <Lazer imovel={imovel} />
             
-            {/* ✅ CORREÇÃO ULTRA-RIGOROSA: Validação YouTube extremamente rígida */}
-            {false && <VideoCondominio imovel={imovel} />}
+            {/* ✅ CORREÇÃO FINAL: Validação YouTube inteligente e rigorosa */}
+            {(() => {
+              try {
+                if (!imovel?.Video || typeof imovel.Video !== 'object' || Array.isArray(imovel.Video)) {
+                  console.log('🎥 [VALIDATION] ❌ Video inválido: não é objeto válido');
+                  return null;
+                }
+                
+                if (Object.keys(imovel.Video).length === 0) {
+                  console.log('🎥 [VALIDATION] ❌ Video inválido: objeto vazio');
+                  return null;
+                }
+                
+                let videoValue = null;
+                const values = Object.values(imovel.Video);
+                
+                // Extrair valor do vídeo
+                if (values.length > 0) {
+                  const firstValue = values[0];
+                  if (typeof firstValue === 'string') {
+                    videoValue = firstValue.trim();
+                  } else if (firstValue && typeof firstValue === 'object') {
+                    videoValue = (firstValue.Video || firstValue.url || firstValue.videoId || firstValue.id || '').trim();
+                  }
+                }
+                
+                if (!videoValue) {
+                  videoValue = (imovel.Video.Video || imovel.Video.url || imovel.Video.videoId || imovel.Video.id || '').trim();
+                }
+                
+                if (!videoValue) {
+                  console.log('🎥 [VALIDATION] ❌ Video inválido: valor vazio');
+                  return null;
+                }
+                
+                // Validar se é YouTube válido
+                const isValidYoutube = 
+                  /^[a-zA-Z0-9_-]{11}$/.test(videoValue) ||
+                  /youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})/.test(videoValue) ||
+                  /youtu\.be\/([a-zA-Z0-9_-]{11})/.test(videoValue) ||
+                  /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/.test(videoValue) ||
+                  /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/.test(videoValue);
+                
+                // Rejeitar URLs inválidas (canais, playlists, etc.)
+                const isInvalidUrl = 
+                  /youtube\.com\/@/.test(videoValue) ||
+                  /youtube\.com\/channel/.test(videoValue) ||
+                  /youtube\.com\/user/.test(videoValue) ||
+                  /youtube\.com\/playlist/.test(videoValue) ||
+                  /youtube\.com\/c\//.test(videoValue) ||
+                  /youtube\.com\/results/.test(videoValue) ||
+                  /youtube\.com\/feed\/trending/.test(videoValue) ||
+                  /^https?:\/\/(?:www\.)?youtube\.com\/?$/.test(videoValue);
+                
+                const shouldRender = isValidYoutube && !isInvalidUrl;
+                
+                console.log('🎥 [VALIDATION] Valor:', videoValue);
+                console.log('🎥 [VALIDATION] É YouTube válido?', isValidYoutube);
+                console.log('🎥 [VALIDATION] É URL inválida?', isInvalidUrl);
+                console.log('🎥 [VALIDATION] Vai renderizar?', shouldRender);
+                
+                return shouldRender ? <VideoCondominio imovel={imovel} /> : null;
+              } catch (e) {
+                console.error('🎥 [VALIDATION] ❌ Erro na validação:', e);
+                return null;
+              }
+            })()}
             
             {imovel.Tour360 && <TourVirtual link={imovel.Tour360} titulo={imovel.Empreendimento} />}
             <SimilarProperties id={imovel.Codigo} />
