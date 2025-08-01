@@ -495,13 +495,14 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     // ✅ FORÇA A CHAMADA da função com debug extra
     console.log("🔥 [FILTROS] CHAMANDO normalizarSituacaoParaAPI...");
     const situacaoProcessada = normalizarSituacaoParaAPI(situacoesSelecionadas);
-    console.log("🔥 [FILTROS] RESULTADO da normalizarSituacaoParaAPI:", situacaoProcessada);
+    console.log("🧪 [FILTROS] RESULTADO da normalizarSituacaoParaAPI:", situacaoProcessada);
+    console.log("🧪 [FILTROS] TESTE: Enviando situação como ARRAY em vez de string");
     
-    // ✅ TESTE: Manter como ARRAY em vez de converter para string
+    // ✅ TESTE: Manter situação como ARRAY, outros filtros normais
     const filtersToApply = {
       Categoria: filters.categoria || categoriaSelecionada,
       Status: filters.status,
-      Situacao: situacaoProcessada || filters.situacao || undefined, // MANTER COMO ARRAY
+      Situacao: situacaoProcessada || filters.situacao || undefined, // ARRAY
       Ativo: filters.cadastro,
       Cidade: cidadeSelecionada,
       bairros: normalizarBairrosParaAPI(bairrosSelecionados) || undefined,
