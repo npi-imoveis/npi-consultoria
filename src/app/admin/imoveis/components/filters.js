@@ -597,23 +597,60 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     console.log("✅ [CLEAR] Limpeza completa finalizada!");
   };
 
-  // ✅ FUNÇÃO CORRIGIDA: Investigar problemas de migração (usando getImoveisByFilters)
+  // ✅ FUNÇÃO CORRIGIDA: Investigar problemas de migração (usando busca com filtro mínimo)
   const investigarMigracao = async () => {
     console.log("🔍 ===== INVESTIGAÇÃO SIMPLES: MIGRAÇÃO =====");
     
     try {
-      // Usar getImoveisByFilters sem parâmetros para buscar amostra
-      console.log("📡 Buscando amostra usando getImoveisByFilters...");
-      const response = await getImoveisByFilters();
+      // Usar getImoveisByFilters com busca por situações para pegar uma amostra maior
+      console.log("📡 Buscando amostra de todos os imóveis via situações...");
       
-      // Assumindo que a resposta tem uma estrutura similar
-      const imoveis = response?.data || [];
+      // Buscar todos os tipos de situação para ter amostra ampla
+      const todasSituacoes = await getImoveisByFilters("Situacao");
+      console.log("📋 Situações disponíveis:", todasSituacoes?.data?.length || 0);
+      
+      // Agora buscar uma amostra usando todas as situações encontradas
+      let imoveis = [];
+      let tentativas = 0;
+      
+      // Tentar buscar com filtro de categoria primeiro (maior amostra)
+      try {
+        console.log("📡 Tentativa 1: Buscando por categoria...");
+        const responseCategorias = await getImoveisByFilters("Categoria");
+        if (responseCategorias?.data && responseCategorias.data.length > 0) {
+          // Pegar a primeira categoria e buscar imóveis dela
+          const primeiraCategoria = responseCategorias.data[0];
+          console.log(`📡 Buscando imóveis da categoria: ${primeiraCategoria}`);
+          
+          const responseImoveis = await getImoveisByFilters("", "", { Categoria: primeiraCategoria });
+          imoveis = responseImoveis?.data || [];
+          console.log(`📊 Encontrados ${imoveis.length} imóveis na categoria ${primeiraCategoria}`);
+        }
+      } catch (error) {
+        console.log("⚠️ Erro na busca por categoria:", error.message);
+      }
+      
+      // Se não conseguiu pela categoria, tentar abordagem diferente
+      if (imoveis.length === 0) {
+        console.log("📡 Tentativa 2: Buscando imóveis usando página direta...");
+        try {
+          // Tentar usar a função de dashboard diretamente
+          const responseAlternativo = await fetch('/api/admin/imoveis?page=1&limit=100');
+          const dadosAlternativos = await responseAlternativo.json();
+          imoveis = dadosAlternativos?.data || [];
+          console.log(`📊 Encontrados ${imoveis.length} imóveis via API direta`);
+        } catch (error) {
+          console.log("⚠️ Erro na busca alternativa:", error.message);
+        }
+      }
+      
       const total = imoveis.length;
-      
-      console.log(`📊 Total da amostra: ${total} imóveis`);
+      console.log(`📊 Total final da amostra: ${total} imóveis`);
       
       if (total === 0) {
         console.log("⚠️ Nenhum imóvel retornado na amostra");
+        console.log("💡 Sugestão: Verifique se a API está funcionando corretamente");
+        console.log("💡 Execute no banco: SELECT COUNT(*) FROM imoveis WHERE situacao IS NULL OR situacao = '';");
         return;
       }
       
