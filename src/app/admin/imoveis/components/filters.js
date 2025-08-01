@@ -392,12 +392,16 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         console.log(`✅ [API SITUAÇÃO] [${index}] MAPEAMENTO ENCONTRADO: ${situacoesMapeamento[chave].length} variações`);
         console.log(`   Variações originais: [${situacoesMapeamento[chave].join(', ')}]`);
         
-        // ✅ FILTRAR: Manter apenas variações TOTALMENTE em MAIÚSCULAS
+        // ✅ FILTRAR: Manter apenas variações COMPLETAMENTE em MAIÚSCULAS  
         const variacoesMaiusculas = situacoesMapeamento[chave].filter(variacao => {
-          // Verificar se a variação está totalmente em maiúsculas
-          const ehMaiuscula = variacao === variacao.toUpperCase() && variacao.trim() !== "";
-          console.log(`   🔍 Testando "${variacao}": ${ehMaiuscula ? '✅ MAIÚSCULA' : '❌ não maiúscula'}`);
-          return ehMaiuscula;
+          // Verificar se TODOS os caracteres alfabéticos estão em maiúsculas
+          const somenteLetrasEspacos = variacao.replace(/[^A-Za-záàâãéèêíìîóòôõúùûçÁÀÂÃÉÈÊÍÌÎÓÒÔÕÚÙÛÇ\s-]/g, '');
+          const ehCompletamenteMaiuscula = somenteLetrasEspacos === somenteLetrasEspacos.toUpperCase() && 
+                                          variacao.trim() !== "" &&
+                                          variacao !== "Pronto Para Morar"; // ✅ EXCLUIR ESPECIFICAMENTE
+          
+          console.log(`   🔍 Testando "${variacao}": ${ehCompletamenteMaiuscula ? '✅ MAIÚSCULA VÁLIDA' : '❌ inválida'}`);
+          return ehCompletamenteMaiuscula;
         });
         
         if (variacoesMaiusculas.length > 0) {
