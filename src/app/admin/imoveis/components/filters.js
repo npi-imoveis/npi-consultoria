@@ -65,7 +65,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
   useEffect(() => {
     async function fetchFilterData() {
       try {
-        console.log("🚨 ===== DEBUG SITUAÇÃO - INÍCIO (SEM PRONTO PARA MORAR) =====");
+        console.log("🚨 ===== DEBUG SITUAÇÃO - INÍCIO (SÓ MAIÚSCULAS) =====");
         
         const [catResponse, cidResponse, sitResponse] = await Promise.all([
           getImoveisByFilters("Categoria"),
@@ -85,7 +85,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           });
           
           // ✅ APLICAR A MESMA LÓGICA DOS BAIRROS (que funciona!)
-          console.log("🔄 [SITUAÇÃO] Aplicando lógica SEM Pronto para Morar...");
+          console.log("🔄 [SITUAÇÃO] Aplicando lógica SÓ MAIÚSCULAS...");
           
           const novoMapeamento = {};
           const situacoesParaUI = new Set();
@@ -116,30 +116,29 @@ export default function FiltersImoveisAdmin({ onFilter }) {
             console.log(`   "${chave}" → [${novoMapeamento[chave].join(', ')}] (${novoMapeamento[chave].length} variações)`);
           });
           
-          // Criar versões para UI (igual aos bairros) + EXCLUIR "Pronto para morar"
+          // Criar versões para UI - PRIORIZAR MAIÚSCULAS SEMPRE
           Object.keys(novoMapeamento).forEach(chave => {
             const situacoesGrupo = novoMapeamento[chave];
             
             // ✅ EXCLUSÃO: Pular chave "pronto para morar"
             if (chave === "pronto para morar") {
               console.log(`   🚫 EXCLUINDO chave "${chave}" da interface`);
-              return; // Pula esta chave
-            }
-            
-            // Buscar versão já capitalizada corretamente
-            const versaoCapitalizada = situacoesGrupo.find(s => 
-              s === capitalizarNomesProprios(s)
-            );
-            
-            const melhorVersao = versaoCapitalizada || capitalizarNomesProprios(situacoesGrupo[0]);
-            
-            // ✅ DUPLA VERIFICAÇÃO: Não adicionar se contém "pronto" + "morar"
-            if (melhorVersao.toLowerCase().includes('pronto') && melhorVersao.toLowerCase().includes('morar')) {
-              console.log(`   🚫 EXCLUINDO "${melhorVersao}" (contém pronto + morar)`);
               return;
             }
             
-            situacoesParaUI.add(melhorVersao);
+            // ✅ PRIORIZAR: Buscar APENAS versões COMPLETAMENTE MAIÚSCULAS
+            const versaoMaiuscula = situacoesGrupo.find(s => {
+              const somenteLetrasEspacos = s.replace(/[^A-Za-záàâãéèêíìîóòôõúùûçÁÀÂÃÉÈÊÍÌÎÓÒÔÕÚÙÛÇ\s-]/g, '');
+              return somenteLetrasEspacos === somenteLetrasEspacos.toUpperCase() && s.trim() !== "";
+            });
+            
+            // ✅ SÓ ADICIONAR SE ENCONTROU VERSÃO MAIÚSCULA
+            if (versaoMaiuscula) {
+              console.log(`   ✅ Usando versão MAIÚSCULA: "${versaoMaiuscula}" para chave "${chave}"`);
+              situacoesParaUI.add(versaoMaiuscula);
+            } else {
+              console.log(`   ❌ NENHUMA versão maiúscula para chave "${chave}", pulando`);
+            }
           });
           
           const situacoesFinais = Array.from(situacoesParaUI).sort();
@@ -384,7 +383,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
 
   // ✅ CORRIGIDO: Processar TODAS as situações + FILTRAR apenas MAIÚSCULAS
   const normalizarSituacaoParaAPI = (situacoesSelecionadas) => {
-    console.log("🚨 ===== SITUAÇÃO API (SEM PRONTO PARA MORAR) =====");
+    console.log("🚨 ===== SITUAÇÃO API (SÓ MAIÚSCULAS) =====");
     
     if (!Array.isArray(situacoesSelecionadas) || situacoesSelecionadas.length === 0) {
       console.log('❌ [API SITUAÇÃO] Nenhuma situação selecionada');
@@ -429,12 +428,22 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           todasVariacoesSituacao.push(...variacoesMaiusculas);
           console.log(`   ✅ Adicionadas ${variacoesMaiusculas.length} variações maiúsculas: [${variacoesMaiusculas.join(', ')}]`);
         } else {
-          console.log(`   ⚠️ Nenhuma variação em maiúscula, usando original: "${situacaoSelecionada}"`);
-          todasVariacoesSituacao.push(situacaoSelecionada);
+          console.log(`   ❌ NENHUMA variação maiúscula para "${situacaoSelecionada}", PULANDO (não incluir na API)`);
+          // ✅ NÃO adicionar nada se não tiver versão maiúscula
         }
       } else {
-        console.log(`⚠️ [API SITUAÇÃO] [${index}] SEM MAPEAMENTO para "${chave}", usando original`);
-        todasVariacoesSituacao.push(situacaoSelecionada);
+        console.log(`⚠️ [API SITUAÇÃO] [${index}] SEM MAPEAMENTO para "${chave}"`);
+        
+        // ✅ VERIFICAR se valor original é maiúsculo antes de adicionar
+        const somenteLetrasEspacos = situacaoSelecionada.replace(/[^A-Za-záàâãéèêíìîóòôõúùûçÁÀÂÃÉÈÊÍÌÎÓÒÔÕÚÙÛÇ\s-]/g, '');
+        const ehMaiuscula = somenteLetrasEspacos === somenteLetrasEspacos.toUpperCase() && situacaoSelecionada.trim() !== "";
+        
+        if (ehMaiuscula) {
+          console.log(`   ✅ Valor original "${situacaoSelecionada}" é maiúsculo, incluindo`);
+          todasVariacoesSituacao.push(situacaoSelecionada);
+        } else {
+          console.log(`   ❌ Valor original "${situacaoSelecionada}" NÃO é maiúsculo, PULANDO`);
+        }
       }
     });
 
@@ -453,10 +462,10 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       return true;
     });
     
-    console.log("🎯 [API SITUAÇÃO] RESULTADO FINAL (SEM PRONTO PARA MORAR):");
+    console.log("🎯 [API SITUAÇÃO] RESULTADO FINAL (SÓ MAIÚSCULAS):");
     console.log("   Situações filtradas:", situacoesFinais);
     console.log("   Total situações enviadas:", situacoesFinais.length);
-    console.log("🚨 ===== SITUAÇÃO API (SEM PRONTO PARA MORAR) - FIM =====");
+    console.log("🚨 ===== SITUAÇÃO API (SÓ MAIÚSCULAS) - FIM =====");
     
     return situacoesFinais;
   };
@@ -677,7 +686,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
                     </div>
                     
                     <div className="px-2 py-1 text-[9px] text-gray-400 border-b border-gray-100">
-                      🚫 SEM "Pronto para Morar": {situacoesReais.length} situações ({Object.keys(situacoesMapeamento).length} chaves mapeadas)
+                      🔠 SÓ MAIÚSCULAS: {situacoesReais.length} situações ({Object.keys(situacoesMapeamento).length} chaves mapeadas)
                     </div>
                     
                     {situacoesFiltradas.map((situacao, index) => {
@@ -877,7 +886,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           className="bg-gray-200 font-bold rounded-md text-zinc-600 hover:bg-zinc-300 p-2"
           onClick={handleFilters}
         >
-          Filtrar 🚫 SEM "Pronto para Morar"
+          Filtrar 🔠 SÓ MAIÚSCULAS
         </button>
         <button
           className="bg-red-100 font-bold rounded-md text-red-600 hover:bg-red-200 p-2"
