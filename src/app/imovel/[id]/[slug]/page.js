@@ -1,10 +1,4 @@
 // app/imovel/[id]/[slug]/page.js
-// ✅ VERSÃO FINAL CORRIGIDA V2.0
-// 🎯 PROBLEMAS RESOLVIDOS:
-// 1. ✅ Thumbnail fantasma de vídeo eliminado (validação inteligente + lista de IDs deletados)
-// 2. 🔧 WhatsApp thumbnails melhorados (meta tags otimizadas + imagem V2.0)
-// 3. ✅ Imóveis similares funcionando (useEffect já correto)
-
 import { ImageGallery } from "@/app/components/sections/image-gallery";
 import { FAQImovel } from "./componentes/FAQImovel";
 import DetalhesCondominio from "./componentes/DetalhesCondominio";
