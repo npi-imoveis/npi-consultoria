@@ -121,11 +121,15 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       }
       
       // ================================
-      // 📊 ANÁLISE COMPLETA DE TODOS OS CAMPOS
+      // 📊 ANÁLISE COMPLETA DE TODOS OS CAMPOS RELEVANTES  
       // ================================
       
       const camposAnalise = ['Situacao', 'Status', 'Categoria', 'Ativo'];
       const analiseCompleta = {};
+      
+      console.log("🔍 INICIANDO ANÁLISE DE TODOS OS CAMPOS RELEVANTES...");
+      console.log(`📋 Campos a serem analisados: ${camposAnalise.join(', ')}`);
+      console.log(`🎯 Objetivo: Encontrar os 57 imóveis restantes (5553 - 5496 = 57)`);
       
       camposAnalise.forEach(campo => {
         console.log(`\n🔍 ===== ANALISANDO CAMPO: ${campo.toUpperCase()} =====`);
@@ -273,35 +277,71 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       });
       
       // ================================
-      // 📋 RESUMO FINAL E DIAGNÓSTICO  
+      // 📋 RESUMO FINAL E DIAGNÓSTICO AVANÇADO
       // ================================
       
-      console.log("🎯 ===== RESUMO FINAL E DIAGNÓSTICO =====");
+      console.log("🎯 ===== RESUMO FINAL E DIAGNÓSTICO AVANÇADO =====");
       console.log(`📊 Total analisado: ${todosImoveis.length} imóveis`);
-      console.log(`🔍 Diferença conhecida: 58 imóveis (5553 - 5495)`);
+      console.log(`🔍 Diferença conhecida: 57 imóveis (5553 - 5496)`);
+      console.log(`📈 Percentual da amostra: ${((todosImoveis.length/5553)*100).toFixed(1)}% do total`);
       
       let problemasEncontrados = false;
+      let totalEstimadoProblemas = 0;
       
+      console.log(`\n📋 ANÁLISE POR CAMPO:`);
       camposAnalise.forEach(campo => {
         const analise = analiseCompleta[campo];
         if (analise.problemasEncontrados) {
           problemasEncontrados = true;
           const estimativa = Math.round((5553 * analise.estatisticas.semValor) / analise.estatisticas.total);
+          totalEstimadoProblemas += estimativa;
           console.log(`⚠️ ${campo}: ${analise.estatisticas.semValor} sem valor (~${estimativa} no total)`);
         } else {
           console.log(`✅ ${campo}: Todos os imóveis têm valor válido`);
         }
       });
       
-      if (!problemasEncontrados) {
-        console.log("\n🤔 TODOS OS CAMPOS PRINCIPAIS ESTÃO OK!");
-        console.log("💡 PRÓXIMAS INVESTIGAÇÕES:");
-        console.log("   - Verificar se há filtros não visíveis sendo aplicados");
-        console.log("   - Checar se 'getImoveisByFilters()' aplica filtros extras");
-        console.log("   - Investigar índices do MongoDB que podem excluir documentos");
-        console.log("   - Verificar se há conditions WHERE ocultas na query");
+      console.log(`\n📊 RESUMO DE PROBLEMAS:`);
+      if (problemasEncontrados) {
+        console.log(`   Total estimado de problemas: ${totalEstimadoProblemas} imóveis`);
+        console.log(`   Diferença real: 57 imóveis`);
+        console.log(`   Percentual explicado: ${((totalEstimadoProblemas/57)*100).toFixed(1)}%`);
+        
+        if (totalEstimadoProblemas >= 50) {
+          console.log(`🎯 PROBLEMAS ENCONTRADOS EXPLICAM A DIFERENÇA!`);
+        } else if (totalEstimadoProblemas < 10) {
+          console.log(`🤔 PROBLEMAS INSUFICIENTES. INVESTIGAR:`);
+          console.log(`   - Múltiplas condições combinadas`);
+          console.log(`   - Filtros de data ou outros campos`);
+          console.log(`   - Condições específicas do MongoDB`);
+        }
       } else {
-        console.log("\n🎯 PROBLEMAS IDENTIFICADOS! Verifique os campos acima.");
+        console.log(`✅ NENHUM PROBLEMA ÓBVIO ENCONTRADO`);
+        console.log(`\n🤔 POSSÍVEIS CAUSAS OCULTAS:`);
+        console.log(`   1. Combinação de múltiplos campos NULL`);
+        console.log(`   2. Filtros de data automáticos não visíveis`);
+        console.log(`   3. Índices do MongoDB excluindo documentos`);
+        console.log(`   4. Condições WHERE ocultas na query`);
+        console.log(`   5. Diferenças entre getImoveisByFilters() e API principal`);
+        
+        // Investigação adicional para casos complexos
+        console.log(`\n🔍 INVESTIGAÇÃO ADICIONAL NECESSÁRIA:`);
+        console.log(`   - Comparar query do getImoveisByFilters vs API principal`);
+        console.log(`   - Verificar campos de data que podem filtrar automaticamente`);
+        console.log(`   - Analisar se há soft deletes ou status ocultos`);
+      }
+      
+      // 🧪 SUGESTÕES DE TESTE
+      console.log(`\n🧪 PRÓXIMOS TESTES SUGERIDOS:`);
+      console.log(`   1. Testar filtro sem nenhum campo (só paginação)`);
+      console.log(`   2. Comparar contagem direta no MongoDB`);
+      console.log(`   3. Verificar se há campo "deleted_at" ou similar`);
+      console.log(`   4. Analisar diferenças entre agregação e find simples`);
+      
+      if (!problemasEncontrados) {
+        console.log(`\n💡 INVESTIGAÇÃO RECOMENDADA:`);
+        console.log(`   Problema pode estar no backend, não no frontend`);
+        console.log(`   Verificar função getImoveisByFilters() vs contagem real`);
       }
       
     } catch (error) {
@@ -1116,6 +1156,17 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           Limpar Filtros
         </button>
 
+        {/* 🎯 BOTÃO DE TESTE CAMPO ATIVO */}
+        <button
+          onClick={() => {
+            console.log('🧪 TESTE: Limpando filtro de cadastro (Ativo)...');
+            setFilters(prev => ({ ...prev, cadastro: "" }));
+            console.log('🧪 TESTE: Filtro de cadastro limpo. Aplicar filtros para ver diferença.');
+          }}
+          className="px-3 py-2 text-xs rounded-lg bg-orange-500 text-white hover:bg-orange-600 transition-colors"
+        >
+          🧪 Limpar Filtro "Cadastro"
+        </button>
         {/* 🎯 BOTÃO DE TESTE RÁPIDO */}
         <button
           onClick={() => {
@@ -1131,7 +1182,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           }}
           className="px-3 py-2 text-xs rounded-lg bg-green-500 text-white hover:bg-green-600 transition-colors"
         >
-          🧪 Testar "Pronto para morar"
+          ✅ "Pronto para morar" (+1)
         </button>
         <button
           onClick={investigarTodosCampos}
@@ -1145,7 +1196,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           {investigandoSituacoes ? '🔍 Investigando...' : '🔍 Investigar Todos os Campos'}
         </button>
 
-        {/* 📊 INFORMAÇÕES DE DEBUG */}
+        {/* 📊 INFORMAÇÕES DE DEBUG MELHORADAS */}
         <div className="text-xs text-gray-500 flex items-center gap-4 flex-wrap">
           <span>🎯 Situações: {situacoesReais.length}</span>
           <span>🗂️ Mapeamentos: {Object.keys(situacoesMapeamento).length}</span>
@@ -1155,13 +1206,16 @@ export default function FiltersImoveisAdmin({ onFilter }) {
             </span>
           )}
           <span className="text-red-600 text-[10px]">
-            ⚠️ 58 imóveis faltando → "Pronto para morar" oculto
+            ⚠️ 57 imóveis ainda faltando (5553 - 5496)
           </span>
           {situacoesReais.includes("Pronto para morar") && (
             <span className="text-green-600 text-[10px] font-bold">
-              ✅ "Pronto para morar" detectado!
+              ✅ "Pronto para morar" detectado! (+1)
             </span>
           )}
+          <span className="text-blue-600 text-[10px]">
+            🔍 Progresso: 1/57 encontrados
+          </span>
         </div>
       </div>
     </div>
