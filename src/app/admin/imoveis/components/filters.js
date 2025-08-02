@@ -1,16 +1,4 @@
-{/* 🎯 INVESTIGAÇÃO FOCADA (OTIMIZADA COM LÓGICA DE PREÇOS) */}
-        <button
-          onClick={investigarImoveisFaltando}
-          disabled={investigando}
-          className={`px-4 py-2 text-sm rounded-lg transition-colors ${
-            investigando
-              ? 'bg-yellow-300 text-yellow-800 cursor-not-allowed'
-              : 'bg-green-500 text-white hover:bg-green-600'
-          }`}
-          title="Testa a nova lógica de preços para resolver os 57 imóveis faltando"
-        >
-          {investigando ? '🔍 Testando Lógica...' : '💡 Testar Lógica de Preços'}
-        </button>import { getBairrosPorCidade, getImoveisByFilters } from "@/app/services";
+import { getBairrosPorCidade, getImoveisByFilters } from "@/app/services";
 import { useEffect, useState, useRef } from "react";
 
 export default function FiltersImoveisAdmin({ onFilter }) {
@@ -124,6 +112,25 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     
     // 🎯 LÓGICA INTELIGENTE: Com preço = Ativo, Sem preço = Inativo
     return imovelTemPreco(imovel) ? "Sim" : "Não";
+  };
+
+  // 🎯 NOVA FUNÇÃO: Aplicar filtro Ativo após processamento de preços
+  const aplicarFiltroAtivoNoFrontend = (imoveisProcessados, filtroAtivo) => {
+    if (!filtroAtivo || !Array.isArray(imoveisProcessados)) {
+      return imoveisProcessados;
+    }
+
+    console.log(`🔍 [FILTRO FRONTEND] Aplicando filtro Ativo="${filtroAtivo}"`);
+    console.log(`📊 [FILTRO FRONTEND] Antes: ${imoveisProcessados.length} imóveis`);
+
+    const imoveisFiltrados = imoveisProcessados.filter(imovel => 
+      imovel.Ativo === filtroAtivo
+    );
+
+    console.log(`📊 [FILTRO FRONTEND] Depois: ${imoveisFiltrados.length} imóveis`);
+    console.log(`✅ [FILTRO FRONTEND] Filtro aplicado com sucesso!`);
+
+    return imoveisFiltrados;
   };
 
   // 🎯 FUNÇÃO OTIMIZADA: Processar imóveis com lógica de preços + filtro frontend
@@ -278,31 +285,6 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         }
       }
       
-      // 🧪 TESTE 3: Verificar campos de preço disponíveis
-      console.log("\n🧪 TESTE 3: Analisando campos de preço...");
-      
-      if (dadosAmostra?.data && dadosAmostra.data.length > 0) {
-        const primeiroImovel = dadosAmostra.data[0];
-        const camposPrecoDisponiveis = Object.keys(primeiroImovel).filter(campo => 
-          campo.toLowerCase().includes('valor') || 
-          campo.toLowerCase().includes('preco') ||
-          campo.toLowerCase().includes('price')
-        );
-        
-        console.log("📋 Campos de preço detectados:", camposPrecoDisponiveis);
-        
-        // Analisar frequência de preenchimento
-        camposPrecoDisponiveis.forEach(campo => {
-          const preenchidos = dadosAmostra.data.filter(imovel => {
-            const valor = imovel[campo];
-            return valor && valor !== '' && valor !== '0' && valor !== 0;
-          }).length;
-          
-          const percentual = ((preenchidos / dadosAmostra.data.length) * 100).toFixed(1);
-          console.log(`   ${campo}: ${preenchidos}/${dadosAmostra.data.length} (${percentual}%)`);
-        });
-      }
-      
       // 📋 RESUMO E RECOMENDAÇÕES
       console.log("\n📋 RESUMO DA INVESTIGAÇÃO:");
       console.log("1. ✅ Lógica de preços implementada no frontend");
@@ -311,11 +293,6 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       console.log("   - SEM preço → Ativo = 'Não'");
       console.log("3. ✅ TODOS os imóveis aparecem nos resultados");
       console.log("4. 🎯 Soluciona os 57 imóveis faltando");
-      
-      console.log("\n🔧 PRÓXIMOS PASSOS:");
-      console.log("- ✅ Frontend já processa automaticamente");
-      console.log("- 💡 Considerar implementar no backend para performance");
-      console.log("- 📊 Validar com filtros reais");
       
     } catch (error) {
       console.error("❌ Erro na investigação focada:", error);
@@ -793,25 +770,6 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     console.log("✅ [CLEAR] Limpeza completa finalizada!");
   };
 
-  // 🎯 NOVA FUNÇÃO: Aplicar filtro Ativo após processamento de preços
-  const aplicarFiltroAtivoNoFrontend = (imoveisProcessados, filtroAtivo) => {
-    if (!filtroAtivo || !Array.isArray(imoveisProcessados)) {
-      return imoveisProcessados;
-    }
-
-    console.log(`🔍 [FILTRO FRONTEND] Aplicando filtro Ativo="${filtroAtivo}"`);
-    console.log(`📊 [FILTRO FRONTEND] Antes: ${imoveisProcessados.length} imóveis`);
-
-    const imoveisFiltrados = imoveisProcessados.filter(imovel => 
-      imovel.Ativo === filtroAtivo
-    );
-
-    console.log(`📊 [FILTRO FRONTEND] Depois: ${imoveisFiltrados.length} imóveis`);
-    console.log(`✅ [FILTRO FRONTEND] Filtro aplicado com sucesso!`);
-
-    return imoveisFiltrados;
-  };
-
   return (
     <div className="w-full mt-4 flex flex-col gap-4 border-t py-4">
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
@@ -1105,6 +1063,41 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           Limpar Filtros
         </button>
 
+        {/* 🧪 BOTÃO DE TESTE COMPLETO */}
+        <button
+          onClick={() => {
+            console.log('🧪 ===== TESTE COMPLETO DA SOLUÇÃO =====');
+            console.log('1. Limpando todos os filtros...');
+            
+            // Limpar tudo
+            setFilters({
+              categoria: "",
+              status: "",
+              situacao: "",
+              cadastro: "", // ✅ SEM FILTRO ATIVO
+            });
+            setCategoriaSelecionada("");
+            setCidadeSelecionada("");
+            setBairrosSelecionados([]);
+            setSituacoesSelecionadas([]);
+            
+            console.log('2. Aplicando lógica em 2 segundos...');
+            console.log('   Backend: Buscará TODOS os imóveis');
+            console.log('   Frontend: Aplicará lógica de preços');
+            console.log('   Resultado esperado: 5553 imóveis categorizados');
+            
+            // Aplicar após delay
+            setTimeout(() => {
+              console.log('3. Executando busca com lógica de preços...');
+              handleFilters();
+            }, 2000);
+          }}
+          className="px-4 py-2 text-xs rounded-lg bg-purple-500 text-white hover:bg-purple-600 transition-colors"
+          title="Testa o fluxo completo: limpa filtros e busca TODOS os imóveis"
+        >
+          🧪 Teste Completo
+        </button>
+
         {/* 🎯 BOTÃO PARA BUSCAR TODOS OS IMÓVEIS (SEM FILTRO ATIVO) */}
         <button
           onClick={() => {
@@ -1141,40 +1134,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           🔍 Só Imóveis Ativos
         </button>
 
-        {/* 🧪 BOTÃO DE TESTE COMPLETO */}
-        <button
-          onClick={() => {
-            console.log('🧪 ===== TESTE COMPLETO DA SOLUÇÃO =====');
-            console.log('1. Limpando todos os filtros...');
-            
-            // Limpar tudo
-            setFilters({
-              categoria: "",
-              status: "",
-              situacao: "",
-              cadastro: "", // ✅ SEM FILTRO ATIVO
-            });
-            setCategoriaSelecionada("");
-            setCidadeSelecionada("");
-            setBairrosSelecionados([]);
-            setSituacoesSelecionadas([]);
-            
-            console.log('2. Aplicando lógica em 2 segundos...');
-            console.log('   Backend: Buscará TODOS os imóveis');
-            console.log('   Frontend: Aplicará lógica de preços');
-            console.log('   Resultado esperado: 5553 imóveis categorizados');
-            
-            // Aplicar após delay
-            setTimeout(() => {
-              console.log('3. Executando busca com lógica de preços...');
-              handleFilters();
-            }, 2000);
-          }}
-          className="px-4 py-2 text-xs rounded-lg bg-purple-500 text-white hover:bg-purple-600 transition-colors"
-          title="Testa o fluxo completo: limpa filtros e busca TODOS os imóveis"
-        >
-          🧪 Teste Completo
-        </button>
+        {/* 🎯 INVESTIGAÇÃO FOCADA (OTIMIZADA COM LÓGICA DE PREÇOS) */}
         <button
           onClick={investigarImoveisFaltando}
           disabled={investigando}
