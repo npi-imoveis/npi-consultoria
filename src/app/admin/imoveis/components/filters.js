@@ -1,6 +1,4 @@
-<span className="text-red-600 text-[10px] font-bold">
-            ⚠️ Se ainda 0 imóveis: Problema no backend com filtro Ativo
-          </span>import { getBairrosPorCidade, getImoveisByFilters } from "@/app/services";
+import { getBairrosPorCidade, getImoveisByFilters } from "@/app/services";
 import { useEffect, useState, useRef } from "react";
 
 export default function FiltersImoveisAdmin({ onFilter }) {
@@ -1052,7 +1050,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         </div>
       </div>
 
-      {/* 🎯 BOTÕES DE AÇÃO OTIMIZADOS COM LÓGICA DE PREÇOS */}
+      {/* 🎯 BOTÕES DE AÇÃO OTIMIZADOS COM DEBUG COMPLETO */}
       <div className="flex flex-wrap gap-3 items-center pt-4 border-t">
         <button
           onClick={handleFilters}
@@ -1138,41 +1136,6 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           🆘 Teste SEM Filtros
         </button>
 
-        {/* 🧪 BOTÃO DE TESTE COMPLETO FORÇADO */}
-        <button
-          onClick={() => {
-            console.log('🧪 ===== TESTE COMPLETO - ESTRATÉGIA FORÇADA =====');
-            console.log('1. Limpando todos os filtros...');
-            
-            // Limpar tudo
-            setFilters({
-              categoria: "",
-              status: "",
-              situacao: "",
-              cadastro: "", // ✅ SEM FILTRO ATIVO (será forçado para ambos)
-            });
-            setCategoriaSelecionada("");
-            setCidadeSelecionada("");
-            setBairrosSelecionados([]);
-            setSituacoesSelecionadas([]);
-            
-            console.log('2. Aplicando estratégia FORÇADA em 2 segundos...');
-            console.log('   Backend: Receberá Ativo=[Sim,Não] (FORÇADO)');
-            console.log('   Frontend: Aplicará lógica de preços');
-            console.log('   Resultado esperado: Backend OBRIGADO a retornar todos!');
-            
-            // Aplicar após delay
-            setTimeout(() => {
-              console.log('3. Executando busca FORÇADA...');
-              handleFilters();
-            }, 2000);
-          }}
-          className="px-4 py-2 text-xs rounded-lg bg-purple-500 text-white hover:bg-purple-600 transition-colors"
-          title="Força backend com Ativo=[Sim,Não] para garantir todos os imóveis"
-        >
-          🧪 Teste FORÇADO
-        </button>
-
         {/* 🎯 BOTÃO PARA FORÇAR BUSCA DE TODOS OS IMÓVEIS */}
         <button
           onClick={() => {
@@ -1189,24 +1152,6 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           title="Força backend a buscar TODOS os imóveis com Ativo=[Sim,Não]"
         >
           🎯 FORÇAR Busca de TODOS
-        </button>
-
-        {/* 🎯 BOTÃO PARA APLICAR FILTRO ESPECÍFICO */}
-        <button
-          onClick={() => {
-            console.log('🔍 FILTRANDO: Aplicando filtro Ativo = Sim...');
-            setFilters(prev => ({ ...prev, cadastro: "Sim" }));
-            console.log('💡 Filtro será aplicado no frontend após processamento');
-            
-            // Aplicar automaticamente após 500ms
-            setTimeout(() => {
-              handleFilters();
-            }, 500);
-          }}
-          className="px-3 py-2 text-xs rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors"
-          title="Aplica filtro Ativo=Sim no frontend (após lógica de preços)"
-        >
-          🔍 Só Imóveis Ativos
         </button>
 
         {/* 🎯 INVESTIGAÇÃO FOCADA (OTIMIZADA COM LÓGICA DE PREÇOS) */}
@@ -1249,81 +1194,14 @@ export default function FiltersImoveisAdmin({ onFilter }) {
               🔍 FILTRADO: Frontend aplicará Ativo={filters.cadastro}
             </span>
           )}
+          <span className="text-red-600 text-[10px] font-bold">
+            ⚠️ Se ainda 0 imóveis: Problema no backend com filtro Ativo
+          </span>
         </div>
       </div>
     </div>
   );
 }
-
-/*
-🎯 ===== INSTRUÇÕES DE INTEGRAÇÃO NO COMPONENTE PAI =====
-
-Para fazer a lógica de preços funcionar, ajuste o componente que recebe os filtros:
-
-```javascript
-// Exemplo no componente de listagem principal
-const handleFilterResults = (filtros) => {
-  console.log("🔄 Recebendo filtros:", filtros);
-  
-  // 🎯 ESTRATÉGIA FORÇADA: Backend recebe Ativo=[Sim,Não] para retornar TODOS
-  
-  // Buscar dados do backend
-  const response = await getImoveisDashboard(filtros);
-  
-  // 🎯 APLICAR LÓGICA DE PREÇOS SE CALLBACK EXISTE
-  if (filtros._processImoveisCallback && response.data) {
-    console.log("🎯 Aplicando lógica de preços...");
-    console.log(`📊 Imóveis recebidos do backend: ${response.data.length}`);
-    
-    const imoveisProcessados = filtros._processImoveisCallback(
-      response.data, 
-      filtros._filtroAtivoFrontend
-    );
-    
-    console.log(`📊 Imóveis após processamento: ${imoveisProcessados.length}`);
-    
-    // Atualizar estado com imóveis processados
-    setImoveis(imoveisProcessados);
-    
-    // Ajustar paginação se necessário
-    if (response.paginacao) {
-      setPaginacao({
-        ...response.paginacao,
-        totalItems: imoveisProcessados.length
-      });
-    }
-  } else {
-    // Comportamento padrão
-    setImoveis(response.data || []);
-    setPaginacao(response.paginacao || {});
-  }
-};
-
-// Passar para o componente FiltersImoveisAdmin
-<FiltersImoveisAdmin onFilter={handleFilterResults} />
-```
-
-🎯 COMO FUNCIONA (ESTRATÉGIA FORÇADA):
-1. Frontend envia Ativo=["Sim","Não"] para FORÇAR backend a retornar todos
-2. Backend OBRIGADO a retornar todos os imóveis (não pode retornar 0)
-3. Frontend aplica lógica: Com preço = Ativo, Sem preço = Inativo  
-4. Frontend aplica filtro Ativo específico se selecionado
-5. Resultado: TODOS os 5553 imóveis categorizados + filtrados corretamente
-
-✅ BENEFÍCIOS DA ESTRATÉGIA FORÇADA:
-- ✅ Backend SEMPRE retorna imóveis (não pode retornar 0)
-- ✅ ZERO imóveis perdidos
-- ✅ Compatível com backend atual
-- ✅ Lógica inteligente de categorização
-- ✅ Soluciona os 57 imóveis faltando
-- ✅ Funciona mesmo se backend tem validações restritivas
-
-🔧 DEBUG:
-Se ainda retornar 0 imóveis, o problema está no backend e precisa investigar:
-- Como o backend trata o array ["Sim","Não"] no filtro Ativo
-- Se há outras validações que impedem retorno de dados
-- Se o campo Ativo no banco está diferente de "Sim"/"Não"
-*/
 
 function SelectFilter({ options, name, onChange, value, placeholder }) {
   return (
