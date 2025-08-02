@@ -1,15 +1,4 @@
-{/* 🔬 BOTÃO DE INVESTIGAÇÃO COMPLETA */}
-        <button
-          onClick={investigarTodosCampos}
-          disabled={investigandoSituacoes}
-          className={`px-4 py-2 text-sm rounded-lg transition-colors ${
-            investigandoSituacoes
-              ? 'bg-yellow-300 text-yellow-800 cursor-not-allowed'
-              : 'bg-red-500 text-white hover:bg-red-600'
-          }`}
-        >
-          {investigandoSituacoes ? '🔍 Investigando...' : '🔍 Investigar Todos os Campos'}
-        </button>import { getBairrosPorCidade, getImoveisByFilters } from "@/app/services";
+import { getBairrosPorCidade, getImoveisByFilters } from "@/app/services";
 import { useEffect, useState, useRef } from "react";
 
 export default function FiltersImoveisAdmin({ onFilter }) {
@@ -77,7 +66,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
   };
 
   // 🔬 INVESTIGAÇÃO COMPLETA: Analisa TODOS os campos (Situacao, Status, Categoria, Ativo)
-  // para encontrar onde estão os 58 imóveis faltando (5553 total - 5495 encontrados = 58)
+  // para encontrar onde estão os 57 imóveis faltando (5553 total - 5496 encontrados = 57)
   const investigarTodosCampos = async () => {
     setInvestigandoSituacoes(true);
     console.log("🔬 ===== INVESTIGAÇÃO COMPLETA: TODOS OS CAMPOS =====");
@@ -199,12 +188,13 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         
         console.log(`\n🎯 VALORES ÚNICOS DE ${campo.toUpperCase()}: ${valoresUnicos.size}`);
         
-        if (valoresUnicos.size > 0) {
+        // Criar array ordenado
+        const valoresOrdenados = valoresUnicos.size > 0 
+          ? Array.from(valoresUnicos.entries()).sort((a, b) => b[1] - a[1])
+          : [];
+        
+        if (valoresOrdenados.length > 0) {
           console.log(`📋 LISTA COMPLETA (ordenada por frequência):`);
-          
-          // Ordenar por frequência
-          const valoresOrdenados = Array.from(valoresUnicos.entries())
-            .sort((a, b) => b[1] - a[1]);
           
           valoresOrdenados.forEach(([valor, count], index) => {
             const exemplos = exemplosValores.get(valor);
@@ -243,7 +233,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
               console.log(`💡 Estimativa de imóveis ocultos: ${estimativa}`);
               
               if (estimativa >= 50) {
-                console.log(`🎯 BINGO! ${estimativa} imóveis ocultos explicam os 58 faltando!`);
+                console.log(`🎯 BINGO! ${estimativa} imóveis ocultos explicam os 57 faltando!`);
                 console.log(`🔧 SOLUÇÃO: Adicionar "${valoresOcultos.map(v => v.valor).join('", "')}" aos filtros`);
               }
             } else {
@@ -268,8 +258,42 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           console.log(`   Imóveis sem ${campo}: ${estatisticas.semValor} (${percentualProblema}%)`);
           console.log(`   Estimativa no total: ${estimativaTotal} imóveis`);
           
-          if (estimativaTotal >= 50) {
-            console.log(`🎯 POSSÍVEL CAUSA DOS 58 IMÓVEIS FALTANDO!`);
+          if (estimativaTotal >= 30) {
+            console.log(`🎯 POSSÍVEL CAUSA DOS 57 IMÓVEIS FALTANDO!`);
+            console.log(`💡 SOLUÇÃO: Incluir imóveis com ${campo} NULL/undefined nos resultados`);
+          }
+        }
+        
+        // 🔍 ALERTA PARA CAMPO ATIVO ESPECÍFICO
+        if (campo === 'Ativo') {
+          console.log(`\n🎯 ANÁLISE ESPECIAL CAMPO ATIVO:`);
+          
+          if (valoresOrdenados.length > 0) {
+            const valorSim = valoresOrdenados.find(([valor]) => valor === 'Sim' || valor === 'sim' || valor === 'S');
+            const valorNao = valoresOrdenados.find(([valor]) => valor === 'Não' || valor === 'não' || valor === 'N' || valor === 'Nao');
+            
+            if (valorSim) {
+              console.log(`   ✅ ATIVO = "Sim": ${valorSim[1]} imóveis`);
+            }
+            if (valorNao) {
+              console.log(`   ❌ ATIVO = "Não": ${valorNao[1]} imóveis`);
+              const estimativaNao = Math.round((5553 * valorNao[1]) / estatisticas.total);
+              console.log(`   📊 Estimativa total "Não": ${estimativaNao} imóveis`);
+              
+              if (estimativaNao >= 50) {
+                console.log(`   🚨 BINGO! Imóveis com Ativo="Não" podem ser os 57 faltando!`);
+                console.log(`   💡 SOLUÇÃO: Verificar se filtro de "cadastro" está excluindo estes imóveis`);
+              }
+            }
+            
+            if (estatisticas.semValor > 0) {
+              const estimativaSemAtivo = Math.round((5553 * estatisticas.semValor) / estatisticas.total);
+              console.log(`   ⚠️ ATIVO = NULL/undefined: ${estatisticas.semValor} imóveis (~${estimativaSemAtivo} total)`);
+              
+              if (estimativaSemAtivo >= 50) {
+                console.log(`   🎯 ESTES PODEM SER OS 57 FALTANDO!`);
+              }
+            }
           }
         }
         
@@ -1167,6 +1191,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         >
           🧪 Limpar Filtro "Cadastro"
         </button>
+
         {/* 🎯 BOTÃO DE TESTE RÁPIDO */}
         <button
           onClick={() => {
@@ -1184,6 +1209,8 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         >
           ✅ "Pronto para morar" (+1)
         </button>
+
+        {/* 🔬 BOTÃO DE INVESTIGAÇÃO COMPLETA */}
         <button
           onClick={investigarTodosCampos}
           disabled={investigandoSituacoes}
