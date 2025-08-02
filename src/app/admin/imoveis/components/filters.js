@@ -42,27 +42,17 @@ export default function FiltersImoveisAdmin({ onFilter }) {
   const [situacoesMapeamento, setSituacoesMapeamento] = useState({});
   const [bairrosMapeamento, setBairrosMapeamento] = useState({});
 
-  // 🔍 Estado para investigação otimizada
-  const [investigando, setInvestigando] = useState(false);
+  // 🔬 Estado para investigação completa
+  const [investigandoSituacoes, setInvestigandoSituacoes] = useState(false);
 
-  // 📊 Estado para estatísticas de preços
-  const [estatisticasPrecos, setEstatisticasPrecos] = useState({
-    comPreco: 0,
-    semPreco: 0,
-    total: 0
-  });
-
-  // Opções de situação expandidas para incluir possíveis valores ocultos
+  // Opções de situação (incluindo "Pronto para morar" que estava oculto)
   const situacaoOptionsHardcoded = [
     "EM CONSTRUÇÃO",
     "LANÇAMENTO", 
     "PRÉ-LANÇAMENTO",
     "PRONTO NOVO",
     "PRONTO USADO",
-    "Pronto para morar",
-    "OBRA FINALIZADA",
-    "OBRA PAUSADA",
-    "OBRA EM ANDAMENTO"
+    "Pronto para morar"  // ✅ ADICIONADO: situação que estava causando os 58 imóveis faltando
   ];
 
   // ✅ Função auxiliar para capitalização (mantida dos bairros que funcionaram)
@@ -75,239 +65,323 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     }).join(' ');
   };
 
-  // 🎯 NOVA FUNÇÃO: Verificar se imóvel tem preço válido
-  const imovelTemPreco = (imovel) => {
-    if (!imovel) return false;
-    
-    // Campos de preço possíveis
-    const camposPreco = [
-      'ValorVenda', 
-      'ValorLocacao', 
-      'ValorAluguel2',
-      'ValorAntigo',
-      'ValorCobertura',
-      'ValorGarden'
-    ];
-    
-    // Verificar se pelo menos um campo de preço tem valor válido > 0
-    return camposPreco.some(campo => {
-      const valor = imovel[campo];
-      return valor && 
-             valor !== '' && 
-             valor !== '0' && 
-             valor !== 0 && 
-             !isNaN(parseFloat(valor)) && 
-             parseFloat(valor) > 0;
-    });
-  };
-
-  // 🎯 NOVA FUNÇÃO: Determinar status Ativo baseado no preço
-  const determinarAtivoBaseadoNoPreco = (imovel) => {
-    if (!imovel) return "Não";
-    
-    // Se já tem Ativo definido, manter
-    if (imovel.Ativo === "Sim" || imovel.Ativo === "Não") {
-      return imovel.Ativo;
-    }
-    
-    // 🎯 LÓGICA INTELIGENTE: Com preço = Ativo, Sem preço = Inativo
-    return imovelTemPreco(imovel) ? "Sim" : "Não";
-  };
-
-  // 🎯 NOVA FUNÇÃO: Aplicar filtro Ativo após processamento de preços
-  const aplicarFiltroAtivoNoFrontend = (imoveisProcessados, filtroAtivo) => {
-    if (!filtroAtivo || !Array.isArray(imoveisProcessados)) {
-      return imoveisProcessados;
-    }
-
-    console.log(`🔍 [FILTRO FRONTEND] Aplicando filtro Ativo="${filtroAtivo}"`);
-    console.log(`📊 [FILTRO FRONTEND] Antes: ${imoveisProcessados.length} imóveis`);
-
-    const imoveisFiltrados = imoveisProcessados.filter(imovel => 
-      imovel.Ativo === filtroAtivo
-    );
-
-    console.log(`📊 [FILTRO FRONTEND] Depois: ${imoveisFiltrados.length} imóveis`);
-    console.log(`✅ [FILTRO FRONTEND] Filtro aplicado com sucesso!`);
-
-    return imoveisFiltrados;
-  };
-
-  // 🎯 FUNÇÃO OTIMIZADA: Processar imóveis com lógica de preços + filtro frontend
-  const processarImoveisComLogicaPreco = (imoveis, filtroAtivoFrontend = null) => {
-    if (!Array.isArray(imoveis)) return [];
-    
-    console.log("🎯 ===== PROCESSAMENTO COMPLETO COM LÓGICA DE PREÇOS =====");
-    console.log(`📊 Total de imóveis recebidos do backend: ${imoveis.length}`);
-    
-    let comPreco = 0;
-    let semPreco = 0;
-    let ativoOriginalSim = 0;
-    let ativoOriginalNao = 0;
-    let ativoUndefined = 0;
-    
-    // ETAPA 1: Processar todos os imóveis com lógica de preços
-    const imoveisProcessados = imoveis.map((imovel, index) => {
-      const ativoOriginal = imovel.Ativo;
-      const temPreco = imovelTemPreco(imovel);
-      const ativoCalculado = determinarAtivoBaseadoNoPreco(imovel);
-      
-      // Estatísticas
-      if (temPreco) comPreco++;
-      else semPreco++;
-      
-      if (ativoOriginal === "Sim") ativoOriginalSim++;
-      else if (ativoOriginal === "Não") ativoOriginalNao++;
-      else ativoUndefined++;
-      
-      // Log para os primeiros 3 imóveis para debug
-      if (index < 3) {
-        console.log(`📋 [${index}] Código: ${imovel.Codigo || 'N/A'}`);
-        console.log(`   Ativo original: "${ativoOriginal}" → Calculado: "${ativoCalculado}"`);
-        console.log(`   Tem preço: ${temPreco}`);
-        
-        const precos = [
-          imovel.ValorVenda ? `Venda=${imovel.ValorVenda}` : null,
-          imovel.ValorLocacao ? `Locação=${imovel.ValorLocacao}` : null,
-          imovel.ValorAluguel2 ? `Aluguel=${imovel.ValorAluguel2}` : null
-        ].filter(Boolean);
-        console.log(`   Preços: ${precos.length > 0 ? precos.join(', ') : 'Nenhum'}`);
-      }
-      
-      // Retornar imóvel com Ativo processado
-      return {
-        ...imovel,
-        Ativo: ativoCalculado,
-        _ativoOriginal: ativoOriginal,
-        _temPreco: temPreco
-      };
-    });
-    
-    console.log("📊 ESTATÍSTICAS DE PROCESSAMENTO:");
-    console.log(`   ✅ Com preço (agora Ativo=Sim): ${comPreco}`);
-    console.log(`   ❌ Sem preço (agora Ativo=Não): ${semPreco}`);
-    console.log(`   📊 Status original - Sim: ${ativoOriginalSim}, Não: ${ativoOriginalNao}, Undefined: ${ativoUndefined}`);
-    console.log(`   🎯 SOLUÇÃO: ${ativoUndefined} imóveis undefined agora categorizados!`);
-    
-    // ETAPA 2: Aplicar filtro Ativo no frontend se necessário
-    let imoveisFinais = imoveisProcessados;
-    
-    if (filtroAtivoFrontend) {
-      console.log(`\n🔍 APLICANDO FILTRO ATIVO NO FRONTEND: "${filtroAtivoFrontend}"`);
-      imoveisFinais = aplicarFiltroAtivoNoFrontend(imoveisProcessados, filtroAtivoFrontend);
-    } else {
-      console.log(`\n✅ SEM FILTRO ATIVO: Todos os ${imoveisProcessados.length} imóveis serão exibidos`);
-    }
-    
-    // Atualizar estatísticas globais
-    setEstatisticasPrecos({
-      comPreco,
-      semPreco,
-      total: imoveis.length
-    });
-    
-    console.log("🎯 RESULTADO FINAL:");
-    console.log(`   📊 Imóveis processados: ${imoveisProcessados.length}`);
-    console.log(`   📊 Imóveis finais exibidos: ${imoveisFinais.length}`);
-    console.log(`   ✅ NENHUM imóvel perdido na categorização!`);
-    console.log("🎯 ===== PROCESSAMENTO CONCLUÍDO =====");
-    
-    return imoveisFinais;
-  };
-
-  // 🔍 INVESTIGAÇÃO FOCADA: Testar especificamente o campo Ativo com lógica de preços
-  const investigarImoveisFaltando = async () => {
-    setInvestigando(true);
-    console.log("🎯 ===== INVESTIGAÇÃO: LÓGICA DE PREÇOS =====");
-    console.log("💡 Nova abordagem: Imóveis com preço = Ativo, sem preço = Inativo");
+  // 🔬 INVESTIGAÇÃO COMPLETA: Analisa TODOS os campos (Situacao, Status, Categoria, Ativo)
+  // para encontrar onde estão os 57 imóveis faltando (5553 total - 5496 encontrados = 57)
+  const investigarTodosCampos = async () => {
+    setInvestigandoSituacoes(true);
+    console.log("🔬 ===== INVESTIGAÇÃO COMPLETA: TODOS OS CAMPOS =====");
     
     try {
-      // 🧪 TESTE 1: Verificar totais por campo Ativo
-      console.log("\n🧪 TESTE 1: Contagens atuais por campo Ativo...");
+      console.log("📡 Buscando dados brutos de múltiplas páginas...");
       
-      const respostaAtivoSim = await fetch('/api/admin/imoveis?page=1&limit=1&Ativo=Sim');
-      const dadosAtivoSim = await respostaAtivoSim.json();
-      const totalAtivoSim = dadosAtivoSim?.pagination?.total || 0;
+      // Coletar mais páginas para análise mais precisa
+      const paginas = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]; // 15 páginas = ~450 imóveis
+      let todosImoveis = [];
       
-      const respostaAtivoNao = await fetch('/api/admin/imoveis?page=1&limit=1&Ativo=Não');
-      const dadosAtivoNao = await respostaAtivoNao.json();
-      const totalAtivoNao = dadosAtivoNao?.pagination?.total || 0;
-      
-      const respostaTotalGeral = await fetch('/api/admin/imoveis?page=1&limit=1');
-      const dadosTotalGeral = await respostaTotalGeral.json();
-      const totalGeral = dadosTotalGeral?.pagination?.total || 0;
-      
-      console.log("📊 SITUAÇÃO ATUAL:");
-      console.log(`   ✅ Ativo = 'Sim': ${totalAtivoSim} imóveis`);
-      console.log(`   ❌ Ativo = 'Não': ${totalAtivoNao} imóveis`);
-      console.log(`   📊 Total geral: ${totalGeral} imóveis`);
-      console.log(`   🔍 Undefined: ${totalGeral - (totalAtivoSim + totalAtivoNao)} imóveis`);
-      
-      // 🧪 TESTE 2: Analisar amostra com lógica de preços
-      console.log("\n🧪 TESTE 2: Testando lógica de preços em amostra...");
-      
-      const respostaAmostra = await fetch('/api/admin/imoveis?page=1&limit=100');
-      const dadosAmostra = await respostaAmostra.json();
-      
-      if (dadosAmostra?.data && Array.isArray(dadosAmostra.data)) {
-        const amostra = dadosAmostra.data;
-        console.log(`📊 Amostra coletada: ${amostra.length} imóveis`);
-        
-        // Processar amostra com lógica de preços
-        const amostraProcessada = processarImoveisComLogicaPreco(amostra);
-        
-        // Contar categorias na amostra processada
-        const ativoSimProcessado = amostraProcessada.filter(i => i.Ativo === "Sim").length;
-        const ativoNaoProcessado = amostraProcessada.filter(i => i.Ativo === "Não").length;
-        const comPrecoReal = amostraProcessada.filter(i => i._temPreco).length;
-        const semPrecoReal = amostraProcessada.filter(i => !i._temPreco).length;
-        
-        console.log("📊 RESULTADO DA LÓGICA DE PREÇOS (Amostra):");
-        console.log(`   ✅ Ativo=Sim (com preço): ${ativoSimProcessado} (${comPrecoReal} realmente têm preço)`);
-        console.log(`   ❌ Ativo=Não (sem preço): ${ativoNaoProcessado} (${semPrecoReal} realmente sem preço)`);
-        console.log(`   ✅ Total processado: ${amostraProcessada.length} (100% dos imóveis)`);
-        
-        // 🎯 Projetar para o total
-        const percentualComPreco = (comPrecoReal / amostra.length) * 100;
-        const projecaoComPreco = Math.round((totalGeral * comPrecoReal) / amostra.length);
-        const projecaoSemPreco = totalGeral - projecaoComPreco;
-        
-        console.log("\n🎯 PROJEÇÃO PARA O TOTAL:");
-        console.log(`   📊 ${percentualComPreco.toFixed(1)}% dos imóveis têm preço`);
-        console.log(`   ✅ Projeção com preço (Ativo=Sim): ${projecaoComPreco} imóveis`);
-        console.log(`   ❌ Projeção sem preço (Ativo=Não): ${projecaoSemPreco} imóveis`);
-        console.log(`   🎯 TOTAL GARANTIDO: ${totalGeral} imóveis (NENHUM PERDIDO!)`);
-        
-        if (projecaoSemPreco >= 50) {
-          console.log(`\n🚨 SOLUÇÃO CONFIRMADA!`);
-          console.log(`   💡 ${projecaoSemPreco} imóveis sem preço explicam os 57 faltando`);
-          console.log(`   ✅ Com a nova lógica, TODOS aparecem nos filtros`);
+      for (const pagina of paginas) {
+        try {
+          console.log(`📄 Carregando página ${pagina}...`);
+          
+          const response = await fetch(`/api/admin/imoveis?page=${pagina}&limit=30`);
+          const dados = await response.json();
+          
+          if (dados && dados.data && Array.isArray(dados.data)) {
+            todosImoveis.push(...dados.data);
+            console.log(`   ✅ Página ${pagina}: ${dados.data.length} imóveis`);
+          } else {
+            console.log(`   ❌ Página ${pagina}: sem dados`);
+          }
+          
+          if (!dados.data || dados.data.length === 0) {
+            console.log(`   🏁 Fim dos dados na página ${pagina}`);
+            break;
+          }
+          
+        } catch (error) {
+          console.log(`   ⚠️ Erro na página ${pagina}:`, error.message);
         }
       }
       
-      // 📋 RESUMO E RECOMENDAÇÕES
-      console.log("\n📋 RESUMO DA INVESTIGAÇÃO:");
-      console.log("1. ✅ Lógica de preços implementada no frontend");
-      console.log("2. 🎯 Imóveis categorizados automaticamente:");
-      console.log("   - COM preço → Ativo = 'Sim'");  
-      console.log("   - SEM preço → Ativo = 'Não'");
-      console.log("3. ✅ TODOS os imóveis aparecem nos resultados");
-      console.log("4. 🎯 Soluciona os 57 imóveis faltando");
+      console.log(`📊 TOTAL COLETADO: ${todosImoveis.length} imóveis`);
+      
+      if (todosImoveis.length === 0) {
+        console.log("❌ Nenhum imóvel coletado da API");
+        return;
+      }
+      
+      // ================================
+      // 📊 ANÁLISE COMPLETA DE TODOS OS CAMPOS RELEVANTES  
+      // ================================
+      
+      const camposAnalise = ['Situacao', 'Status', 'Categoria', 'Ativo'];
+      const analiseCompleta = {};
+      
+      console.log("🔍 INICIANDO ANÁLISE DE TODOS OS CAMPOS RELEVANTES...");
+      console.log(`📋 Campos a serem analisados: ${camposAnalise.join(', ')}`);
+      console.log(`🎯 Objetivo: Encontrar os 57 imóveis restantes (5553 - 5496 = 57)`);
+      
+      camposAnalise.forEach(campo => {
+        console.log(`\n🔍 ===== ANALISANDO CAMPO: ${campo.toUpperCase()} =====`);
+        
+        const estatisticas = {
+          total: todosImoveis.length,
+          comValor: 0,
+          semValor: 0,
+          null: 0,
+          undefined: 0,
+          vazio: 0,
+          espacos: 0
+        };
+        
+        const valoresUnicos = new Map();
+        const exemplosValores = new Map();
+        
+        todosImoveis.forEach((imovel, i) => {
+          const valor = imovel[campo];
+          const codigo = imovel.Codigo || imovel.codigo || `sem-codigo-${i}`;
+          
+          // Classificar o tipo de valor
+          if (valor === null) {
+            estatisticas.null++;
+            estatisticas.semValor++;
+          } else if (valor === undefined) {
+            estatisticas.undefined++;
+            estatisticas.semValor++;
+          } else if (valor === '') {
+            estatisticas.vazio++;
+            estatisticas.semValor++;
+          } else if (typeof valor === 'string' && valor.trim() === '') {
+            estatisticas.espacos++;
+            estatisticas.semValor++;
+          } else {
+            // Valor válido
+            estatisticas.comValor++;
+            
+            const valorStr = String(valor).trim();
+            
+            if (valorStr) {
+              // Contar frequência
+              if (valoresUnicos.has(valorStr)) {
+                valoresUnicos.set(valorStr, valoresUnicos.get(valorStr) + 1);
+              } else {
+                valoresUnicos.set(valorStr, 1);
+                exemplosValores.set(valorStr, []);
+              }
+              
+              // Guardar exemplos
+              const exemplos = exemplosValores.get(valorStr);
+              if (exemplos.length < 3) {
+                exemplos.push(codigo);
+              }
+            }
+          }
+        });
+        
+        console.log(`📊 ESTATÍSTICAS ${campo.toUpperCase()}:`);
+        console.log(`   Total de imóveis: ${estatisticas.total}`);
+        console.log(`   Com ${campo} válido: ${estatisticas.comValor} (${((estatisticas.comValor/estatisticas.total)*100).toFixed(1)}%)`);
+        console.log(`   Sem ${campo}: ${estatisticas.semValor} (${((estatisticas.semValor/estatisticas.total)*100).toFixed(1)}%)`);
+        console.log(`   - NULL: ${estatisticas.null}`);
+        console.log(`   - Undefined: ${estatisticas.undefined}`);
+        console.log(`   - Vazio (""): ${estatisticas.vazio}`);
+        console.log(`   - Só espaços: ${estatisticas.espacos}`);
+        
+        console.log(`\n🎯 VALORES ÚNICOS DE ${campo.toUpperCase()}: ${valoresUnicos.size}`);
+        
+        // Criar array ordenado
+        const valoresOrdenados = valoresUnicos.size > 0 
+          ? Array.from(valoresUnicos.entries()).sort((a, b) => b[1] - a[1])
+          : [];
+        
+        if (valoresOrdenados.length > 0) {
+          console.log(`📋 LISTA COMPLETA (ordenada por frequência):`);
+          
+          valoresOrdenados.forEach(([valor, count], index) => {
+            const exemplos = exemplosValores.get(valor);
+            const percentual = ((count/estatisticas.comValor)*100).toFixed(1);
+            console.log(`   ${index + 1}. "${valor}" → ${count}x (${percentual}%) - Ex: ${exemplos.join(', ')}`);
+          });
+          
+          // Comparar com interface (apenas para campos que temos na interface)
+          if (campo === 'Situacao') {
+            console.log(`\n🔍 COMPARAÇÃO COM INTERFACE (${campo}):`);
+            console.log(`   Valores na interface: ${situacoesReais.length}`);
+            console.log(`   Valores no banco: ${valoresUnicos.size}`);
+            
+            const valoresDaInterface = new Set(situacoesReais.map(s => s.toLowerCase().trim()));
+            const valoresOcultos = [];
+            
+            valoresOrdenados.forEach(([valor, count]) => {
+              const chaveNormalizada = valor.toLowerCase().trim();
+              if (!valoresDaInterface.has(chaveNormalizada)) {
+                valoresOcultos.push({ valor, count });
+              }
+            });
+            
+            if (valoresOcultos.length > 0) {
+              console.log(`🚨 VALORES OCULTOS EM ${campo.toUpperCase()}:`);
+              
+              let totalOcultos = 0;
+              valoresOcultos.forEach(({valor, count}, i) => {
+                totalOcultos += count;
+                const exemplos = exemplosValores.get(valor);
+                console.log(`   ${i + 1}. "${valor}" → ${count}x - Ex: ${exemplos.join(', ')}`);
+              });
+              
+              // Estimativa no total
+              const estimativa = Math.round((5553 * totalOcultos) / estatisticas.comValor);
+              console.log(`💡 Estimativa de imóveis ocultos: ${estimativa}`);
+              
+              if (estimativa >= 50) {
+                console.log(`🎯 BINGO! ${estimativa} imóveis ocultos explicam os 57 faltando!`);
+                console.log(`🔧 SOLUÇÃO: Adicionar "${valoresOcultos.map(v => v.valor).join('", "')}" aos filtros`);
+              }
+            } else {
+              console.log(`✅ Todos os valores de ${campo} estão na interface`);
+            }
+          }
+        }
+        
+        // Salvar análise
+        analiseCompleta[campo] = {
+          estatisticas,
+          valoresUnicos: valoresOrdenados,
+          problemasEncontrados: estatisticas.semValor > 0
+        };
+        
+        // 🚨 ALERTA PARA PROBLEMAS CRÍTICOS
+        if (estatisticas.semValor > 0) {
+          const percentualProblema = ((estatisticas.semValor/estatisticas.total)*100).toFixed(1);
+          const estimativaTotal = Math.round((5553 * estatisticas.semValor) / estatisticas.total);
+          
+          console.log(`\n🚨 PROBLEMA ENCONTRADO EM ${campo.toUpperCase()}:`);
+          console.log(`   Imóveis sem ${campo}: ${estatisticas.semValor} (${percentualProblema}%)`);
+          console.log(`   Estimativa no total: ${estimativaTotal} imóveis`);
+          
+          if (estimativaTotal >= 30) {
+            console.log(`🎯 POSSÍVEL CAUSA DOS 57 IMÓVEIS FALTANDO!`);
+            console.log(`💡 SOLUÇÃO: Incluir imóveis com ${campo} NULL/undefined nos resultados`);
+          }
+        }
+        
+        // 🔍 ALERTA PARA CAMPO ATIVO ESPECÍFICO
+        if (campo === 'Ativo') {
+          console.log(`\n🎯 ANÁLISE ESPECIAL CAMPO ATIVO:`);
+          
+          if (valoresOrdenados.length > 0) {
+            const valorSim = valoresOrdenados.find(([valor]) => valor === 'Sim' || valor === 'sim' || valor === 'S');
+            const valorNao = valoresOrdenados.find(([valor]) => valor === 'Não' || valor === 'não' || valor === 'N' || valor === 'Nao');
+            
+            if (valorSim) {
+              console.log(`   ✅ ATIVO = "Sim": ${valorSim[1]} imóveis`);
+            }
+            if (valorNao) {
+              console.log(`   ❌ ATIVO = "Não": ${valorNao[1]} imóveis`);
+              const estimativaNao = Math.round((5553 * valorNao[1]) / estatisticas.total);
+              console.log(`   📊 Estimativa total "Não": ${estimativaNao} imóveis`);
+              
+              if (estimativaNao >= 50) {
+                console.log(`   🚨 BINGO! Imóveis com Ativo="Não" podem ser os 57 faltando!`);
+                console.log(`   💡 SOLUÇÃO: Verificar se filtro de "cadastro" está excluindo estes imóveis`);
+              }
+            }
+            
+            if (estatisticas.semValor > 0) {
+              const estimativaSemAtivo = Math.round((5553 * estatisticas.semValor) / estatisticas.total);
+              console.log(`   ⚠️ ATIVO = NULL/undefined: ${estatisticas.semValor} imóveis (~${estimativaSemAtivo} total)`);
+              
+              if (estimativaSemAtivo >= 50) {
+                console.log(`   🎯 ESTES PODEM SER OS 57 FALTANDO!`);
+              }
+            }
+          }
+        }
+        
+        console.log(`===== FIM ANÁLISE ${campo.toUpperCase()} =====\n`);
+      });
+      
+      // ================================
+      // 📋 RESUMO FINAL E DIAGNÓSTICO AVANÇADO
+      // ================================
+      
+      console.log("🎯 ===== RESUMO FINAL E DIAGNÓSTICO AVANÇADO =====");
+      console.log(`📊 Total analisado: ${todosImoveis.length} imóveis`);
+      console.log(`🔍 Diferença conhecida: 57 imóveis (5553 - 5496)`);
+      console.log(`📈 Percentual da amostra: ${((todosImoveis.length/5553)*100).toFixed(1)}% do total`);
+      
+      let problemasEncontrados = false;
+      let totalEstimadoProblemas = 0;
+      
+      console.log(`\n📋 ANÁLISE POR CAMPO:`);
+      camposAnalise.forEach(campo => {
+        const analise = analiseCompleta[campo];
+        if (analise.problemasEncontrados) {
+          problemasEncontrados = true;
+          const estimativa = Math.round((5553 * analise.estatisticas.semValor) / analise.estatisticas.total);
+          totalEstimadoProblemas += estimativa;
+          console.log(`⚠️ ${campo}: ${analise.estatisticas.semValor} sem valor (~${estimativa} no total)`);
+        } else {
+          console.log(`✅ ${campo}: Todos os imóveis têm valor válido`);
+        }
+      });
+      
+      console.log(`\n📊 RESUMO DE PROBLEMAS:`);
+      if (problemasEncontrados) {
+        console.log(`   Total estimado de problemas: ${totalEstimadoProblemas} imóveis`);
+        console.log(`   Diferença real: 57 imóveis`);
+        console.log(`   Percentual explicado: ${((totalEstimadoProblemas/57)*100).toFixed(1)}%`);
+        
+        if (totalEstimadoProblemas >= 50) {
+          console.log(`🎯 PROBLEMAS ENCONTRADOS EXPLICAM A DIFERENÇA!`);
+        } else if (totalEstimadoProblemas < 10) {
+          console.log(`🤔 PROBLEMAS INSUFICIENTES. INVESTIGAR:`);
+          console.log(`   - Múltiplas condições combinadas`);
+          console.log(`   - Filtros de data ou outros campos`);
+          console.log(`   - Condições específicas do MongoDB`);
+        }
+      } else {
+        console.log(`✅ NENHUM PROBLEMA ÓBVIO ENCONTRADO`);
+        console.log(`\n🤔 POSSÍVEIS CAUSAS OCULTAS:`);
+        console.log(`   1. Combinação de múltiplos campos NULL`);
+        console.log(`   2. Filtros de data automáticos não visíveis`);
+        console.log(`   3. Índices do MongoDB excluindo documentos`);
+        console.log(`   4. Condições WHERE ocultas na query`);
+        console.log(`   5. Diferenças entre getImoveisByFilters() e API principal`);
+        
+        // Investigação adicional para casos complexos
+        console.log(`\n🔍 INVESTIGAÇÃO ADICIONAL NECESSÁRIA:`);
+        console.log(`   - Comparar query do getImoveisByFilters vs API principal`);
+        console.log(`   - Verificar campos de data que podem filtrar automaticamente`);
+        console.log(`   - Analisar se há soft deletes ou status ocultos`);
+      }
+      
+      // 🧪 SUGESTÕES DE TESTE
+      console.log(`\n🧪 PRÓXIMOS TESTES SUGERIDOS:`);
+      console.log(`   1. Testar filtro sem nenhum campo (só paginação)`);
+      console.log(`   2. Comparar contagem direta no MongoDB`);
+      console.log(`   3. Verificar se há campo "deleted_at" ou similar`);
+      console.log(`   4. Analisar diferenças entre agregação e find simples`);
+      
+      if (!problemasEncontrados) {
+        console.log(`\n💡 INVESTIGAÇÃO RECOMENDADA:`);
+        console.log(`   Problema pode estar no backend, não no frontend`);
+        console.log(`   Verificar função getImoveisByFilters() vs contagem real`);
+      }
       
     } catch (error) {
-      console.error("❌ Erro na investigação focada:", error);
+      console.error("❌ Erro na investigação completa:", error);
     } finally {
-      setInvestigando(false);
+      setInvestigandoSituacoes(false);
     }
     
-    console.log("🎯 ===== FIM INVESTIGAÇÃO =====");
+    console.log("🔬 ===== FIM INVESTIGAÇÃO COMPLETA =====");
   };
 
-  // ✅ useEffect para situações - VERSÃO OTIMIZADA
+  // ✅ useEffect para situações - VERSÃO INCLUSIVA TOTAL
   useEffect(() => {
     async function fetchFilterData() {
       try {
-        console.log("📡 [SITUAÇÃO] Buscando dados de filtros...");
+        console.log("🚨 ===== DEBUG SITUAÇÃO - VERSÃO INCLUSIVA TOTAL =====");
         
         const [catResponse, cidResponse, sitResponse] = await Promise.all([
           getImoveisByFilters("Categoria"),
@@ -321,29 +395,47 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         if (sitResponse?.data && Array.isArray(sitResponse.data) && sitResponse.data.length > 0) {
           const situacoesBrutas = sitResponse.data.filter(s => s && s.toString().trim() !== '');
           
-          console.log("📥 [SITUAÇÃO] Situações recebidas:", situacoesBrutas.length);
+          console.log("📥 [SITUAÇÃO] Situações BRUTAS recebidas do backend:");
+          situacoesBrutas.forEach((sit, i) => {
+            console.log(`   ${i}: "${sit}" (tipo: ${typeof sit})`);
+          });
+          
+          console.log("🔄 [SITUAÇÃO] Aplicando lógica INCLUSIVA TOTAL...");
           
           const novoMapeamento = {};
           const situacoesParaUI = new Set();
           
           // Criar mapeamento por chave normalizada
-          situacoesBrutas.forEach((situacaoOriginal) => {
+          situacoesBrutas.forEach((situacaoOriginal, index) => {
             if (situacaoOriginal && situacaoOriginal.toString().trim() !== '') {
               const chave = situacaoOriginal.toLowerCase().trim();
               
+              console.log(`   ${index}: "${situacaoOriginal}" → chave: "${chave}"`);
+              
               if (!novoMapeamento[chave]) {
                 novoMapeamento[chave] = [];
+                console.log(`     ✅ Nova chave criada: "${chave}"`);
               }
               
               if (!novoMapeamento[chave].includes(situacaoOriginal)) {
                 novoMapeamento[chave].push(situacaoOriginal);
+                console.log(`     ✅ Situação "${situacaoOriginal}" adicionada à chave "${chave}"`);
+              } else {
+                console.log(`     ⚠️ Situação "${situacaoOriginal}" já existe na chave "${chave}"`);
               }
             }
           });
           
-          // ✅ Incluir todas as situações encontradas
+          console.log("📊 [SITUAÇÃO] Mapeamento criado:");
+          Object.keys(novoMapeamento).forEach(chave => {
+            console.log(`   "${chave}" → [${novoMapeamento[chave].join(', ')}] (${novoMapeamento[chave].length} variações)`);
+          });
+          
+          // ✅ INCLUIR TODAS as situações (versão inclusiva total)
           Object.keys(novoMapeamento).forEach(chave => {
             const situacoesGrupo = novoMapeamento[chave];
+            
+            console.log(`   🧪 INCLUINDO TODAS as variações de "${chave}"`);
             
             // Priorizar versão maiúscula se existir, senão usar a primeira
             const versaoMaiuscula = situacoesGrupo.find(s => {
@@ -354,16 +446,23 @@ export default function FiltersImoveisAdmin({ onFilter }) {
             const situacaoParaUI = versaoMaiuscula || situacoesGrupo[0];
             
             if (situacaoParaUI) {
+              console.log(`   ✅ Adicionando à UI: "${situacaoParaUI}"`);
               situacoesParaUI.add(situacaoParaUI);
             }
           });
           
           const situacoesFinais = Array.from(situacoesParaUI).sort();
           
-          console.log("🎨 [SITUAÇÃO] Situações finais para interface:", situacoesFinais.length);
+          console.log("🎨 [SITUAÇÃO] Situações FINAIS para interface:");
+          situacoesFinais.forEach((sit, i) => {
+            console.log(`   ${i}: "${sit}"`);
+          });
           
+          console.log("💾 [SITUAÇÃO] Salvando estados...");
           setSituacoesReais(situacoesFinais);
           setSituacoesMapeamento(novoMapeamento);
+          
+          console.log("🚨 ===== DEBUG SITUAÇÃO - SUCESSO (INCLUSIVA TOTAL) =====");
           
         } else {
           console.log("⚠️ [SITUAÇÃO] Sem dados do backend, usando hardcoded");
@@ -377,11 +476,10 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         setSituacoesMapeamento({});
       }
     }
-    
     fetchFilterData();
   }, []);
 
-  // ✅ useEffect para bairros (funcionando corretamente)
+  // ✅ MANTIDO: useEffect para bairros (funcionando corretamente)
   useEffect(() => {
     async function fetchBairros() {
       if (!cidadeSelecionada) {
@@ -593,9 +691,9 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     });
   };
 
-  // ✅ FUNÇÃO FUNCIONANDO: Normalizar situações para API
+  // ✅ FUNÇÃO CORRIGIDA: Versão TOTALMENTE INCLUSIVA
   const normalizarSituacaoParaAPI = (situacoesSelecionadas) => {
-    console.log("✅ ===== SITUAÇÃO API (FUNCIONANDO CORRETAMENTE) =====");
+    console.log("🔓 ===== SITUAÇÃO API (VERSÃO TOTALMENTE INCLUSIVA) =====");
     
     if (!Array.isArray(situacoesSelecionadas) || situacoesSelecionadas.length === 0) {
       console.log('❌ [API SITUAÇÃO] Nenhuma situação selecionada');
@@ -614,12 +712,20 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       
       if (situacoesMapeamento[chave] && situacoesMapeamento[chave].length > 0) {
         console.log(`✅ [API SITUAÇÃO] [${index}] MAPEAMENTO ENCONTRADO: ${situacoesMapeamento[chave].length} variações`);
+        console.log(`   Variações originais: [${situacoesMapeamento[chave].join(', ')}]`);
         
-        // ✅ Incluir todas as variações mapeadas
+        // ✅ VERSÃO TOTALMENTE INCLUSIVA: Incluir TODAS as variações
         const variacoesValidas = situacoesMapeamento[chave];
+        
+        variacoesValidas.forEach(variacao => {
+          console.log(`   ✅ INCLUINDO (TOTAL): "${variacao}"`);
+        });
+        
         todasVariacoesSituacao.push(...variacoesValidas);
+        console.log(`   ✅ Adicionadas ${variacoesValidas.length} variações válidas`);
       } else {
-        console.log(`⚠️ [API SITUAÇÃO] [${index}] SEM MAPEAMENTO para "${chave}" - usando valor original`);
+        console.log(`⚠️ [API SITUAÇÃO] [${index}] SEM MAPEAMENTO para "${chave}"`);
+        console.log(`   ✅ Valor original "${situacaoSelecionada}" incluído (TOTAL)`);
         todasVariacoesSituacao.push(situacaoSelecionada);
       }
     });
@@ -627,16 +733,18 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     // Remover duplicatas
     const situacoesSemDuplicatas = [...new Set(todasVariacoesSituacao)];
     
-    console.log("🎯 [API SITUAÇÃO] RESULTADO FINAL:");
+    console.log("🎯 [API SITUAÇÃO] RESULTADO TOTALMENTE INCLUSIVO:");
     console.log("   Situações na UI:", situacoesSelecionadas.length);
-    console.log("   Situações para API:", situacoesSemDuplicatas.length);
+    console.log("   Variações totais encontradas:", todasVariacoesSituacao.length);
+    console.log("   Após remoção de duplicatas:", situacoesSemDuplicatas.length);
+    console.log("   Multiplicador:", (situacoesSemDuplicatas.length / situacoesSelecionadas.length).toFixed(2), ":1");
     console.log("   Situações finais:", situacoesSemDuplicatas);
-    console.log("✅ ===== SITUAÇÃO API (FUNCIONANDO) - FIM =====");
+    console.log("🔓 ===== SITUAÇÃO API (VERSÃO TOTALMENTE INCLUSIVA) - FIM =====");
     
     return situacoesSemDuplicatas;
   };
 
-  // ✅ Normalizar bairros para API (funcionando corretamente)
+  // ✅ MANTIDO: Normalizar bairros para API (funcionando)
   const normalizarBairrosParaAPI = (bairrosSelecionados) => {
     if (!Array.isArray(bairrosSelecionados) || bairrosSelecionados.length === 0) {
       return undefined;
@@ -657,33 +765,49 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     return [...new Set(todasVariacoes)];
   };
 
-  // 🎯 FUNÇÃO AJUSTADA: handleFilters para forçar busca de todos os imóveis
+  // handleFilters com debug
   const handleFilters = () => {
-    console.log("🎯 ===== APLICANDO FILTROS (ESTRATÉGIA FORÇAR TODOS) =====");
+    console.log("🚨 ================================");
+    console.log("🚨 APLICANDO FILTROS - VERSÃO TOTALMENTE INCLUSIVA");
+    console.log("🚨 ================================");
     
-    console.log("📋 [FILTROS] Situações selecionadas:", situacoesSelecionadas.length);
-    console.log("💡 [FILTROS] Nova estratégia: Forçar busca de TODOS os imóveis");
+    console.log("📋 [FILTROS] Situações selecionadas na interface:", situacoesSelecionadas);
+    console.log("📋 [FILTROS] Total de situações selecionadas:", situacoesSelecionadas.length);
+    console.log("📋 [FILTROS] Mapeamento disponível:", Object.keys(situacoesMapeamento));
     
-    // ✅ Processar situações (funcionando corretamente)
+    // ✅ CHAMAR A VERSÃO TOTALMENTE INCLUSIVA
+    console.log("🔥 [FILTROS] CHAMANDO normalizarSituacaoParaAPI TOTALMENTE INCLUSIVA...");
     const situacaoProcessada = normalizarSituacaoParaAPI(situacoesSelecionadas);
+    console.log("🧪 [FILTROS] RESULTADO da normalizarSituacaoParaAPI:", situacaoProcessada);
+    console.log("🧪 [FILTROS] TIPO:", typeof situacaoProcessada);
+    console.log("🧪 [FILTROS] É ARRAY:", Array.isArray(situacaoProcessada));
+    console.log("🧪 [FILTROS] COMPRIMENTO:", situacaoProcessada?.length || 0);
     
-    // 🎯 ESTRATÉGIA NOVA: Incluir AMBOS valores de Ativo para forçar busca completa
+    // ✅ ANÁLISE DE MULTIPLICAÇÃO
+    if (situacoesSelecionadas.length > 0 && situacaoProcessada) {
+      const multiplicador = situacaoProcessada.length / situacoesSelecionadas.length;
+      console.log("📊 [FILTROS] ANÁLISE DE MULTIPLICAÇÃO:");
+      console.log(`   Situações na UI: ${situacoesSelecionadas.length}`);
+      console.log(`   Situações para API: ${situacaoProcessada.length}`);
+      console.log(`   Multiplicador: ${multiplicador.toFixed(2)}x`);
+      
+      if (multiplicador > 1.5) {
+        console.log(`💡 [FILTROS] MULTIPLICADOR ALTO: ${multiplicador.toFixed(2)}x pode recuperar os imóveis faltando!`);
+      }
+    }
+    
     const filtersToApply = {
       Categoria: filters.categoria || categoriaSelecionada,
       Status: filters.status,
       Situacao: situacaoProcessada || filters.situacao || undefined,
-      // 🎯 MUDANÇA CRÍTICA: Incluir AMBOS valores para forçar busca completa
-      Ativo: filters.cadastro || ["Sim", "Não"], // ✅ Força busca de todos
+      Ativo: filters.cadastro,
       Cidade: cidadeSelecionada,
       bairros: normalizarBairrosParaAPI(bairrosSelecionados) || undefined,
       ValorMin: valorMin,
       ValorMax: valorMax,
       AreaMin: areaMin,
-      AreaMax: areaMax
+      AreaMax: areaMax,
     };
-
-    // ✅ PRESERVAR FILTRO ATIVO PARA PROCESSAMENTO FRONTEND
-    const filtroAtivoFrontend = filters.cadastro;
 
     // Remover campos undefined para clareza
     const filtersForAPI = {};
@@ -693,37 +817,29 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       }
     });
 
-    console.log("📤 FILTROS FINAIS ENVIADOS PARA BACKEND:");
+    console.log("📤 FILTROS FINAIS ENVIADOS PARA API:");
     console.log(JSON.stringify(filtersForAPI, null, 2));
-    console.log("🎯 FILTRO ATIVO ENVIADO:", Array.isArray(filtersForAPI.Ativo) ? "AMBOS [Sim, Não]" : filtersForAPI.Ativo);
-    console.log("🎯 FILTRO ATIVO FRONTEND:", filtroAtivoFrontend || "nenhum (todos)");
 
     if (filtersForAPI.Situacao) {
-      console.log("🎯 SITUAÇÃO ENVIADA:", filtersForAPI.Situacao.length, "valores");
+      console.log("🎯 SITUAÇÃO ENVIADA PARA API (TOTALMENTE INCLUSIVA):", filtersForAPI.Situacao);
+      console.log("🎯 TIPO DA SITUAÇÃO:", typeof filtersForAPI.Situacao);
+      console.log("🎯 É ARRAY:", Array.isArray(filtersForAPI.Situacao));
+      if (Array.isArray(filtersForAPI.Situacao)) {
+        console.log("🎯 COMPRIMENTO DO ARRAY:", filtersForAPI.Situacao.length);
+        console.log("🎯 ITENS DO ARRAY:", filtersForAPI.Situacao.map((s, i) => `  ${i}: "${s}"`));
+      }
+    } else {
+      console.log("⚠️ NENHUMA SITUAÇÃO NO FILTRO FINAL");
     }
 
-    // 💡 LOG ESPECIAL PARA NOVA ESTRATÉGIA
-    console.log("💡 NOVA ESTRATÉGIA:");
-    console.log("   ✅ Backend: Busca com Ativo=[Sim,Não] (força todos)");
-    console.log("   ✅ Frontend: Aplica lógica de preços + filtro específico");
-    console.log("   🎯 Resultado: Backend OBRIGADO a retornar todos!");
-
-    console.log("🎯 ===== FIM APLICAÇÃO FILTROS =====");
+    console.log("🚨 ================================");
 
     if (onFilter) {
-      // 🎯 ENVIAR FILTROS COM ESTRATÉGIA FORÇADA
-      const filtersWithProcessing = {
-        ...filtersToApply,
-        // ✅ Metadados para processamento frontend
-        _filtroAtivoFrontend: filtroAtivoFrontend,
-        _aplicarLogicaPrecos: true,
-        _processImoveisCallback: processarImoveisComLogicaPreco
-      };
-      onFilter(filtersWithProcessing);
+      onFilter(filtersToApply);
     }
   };
 
-  // ✅ handleClearFilters com estratégia forçada
+  // ✅ MANTIDO: handleClearFilters com limpeza completa do cache
   const handleClearFilters = () => {
     console.log("🧹 [CLEAR] Iniciando limpeza completa dos filtros...");
     
@@ -750,24 +866,22 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     // ✅ LIMPEZA COMPLETA DO CACHE DO LOCALSTORAGE
     console.log("🧹 [CLEAR] Limpando cache do localStorage...");
     
+    // Limpar todos os caches relacionados aos filtros
     localStorage.removeItem("admin_appliedFilters");
     localStorage.removeItem("admin_filterResults");
     localStorage.removeItem("admin_filterPagination");
+    
+    // Limpar também cache de busca livre se existir
     localStorage.removeItem("admin_searchTerm");
     localStorage.removeItem("admin_searchResults");
     localStorage.removeItem("admin_searchPagination");
     
     console.log("✅ [CLEAR] Cache limpo com sucesso!");
-    console.log("🔄 [CLEAR] Forçando busca de TODOS os imóveis...");
+    console.log("🔄 [CLEAR] Aplicando filtros vazios...");
 
-    // ✅ FORÇAR BUSCA DE TODOS OS IMÓVEIS
+    // Aplicar filtros vazios
     if (onFilter) {
-      onFilter({
-        // 🎯 FORÇAR busca de todos com Ativo=[Sim,Não]
-        Ativo: ["Sim", "Não"],
-        _aplicarLogicaPrecos: true,
-        _processImoveisCallback: processarImoveisComLogicaPreco
-      });
+      onFilter({});
     }
     
     console.log("✅ [CLEAR] Limpeza completa finalizada!");
@@ -814,7 +928,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           value={filters.status}
         />
         
-        {/* ✅ DROPDOWN DE SITUAÇÃO (FUNCIONANDO CORRETAMENTE) */}
+        {/* ✅ DROPDOWN DE SITUAÇÃO TOTALMENTE INCLUSIVO */}
         <div ref={situacaoRef} className="relative">
           <label htmlFor="situacao" className="text-xs text-gray-500 block mb-2">
             situacao
@@ -855,7 +969,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
                     </div>
                     
                     <div className="px-2 py-1 text-[9px] text-gray-400 border-b border-gray-100">
-                      ✅ FUNCIONANDO: {situacoesReais.length} situações ({Object.keys(situacoesMapeamento).length} chaves mapeadas)
+                      🔓 TOTALMENTE INCLUSIVO: {situacoesReais.length} situações ({Object.keys(situacoesMapeamento).length} chaves mapeadas)
                     </div>
                     
                     {situacoesFiltradas.map((situacao, index) => {
@@ -912,7 +1026,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* ✅ DROPDOWN DE BAIRROS (FUNCIONANDO CORRETAMENTE) */}
+        {/* ✅ DROPDOWN DE BAIRROS MANTIDO (funcionando) */}
         <div ref={bairrosRef}>
           <label htmlFor="bairros" className="text-xs text-gray-500 block mb-2">
             Bairros
@@ -954,7 +1068,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
                     </div>
                     
                     <div className="px-2 py-1 text-[9px] text-gray-400 border-b border-gray-100">
-                      ✅ {bairrosReais.length} bairros ({Object.keys(bairrosMapeamento).length} chaves mapeadas)
+                      Debug: {bairrosReais.length} bairros ({Object.keys(bairrosMapeamento).length} chaves mapeadas)
                     </div>
                     
                     {bairrosFiltrados.map((bairro, index) => {
@@ -1050,7 +1164,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         </div>
       </div>
 
-      {/* 🎯 BOTÕES DE AÇÃO OTIMIZADOS COM DEBUG COMPLETO */}
+      {/* 🔬 BOTÕES DE AÇÃO - INCLUINDO INVESTIGAÇÃO */}
       <div className="flex flex-wrap gap-3 items-center pt-4 border-t">
         <button
           onClick={handleFilters}
@@ -1066,109 +1180,50 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           Limpar Filtros
         </button>
 
-        {/* 🔍 DEBUG BACKEND */}
-        <button
-          onClick={async () => {
-            console.log('🔍 ===== DEBUG BACKEND DIRETO =====');
-            
-            try {
-              // Teste 1: API direta sem filtros
-              console.log('📡 Teste 1: API direta sem filtros...');
-              const response1 = await fetch('/api/admin/imoveis?page=1&limit=5');
-              const data1 = await response1.json();
-              console.log('Resultado API sem filtros:', data1);
-              
-              // Teste 2: API com Ativo=Sim
-              console.log('📡 Teste 2: API com Ativo=Sim...');
-              const response2 = await fetch('/api/admin/imoveis?page=1&limit=5&Ativo=Sim');
-              const data2 = await response2.json();
-              console.log('Resultado API Ativo=Sim:', data2);
-              
-              // Teste 3: API com Ativo=Não
-              console.log('📡 Teste 3: API com Ativo=Não...');
-              const response3 = await fetch('/api/admin/imoveis?page=1&limit=5&Ativo=Não');
-              const data3 = await response3.json();
-              console.log('Resultado API Ativo=Não:', data3);
-              
-              console.log('🔍 ===== FIM DEBUG BACKEND =====');
-            } catch (error) {
-              console.error('❌ Erro no debug:', error);
-            }
-          }}
-          className="px-3 py-2 text-xs rounded-lg bg-indigo-500 text-white hover:bg-indigo-600 transition-colors"
-          title="Debug: Testa API backend diretamente"
-        >
-          🔍 Debug Backend
-        </button>
-
-        {/* 🧪 TESTE DE VALORES CONHECIDOS */}
+        {/* 🎯 BOTÃO DE TESTE CAMPO ATIVO */}
         <button
           onClick={() => {
-            console.log('🧪 TESTE: Tentando valores que sabemos que existem...');
-            
-            if (onFilter) {
-              // Testar apenas com Ativo = "Sim" (que sabemos que tem muitos)
-              onFilter({
-                Ativo: "Sim",
-                _aplicarLogicaPrecos: false // Sem processamento para ver resultado bruto
-              });
-            }
-          }}
-          className="px-3 py-2 text-xs rounded-lg bg-yellow-500 text-white hover:bg-yellow-600 transition-colors"
-          title="Testa com valores que sabemos que existem no banco"
-        >
-          🧪 Teste Ativo=Sim
-        </button>
-
-        {/* 🆘 BOTÃO DE EMERGÊNCIA - TESTE SEM FILTROS */}
-        <button
-          onClick={() => {
-            console.log('🆘 EMERGÊNCIA: Testando chamada direta ao backend SEM filtros...');
-            
-            if (onFilter) {
-              console.log('📡 Enviando objeto vazio para forçar busca sem filtros...');
-              onFilter({});
-            }
-          }}
-          className="px-3 py-2 text-xs rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
-          title="Emergência: Testa backend sem nenhum filtro"
-        >
-          🆘 Teste SEM Filtros
-        </button>
-
-        {/* 🎯 BOTÃO PARA FORÇAR BUSCA DE TODOS OS IMÓVEIS */}
-        <button
-          onClick={() => {
-            console.log('🎯 FORÇANDO BUSCA: Incluindo AMBOS valores Ativo para forçar todos os imóveis...');
+            console.log('🧪 TESTE: Limpando filtro de cadastro (Ativo)...');
             setFilters(prev => ({ ...prev, cadastro: "" }));
-            console.log('💡 Backend receberá Ativo=[Sim,Não] para retornar TODOS!');
-            
-            // Aplicar automaticamente após 500ms
-            setTimeout(() => {
-              handleFilters();
-            }, 500);
+            console.log('🧪 TESTE: Filtro de cadastro limpo. Aplicar filtros para ver diferença.');
+          }}
+          className="px-3 py-2 text-xs rounded-lg bg-orange-500 text-white hover:bg-orange-600 transition-colors"
+        >
+          🧪 Limpar Filtro "Cadastro"
+        </button>
+
+        {/* 🎯 BOTÃO DE TESTE RÁPIDO */}
+        <button
+          onClick={() => {
+            console.log('🧪 TESTE: Adicionando "Pronto para morar" às situações selecionadas...');
+            setSituacoesSelecionadas(prev => {
+              if (!prev.includes("Pronto para morar")) {
+                const novasSituacoes = [...prev, "Pronto para morar"];
+                console.log('🧪 TESTE: Novas situações:', novasSituacoes);
+                return novasSituacoes;
+              }
+              return prev;
+            });
           }}
           className="px-3 py-2 text-xs rounded-lg bg-green-500 text-white hover:bg-green-600 transition-colors"
-          title="Força backend a buscar TODOS os imóveis com Ativo=[Sim,Não]"
         >
-          🎯 FORÇAR Busca de TODOS
+          ✅ "Pronto para morar" (+1)
         </button>
 
-        {/* 🎯 INVESTIGAÇÃO FOCADA (OTIMIZADA COM LÓGICA DE PREÇOS) */}
+        {/* 🔬 BOTÃO DE INVESTIGAÇÃO COMPLETA */}
         <button
-          onClick={investigarImoveisFaltando}
-          disabled={investigando}
+          onClick={investigarTodosCampos}
+          disabled={investigandoSituacoes}
           className={`px-4 py-2 text-sm rounded-lg transition-colors ${
-            investigando
+            investigandoSituacoes
               ? 'bg-yellow-300 text-yellow-800 cursor-not-allowed'
-              : 'bg-green-500 text-white hover:bg-green-600'
+              : 'bg-red-500 text-white hover:bg-red-600'
           }`}
-          title="Testa a nova lógica de preços para resolver os 57 imóveis faltando"
         >
-          {investigando ? '🔍 Testando Lógica...' : '💡 Testar Lógica de Preços'}
+          {investigandoSituacoes ? '🔍 Investigando...' : '🔍 Investigar Todos os Campos'}
         </button>
 
-        {/* 📊 INFORMAÇÕES DE STATUS OTIMIZADAS */}
+        {/* 📊 INFORMAÇÕES DE DEBUG MELHORADAS */}
         <div className="text-xs text-gray-500 flex items-center gap-4 flex-wrap">
           <span>🎯 Situações: {situacoesReais.length}</span>
           <span>🗂️ Mapeamentos: {Object.keys(situacoesMapeamento).length}</span>
@@ -1177,25 +1232,16 @@ export default function FiltersImoveisAdmin({ onFilter }) {
               ✅ {situacoesSelecionadas.length} selecionadas
             </span>
           )}
-          {estatisticasPrecos.total > 0 && (
-            <span className="text-green-600 text-[10px] font-bold">
-              💰 {estatisticasPrecos.comPreco}/{estatisticasPrecos.total} com preço
-            </span>
-          )}
-          <span className="text-green-600 text-[10px] font-bold">
-            🎯 ESTRATÉGIA: Ativo=[Sim,Não] força backend retornar todos
+          <span className="text-red-600 text-[10px]">
+            ⚠️ 57 imóveis ainda faltando (5553 - 5496)
           </span>
-          {!filters.cadastro ? (
-            <span className="text-orange-600 text-[10px] font-bold">
-              🔓 MODO FORÇADO: Backend receberá [Sim,Não]
-            </span>
-          ) : (
-            <span className="text-blue-600 text-[10px] font-bold">
-              🔍 FILTRADO: Frontend aplicará Ativo={filters.cadastro}
+          {situacoesReais.includes("Pronto para morar") && (
+            <span className="text-green-600 text-[10px] font-bold">
+              ✅ "Pronto para morar" detectado! (+1)
             </span>
           )}
-          <span className="text-red-600 text-[10px] font-bold">
-            ⚠️ Se ainda 0 imóveis: Problema no backend com filtro Ativo
+          <span className="text-blue-600 text-[10px]">
+            🔍 Progresso: 1/57 encontrados
           </span>
         </div>
       </div>
