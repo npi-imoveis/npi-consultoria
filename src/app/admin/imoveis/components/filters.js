@@ -1,4 +1,6 @@
-import { getBairrosPorCidade, getImoveisByFilters } from "@/app/services";
+<span className="text-red-600 text-[10px] font-bold">
+            ⚠️ Se ainda 0 imóveis: Problema no backend com filtro Ativo
+          </span>import { getBairrosPorCidade, getImoveisByFilters } from "@/app/services";
 import { useEffect, useState, useRef } from "react";
 
 export default function FiltersImoveisAdmin({ onFilter }) {
@@ -1064,6 +1066,76 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           className="px-4 py-2 bg-gray-500 text-white text-sm rounded-lg hover:bg-gray-600 transition-colors"
         >
           Limpar Filtros
+        </button>
+
+        {/* 🔍 DEBUG BACKEND */}
+        <button
+          onClick={async () => {
+            console.log('🔍 ===== DEBUG BACKEND DIRETO =====');
+            
+            try {
+              // Teste 1: API direta sem filtros
+              console.log('📡 Teste 1: API direta sem filtros...');
+              const response1 = await fetch('/api/admin/imoveis?page=1&limit=5');
+              const data1 = await response1.json();
+              console.log('Resultado API sem filtros:', data1);
+              
+              // Teste 2: API com Ativo=Sim
+              console.log('📡 Teste 2: API com Ativo=Sim...');
+              const response2 = await fetch('/api/admin/imoveis?page=1&limit=5&Ativo=Sim');
+              const data2 = await response2.json();
+              console.log('Resultado API Ativo=Sim:', data2);
+              
+              // Teste 3: API com Ativo=Não
+              console.log('📡 Teste 3: API com Ativo=Não...');
+              const response3 = await fetch('/api/admin/imoveis?page=1&limit=5&Ativo=Não');
+              const data3 = await response3.json();
+              console.log('Resultado API Ativo=Não:', data3);
+              
+              console.log('🔍 ===== FIM DEBUG BACKEND =====');
+            } catch (error) {
+              console.error('❌ Erro no debug:', error);
+            }
+          }}
+          className="px-3 py-2 text-xs rounded-lg bg-indigo-500 text-white hover:bg-indigo-600 transition-colors"
+          title="Debug: Testa API backend diretamente"
+        >
+          🔍 Debug Backend
+        </button>
+
+        {/* 🧪 TESTE DE VALORES CONHECIDOS */}
+        <button
+          onClick={() => {
+            console.log('🧪 TESTE: Tentando valores que sabemos que existem...');
+            
+            if (onFilter) {
+              // Testar apenas com Ativo = "Sim" (que sabemos que tem muitos)
+              onFilter({
+                Ativo: "Sim",
+                _aplicarLogicaPrecos: false // Sem processamento para ver resultado bruto
+              });
+            }
+          }}
+          className="px-3 py-2 text-xs rounded-lg bg-yellow-500 text-white hover:bg-yellow-600 transition-colors"
+          title="Testa com valores que sabemos que existem no banco"
+        >
+          🧪 Teste Ativo=Sim
+        </button>
+
+        {/* 🆘 BOTÃO DE EMERGÊNCIA - TESTE SEM FILTROS */}
+        <button
+          onClick={() => {
+            console.log('🆘 EMERGÊNCIA: Testando chamada direta ao backend SEM filtros...');
+            
+            if (onFilter) {
+              console.log('📡 Enviando objeto vazio para forçar busca sem filtros...');
+              onFilter({});
+            }
+          }}
+          className="px-3 py-2 text-xs rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
+          title="Emergência: Testa backend sem nenhum filtro"
+        >
+          🆘 Teste SEM Filtros
         </button>
 
         {/* 🧪 BOTÃO DE TESTE COMPLETO FORÇADO */}
