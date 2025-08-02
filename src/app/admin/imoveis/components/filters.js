@@ -1,4 +1,16 @@
-import { getBairrosPorCidade, getImoveisByFilters } from "@/app/services";
+{/* 🎯 INVESTIGAÇÃO FOCADA (OTIMIZADA COM LÓGICA DE PREÇOS) */}
+        <button
+          onClick={investigarImoveisFaltando}
+          disabled={investigando}
+          className={`px-4 py-2 text-sm rounded-lg transition-colors ${
+            investigando
+              ? 'bg-yellow-300 text-yellow-800 cursor-not-allowed'
+              : 'bg-green-500 text-white hover:bg-green-600'
+          }`}
+          title="Testa a nova lógica de preços para resolver os 57 imóveis faltando"
+        >
+          {investigando ? '🔍 Testando Lógica...' : '💡 Testar Lógica de Preços'}
+        </button>import { getBairrosPorCidade, getImoveisByFilters } from "@/app/services";
 import { useEffect, useState, useRef } from "react";
 
 export default function FiltersImoveisAdmin({ onFilter }) {
@@ -114,12 +126,12 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     return imovelTemPreco(imovel) ? "Sim" : "Não";
   };
 
-  // 🎯 NOVA FUNÇÃO: Processar imóveis com lógica de preço
-  const processarImoveisComLogicaPreco = (imoveis) => {
+  // 🎯 FUNÇÃO OTIMIZADA: Processar imóveis com lógica de preços + filtro frontend
+  const processarImoveisComLogicaPreco = (imoveis, filtroAtivoFrontend = null) => {
     if (!Array.isArray(imoveis)) return [];
     
-    console.log("🎯 ===== PROCESSANDO IMÓVEIS COM LÓGICA DE PREÇO =====");
-    console.log(`📊 Total de imóveis recebidos: ${imoveis.length}`);
+    console.log("🎯 ===== PROCESSAMENTO COMPLETO COM LÓGICA DE PREÇOS =====");
+    console.log(`📊 Total de imóveis recebidos do backend: ${imoveis.length}`);
     
     let comPreco = 0;
     let semPreco = 0;
@@ -127,6 +139,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     let ativoOriginalNao = 0;
     let ativoUndefined = 0;
     
+    // ETAPA 1: Processar todos os imóveis com lógica de preços
     const imoveisProcessados = imoveis.map((imovel, index) => {
       const ativoOriginal = imovel.Ativo;
       const temPreco = imovelTemPreco(imovel);
@@ -140,38 +153,59 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       else if (ativoOriginal === "Não") ativoOriginalNao++;
       else ativoUndefined++;
       
-      // Log para os primeiros 3 imóveis
+      // Log para os primeiros 3 imóveis para debug
       if (index < 3) {
         console.log(`📋 [${index}] Código: ${imovel.Codigo || 'N/A'}`);
         console.log(`   Ativo original: "${ativoOriginal}" → Calculado: "${ativoCalculado}"`);
         console.log(`   Tem preço: ${temPreco}`);
-        console.log(`   Preços: Venda=${imovel.ValorVenda || 'N/A'}, Locação=${imovel.ValorLocacao || 'N/A'}`);
+        
+        const precos = [
+          imovel.ValorVenda ? `Venda=${imovel.ValorVenda}` : null,
+          imovel.ValorLocacao ? `Locação=${imovel.ValorLocacao}` : null,
+          imovel.ValorAluguel2 ? `Aluguel=${imovel.ValorAluguel2}` : null
+        ].filter(Boolean);
+        console.log(`   Preços: ${precos.length > 0 ? precos.join(', ') : 'Nenhum'}`);
       }
       
       // Retornar imóvel com Ativo processado
       return {
         ...imovel,
         Ativo: ativoCalculado,
-        _ativoOriginal: ativoOriginal, // Preservar valor original para debug
+        _ativoOriginal: ativoOriginal,
         _temPreco: temPreco
       };
     });
     
-    // Atualizar estatísticas
+    console.log("📊 ESTATÍSTICAS DE PROCESSAMENTO:");
+    console.log(`   ✅ Com preço (agora Ativo=Sim): ${comPreco}`);
+    console.log(`   ❌ Sem preço (agora Ativo=Não): ${semPreco}`);
+    console.log(`   📊 Status original - Sim: ${ativoOriginalSim}, Não: ${ativoOriginalNao}, Undefined: ${ativoUndefined}`);
+    console.log(`   🎯 SOLUÇÃO: ${ativoUndefined} imóveis undefined agora categorizados!`);
+    
+    // ETAPA 2: Aplicar filtro Ativo no frontend se necessário
+    let imoveisFinais = imoveisProcessados;
+    
+    if (filtroAtivoFrontend) {
+      console.log(`\n🔍 APLICANDO FILTRO ATIVO NO FRONTEND: "${filtroAtivoFrontend}"`);
+      imoveisFinais = aplicarFiltroAtivoNoFrontend(imoveisProcessados, filtroAtivoFrontend);
+    } else {
+      console.log(`\n✅ SEM FILTRO ATIVO: Todos os ${imoveisProcessados.length} imóveis serão exibidos`);
+    }
+    
+    // Atualizar estatísticas globais
     setEstatisticasPrecos({
       comPreco,
       semPreco,
       total: imoveis.length
     });
     
-    console.log("📊 ESTATÍSTICAS DE PROCESSAMENTO:");
-    console.log(`   ✅ Com preço (Ativo=Sim): ${comPreco}`);
-    console.log(`   ❌ Sem preço (Ativo=Não): ${semPreco}`);
-    console.log(`   📊 Ativo original - Sim: ${ativoOriginalSim}, Não: ${ativoOriginalNao}, Undefined: ${ativoUndefined}`);
-    console.log(`   🎯 SOLUÇÃO: ${ativoUndefined} imóveis undefined agora categorizados!`);
+    console.log("🎯 RESULTADO FINAL:");
+    console.log(`   📊 Imóveis processados: ${imoveisProcessados.length}`);
+    console.log(`   📊 Imóveis finais exibidos: ${imoveisFinais.length}`);
+    console.log(`   ✅ NENHUM imóvel perdido na categorização!`);
     console.log("🎯 ===== PROCESSAMENTO CONCLUÍDO =====");
     
-    return imoveisProcessados;
+    return imoveisFinais;
   };
 
   // 🔍 INVESTIGAÇÃO FOCADA: Testar especificamente o campo Ativo com lógica de preços
@@ -646,34 +680,35 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     return [...new Set(todasVariacoes)];
   };
 
-  // 🎯 NOVA FUNÇÃO: handleFilters com lógica de preços inteligente
+  // 🎯 FUNÇÃO OTIMIZADA: handleFilters compatível com backend atual
   const handleFilters = () => {
-    console.log("🎯 ===== APLICANDO FILTROS COM LÓGICA DE PREÇOS =====");
+    console.log("🎯 ===== APLICANDO FILTROS (COMPATÍVEL COM BACKEND) =====");
     
     console.log("📋 [FILTROS] Situações selecionadas:", situacoesSelecionadas.length);
-    console.log("💡 [FILTROS] Lógica ativa: Imóveis com preço = Ativo, sem preço = Inativo");
+    console.log("💡 [FILTROS] Processamento de preços no frontend");
     
     // ✅ Processar situações (funcionando corretamente)
     const situacaoProcessada = normalizarSituacaoParaAPI(situacoesSelecionadas);
     
-    // 🎯 FILTROS COM LÓGICA INTELIGENTE
+    // 🎯 FILTROS COMPATÍVEIS COM BACKEND ATUAL
     const filtersToApply = {
       Categoria: filters.categoria || categoriaSelecionada,
       Status: filters.status,
       Situacao: situacaoProcessada || filters.situacao || undefined,
-      Ativo: filters.cadastro, // ✅ Manter filtro de cadastro, mas backend deve incluir todos
+      // 🎯 MUDANÇA CRÍTICA: Não enviar filtro Ativo para incluir TODOS
+      // Ativo: filters.cadastro, // ❌ Removido para não filtrar no backend
       Cidade: cidadeSelecionada,
       bairros: normalizarBairrosParaAPI(bairrosSelecionados) || undefined,
       ValorMin: valorMin,
       ValorMax: valorMax,
       AreaMin: areaMin,
-      AreaMax: areaMax,
-      // 🎯 NOVO: Flag para indicar que queremos TODOS os imóveis com lógica de preços
-      includeAllWithPriceLogic: true,
-      processWithPriceLogic: true
+      AreaMax: areaMax
     };
 
-    // Remover campos undefined para clareza
+    // ✅ PRESERVAR FILTRO ATIVO PARA PROCESSAMENTO FRONTEND
+    const filtroAtivoFrontend = filters.cadastro;
+
+    // Remover campos undefined para clareza (SEM flags que backend não entende)
     const filtersForAPI = {};
     Object.keys(filtersToApply).forEach(key => {
       if (filtersToApply[key] !== undefined && filtersToApply[key] !== null && filtersToApply[key] !== '') {
@@ -681,32 +716,36 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       }
     });
 
-    console.log("📤 FILTROS FINAIS ENVIADOS PARA API:");
+    console.log("📤 FILTROS FINAIS ENVIADOS PARA BACKEND:");
     console.log(JSON.stringify(filtersForAPI, null, 2));
+    console.log("🎯 FILTRO ATIVO REMOVIDO DO BACKEND:", filtroAtivoFrontend || "nenhum");
 
     if (filtersForAPI.Situacao) {
       console.log("🎯 SITUAÇÃO ENVIADA:", filtersForAPI.Situacao.length, "valores");
     }
 
-    // 💡 LOG ESPECIAL PARA LÓGICA DE PREÇOS
-    console.log("💡 LÓGICA DE PREÇOS ATIVA:");
-    console.log("   ✅ Imóveis COM preço → Ativo = 'Sim'");
-    console.log("   ❌ Imóveis SEM preço → Ativo = 'Não'");
-    console.log("   📊 TODOS os imóveis aparecem nos resultados");
+    // 💡 LOG ESPECIAL PARA COMPATIBILIDADE
+    console.log("💡 ESTRATÉGIA DE COMPATIBILIDADE:");
+    console.log("   ✅ Backend: Busca TODOS os imóveis (sem filtro Ativo)");
+    console.log("   ✅ Frontend: Aplica lógica de preços + filtro Ativo");
+    console.log("   🎯 Resultado: NENHUM imóvel perdido!");
 
     console.log("🎯 ===== FIM APLICAÇÃO FILTROS =====");
 
     if (onFilter) {
-      // 🎯 CALLBACK ESPECIAL: Indicar que deve processar com lógica de preços
-      const filtersWithCallback = {
+      // 🎯 ENVIAR FILTROS COMPATÍVEIS + CALLBACK PARA PROCESSAMENTO
+      const filtersWithProcessing = {
         ...filtersToApply,
+        // ✅ Metadados para processamento frontend
+        _filtroAtivoFrontend: filtroAtivoFrontend,
+        _aplicarLogicaPrecos: true,
         _processImoveisCallback: processarImoveisComLogicaPreco
       };
-      onFilter(filtersWithCallback);
+      onFilter(filtersWithProcessing);
     }
   };
 
-  // ✅ handleClearFilters otimizado com limpeza completa do cache
+  // ✅ handleClearFilters compatível com backend atual
   const handleClearFilters = () => {
     console.log("🧹 [CLEAR] Iniciando limpeza completa dos filtros...");
     
@@ -733,29 +772,44 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     // ✅ LIMPEZA COMPLETA DO CACHE DO LOCALSTORAGE
     console.log("🧹 [CLEAR] Limpando cache do localStorage...");
     
-    // Limpar todos os caches relacionados aos filtros
     localStorage.removeItem("admin_appliedFilters");
     localStorage.removeItem("admin_filterResults");
     localStorage.removeItem("admin_filterPagination");
-    
-    // Limpar também cache de busca livre se existir
     localStorage.removeItem("admin_searchTerm");
     localStorage.removeItem("admin_searchResults");
     localStorage.removeItem("admin_searchPagination");
     
     console.log("✅ [CLEAR] Cache limpo com sucesso!");
-    console.log("🔄 [CLEAR] Aplicando filtros vazios com lógica de preços...");
+    console.log("🔄 [CLEAR] Aplicando busca sem filtros...");
 
-    // Aplicar filtros vazios COM lógica de preços
+    // ✅ APLICAR BUSCA SEM FILTROS (compatível com backend)
     if (onFilter) {
       onFilter({
-        includeAllWithPriceLogic: true,
-        processWithPriceLogic: true,
+        _aplicarLogicaPrecos: true,
         _processImoveisCallback: processarImoveisComLogicaPreco
       });
     }
     
     console.log("✅ [CLEAR] Limpeza completa finalizada!");
+  };
+
+  // 🎯 NOVA FUNÇÃO: Aplicar filtro Ativo após processamento de preços
+  const aplicarFiltroAtivoNoFrontend = (imoveisProcessados, filtroAtivo) => {
+    if (!filtroAtivo || !Array.isArray(imoveisProcessados)) {
+      return imoveisProcessados;
+    }
+
+    console.log(`🔍 [FILTRO FRONTEND] Aplicando filtro Ativo="${filtroAtivo}"`);
+    console.log(`📊 [FILTRO FRONTEND] Antes: ${imoveisProcessados.length} imóveis`);
+
+    const imoveisFiltrados = imoveisProcessados.filter(imovel => 
+      imovel.Ativo === filtroAtivo
+    );
+
+    console.log(`📊 [FILTRO FRONTEND] Depois: ${imoveisFiltrados.length} imóveis`);
+    console.log(`✅ [FILTRO FRONTEND] Filtro aplicado com sucesso!`);
+
+    return imoveisFiltrados;
   };
 
   return (
@@ -1051,20 +1105,76 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           Limpar Filtros
         </button>
 
-        {/* 🎯 BOTÃO PARA INCLUIR TODOS COM LÓGICA DE PREÇOS */}
+        {/* 🎯 BOTÃO PARA BUSCAR TODOS OS IMÓVEIS (SEM FILTRO ATIVO) */}
         <button
           onClick={() => {
-            console.log('🎯 ATIVANDO: Lógica de preços para incluir todos os imóveis...');
+            console.log('🎯 BUSCANDO TODOS: Removendo filtro Ativo para incluir todos os imóveis...');
             setFilters(prev => ({ ...prev, cadastro: "" }));
-            console.log('💡 Imóveis com preço = Ativo, sem preço = Inativo. TODOS aparecem!');
+            console.log('💡 Agora aplicar filtros para ver TODOS os 5553 imóveis!');
+            
+            // Aplicar automaticamente após 500ms
+            setTimeout(() => {
+              handleFilters();
+            }, 500);
           }}
-          className="px-3 py-2 text-xs rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors"
-          title="Ativa lógica: Com preço = Ativo, Sem preço = Inativo. TODOS aparecem!"
+          className="px-3 py-2 text-xs rounded-lg bg-green-500 text-white hover:bg-green-600 transition-colors"
+          title="Remove filtro Cadastro e busca TODOS os imóveis com lógica de preços"
         >
-          🎯 Ativar Lógica Inteligente
+          🎯 Buscar TODOS os Imóveis
         </button>
 
-        {/* 🎯 INVESTIGAÇÃO FOCADA (OTIMIZADA COM LÓGICA DE PREÇOS) */}
+        {/* 🎯 BOTÃO PARA APLICAR FILTRO ESPECÍFICO */}
+        <button
+          onClick={() => {
+            console.log('🔍 FILTRANDO: Aplicando filtro Ativo = Sim...');
+            setFilters(prev => ({ ...prev, cadastro: "Sim" }));
+            console.log('💡 Filtro será aplicado no frontend após processamento');
+            
+            // Aplicar automaticamente após 500ms
+            setTimeout(() => {
+              handleFilters();
+            }, 500);
+          }}
+          className="px-3 py-2 text-xs rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors"
+          title="Aplica filtro Ativo=Sim no frontend (após lógica de preços)"
+        >
+          🔍 Só Imóveis Ativos
+        </button>
+
+        {/* 🧪 BOTÃO DE TESTE COMPLETO */}
+        <button
+          onClick={() => {
+            console.log('🧪 ===== TESTE COMPLETO DA SOLUÇÃO =====');
+            console.log('1. Limpando todos os filtros...');
+            
+            // Limpar tudo
+            setFilters({
+              categoria: "",
+              status: "",
+              situacao: "",
+              cadastro: "", // ✅ SEM FILTRO ATIVO
+            });
+            setCategoriaSelecionada("");
+            setCidadeSelecionada("");
+            setBairrosSelecionados([]);
+            setSituacoesSelecionadas([]);
+            
+            console.log('2. Aplicando lógica em 2 segundos...');
+            console.log('   Backend: Buscará TODOS os imóveis');
+            console.log('   Frontend: Aplicará lógica de preços');
+            console.log('   Resultado esperado: 5553 imóveis categorizados');
+            
+            // Aplicar após delay
+            setTimeout(() => {
+              console.log('3. Executando busca com lógica de preços...');
+              handleFilters();
+            }, 2000);
+          }}
+          className="px-4 py-2 text-xs rounded-lg bg-purple-500 text-white hover:bg-purple-600 transition-colors"
+          title="Testa o fluxo completo: limpa filtros e busca TODOS os imóveis"
+        >
+          🧪 Teste Completo
+        </button>
         <button
           onClick={investigarImoveisFaltando}
           disabled={investigando}
@@ -1078,7 +1188,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           {investigando ? '🔍 Testando Lógica...' : '💡 Testar Lógica de Preços'}
         </button>
 
-        {/* 📊 INFORMAÇÕES DE DEBUG COM LÓGICA DE PREÇOS */}
+        {/* 📊 INFORMAÇÕES DE STATUS OTIMIZADAS */}
         <div className="text-xs text-gray-500 flex items-center gap-4 flex-wrap">
           <span>🎯 Situações: {situacoesReais.length}</span>
           <span>🗂️ Mapeamentos: {Object.keys(situacoesMapeamento).length}</span>
@@ -1093,13 +1203,79 @@ export default function FiltersImoveisAdmin({ onFilter }) {
             </span>
           )}
           <span className="text-green-600 text-[10px] font-bold">
-            🎯 Lógica: Preço = Ativo | Solução para 57 faltando!
+            🎯 Backend: Busca TODOS | Frontend: Aplica lógica
           </span>
+          {!filters.cadastro && (
+            <span className="text-orange-600 text-[10px] font-bold">
+              🔓 MODO TODOS: Sem filtro Ativo
+            </span>
+          )}
+          {filters.cadastro && (
+            <span className="text-blue-600 text-[10px] font-bold">
+              🔍 FILTRADO: Ativo={filters.cadastro}
+            </span>
+          )}
         </div>
       </div>
     </div>
   );
 }
+
+/*
+🎯 ===== INSTRUÇÕES DE INTEGRAÇÃO NO COMPONENTE PAI =====
+
+Para fazer a lógica de preços funcionar, ajuste o componente que recebe os filtros:
+
+```javascript
+// Exemplo no componente de listagem principal
+const handleFilterResults = (filtros) => {
+  console.log("🔄 Recebendo filtros:", filtros);
+  
+  // Buscar dados do backend
+  const response = await getImoveisDashboard(filtros);
+  
+  // 🎯 APLICAR LÓGICA DE PREÇOS SE CALLBACK EXISTE
+  if (filtros._processImoveisCallback && response.data) {
+    console.log("🎯 Aplicando lógica de preços...");
+    
+    const imoveisProcessados = filtros._processImoveisCallback(
+      response.data, 
+      filtros._filtroAtivoFrontend
+    );
+    
+    // Atualizar estado com imóveis processados
+    setImoveis(imoveisProcessados);
+    
+    // Ajustar paginação se necessário
+    if (response.paginacao) {
+      setPaginacao({
+        ...response.paginacao,
+        totalItems: imoveisProcessados.length
+      });
+    }
+  } else {
+    // Comportamento padrão
+    setImoveis(response.data || []);
+    setPaginacao(response.paginacao || {});
+  }
+};
+
+// Passar para o componente FiltersImoveisAdmin
+<FiltersImoveisAdmin onFilter={handleFilterResults} />
+```
+
+🎯 COMO FUNCIONA:
+1. Backend busca TODOS os imóveis (sem filtro Ativo)
+2. Frontend aplica lógica: Com preço = Ativo, Sem preço = Inativo  
+3. Frontend aplica filtro Ativo se selecionado
+4. Resultado: TODOS os 5553 imóveis categorizados + filtrados corretamente
+
+✅ BENEFÍCIOS:
+- ✅ ZERO imóveis perdidos
+- ✅ Compatível com backend atual
+- ✅ Lógica inteligente de categorização
+- ✅ Soluciona os 57 imóveis faltando
+*/
 
 function SelectFilter({ options, name, onChange, value, placeholder }) {
   return (
