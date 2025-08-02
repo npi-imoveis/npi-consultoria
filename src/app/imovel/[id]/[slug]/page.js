@@ -588,23 +588,15 @@ export default async function ImovelPage({ params }) {
             <DetalhesCondominio imovel={imovel} />
             <Lazer imovel={imovel} />
             
-            {/* ✅ CORREÇÃO FINAL: Validação YouTube inteligente e rigorosa */}
+            {/* 🚨 TESTE DEFINITIVO: BLOQUEAR VIDEOID ESPECÍFICO PARA CONFIRMAR FUNCIONAMENTO */}
             {(() => {
-              try {
-                if (!imovel?.Video || typeof imovel.Video !== 'object' || Array.isArray(imovel.Video)) {
-                  console.log('🎥 [VALIDATION] ❌ Video inválido: não é objeto válido');
-                  return null;
-                }
-                
-                if (Object.keys(imovel.Video).length === 0) {
-                  console.log('🎥 [VALIDATION] ❌ Video inválido: objeto vazio');
-                  return null;
-                }
-                
-                let videoValue = null;
+              console.log('🎥 [ULTIMATE-TEST] ========== TESTE DEFINITIVO ==========');
+              console.log('🎥 [ULTIMATE-TEST] Dados do Video:', JSON.stringify(imovel.Video, null, 2));
+              
+              // 🚨 BLOQUEIO ESPECÍFICO DO VIDEOID PROBLEMÁTICO
+              let videoValue = null;
+              if (imovel?.Video && typeof imovel.Video === 'object') {
                 const values = Object.values(imovel.Video);
-                
-                // Extrair valor do vídeo
                 if (values.length > 0) {
                   const firstValue = values[0];
                   if (typeof firstValue === 'string') {
@@ -613,13 +605,32 @@ export default async function ImovelPage({ params }) {
                     videoValue = (firstValue.Video || firstValue.url || firstValue.videoId || firstValue.id || '').trim();
                   }
                 }
+              }
+              
+              console.log('🎥 [ULTIMATE-TEST] VideoId extraído:', videoValue);
+              
+              // 🚨 BLOQUEIO ESPECÍFICO PARA TESTE
+              if (videoValue === '4Aq7szgycT4') {
+                console.log('🎥 [ULTIMATE-TEST] ❌ BLOQUEANDO VideoId específico para teste:', videoValue);
+                return null;
+              }
+              
+              console.log('🎥 [ULTIMATE-TEST] ✅ VideoId liberado (não é o problemático):', videoValue);
+              
+              // Validação normal para outros vídeos
+              try {
+                if (!imovel?.Video || typeof imovel.Video !== 'object' || Array.isArray(imovel.Video)) {
+                  console.log('🎥 [ULTIMATE-TEST] ❌ Video inválido: não é objeto válido');
+                  return null;
+                }
                 
-                if (!videoValue) {
-                  videoValue = (imovel.Video.Video || imovel.Video.url || imovel.Video.videoId || imovel.Video.id || '').trim();
+                if (Object.keys(imovel.Video).length === 0) {
+                  console.log('🎥 [ULTIMATE-TEST] ❌ Video inválido: objeto vazio');
+                  return null;
                 }
                 
                 if (!videoValue) {
-                  console.log('🎥 [VALIDATION] ❌ Video inválido: valor vazio');
+                  console.log('🎥 [ULTIMATE-TEST] ❌ Video inválido: valor vazio');
                   return null;
                 }
                 
@@ -644,14 +655,13 @@ export default async function ImovelPage({ params }) {
                 
                 const shouldRender = isValidYoutube && !isInvalidUrl;
                 
-                console.log('🎥 [VALIDATION] Valor:', videoValue);
-                console.log('🎥 [VALIDATION] É YouTube válido?', isValidYoutube);
-                console.log('🎥 [VALIDATION] É URL inválida?', isInvalidUrl);
-                console.log('🎥 [VALIDATION] Vai renderizar?', shouldRender);
+                console.log('🎥 [ULTIMATE-TEST] É YouTube válido?', isValidYoutube);
+                console.log('🎥 [ULTIMATE-TEST] É URL inválida?', isInvalidUrl);
+                console.log('🎥 [ULTIMATE-TEST] Vai renderizar?', shouldRender);
                 
                 return shouldRender ? <VideoCondominio imovel={imovel} /> : null;
               } catch (e) {
-                console.error('🎥 [VALIDATION] ❌ Erro na validação:', e);
+                console.error('🎥 [ULTIMATE-TEST] ❌ Erro na validação:', e);
                 return null;
               }
             })()}
