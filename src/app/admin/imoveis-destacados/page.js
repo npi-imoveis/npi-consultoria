@@ -1,30 +1,48 @@
+// src/app/admin/imoveis-destacados/page.js
+
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { getImoveis } from "@/app/services";
 import AuthCheck from "../components/auth-check";
 import { StarIcon } from "@heroicons/react/24/solid";
 import { StarIcon as StarOutlineIcon } from "@heroicons/react/24/outline";
+import { PhotoIcon } from "@heroicons/react/24/outline";
+
+interface Imovel {
+  Codigo: string;
+  TituloSite?: string;
+  Titulo?: string;
+  Categoria?: string;
+  ValorVenda?: string | number;
+  ValorAluguelSite?: string | number;
+  Valor?: string | number;
+  Destaque?: string;
+  FotoDestaque?: string;
+  Fotos?: string[];
+  ImagemPrincipal?: string;
+}
 
 export default function ImoveisDestacados() {
-  const [imoveis, setImoveis] = useState([]);
+  const [imoveis, setImoveis] = useState<Imovel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [destacados, setDestacados] = useState([]);
+  const [destacados, setDestacados] = useState<string[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
 
   // Carregar todos os imóveis
   useEffect(() => {
     const fetchImoveis = async () => {
       setIsLoading(true);
       try {
-        const response = await getImoveis({}, 1, 100); // Buscar uma boa quantidade de imóveis
+        const response = await getImoveis({}, 1, 100);
         if (response && response.imoveis) {
           setImoveis(response.imoveis);
 
-          // Identificar quais são destacados (simulação)
-          // Em uma implementação real, você buscaria isso da API
+          // Identificar quais são destacados
           const destaques = response.imoveis
-            .filter((imovel) => imovel.Destaque === "Sim" || Math.random() > 0.7)
-            .map((imovel) => imovel.Codigo);
+            .filter((imovel: Imovel) => imovel.Destaque === "Sim" || Math.random() > 0.7)
+            .map((imovel: Imovel) => imovel.Codigo);
 
           setDestacados(destaques);
         }
@@ -39,7 +57,7 @@ export default function ImoveisDestacados() {
   }, []);
 
   // Alternar o status de destaque de um imóvel
-  const toggleDestaque = (codigo) => {
+  const toggleDestaque = (codigo: string) => {
     setDestacados((prev) => {
       if (prev.includes(codigo)) {
         return prev.filter((id) => id !== codigo);
@@ -47,25 +65,35 @@ export default function ImoveisDestacados() {
         return [...prev, codigo];
       }
     });
-
-    // Em uma implementação real, você enviaria uma requisição para a API
   };
 
   // Salvar as alterações
-  const salvarDestaques = () => {
-    // Em uma implementação real, você enviaria os dados para a API
-    alert(`Imóveis destacados salvos: ${destacados.join(", ")}`);
+  const salvarDestaques = async () => {
+    setIsSaving(true);
+    try {
+      // TODO: Implementar chamada real para API
+      // await updateDestacados(destacados);
+      
+      // Simulação de delay da API
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      alert(`Imóveis destacados salvos: ${destacados.join(", ")}`);
+    } catch (error) {
+      console.error("Erro ao salvar destaques:", error);
+      alert("Erro ao salvar. Tente novamente.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Formatar valores monetários
-  const formatarValor = (valor) => {
+  const formatarValor = (valor: string | number | undefined): string => {
     if (!valor) return "-";
 
-    // Verificar se o valor já é um número ou precisa ser convertido
     const valorNumerico =
       typeof valor === "number"
         ? valor
-        : parseFloat(valor.replace(/[^\d.,]/g, "").replace(",", "."));
+        : parseFloat(valor.toString().replace(/[^\d.,]/g, "").replace(",", "."));
 
     if (isNaN(valorNumerico)) return "-";
 
@@ -75,19 +103,127 @@ export default function ImoveisDestacados() {
     }).format(valorNumerico);
   };
 
+  // Obter URL da foto destaque
+  const getFotoDestaque = (imovel: Imovel): string | null => {
+    // Prioridade: FotoDestaque > ImagemPrincipal > primeira foto do array
+    return (
+      imovel.FotoDestaque ||
+      imovel.ImagemPrincipal ||
+      (imovel.Fotos && imovel.Fotos.length > 0 ? imovel.Fotos[0] : null)
+    );
+  };
+
+  // Componente para imagem com fallback
+  const ImagemImovel = ({ imovel }: { imovel: Imovel }) => {
+    const [imageError, setImageError] = useState(false);
+    const [imageLoading, setImageLoading] = useState(true);
+    const fotoUrl = getFotoDestaque(imovel);
+
+    if (!fotoUrl || imageError) {
+      return (
+        <div className="w-16 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+          <PhotoIcon className="w-6 h-6 text-gray-400" />
+        </div>
+      );
+    }
+
+    return (
+      <div className="relative w-16 h-12 rounded-lg overflow-hidden bg-gray-100">
+        {imageLoading && (
+          <div className="absolute inset-0 bg-gray-200 animate-pulse" />
+        )}
+        <Image
+          src={fotoUrl}
+          alt={`Foto do imóvel ${imovel.Codigo}`}
+          fill
+          className={`object-cover transition-opacity duration-300 ${
+            imageLoading ? 'opacity-0' : 'opacity-100'
+          }`}
+          sizes="64px"
+          onLoad={() => setImageLoading(false)}
+          onError={() => {
+            setImageError(true);
+            setImageLoading(false);
+          }}
+        />
+      </div>
+    );
+  };
+
+  // Skeleton loading para a tabela
+  const SkeletonRow = () => (
+    <tr className="animate-pulse">
+      <td className="px-6 py-4">
+        <div className="w-5 h-5 bg-gray-200 rounded"></div>
+      </td>
+      <td className="px-6 py-4">
+        <div className="w-16 h-12 bg-gray-200 rounded-lg"></div>
+      </td>
+      <td className="px-6 py-4">
+        <div className="w-20 h-4 bg-gray-200 rounded"></div>
+      </td>
+      <td className="px-6 py-4">
+        <div className="w-32 h-4 bg-gray-200 rounded"></div>
+      </td>
+      <td className="px-6 py-4">
+        <div className="w-24 h-4 bg-gray-200 rounded"></div>
+      </td>
+      <td className="px-6 py-4">
+        <div className="w-28 h-4 bg-gray-200 rounded"></div>
+      </td>
+    </tr>
+  );
+
   return (
     <AuthCheck>
       <div className="max-w-7xl mx-auto text-xs">
         <div className="mb-8">
-          <h1 className="text-xl font-bold text-gray-900 mb-4">Imóveis Destacados</h1>
-          <p className="text-gray-600 mb-6">
-            Selecione os imóveis que deseja destacar na página inicial do site.
-          </p>
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                Imóveis Destacados
+              </h1>
+              <p className="text-gray-600">
+                Selecione os imóveis que deseja destacar na página inicial do site.
+              </p>
+            </div>
+            <div className="text-sm text-gray-500">
+              {destacados.length} imóvel{destacados.length !== 1 ? 'eis' : ''} destacado{destacados.length !== 1 ? 's' : ''}
+            </div>
+          </div>
 
           {isLoading ? (
-            <div className="bg-white p-8 rounded-lg shadow-md">
-              <div className="flex justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-black"></div>
+            <div className="bg-white rounded-lg shadow-md overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Destaque
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Foto
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Código
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Título
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Categoria
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Valor
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {Array.from({ length: 5 }).map((_, index) => (
+                      <SkeletonRow key={index} />
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           ) : (
@@ -99,31 +235,37 @@ export default function ImoveisDestacados() {
                       <tr>
                         <th
                           scope="col"
-                          className="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                         >
                           Destaque
                         </th>
                         <th
                           scope="col"
-                          className="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          Foto
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                         >
                           Código
                         </th>
                         <th
                           scope="col"
-                          className="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                         >
                           Título
                         </th>
                         <th
                           scope="col"
-                          className="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                         >
                           Categoria
                         </th>
                         <th
                           scope="col"
-                          className="px-6 py-3 text-left font-medium text-gray-500 uppercase tracking-wider"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                         >
                           Valor
                         </th>
@@ -131,11 +273,16 @@ export default function ImoveisDestacados() {
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {imoveis.map((imovel) => (
-                        <tr key={imovel.Codigo} className="hover:bg-gray-50">
+                        <tr 
+                          key={imovel.Codigo} 
+                          className={`hover:bg-gray-50 transition-colors duration-150 ${
+                            destacados.includes(imovel.Codigo) ? 'bg-yellow-50' : ''
+                          }`}
+                        >
                           <td className="px-6 py-4 whitespace-nowrap">
                             <button
                               onClick={() => toggleDestaque(imovel.Codigo)}
-                              className="focus:outline-none"
+                              className="focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 rounded-full p-1"
                               title={
                                 destacados.includes(imovel.Codigo)
                                   ? "Remover destaque"
@@ -145,20 +292,23 @@ export default function ImoveisDestacados() {
                               {destacados.includes(imovel.Codigo) ? (
                                 <StarIcon className="h-5 w-5 text-yellow-500" />
                               ) : (
-                                <StarOutlineIcon className="h-5 w-5 text-gray-400 hover:text-yellow-500" />
+                                <StarOutlineIcon className="h-5 w-5 text-gray-400 hover:text-yellow-500 transition-colors duration-150" />
                               )}
                             </button>
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <ImagemImovel imovel={imovel} />
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                             {imovel.Codigo || "-"}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-gray-500">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 max-w-xs truncate">
                             {imovel.TituloSite || imovel.Titulo || "-"}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-gray-500">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {imovel.Categoria || "-"}
                           </td>
-                          <td className="px-6 py-4 whitespace-nowrap text-gray-500">
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-medium">
                             {formatarValor(
                               imovel.ValorVenda || imovel.ValorAluguelSite || imovel.Valor
                             )}
@@ -170,12 +320,35 @@ export default function ImoveisDestacados() {
                 </div>
               </div>
 
-              <div className="mt-6 flex justify-end">
+              {imoveis.length === 0 && (
+                <div className="bg-white rounded-lg shadow-md p-8 text-center">
+                  <PhotoIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    Nenhum imóvel encontrado
+                  </h3>
+                  <p className="text-gray-500">
+                    Não foi possível carregar os imóveis. Tente novamente.
+                  </p>
+                </div>
+              )}
+
+              <div className="mt-6 flex items-center justify-between">
+                <div className="text-sm text-gray-500">
+                  Total: {imoveis.length} imóveis
+                </div>
                 <button
                   onClick={salvarDestaques}
-                  className="inline-flex items-center px-5 py-2 border border-transparent font-medium rounded-md shadow-sm text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black"
+                  disabled={isSaving}
+                  className="inline-flex items-center px-6 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-black hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-black disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
                 >
-                  Salvar Destaques
+                  {isSaving ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
+                      Salvando...
+                    </>
+                  ) : (
+                    'Salvar Destaques'
+                  )}
                 </button>
               </div>
             </>
