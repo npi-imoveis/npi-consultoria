@@ -66,6 +66,76 @@ function processarFotosCondominio(fotos, codigoCondominio) {
   }
 }
 
+// 🎯 FUNÇÃO PARA LIMPAR DECIMAIS DESNECESSÁRIOS DA METRAGEM
+function limparMetragem(valor) {
+  if (!valor) return valor;
+  
+  // Se for string, converter para número e formatar
+  if (typeof valor === 'string') {
+    // Remover qualquer formatação existente e converter
+    const numero = parseFloat(valor.replace(/[^\d,.-]/g, '').replace(',', '.'));
+    
+    if (isNaN(numero)) return valor;
+    
+    // Se é número inteiro, não mostrar decimais
+    if (numero === Math.floor(numero)) {
+      return numero.toString();
+    }
+    
+    // Se tem decimais significativos, manter apenas 1 casa
+    return numero.toFixed(1).replace('.0', '');
+  }
+  
+  // Se for número
+  if (typeof valor === 'number') {
+    // Se é inteiro, retornar sem decimais
+    if (valor === Math.floor(valor)) {
+      return valor.toString();
+    }
+    
+    // Se tem decimais, manter apenas 1 casa significativa
+    return valor.toFixed(1).replace('.0', '');
+  }
+  
+  return valor;
+}
+
+// 🎯 FUNÇÃO PARA PROCESSAR E LIMPAR DADOS DOS IMÓVEIS
+function processarDadosImoveis(imoveis) {
+  if (!Array.isArray(imoveis)) return imoveis;
+  
+  return imoveis.map(imovel => {
+    // Criar cópia do imóvel para não alterar o original
+    const imovelProcessado = { ...imovel };
+    
+    // Limpar campos de metragem
+    const camposMetragem = [
+      'Metragem',
+      'MetragemTotal', 
+      'MetragemPrivativa',
+      'MetragemAnt',
+      'AreaTotal',
+      'AreaPrivativa',
+      'Area'
+    ];
+    
+    camposMetragem.forEach(campo => {
+      if (imovelProcessado[campo]) {
+        const valorOriginal = imovelProcessado[campo];
+        const valorLimpo = limparMetragem(valorOriginal);
+        
+        if (valorOriginal !== valorLimpo) {
+          console.log(`🧹 METRAGEM LIMPA: ${campo} ${valorOriginal} → ${valorLimpo} (Código: ${imovel.Codigo})`);
+        }
+        
+        imovelProcessado[campo] = valorLimpo;
+      }
+    });
+    
+    return imovelProcessado;
+  });
+}
+
 // 🎯 NOVA FUNÇÃO PARA ORDENAR IMÓVEIS RELACIONADOS
 // Coloca o imóvel principal primeiro + demais por valor (menor → maior)
 function ordenarImoveisRelacionados(imoveisRelacionados, codigoPrincipal) {
@@ -114,12 +184,6 @@ function ordenarImoveisRelacionados(imoveisRelacionados, codigoPrincipal) {
                           imovel.ValorVendaSite ||
                           '0';
         
-        console.log('🔍 VALOR BRUTO:', {
-          codigo: imovel.Codigo || imovel.CodigoImovel,
-          valorBruto,
-          tipo: typeof valorBruto
-        });
-        
         // Se for número, retornar direto
         if (typeof valorBruto === 'number') {
           return valorBruto;
@@ -137,13 +201,6 @@ function ordenarImoveisRelacionados(imoveisRelacionados, codigoPrincipal) {
           
           const valorNumerico = parseFloat(valorLimpo) || 0;
           
-          console.log('🔍 CONVERSÃO:', {
-            codigo: imovel.Codigo || imovel.CodigoImovel,
-            original: valorBruto,
-            limpo: valorLimpo,
-            numerico: valorNumerico
-          });
-          
           return valorNumerico;
         }
         
@@ -152,12 +209,6 @@ function ordenarImoveisRelacionados(imoveisRelacionados, codigoPrincipal) {
 
       const valorA = extrairValor(a);
       const valorB = extrairValor(b);
-      
-      console.log('🎯 COMPARAÇÃO:', {
-        imovelA: `${a.Codigo || a.CodigoImovel} = ${valorA}`,
-        imovelB: `${b.Codigo || b.CodigoImovel} = ${valorB}`,
-        resultado: valorA - valorB
-      });
 
       return valorA - valorB; // Ordem crescente (menor → maior)
     });
@@ -181,13 +232,14 @@ function ordenarImoveisRelacionados(imoveisRelacionados, codigoPrincipal) {
       })
     });
 
-    return imoveisOrdenados;
+    // 🧹 APLICAR LIMPEZA DE METRAGEM EM TODOS OS IMÓVEIS
+    return processarDadosImoveis(imoveisOrdenados);
 
   } catch (error) {
     console.error('❌ ORDENAÇÃO: Erro ao ordenar imóveis relacionados:', error);
     
-    // Fallback seguro - retornar array original
-    return imoveisRelacionados;
+    // Fallback seguro - retornar array original com limpeza aplicada
+    return processarDadosImoveis(imoveisRelacionados);
   }
 }
 
@@ -395,8 +447,8 @@ export default async function CondominioPage({ params }) {
   // 🎯 PROCESSAR FOTOS COM photoSorter ANTES DE USAR (igual ao admin que funcionou)
   const fotosOrdenadas = processarFotosCondominio(condominio.Foto, condominio.Codigo);
 
-  // 🎯 NOVA IMPLEMENTAÇÃO: ORDENAR IMÓVEIS RELACIONADOS
-  // Principal primeiro + demais por valor crescente
+  // 🎯 NOVA IMPLEMENTAÇÃO: ORDENAR IMÓVEIS RELACIONADOS + LIMPAR METRAGEM
+  // Principal primeiro + demais por valor crescente + sem decimais desnecessários
   const imoveisOrdenados = ordenarImoveisRelacionados(imoveisRelacionados, condominio.Codigo);
 
   const rawTitle = ensureCondominio(condominio.Empreendimento);
