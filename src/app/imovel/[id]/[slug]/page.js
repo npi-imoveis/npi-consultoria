@@ -1,4 +1,11 @@
 // app/imovel/[id]/[slug]/page.js
+// ✅ VERSÃO RESTAURADA - TODOS OS LOGS E FUNCIONALIDADES DE VOLTA
+// 1. ✅ Valida formato YouTube (regex rigorosa)
+// 2. ✅ Rejeita URLs inválidas (canais, playlists)  
+// 3. ✅ Bloqueia vídeos deletados (lista expansível)
+// 4. ✅ Permite vídeos válidos funcionarem
+// 5. ✅ Meta tags WhatsApp (básicas)
+// 6. ✅ TODOS OS LOGS restaurados (DESTAQUE, WHATSAPP-ULTRA, etc.)
 import { ImageGallery } from "@/app/components/sections/image-gallery";
 import { FAQImovel } from "./componentes/FAQImovel";
 import DetalhesCondominio from "./componentes/DetalhesCondominio";
@@ -37,7 +44,9 @@ function convertBrazilianDateToISO(brazilianDate, imovelData) {
   }
   
   if (!workingDate) {
-    return new Date().toISOString();
+    const currentDate = new Date();
+    console.log(`[DATE-CONVERT] ⚠️  Usando data atual como fallback: ${currentDate.toISOString()}`);
+    return currentDate.toISOString();
   }
   
   try {
@@ -56,31 +65,45 @@ function convertBrazilianDateToISO(brazilianDate, imovelData) {
       );
       
       if (!isNaN(date.getTime())) {
+        console.log(`[DATE-CONVERT] ✅ Formato brasileiro convertido: ${date.toISOString()}`);
         return date.toISOString();
       }
     }
     
     const date = new Date(workingDate);
     if (!isNaN(date.getTime())) {
+      console.log(`[DATE-CONVERT] ✅ Parse direto: ${date.toISOString()}`);
       return date.toISOString();
     }
     
-    return new Date().toISOString();
+    const fallbackDate = new Date();
+    console.log(`[DATE-CONVERT] ⚠️  Fallback para data atual: ${fallbackDate.toISOString()}`);
+    return fallbackDate.toISOString();
     
   } catch (error) {
-    return new Date().toISOString();
+    console.error(`[DATE-CONVERT] ❌ Erro na conversão:`, error);
+    const errorFallbackDate = new Date();
+    return errorFallbackDate.toISOString();
   }
 }
 
 function getWhatsAppOptimizedImageUrl(imovelFotos) {
+  console.log('📱 [WHATSAPP-ULTRA] ========== PROCESSANDO IMAGEM ==========');
+  console.log('📱 [WHATSAPP-ULTRA] Input:', JSON.stringify(imovelFotos, null, 2));
+  
   try {
     let finalImageUrl = null;
     
+    // MÉTODO 1: Array de fotos
     if (Array.isArray(imovelFotos) && imovelFotos.length > 0) {
+      console.log('📱 [WHATSAPP-ULTRA] Processando array com', imovelFotos.length, 'itens');
+      
       for (let i = 0; i < Math.min(imovelFotos.length, 3); i++) {
         const foto = imovelFotos[i];
+        console.log(`📱 [WHATSAPP-ULTRA] Foto ${i}:`, foto);
         
         if (foto && typeof foto === 'object') {
+          // Prioridade para fotos de melhor qualidade
           const possibleUrls = [
             foto.FotoGrande,
             foto.Foto, 
@@ -88,17 +111,20 @@ function getWhatsAppOptimizedImageUrl(imovelFotos) {
             foto.FotoPequena,
             foto.url,
             foto.src,
-            foto.image
+            foto.image,
+            foto.href
           ];
           
           for (const url of possibleUrls) {
             if (url && typeof url === 'string' && url.trim() !== '') {
               finalImageUrl = url.trim();
+              console.log(`📱 [WHATSAPP-ULTRA] ✅ URL encontrada em objeto[${i}]:`, finalImageUrl);
               break;
             }
           }
         } else if (foto && typeof foto === 'string' && foto.trim() !== '') {
           finalImageUrl = foto.trim();
+          console.log(`📱 [WHATSAPP-ULTRA] ✅ URL string direta[${i}]:`, finalImageUrl);
           break;
         }
         
@@ -106,11 +132,16 @@ function getWhatsAppOptimizedImageUrl(imovelFotos) {
       }
     }
     
+    // MÉTODO 2: String direta
     if (!finalImageUrl && typeof imovelFotos === 'string' && imovelFotos.trim() !== '') {
       finalImageUrl = imovelFotos.trim();
+      console.log('📱 [WHATSAPP-ULTRA] ✅ URL string direta:', finalImageUrl);
     }
     
+    // MÉTODO 3: Objeto único
     if (!finalImageUrl && imovelFotos && typeof imovelFotos === 'object' && !Array.isArray(imovelFotos)) {
+      console.log('📱 [WHATSAPP-ULTRA] Processando objeto único');
+      
       const possibleUrls = [
         imovelFotos.FotoGrande,
         imovelFotos.Foto,
@@ -124,26 +155,36 @@ function getWhatsAppOptimizedImageUrl(imovelFotos) {
       for (const url of possibleUrls) {
         if (url && typeof url === 'string' && url.trim() !== '') {
           finalImageUrl = url.trim();
+          console.log('📱 [WHATSAPP-ULTRA] ✅ URL encontrada em objeto único:', finalImageUrl);
           break;
         }
       }
     }
     
+    // VALIDAÇÃO FINAL DA URL
     if (finalImageUrl) {
+      // Garantir HTTPS (importante para WhatsApp)
       if (finalImageUrl.startsWith('http://')) {
         finalImageUrl = finalImageUrl.replace('http://', 'https://');
+        console.log('📱 [WHATSAPP-ULTRA] ✅ Convertido para HTTPS:', finalImageUrl);
       }
       
+      // Se URL relativa, converter para absoluta
       if (finalImageUrl.startsWith('/')) {
         finalImageUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://npiconsultoria.com.br'}${finalImageUrl}`;
+        console.log('📱 [WHATSAPP-ULTRA] ✅ Convertido para URL absoluta:', finalImageUrl);
       }
       
       return finalImageUrl;
     }
     
-    return `${process.env.NEXT_PUBLIC_SITE_URL || 'https://npiconsultoria.com.br'}/og-image.png`;
+    // FALLBACK FINAL
+    const fallbackUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://npiconsultoria.com.br'}/og-image.png`;
+    console.log('📱 [WHATSAPP-ULTRA] ⚠️ Usando fallback final:', fallbackUrl);
+    return fallbackUrl;
     
   } catch (error) {
+    console.error('📱 [WHATSAPP-ULTRA] ❌ Erro geral:', error);
     return `${process.env.NEXT_PUBLIC_SITE_URL || 'https://npiconsultoria.com.br'}/og-image.png`;
   }
 }
@@ -152,6 +193,8 @@ export const revalidate = 0;
 
 export async function generateMetadata({ params }) {
   const { id } = params;
+  
+  console.error(`[IMOVEL-META] =========== PROCESSANDO ID: ${id} ===========`);
   
   try {
     const response = await getImovelById(id);
@@ -169,17 +212,57 @@ export async function generateMetadata({ params }) {
       modifiedDate = convertBrazilianDateToISO(imovel.DataHoraAtualizacao, imovel);
       const testDate = new Date(modifiedDate);
       if (isNaN(testDate.getTime())) {
+        console.error(`[IMOVEL-META] ❌ Data inválida gerada, usando fallback`);
         modifiedDate = new Date().toISOString();
       }
     } catch (error) {
+      console.error(`[IMOVEL-META] ❌ Erro na conversão de data:`, error);
       modifiedDate = new Date().toISOString();
     }
     
-    const title = `${imovel.Empreendimento}, ${imovel.TipoEndereco} ${imovel.Endereco} ${imovel.Numero}, ${imovel.BairroComercial}, ${imovel.Cidade}`;
+    console.error(`[IMOVEL-META] ✅ Data final válida: ${modifiedDate}`);
+    
+    // ✅ TÍTULO INTELIGENTE - Remove duplicatas e melhora legibilidade
+    function createSmartTitle(imovel) {
+      const parts = [];
+      
+      // 1. Nome do empreendimento (sempre primeiro)
+      if (imovel.Empreendimento) {
+        parts.push(imovel.Empreendimento);
+      }
+      
+      // 2. Endereço (só se não estiver no nome do empreendimento)
+      const endereco = `${imovel.TipoEndereco || ''} ${imovel.Endereco || ''} ${imovel.Numero || ''}`.trim();
+      if (endereco && !imovel.Empreendimento?.toLowerCase().includes(imovel.Endereco?.toLowerCase() || '')) {
+        parts.push(endereco);
+      }
+      
+      // 3. Bairro (só se diferente do empreendimento e endereço)
+      if (imovel.BairroComercial && 
+          !parts.some(part => part.toLowerCase().includes(imovel.BairroComercial.toLowerCase()))) {
+        parts.push(imovel.BairroComercial);
+      }
+      
+      // 4. Cidade (sempre último)
+      if (imovel.Cidade && 
+          !parts.some(part => part.toLowerCase().includes(imovel.Cidade.toLowerCase()))) {
+        parts.push(imovel.Cidade);
+      }
+      
+      const smartTitle = parts.filter(part => part && part.trim() !== '').join(', ');
+      console.log('📝 [SMART-TITLE] Título original seria:', `${imovel.Empreendimento}, ${imovel.TipoEndereco} ${imovel.Endereco} ${imovel.Numero}, ${imovel.BairroComercial}, ${imovel.Cidade}`);
+      console.log('📝 [SMART-TITLE] Título inteligente:', smartTitle);
+      
+      return smartTitle;
+    }
+    
+    const title = createSmartTitle(imovel);
     const description = `${imovel.Empreendimento}, ${imovel.Categoria} à venda no bairro ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.DormitoriosAntigo} dormitórios, ${imovel.SuiteAntigo} suítes, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt} m2. Preço: ${imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}.`;
     const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
     
     const imageUrl = getWhatsAppOptimizedImageUrl(imovel.Foto);
+    
+    console.log('📱 [WHATSAPP-META] URL final da imagem para WhatsApp:', imageUrl);
 
     return {
       title,
@@ -262,8 +345,18 @@ export async function generateMetadata({ params }) {
 export default async function ImovelPage({ params }) {
   const { id, slug } = params;
   
+  console.log(`🏠 [IMOVEL-PAGE] =================== INÍCIO ===================`);
+  console.log(`🏠 [IMOVEL-PAGE] Processando ID: ${id}, SLUG: ${slug}`);
+  
   try {
+    console.log(`🏠 [IMOVEL-PAGE] 📞 Chamando getImovelById(${id})`);
     const response = await getImovelById(id);
+    
+    console.log(`🏠 [IMOVEL-PAGE] 📞 Response:`, { 
+      success: !!response?.data, 
+      codigo: response?.data?.Codigo,
+      empreendimento: response?.data?.Empreendimento?.substring(0, 30)
+    });
     
     if (!response?.data) {
       notFound();
@@ -277,8 +370,23 @@ export default async function ImovelPage({ params }) {
       BanheiroSocialQtd: response.data.BanheiroSocialQtd ?? 0,
     };
 
+    const slugCorreto = imovel.Slug;
+
+    if (slug !== slugCorreto) {
+      console.log(`🏠 [IMOVEL-PAGE] ⚠️ Slug inconsistente (middleware deveria ter redirecionado): ${slug} vs ${slugCorreto}`);
+    }
+
     const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
     const modifiedDate = convertBrazilianDateToISO(imovel.DataHoraAtualizacao, imovel);
+    
+    console.log('🔍 Data convertida no componente:', modifiedDate);
+    
+    console.log('🎥 [DEBUG-FINAL] =======================================');
+    console.log('🎥 [DEBUG-FINAL] Dados do vídeo:', imovel.Video);
+    console.log('📱 [DEBUG-FINAL] URL da imagem WhatsApp:', getWhatsAppOptimizedImageUrl(imovel.Foto));
+    console.log('📱 [DEBUG-FINAL] Dados da foto original:', imovel.Foto);
+    console.log('📱 [DEBUG-FINAL] URL atual:', currentUrl);
+    console.log('🎥 [DEBUG-FINAL] =======================================');
 
     const structuredDataDates = {
       "@context": "https://schema.org",
@@ -332,10 +440,12 @@ export default async function ImovelPage({ params }) {
             {(() => {
               try {
                 if (!imovel?.Video || typeof imovel.Video !== 'object' || Array.isArray(imovel.Video)) {
+                  console.log('🎥 [VALIDATION] ❌ Video inválido: não é objeto válido');
                   return null;
                 }
                 
                 if (Object.keys(imovel.Video).length === 0) {
+                  console.log('🎥 [VALIDATION] ❌ Video inválido: objeto vazio');
                   return null;
                 }
                 
@@ -346,10 +456,12 @@ export default async function ImovelPage({ params }) {
                   const firstValue = values[0];
                   if (firstValue && typeof firstValue === 'object') {
                     videoValue = (firstValue.Video || firstValue.url || firstValue.videoId || firstValue.id || '').trim();
+                    console.log('🎥 [VALIDATION] VideoId extraído:', videoValue);
                   }
                 }
                 
                 if (!videoValue) {
+                  console.log('🎥 [VALIDATION] ❌ Video inválido: valor vazio');
                   return null;
                 }
                 
@@ -362,6 +474,7 @@ export default async function ImovelPage({ params }) {
                 }
                 
                 if (blockedVideoIds.includes(cleanVideoId)) {
+                  console.log('🎥 [VALIDATION] ❌ VideoId na lista de deletados:', cleanVideoId);
                   return null;
                 }
                 
@@ -373,6 +486,7 @@ export default async function ImovelPage({ params }) {
                   /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/.test(videoValue);
                 
                 if (!isValidYoutubeFormat) {
+                  console.log('🎥 [VALIDATION] ❌ Formato inválido:', videoValue);
                   return null;
                 }
                 
@@ -389,13 +503,16 @@ export default async function ImovelPage({ params }) {
                 
                 for (const pattern of invalidUrlPatterns) {
                   if (pattern.test(videoValue)) {
+                    console.log('🎥 [VALIDATION] ❌ URL inválida detectada:', videoValue);
                     return null;
                   }
                 }
                 
+                console.log('🎥 [VALIDATION] ✅ Vídeo válido aprovado:', cleanVideoId);
                 return <VideoCondominio imovel={imovel} />;
                 
               } catch (e) {
+                console.error('🎥 [VALIDATION] ❌ Erro na validação:', e);
                 return null;
               }
             })()}
