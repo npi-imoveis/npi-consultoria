@@ -10,24 +10,10 @@ import { StarIcon } from "@heroicons/react/24/solid";
 import { StarIcon as StarOutlineIcon } from "@heroicons/react/24/outline";
 import { PhotoIcon } from "@heroicons/react/24/outline";
 
-interface Imovel {
-  Codigo: string;
-  TituloSite?: string;
-  Titulo?: string;
-  Categoria?: string;
-  ValorVenda?: string | number;
-  ValorAluguelSite?: string | number;
-  Valor?: string | number;
-  Destaque?: string;
-  FotoDestaque?: string;
-  Fotos?: string[];
-  ImagemPrincipal?: string;
-}
-
 export default function ImoveisDestacados() {
-  const [imoveis, setImoveis] = useState<Imovel[]>([]);
+  const [imoveis, setImoveis] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [destacados, setDestacados] = useState<string[]>([]);
+  const [destacados, setDestacados] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
 
   // Carregar todos os imóveis
@@ -41,8 +27,8 @@ export default function ImoveisDestacados() {
 
           // Identificar quais são destacados
           const destaques = response.imoveis
-            .filter((imovel: Imovel) => imovel.Destaque === "Sim" || Math.random() > 0.7)
-            .map((imovel: Imovel) => imovel.Codigo);
+            .filter((imovel) => imovel.Destaque === "Sim" || Math.random() > 0.7)
+            .map((imovel) => imovel.Codigo);
 
           setDestacados(destaques);
         }
@@ -57,7 +43,7 @@ export default function ImoveisDestacados() {
   }, []);
 
   // Alternar o status de destaque de um imóvel
-  const toggleDestaque = (codigo: string) => {
+  const toggleDestaque = (codigo) => {
     setDestacados((prev) => {
       if (prev.includes(codigo)) {
         return prev.filter((id) => id !== codigo);
@@ -87,7 +73,7 @@ export default function ImoveisDestacados() {
   };
 
   // Formatar valores monetários
-  const formatarValor = (valor: string | number | undefined): string => {
+  const formatarValor = (valor) => {
     if (!valor) return "-";
 
     const valorNumerico =
@@ -104,7 +90,7 @@ export default function ImoveisDestacados() {
   };
 
   // Obter URL da foto destaque
-  const getFotoDestaque = (imovel: Imovel): string | null => {
+  const getFotoDestaque = (imovel) => {
     // Prioridade: FotoDestaque > ImagemPrincipal > primeira foto do array
     return (
       imovel.FotoDestaque ||
@@ -114,7 +100,7 @@ export default function ImoveisDestacados() {
   };
 
   // Componente para imagem com fallback
-  const ImagemImovel = ({ imovel }: { imovel: Imovel }) => {
+  const ImagemImovel = ({ imovel }) => {
     const [imageError, setImageError] = useState(false);
     const [imageLoading, setImageLoading] = useState(true);
     const fotoUrl = getFotoDestaque(imovel);
