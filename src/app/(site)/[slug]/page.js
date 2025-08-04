@@ -218,15 +218,21 @@ export async function generateMetadata({ params }) {
   // 🎯 PROCESSAR FOTOS PARA METADATA TAMBÉM
   const fotosOrdenadas = processarFotosCondominio(condominio.Foto, condominio.Codigo);
   
-  // Corrigir extração da imagem - buscar foto destacada ou primeira disponível
+  // 🎯 MELHORAR SELEÇÃO DE IMAGEM PARA WHATSAPP
   const destaqueFotoObj = fotosOrdenadas?.find((f) => f.Destaque === "Sim");
   const primeiraFoto = Array.isArray(fotosOrdenadas) && fotosOrdenadas.length > 0 ? fotosOrdenadas[0] : null;
   
-  const destaqueFotoUrl = destaqueFotoObj?.Foto || 
-                         destaqueFotoObj?.FotoPequena || 
-                         primeiraFoto?.Foto || 
-                         primeiraFoto?.FotoPequena ||
-                         `${process.env.NEXT_PUBLIC_SITE_URL}/og-image.png`;
+  // Priorizar FotoPequena para WhatsApp (menor tamanho = carrega mais rápido)
+  const imagemWhatsApp = destaqueFotoObj?.FotoPequena || 
+                        primeiraFoto?.FotoPequena ||
+                        destaqueFotoObj?.Foto || 
+                        primeiraFoto?.Foto ||
+                        `${process.env.NEXT_PUBLIC_SITE_URL}/og-image-small.jpg`;
+  
+  // Imagem de backup otimizada para redes sociais
+  const imagemFacebook = destaqueFotoObj?.Foto || 
+                        primeiraFoto?.Foto ||
+                        `${process.env.NEXT_PUBLIC_SITE_URL}/og-image.jpg`;
   
   const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`;
   
@@ -236,14 +242,18 @@ export async function generateMetadata({ params }) {
   // 🎯 EXTRAIR ID DO VÍDEO - ADICIONADO
   const videoId = condominio?.Video ? Object.values(condominio.Video)[0]?.Video : null;
 
-  console.error(`[CONDOMINIO-META] Image URL: ${destaqueFotoUrl}`);
+  console.error(`[CONDOMINIO-META] WhatsApp Image URL: ${imagemWhatsApp}`);
+  console.error(`[CONDOMINIO-META] Facebook Image URL: ${imagemFacebook}`);
 
   const description = `${rawTitle} em ${condominio.BairroComercial}, ${condominio.Cidade}. ${condominio.Categoria} com ${condominio.MetragemAnt} m2, ${condominio.DormitoriosAntigo} quartos, ${condominio.VagasAntigo} vagas. ${condominio.Situacao}.`;
 
   return {
     title: `${rawTitle}, ${condominio.TipoEndereco} ${condominio.Endereco} ${condominio.Numero}, ${condominio.BairroComercial}`,
     description,
+    
+    // 🎯 CRÍTICO: metadataBase é OBRIGATÓRIO para Next.js 13+ WhatsApp thumbnails
     metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL),
+    
     robots: {
       index: true,
       follow: true,
@@ -257,6 +267,8 @@ export async function generateMetadata({ params }) {
         "pt-BR": currentUrl,
       },
     },
+    
+    // 🎯 OPENGRPAH OTIMIZADO PARA WHATSAPP
     openGraph: {
       title: rawTitle,
       description,
@@ -265,15 +277,27 @@ export async function generateMetadata({ params }) {
       siteName: "NPI Consultoria",
       publishedTime: modifiedDate,
       modifiedTime: modifiedDate,
+      
+      // 🎯 MÚLTIPLAS IMAGENS: WHATSAPP USARÁ A MAIS ADEQUADA
       images: [
+        // Primeira imagem: Otimizada para WhatsApp (300KB max, quadrada)
         {
-          url: destaqueFotoUrl,
+          url: imagemWhatsApp,
+          width: 400,
+          height: 400,
+          alt: `${rawTitle} - WhatsApp Preview`,
+          type: "image/jpeg",
+        },
+        // Segunda imagem: Para Facebook/outras redes (retangular)
+        {
+          url: imagemFacebook,
           width: 1200,
           height: 630,
-          alt: rawTitle,
+          alt: `${rawTitle} - Social Preview`,
           type: "image/jpeg",
         }
       ],
+      
       // 🎯 ADICIONAR VÍDEOS SE EXISTIR
       ...(videoId && {
         videos: [{
@@ -286,18 +310,24 @@ export async function generateMetadata({ params }) {
       }),
       updated_time: modifiedDate,
     },
+    
     twitter: {
       card: videoId ? "player" : "summary_large_image", // 🎯 Muda para player se tiver vídeo
       title: rawTitle,
       description,
       site: "@NPIImoveis",
       creator: "@NPIImoveis",
+      
+      // Usar imagem menor para carregamento mais rápido
       images: [
         {
-          url: destaqueFotoUrl,
+          url: imagemWhatsApp,
           alt: rawTitle,
+          width: 400,
+          height: 400,
         }
       ],
+      
       // 🎯 ADICIONAR PLAYER DO TWITTER SE TIVER VÍDEO
       ...(videoId && {
         players: [{
@@ -308,17 +338,29 @@ export async function generateMetadata({ params }) {
         }],
       }),
     },
+    
+    // 🎯 META TAGS ADICIONAIS PARA WHATSAPP
     other: {
+      // Meta tags básicas
       'article:published_time': modifiedDate,
       'article:modified_time': modifiedDate,
       'article:author': 'NPI Consultoria',
       'article:section': 'Imobiliário',
       'article:tag': `${condominio.Categoria}, ${condominio.BairroComercial}, ${condominio.Cidade}, condomínio`,
+      
+      // Meta tags específicas para WhatsApp
       'og:updated_time': modifiedDate,
+      'og:image:secure_url': imagemWhatsApp,
+      'og:image:width': '400',
+      'og:image:height': '400',
+      'og:image:type': 'image/jpeg',
+      
+      // Meta tags de cache
       'last-modified': modifiedDate,
       'date': modifiedDate,
       'DC.date.modified': modifiedDate,
       'DC.date.created': modifiedDate,
+      
       // 🎯 META TAGS DE VÍDEO ADICIONADAS CORRETAMENTE
       ...(videoId && {
         'og:video': `https://www.youtube.com/embed/${videoId}`,
