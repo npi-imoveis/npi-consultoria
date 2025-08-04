@@ -66,6 +66,96 @@ function processarFotosCondominio(fotos, codigoCondominio) {
   }
 }
 
+// 🎯 NOVA FUNÇÃO PARA ORDENAR IMÓVEIS RELACIONADOS
+// Coloca o imóvel principal primeiro + demais por valor (menor → maior)
+function ordenarImoveisRelacionados(imoveisRelacionados, codigoPrincipal) {
+  if (!Array.isArray(imoveisRelacionados) || imoveisRelacionados.length === 0) {
+    console.log('📋 ORDENAÇÃO: Nenhum imóvel relacionado para ordenar');
+    return [];
+  }
+
+  try {
+    console.log('🎯 ORDENAÇÃO: Iniciando ordenação de imóveis relacionados', {
+      totalImoveis: imoveisRelacionados.length,
+      codigoPrincipal: codigoPrincipal
+    });
+
+    // 1️⃣ SEPARAR IMÓVEL PRINCIPAL DOS DEMAIS
+    const imovelPrincipal = imoveisRelacionados.find(imovel => 
+      imovel.Codigo === codigoPrincipal || 
+      imovel.Codigo === parseInt(codigoPrincipal) ||
+      imovel.CodigoImovel === codigoPrincipal ||
+      imovel.CodigoImovel === parseInt(codigoPrincipal)
+    );
+
+    const demaisImoveis = imoveisRelacionados.filter(imovel => 
+      imovel.Codigo !== codigoPrincipal && 
+      imovel.Codigo !== parseInt(codigoPrincipal) &&
+      imovel.CodigoImovel !== codigoPrincipal &&
+      imovel.CodigoImovel !== parseInt(codigoPrincipal)
+    );
+
+    console.log('🔍 ORDENAÇÃO: Separação concluída', {
+      imovelPrincipalEncontrado: !!imovelPrincipal,
+      codigoImovelPrincipal: imovelPrincipal?.Codigo || imovelPrincipal?.CodigoImovel,
+      demaisImoveis: demaisImoveis.length
+    });
+
+    // 2️⃣ ORDENAR DEMAIS IMÓVEIS POR VALOR (MENOR → MAIOR)
+    const demaisOrdenados = demaisImoveis.sort((a, b) => {
+      // Função para extrair valor numérico 
+      const extrairValor = (imovel) => {
+        // Tentar diferentes campos de valor
+        const valor = imovel.ValorVenda || 
+                     imovel.ValorAntigo || 
+                     imovel.Valor || 
+                     imovel.PrecoVenda ||
+                     imovel.ValorVendaFormatado ||
+                     0;
+        
+        // Se for string, limpar formatação e converter
+        if (typeof valor === 'string') {
+          return parseFloat(valor.replace(/[^\d,.-]/g, '').replace(',', '.')) || 0;
+        }
+        
+        return parseFloat(valor) || 0;
+      };
+
+      const valorA = extrairValor(a);
+      const valorB = extrairValor(b);
+
+      return valorA - valorB; // Ordem crescente (menor → maior)
+    });
+
+    // 3️⃣ MONTAR ARRAY FINAL: PRINCIPAL PRIMEIRO + DEMAIS ORDENADOS
+    const imoveisOrdenados = [];
+    
+    if (imovelPrincipal) {
+      imoveisOrdenados.push(imovelPrincipal);
+    }
+    
+    imoveisOrdenados.push(...demaisOrdenados);
+
+    console.log('✅ ORDENAÇÃO: Finalizada com sucesso', {
+      totalFinal: imoveisOrdenados.length,
+      primeiroEhPrincipal: imoveisOrdenados[0]?.Codigo === codigoPrincipal || 
+                          imoveisOrdenados[0]?.CodigoImovel === codigoPrincipal,
+      ordemValores: imoveisOrdenados.slice(1, 4).map(i => {
+        const valor = i.ValorVenda || i.ValorAntigo || i.Valor || 0;
+        return typeof valor === 'string' ? valor.substring(0, 15) + '...' : valor;
+      })
+    });
+
+    return imoveisOrdenados;
+
+  } catch (error) {
+    console.error('❌ ORDENAÇÃO: Erro ao ordenar imóveis relacionados:', error);
+    
+    // Fallback seguro - retornar array original
+    return imoveisRelacionados;
+  }
+}
+
 export async function generateMetadata({ params }) {
   const { slug } = params;
   
@@ -228,6 +318,10 @@ export default async function CondominioPage({ params }) {
   // 🎯 PROCESSAR FOTOS COM photoSorter ANTES DE USAR (igual ao admin que funcionou)
   const fotosOrdenadas = processarFotosCondominio(condominio.Foto, condominio.Codigo);
 
+  // 🎯 NOVA IMPLEMENTAÇÃO: ORDENAR IMÓVEIS RELACIONADOS
+  // Principal primeiro + demais por valor crescente
+  const imoveisOrdenados = ordenarImoveisRelacionados(imoveisRelacionados, condominio.Codigo);
+
   const rawTitle = ensureCondominio(condominio.Empreendimento);
   const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`;
   const modifiedDate = new Date().toISOString();
@@ -360,13 +454,13 @@ export default async function CondominioPage({ params }) {
                   </div>
                 )}
               </div>
-              <ScrollToImoveisButton text={`Mostrar imóveis (${imoveisRelacionados.length})`} />
+              <ScrollToImoveisButton text={`Mostrar imóveis (${imoveisOrdenados.length})`} />
             </div>
             <div className="relative w-full h-[230px] overflow-y-auto bg-white rounded-lg overflow-hidden p-4">
               {isValidValue(condominio.ValorVenda2) || isValidValue(condominio.ValorGarden) || isValidValue(condominio.ValorCobertura) ? (
                 <PropertyTableOwner imovel={condominio} />
               ) : (
-                <PropertyTable imoveisRelacionados={imoveisRelacionados} />
+                <PropertyTable imoveisRelacionados={imoveisOrdenados} />
               )}
             </div>
           </div>
@@ -382,9 +476,9 @@ export default async function CondominioPage({ params }) {
           </div>
         </div>
       </div>
-      {imoveisRelacionados && imoveisRelacionados.length > 0 && (
+      {imoveisOrdenados && imoveisOrdenados.length > 0 && (
         <div id="imoveis-relacionados">
-          <ImoveisRelacionados imoveisRelacionados={imoveisRelacionados} />
+          <ImoveisRelacionados imoveisRelacionados={imoveisOrdenados} />
         </div>
       )}
       <SobreCondominio condominio={condominio} />
