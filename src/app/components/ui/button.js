@@ -1,13 +1,11 @@
 "use client";
-
 import Link from "next/link";
 
-export function Button({ link, text, style = "primary", onClick = () => { } }) {
+export function Button({ link, text, style = "primary", onClick = () => { }, target }) {
   // Define classes based on style prop
   const getButtonClasses = () => {
     const baseClasses =
       "inline-flex justify-center items-center tracking-wide gap-2 px-6 py-2 focus:outline-none focus:ring transition-all duration-300 ease-in-out";
-
     switch (style) {
       case "primary":
         return `${baseClasses} bg-black border border-black text-white hover:bg-transparent hover:text-black rounded-full`;
@@ -19,20 +17,19 @@ export function Button({ link, text, style = "primary", onClick = () => { } }) {
         return `${baseClasses} bg-black border border-black text-white hover:bg-transparent hover:text-black rounded-full`;
     }
   };
-
+  
   // Função para lidar com o clique
   const handleClick = (e) => {
     if (onClick) {
       onClick(e);
     }
   };
-
+  
   // Se não tiver link, renderiza um botão comum
   if (!link) {
     return (
       <button className={getButtonClasses()} onClick={handleClick} type="button">
         <span className="text-[10px] font-semibold uppercase"> {text} </span>
-
         <svg
           className="size-5 rtl:rotate-180"
           xmlns="http://www.w3.org/2000/svg"
@@ -50,12 +47,17 @@ export function Button({ link, text, style = "primary", onClick = () => { } }) {
       </button>
     );
   }
-
+  
   // Com link, renderiza como Link
   return (
-    <Link className={getButtonClasses()} href={link} onClick={handleClick} target="_blank" rel="noopener noreferrer">
+    <Link 
+      className={getButtonClasses()} 
+      href={link} 
+      onClick={handleClick} 
+      target={target}
+      rel={target === "_blank" ? "noopener noreferrer" : undefined}
+    >
       <span className="text-[10px] font-semibold uppercase"> {text} </span>
-
       <svg
         className="size-5 rtl:rotate-180"
         xmlns="http://www.w3.org/2000/svg"
