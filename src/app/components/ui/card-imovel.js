@@ -70,6 +70,7 @@ export default function CardImovel({
   AreaPrivativa,
   id,
   isLoading,
+  target, // 🎯 NOVA PROP PARA CONTROLAR ABERTURA EM NOVA ABA
 }) {
   // Se estiver carregando ou não houver código, mostra o skeleton
   if (isLoading || !Codigo) {
@@ -221,6 +222,7 @@ export default function CardImovel({
             link={`/imovel/${Codigo}/${slug}`}
             text="Saiba mais"
             onClick={handleButtonClick}
+            target={target} // 🎯 PASSAR PROP TARGET PARA O BUTTON
           />
         </div>
       </div>
