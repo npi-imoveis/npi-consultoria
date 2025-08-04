@@ -1,5 +1,3 @@
-// src/app/admin/imoveis-destacados/page.js
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -10,24 +8,10 @@ import { StarIcon } from "@heroicons/react/24/solid";
 import { StarIcon as StarOutlineIcon } from "@heroicons/react/24/outline";
 import { PhotoIcon } from "@heroicons/react/24/outline";
 
-interface Imovel {
-  Codigo: string;
-  TituloSite?: string;
-  Titulo?: string;
-  Categoria?: string;
-  ValorVenda?: string | number;
-  ValorAluguelSite?: string | number;
-  Valor?: string | number;
-  Destaque?: string;
-  FotoDestaque?: string;
-  Fotos?: string[];
-  ImagemPrincipal?: string;
-}
-
 export default function ImoveisDestacados() {
-  const [imoveis, setImoveis] = useState<Imovel[]>([]);
+  const [imoveis, setImoveis] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [destacados, setDestacados] = useState<string[]>([]);
+  const [destacados, setDestacados] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
 
   // Carregar todos os imóveis
@@ -36,13 +20,14 @@ export default function ImoveisDestacados() {
       setIsLoading(true);
       try {
         const response = await getImoveis({}, 1, 100);
+        
         if (response && response.imoveis) {
           setImoveis(response.imoveis);
 
           // Identificar quais são destacados
           const destaques = response.imoveis
-            .filter((imovel: Imovel) => imovel.Destaque === "Sim" || Math.random() > 0.7)
-            .map((imovel: Imovel) => imovel.Codigo);
+            .filter((imovel) => imovel.Destaque === "Sim" || Math.random() > 0.7)
+            .map((imovel) => imovel.Codigo);
 
           setDestacados(destaques);
         }
@@ -57,7 +42,7 @@ export default function ImoveisDestacados() {
   }, []);
 
   // Alternar o status de destaque de um imóvel
-  const toggleDestaque = (codigo: string) => {
+  const toggleDestaque = (codigo) => {
     setDestacados((prev) => {
       if (prev.includes(codigo)) {
         return prev.filter((id) => id !== codigo);
@@ -74,9 +59,7 @@ export default function ImoveisDestacados() {
       // TODO: Implementar chamada real para API
       // await updateDestacados(destacados);
       
-      // Simulação de delay da API
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
       alert(`Imóveis destacados salvos: ${destacados.join(", ")}`);
     } catch (error) {
       console.error("Erro ao salvar destaques:", error);
@@ -87,7 +70,7 @@ export default function ImoveisDestacados() {
   };
 
   // Formatar valores monetários
-  const formatarValor = (valor: string | number | undefined): string => {
+  const formatarValor = (valor) => {
     if (!valor) return "-";
 
     const valorNumerico =
@@ -103,21 +86,45 @@ export default function ImoveisDestacados() {
     }).format(valorNumerico);
   };
 
-  // Obter URL da foto destaque
-  const getFotoDestaque = (imovel: Imovel): string | null => {
-    // Prioridade: FotoDestaque > ImagemPrincipal > primeira foto do array
-    return (
-      imovel.FotoDestaque ||
-      imovel.ImagemPrincipal ||
-      (imovel.Fotos && imovel.Fotos.length > 0 ? imovel.Fotos[0] : null)
-    );
+  // 🎯 Buscar foto destaque (versão otimizada)
+  const getFotoDestaque = (imovel) => {
+    // Buscar foto com Destaque: "Sim" no array
+    if (Array.isArray(imovel.Foto) && imovel.Foto.length > 0) {
+      const fotoDestaque = imovel.Foto.find(foto => foto.Destaque === "Sim");
+      
+      if (fotoDestaque && fotoDestaque.Foto) {
+        return fotoDestaque.Foto;
+      }
+      
+      // Fallback: primeira foto do array
+      const primeiraFoto = imovel.Foto[0];
+      if (primeiraFoto && primeiraFoto.Foto) {
+        return primeiraFoto.Foto;
+      }
+      
+      if (typeof primeiraFoto === 'string') {
+        return primeiraFoto;
+      }
+    }
+    
+    // Fallback: string direta
+    if (typeof imovel.Foto === 'string' && imovel.Foto.trim() !== '') {
+      return imovel.Foto;
+    }
+    
+    return null;
   };
 
   // Componente para imagem com fallback
-  const ImagemImovel = ({ imovel }: { imovel: Imovel }) => {
+  const ImagemImovel = ({ imovel }) => {
     const [imageError, setImageError] = useState(false);
     const [imageLoading, setImageLoading] = useState(true);
     const fotoUrl = getFotoDestaque(imovel);
+
+    // Verificar se é foto destaque
+    const isFotoDestaque = Array.isArray(imovel.Foto) && imovel.Foto.some(foto => 
+      foto.Destaque === "Sim" && foto.Foto === fotoUrl
+    );
 
     if (!fotoUrl || imageError) {
       return (
@@ -146,31 +153,26 @@ export default function ImoveisDestacados() {
             setImageLoading(false);
           }}
         />
+        
+        {/* Badge de destaque */}
+        {isFotoDestaque && (
+          <div className="absolute -top-1 -right-1 bg-yellow-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+            ⭐
+          </div>
+        )}
       </div>
     );
   };
 
-  // Skeleton loading para a tabela
+  // Skeleton loading
   const SkeletonRow = () => (
     <tr className="animate-pulse">
-      <td className="px-6 py-4">
-        <div className="w-5 h-5 bg-gray-200 rounded"></div>
-      </td>
-      <td className="px-6 py-4">
-        <div className="w-16 h-12 bg-gray-200 rounded-lg"></div>
-      </td>
-      <td className="px-6 py-4">
-        <div className="w-20 h-4 bg-gray-200 rounded"></div>
-      </td>
-      <td className="px-6 py-4">
-        <div className="w-32 h-4 bg-gray-200 rounded"></div>
-      </td>
-      <td className="px-6 py-4">
-        <div className="w-24 h-4 bg-gray-200 rounded"></div>
-      </td>
-      <td className="px-6 py-4">
-        <div className="w-28 h-4 bg-gray-200 rounded"></div>
-      </td>
+      <td className="px-6 py-4"><div className="w-5 h-5 bg-gray-200 rounded"></div></td>
+      <td className="px-6 py-4"><div className="w-16 h-12 bg-gray-200 rounded-lg"></div></td>
+      <td className="px-6 py-4"><div className="w-20 h-4 bg-gray-200 rounded"></div></td>
+      <td className="px-6 py-4"><div className="w-32 h-4 bg-gray-200 rounded"></div></td>
+      <td className="px-6 py-4"><div className="w-24 h-4 bg-gray-200 rounded"></div></td>
+      <td className="px-6 py-4"><div className="w-28 h-4 bg-gray-200 rounded"></div></td>
     </tr>
   );
 
@@ -198,24 +200,12 @@ export default function ImoveisDestacados() {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Destaque
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Foto
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Código
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Título
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Categoria
-                      </th>
-                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        Valor
-                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Destaque</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Foto</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Título</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categoria</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor</th>
                     </tr>
                   </thead>
                   <tbody className="bg-white divide-y divide-gray-200">
@@ -233,40 +223,22 @@ export default function ImoveisDestacados() {
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                        >
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Destaque
                         </th>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                        >
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Foto
                         </th>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                        >
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Código
                         </th>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                        >
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Título
                         </th>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                        >
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Categoria
                         </th>
-                        <th
-                          scope="col"
-                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                        >
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Valor
                         </th>
                       </tr>
