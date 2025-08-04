@@ -66,7 +66,35 @@ function processarFotosCondominio(fotos, codigoCondominio) {
   }
 }
 
-// 🎯 NOVA FUNÇÃO PARA ORDENAR IMÓVEIS RELACIONADOS
+// 🎯 FUNÇÃO PARA CONVERTER S3 URLs PARA PROXY (SOLUÇÃO WHATSAPP WEB)
+function converterParaProxy(urlImagem, dominioSite) {
+  if (!urlImagem) {
+    return `${dominioSite}/og-image-small.jpg`;
+  }
+  
+  // Se já é URL do seu domínio, manter
+  if (urlImagem.startsWith(dominioSite)) {
+    return urlImagem;
+  }
+  
+  // 🔥 Se é URL S3, converter para proxy (RESOLVE PROBLEMA WHATSAPP)
+  if (urlImagem.includes('s3') || urlImagem.includes('amazonaws')) {
+    const encodedUrl = encodeURIComponent(urlImagem);
+    const proxyUrl = `${dominioSite}/api/image-proxy?url=${encodedUrl}`;
+    
+    console.log('🔄 S3→Proxy:', urlImagem.substring(0, 50) + '...', '→', proxyUrl.substring(0, 50) + '...');
+    return proxyUrl;
+  }
+  
+  // URL externa qualquer, usar proxy também
+  if (urlImagem.startsWith('http')) {
+    const encodedUrl = encodeURIComponent(urlImagem);
+    return `${dominioSite}/api/image-proxy?url=${encodedUrl}`;
+  }
+  
+  // URL relativa, tornar absoluta
+  return `${dominioSite}${urlImagem.startsWith('/') ? '' : '/'}${urlImagem}`;
+}
 // Coloca o imóvel principal primeiro + demais por valor (menor → maior)
 function ordenarImoveisRelacionados(imoveisRelacionados, codigoPrincipal) {
   if (!Array.isArray(imoveisRelacionados) || imoveisRelacionados.length === 0) {
@@ -218,21 +246,23 @@ export async function generateMetadata({ params }) {
   // 🎯 PROCESSAR FOTOS PARA METADATA TAMBÉM
   const fotosOrdenadas = processarFotosCondominio(condominio.Foto, condominio.Codigo);
   
-  // 🎯 MELHORAR SELEÇÃO DE IMAGEM PARA WHATSAPP
+  // 🎯 SELECIONAR MELHOR IMAGEM PARA WHATSAPP
   const destaqueFotoObj = fotosOrdenadas?.find((f) => f.Destaque === "Sim");
   const primeiraFoto = Array.isArray(fotosOrdenadas) && fotosOrdenadas.length > 0 ? fotosOrdenadas[0] : null;
   
-  // Priorizar FotoPequena para WhatsApp (menor tamanho = carrega mais rápido)
-  const imagemWhatsApp = destaqueFotoObj?.FotoPequena || 
+  const imagemOriginal = destaqueFotoObj?.FotoPequena || 
                         primeiraFoto?.FotoPequena ||
                         destaqueFotoObj?.Foto || 
-                        primeiraFoto?.Foto ||
-                        `${process.env.NEXT_PUBLIC_SITE_URL}/og-image-small.jpg`;
+                        primeiraFoto?.Foto;
+
+  // 🔥 CONVERTER S3 URL PARA PROXY URL - RESOLVE PROBLEMA WHATSAPP
+  const imagemWhatsApp = converterParaProxy(imagemOriginal, process.env.NEXT_PUBLIC_SITE_URL);
   
-  // Imagem de backup otimizada para redes sociais
-  const imagemFacebook = destaqueFotoObj?.Foto || 
-                        primeiraFoto?.Foto ||
-                        `${process.env.NEXT_PUBLIC_SITE_URL}/og-image.jpg`;
+  // Imagem de backup otimizada para outras redes sociais
+  const imagemFacebook = converterParaProxy(
+    destaqueFotoObj?.Foto || primeiraFoto?.Foto,
+    process.env.NEXT_PUBLIC_SITE_URL
+  ) || `${process.env.NEXT_PUBLIC_SITE_URL}/og-image.jpg`;
   
   const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`;
   
@@ -339,7 +369,7 @@ export async function generateMetadata({ params }) {
       }),
     },
     
-    // 🎯 META TAGS ADICIONAIS PARA WHATSAPP
+    // 🎯 META TAGS ESPECÍFICOS PARA WHATSAPP WEB
     other: {
       // Meta tags básicas
       'article:published_time': modifiedDate,
@@ -348,12 +378,22 @@ export async function generateMetadata({ params }) {
       'article:section': 'Imobiliário',
       'article:tag': `${condominio.Categoria}, ${condominio.BairroComercial}, ${condominio.Cidade}, condomínio`,
       
-      // Meta tags específicas para WhatsApp
-      'og:updated_time': modifiedDate,
+      // 🔥 CRÍTICO PARA WHATSAPP WEB: og:image:secure_url obrigatório
       'og:image:secure_url': imagemWhatsApp,
+      'og:image:url': imagemWhatsApp,
       'og:image:width': '400',
       'og:image:height': '400',
       'og:image:type': 'image/jpeg',
+      'og:updated_time': modifiedDate,
+      
+      // 🔥 TWITTER META TAGS ADICIONAIS (WhatsApp Web pode usar)
+      'twitter:image:src': imagemWhatsApp,
+      'twitter:image:width': '400',
+      'twitter:image:height': '400',
+      
+      // 🔥 META TAGS LEGACY PARA COMPATIBILIDADE
+      'image': imagemWhatsApp,
+      'thumbnail': imagemWhatsApp,
       
       // Meta tags de cache
       'last-modified': modifiedDate,
@@ -405,6 +445,17 @@ export default async function CondominioPage({ params }) {
 
   // 🎯 EXTRAIR ID DO VÍDEO - ADICIONADO
   const videoId = condominio?.Video ? Object.values(condominio.Video)[0]?.Video : null;
+
+  // 🔥 PREPARAR IMAGENS PARA WHATSAPP WEB (USAR PROXY)
+  const destaqueFotoObj = fotosOrdenadas?.find((f) => f.Destaque === "Sim");
+  const primeiraFoto = Array.isArray(fotosOrdenadas) && fotosOrdenadas.length > 0 ? fotosOrdenadas[0] : null;
+  
+  const imagemOriginal = destaqueFotoObj?.FotoPequena || 
+                        primeiraFoto?.FotoPequena ||
+                        destaqueFotoObj?.Foto || 
+                        primeiraFoto?.Foto;
+  
+  const imagemWhatsApp = converterParaProxy(imagemOriginal, process.env.NEXT_PUBLIC_SITE_URL);
 
   // Structured Data adicional para datas
   const structuredDataDates = {
