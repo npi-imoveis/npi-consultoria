@@ -91,10 +91,31 @@ export default function ImoveisDestacados() {
 
   // Obter URL da foto destaque
   const getFotoDestaque = (imovel) => {
-    // Prioridade: FotoDestaque > ImagemPrincipal > primeira foto do array
+    // Debug: vamos ver todos os campos de foto disponíveis
+    console.log('Debug foto imovel:', imovel.Codigo, {
+      FotoDestaque: imovel.FotoDestaque,
+      ImagemPrincipal: imovel.ImagemPrincipal,
+      Fotos: imovel.Fotos,
+      Foto: imovel.Foto,
+      FotoPrincipal: imovel.FotoPrincipal,
+      Imagem: imovel.Imagem,
+      foto_destaque: imovel.foto_destaque,
+      imagem_principal: imovel.imagem_principal
+    });
+
+    // Prioridades para buscar a foto destaque:
+    // 1. FotoDestaque (campo específico para destaque)
+    // 2. FotoPrincipal ou ImagemPrincipal 
+    // 3. Foto (campo genérico)
+    // 4. Primeira foto do array Fotos
     return (
       imovel.FotoDestaque ||
+      imovel.FotoPrincipal ||
       imovel.ImagemPrincipal ||
+      imovel.Foto ||
+      imovel.Imagem ||
+      imovel.foto_destaque ||
+      imovel.imagem_principal ||
       (imovel.Fotos && imovel.Fotos.length > 0 ? imovel.Fotos[0] : null)
     );
   };
@@ -105,10 +126,33 @@ export default function ImoveisDestacados() {
     const [imageLoading, setImageLoading] = useState(true);
     const fotoUrl = getFotoDestaque(imovel);
 
-    if (!fotoUrl || imageError) {
+    // Função para tratar a URL da foto
+    const tratarUrlFoto = (url) => {
+      if (!url) return null;
+      
+      // Se a URL já estiver completa, retorna como está
+      if (url.startsWith('http://') || url.startsWith('https://')) {
+        return url;
+      }
+      
+      // Se for uma URL relativa, pode precisar de tratamento
+      // Ajuste conforme seu domínio/CDN
+      if (url.startsWith('/')) {
+        return url; // Next.js Image pode lidar com URLs relativas
+      }
+      
+      return url;
+    };
+
+    const urlTratada = tratarUrlFoto(fotoUrl);
+
+    if (!urlTratada || imageError) {
       return (
         <div className="w-16 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
           <PhotoIcon className="w-6 h-6 text-gray-400" />
+          <span className="text-xs text-gray-400 ml-1">
+            {imovel.Codigo}
+          </span>
         </div>
       );
     }
@@ -119,7 +163,7 @@ export default function ImoveisDestacados() {
           <div className="absolute inset-0 bg-gray-200 animate-pulse" />
         )}
         <Image
-          src={fotoUrl}
+          src={urlTratada}
           alt={`Foto do imóvel ${imovel.Codigo}`}
           fill
           className={`object-cover transition-opacity duration-300 ${
@@ -127,7 +171,8 @@ export default function ImoveisDestacados() {
           }`}
           sizes="64px"
           onLoad={() => setImageLoading(false)}
-          onError={() => {
+          onError={(e) => {
+            console.error(`Erro ao carregar imagem do imóvel ${imovel.Codigo}:`, urlTratada);
             setImageError(true);
             setImageLoading(false);
           }}
