@@ -103,26 +103,61 @@ function ordenarImoveisRelacionados(imoveisRelacionados, codigoPrincipal) {
 
     // 2️⃣ ORDENAR DEMAIS IMÓVEIS POR VALOR (MENOR → MAIOR)
     const demaisOrdenados = demaisImoveis.sort((a, b) => {
-      // Função para extrair valor numérico 
+      // Função para extrair valor numérico melhorada
       const extrairValor = (imovel) => {
-        // Tentar diferentes campos de valor
-        const valor = imovel.ValorVenda || 
-                     imovel.ValorAntigo || 
-                     imovel.Valor || 
-                     imovel.PrecoVenda ||
-                     imovel.ValorVendaFormatado ||
-                     0;
+        // Tentar diferentes campos de valor (ordem de prioridade)
+        const valorBruto = imovel.ValorVenda || 
+                          imovel.ValorAntigo || 
+                          imovel.Valor || 
+                          imovel.PrecoVenda ||
+                          imovel.ValorVendaFormatado ||
+                          imovel.ValorVendaSite ||
+                          '0';
         
-        // Se for string, limpar formatação e converter
-        if (typeof valor === 'string') {
-          return parseFloat(valor.replace(/[^\d,.-]/g, '').replace(',', '.')) || 0;
+        console.log('🔍 VALOR BRUTO:', {
+          codigo: imovel.Codigo || imovel.CodigoImovel,
+          valorBruto,
+          tipo: typeof valorBruto
+        });
+        
+        // Se for número, retornar direto
+        if (typeof valorBruto === 'number') {
+          return valorBruto;
         }
         
-        return parseFloat(valor) || 0;
+        // Se for string, fazer limpeza mais robusta
+        if (typeof valorBruto === 'string') {
+          // Remover R$, pontos, espaços, deixar apenas números e vírgula
+          let valorLimpo = valorBruto
+            .replace(/R\$?\s*/g, '')           // Remove R$ e espaços
+            .replace(/\./g, '')               // Remove pontos (separadores de milhares)
+            .replace(/,/g, '.')               // Troca vírgula por ponto decimal
+            .replace(/[^\d.-]/g, '')          // Remove qualquer outro caractere
+            .trim();
+          
+          const valorNumerico = parseFloat(valorLimpo) || 0;
+          
+          console.log('🔍 CONVERSÃO:', {
+            codigo: imovel.Codigo || imovel.CodigoImovel,
+            original: valorBruto,
+            limpo: valorLimpo,
+            numerico: valorNumerico
+          });
+          
+          return valorNumerico;
+        }
+        
+        return 0;
       };
 
       const valorA = extrairValor(a);
       const valorB = extrairValor(b);
+      
+      console.log('🎯 COMPARAÇÃO:', {
+        imovelA: `${a.Codigo || a.CodigoImovel} = ${valorA}`,
+        imovelB: `${b.Codigo || b.CodigoImovel} = ${valorB}`,
+        resultado: valorA - valorB
+      });
 
       return valorA - valorB; // Ordem crescente (menor → maior)
     });
