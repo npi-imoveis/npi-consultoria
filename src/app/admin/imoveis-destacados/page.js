@@ -19,10 +19,16 @@ export default function ImoveisDestacados() {
   // Carregar todos os imóveis
   useEffect(() => {
     const fetchImoveis = async () => {
+      console.log("🔄 INICIANDO CARREGAMENTO DE IMÓVEIS...");
       setIsLoading(true);
       try {
         const response = await getImoveis({}, 1, 100);
+        console.log("📦 RESPOSTA DA API:", response);
+        
         if (response && response.imoveis) {
+          console.log("🏠 TOTAL DE IMÓVEIS:", response.imoveis.length);
+          console.log("🎯 PRIMEIRO IMÓVEL PARA DEBUG:", response.imoveis[0]);
+          
           setImoveis(response.imoveis);
 
           // Identificar quais são destacados
@@ -33,9 +39,10 @@ export default function ImoveisDestacados() {
           setDestacados(destaques);
         }
       } catch (error) {
-        console.error("Erro ao carregar imóveis:", error);
+        console.error("❌ ERRO ao carregar imóveis:", error);
       } finally {
         setIsLoading(false);
+        console.log("✅ CARREGAMENTO FINALIZADO");
       }
     };
 
@@ -92,7 +99,7 @@ export default function ImoveisDestacados() {
   // Obter URL da foto destaque
   const getFotoDestaque = (imovel) => {
     // Debug: vamos ver todos os campos de foto disponíveis
-    console.log('Debug foto imovel:', imovel.Codigo, {
+    console.log(`🖼️ ANÁLISE DE FOTO - Imóvel ${imovel.Codigo}:`, {
       FotoDestaque: imovel.FotoDestaque,
       ImagemPrincipal: imovel.ImagemPrincipal,
       Fotos: imovel.Fotos,
@@ -100,15 +107,12 @@ export default function ImoveisDestacados() {
       FotoPrincipal: imovel.FotoPrincipal,
       Imagem: imovel.Imagem,
       foto_destaque: imovel.foto_destaque,
-      imagem_principal: imovel.imagem_principal
+      imagem_principal: imovel.imagem_principal,
+      'Todos os campos do imóvel': Object.keys(imovel)
     });
 
     // Prioridades para buscar a foto destaque:
-    // 1. FotoDestaque (campo específico para destaque)
-    // 2. FotoPrincipal ou ImagemPrincipal 
-    // 3. Foto (campo genérico)
-    // 4. Primeira foto do array Fotos
-    return (
+    const fotoEscolhida = (
       imovel.FotoDestaque ||
       imovel.FotoPrincipal ||
       imovel.ImagemPrincipal ||
@@ -118,6 +122,10 @@ export default function ImoveisDestacados() {
       imovel.imagem_principal ||
       (imovel.Fotos && imovel.Fotos.length > 0 ? imovel.Fotos[0] : null)
     );
+
+    console.log(`📸 FOTO ESCOLHIDA para ${imovel.Codigo}:`, fotoEscolhida);
+    
+    return fotoEscolhida;
   };
 
   // Componente para imagem com fallback
