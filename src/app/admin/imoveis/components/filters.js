@@ -211,8 +211,8 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         const estimativa = Math.round((5553 * totalOcultos) / estatisticasSituacao.comSituacao);
         console.log(`💡 Estimativa de imóveis ocultos: ${estimativa}`);
         
-        if (estimativa >= 50) {
-          console.log(`🎯 BINGO! ${estimativa} imóveis ocultos explicam os 57 faltando!`);
+        if (estimativa >= 90) {
+          console.log(`🎯 BINGO! ${estimativa} imóveis ocultos explicam os 97 perdidos!`);
           console.log(`🔧 SOLUÇÃO: Adicionar "${situacoesOcultas.map(v => v.situacao).join('", "')}" aos filtros`);
         }
       } else {
@@ -226,8 +226,8 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         console.log(`   Na amostra: ${estatisticasSituacao.semSituacao}`);
         console.log(`   Estimativa total: ${estimativaSemSituacao}`);
         
-        if (estimativaSemSituacao >= 50) {
-          console.log(`🎯 POSSÍVEL CAUSA DOS 57 IMÓVEIS FALTANDO!`);
+        if (estimativaSemSituacao >= 90) {
+          console.log(`🎯 POSSÍVEL CAUSA DOS 97 IMÓVEIS PERDIDOS!`);
           console.log(`💡 SOLUÇÃO: Incluir imóveis com Situação NULL/vazia nos filtros`);
         }
       }
@@ -241,22 +241,40 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     console.log("🔬 ===== FIM INVESTIGAÇÃO COMPLETA =====");
   };
 
-  // ✅ MELHORADO: useEffect para situações com lógica mais robusta
+  // ✅ MELHORADO: useEffect para situações com debug aprimorado
   useEffect(() => {
     async function fetchFilterData() {
       try {
         console.log("🚨 ===== DEBUG SITUAÇÃO - VERSÃO ULTRA INCLUSIVA =====");
+        console.log("🔄 Iniciando chamadas para getImoveisByFilters...");
         
-        const [catResponse, cidResponse, sitResponse] = await Promise.all([
-          getImoveisByFilters("Categoria"),
-          getImoveisByFilters("Cidade"),
-          getImoveisByFilters("Situacao")
-        ]);
+        console.log("📡 Chamando getImoveisByFilters('Categoria')...");
+        const catResponse = await getImoveisByFilters("Categoria");
+        console.log("📡 Categoria response:", catResponse);
+        
+        console.log("📡 Chamando getImoveisByFilters('Cidade')...");
+        const cidResponse = await getImoveisByFilters("Cidade");
+        console.log("📡 Cidade response:", cidResponse);
+        
+        console.log("📡 Chamando getImoveisByFilters('Situacao')...");
+        const sitResponse = await getImoveisByFilters("Situacao");
+        console.log("📡 SITUAÇÃO response completa:", sitResponse);
+        console.log("📡 SITUAÇÃO response.data:", sitResponse?.data);
+        console.log("📡 SITUAÇÃO response.data type:", typeof sitResponse?.data);
+        console.log("📡 SITUAÇÃO response.data isArray:", Array.isArray(sitResponse?.data));
 
         setCategorias(catResponse.data || []);
         setCidades(cidResponse.data || []);
         
+        console.log("🔍 Verificando resposta de Situacao...");
+        console.log("   sitResponse existe?", !!sitResponse);
+        console.log("   sitResponse.data existe?", !!sitResponse?.data);
+        console.log("   sitResponse.data é array?", Array.isArray(sitResponse?.data));
+        console.log("   sitResponse.data.length:", sitResponse?.data?.length);
+        
         if (sitResponse?.data && Array.isArray(sitResponse.data) && sitResponse.data.length > 0) {
+          console.log("✅ [SITUAÇÃO] Dados encontrados - processando...");
+          
           const situacoesBrutas = sitResponse.data.filter(s => s && s.toString().trim() !== '');
           
           console.log("📥 [SITUAÇÃO] Situações BRUTAS recebidas do backend:");
@@ -264,10 +282,24 @@ export default function FiltersImoveisAdmin({ onFilter }) {
             console.log(`   ${i}: "${sit}" (tipo: ${typeof sit})`);
           });
           
+          if (situacoesBrutas.length === 0) {
+            console.log("⚠️ [SITUAÇÃO] Nenhuma situação válida após filtro");
+            setSituacoesReais(situacaoOptionsHardcoded);
+            setSituacoesMapeamento({});
+            return;
+          }
+          
           console.log("🔄 [SITUAÇÃO] Aplicando lógica ULTRA INCLUSIVA...");
           
           const novoMapeamento = {};
           const situacoesParaUI = new Set();
+          
+          // ✅ NOVO: Log específico para detectar "Pronto Novo" vs "PRONTO NOVO"
+          console.log("🔍 [SITUAÇÃO] Procurando por variações de 'Pronto Novo':");
+          const variacoesProntoNovo = situacoesBrutas.filter(s => 
+            s.toLowerCase().includes('pronto') && s.toLowerCase().includes('novo')
+          );
+          console.log("   Variações encontradas:", variacoesProntoNovo);
           
           // ✅ NOVO: Criar mapeamento mais robusto com diferentes estratégias de normalização
           situacoesBrutas.forEach((situacaoOriginal, index) => {
@@ -298,6 +330,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
                 }
                 if (!novoMapeamento[chaveSimples].includes(situacaoOriginal)) {
                   novoMapeamento[chaveSimples].push(situacaoOriginal);
+                  console.log(`     ✅ Situação "${situacaoOriginal}" também mapeada com chave simples "${chaveSimples}"`);
                 }
               }
             }
@@ -307,6 +340,12 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           Object.keys(novoMapeamento).forEach(chave => {
             console.log(`   "${chave}" → [${novoMapeamento[chave].join(', ')}] (${novoMapeamento[chave].length} variações)`);
           });
+          
+          // ✅ VERIFICAÇÃO ESPECÍFICA para "Pronto Novo"
+          const chavesProntoNovo = Object.keys(novoMapeamento).filter(chave => 
+            chave.includes('pronto') && chave.includes('novo')
+          );
+          console.log("🎯 [SITUAÇÃO] Chaves para 'Pronto Novo':", chavesProntoNovo);
           
           // ✅ CRIAR SITUAÇÕES PARA UI: Uma por grupo, priorizando versões maiúsculas
           Object.keys(novoMapeamento).forEach(chave => {
@@ -321,7 +360,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
             const situacaoParaUI = versaoMaiuscula || capitalizarNomesProprios(situacoesGrupo[0]) || situacoesGrupo[0];
             
             if (situacaoParaUI && !situacoesParaUI.has(situacaoParaUI)) {
-              console.log(`   ✅ Adicionando à UI: "${situacaoParaUI}"`);
+              console.log(`   ✅ Adicionando à UI: "${situacaoParaUI}" (representa: [${situacoesGrupo.join(', ')}])`);
               situacoesParaUI.add(situacaoParaUI);
             }
           });
@@ -334,6 +373,9 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           });
           
           console.log("💾 [SITUAÇÃO] Salvando estados...");
+          console.log("   situacoesFinais.length:", situacoesFinais.length);
+          console.log("   Object.keys(novoMapeamento).length:", Object.keys(novoMapeamento).length);
+          
           setSituacoesReais(situacoesFinais);
           setSituacoesMapeamento(novoMapeamento);
           
@@ -341,6 +383,10 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           
         } else {
           console.log("⚠️ [SITUAÇÃO] Sem dados do backend, usando hardcoded");
+          console.log("   Motivo:", !sitResponse ? "sitResponse falsy" : 
+                     !sitResponse.data ? "sitResponse.data falsy" : 
+                     !Array.isArray(sitResponse.data) ? "não é array" : 
+                     "array vazio");
           setSituacoesReais(situacaoOptionsHardcoded);
           setSituacoesMapeamento({});
         }
@@ -665,8 +711,8 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       console.log(`   Situações para API: ${situacaoProcessada.length}`);
       console.log(`   Fator de expansão: ${multiplicador.toFixed(2)}x`);
       
-      if (multiplicador > 2.0) {
-        console.log(`💡 [FILTROS] ALTA EXPANSÃO: ${multiplicador.toFixed(2)}x deve recuperar os 57 imóveis faltando!`);
+      if (multiplicador > 1.5) {
+        console.log(`💡 [FILTROS] ALTA EXPANSÃO: ${multiplicador.toFixed(2)}x deve recuperar os 97 imóveis perdidos!`);
       } else if (multiplicador < 1.5) {
         console.log(`⚠️ [FILTROS] BAIXA EXPANSÃO: ${multiplicador.toFixed(2)}x pode não ser suficiente`);
       }
@@ -1055,7 +1101,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           {investigandoSituacoes ? '🔍 Investigando...' : '🔍 Investigar Todos os Campos'}
         </button>
 
-        {/* 📊 INFORMAÇÕES DE DEBUG ATUALIZADAS */}
+        {/* 📊 INFORMAÇÕES DE DEBUG CORRIGIDAS */}
         <div className="text-xs text-gray-500 flex items-center gap-4 flex-wrap">
           <span>🎯 Situações: {situacoesReais.length}</span>
           <span>🗂️ Mapeamentos: {Object.keys(situacoesMapeamento).length}</span>
@@ -1065,10 +1111,10 @@ export default function FiltersImoveisAdmin({ onFilter }) {
             </span>
           )}
           <span className="text-red-600 text-[10px]">
-            ⚠️ 57 imóveis ainda faltando (5553 - 5496)
+            ⚠️ 97 imóveis perdidos - "Pronto Novo" vs "PRONTO NOVO"
           </span>
-          <span className="text-green-600 text-[10px] font-bold">
-            🚀 VERSÃO ULTRA ROBUSTA
+          <span className="text-purple-600 text-[10px] font-bold">
+            🔧 PROBLEMA: Mapeamento vazio - use botão correção
           </span>
         </div>
       </div>
