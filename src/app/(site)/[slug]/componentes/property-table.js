@@ -41,7 +41,7 @@ export function PropertyTable({ imoveisRelacionados, isLoading }) {
               <tr
                 key={index}
                 className="border-b border-gray-200 text-[10px] hover:bg-gray-50 cursor-pointer transition-colors"
-                onClick={() => (window.location.href = href)}
+                onClick={() => window.open(href, '_blank')}
               >
                 <td className="p-3 font-bold">
                   <h2 className="text-black font-semibold text-[10px]">{imovel.Categoria}</h2>
