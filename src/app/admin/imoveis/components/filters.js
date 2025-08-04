@@ -45,6 +45,9 @@ export default function FiltersImoveisAdmin({ onFilter }) {
   // Estado para investigação completa
   const [investigandoSituacoes, setInvestigandoSituacoes] = useState(false);
 
+  // 🎯 NOVO: Estado para busca dos 57 imóveis
+  const [buscandoImoveis57, setBuscandoImoveis57] = useState(false);
+
   // Opções de situação hardcoded (sem "Pronto para morar")
   const situacaoOptionsHardcoded = [
     "EM CONSTRUÇÃO",
@@ -79,6 +82,324 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       .replace(/[ùúûü]/g, 'u')
       .replace(/[ç]/g, 'c')
       .replace(/[ñ]/g, 'n');
+  };
+
+  // 🎯 NOVA FUNÇÃO: Encontrar os 57 imóveis sem situação - VERSÃO DEFINITIVA
+  const encontrarOs57ImoveisPerdidos = async () => {
+    setBuscandoImoveis57(true);
+    console.log('🎯 ===== MISSÃO DEFINITIVA: ENCONTRAR OS 57 IMÓVEIS PERDIDOS =====');
+    
+    try {
+      let todosImoveis = [];
+      let pagina = 1;
+      const LIMITE_POR_PAGINA = 100;
+      
+      console.log('📡 Fase 1: Coletando TODOS os imóveis da base (sem filtros)...');
+      
+      // Buscar TODOS os imóveis sem nenhum filtro
+      while (true) {
+        try {
+          console.log(`📄 Carregando página ${pagina}...`);
+          
+          const response = await fetch(`/api/admin/imoveis?page=${pagina}&limit=${LIMITE_POR_PAGINA}`);
+          const dados = await response.json();
+          
+          if (dados?.data && Array.isArray(dados.data) && dados.data.length > 0) {
+            todosImoveis.push(...dados.data);
+            console.log(`   ✅ Página ${pagina}: ${dados.data.length} imóveis (Total acumulado: ${todosImoveis.length})`);
+            
+            // Se retornou menos que o limite, chegamos ao fim
+            if (dados.data.length < LIMITE_POR_PAGINA) {
+              console.log(`   🏁 Última página detectada (${dados.data.length} < ${LIMITE_POR_PAGINA})`);
+              break;
+            }
+            
+            pagina++;
+            
+            // Segurança: máximo 100 páginas
+            if (pagina > 100) {
+              console.log('⚠️ Limite de segurança atingido (100 páginas)');
+              break;
+            }
+            
+          } else {
+            console.log(`   🏁 Sem mais dados na página ${pagina}`);
+            break;
+          }
+          
+        } catch (error) {
+          console.error(`❌ Erro na página ${pagina}:`, error);
+          break;
+        }
+      }
+      
+      console.log(`📊 TOTAL COLETADO: ${todosImoveis.length} imóveis`);
+      
+      if (todosImoveis.length === 0) {
+        console.error('❌ ERRO CRÍTICO: Nenhum imóvel foi coletado da API');
+        return;
+      }
+      
+      // Verificar se bate com os 5553 esperados
+      if (todosImoveis.length === 5553) {
+        console.log('✅ PERFEITO: Coletados exatamente os 5553 imóveis esperados!');
+      } else if (todosImoveis.length > 5553) {
+        console.log(`⚠️ ATENÇÃO: Coletados ${todosImoveis.length} imóveis (${todosImoveis.length - 5553} a mais que esperado)`);
+      } else {
+        console.log(`⚠️ ATENÇÃO: Coletados apenas ${todosImoveis.length} imóveis (faltam ${5553 - todosImoveis.length})`);
+      }
+      
+      console.log('🔍 Fase 2: Analisando campo SITUAÇÃO em busca dos problemáticos...');
+      
+      const imoveisSemSituacao = [];
+      const estatisticas = {
+        total: todosImoveis.length,
+        comSituacao: 0,
+        semSituacao: 0,
+        casos: {
+          null: 0,
+          undefined: 0,
+          stringVazia: 0,
+          apenasEspacos: 0,
+          tipoIncorreto: 0
+        }
+      };
+      
+      todosImoveis.forEach((imovel, index) => {
+        const situacao = imovel.Situacao;
+        const codigo = imovel.Codigo || imovel.codigo || `ERRO-SEM-CODIGO-${index}`;
+        
+        let temSituacaoValida = true;
+        let tipoProblemaSituacao = '';
+        
+        // Verificar todos os casos problemáticos
+        if (situacao === null) {
+          temSituacaoValida = false;
+          tipoProblemaSituacao = 'NULL';
+          estatisticas.casos.null++;
+        } else if (situacao === undefined) {
+          temSituacaoValida = false;
+          tipoProblemaSituacao = 'UNDEFINED';
+          estatisticas.casos.undefined++;
+        } else if (situacao === '') {
+          temSituacaoValida = false;
+          tipoProblemaSituacao = 'STRING_VAZIA';
+          estatisticas.casos.stringVazia++;
+        } else if (typeof situacao === 'string' && situacao.trim() === '') {
+          temSituacaoValida = false;
+          tipoProblemaSituacao = 'APENAS_ESPACOS';
+          estatisticas.casos.apenasEspacos++;
+        } else if (typeof situacao !== 'string') {
+          temSituacaoValida = false;
+          tipoProblemaSituacao = `TIPO_INCORRETO_${typeof situacao}`;
+          estatisticas.casos.tipoIncorreto++;
+        }
+        
+        if (temSituacaoValida) {
+          estatisticas.comSituacao++;
+        } else {
+          estatisticas.semSituacao++;
+          
+          imoveisSemSituacao.push({
+            codigo: codigo,
+            situacao: situacao,
+            tipoProblemaSituacao: tipoProblemaSituacao,
+            categoria: imovel.Categoria || 'N/A',
+            cidade: imovel.Cidade || 'N/A',
+            status: imovel.Status || 'N/A',
+            bairro: imovel.Bairro || 'N/A',
+            valor: imovel.Valor || 'N/A',
+            area: imovel.Area || 'N/A'
+          });
+        }
+      });
+      
+      console.log('🎯 ===== RESULTADOS DA ANÁLISE =====');
+      console.log(`📊 Total de imóveis analisados: ${estatisticas.total}`);
+      console.log(`✅ Com situação válida: ${estatisticas.comSituacao} (${((estatisticas.comSituacao/estatisticas.total)*100).toFixed(2)}%)`);
+      console.log(`❌ SEM situação válida: ${estatisticas.semSituacao} (${((estatisticas.semSituacao/estatisticas.total)*100).toFixed(2)}%)`);
+      
+      console.log(`\n📋 DETALHAMENTO DOS PROBLEMAS ENCONTRADOS:`);
+      console.log(`   🔴 NULL: ${estatisticas.casos.null} imóveis`);
+      console.log(`   🔴 UNDEFINED: ${estatisticas.casos.undefined} imóveis`);
+      console.log(`   🔴 STRING VAZIA (""): ${estatisticas.casos.stringVazia} imóveis`);
+      console.log(`   🔴 APENAS ESPAÇOS: ${estatisticas.casos.apenasEspacos} imóveis`);
+      console.log(`   🔴 TIPO INCORRETO: ${estatisticas.casos.tipoIncorreto} imóveis`);
+      
+      // MOMENTO DA VERDADE!
+      console.log(`\n🎯 ===== MOMENTO DA VERDADE =====`);
+      console.log(`🔢 ESPERADO: 57 imóveis sem situação (baseado na diferença 5553 - 5496)`);
+      console.log(`🔢 ENCONTRADO: ${estatisticas.semSituacao} imóveis sem situação`);
+      
+      if (estatisticas.semSituacao === 57) {
+        console.log(`✅ 🎉 BINGO ABSOLUTO! Encontramos exatamente os 57 imóveis problemáticos!`);
+        console.log(`🎯 Esta É a causa dos imóveis perdidos nos filtros!`);
+      } else if (estatisticas.semSituacao > 57) {
+        console.log(`⚠️ Encontramos ${estatisticas.semSituacao - 57} imóveis a mais que o esperado`);
+        console.log(`💡 Pode haver casos adicionais não contabilizados`);
+      } else {
+        console.log(`🤔 Encontramos ${57 - estatisticas.semSituacao} imóveis a menos que o esperado`);
+        console.log(`💡 Pode haver outros problemas além da falta de situação`);
+      }
+      
+      if (imoveisSemSituacao.length > 0) {
+        console.log(`\n🚨 ===== CÓDIGOS DOS IMÓVEIS SEM SITUAÇÃO =====`);
+        console.log('═'.repeat(100));
+        
+        // Agrupar por tipo de problema para melhor visualização
+        const porTipoProblema = {};
+        imoveisSemSituacao.forEach(imovel => {
+          if (!porTipoProblema[imovel.tipoProblemaSituacao]) {
+            porTipoProblema[imovel.tipoProblemaSituacao] = [];
+          }
+          porTipoProblema[imovel.tipoProblemaSituacao].push(imovel);
+        });
+        
+        Object.keys(porTipoProblema).forEach(tipo => {
+          const imoveis = porTipoProblema[tipo];
+          console.log(`\n🔴 ${tipo} (${imoveis.length} imóveis):`);
+          
+          imoveis.forEach((imovel, i) => {
+            console.log(`   ${i + 1}. ${imovel.codigo} | ${imovel.categoria} | ${imovel.cidade} | ${imovel.status} | R$ ${imovel.valor} | ${imovel.area}m²`);
+          });
+          
+          const codigos = imoveis.map(i => i.codigo);
+          console.log(`   📋 CÓDIGOS ${tipo}: ${codigos.join(', ')}`);
+        });
+        
+        // LISTA FINAL PARA CORREÇÃO MANUAL
+        console.log(`\n🎯 ===== LISTA FINAL PARA CORREÇÃO MANUAL =====`);
+        console.log('═'.repeat(100));
+        
+        const todosCodigosProblemáticos = imoveisSemSituacao.map(i => i.codigo);
+        console.log(`📋 TOTAL DE CÓDIGOS PROBLEMÁTICOS: ${todosCodigosProblemáticos.length}`);
+        console.log(`📋 CÓDIGOS COMPLETOS: ${todosCodigosProblemáticos.join(', ')}`);
+        
+        // COMANDOS SQL PARA CORREÇÃO
+        console.log(`\n💾 ===== COMANDOS SQL PARA CORREÇÃO =====`);
+        console.log('═'.repeat(100));
+        
+        // Opção 1: Definir como 'PRONTO USADO' (mais comum para imóveis sem situação)
+        console.log('-- OPÇÃO 1: Definir todos como PRONTO USADO (recomendado)');
+        console.log(`UPDATE imoveis SET Situacao = 'PRONTO USADO' WHERE Codigo IN ('${todosCodigosProblemáticos.join("', '")}');`);
+        
+        // Opção 2: Definir como 'SEM SITUAÇÃO' para identificação posterior
+        console.log('\n-- OPÇÃO 2: Marcar temporariamente como SEM SITUAÇÃO');
+        console.log(`UPDATE imoveis SET Situacao = 'SEM SITUAÇÃO' WHERE Codigo IN ('${todosCodigosProblemáticos.join("', '")}');`);
+        
+        // Opção 3: Comandos individuais por tipo de problema
+        console.log('\n-- OPÇÃO 3: Comandos específicos por tipo de problema:');
+        Object.keys(porTipoProblema).forEach(tipo => {
+          const codigos = porTipoProblema[tipo].map(i => i.codigo);
+          console.log(`-- ${tipo} (${codigos.length} imóveis):`);
+          console.log(`UPDATE imoveis SET Situacao = 'PRONTO USADO' WHERE Codigo IN ('${codigos.join("', '")}');`);
+        });
+        
+        // Estatísticas por categoria/cidade para definir melhor estratégia
+        console.log(`\n📊 ===== ANÁLISE ESTRATÉGICA PARA MELHOR CORREÇÃO =====`);
+        
+        const porCategoria = {};
+        const porCidade = {};
+        const porStatus = {};
+        
+        imoveisSemSituacao.forEach(imovel => {
+          // Por categoria
+          if (!porCategoria[imovel.categoria]) {
+            porCategoria[imovel.categoria] = 0;
+          }
+          porCategoria[imovel.categoria]++;
+          
+          // Por cidade
+          if (!porCidade[imovel.cidade]) {
+            porCidade[imovel.cidade] = 0;
+          }
+          porCidade[imovel.cidade]++;
+          
+          // Por status
+          if (!porStatus[imovel.status]) {
+            porStatus[imovel.status] = 0;
+          }
+          porStatus[imovel.status]++;
+        });
+        
+        console.log('📊 Distribuição por CATEGORIA:');
+        Object.entries(porCategoria)
+          .sort(([,a], [,b]) => b - a)
+          .forEach(([categoria, count]) => {
+            const percentual = ((count / imoveisSemSituacao.length) * 100).toFixed(1);
+            console.log(`   ${categoria}: ${count} imóveis (${percentual}%)`);
+          });
+        
+        console.log('\n📊 Distribuição por CIDADE:');
+        Object.entries(porCidade)
+          .sort(([,a], [,b]) => b - a)
+          .forEach(([cidade, count]) => {
+            const percentual = ((count / imoveisSemSituacao.length) * 100).toFixed(1);
+            console.log(`   ${cidade}: ${count} imóveis (${percentual}%)`);
+          });
+        
+        console.log('\n📊 Distribuição por STATUS:');
+        Object.entries(porStatus)
+          .sort(([,a], [,b]) => b - a)
+          .forEach(([status, count]) => {
+            const percentual = ((count / imoveisSemSituacao.length) * 100).toFixed(1);
+            console.log(`   ${status}: ${count} imóveis (${percentual}%)`);
+          });
+        
+        // Tentar copiar para clipboard
+        console.log(`\n📋 ===== TENTANDO COPIAR PARA CLIPBOARD =====`);
+        try {
+          const textoParaCopiar = `CÓDIGOS DOS ${imoveisSemSituacao.length} IMÓVEIS SEM SITUAÇÃO:\n${todosCodigosProblemáticos.join(', ')}`;
+          
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(textoParaCopiar);
+            console.log('✅ Lista de códigos copiada para clipboard com sucesso!');
+          } else {
+            console.log('⚠️ Clipboard API não disponível - copie manualmente do console');
+          }
+        } catch (error) {
+          console.log('❌ Erro ao copiar para clipboard:', error.message);
+          console.log('💡 Copie manualmente a lista de códigos acima');
+        }
+        
+        // Retornar dados para uso programático se necessário
+        return {
+          total: estatisticas.total,
+          comSituacao: estatisticas.comSituacao,
+          semSituacao: estatisticas.semSituacao,
+          codigos: todosCodigosProblemáticos,
+          detalhes: imoveisSemSituacao,
+          porTipo: porTipoProblema,
+          porCategoria,
+          porCidade,
+          porStatus
+        };
+        
+      } else {
+        console.log(`\n✅ SURPREENDENTE: Nenhum imóvel sem situação encontrado!`);
+        console.log(`🤔 Isso significa que o problema dos 57 imóveis deve estar em outro lugar:`);
+        console.log(`   1. Filtros ocultos no backend`);
+        console.log(`   2. Lógica de agregação/agrupamento`);
+        console.log(`   3. Problemas em outros campos (não só Situação)`);
+        console.log(`   4. Cache ou sincronização de dados`);
+        
+        return {
+          total: estatisticas.total,
+          comSituacao: estatisticas.comSituacao,
+          semSituacao: 0,
+          codigos: [],
+          observacao: 'Nenhum problema de situação encontrado'
+        };
+      }
+      
+    } catch (error) {
+      console.error('❌ ERRO CRÍTICO na análise:', error);
+      console.error('Stack trace:', error.stack);
+    } finally {
+      setBuscandoImoveis57(false);
+    }
+    
+    console.log('🎯 ===== FIM DA MISSÃO: ENCONTRAR OS 57 IMÓVEIS PERDIDOS =====');
   };
 
   // Investigação completa
@@ -1051,6 +1372,19 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           Limpar Filtros
         </button>
 
+        {/* 🎯 NOVO BOTÃO: Encontrar os 57 imóveis perdidos */}
+        <button
+          onClick={encontrarOs57ImoveisPerdidos}
+          disabled={buscandoImoveis57}
+          className={`px-4 py-2 text-sm font-bold rounded-lg transition-colors shadow-lg border-2 ${
+            buscandoImoveis57
+              ? 'bg-yellow-400 text-yellow-800 border-yellow-600 cursor-not-allowed'
+              : 'bg-red-600 text-white border-red-700 hover:bg-red-700'
+          }`}
+        >
+          {buscandoImoveis57 ? '🔍 Analisando 5553 imóveis...' : '🎯 ENCONTRAR OS 57 IMÓVEIS PERDIDOS'}
+        </button>
+
         {/* 🚫 BOTÃO PARA LISTAR IMÓVEIS SEM SITUAÇÃO */}
         <button
           onClick={async () => {
@@ -1092,7 +1426,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
                   }
                   
                 } catch (error) {
-                  console.log(`   ❌ Erro na página ${pagina}:`, error.message);
+                  console.log(`   ⚠️ Erro na página ${pagina}:`, error.message);
                   break;
                 }
               }
@@ -1595,7 +1929,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         </div>
         
         <div className="text-xs italic text-gray-400 mt-2">
-          💡 Use os botões: <strong>🚫 Listar Sem Situação</strong> → <strong>🔄 Comparação Direta</strong> → <strong>📋 Situações Atípicas</strong> para identificar os códigos perdidos
+          💡 Use o botão <strong>🎯 ENCONTRAR OS 57 IMÓVEIS PERDIDOS</strong> para identificar todos os códigos problemáticos
         </div>
       </div>
     </div>
