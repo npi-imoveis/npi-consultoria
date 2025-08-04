@@ -628,3 +628,34 @@ export default async function CondominioPage({ params }) {
     </section>
   );
 }
+
+/*
+🔥 CHECKLIST CRÍTICO PARA WHATSAPP WEB THUMBNAILS:
+
+✅ IMPLEMENTADO:
+1. metadataBase definido ✅
+2. og:image:secure_url obrigatório ✅
+3. URL absoluta com extensão ✅
+4. Imagem do mesmo domínio ✅
+5. Meta tags duplicados para compatibilidade ✅
+
+🧪 COMO TESTAR:
+1. Faça deploy das alterações
+2. Crie /public/og-image-small.jpg (400x400px, <200KB)
+3. Teste no Facebook Debugger primeiro
+4. WhatsApp Web: feche completamente o browser
+5. Abra nova aba do WhatsApp Web
+6. Compartilhe o link com parâmetro: ?t=123456
+7. Aguarde 30-60 segundos
+
+⚠️ LIMITAÇÕES CONHECIDAS:
+- WhatsApp Web pode não funcionar 100% independente do código
+- Algumas redes corporativas bloqueiam meta tags
+- Cache agressivo do WhatsApp pode demorar para atualizar
+
+🎯 SE AINDA NÃO FUNCIONAR:
+1. Teste com URL: https://site.com/pagina?whatsapp=1
+2. Verifique se imagem está no mesmo domínio
+3. Use ferramentas: https://metatags.io
+4. Teste em máquina/rede diferente
+*/
