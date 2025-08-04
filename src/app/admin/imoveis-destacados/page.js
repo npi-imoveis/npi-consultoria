@@ -10,39 +10,46 @@ import { StarIcon } from "@heroicons/react/24/solid";
 import { StarIcon as StarOutlineIcon } from "@heroicons/react/24/outline";
 import { PhotoIcon } from "@heroicons/react/24/outline";
 
+interface Imovel {
+  Codigo: string;
+  TituloSite?: string;
+  Titulo?: string;
+  Categoria?: string;
+  ValorVenda?: string | number;
+  ValorAluguelSite?: string | number;
+  Valor?: string | number;
+  Destaque?: string;
+  FotoDestaque?: string;
+  Fotos?: string[];
+  ImagemPrincipal?: string;
+}
+
 export default function ImoveisDestacados() {
-  const [imoveis, setImoveis] = useState([]);
+  const [imoveis, setImoveis] = useState<Imovel[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [destacados, setDestacados] = useState([]);
+  const [destacados, setDestacados] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
 
   // Carregar todos os imóveis
   useEffect(() => {
     const fetchImoveis = async () => {
-      console.log("🔄 INICIANDO CARREGAMENTO DE IMÓVEIS...");
       setIsLoading(true);
       try {
         const response = await getImoveis({}, 1, 100);
-        console.log("📦 RESPOSTA DA API:", response);
-        
         if (response && response.imoveis) {
-          console.log("🏠 TOTAL DE IMÓVEIS:", response.imoveis.length);
-          console.log("🎯 PRIMEIRO IMÓVEL PARA DEBUG:", response.imoveis[0]);
-          
           setImoveis(response.imoveis);
 
           // Identificar quais são destacados
           const destaques = response.imoveis
-            .filter((imovel) => imovel.Destaque === "Sim" || Math.random() > 0.7)
-            .map((imovel) => imovel.Codigo);
+            .filter((imovel: Imovel) => imovel.Destaque === "Sim" || Math.random() > 0.7)
+            .map((imovel: Imovel) => imovel.Codigo);
 
           setDestacados(destaques);
         }
       } catch (error) {
-        console.error("❌ ERRO ao carregar imóveis:", error);
+        console.error("Erro ao carregar imóveis:", error);
       } finally {
         setIsLoading(false);
-        console.log("✅ CARREGAMENTO FINALIZADO");
       }
     };
 
@@ -50,7 +57,7 @@ export default function ImoveisDestacados() {
   }, []);
 
   // Alternar o status de destaque de um imóvel
-  const toggleDestaque = (codigo) => {
+  const toggleDestaque = (codigo: string) => {
     setDestacados((prev) => {
       if (prev.includes(codigo)) {
         return prev.filter((id) => id !== codigo);
@@ -80,7 +87,7 @@ export default function ImoveisDestacados() {
   };
 
   // Formatar valores monetários
-  const formatarValor = (valor) => {
+  const formatarValor = (valor: string | number | undefined): string => {
     if (!valor) return "-";
 
     const valorNumerico =
@@ -97,98 +104,25 @@ export default function ImoveisDestacados() {
   };
 
   // Obter URL da foto destaque
-  const getFotoDestaque = (imovel) => {
-    console.log(`🖼️ ANÁLISE DE FOTO - Imóvel ${imovel.Codigo}:`);
-    console.log('📂 Estrutura completa do objeto Foto:', imovel.Foto);
-    console.log('🔍 Tipo do campo Foto:', typeof imovel.Foto);
-    console.log('📋 É array?', Array.isArray(imovel.Foto));
-    
-    // MÉTODO 1: Buscar foto com Destaque: "Sim" no array
-    if (Array.isArray(imovel.Foto) && imovel.Foto.length > 0) {
-      console.log(`📸 Processando array com ${imovel.Foto.length} fotos`);
-      
-      // Procurar foto marcada como destaque
-      const fotoDestaque = imovel.Foto.find(foto => foto.Destaque === "Sim");
-      
-      if (fotoDestaque && fotoDestaque.Foto) {
-        console.log(`✅ FOTO DESTAQUE ENCONTRADA:`, fotoDestaque.Foto);
-        return fotoDestaque.Foto;
-      }
-      
-      // Se não encontrou destaque, pegar a primeira foto
-      const primeiraFoto = imovel.Foto[0];
-      if (primeiraFoto && primeiraFoto.Foto) {
-        console.log(`📷 Usando primeira foto do array:`, primeiraFoto.Foto);
-        return primeiraFoto.Foto;
-      }
-      
-      // Fallback para string direta no array
-      if (typeof primeiraFoto === 'string') {
-        console.log(`📷 Primeira foto como string:`, primeiraFoto);
-        return primeiraFoto;
-      }
-    }
-    
-    // MÉTODO 2: Se Foto for string direta
-    if (typeof imovel.Foto === 'string' && imovel.Foto.trim() !== '') {
-      console.log(`📷 Foto como string direta:`, imovel.Foto);
-      return imovel.Foto;
-    }
-    
-    // MÉTODO 3: Buscar em outros campos (fallback)
-    const camposFallback = [
-      imovel.FotoDestaque,
-      imovel.FotoPrincipal,
-      imovel.ImagemPrincipal,
-      imovel.Imagem,
-      imovel.foto_destaque,
-      imovel.imagem_principal
-    ];
-    
-    for (const campo of camposFallback) {
-      if (campo && typeof campo === 'string' && campo.trim() !== '') {
-        console.log(`📷 Usando campo fallback:`, campo);
-        return campo;
-      }
-    }
-    
-    console.log(`❌ NENHUMA FOTO ENCONTRADA para ${imovel.Codigo}`);
-    return null;
+  const getFotoDestaque = (imovel: Imovel): string | null => {
+    // Prioridade: FotoDestaque > ImagemPrincipal > primeira foto do array
+    return (
+      imovel.FotoDestaque ||
+      imovel.ImagemPrincipal ||
+      (imovel.Fotos && imovel.Fotos.length > 0 ? imovel.Fotos[0] : null)
+    );
   };
 
   // Componente para imagem com fallback
-  const ImagemImovel = ({ imovel }) => {
+  const ImagemImovel = ({ imovel }: { imovel: Imovel }) => {
     const [imageError, setImageError] = useState(false);
     const [imageLoading, setImageLoading] = useState(true);
     const fotoUrl = getFotoDestaque(imovel);
 
-    // Função para tratar a URL da foto
-    const tratarUrlFoto = (url) => {
-      if (!url) return null;
-      
-      // Se a URL já estiver completa, retorna como está
-      if (url.startsWith('http://') || url.startsWith('https://')) {
-        return url;
-      }
-      
-      // Se for uma URL relativa, pode precisar de tratamento
-      // Ajuste conforme seu domínio/CDN
-      if (url.startsWith('/')) {
-        return url; // Next.js Image pode lidar com URLs relativas
-      }
-      
-      return url;
-    };
-
-    const urlTratada = tratarUrlFoto(fotoUrl);
-
-    if (!urlTratada || imageError) {
+    if (!fotoUrl || imageError) {
       return (
         <div className="w-16 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
           <PhotoIcon className="w-6 h-6 text-gray-400" />
-          <span className="text-xs text-gray-400 ml-1">
-            {imovel.Codigo}
-          </span>
         </div>
       );
     }
@@ -199,7 +133,7 @@ export default function ImoveisDestacados() {
           <div className="absolute inset-0 bg-gray-200 animate-pulse" />
         )}
         <Image
-          src={urlTratada}
+          src={fotoUrl}
           alt={`Foto do imóvel ${imovel.Codigo}`}
           fill
           className={`object-cover transition-opacity duration-300 ${
@@ -207,8 +141,7 @@ export default function ImoveisDestacados() {
           }`}
           sizes="64px"
           onLoad={() => setImageLoading(false)}
-          onError={(e) => {
-            console.error(`Erro ao carregar imagem do imóvel ${imovel.Codigo}:`, urlTratada);
+          onError={() => {
             setImageError(true);
             setImageLoading(false);
           }}
