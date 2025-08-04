@@ -98,34 +98,62 @@ export default function ImoveisDestacados() {
 
   // Obter URL da foto destaque
   const getFotoDestaque = (imovel) => {
-    // Debug: vamos ver todos os campos de foto disponíveis
-    console.log(`🖼️ ANÁLISE DE FOTO - Imóvel ${imovel.Codigo}:`, {
-      FotoDestaque: imovel.FotoDestaque,
-      ImagemPrincipal: imovel.ImagemPrincipal,
-      Fotos: imovel.Fotos,
-      Foto: imovel.Foto,
-      FotoPrincipal: imovel.FotoPrincipal,
-      Imagem: imovel.Imagem,
-      foto_destaque: imovel.foto_destaque,
-      imagem_principal: imovel.imagem_principal,
-      'Todos os campos do imóvel': Object.keys(imovel)
-    });
-
-    // Prioridades para buscar a foto destaque:
-    const fotoEscolhida = (
-      imovel.FotoDestaque ||
-      imovel.FotoPrincipal ||
-      imovel.ImagemPrincipal ||
-      imovel.Foto ||
-      imovel.Imagem ||
-      imovel.foto_destaque ||
-      imovel.imagem_principal ||
-      (imovel.Fotos && imovel.Fotos.length > 0 ? imovel.Fotos[0] : null)
-    );
-
-    console.log(`📸 FOTO ESCOLHIDA para ${imovel.Codigo}:`, fotoEscolhida);
+    console.log(`🖼️ ANÁLISE DE FOTO - Imóvel ${imovel.Codigo}:`);
+    console.log('📂 Estrutura completa do objeto Foto:', imovel.Foto);
+    console.log('🔍 Tipo do campo Foto:', typeof imovel.Foto);
+    console.log('📋 É array?', Array.isArray(imovel.Foto));
     
-    return fotoEscolhida;
+    // MÉTODO 1: Buscar foto com Destaque: "Sim" no array
+    if (Array.isArray(imovel.Foto) && imovel.Foto.length > 0) {
+      console.log(`📸 Processando array com ${imovel.Foto.length} fotos`);
+      
+      // Procurar foto marcada como destaque
+      const fotoDestaque = imovel.Foto.find(foto => foto.Destaque === "Sim");
+      
+      if (fotoDestaque && fotoDestaque.Foto) {
+        console.log(`✅ FOTO DESTAQUE ENCONTRADA:`, fotoDestaque.Foto);
+        return fotoDestaque.Foto;
+      }
+      
+      // Se não encontrou destaque, pegar a primeira foto
+      const primeiraFoto = imovel.Foto[0];
+      if (primeiraFoto && primeiraFoto.Foto) {
+        console.log(`📷 Usando primeira foto do array:`, primeiraFoto.Foto);
+        return primeiraFoto.Foto;
+      }
+      
+      // Fallback para string direta no array
+      if (typeof primeiraFoto === 'string') {
+        console.log(`📷 Primeira foto como string:`, primeiraFoto);
+        return primeiraFoto;
+      }
+    }
+    
+    // MÉTODO 2: Se Foto for string direta
+    if (typeof imovel.Foto === 'string' && imovel.Foto.trim() !== '') {
+      console.log(`📷 Foto como string direta:`, imovel.Foto);
+      return imovel.Foto;
+    }
+    
+    // MÉTODO 3: Buscar em outros campos (fallback)
+    const camposFallback = [
+      imovel.FotoDestaque,
+      imovel.FotoPrincipal,
+      imovel.ImagemPrincipal,
+      imovel.Imagem,
+      imovel.foto_destaque,
+      imovel.imagem_principal
+    ];
+    
+    for (const campo of camposFallback) {
+      if (campo && typeof campo === 'string' && campo.trim() !== '') {
+        console.log(`📷 Usando campo fallback:`, campo);
+        return campo;
+      }
+    }
+    
+    console.log(`❌ NENHUMA FOTO ENCONTRADA para ${imovel.Codigo}`);
+    return null;
   };
 
   // Componente para imagem com fallback
@@ -395,7 +423,5 @@ export default function ImoveisDestacados() {
         </div>
       </div>
     </AuthCheck>
-  );
-}
   );
 }
