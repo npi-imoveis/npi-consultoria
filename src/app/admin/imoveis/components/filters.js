@@ -1088,7 +1088,139 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           Limpar Filtros
         </button>
 
-        {/* 🔬 BOTÃO DE INVESTIGAÇÃO MANTIDO */}
+        {/* 📋 BOTÃO PARA LISTAR CÓDIGOS COM SITUAÇÕES ATÍPICAS */}
+        <button
+          onClick={async () => {
+            console.log('📋 ===== LISTANDO CÓDIGOS COM SITUAÇÕES ATÍPICAS =====');
+            
+            try {
+              // Buscar várias páginas para ter uma amostra maior
+              console.log('📡 Coletando amostra de múltiplas páginas...');
+              
+              let todosImoveis = [];
+              const maxPaginas = 20; // ~600 imóveis
+              
+              for (let pagina = 1; pagina <= maxPaginas; pagina++) {
+                try {
+                  const response = await fetch(`/api/admin/imoveis?page=${pagina}&limit=30`);
+                  const dados = await response.json();
+                  
+                  if (dados?.data && dados.data.length > 0) {
+                    todosImoveis.push(...dados.data);
+                    console.log(`   Página ${pagina}: ${dados.data.length} imóveis`);
+                  } else {
+                    console.log(`   Página ${pagina}: sem dados, parando...`);
+                    break;
+                  }
+                } catch (error) {
+                  console.log(`   Erro na página ${pagina}:`, error.message);
+                  break;
+                }
+              }
+              
+              console.log(`📊 Total coletado: ${todosImoveis.length} imóveis`);
+              
+              if (todosImoveis.length === 0) {
+                console.log('❌ Nenhum imóvel coletado');
+                return;
+              }
+              
+              // Analisar situações
+              console.log('🔍 Analisando situações...');
+              
+              const situacoesPadrao = new Set([
+                'EM CONSTRUÇÃO', 'LANÇAMENTO', 'PRONTO NOVO', 
+                'PRONTO USADO', 'PRÉ-LANÇAMENTO'
+              ]);
+              
+              const situacoesAtipicas = new Map();
+              const codigosAtipicos = [];
+              
+              todosImoveis.forEach((imovel, i) => {
+                const situacao = imovel.Situacao;
+                const codigo = imovel.Codigo || `sem-codigo-${i}`;
+                
+                // Verificar se é atípica
+                let isAtipica = false;
+                
+                if (situacao === null || situacao === undefined) {
+                  isAtipica = true;
+                  const chave = situacao === null ? 'NULL' : 'UNDEFINED';
+                  if (!situacoesAtipicas.has(chave)) {
+                    situacoesAtipicas.set(chave, []);
+                  }
+                  situacoesAtipicas.get(chave).push(codigo);
+                } else if (situacao === '') {
+                  isAtipica = true;
+                  if (!situacoesAtipicas.has('VAZIO')) {
+                    situacoesAtipicas.set('VAZIO', []);
+                  }
+                  situacoesAtipicas.get('VAZIO').push(codigo);
+                } else if (typeof situacao === 'string') {
+                  // Verificar se não está na lista padrão
+                  if (!situacoesPadrao.has(situacao.trim())) {
+                    isAtipica = true;
+                    const chave = `"${situacao}"`;
+                    if (!situacoesAtipicas.has(chave)) {
+                      situacoesAtipicas.set(chave, []);
+                    }
+                    situacoesAtipicas.get(chave).push(codigo);
+                  }
+                }
+                
+                if (isAtipica) {
+                  codigosAtipicos.push({
+                    codigo: codigo,
+                    situacao: situacao,
+                    tipo: typeof situacao
+                  });
+                }
+              });
+              
+              console.log('🎯 RESULTADO DA ANÁLISE:');
+              console.log(`📊 Total de imóveis analisados: ${todosImoveis.length}`);
+              console.log(`📊 Imóveis com situações atípicas: ${codigosAtipicos.length}`);
+              console.log(`📊 Percentual atípico: ${((codigosAtipicos.length/todosImoveis.length)*100).toFixed(1)}%`);
+              console.log(`📊 Estimativa no total (5553): ${Math.round((5553 * codigosAtipicos.length) / todosImoveis.length)} imóveis`);
+              
+              if (situacoesAtipicas.size > 0) {
+                console.log('\n🚨 SITUAÇÕES ATÍPICAS ENCONTRADAS:');
+                
+                Array.from(situacoesAtipicas.entries()).forEach(([situacao, codigos]) => {
+                  console.log(`\n📍 Situação: ${situacao}`);
+                  console.log(`   Quantidade: ${codigos.length}`);
+                  console.log(`   Códigos: ${codigos.slice(0, 10).join(', ')}${codigos.length > 10 ? ` (e mais ${codigos.length - 10})` : ''}`);
+                  
+                  // Estimativa no total
+                  const estimativa = Math.round((5553 * codigos.length) / todosImoveis.length);
+                  console.log(`   Estimativa total: ${estimativa} imóveis`);
+                });
+                
+                console.log('\n💡 AÇÕES RECOMENDADAS:');
+                console.log('1. Para situações NULL/UNDEFINED/VAZIO: Incluir nos filtros OR adicionar valor padrão');
+                console.log('2. Para situações com grafia diferente: Adicionar ao mapeamento');
+                console.log('3. Para situações com espaços: Normalizar no banco de dados');
+                
+                // Criar lista de códigos para correção manual
+                const todosCodigosAtipicos = codigosAtipicos.map(item => item.codigo);
+                console.log(`\n📋 CÓDIGOS PARA CORREÇÃO MANUAL (${todosCodigosAtipicos.length}):`);
+                console.log(todosCodigosAtipicos.join(', '));
+                
+              } else {
+                console.log('✅ Nenhuma situação atípica encontrada na amostra');
+                console.log('🤔 O problema pode estar em outras páginas ou filtros ocultos');
+              }
+              
+            } catch (error) {
+              console.error('❌ Erro na análise:', error);
+            }
+            
+            console.log('📋 ===== FIM LISTAGEM CÓDIGOS ATÍPICOS =====');
+          }}
+          className="px-3 py-2 text-xs rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
+        >
+          📋 Listar Códigos Atípicos
+        </button>
         <button
           onClick={investigarTodosCampos}
           disabled={investigandoSituacoes}
