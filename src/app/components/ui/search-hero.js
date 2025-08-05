@@ -6,7 +6,7 @@ export function SearchHero() {
   const router = useRouter();
   const [searchTerm, setSearchTerm] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e) => { // ✅ REMOVIDO: React.FormEvent
     e.preventDefault();
     if (searchTerm.trim() === "") return;
     
@@ -28,8 +28,8 @@ export function SearchHero() {
             text-white bg-transparent rounded-lg 
             focus:outline-none focus:ring-2 focus:ring-white/30 
             placeholder-gray-300 transition-all duration-200
-            text-base /* 16px - CRÍTICO para iOS */
-            md:text-lg /* 18px para desktop */
+            text-base 
+            md:text-lg
           "
           placeholder="Digite código, endereço, cidade ou condomínio..."
           value={searchTerm}
@@ -54,7 +54,7 @@ export function SearchHero() {
           type="submit"
           className="
             w-full sm:w-auto sm:absolute 
-            text-sm md:text-base /* Consistente com input */
+            text-sm md:text-base
             right-1 sm:top-1 sm:bottom-1 
             px-4 md:px-6 py-2 sm:py-0 
             bg-black/70 hover:bg-black/80 
