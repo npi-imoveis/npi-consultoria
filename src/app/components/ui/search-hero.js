@@ -7,33 +7,39 @@ export function SearchHero() {
   const [searchTerm, setSearchTerm] = useState("");
   const inputRef = useRef(null);
 
-  // ✅ Chrome iOS refinado: useEffect com propriedades mínimas
+  // ✅ Chrome iOS específico: aplica fontSize mínimo apenas se for Chrome iOS
   useEffect(() => {
     if (inputRef.current) {
       const input = inputRef.current;
       
-      // ✅ REFINADO: Apenas propriedades essenciais que não bloqueiam digitação
-      input.style.fontSize = "14px"; // Tamanho otimizado
+      // ✅ DETECÇÃO: Só aplica fontSize se for Chrome iOS
+      const isChromeIOS = /CriOS/.test(navigator.userAgent);
+      
+      if (isChromeIOS) {
+        // ✅ Chrome iOS: aplicar fontSize mínimo para prevenir zoom
+        input.style.fontSize = "15.5px";
+      }
+      
+      // ✅ Propriedades essenciais para todos iOS (Safari + Chrome)
       input.style.webkitAppearance = "none";
       input.style.webkitTextSizeAdjust = "none";
       input.style.webkitUserScalable = "0";
       input.style.userScalable = "0";
       
-      // ✅ Transform leve que não interfere
+      // Transform leve
       input.style.webkitTransform = "translate3d(0,0,0)";
       input.style.transform = "translate3d(0,0,0)";
       
-      // ✅ REMOVIDO: Event listeners agressivos que bloqueavam digitação
-      // Apenas gesturestart que é específico para zoom
+      // ✅ APENAS gesturestart para Chrome iOS
       const preventGesture = (e) => {
         e.preventDefault();
-        input.style.fontSize = "14px";
+        if (isChromeIOS) {
+          input.style.fontSize = "15.5px";
+        }
       };
       
-      // ✅ Apenas gesturestart (não touchstart/touchend que bloqueiam digitação)
       input.addEventListener('gesturestart', preventGesture, { passive: false });
       
-      // Cleanup
       return () => {
         input.removeEventListener('gesturestart', preventGesture);
       };
@@ -59,14 +65,17 @@ export function SearchHero() {
     // ✅ Mínimo necessário - sem interferir na digitação
   };
 
-  // ✅ REFINADO: Handler para focus - apenas se necessário
+  // ✅ REFINADO: Handler para focus - apenas Chrome iOS
   const handleFocus = (e) => {
     const input = e.target;
+    const isChromeIOS = /CriOS/.test(navigator.userAgent);
     
-    // ✅ Aplicação suave sem delays agressivos
-    input.style.fontSize = "14px";
-    input.style.webkitUserScalable = "0";
-    input.style.userScalable = "0";
+    // ✅ Aplica fontSize mínimo apenas se for Chrome iOS
+    if (isChromeIOS) {
+      input.style.fontSize = "15.5px";
+      input.style.webkitUserScalable = "0";
+      input.style.userScalable = "0";
+    }
   };
 
   return (
@@ -88,8 +97,8 @@ export function SearchHero() {
             text-white bg-transparent rounded-lg 
             focus:outline-none focus:ring-2 focus:ring-white/30 
             placeholder-gray-300 transition-all duration-200
-            text-sm
-            md:text-base
+            text-xs
+            md:text-sm
           "
           placeholder="Digite código, endereço, cidade ou condomínio..."
           value={searchTerm}
@@ -97,7 +106,7 @@ export function SearchHero() {
           onFocus={handleFocus}
           style={{
             // ✅ REFINADO: Propriedades mínimas necessárias
-            fontSize: "14px", // Tamanho otimizado (previne zoom Chrome iOS)
+            fontSize: "15.5px", // Tamanho otimizado (previne zoom Chrome iOS)
             minHeight: "40px", // Reduzido de 44px
             
             // WebKit essencial
@@ -155,29 +164,29 @@ export function SearchHero() {
         </button>
       </form>
       
-      {/* ✅ REFINADO: Script backup mínimo para Chrome iOS */}
+      {/* ✅ Script backup específico APENAS para Chrome iOS */}
       <script
         dangerouslySetInnerHTML={{
           __html: `
             (function() {
-              // Detection simples para Chrome iOS
+              // Detection específica para Chrome iOS
               var isChromeIOS = /CriOS/.test(navigator.userAgent);
               
+              // ✅ SÓ executa se for Chrome iOS
               if (isChromeIOS) {
                 function applyMinimalStyles() {
                   var inputs = document.querySelectorAll('.search-hero-input');
                   inputs.forEach(function(input) {
-                    // Apenas o essencial para Chrome iOS
-                    input.style.fontSize = '14px';
+                    // ✅ APENAS Chrome iOS: aplicar fontSize mínimo
+                    input.style.fontSize = '15.5px';
                     input.style.webkitUserScalable = '0';
                     input.style.userScalable = '0';
                     input.style.webkitTextSizeAdjust = 'none';
                     
-                    // ✅ REMOVIDO: Event listeners agressivos
-                    // Apenas gesturestart mínimo
+                    // Gesturestart para prevenir zoom
                     input.addEventListener('gesturestart', function(e) {
                       e.preventDefault();
-                      input.style.fontSize = '14px';
+                      input.style.fontSize = '15.5px';
                     });
                   });
                 }
@@ -189,6 +198,7 @@ export function SearchHero() {
                   applyMinimalStyles();
                 }
               }
+              // ✅ Se NÃO for Chrome iOS, não faz nada (deixa Tailwind funcionar)
             })();
           `
         }}
