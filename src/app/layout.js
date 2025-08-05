@@ -127,51 +127,44 @@ export default function RootLayout({ children }) {
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         
-        {/* ✅ CRÍTICO: CSS inline específico para Chrome iOS */}
+        {/* ✅ CSS inline refinado - Chrome iOS sem quebrar funcionalidade */}
         <style dangerouslySetInnerHTML={{
           __html: `
-            /* Crítico: Chrome iOS específico - previne zoom antes do CSS carregar */
+            /* Crítico: Chrome iOS específico - font otimizado */
             input, textarea, select {
-              font-size: 16px !important;
+              font-size: 15.5px !important;
               -webkit-appearance: none !important;
               -webkit-text-size-adjust: none !important;
               -webkit-user-scalable: 0 !important;
               user-scalable: 0 !important;
-              zoom: 1 !important;
-              -webkit-transform: translateZ(0) !important;
-              transform: translateZ(0) !important;
             }
             
-            /* Chrome iOS detection e override */
+            /* Chrome iOS detection refinada */
             @supports (-webkit-appearance: none) and (not (-webkit-backdrop-filter: blur(1px))) {
               input, textarea, select {
-                font-size: 16px !important;
+                font-size: 15.5px !important;
                 -webkit-user-scalable: 0 !important;
                 user-scalable: 0 !important;
-                -webkit-text-size-adjust: none !important;
-                -webkit-transform: translateZ(0) scale(1) !important;
-                transform: translateZ(0) scale(1) !important;
+                -webkit-transform: translate3d(0,0,0) !important;
+                transform: translate3d(0,0,0) !important;
               }
             }
             
             @media screen and (max-width: 768px) {
               input, textarea, select {
-                font-size: 16px !important;
+                font-size: 15.5px !important;
                 -webkit-user-scalable: 0 !important;
                 user-scalable: 0 !important;
-                touch-action: manipulation !important;
-                min-height: 44px !important;
+                min-height: 40px !important;
               }
             }
             
             * {
               -webkit-tap-highlight-color: transparent !important;
-              -webkit-touch-callout: none !important;
             }
             
             html {
               -webkit-text-size-adjust: 100% !important;
-              text-size-adjust: 100% !important;
             }
           `
         }} />
