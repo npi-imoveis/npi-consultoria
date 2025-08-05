@@ -88,8 +88,8 @@ export function SearchHero() {
             text-white bg-transparent rounded-lg 
             focus:outline-none focus:ring-2 focus:ring-white/30 
             placeholder-gray-300 transition-all duration-200
-            text-base 
-            md:text-lg
+            text-sm
+            md:text-base
           "
           placeholder="Digite código, endereço, cidade ou condomínio..."
           value={searchTerm}
@@ -97,7 +97,7 @@ export function SearchHero() {
           onFocus={handleFocus}
           style={{
             // ✅ REFINADO: Propriedades mínimas necessárias
-            fontSize: "15.5px", // Tamanho otimizado
+            fontSize: "15.5px", // Tamanho otimizado (previne zoom Chrome iOS)
             minHeight: "40px", // Reduzido de 44px
             
             // WebKit essencial
