@@ -111,7 +111,7 @@ export default function CardHome({
           <div className="flex items-center gap-6 text-xs font-bold text-gray-800 mt-4">
             <div className="flex items-center gap-1">
               <ArrowLeftRight className="w-4 h-4" />
-              {MetragemAnt} m2
+              {MetragemAnt} m²
             </div>
             <div className="flex items-center gap-1">
               <BedDouble className="w-4 h-4" />
