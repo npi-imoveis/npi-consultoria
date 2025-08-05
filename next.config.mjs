@@ -67,6 +67,10 @@ const nextConfig = {
       },
       {
         protocol: "https",
+        hostname: "sigasp.com.br",
+      },      
+      {
+        protocol: "https",
         hostname: "cdn.imoview.com.br",
         pathname: "/**",
       },
