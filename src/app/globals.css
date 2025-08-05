@@ -41,6 +41,10 @@ p {
   }
 }
 
+/* ============================================
+   🗺️ ESTILOS LEAFLET COMPLETOS - MANTIDOS
+   ============================================ */
+
 /* Estilos para o Leaflet */
 .leaflet-container {
   width: 100%;
@@ -127,7 +131,7 @@ p {
   width: 100%;
 }
 
-/* Estilos para o placeholder do mapa durante o SSR */
+/* ✅ MANTIDO: Estilos para o placeholder do mapa durante o SSR */
 .map-placeholder {
   width: 100%;
   height: 100%;
@@ -139,7 +143,7 @@ p {
   border: 1px solid #e5e5e5;
 }
 
-/* Estilos para a barra de pesquisa (GeoSearch) */
+/* ✅ MANTIDO: Estilos para a barra de pesquisa (GeoSearch) */
 .leaflet-control-geosearch {
   width: 400px !important;
   margin-top: 10px !important;
@@ -198,7 +202,7 @@ p {
   background-color: #f5f5f5;
 }
 
-/* Estilos responsivos para telas menores */
+/* ✅ MANTIDO: Estilos responsivos para telas menores */
 @media (max-width: 768px) {
   .leaflet-control-geosearch {
     width: calc(100% - 20px) !important;
@@ -206,7 +210,7 @@ p {
   }
 }
 
-/* Estilos para o controle de camadas */
+/* ✅ MANTIDO: Estilos para o controle de camadas */
 .google-maps-style .leaflet-control-layers {
   border: none;
   border-radius: 8px;
@@ -248,6 +252,7 @@ p {
   color: #3c4043;
 }
 
+/* ✅ MANTIDO: Animação pulse */
 @keyframes pulse-opacity {
   0% {
     opacity: 0.3;
@@ -264,68 +269,43 @@ p {
   animation: pulse-opacity 1.5s infinite ease-in-out;
 }
 
-/* ========================================
-   🎯 CORREÇÕES REFINADAS PARA CHROME iOS
-   Previne zoom SEM quebrar funcionalidade
-   ======================================== */
+/* ============================================
+   📱 iOS CORREÇÕES OTIMIZADAS (Performance)
+   Mantém funcionalidade, remove excessos
+   ============================================ */
 
-/* 
- * ESTRATÉGIA REFINADA: Mínimo necessário para Chrome iOS
- * 1. Font-size otimizado (15.5px - previne zoom mas não fica grande)
- * 2. Propriedades essenciais apenas
- * 3. Sem bloqueios de digitação
- */
-
-/* CAMADA 1: Base refinada - font-size otimizado */
+/* 🎯 OTIMIZADO: Base essencial para todos inputs */
 input,
 textarea,
 select {
-  /* Font-size otimizado: 15.5px previne zoom mas não fica grande */
-  font-size: 15.5px !important;
-  
-  /* Apenas propriedades essenciais */
+  font-size: 16px !important; /* ✅ 16px para acessibilidade */
   -webkit-appearance: none !important;
-  -webkit-text-size-adjust: none !important;
-  
-  /* Touch behavior básico */
+  -webkit-text-size-adjust: 100% !important; /* ✅ Mudado de 'none' para '100%' */
   touch-action: manipulation !important;
   -webkit-tap-highlight-color: transparent !important;
 }
 
-/* CAMADA 2: Chrome iOS específico - detection refinada */
+/* 🎯 OTIMIZADO: Chrome iOS detection específica */
 @supports (-webkit-appearance: none) and (not (-webkit-backdrop-filter: blur(1px))) {
   input, textarea, select {
-    /* Font otimizado para Chrome iOS */
-    font-size: 15.5px !important;
-    
-    /* Apenas o essencial para prevenir zoom */
-    -webkit-user-scalable: 0 !important;
-    user-scalable: 0 !important;
-    
-    /* Transform leve para GPU mas sem interferir */
+    font-size: 16px !important;
+    /* ✅ REMOVIDO: user-scalable para acessibilidade */
     -webkit-transform: translate3d(0,0,0) !important;
     transform: translate3d(0,0,0) !important;
   }
 }
 
-/* CAMADA 3: Mobile iOS - refinado */
-@media screen and (max-width: 768px) and (-webkit-min-device-pixel-ratio: 1) {
+/* 🎯 OTIMIZADO: Mobile iOS básico */
+@media screen and (max-width: 768px) {
   input, textarea, select {
-    /* Font size consistente */
-    font-size: 15.5px !important;
+    font-size: 16px !important;
     line-height: 1.4 !important;
-    
-    /* Apenas o mínimo necessário */
-    -webkit-user-scalable: 0 !important;
-    user-scalable: 0 !important;
-    
-    /* Layout sem interferência */
-    min-height: 40px !important;
+    min-height: 44px !important; /* ✅ iOS touch target */
     box-sizing: border-box !important;
   }
 }
 
-/* CAMADA 4: Input types - sem remover funcionalidades */
+/* 🎯 OTIMIZADO: Input types específicos */
 input[type="search"],
 input[type="text"],
 input[type="email"],
@@ -333,87 +313,61 @@ input[type="tel"],
 input[type="url"],
 input[type="password"],
 input[type="number"] {
-  /* Font consistente */
-  font-size: 15.5px !important;
-  
-  /* Remove apenas decorações desnecessárias */
+  font-size: 16px !important;
   -webkit-search-decoration: none !important;
   -webkit-search-cancel-button: none !important;
-  
-  /* Appearance mínimo */
   -webkit-appearance: none !important;
 }
 
-/* ✅ ESPECÍFICO: SearchHero component - fonte ajustada */
+/* 🎯 ESPECÍFICO: SearchHero component - essencial apenas */
 .search-hero-input {
-  /* Font otimizado: previne zoom mas não fica grande */
-  font-size: 15.5px !important;
-  
-  /* Apenas o essencial para Chrome iOS */
-  -webkit-user-scalable: 0 !important;
-  user-scalable: 0 !important;
-  -webkit-text-size-adjust: none !important;
-  
-  /* Transform leve */
-  -webkit-transform: translate3d(0,0,0) !important;
-  transform: translate3d(0,0,0) !important;
-  
-  /* Zoom control */
-  zoom: 1 !important;
+  font-size: 16px !important;
+  -webkit-appearance: none !important;
+  -webkit-text-size-adjust: 100% !important; /* ✅ Corrigido */
+  touch-action: manipulation !important;
+  min-height: 44px !important; /* ✅ Touch target adequado */
 }
 
-/* Remove highlight azul do iOS em elementos tocáveis */
+/* ✅ MANTIDO: Performance essenciais */
 * {
   -webkit-tap-highlight-color: transparent !important;
-  -webkit-touch-callout: none !important;
 }
 
-/* Smooth scrolling otimizado para iOS */
 html {
   -webkit-overflow-scrolling: touch;
   -webkit-text-size-adjust: 100% !important;
 }
 
-/* Performance: GPU acceleration para vídeos */
+/* ✅ MANTIDO: GPU acceleration para vídeos */
 video {
   transform: translate3d(0, 0, 0);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 }
 
-/* Correção específica para inputs em containers com backdrop-blur */
+/* ✅ MANTIDO: Backdrop blur fix */
 .backdrop-blur input,
 .backdrop-blur-sm input {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
 }
 
-/* 🔥 ESPECÍFICO: SearchHero component fixes */
-.search-hero-input {
-  /* Font size crítico */
-  font-size: 16px !important;
-  
-  /* WebKit resets */
-  -webkit-appearance: none !important;
-  -webkit-border-radius: 0 !important;
-  -webkit-text-size-adjust: 100% !important;
-  
-  /* Transform override */
-  -webkit-transform: none !important;
-  transform: none !important;
-  
-  /* User scalable */
-  -webkit-user-scalable: no !important;
-  user-scalable: no !important;
-  
-  /* Touch action */
-  touch-action: manipulation !important;
-  
-  /* Zoom override */
-  zoom: 1 !important;
-}
-
-/* Exceção para inputs do Leaflet/mapas que já funcionam corretamente */
+/* ✅ MANTIDO: Exceção para inputs do Leaflet */
 .leaflet-control-geosearch form input {
   font-size: 15px !important; /* Mantém o estilo original do mapa */
+}
+
+/* ============================================
+   🔧 PLACEHOLDER RESPONSIVO (Performance)
+   ============================================ */
+@media screen and (max-width: 768px) {
+  input::placeholder, textarea::placeholder {
+    font-size: 12px !important; /* ✅ Otimizado */
+  }
+}
+
+@media screen and (min-width: 768px) {
+  input::placeholder, textarea::placeholder {
+    font-size: 14px !important;
+  }
 }
