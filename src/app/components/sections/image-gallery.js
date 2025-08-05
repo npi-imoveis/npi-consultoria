@@ -258,10 +258,10 @@ export function ImageGallery({
                 1 / {images.length}
               </div>
 
-              {/* 🎯 Indicador de toque para ver mais */}
+              {/* 🎯 Indicador de toque para ver mais - sem emoji */}
               {images.length > 1 && (
                 <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 bg-white bg-opacity-90 backdrop-blur-sm text-black px-4 py-2 rounded-full text-sm font-medium shadow-lg">
-                  👆 Toque para ver todas as {images.length} fotos
+                  Toque para ver todas as {images.length} fotos
                 </div>
               )}
             </div>
@@ -367,7 +367,7 @@ export function ImageGallery({
           </div>
 
           {selectedIndex !== null ? (
-            <div className="flex items-center justify-center min-h-screen p-4 relative -mt-20 pt-20">
+            <div className="flex items-center justify-center min-h-screen p-4 relative">
               <Image
                 src={images[selectedIndex].Foto}
                 alt={`${processedData.titulo} - imagem ampliada`}
@@ -381,22 +381,22 @@ export function ImageGallery({
                 className="max-w-full max-h-screen object-contain"
               />
 
-              {/* 🎯 CONTADOR - agora relativo ao container da imagem */}
-              <div className="absolute top-6 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm">
+              {/* 🎯 CONTADOR CORRIGIDO - visível novamente */}
+              <div className="absolute top-24 md:top-20 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm z-20">
                 {selectedIndex + 1} / {images.length}
                 {images[selectedIndex].Destaque === "Sim" && " ⭐"}
               </div>
 
               <button
                 onClick={goPrev}
-                className="absolute left-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2 hover:bg-black hover:bg-opacity-50 rounded-full transition-colors"
+                className="absolute left-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2 hover:bg-black hover:bg-opacity-50 rounded-full transition-colors z-20"
                 aria-label="Imagem anterior"
               >
                 &#10094;
               </button>
               <button
                 onClick={goNext}
-                className="absolute right-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2 hover:bg-black hover:bg-opacity-50 rounded-full transition-colors"
+                className="absolute right-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2 hover:bg-black hover:bg-opacity-50 rounded-full transition-colors z-20"
                 aria-label="Próxima imagem"
               >
                 &#10095;
