@@ -230,21 +230,20 @@ export function ImageGallery({
         // 📱 LAYOUT RESPONSIVO OTIMIZADO
         <div className={`w-full ${isMobile ? 'space-y-3' : 'grid grid-cols-1 md:grid-cols-2 gap-1'}`}>
           
-          {/* 📱 MOBILE: Foto principal otimizada */}
+          {/* 📱 MOBILE: Foto principal com altura inteligente */}
           {isMobile ? (
-            <div className="w-full h-[300px] cursor-pointer relative overflow-hidden rounded-lg" onClick={() => openModal()}>
+            <div className="w-full aspect-[4/3] max-h-[280px] cursor-pointer relative overflow-hidden rounded-lg" onClick={() => openModal()}>
               <Image
                 src={images[0].Foto}
                 alt={processedData.titulo}
                 title={processedData.titulo}
-                width={800}
-                height={600}
+                fill
                 sizes="100vw"
                 placeholder="blur"
                 blurDataURL={images[0].blurDataURL || "/placeholder.png"}
                 loading="eager"
                 priority={true}
-                className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-105"
+                className="object-cover transition-transform duration-300 ease-in-out hover:scale-105"
               />
 
               {/* 🏷️ Indicador de destaque */}
