@@ -230,9 +230,9 @@ export function ImageGallery({
         // 📱 LAYOUT RESPONSIVO ULTRA-OTIMIZADO
         <div className={`w-full ${isMobile ? '' : 'grid grid-cols-1 md:grid-cols-2 gap-1'}`}>
           
-          {/* 📱 MOBILE: Foto principal ocupando máximo espaço */}
+          {/* 📱 MOBILE: Foto principal com altura REAL para dispositivos móveis */}
           {isMobile ? (
-            <div className="w-full h-[60vh] min-h-[250px] max-h-[400px] cursor-pointer relative overflow-hidden rounded-lg" onClick={() => openModal()}>
+            <div className="w-full h-[75vh] sm:h-[70vh] min-h-[320px] max-h-[450px] cursor-pointer relative overflow-hidden rounded-lg" onClick={() => openModal()}>
               <Image
                 src={images[0].Foto}
                 alt={processedData.titulo}
