@@ -97,8 +97,8 @@ export function SearchHero() {
             text-white bg-transparent rounded-lg 
             focus:outline-none focus:ring-2 focus:ring-white/30 
             placeholder-gray-300 transition-all duration-200
-            text-xs
-            md:text-sm
+            text-base
+            md:text-lg
           "
           placeholder="Digite código, endereço, cidade ou condomínio..."
           value={searchTerm}
