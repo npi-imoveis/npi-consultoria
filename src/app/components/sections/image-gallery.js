@@ -227,12 +227,12 @@ export function ImageGallery({
           </div>
         </div>
       ) : (
-        // 📱 LAYOUT RESPONSIVO OTIMIZADO
-        <div className={`w-full ${isMobile ? 'space-y-3' : 'grid grid-cols-1 md:grid-cols-2 gap-1'}`}>
+        // 📱 LAYOUT RESPONSIVO ULTRA-OTIMIZADO
+        <div className={`w-full ${isMobile ? '' : 'grid grid-cols-1 md:grid-cols-2 gap-1'}`}>
           
-          {/* 📱 MOBILE: Foto principal com altura inteligente */}
+          {/* 📱 MOBILE: Foto principal ocupando máximo espaço */}
           {isMobile ? (
-            <div className="w-full aspect-[4/3] max-h-[280px] cursor-pointer relative overflow-hidden rounded-lg" onClick={() => openModal()}>
+            <div className="w-full h-[60vh] min-h-[250px] max-h-[400px] cursor-pointer relative overflow-hidden rounded-lg" onClick={() => openModal()}>
               <Image
                 src={images[0].Foto}
                 alt={processedData.titulo}
@@ -255,13 +255,13 @@ export function ImageGallery({
 
               {/* 📸 Contador de fotos - posicionamento otimizado mobile */}
               <div className="absolute top-3 right-3 bg-black bg-opacity-80 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-sm font-medium shadow-lg">
-                {images.length} foto{images.length > 1 ? 's' : ''}
+                1 / {images.length}
               </div>
 
               {/* 🎯 Indicador de toque para ver mais */}
               {images.length > 1 && (
                 <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 bg-white bg-opacity-90 backdrop-blur-sm text-black px-4 py-2 rounded-full text-sm font-medium shadow-lg">
-                  👆 Toque para ver todas
+                  👆 Toque para ver todas as {images.length} fotos
                 </div>
               )}
             </div>
