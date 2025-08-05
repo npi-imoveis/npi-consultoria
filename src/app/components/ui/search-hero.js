@@ -13,7 +13,7 @@ export function SearchHero() {
       const input = inputRef.current;
       
       // ✅ REFINADO: Apenas propriedades essenciais que não bloqueiam digitação
-      input.style.fontSize = "15.5px"; // Tamanho otimizado
+      input.style.fontSize = "14px"; // Tamanho otimizado
       input.style.webkitAppearance = "none";
       input.style.webkitTextSizeAdjust = "none";
       input.style.webkitUserScalable = "0";
@@ -27,7 +27,7 @@ export function SearchHero() {
       // Apenas gesturestart que é específico para zoom
       const preventGesture = (e) => {
         e.preventDefault();
-        input.style.fontSize = "15.5px";
+        input.style.fontSize = "14px";
       };
       
       // ✅ Apenas gesturestart (não touchstart/touchend que bloqueiam digitação)
@@ -64,7 +64,7 @@ export function SearchHero() {
     const input = e.target;
     
     // ✅ Aplicação suave sem delays agressivos
-    input.style.fontSize = "15.5px";
+    input.style.fontSize = "14px";
     input.style.webkitUserScalable = "0";
     input.style.userScalable = "0";
   };
@@ -97,7 +97,7 @@ export function SearchHero() {
           onFocus={handleFocus}
           style={{
             // ✅ REFINADO: Propriedades mínimas necessárias
-            fontSize: "15.5px", // Tamanho otimizado (previne zoom Chrome iOS)
+            fontSize: "14px", // Tamanho otimizado (previne zoom Chrome iOS)
             minHeight: "40px", // Reduzido de 44px
             
             // WebKit essencial
@@ -168,7 +168,7 @@ export function SearchHero() {
                   var inputs = document.querySelectorAll('.search-hero-input');
                   inputs.forEach(function(input) {
                     // Apenas o essencial para Chrome iOS
-                    input.style.fontSize = '15.5px';
+                    input.style.fontSize = '14px';
                     input.style.webkitUserScalable = '0';
                     input.style.userScalable = '0';
                     input.style.webkitTextSizeAdjust = 'none';
@@ -177,7 +177,7 @@ export function SearchHero() {
                     // Apenas gesturestart mínimo
                     input.addEventListener('gesturestart', function(e) {
                       e.preventDefault();
-                      input.style.fontSize = '15.5px';
+                      input.style.fontSize = '14px';
                     });
                   });
                 }
