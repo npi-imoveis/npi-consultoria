@@ -7,17 +7,17 @@ export function SearchHero() {
   const [searchTerm, setSearchTerm] = useState("");
   const inputRef = useRef(null);
 
-  // ✅ Chrome iOS específico: aplica fontSize mínimo apenas se for Chrome iOS
+  // ✅ Chrome iOS: aplica fontSize para texto digitado (não placeholder)
   useEffect(() => {
     if (inputRef.current) {
       const input = inputRef.current;
       
-      // ✅ DETECÇÃO: Só aplica fontSize se for Chrome iOS
+      // ✅ DETECÇÃO: Só aplica fontSize para texto digitado se for Chrome iOS
       const isChromeIOS = /CriOS/.test(navigator.userAgent);
       
       if (isChromeIOS) {
-        // ✅ Chrome iOS: aplicar fontSize mínimo para prevenir zoom
-        input.style.fontSize = "15.5px";
+        // ✅ Chrome iOS: aplicar fontSize para texto digitado (prevenir zoom)
+        input.style.fontSize = "16px"; // Tamanho adequado para texto digitado
       }
       
       // ✅ Propriedades essenciais para todos iOS (Safari + Chrome)
@@ -30,11 +30,11 @@ export function SearchHero() {
       input.style.webkitTransform = "translate3d(0,0,0)";
       input.style.transform = "translate3d(0,0,0)";
       
-      // ✅ APENAS gesturestart para Chrome iOS
+      // ✅ Gesturestart para Chrome iOS
       const preventGesture = (e) => {
         e.preventDefault();
         if (isChromeIOS) {
-          input.style.fontSize = "15.5px";
+          input.style.fontSize = "16px"; // Manter tamanho para texto digitado
         }
       };
       
@@ -65,21 +65,21 @@ export function SearchHero() {
     // ✅ Mínimo necessário - sem interferir na digitação
   };
 
-  // ✅ REFINADO: Handler para focus - apenas Chrome iOS
+  // ✅ Handler para focus - texto digitado adequado
   const handleFocus = (e) => {
     const input = e.target;
     const isChromeIOS = /CriOS/.test(navigator.userAgent);
     
-    // ✅ Aplica fontSize mínimo apenas se for Chrome iOS
+    // ✅ Aplica fontSize para texto digitado apenas se for Chrome iOS
     if (isChromeIOS) {
-      input.style.fontSize = "15.5px";
+      input.style.fontSize = "16px"; // Tamanho adequado para prevenir zoom
       input.style.webkitUserScalable = "0";
       input.style.userScalable = "0";
     }
   };
 
   return (
-    <div className="relative w-[400px] sm:w-[350px] md:w-[600px] xl:w-[950px] bg-gray-100/10 rounded-2xl sm:rounded-full p-1.5 mb-20 lg:mb-0 transform translate-z-0">
+    <div className="relative w-[280px] mx-4 sm:w-[320px] sm:mx-6 md:w-[600px] xl:w-[950px] bg-gray-100/10 rounded-2xl sm:rounded-full p-1.5 mb-20 lg:mb-0 transform translate-z-0">
       <form 
         onSubmit={handleSubmit} 
         className="flex flex-col sm:block gap-2 sm:gap-0"
@@ -97,8 +97,6 @@ export function SearchHero() {
             text-white bg-transparent rounded-lg 
             focus:outline-none focus:ring-2 focus:ring-white/30 
             placeholder-gray-300 transition-all duration-200
-            text-base
-            md:text-lg
           "
           placeholder="Digite código, endereço, cidade ou condomínio..."
           value={searchTerm}
@@ -164,7 +162,7 @@ export function SearchHero() {
         </button>
       </form>
       
-      {/* ✅ Script backup específico APENAS para Chrome iOS */}
+      {/* ✅ Script backup: Chrome iOS - texto digitado */}
       <script
         dangerouslySetInnerHTML={{
           __html: `
@@ -174,11 +172,11 @@ export function SearchHero() {
               
               // ✅ SÓ executa se for Chrome iOS
               if (isChromeIOS) {
-                function applyMinimalStyles() {
+                function applyInputStyles() {
                   var inputs = document.querySelectorAll('.search-hero-input');
                   inputs.forEach(function(input) {
-                    // ✅ APENAS Chrome iOS: aplicar fontSize mínimo
-                    input.style.fontSize = '15.5px';
+                    // ✅ APENAS Chrome iOS: fontSize para texto digitado
+                    input.style.fontSize = '16px'; // Tamanho adequado para prevenir zoom
                     input.style.webkitUserScalable = '0';
                     input.style.userScalable = '0';
                     input.style.webkitTextSizeAdjust = 'none';
@@ -186,19 +184,19 @@ export function SearchHero() {
                     // Gesturestart para prevenir zoom
                     input.addEventListener('gesturestart', function(e) {
                       e.preventDefault();
-                      input.style.fontSize = '15.5px';
+                      input.style.fontSize = '16px';
                     });
                   });
                 }
                 
                 // Aplicar após DOM ready
                 if (document.readyState === 'loading') {
-                  document.addEventListener('DOMContentLoaded', applyMinimalStyles);
+                  document.addEventListener('DOMContentLoaded', applyInputStyles);
                 } else {
-                  applyMinimalStyles();
+                  applyInputStyles();
                 }
               }
-              // ✅ Se NÃO for Chrome iOS, não faz nada (deixa Tailwind funcionar)
+              // ✅ Placeholder controlado por CSS ::placeholder
             })();
           `
         }}
