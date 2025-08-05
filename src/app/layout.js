@@ -7,32 +7,31 @@ import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import Script from "next/script";
 
-// Fontes otimizadas (SEGURO: funciona em todas as versões)
 const oxanium = Oxanium({
   variable: "--font-oxanium",
   subsets: ["latin"],
   weight: ["400", "700"],
-  display: "swap", // Performance boost
+  display: "swap",
 });
 
 const michroma = Michroma({
   variable: "--font-michroma",
   subsets: ["latin"],
   weight: ["400"],
-  display: "swap", // Performance boost
+  display: "swap",
 });
 
 const GTM_ID = "GTM-NN6HZC";
 const ANALYTICS_ID = "G-405E52JFGM";
 
-// SEGURO: Funciona no Next.js 13+ (você está no 14+)
+// METADATA SEM IMAGENS - Não interfere nas fotos de condomínio
 export const metadata = {
   title: {
     default: "NPi Consultoria - Imóveis de Alto Padrão",
     template: "%s | NPi Consultoria"
   },
   description: "Especialistas em imóveis de alto padrão. Encontre apartamentos, casas e terrenos exclusivos com a melhor consultoria imobiliária.",
-  keywords: ["imóveis alto padrão", "consultoria imobiliária", "apartamentos luxo", "casas exclusivas", "imóveis São Paulo"],
+  keywords: ["imóveis alto padrão", "consultoria imobiliária", "apartamentos luxo", "casas exclusivas"],
   authors: [{ name: "NPi Consultoria" }],
   creator: "NPi Consultoria",
   publisher: "NPi Consultoria",
@@ -47,7 +46,7 @@ export const metadata = {
       "max-snippet": -1,
     },
   },
-  // SEO CRÍTICO: OpenGraph (funciona mesmo sem as imagens)
+  // OpenGraph SEM imagens específicas - deixa o sistema usar as imagens das páginas
   openGraph: {
     type: "website",
     locale: "pt_BR",
@@ -55,16 +54,17 @@ export const metadata = {
     siteName: "NPi Consultoria",
     title: "NPi Consultoria - Imóveis de Alto Padrão",
     description: "Especialistas em imóveis de alto padrão com a melhor consultoria imobiliária.",
+    // REMOVIDO: images array para não interferir nas fotos de condomínio
   },
-  // SEO CRÍTICO: Twitter Cards
   twitter: {
     card: "summary_large_image",
     title: "NPi Consultoria - Imóveis de Alto Padrão",
     description: "Especialistas em imóveis de alto padrão com a melhor consultoria imobiliária.",
+    // REMOVIDO: images para não interferir
   },
 };
 
-// CRÍTICO: Viewport para iOS (SEGURO: funciona em todas as versões)
+// CRÍTICO: Viewport para iOS
 export const viewport = {
   width: "device-width",
   initialScale: 1,
@@ -79,35 +79,34 @@ export default function RootLayout({ children }) {
         {/* CRÍTICO: Meta viewport backup (iOS fix) */}
         <meta 
           name="viewport" 
-          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no"
+          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
         />
         
-        {/* SEO ESSENCIAL: Meta tags adicionais */}
+        {/* Meta tags essenciais SEM interferir em imagens */}
         <meta name="format-detection" content="telephone=no, email=no, address=no" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="NPi Consultoria" />
         
-        {/* PERFORMANCE: Preconnect essenciais (SEGURO) */}
+        {/* Preconnect essenciais SEM preload de mídia */}
         <link rel="preconnect" href="https://www.googletagmanager.com" />
         <link rel="preconnect" href="https://www.google-analytics.com" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         
-        {/* FAVICON BÁSICO (SEGURO: funciona mesmo se não existir) */}
+        {/* Favicon básico */}
         <link rel="icon" href="/favicon.ico" />
       </head>
       
       <body 
         className={`${oxanium.variable} ${michroma.variable} antialiased`}
         style={{
-          // iOS optimizations (SEGURO)
           WebkitFontSmoothing: "antialiased",
           MozOsxFontSmoothing: "grayscale",
           WebkitTapHighlightColor: "transparent",
         }}
       >
-        {/* GTM - Implementação corrigida (SEGURO) */}
+        {/* GTM Script */}
         <Script
           id="gtm-script"
           strategy="afterInteractive"
@@ -122,7 +121,6 @@ export default function RootLayout({ children }) {
           }}
         />
 
-        {/* Google Analytics - Otimizado (SEGURO) */}
         <Script
           src={`https://www.googletagmanager.com/gtag/js?id=${ANALYTICS_ID}`}
           strategy="afterInteractive"
@@ -135,15 +133,11 @@ export default function RootLayout({ children }) {
               window.dataLayer = window.dataLayer || [];
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
-              gtag('config', '${ANALYTICS_ID}', {
-                page_title: document.title,
-                page_location: window.location.href
-              });
+              gtag('config', '${ANALYTICS_ID}');
             `,
           }}
         />
 
-        {/* NoScript GTM fallback (SEO IMPORTANTE) */}
         <noscript>
           <iframe
             src={`https://www.googletagmanager.com/ns.html?id=${GTM_ID}`}
@@ -153,19 +147,10 @@ export default function RootLayout({ children }) {
           />
         </noscript>
 
-        {/* Structured Data (SEGURO: seus componentes existem) */}
         <Organization />
         <WebSite />
-
-        {/* App Content */}
-        <QueryProvider>
-          {children}
-        </QueryProvider>
-
-        {/* Global Components (SEGURO: componentes existem) */}
+        <QueryProvider>{children}</QueryProvider>
         <MusicPlayer />
-        
-        {/* Vercel Analytics (SEGURO) */}
         <Analytics />
         <SpeedInsights />
       </body>
