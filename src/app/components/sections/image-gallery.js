@@ -261,7 +261,7 @@ export function ImageGallery({
               {/* 🎯 Indicador de toque para ver mais - sem emoji */}
               {images.length > 1 && (
                 <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 bg-white bg-opacity-90 backdrop-blur-sm text-black px-4 py-2 rounded-full text-sm font-medium shadow-lg">
-                  Toque para ver todas as {images.length} fotos
+                  Toque para ver as {images.length} fotos
                 </div>
               )}
             </div>
