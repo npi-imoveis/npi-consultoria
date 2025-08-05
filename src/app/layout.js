@@ -127,35 +127,44 @@ export default function RootLayout({ children }) {
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         
-        {/* ✅ CSS inline refinado - Chrome iOS sem quebrar funcionalidade */}
+        {/* ✅ CSS inline específico - placeholder pequeno */}
         <style dangerouslySetInnerHTML={{
           __html: `
-            /* Crítico: Chrome iOS específico - font otimizado */
-            input, textarea, select {
-              font-size: 15.5px !important;
-              -webkit-appearance: none !important;
-              -webkit-text-size-adjust: none !important;
-              -webkit-user-scalable: 0 !important;
-              user-scalable: 0 !important;
-            }
-            
-            /* Chrome iOS detection refinada */
+            /* ✅ Chrome iOS detection: texto digitado para prevenir zoom */
             @supports (-webkit-appearance: none) and (not (-webkit-backdrop-filter: blur(1px))) {
               input, textarea, select {
-                font-size: 15.5px !important;
+                font-size: 16px !important;
                 -webkit-user-scalable: 0 !important;
                 user-scalable: 0 !important;
+                -webkit-text-size-adjust: none !important;
                 -webkit-transform: translate3d(0,0,0) !important;
                 transform: translate3d(0,0,0) !important;
               }
+              
+              /* Placeholder pequeno para Chrome iOS */
+              input::placeholder, textarea::placeholder {
+                font-size: 8px !important;
+                opacity: 0.7 !important;
+              }
             }
             
+            /* ✅ Propriedades básicas para todos iOS */
             @media screen and (max-width: 768px) {
               input, textarea, select {
-                font-size: 15.5px !important;
                 -webkit-user-scalable: 0 !important;
                 user-scalable: 0 !important;
                 min-height: 40px !important;
+              }
+              
+              /* Placeholder responsivo */
+              input::placeholder {
+                font-size: 8px !important;
+              }
+            }
+            
+            @media screen and (min-width: 768px) {
+              input::placeholder {
+                font-size: 10px !important;
               }
             }
             
