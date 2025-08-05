@@ -139,37 +139,52 @@ function DetalhesCondominioMelhorado({ condominio, expanded, setExpanded }) {
 
     return (
         <div className={`mx-auto p-6 text-black font-sans ${expanded ? 'max-w-full' : 'max-w-lg'}`}>
-            <h1 className="font-semibold">
-                {condominio.Categoria} {condominio.Status}
-            </h1>
-            <div className="flex items-center gap-2 mt-2">
-                <Home size={18} />
-                <span className="text-sm">A partir de {condominio.MetragemAnt} m2</span>
-            </div>
-            <div className="flex items-center gap-2 mt-2">
-                <Bed size={18} />
-                <h2 className="text-sm">Imóveis com {condominio.DormitoriosAntigo} quartos</h2>
-            </div>
+            
+            {/* 🎯 LAYOUT ADAPTATIVO: 2 colunas quando expandido, 1 coluna quando collapsed */}
+            <div className={`${expanded ? 'grid grid-cols-1 md:grid-cols-2 gap-8' : 'space-y-4'}`}>
+                
+                {/* 🏠 SEÇÃO: APARTAMENTO VENDA */}
+                <div>
+                    <h1 className="font-semibold text-lg mb-3">
+                        {condominio.Categoria} {condominio.Status}
+                    </h1>
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                            <Home size={18} />
+                            <span className="text-sm">A partir de {condominio.MetragemAnt} m²</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Bed size={18} />
+                            <span className="text-sm">Imóveis com {condominio.DormitoriosAntigo} quartos</span>
+                        </div>
+                    </div>
+                </div>
 
-            <h1 className="font-semibold mt-6">Condomínio</h1>
-            <div className="flex items-center gap-2 mt-2">
-                <Car size={18} />
-                <span className="text-sm">
-                    Garagens com até {maxVagas > 0 ? maxVagas : condominio.Vagas} vagas
-                </span>
-            </div>
-
-            <div className="flex items-center gap-2 mt-2">
-                <Calendar size={18} />
-                <span className="text-sm">Data de entrega: {
-                    condominio.DataEntrega 
-                        ? String(condominio.DataEntrega).replace(/undefined\/?/g, '').replace(/\/+/g, '/').replace(/^\/|\/$/g, '') || 'Data não informada'
-                        : 'Data não informada'
-                }</span>
-            </div>
-            <div className="flex items-center gap-2 mt-2">
-                <Building size={18} />
-                <h2 className="text-sm">Construtora: {condominio.Construtora}</h2>
+                {/* 🏢 SEÇÃO: CONDOMÍNIO */}
+                <div>
+                    <h1 className="font-semibold text-lg mb-3">Condomínio</h1>
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                            <Car size={18} />
+                            <span className="text-sm">
+                                Garagens com até {maxVagas > 0 ? maxVagas : condominio.Vagas} vagas
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Calendar size={18} />
+                            <span className="text-sm">Data de entrega: {
+                                condominio.DataEntrega 
+                                    ? String(condominio.DataEntrega).replace(/undefined\/?/g, '').replace(/\/+/g, '/').replace(/^\/|\/$/g, '') || 'Data não informada'
+                                    : 'Data não informada'
+                            }</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Building size={18} />
+                            <span className="text-sm">Construtora: {condominio.Construtora}</span>
+                        </div>
+                    </div>
+                </div>
+                
             </div>
 
             {condominio.DescricaoUnidades ? (
