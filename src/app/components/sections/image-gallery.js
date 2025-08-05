@@ -350,7 +350,7 @@ export function ImageGallery({
       {/* 🖼️ MODAL DA GALERIA */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-95 z-50 overflow-auto">
-          <div className="flex justify-between gap-4 p-5 pt-28 mt-6 md:mt-0">
+          <div className="flex justify-between gap-4 p-4 pt-12 safe-area-inset-top">
             <button onClick={closeModal} aria-label="Fechar galeria" className="text-white">
               <ArrowLeft size={24} />
             </button>
@@ -380,8 +380,8 @@ export function ImageGallery({
                 className="max-w-full max-h-screen object-contain"
               />
 
-              {/* Indicador de foto atual */}
-              <div className="absolute top-20 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm">
+              {/* Indicador de foto atual - posicionamento otimizado */}
+              <div className="absolute top-16 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm">
                 {selectedIndex + 1} / {images.length}
                 {images[selectedIndex].Destaque === "Sim" && " ⭐"}
               </div>
