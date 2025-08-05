@@ -380,8 +380,8 @@ export function ImageGallery({
                 className="max-w-full max-h-screen object-contain"
               />
 
-              {/* 🎯 CONTADOR REPOSICIONADO - mais próximo dos botões do topo */}
-              <div className="absolute top-8 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm">
+              {/* 🎯 CONTADOR com distância otimizada - mobile mais próximo da foto */}
+              <div className="absolute top-4 md:top-8 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm">
                 {selectedIndex + 1} / {images.length}
                 {images[selectedIndex].Destaque === "Sim" && " ⭐"}
               </div>
