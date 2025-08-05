@@ -161,8 +161,11 @@ function DetalhesCondominioMelhorado({ condominio, expanded, setExpanded }) {
 
             <div className="flex items-center gap-2 mt-2">
                 <Calendar size={18} />
-                {/* ✅ CORREÇÃO CIRÚRGICA: Usar formatarDataSegura ao invés de formatterDate */}
-                <span className="text-sm">Data de entrega: {formatarDataSegura(condominio.DataEntrega)}</span>
+                <span className="text-sm">Data de entrega: {
+                    condominio.DataEntrega 
+                        ? String(condominio.DataEntrega).replace(/undefined\/?/g, '').replace(/\/+/g, '/').replace(/^\/|\/$/g, '') || 'Data não informada'
+                        : 'Data não informada'
+                }</span>
             </div>
             <div className="flex items-center gap-2 mt-2">
                 <Building size={18} />
