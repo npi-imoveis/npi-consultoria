@@ -263,3 +263,70 @@ p {
 .animate-pulse-opacity {
   animation: pulse-opacity 1.5s infinite ease-in-out;
 }
+
+/* ========================================
+   CORREÇÕES ESPECÍFICAS PARA iOS SAFARI
+   Previne zoom automático em inputs
+   ======================================== */
+
+/* CRÍTICO: Font-size mínimo de 16px para prevenir zoom no iOS */
+input[type="text"],
+input[type="search"],
+input[type="email"],
+input[type="tel"],
+input[type="url"],
+input[type="password"],
+input[type="number"],
+textarea,
+select {
+  font-size: 16px !important;
+  -webkit-appearance: none;
+  -webkit-border-radius: 0;
+}
+
+/* Específico para dispositivos iOS (detecção via CSS) */
+@supports (-webkit-touch-callout: none) {
+  input, textarea, select {
+    font-size: 16px !important;
+    -webkit-text-size-adjust: 100%;
+    -webkit-appearance: none;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+  }
+}
+
+/* Media query para garantir font-size em mobile */
+@media screen and (max-width: 768px) {
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+}
+
+/* Remove highlight azul do iOS em elementos tocáveis */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Smooth scrolling otimizado para iOS */
+html {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Performance: GPU acceleration para vídeos */
+video {
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* Correção específica para inputs em containers com backdrop-blur */
+.backdrop-blur input,
+.backdrop-blur-sm input {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* Exceção para inputs do Leaflet/mapas que já funcionam corretamente */
+.leaflet-control-geosearch form input {
+  font-size: 15px !important; /* Mantém o estilo original do mapa */
+}
