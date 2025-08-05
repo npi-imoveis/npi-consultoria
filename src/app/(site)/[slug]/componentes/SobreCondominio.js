@@ -11,6 +11,27 @@ const DetalhesCondominioSobre = dynamic(() => import('./DetalhesCondominioSobre'
     loading: () => <div className="w-full h-64 bg-zinc-100 animate-pulse rounded-lg"></div>
 });
 
+// ✅ CORREÇÃO CIRÚRGICA: Função para limpar "undefined" da data
+const formatarDataSegura = (dataEntrega) => {
+    if (!dataEntrega) return 'Data não informada';
+    
+    // Se for string com "undefined", limpar antes de usar formatterDate
+    if (typeof dataEntrega === 'string') {
+        const dataLimpa = dataEntrega
+            .replace(/undefined\/?/g, '') // Remove "undefined/" e "undefined"
+            .replace(/\/+/g, '/') // Remove barras duplicadas como "//"
+            .replace(/^\/|\/$/g, ''); // Remove barras no início e fim
+        
+        // Se ainda tem conteúdo válido, usar o formatterDate original
+        if (dataLimpa && dataLimpa.length >= 8) {
+            return formatterDate(dataLimpa) || dataLimpa;
+        }
+    }
+    
+    // Usar a função original como fallback
+    return formatterDate(dataEntrega) || 'Data não informada';
+};
+
 // ✅ NOVA FUNÇÃO: Processar HTML e aplicar estilos às tags
 const processarHtmlDescricao = (htmlString) => {
     if (!htmlString) return '';
@@ -140,7 +161,8 @@ function DetalhesCondominioMelhorado({ condominio, expanded, setExpanded }) {
 
             <div className="flex items-center gap-2 mt-2">
                 <Calendar size={18} />
-                <span className="text-sm">Data de entrega: {formatterDate(condominio.DataEntrega)}</span>
+                {/* ✅ CORREÇÃO CIRÚRGICA: Usar formatarDataSegura ao invés de formatterDate */}
+                <span className="text-sm">Data de entrega: {formatarDataSegura(condominio.DataEntrega)}</span>
             </div>
             <div className="flex items-center gap-2 mt-2">
                 <Building size={18} />
