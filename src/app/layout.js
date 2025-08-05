@@ -143,7 +143,7 @@ export default function RootLayout({ children }) {
               
               /* Placeholder pequeno para Chrome iOS */
               input::placeholder, textarea::placeholder {
-                font-size: 11px !important;
+                font-size: 12px !important;
                 opacity: 0.7 !important;
               }
             }
@@ -158,7 +158,7 @@ export default function RootLayout({ children }) {
               
               /* Placeholder responsivo */
               input::placeholder {
-                font-size: 11px !important;
+                font-size: 12px !important;
               }
             }
             
