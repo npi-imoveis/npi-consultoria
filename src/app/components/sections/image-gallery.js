@@ -350,8 +350,9 @@ export function ImageGallery({
       {/* 🖼️ MODAL DA GALERIA */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-95 z-50 overflow-auto">
-          <div className="flex justify-between gap-4 p-5 pt-28 mt-6 md:mt-0">
-            <button onClick={closeModal} aria-label="Fechar galeria" className="text-white">
+          {/* 📌 HEADER FIXO - sempre visível durante navegação */}
+          <div className="sticky top-0 z-10 flex justify-between gap-4 p-5 pt-28 mt-6 md:mt-0 bg-gradient-to-b from-black/80 via-black/40 to-transparent backdrop-blur-sm">
+            <button onClick={closeModal} aria-label="Fechar galeria" className="text-white hover:text-gray-300 transition-colors">
               <ArrowLeft size={24} />
             </button>
             <Share
@@ -366,7 +367,7 @@ export function ImageGallery({
           </div>
 
           {selectedIndex !== null ? (
-            <div className="flex items-center justify-center min-h-screen p-4 relative">
+            <div className="flex items-center justify-center min-h-screen p-4 relative -mt-20 pt-20">
               <Image
                 src={images[selectedIndex].Foto}
                 alt={`${processedData.titulo} - imagem ampliada`}
@@ -380,8 +381,8 @@ export function ImageGallery({
                 className="max-w-full max-h-screen object-contain"
               />
 
-              {/* 🎯 CONTADOR com distância otimizada - mobile mais próximo da foto */}
-              <div className="absolute top-4 md:top-8 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm">
+              {/* 🎯 CONTADOR - agora relativo ao container da imagem */}
+              <div className="absolute top-6 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm">
                 {selectedIndex + 1} / {images.length}
                 {images[selectedIndex].Destaque === "Sim" && " ⭐"}
               </div>
