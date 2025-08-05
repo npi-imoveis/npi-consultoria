@@ -1,4 +1,4 @@
-// src/app/components/sections/image-gallery.js - VERSÃO CORRIGIDA
+// src/app/components/sections/image-gallery.js - VERSÃO COM CORREÇÃO MOBILE
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -227,96 +227,124 @@ export function ImageGallery({
           </div>
         </div>
       ) : (
-        // LAYOUT GRID: Grid tradicional com foto principal + thumbnails
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-1 w-full">
-          <div className="col-span-1 h-[410px] cursor-pointer relative" onClick={() => openModal()}>
-            <div className="w-full h-full overflow-hidden">
+        // 📱 LAYOUT RESPONSIVO OTIMIZADO
+        <div className={`w-full ${isMobile ? 'space-y-3' : 'grid grid-cols-1 md:grid-cols-2 gap-1'}`}>
+          
+          {/* 📱 MOBILE: Foto principal otimizada */}
+          {isMobile ? (
+            <div className="w-full h-[300px] cursor-pointer relative overflow-hidden rounded-lg" onClick={() => openModal()}>
               <Image
                 src={images[0].Foto}
                 alt={processedData.titulo}
                 title={processedData.titulo}
                 width={800}
                 height={600}
-                sizes="(max-width: 350px) 100vw, (max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                sizes="100vw"
                 placeholder="blur"
                 blurDataURL={images[0].blurDataURL || "/placeholder.png"}
                 loading="eager"
                 priority={true}
-                className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
+                className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-105"
               />
-            </div>
 
-            {/* 🏷️ Indicador de destaque */}
-            {images[0].Destaque === "Sim" && (
-              <div className="absolute top-4 left-4 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
-                ⭐ DESTAQUE
+              {/* 🏷️ Indicador de destaque */}
+              {images[0].Destaque === "Sim" && (
+                <div className="absolute top-3 left-3 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                  ⭐ DESTAQUE
+                </div>
+              )}
+
+              {/* 📸 Contador de fotos - posicionamento otimizado mobile */}
+              <div className="absolute top-3 right-3 bg-black bg-opacity-80 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-sm font-medium shadow-lg">
+                {images.length} foto{images.length > 1 ? 's' : ''}
               </div>
-            )}
 
-            {/* 📸 Contador de fotos - sempre visível */}
-            <div className="absolute top-4 right-4 bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg">
-              {images.length} foto{images.length > 1 ? 's' : ''}
+              {/* 🎯 Indicador de toque para ver mais */}
+              {images.length > 1 && (
+                <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 bg-white bg-opacity-90 backdrop-blur-sm text-black px-4 py-2 rounded-full text-sm font-medium shadow-lg">
+                  👆 Toque para ver todas
+                </div>
+              )}
             </div>
-          </div>
+          ) : (
+            // 💻 DESKTOP: Layout grid original
+            <>
+              <div className="col-span-1 h-[410px] cursor-pointer relative" onClick={() => openModal()}>
+                <div className="w-full h-full overflow-hidden rounded-lg">
+                  <Image
+                    src={images[0].Foto}
+                    alt={processedData.titulo}
+                    title={processedData.titulo}
+                    width={800}
+                    height={600}
+                    sizes="(max-width: 350px) 100vw, (max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    placeholder="blur"
+                    blurDataURL={images[0].blurDataURL || "/placeholder.png"}
+                    loading="eager"
+                    priority={true}
+                    className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
+                  />
+                </div>
 
-          {/* GRID 2x2 original */}
-          {!isMobile && (
-            <div className="col-span-1 grid grid-cols-2 grid-rows-2 gap-1 h-[410px]">
-              {images.slice(1, 5).map((image, index) => {
-                const isLastImage = index === 3;
-                return (
-                  <div
-                    key={index}
-                    className="relative h-full overflow-hidden cursor-pointer"
-                    onClick={() => openModal()}
-                  >
-                    <Image
-                      src={image.Foto}
-                      alt={`${processedData.titulo} - imagem ${index + 2}`}
-                      title={`${processedData.titulo} - imagem ${index + 2}`}
-                      width={400}
-                      height={300}
-                      sizes="25vw"
-                      placeholder="blur"
-                      blurDataURL={image.blurDataURL || "/placeholder.png"}
-                      loading="lazy"
-                      className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
-                    />
-                    
-                    {/* Indicador de destaque nos thumbnails */}
-                    {image.Destaque === "Sim" && (
-                      <div className="absolute top-2 left-2 bg-yellow-500 text-white text-xs font-bold px-1.5 py-0.5 rounded">
-                        ⭐
-                      </div>
-                    )}
-                    
-                    {isLastImage && images.length > 5 && (
-                      <div className="absolute inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center">
-                        <button
-                          className="border border-white text-white px-4 py-2 rounded hover:bg-white hover:text-black transition-colors"
-                          aria-label="Ver mais fotos"
-                        >
-                          +{images.length - 5} fotos
-                        </button>
-                      </div>
-                    )}
+                {/* 🏷️ Indicador de destaque */}
+                {images[0].Destaque === "Sim" && (
+                  <div className="absolute top-4 left-4 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                    ⭐ DESTAQUE
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      )}
+                )}
 
-      {/* Botão mobile para ver todas as fotos */}
-      {isMobile && images.length > 1 && (
-        <div className="mt-4 px-4">
-          <button
-            onClick={() => openModal()}
-            className="w-full py-3 text-center border border-gray-300 rounded-md bg-white hover:bg-gray-50 transition-colors font-medium"
-          >
-            📸 Ver todas as {images.length} fotos
-          </button>
+                {/* 📸 Contador de fotos - sempre visível */}
+                <div className="absolute top-4 right-4 bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg">
+                  {images.length} foto{images.length > 1 ? 's' : ''}
+                </div>
+              </div>
+
+              {/* GRID 2x2 original - só desktop */}
+              <div className="col-span-1 grid grid-cols-2 grid-rows-2 gap-1 h-[410px]">
+                {images.slice(1, 5).map((image, index) => {
+                  const isLastImage = index === 3;
+                  return (
+                    <div
+                      key={index}
+                      className="relative h-full overflow-hidden cursor-pointer rounded-lg"
+                      onClick={() => openModal()}
+                    >
+                      <Image
+                        src={image.Foto}
+                        alt={`${processedData.titulo} - imagem ${index + 2}`}
+                        title={`${processedData.titulo} - imagem ${index + 2}`}
+                        width={400}
+                        height={300}
+                        sizes="25vw"
+                        placeholder="blur"
+                        blurDataURL={image.blurDataURL || "/placeholder.png"}
+                        loading="lazy"
+                        className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
+                      />
+                      
+                      {/* Indicador de destaque nos thumbnails */}
+                      {image.Destaque === "Sim" && (
+                        <div className="absolute top-2 left-2 bg-yellow-500 text-white text-xs font-bold px-1.5 py-0.5 rounded">
+                          ⭐
+                        </div>
+                      )}
+                      
+                      {isLastImage && images.length > 5 && (
+                        <div className="absolute inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center rounded-lg">
+                          <button
+                            className="border border-white text-white px-4 py-2 rounded hover:bg-white hover:text-black transition-colors"
+                            aria-label="Ver mais fotos"
+                          >
+                            +{images.length - 5} fotos
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          )}
         </div>
       )}
 
@@ -380,7 +408,7 @@ export function ImageGallery({
                 <div
                   key={idx}
                   onClick={() => setSelectedIndex(idx)}
-                  className="relative w-full h-48 sm:h-56 md:h-64 lg:h-72 xl:h-80 cursor-pointer overflow-hidden border-2 border-transparent hover:border-white transition-colors"
+                  className="relative w-full h-48 sm:h-56 md:h-64 lg:h-72 xl:h-80 cursor-pointer overflow-hidden border-2 border-transparent hover:border-white transition-colors rounded-lg"
                 >
                   <Image
                     src={image.Foto}
