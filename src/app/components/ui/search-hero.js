@@ -79,7 +79,7 @@ export function SearchHero() {
   };
 
   return (
-    <div className="relative w-[370px] mx-2 sm:w-[360px] sm:mx-3 md:w-[600px] xl:w-[950px] bg-gray-100/10 rounded-2xl sm:rounded-full p-1.5 mb-20 lg:mb-0 transform translate-z-0">
+    <div className="relative w-[385px] mx-1 sm:w-[375px] sm:mx-2 md:w-[600px] xl:w-[950px] bg-gray-100/10 rounded-2xl sm:rounded-full p-1.5 mb-20 lg:mb-0 transform translate-z-0">
       <form 
         onSubmit={handleSubmit} 
         className="flex flex-col sm:block gap-2 sm:gap-0"
