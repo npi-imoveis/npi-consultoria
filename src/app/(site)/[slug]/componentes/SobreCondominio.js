@@ -123,7 +123,7 @@ function DetalhesCondominioMelhorado({ condominio, expanded, setExpanded }) {
             </h1>
             <div className="flex items-center gap-2 mt-2">
                 <Home size={18} />
-                <span className="text-sm">A partir de {condominio.MetragemAnt}</span>
+                <span className="text-sm">A partir de {condominio.MetragemAnt} m2</span>
             </div>
             <div className="flex items-center gap-2 mt-2">
                 <Bed size={18} />
