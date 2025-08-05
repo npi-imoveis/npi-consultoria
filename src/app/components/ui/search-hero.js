@@ -7,50 +7,35 @@ export function SearchHero() {
   const [searchTerm, setSearchTerm] = useState("");
   const inputRef = useRef(null);
 
-  // ✅ Chrome iOS específico: useEffect para aplicar estilos críticos após mount
+  // ✅ Chrome iOS refinado: useEffect com propriedades mínimas
   useEffect(() => {
     if (inputRef.current) {
       const input = inputRef.current;
       
-      // ✅ CHROME iOS ESPECÍFICO: Propriedades críticas via JavaScript
-      input.style.fontSize = "16px";
+      // ✅ REFINADO: Apenas propriedades essenciais que não bloqueiam digitação
+      input.style.fontSize = "15.5px"; // Tamanho otimizado
       input.style.webkitAppearance = "none";
-      input.style.webkitTextSizeAdjust = "none"; // ✅ "none" para Chrome iOS
-      input.style.webkitUserScalable = "0"; // ✅ Valor "0" para Chrome iOS
+      input.style.webkitTextSizeAdjust = "none";
+      input.style.webkitUserScalable = "0";
       input.style.userScalable = "0";
-      input.style.webkitTransform = "translateZ(0)"; // ✅ GPU layer para Chrome iOS
-      input.style.transform = "translateZ(0)";
-      input.style.zoom = "1";
-      input.style.touchAction = "manipulation";
       
-      // ✅ Chrome iOS: Previne zoom em double tap (comportamento específico)
-      const preventChromeZoom = (e) => {
+      // ✅ Transform leve que não interfere
+      input.style.webkitTransform = "translate3d(0,0,0)";
+      input.style.transform = "translate3d(0,0,0)";
+      
+      // ✅ REMOVIDO: Event listeners agressivos que bloqueavam digitação
+      // Apenas gesturestart que é específico para zoom
+      const preventGesture = (e) => {
         e.preventDefault();
-        // Delay específico para Chrome iOS
-        setTimeout(() => {
-          input.focus();
-          // Força estilos após focus
-          input.style.fontSize = "16px";
-          input.style.zoom = "1";
-          input.style.webkitTransform = "translateZ(0)";
-        }, 50); // ✅ 50ms delay para Chrome iOS
+        input.style.fontSize = "15.5px";
       };
       
-      // Event listeners específicos para Chrome iOS
-      input.addEventListener('touchstart', preventChromeZoom, { passive: false });
-      input.addEventListener('touchend', preventChromeZoom, { passive: false });
-      
-      // ✅ NOVO: Listener para gesturestart (Chrome iOS específico)
-      input.addEventListener('gesturestart', (e) => {
-        e.preventDefault();
-        input.style.fontSize = "16px";
-      }, { passive: false });
+      // ✅ Apenas gesturestart (não touchstart/touchend que bloqueiam digitação)
+      input.addEventListener('gesturestart', preventGesture, { passive: false });
       
       // Cleanup
       return () => {
-        input.removeEventListener('touchstart', preventChromeZoom);
-        input.removeEventListener('touchend', preventChromeZoom);
-        input.removeEventListener('gesturestart', preventChromeZoom);
+        input.removeEventListener('gesturestart', preventGesture);
       };
     }
   }, []);
@@ -68,35 +53,20 @@ export function SearchHero() {
     router.push(`/busca?q=${encodeURIComponent(searchTerm)}`);
   };
 
-  // ✅ NOVO: Handler específico para mudança de input
+  // ✅ REFINADO: Handler simples para mudança de input
   const handleInputChange = (e) => {
     setSearchTerm(e.target.value);
-    
-    // Força manter estilos durante typing
-    const input = e.target;
-    input.style.fontSize = "16px";
-    input.style.zoom = "1";
+    // ✅ Mínimo necessário - sem interferir na digitação
   };
 
-  // ✅ Chrome iOS: Handler para focus (previne zoom com timing específico)
+  // ✅ REFINADO: Handler para focus - apenas se necessário
   const handleFocus = (e) => {
     const input = e.target;
     
-    // ✅ Chrome iOS específico: delay maior e múltiplas aplicações
-    setTimeout(() => {
-      input.style.fontSize = "16px";
-      input.style.webkitTransform = "translateZ(0)";
-      input.style.transform = "translateZ(0)";
-      input.style.zoom = "1";
-      input.style.webkitUserScalable = "0"; // Chrome iOS prefere "0"
-      input.style.userScalable = "0";
-    }, 100); // ✅ 100ms delay para Chrome iOS
-    
-    // ✅ Aplicação dupla para garantir
-    setTimeout(() => {
-      input.style.fontSize = "16px";
-      input.style.zoom = "1";
-    }, 200);
+    // ✅ Aplicação suave sem delays agressivos
+    input.style.fontSize = "15.5px";
+    input.style.webkitUserScalable = "0";
+    input.style.userScalable = "0";
   };
 
   return (
@@ -126,33 +96,27 @@ export function SearchHero() {
           onChange={handleInputChange}
           onFocus={handleFocus}
           style={{
-            // ✅ PROPRIEDADES ULTRA-CRÍTICAS inline (maior prioridade)
-            fontSize: "16px",
-            minHeight: "44px", // iOS minimum touch target
+            // ✅ REFINADO: Propriedades mínimas necessárias
+            fontSize: "15.5px", // Tamanho otimizado
+            minHeight: "40px", // Reduzido de 44px
             
-            // WebKit específico
+            // WebKit essencial
             WebkitAppearance: "none",
-            WebkitBorderRadius: "8px",
-            WebkitTextSizeAdjust: "100%",
-            WebkitUserScalable: "no",
-            WebkitTransform: "none",
-            WebkitTouchCallout: "none",
-            WebkitTapHighlightColor: "transparent",
+            WebkitTextSizeAdjust: "none",
+            WebkitUserScalable: "0",
             
-            // Touch e scale
+            // Touch básico
             touchAction: "manipulation",
-            userScalable: "no",
-            transform: "none",
-            zoom: 1,
+            userScalable: "0",
             
-            // Layout
+            // Transform leve
+            WebkitTransform: "translate3d(0,0,0)",
+            transform: "translate3d(0,0,0)",
+            
+            // Layout básico
             boxSizing: "border-box",
             outline: "none",
             border: "none",
-            
-            // Performance
-            willChange: "auto", // Evita layers desnecessárias
-            contain: "layout style", // Isolamento de rendering
           }}
           autoComplete="off"
           spellCheck="false"
@@ -191,50 +155,38 @@ export function SearchHero() {
         </button>
       </form>
       
-      {/* ✅ Chrome iOS: Script inline backup específico */}
+      {/* ✅ REFINADO: Script backup mínimo para Chrome iOS */}
       <script
         dangerouslySetInnerHTML={{
           __html: `
             (function() {
-              // Chrome iOS detection específica
+              // Detection simples para Chrome iOS
               var isChromeIOS = /CriOS/.test(navigator.userAgent);
               
               if (isChromeIOS) {
-                // Força estilos após DOM ready para Chrome iOS
-                if (document.readyState === 'loading') {
-                  document.addEventListener('DOMContentLoaded', applyChromeIOSStyles);
-                } else {
-                  applyChromeIOSStyles();
-                }
-                
-                function applyChromeIOSStyles() {
+                function applyMinimalStyles() {
                   var inputs = document.querySelectorAll('.search-hero-input');
                   inputs.forEach(function(input) {
-                    // Chrome iOS específico
-                    input.style.fontSize = '16px';
-                    input.style.webkitAppearance = 'none';
-                    input.style.webkitTextSizeAdjust = 'none';
+                    // Apenas o essencial para Chrome iOS
+                    input.style.fontSize = '15.5px';
                     input.style.webkitUserScalable = '0';
                     input.style.userScalable = '0';
-                    input.style.zoom = '1';
-                    input.style.webkitTransform = 'translateZ(0)';
-                    input.style.transform = 'translateZ(0)';
+                    input.style.webkitTextSizeAdjust = 'none';
                     
-                    // Event listener específico para Chrome iOS
-                    input.addEventListener('focus', function() {
-                      setTimeout(function() {
-                        input.style.fontSize = '16px';
-                        input.style.zoom = '1';
-                        input.style.webkitTransform = 'translateZ(0)';
-                      }, 100);
-                    });
-                    
-                    // Gesturestart para Chrome iOS
+                    // ✅ REMOVIDO: Event listeners agressivos
+                    // Apenas gesturestart mínimo
                     input.addEventListener('gesturestart', function(e) {
                       e.preventDefault();
-                      input.style.fontSize = '16px';
+                      input.style.fontSize = '15.5px';
                     });
                   });
+                }
+                
+                // Aplicar após DOM ready
+                if (document.readyState === 'loading') {
+                  document.addEventListener('DOMContentLoaded', applyMinimalStyles);
+                } else {
+                  applyMinimalStyles();
                 }
               }
             })();
