@@ -265,86 +265,67 @@ p {
 }
 
 /* ========================================
-   🔥 CORREÇÕES ESPECÍFICAS PARA CHROME iOS
-   Android está OK - foco apenas no Chrome iOS
+   🎯 CORREÇÕES REFINADAS PARA CHROME iOS
+   Previne zoom SEM quebrar funcionalidade
    ======================================== */
 
 /* 
- * ESTRATÉGIA FOCADA: Chrome iOS específico
- * 1. Base iOS (Safari + Chrome iOS)
- * 2. Chrome iOS detection específica
- * 3. Override para Chrome iOS apenas
+ * ESTRATÉGIA REFINADA: Mínimo necessário para Chrome iOS
+ * 1. Font-size otimizado (15.5px - previne zoom mas não fica grande)
+ * 2. Propriedades essenciais apenas
+ * 3. Sem bloqueios de digitação
  */
 
-/* CAMADA 1: Base iOS - Safari + Chrome iOS */
+/* CAMADA 1: Base refinada - font-size otimizado */
 input,
 textarea,
 select {
-  /* Font-size CRÍTICO - 16px mínimo */
-  font-size: 16px !important;
+  /* Font-size otimizado: 15.5px previne zoom mas não fica grande */
+  font-size: 15.5px !important;
   
-  /* WebKit resets */
+  /* Apenas propriedades essenciais */
   -webkit-appearance: none !important;
-  -webkit-border-radius: 0 !important;
-  -webkit-text-size-adjust: 100% !important;
+  -webkit-text-size-adjust: none !important;
   
-  /* Touch behavior */
+  /* Touch behavior básico */
   touch-action: manipulation !important;
-  -webkit-touch-callout: none !important;
   -webkit-tap-highlight-color: transparent !important;
 }
 
-/* CAMADA 2: WebKit específico (iOS - Safari + Chrome) */
-@supports (-webkit-touch-callout: none) {
-  input, textarea, select {
-    font-size: 16px !important;
-    -webkit-appearance: none !important;
-    -webkit-text-size-adjust: 100% !important;
-    -webkit-user-select: text !important;
-    -webkit-transform: none !important;
-    transform: none !important;
-  }
-}
-
-/* CAMADA 3: 🎯 CHROME iOS ESPECÍFICO - Detection via user agent patterns */
-/* Chrome iOS tem behaviors específicos diferentes do Safari iOS */
-
-/* Chrome iOS detection: supports WebKit mas não suporta algumas features específicas do Safari */
+/* CAMADA 2: Chrome iOS específico - detection refinada */
 @supports (-webkit-appearance: none) and (not (-webkit-backdrop-filter: blur(1px))) {
   input, textarea, select {
-    /* Chrome iOS específico */
-    font-size: 16px !important;
-    -webkit-text-size-adjust: none !important; /* Diferente do Safari */
-    -webkit-user-scalable: 0 !important; /* Valor 0 em vez de no */
-    user-scalable: 0 !important;
-    zoom: normal !important;
-    -webkit-transform: translateZ(0) !important; /* Force GPU layer */
-    transform: translateZ(0) !important;
-  }
-}
-
-/* CAMADA 4: iOS mobile override (Safari + Chrome) */
-@media screen and (max-width: 768px) and (-webkit-min-device-pixel-ratio: 1) {
-  input, textarea, select {
-    font-size: 16px !important;
-    line-height: 1.5 !important;
-    min-height: 44px !important; /* iOS touch target */
+    /* Font otimizado para Chrome iOS */
+    font-size: 15.5px !important;
     
-    /* Transforms específicos para iOS */
-    -webkit-transform: none !important;
-    transform: none !important;
-    
-    /* Chrome iOS specific */
+    /* Apenas o essencial para prevenir zoom */
     -webkit-user-scalable: 0 !important;
     user-scalable: 0 !important;
     
-    /* Layout forçado */
-    box-sizing: border-box !important;
-    -webkit-box-sizing: border-box !important;
+    /* Transform leve para GPU mas sem interferir */
+    -webkit-transform: translate3d(0,0,0) !important;
+    transform: translate3d(0,0,0) !important;
   }
 }
 
-/* CAMADA 5: Input types específicos para iOS */
+/* CAMADA 3: Mobile iOS - refinado */
+@media screen and (max-width: 768px) and (-webkit-min-device-pixel-ratio: 1) {
+  input, textarea, select {
+    /* Font size consistente */
+    font-size: 15.5px !important;
+    line-height: 1.4 !important;
+    
+    /* Apenas o mínimo necessário */
+    -webkit-user-scalable: 0 !important;
+    user-scalable: 0 !important;
+    
+    /* Layout sem interferência */
+    min-height: 40px !important;
+    box-sizing: border-box !important;
+  }
+}
+
+/* CAMADA 4: Input types - sem remover funcionalidades */
 input[type="search"],
 input[type="text"],
 input[type="email"],
@@ -352,50 +333,33 @@ input[type="tel"],
 input[type="url"],
 input[type="password"],
 input[type="number"] {
-  font-size: 16px !important;
+  /* Font consistente */
+  font-size: 15.5px !important;
   
-  /* Remove search decorations (Chrome iOS) */
+  /* Remove apenas decorações desnecessárias */
   -webkit-search-decoration: none !important;
   -webkit-search-cancel-button: none !important;
-  -webkit-search-results-button: none !important;
-  -webkit-search-results-decoration: none !important;
   
-  /* Appearance reset */
+  /* Appearance mínimo */
   -webkit-appearance: none !important;
-  appearance: none !important;
 }
 
-/* CAMADA 6: 🔥 CHROME iOS ULTRA-ESPECÍFICO - Force override */
-/* Detection mais específica para Chrome iOS usando múltiplas condições */
-@media screen and (max-width: 768px) {
-  /* Multi-condition Chrome iOS detection */
-  @supports ((-webkit-appearance: none) and (not (-webkit-backdrop-filter: blur(1px))) and (-webkit-transform: translateZ(0))) {
-    input, textarea, select {
-      /* Ultra-específico para Chrome iOS */
-      font-size: 16px !important;
-      font-size: 1rem !important; /* Fallback */
-      
-      /* Text size adjustment específico */
-      -webkit-text-size-adjust: none !important;
-      text-size-adjust: none !important;
-      
-      /* User scalable com diferentes valores */
-      -webkit-user-scalable: 0 !important;
-      user-scalable: 0 !important;
-      
-      /* Zoom controls */
-      zoom: 1 !important;
-      
-      /* Transform com GPU acceleration */
-      -webkit-transform: translateZ(0) scale(1) !important;
-      transform: translateZ(0) scale(1) !important;
-      will-change: auto !important;
-      
-      /* Box model específico */
-      -webkit-box-sizing: border-box !important;
-      box-sizing: border-box !important;
-    }
-  }
+/* ✅ ESPECÍFICO: SearchHero component - fonte ajustada */
+.search-hero-input {
+  /* Font otimizado: previne zoom mas não fica grande */
+  font-size: 15.5px !important;
+  
+  /* Apenas o essencial para Chrome iOS */
+  -webkit-user-scalable: 0 !important;
+  user-scalable: 0 !important;
+  -webkit-text-size-adjust: none !important;
+  
+  /* Transform leve */
+  -webkit-transform: translate3d(0,0,0) !important;
+  transform: translate3d(0,0,0) !important;
+  
+  /* Zoom control */
+  zoom: 1 !important;
 }
 
 /* Remove highlight azul do iOS em elementos tocáveis */
