@@ -265,51 +265,149 @@ p {
 }
 
 /* ========================================
-   CORREÇÕES ESPECÍFICAS PARA iOS SAFARI
-   Previne zoom automático em inputs
+   🔥 CORREÇÕES ESPECÍFICAS PARA CHROME iOS
+   Android está OK - foco apenas no Chrome iOS
    ======================================== */
 
-/* CRÍTICO: Font-size mínimo de 16px para prevenir zoom no iOS */
-input[type="text"],
+/* 
+ * ESTRATÉGIA FOCADA: Chrome iOS específico
+ * 1. Base iOS (Safari + Chrome iOS)
+ * 2. Chrome iOS detection específica
+ * 3. Override para Chrome iOS apenas
+ */
+
+/* CAMADA 1: Base iOS - Safari + Chrome iOS */
+input,
+textarea,
+select {
+  /* Font-size CRÍTICO - 16px mínimo */
+  font-size: 16px !important;
+  
+  /* WebKit resets */
+  -webkit-appearance: none !important;
+  -webkit-border-radius: 0 !important;
+  -webkit-text-size-adjust: 100% !important;
+  
+  /* Touch behavior */
+  touch-action: manipulation !important;
+  -webkit-touch-callout: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+/* CAMADA 2: WebKit específico (iOS - Safari + Chrome) */
+@supports (-webkit-touch-callout: none) {
+  input, textarea, select {
+    font-size: 16px !important;
+    -webkit-appearance: none !important;
+    -webkit-text-size-adjust: 100% !important;
+    -webkit-user-select: text !important;
+    -webkit-transform: none !important;
+    transform: none !important;
+  }
+}
+
+/* CAMADA 3: 🎯 CHROME iOS ESPECÍFICO - Detection via user agent patterns */
+/* Chrome iOS tem behaviors específicos diferentes do Safari iOS */
+
+/* Chrome iOS detection: supports WebKit mas não suporta algumas features específicas do Safari */
+@supports (-webkit-appearance: none) and (not (-webkit-backdrop-filter: blur(1px))) {
+  input, textarea, select {
+    /* Chrome iOS específico */
+    font-size: 16px !important;
+    -webkit-text-size-adjust: none !important; /* Diferente do Safari */
+    -webkit-user-scalable: 0 !important; /* Valor 0 em vez de no */
+    user-scalable: 0 !important;
+    zoom: normal !important;
+    -webkit-transform: translateZ(0) !important; /* Force GPU layer */
+    transform: translateZ(0) !important;
+  }
+}
+
+/* CAMADA 4: iOS mobile override (Safari + Chrome) */
+@media screen and (max-width: 768px) and (-webkit-min-device-pixel-ratio: 1) {
+  input, textarea, select {
+    font-size: 16px !important;
+    line-height: 1.5 !important;
+    min-height: 44px !important; /* iOS touch target */
+    
+    /* Transforms específicos para iOS */
+    -webkit-transform: none !important;
+    transform: none !important;
+    
+    /* Chrome iOS specific */
+    -webkit-user-scalable: 0 !important;
+    user-scalable: 0 !important;
+    
+    /* Layout forçado */
+    box-sizing: border-box !important;
+    -webkit-box-sizing: border-box !important;
+  }
+}
+
+/* CAMADA 5: Input types específicos para iOS */
 input[type="search"],
+input[type="text"],
 input[type="email"],
 input[type="tel"],
 input[type="url"],
 input[type="password"],
-input[type="number"],
-textarea,
-select {
+input[type="number"] {
   font-size: 16px !important;
-  -webkit-appearance: none;
-  -webkit-border-radius: 0;
+  
+  /* Remove search decorations (Chrome iOS) */
+  -webkit-search-decoration: none !important;
+  -webkit-search-cancel-button: none !important;
+  -webkit-search-results-button: none !important;
+  -webkit-search-results-decoration: none !important;
+  
+  /* Appearance reset */
+  -webkit-appearance: none !important;
+  appearance: none !important;
 }
 
-/* Específico para dispositivos iOS (detecção via CSS) */
-@supports (-webkit-touch-callout: none) {
-  input, textarea, select {
-    font-size: 16px !important;
-    -webkit-text-size-adjust: 100%;
-    -webkit-appearance: none;
-    -webkit-tap-highlight-color: transparent;
-    -webkit-touch-callout: none;
-  }
-}
-
-/* Media query para garantir font-size em mobile */
+/* CAMADA 6: 🔥 CHROME iOS ULTRA-ESPECÍFICO - Force override */
+/* Detection mais específica para Chrome iOS usando múltiplas condições */
 @media screen and (max-width: 768px) {
-  input, textarea, select {
-    font-size: 16px !important;
+  /* Multi-condition Chrome iOS detection */
+  @supports ((-webkit-appearance: none) and (not (-webkit-backdrop-filter: blur(1px))) and (-webkit-transform: translateZ(0))) {
+    input, textarea, select {
+      /* Ultra-específico para Chrome iOS */
+      font-size: 16px !important;
+      font-size: 1rem !important; /* Fallback */
+      
+      /* Text size adjustment específico */
+      -webkit-text-size-adjust: none !important;
+      text-size-adjust: none !important;
+      
+      /* User scalable com diferentes valores */
+      -webkit-user-scalable: 0 !important;
+      user-scalable: 0 !important;
+      
+      /* Zoom controls */
+      zoom: 1 !important;
+      
+      /* Transform com GPU acceleration */
+      -webkit-transform: translateZ(0) scale(1) !important;
+      transform: translateZ(0) scale(1) !important;
+      will-change: auto !important;
+      
+      /* Box model específico */
+      -webkit-box-sizing: border-box !important;
+      box-sizing: border-box !important;
+    }
   }
 }
 
 /* Remove highlight azul do iOS em elementos tocáveis */
 * {
-  -webkit-tap-highlight-color: transparent;
+  -webkit-tap-highlight-color: transparent !important;
+  -webkit-touch-callout: none !important;
 }
 
 /* Smooth scrolling otimizado para iOS */
 html {
   -webkit-overflow-scrolling: touch;
+  -webkit-text-size-adjust: 100% !important;
 }
 
 /* Performance: GPU acceleration para vídeos */
@@ -324,6 +422,31 @@ video {
 .backdrop-blur-sm input {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
+}
+
+/* 🔥 ESPECÍFICO: SearchHero component fixes */
+.search-hero-input {
+  /* Font size crítico */
+  font-size: 16px !important;
+  
+  /* WebKit resets */
+  -webkit-appearance: none !important;
+  -webkit-border-radius: 0 !important;
+  -webkit-text-size-adjust: 100% !important;
+  
+  /* Transform override */
+  -webkit-transform: none !important;
+  transform: none !important;
+  
+  /* User scalable */
+  -webkit-user-scalable: no !important;
+  user-scalable: no !important;
+  
+  /* Touch action */
+  touch-action: manipulation !important;
+  
+  /* Zoom override */
+  zoom: 1 !important;
 }
 
 /* Exceção para inputs do Leaflet/mapas que já funcionam corretamente */
