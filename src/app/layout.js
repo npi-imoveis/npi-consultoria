@@ -66,10 +66,11 @@ export const metadata = {
   },
 };
 
+// ✅ CORRIGIDO: Viewport acessível (removido user-scalable=no)
 export const viewport = {
   width: "device-width",
   initialScale: 1.0,
-  maximumScale: 5.0,
+  maximumScale: 5.0, // Para acessibilidade
   minimumScale: 1.0,
   viewportFit: "cover",
   shrinkToFit: false,
@@ -79,11 +80,11 @@ export default function RootLayout({ children }) {
   return (
     <html lang="pt-BR">
       <head>
-        {/* 🚀 CRITICAL CSS INLINE - Resolve CSS blocking */}
+        {/* 🚀 CRITICAL CSS INLINE - Performance + Layout Fixes */}
         <style
           dangerouslySetInnerHTML={{
             __html: `
-              /* Critical CSS above the fold - Base */
+              /* Critical CSS above the fold */
               *,::before,::after{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}
               html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif}
               body{margin:0;line-height:inherit;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
@@ -96,24 +97,24 @@ export default function RootLayout({ children }) {
               @media (min-width:1024px){.container{max-width:1024px}}
               @media (min-width:1280px){.container{max-width:1280px}}
               
-              /* Flex utilities críticos */
+              /* Flex utilities */
               .flex{display:flex}
               .flex-col{flex-direction:column}
               @media (min-width:1024px){.lg\\:flex-row{flex-direction:row}}
               .w-full{width:100%}
               @media (min-width:1024px){.lg\\:w-\\[65\\%\\]{width:65%};.lg\\:w-\\[35\\%\\]{width:35%}}
               
-              /* Spacing crítico */
+              /* Spacing */
               .gap-4{gap:1rem}
               .mt-3{margin-top:0.75rem}
               .px-4{padding-left:1rem;padding-right:1rem}
               @media (min-width:768px){.md\\:px-0{padding-left:0;padding-right:0}}
               
-              /* Background essencial */
+              /* Background */
               .bg-white{background-color:#fff}
               .bg-zinc-200{background-color:#e4e4e7}
               
-              /* Text utilities críticos */
+              /* Text utilities */
               .text-black{color:#000}
               .text-sm{font-size:0.875rem;line-height:1.25rem}
               .font-semibold{font-weight:600}
@@ -124,8 +125,54 @@ export default function RootLayout({ children }) {
               /* Image optimization */
               img[data-nimg="fill"]{position:absolute;height:100%;width:100%;left:0;top:0;right:0;bottom:0;object-fit:cover}
               
-              /* Layout optimization para prevenir shift */
+              /* Layout optimization */
               .layout-optimized{min-height:1200px;contain:layout style paint;transform:translateZ(0)}
+              
+              /* ✅ CRÍTICO: CORREÇÃO LAYOUT TÍTULO - Igual ao Serido 106 */
+              .bg-white.container.mx-auto .flex.flex-col.sm\\:flex-row.sm\\:items-center.sm\\:justify-between {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 1rem !important;
+              }
+              
+              @media (min-width: 640px) {
+                .bg-white.container.mx-auto .flex.flex-col.sm\\:flex-row.sm\\:items-center.sm\\:justify-between {
+                  flex-direction: row !important;
+                  align-items: center !important;
+                  justify-content: space-between !important;
+                  gap: 1rem !important;
+                }
+              }
+              
+              /* TÍTULO H1 + BOTÕES INLINE */
+              .bg-white.container .flex-1 {
+                flex: 1 !important;
+              }
+              
+              .bg-white.container .flex.items-center.gap-3 {
+                display: flex !important;
+                align-items: center !important;
+                gap: 0.75rem !important;
+                flex-shrink: 0 !important;
+              }
+              
+              /* FORMULÁRIO SIDEBAR - Tamanho correto */
+              @media (min-width: 1024px) {
+                .lg\\:w-\\[35\\%\\] {
+                  width: 35% !important;
+                  max-width: 400px !important;
+                  min-width: 320px !important;
+                  flex-shrink: 0 !important;
+                }
+              }
+              
+              /* MOBILE - Formulário responsivo */
+              @media (max-width: 1023px) {
+                .lg\\:w-\\[35\\%\\] {
+                  width: 100% !important;
+                  max-width: none !important;
+                }
+              }
             `,
           }}
         />
@@ -136,7 +183,7 @@ export default function RootLayout({ children }) {
           content="width=device-width, initial-scale=1.0, maximum-scale=5.0, minimum-scale=1.0, shrink-to-fit=no, viewport-fit=cover"
         />
         
-        {/* ✅ CORRIGIDO: Meta tags atualizadas */}
+        {/* Meta tags atualizadas */}
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -146,7 +193,7 @@ export default function RootLayout({ children }) {
         <meta name="theme-color" content="#000000" />
         <meta name="color-scheme" content="light" />
         
-        {/* ✅ LIMPO: Apenas preconnect essenciais */}
+        {/* Preconnect otimizados */}
         <link rel="preconnect" href="https://www.googletagmanager.com" />
         <link rel="preconnect" href="https://npi-imoveis.s3.sa-east-1.amazonaws.com" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -160,7 +207,7 @@ export default function RootLayout({ children }) {
         {/* iOS otimizações */}
         <style dangerouslySetInnerHTML={{
           __html: `
-            /* Chrome iOS otimizações sem user-scalable */
+            /* Chrome iOS otimizações */
             @supports (-webkit-appearance: none) and (not (-webkit-backdrop-filter: blur(1px))) {
               input, textarea, select {
                 font-size: 16px !important;
