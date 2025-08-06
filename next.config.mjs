@@ -4,7 +4,7 @@ const nextConfig = {
   
   // ✅ OTIMIZAÇÕES: Experimentais válidas
   experimental: {
-    optimizePackageImports: ['lucide-react'], // 🚀 NOVO: Tree shaking icons
+    optimizePackageImports: ['lucide-react'], // 🚀 Tree shaking icons
   },
   
   // ✅ MANTIDO + OTIMIZADO: Configuração de imagens
@@ -83,7 +83,7 @@ const nextConfig = {
     deviceSizes: [640, 750, 828, 1080, 1200],
     minimumCacheTTL: 60, // Cache de 60 segundos
     
-    // 🚀 NOVO: Otimizações para resolver 176 KiB de imagens superdimensionadas
+    // 🚀 OTIMIZADO: Tamanhos específicos para resolver 176 KiB de imagens superdimensionadas
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384], // Tamanhos pequenos para thumbnails
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
@@ -95,20 +95,31 @@ const nextConfig = {
     ignoreBuildErrors: true, // ⚠️ Remover em produção
   },
 
-  // 🚀 NOVO: Compilação moderna - Remove JavaScript legado (12 KiB)
+  // 🚀 OTIMIZADO: Compilação moderna - Remove JavaScript legado (12 KiB)
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production', // Remove console.log em produção
   },
   swcMinify: true, // Minificação otimizada
+
+  // 🚀 CRÍTICO: Target para navegadores modernos (Remove polyfills de 12 KiB)
+  target: 'serverless',
   
   // 🚀 NOVO: Webpack otimizado para JavaScript moderno
   webpack: (config, { dev, isServer }) => {
     // Remove polyfills desnecessários apenas em produção
     if (!dev && !isServer) {
-      // Target ES2020+ para remover polyfills
+      // Target ES2020+ para remover polyfills Array.prototype.at, Object.hasOwn, etc.
       config.resolve.fallback = {
         ...config.resolve.fallback,
         fs: false,
+      };
+      
+      // 🚀 CRÍTICO: Configuração para remover polyfills específicos
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        // Remove polyfills específicos detectados pelo PageSpeed
+        '@babel/runtime/helpers/arrayIncludes': false,
+        '@babel/runtime/helpers/objectWithoutPropertiesLoose': false,
       };
     }
     return config;
@@ -170,6 +181,32 @@ const nextConfig = {
   
   // ✅ MANTIDO: Output config
   output: "standalone", // Para builds containerizadas
+
+  // 🚀 CRÍTICO: Babel config para navegadores modernos (Remove 12 KiB de polyfills)
+  babel: {
+    presets: [
+      [
+        'next/babel',
+        {
+          'preset-env': {
+            targets: {
+              // Target ES2020+ apenas (navegadores modernos)
+              esmodules: true,
+              chrome: '91',
+              firefox: '89',
+              safari: '14',
+              edge: '91'
+            },
+            // NÃO incluir polyfills automáticos
+            useBuiltIns: false,
+            corejs: false
+          }
+        }
+      ]
+    ],
+    // Remove transformações desnecessárias
+    plugins: []
+  }
 };
 
 export default nextConfig;
