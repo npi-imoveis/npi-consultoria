@@ -102,6 +102,7 @@ export function Footer() {
           <h3 className="font-semibold mb-1">Hub de Imobiliárias</h3>
           <p className="font-semibold">Boutique de Alto Padrão</p>
           <div className="mt-4 flex justify-center md:justify-end">
+           <div style={{ width: '120px', height: '120px', position: 'relative' }}>
             {/* ✅ OTIMIZAÇÃO CRÍTICA: bg-hub.png (80 KiB economia) */}
             <div 
               style={{ 
@@ -115,11 +116,10 @@ export function Footer() {
                 alt="Logo Hub de Imobiliárias Boutique de Alto Padrão da NPi"
                 title="Logo Hub de Imobiliárias Boutique de Alto Padrão da NPi"
                 fill
-                sizes="(max-width: 768px) 80px, 120px"
+                sizes="120px"
                 loading="lazy"
-                quality={85}
+                quality={75}
                 className="object-contain"
-                priority={false}
               />
             </div>
           </div>
