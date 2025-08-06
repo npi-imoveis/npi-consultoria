@@ -1,4 +1,4 @@
-// src/app/components/sections/image-gallery.js - VERSÃO OTIMIZADA PERFORMANCE
+// src/app/components/sections/image-gallery.js - VERSÃO OTIMIZADA PARA LCP
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -164,19 +164,19 @@ export function ImageGallery({
 
   return (
     <>
-      {/* 🎨 LAYOUT OTIMIZADO */}
+      {/* 🎨 LAYOUT OTIMIZADO PARA LCP */}
       {layout === "single" ? (
         // LAYOUT SINGLE
         <div 
           className="w-full h-full cursor-pointer relative overflow-hidden rounded-lg" 
-          onClick={() => openModal()} // ✅ CORRIGIDO: Abre grid primeiro
+          onClick={() => openModal()}
           role="button"
           tabIndex={0}
           aria-label={`Ver galeria completa de ${processedData.titulo}`}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
-              openModal(); // ✅ CORRIGIDO: Abre grid primeiro
+              openModal();
             }
           }}
         >
@@ -191,6 +191,7 @@ export function ImageGallery({
             blurDataURL={images[0].blurDataURL || "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="}
             loading="eager"
             priority={true}
+            fetchPriority="high"
             className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-105"
           />
 
@@ -206,21 +207,21 @@ export function ImageGallery({
           </div>
         </div>
       ) : (
-        // 📱 LAYOUT RESPONSIVO OTIMIZADO
+        // 📱 LAYOUT RESPONSIVO OTIMIZADO PARA LCP
         <div className={`w-full ${isMobile ? '' : 'grid grid-cols-1 md:grid-cols-2 gap-1'}`}>
           
-          {/* 📱 MOBILE: Foto principal otimizada */}
+          {/* 📱 MOBILE: Foto principal LCP OTIMIZADA */}
           {isMobile ? (
             <div 
               className="w-full h-[75vh] sm:h-[70vh] min-h-[320px] max-h-[450px] cursor-pointer relative overflow-hidden rounded-lg" 
-              onClick={() => openModal()} // ✅ CORRIGIDO: Abre grid primeiro
+              onClick={() => openModal()}
               role="button"
               tabIndex={0}
               aria-label={`Ver galeria de ${images.length} fotos de ${processedData.titulo}`}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
-                  openModal(); // ✅ CORRIGIDO: Abre grid primeiro
+                  openModal();
                 }
               }}
             >
@@ -234,6 +235,7 @@ export function ImageGallery({
                 blurDataURL={images[0].blurDataURL || "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="}
                 loading="eager"
                 priority={true}
+                fetchPriority="high"
                 className="object-cover transition-transform duration-300 ease-in-out hover:scale-105"
               />
 
@@ -255,18 +257,18 @@ export function ImageGallery({
               )}
             </div>
           ) : (
-            // 💻 DESKTOP: Layout grid otimizado
+            // 💻 DESKTOP: Layout grid LCP OTIMIZADO
             <>
               <div 
                 className="col-span-1 h-[410px] cursor-pointer relative" 
-                onClick={() => openModal()} // ✅ CORRIGIDO: Abre grid primeiro
+                onClick={() => openModal()}
                 role="button"
                 tabIndex={0}
                 aria-label={`Ver galeria de ${images.length} fotos de ${processedData.titulo}`}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
-                    openModal(); // ✅ CORRIGIDO: Abre grid primeiro
+                    openModal();
                   }
                 }}
               >
@@ -282,6 +284,7 @@ export function ImageGallery({
                     blurDataURL={images[0].blurDataURL || "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="}
                     loading="eager"
                     priority={true}
+                    fetchPriority="high"
                     className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
                   />
                 </div>
@@ -298,7 +301,7 @@ export function ImageGallery({
                 </div>
               </div>
 
-              {/* GRID 2x2 otimizado - só desktop */}
+              {/* GRID 2x2 otimizado - LAZY LOADING para não competir com LCP */}
               <div className="col-span-1 grid grid-cols-2 grid-rows-2 gap-1 h-[410px]">
                 {images.slice(1, 5).map((image, index) => {
                   const isLastImage = index === 3;
@@ -306,14 +309,14 @@ export function ImageGallery({
                     <div
                       key={image.Codigo || index}
                       className="relative h-full overflow-hidden cursor-pointer rounded-lg"
-                      onClick={() => openModal()} // ✅ CORRIGIDO: Abre grid primeiro
+                      onClick={() => openModal()}
                       role="button"
                       tabIndex={0}
                       aria-label={`Ver galeria completa - imagem ${index + 2}`}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
                           e.preventDefault();
-                          openModal(); // ✅ CORRIGIDO: Abre grid primeiro
+                          openModal();
                         }
                       }}
                     >
@@ -327,6 +330,7 @@ export function ImageGallery({
                         placeholder="blur"
                         blurDataURL={image.blurDataURL || "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="}
                         loading="lazy"
+                        priority={false}
                         className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
                       />
                       
@@ -417,7 +421,7 @@ export function ImageGallery({
               </button>
             </div>
           ) : (
-            // Grid de thumbnails otimizado
+            // Grid de thumbnails otimizado - LAZY LOADING
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
               {images.map((image, idx) => (
                 <div
