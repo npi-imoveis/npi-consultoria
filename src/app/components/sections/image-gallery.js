@@ -1,4 +1,4 @@
-// src/app/components/sections/image-gallery.js - VERSÃO CORRIGIDA PARA CLS 0.003
+// src/app/components/sections/image-gallery.js - SOLUÇÃO DEFINITIVA CLS 0.003
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -15,10 +15,8 @@ function useIsMobile() {
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
     
-    // ✅ Check inicial sem layout shift
     check();
     
-    // ✅ Debounced resize para performance
     let timeoutId;
     const debouncedCheck = () => {
       clearTimeout(timeoutId);
@@ -35,9 +33,6 @@ function useIsMobile() {
   return isMobile;
 }
 
-// 🎯 BLUR DATA URL ULTRA-OTIMIZADO (20 bytes vs 1KB anterior)
-const OPTIMIZED_BLUR = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k=";
-
 export function ImageGallery({ 
   imovel,
   fotos, 
@@ -52,7 +47,6 @@ export function ImageGallery({
 
   const isImovelMode = !!imovel;
   
-  // 🚀 DADOS PROCESSADOS - Memoized para performance
   const processedData = useMemo(() => {
     if (isImovelMode) {
       return {
@@ -73,7 +67,6 @@ export function ImageGallery({
     }
   }, [imovel, fotos, title, shareUrl, shareTitle, isImovelMode]);
 
-  // 🎯 IMAGENS PROCESSADAS - Otimizado
   const images = useMemo(() => {
     if (!Array.isArray(processedData.fotos) || processedData.fotos.length === 0) {
       return [];
@@ -94,7 +87,6 @@ export function ImageGallery({
 
     } catch (error) {
       console.error('❌ GALERIA: Erro ao processar imagens:', error);
-      
       return [...processedData.fotos].map((foto, index) => ({
         ...foto,
         Codigo: `${processedData.codigo}-foto-${index}`,
@@ -102,7 +94,6 @@ export function ImageGallery({
     }
   }, [processedData]);
 
-  // 🎯 HANDLERS OTIMIZADOS com useCallback
   const openModal = useCallback((index = null) => {
     setIsModalOpen(true);
     setSelectedIndex(index);
@@ -125,7 +116,6 @@ export function ImageGallery({
     }
   }, [selectedIndex, images.length]);
 
-  // 🚀 KEYBOARD NAVIGATION - Otimizado
   useEffect(() => {
     if (!isModalOpen) return;
 
@@ -157,11 +147,12 @@ export function ImageGallery({
 
   return (
     <>
-      {/* 🎨 LAYOUT CORRIGIDO PARA CLS 0.003 */}
+      {/* 🎨 LAYOUT COM CSS ASPECT-RATIO (SOLUÇÃO DEFINITIVA CLS) */}
       {layout === "single" ? (
-        // LAYOUT SINGLE - CLS CORRIGIDA
+        // LAYOUT SINGLE - ASPECT-RATIO FIXO
         <div 
-          className="w-full h-full cursor-pointer relative overflow-hidden rounded-lg" 
+          className="w-full cursor-pointer relative overflow-hidden rounded-lg"
+          style={{ aspectRatio: '4/3' }} // 🔥 CRITICAL: Aspect ratio fixo previne CLS
           onClick={() => openModal()}
           role="button"
           tabIndex={0}
@@ -173,21 +164,15 @@ export function ImageGallery({
             }
           }}
         >
-          {/* 🔥 CRÍTICO: width/height explícitos para evitar CLS */}
           <Image
             src={images[0].Foto}
             alt={`${processedData.titulo} - foto principal`}
             title={processedData.titulo}
-            width={800}
-            height={600}
+            fill
             sizes="(max-width: 768px) 100vw, 800px"
-            placeholder="blur"
-            blurDataURL={OPTIMIZED_BLUR}
+            className="object-cover transition-transform duration-300 ease-in-out hover:scale-105"
             loading="eager"
             priority={true}
-            fetchPriority="high"
-            quality={75}
-            className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-105"
           />
 
           {images[0].Destaque === "Sim" && (
@@ -201,14 +186,14 @@ export function ImageGallery({
           </div>
         </div>
       ) : (
-        // 📱 LAYOUT RESPONSIVO CLS CORRIGIDO
+        // 📱 LAYOUT RESPONSIVO COM ASPECT-RATIO
         <div className={`w-full ${isMobile ? '' : 'grid grid-cols-1 md:grid-cols-2 gap-1'}`}>
           
-          {/* 📱 MOBILE: Foto principal CLS CORRIGIDA */}
+          {/* 📱 MOBILE: Aspect-ratio fixo */}
           {isMobile ? (
-            // 🔥 CRÍTICO: Container com dimensões fixas para evitar CLS
             <div 
-              className="w-full h-[75vh] sm:h-[70vh] min-h-[320px] max-h-[450px] cursor-pointer relative overflow-hidden rounded-lg" 
+              className="w-full cursor-pointer relative overflow-hidden rounded-lg"
+              style={{ aspectRatio: '16/10' }} // 🔥 CRITICAL: Mobile aspect ratio fixo
               onClick={() => openModal()}
               role="button"
               tabIndex={0}
@@ -220,21 +205,15 @@ export function ImageGallery({
                 }
               }}
             >
-              {/* 🔥 SOLUÇÃO CLS: width/height em vez de fill */}
               <Image
                 src={images[0].Foto}
                 alt={`${processedData.titulo} - foto principal`}
                 title={processedData.titulo}
-                width={800}
-                height={600}
+                fill
                 sizes="100vw"
-                placeholder="blur"
-                blurDataURL={OPTIMIZED_BLUR}
+                className="object-cover transition-transform duration-300 ease-in-out hover:scale-105"
                 loading="eager"
                 priority={true}
-                fetchPriority="high"
-                quality={75}
-                className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-105"
               />
 
               {images[0].Destaque === "Sim" && (
@@ -254,11 +233,12 @@ export function ImageGallery({
               )}
             </div>
           ) : (
-            // 💻 DESKTOP: Layout grid CLS CORRIGIDO
+            // 💻 DESKTOP: Grid com aspect-ratio
             <>
-              {/* 🔥 CRÍTICO: Container com height fixo para evitar CLS */}
+              {/* 🔥 CRITICAL: Container principal com aspect-ratio fixo */}
               <div 
-                className="col-span-1 h-[410px] cursor-pointer relative overflow-hidden rounded-lg" 
+                className="col-span-1 cursor-pointer relative overflow-hidden rounded-lg"
+                style={{ aspectRatio: '4/3' }} // 🔥 CRITICAL: Desktop main image aspect ratio
                 onClick={() => openModal()}
                 role="button"
                 tabIndex={0}
@@ -270,21 +250,15 @@ export function ImageGallery({
                   }
                 }}
               >
-                {/* 🔥 SOLUÇÃO CLS: width/height explícitos */}
                 <Image
                   src={images[0].Foto}
                   alt={`${processedData.titulo} - foto principal`}
                   title={processedData.titulo}
-                  width={800}
-                  height={600}
+                  fill
                   sizes="(max-width: 768px) 100vw, 50vw"
-                  placeholder="blur"
-                  blurDataURL={OPTIMIZED_BLUR}
+                  className="object-cover transition-transform duration-300 ease-in-out hover:scale-110"
                   loading="eager"
                   priority={true}
-                  fetchPriority="high"
-                  quality={75}
-                  className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
                 />
 
                 {images[0].Destaque === "Sim" && (
@@ -298,14 +272,15 @@ export function ImageGallery({
                 </div>
               </div>
 
-              {/* GRID 2x2 CLS CORRIGIDO - altura fixa */}
-              <div className="col-span-1 grid grid-cols-2 grid-rows-2 gap-1 h-[410px]">
+              {/* 🔥 GRID 2x2 com aspect-ratio fixo para cada thumbnail */}
+              <div className="col-span-1 grid grid-cols-2 grid-rows-2 gap-1">
                 {images.slice(1, 5).map((image, index) => {
                   const isLastImage = index === 3;
                   return (
                     <div
                       key={image.Codigo || index}
-                      className="relative h-full overflow-hidden cursor-pointer rounded-lg"
+                      className="relative overflow-hidden cursor-pointer rounded-lg"
+                      style={{ aspectRatio: '4/3' }} // 🔥 CRITICAL: Thumbnails aspect ratio fixo
                       onClick={() => openModal()}
                       role="button"
                       tabIndex={0}
@@ -317,20 +292,14 @@ export function ImageGallery({
                         }
                       }}
                     >
-                      {/* 🔥 SOLUÇÃO CLS: width/height explícitos para thumbnails */}
                       <Image
                         src={image.Foto}
                         alt={`${processedData.titulo} - imagem ${index + 2}`}
                         title={`${processedData.titulo} - imagem ${index + 2}`}
-                        width={400}
-                        height={300}
+                        fill
                         sizes="(max-width: 768px) 50vw, 25vw"
-                        placeholder="blur"
-                        blurDataURL={OPTIMIZED_BLUR}
+                        className="object-cover transition-transform duration-300 ease-in-out hover:scale-110"
                         loading="lazy"
-                        priority={false}
-                        quality={75}
-                        className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
                       />
                       
                       {image.Destaque === "Sim" && (
@@ -358,7 +327,7 @@ export function ImageGallery({
         </div>
       )}
 
-      {/* 🖼️ MODAL CLS CORRIGIDO */}
+      {/* 🖼️ MODAL COM ASPECT-RATIO */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-95 z-50 overflow-auto">
           <div className="sticky top-0 z-10 flex justify-between gap-4 p-5 pt-28 mt-6 md:mt-0 bg-gradient-to-b from-black/80 via-black/40 to-transparent backdrop-blur-sm">
@@ -382,20 +351,20 @@ export function ImageGallery({
 
           {selectedIndex !== null ? (
             <div className="flex items-center justify-center min-h-screen p-4 relative">
-              {/* 🔥 MODAL: width/height para consistência */}
-              <Image
-                src={images[selectedIndex].Foto}
-                alt={`${processedData.titulo} - imagem ${selectedIndex + 1} de ${images.length}`}
-                title={`${processedData.titulo} - imagem ${selectedIndex + 1} de ${images.length}`}
-                width={1200}
-                height={800}
-                sizes="100vw"
-                placeholder="blur"
-                blurDataURL={OPTIMIZED_BLUR}
-                loading="eager"
-                quality={85}
-                className="max-w-full max-h-screen object-contain"
-              />
+              <div 
+                className="relative max-w-screen-lg w-full"
+                style={{ aspectRatio: '4/3' }} // 🔥 CRITICAL: Modal main image aspect ratio
+              >
+                <Image
+                  src={images[selectedIndex].Foto}
+                  alt={`${processedData.titulo} - imagem ${selectedIndex + 1} de ${images.length}`}
+                  title={`${processedData.titulo} - imagem ${selectedIndex + 1} de ${images.length}`}
+                  fill
+                  sizes="100vw"
+                  className="object-contain"
+                  loading="eager"
+                />
+              </div>
 
               <div className="absolute top-24 md:top-20 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm z-20">
                 {selectedIndex + 1} / {images.length}
@@ -418,13 +387,14 @@ export function ImageGallery({
               </button>
             </div>
           ) : (
-            // Grid de thumbnails CLS CORRIGIDO - dimensões fixas
+            // Grid de thumbnails com aspect-ratio fixo
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
               {images.map((image, idx) => (
                 <div
                   key={image.Codigo || idx}
                   onClick={() => setSelectedIndex(idx)}
-                  className="relative w-full h-48 sm:h-56 md:h-64 lg:h-72 xl:h-80 cursor-pointer overflow-hidden border-2 border-transparent hover:border-white transition-colors rounded-lg focus:outline-none focus:ring-2 focus:ring-white/50"
+                  className="relative cursor-pointer overflow-hidden border-2 border-transparent hover:border-white transition-colors rounded-lg focus:outline-none focus:ring-2 focus:ring-white/50"
+                  style={{ aspectRatio: '4/3' }} // 🔥 CRITICAL: Modal thumbnails aspect ratio
                   role="button"
                   tabIndex={0}
                   aria-label={`Ver imagem ${idx + 1} de ${images.length}`}
@@ -435,19 +405,14 @@ export function ImageGallery({
                     }
                   }}
                 >
-                  {/* 🔥 MODAL THUMBNAILS: width/height para consistência */}
                   <Image
                     src={image.Foto}
                     alt={`${processedData.titulo} - miniatura ${idx + 1}`}
                     title={`${processedData.titulo} - imagem ${idx + 1}`}
-                    width={400}
-                    height={300}
+                    fill
                     sizes="(max-width: 768px) 50vw, 25vw"
-                    placeholder="blur"
-                    blurDataURL={OPTIMIZED_BLUR}
+                    className="object-cover"
                     loading="lazy"
-                    quality={70}
-                    className="w-full h-full object-cover"
                   />
                   
                   <div className="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
