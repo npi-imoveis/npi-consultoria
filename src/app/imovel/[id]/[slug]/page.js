@@ -1,6 +1,6 @@
 // app/imovel/[id]/[slug]/page.js
-// ✅ VERSÃO OTIMIZADA PARA LCP - Cirúrgica
-// 🚀 FOCO: Largest Contentful Paint < 2.5s no mobile
+// ✅ VERSÃO CONSERVADORA - Performance segura
+// 🎯 FOCO: Mínimas mudanças para melhorar LCP
 
 import { ImageGallery } from "@/app/components/sections/image-gallery";
 import { FAQImovel } from "./componentes/FAQImovel";
@@ -326,36 +326,6 @@ function cleanDuplicateWords(text) {
     .trim();
 }
 
-// 🚀 NOVA FUNÇÃO: Extrai URL da primeira imagem para preload
-function getFirstImageUrl(imovelFotos) {
-  console.log('🖼️ [PRELOAD-IMAGE] Extraindo primeira imagem para preload');
-  
-  if (!imovelFotos) return null;
-  
-  // Array de fotos
-  if (Array.isArray(imovelFotos) && imovelFotos.length > 0) {
-    const firstPhoto = imovelFotos[0];
-    if (firstPhoto && typeof firstPhoto === 'object') {
-      return firstPhoto.FotoGrande || firstPhoto.Foto || firstPhoto.FotoMedia || null;
-    }
-    if (typeof firstPhoto === 'string') {
-      return firstPhoto;
-    }
-  }
-  
-  // Objeto único
-  if (typeof imovelFotos === 'object' && !Array.isArray(imovelFotos)) {
-    return imovelFotos.FotoGrande || imovelFotos.Foto || imovelFotos.FotoMedia || null;
-  }
-  
-  // String direta
-  if (typeof imovelFotos === 'string') {
-    return imovelFotos;
-  }
-  
-  return null;
-}
-
 export const revalidate = 0;
 
 export async function generateMetadata({ params }) {
@@ -517,10 +487,6 @@ export default async function ImovelPage({ params }) {
     const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
     const modifiedDate = convertBrazilianDateToISO(imovel.DataHoraAtualizacao, imovel);
     
-    // 🚀 CRÍTICO PARA LCP: Extrair URL da primeira imagem
-    const firstImageUrl = getFirstImageUrl(imovel.Foto);
-    console.log('🖼️ [LCP-OPTIMIZATION] URL da primeira imagem:', firstImageUrl);
-    
     console.log('🔍 Data convertida no componente:', modifiedDate);
     
     console.log('🎥 [DEBUG-FINAL] =======================================');
@@ -548,17 +514,6 @@ export default async function ImovelPage({ params }) {
 
     return (
       <section className="w-full bg-white pb-32 pt-20">
-        {/* 🚀 PRELOAD CRÍTICO: Primeira imagem para LCP */}
-        {firstImageUrl && (
-          <link
-            rel="preload"
-            as="image"
-            href={firstImageUrl}
-            fetchPriority="high"
-            className="hidden"
-          />
-        )}
-
         <StructuredDataApartment
           title={imovel.Empreendimento}
           price={imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}
@@ -577,17 +532,17 @@ export default async function ImovelPage({ params }) {
 
         <ExitIntentModal condominio={imovel.Empreendimento} link={currentUrl} />
 
-        {/* 🎯 GALERIA OTIMIZADA PARA LCP */}
         <div className="w-full mx-auto">
-          <ImageGallery 
-            imovel={imovel}
-            priority={true}
-            lcpOptimized={true}
-          />
+          <ImageGallery imovel={imovel} />
         </div>
 
-        {/* 🚀 CONTAINER OTIMIZADO - Removido minHeight que causa CLS */}
-        <div className="container mx-auto gap-4 mt-3 px-4 md:px-0 flex flex-col lg:flex-row">
+        {/* ✅ CONTAINER ORIGINAL RESTAURADO */}
+        <div 
+          className="container mx-auto gap-4 mt-3 px-4 md:px-0 flex flex-col lg:flex-row"
+          style={{
+            minHeight: '40vh', // 🔄 RESTAURADO para evitar CLS
+          }}
+        >
           <div className="w-full lg:w-[65%]">
             <TituloImovel imovel={imovel} currentUrl={currentUrl} />
             <DetalhesImovel imovel={imovel} />
@@ -682,7 +637,7 @@ export default async function ImovelPage({ params }) {
             <LocalizacaoCondominio imovel={imovel} />
           </div>
 
-          {/* ✅ SIDEBAR OTIMIZADA - Sticky otimizado */}
+          {/* ✅ SIDEBAR ORIGINAL */}
           <div className="w-full lg:w-[35%] h-fit lg:sticky lg:top-24 order-first lg:order-last mb-6 lg:mb-0">
             <Contato imovel={imovel} currentUrl={currentUrl} />
           </div>
