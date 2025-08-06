@@ -95,31 +95,29 @@ const nextConfig = {
     ignoreBuildErrors: true, // ⚠️ Remover em produção
   },
 
-  // 🚀 OTIMIZADO: Compilação moderna - Remove JavaScript legado (12 KiB)
+  // 🚀 OTIMIZADO: Compilação moderna - Otimizações gerais
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production', // Remove console.log em produção
   },
   swcMinify: true, // Minificação otimizada
 
-  // 🚀 CRÍTICO: Target para navegadores modernos (Remove polyfills de 12 KiB)
-  target: 'serverless',
+  // ✅ REMOVIDO: target não é mais suportado no Next.js 14+
   
   // 🚀 NOVO: Webpack otimizado para JavaScript moderno
   webpack: (config, { dev, isServer }) => {
     // Remove polyfills desnecessários apenas em produção
     if (!dev && !isServer) {
-      // Target ES2020+ para remover polyfills Array.prototype.at, Object.hasOwn, etc.
+      // Configurações para navegadores modernos
       config.resolve.fallback = {
         ...config.resolve.fallback,
         fs: false,
       };
       
-      // 🚀 CRÍTICO: Configuração para remover polyfills específicos
-      config.resolve.alias = {
-        ...config.resolve.alias,
-        // Remove polyfills específicos detectados pelo PageSpeed
-        '@babel/runtime/helpers/arrayIncludes': false,
-        '@babel/runtime/helpers/objectWithoutPropertiesLoose': false,
+      // Otimizações para bundle menor
+      config.optimization = {
+        ...config.optimization,
+        usedExports: true,
+        sideEffects: false,
       };
     }
     return config;
@@ -181,32 +179,6 @@ const nextConfig = {
   
   // ✅ MANTIDO: Output config
   output: "standalone", // Para builds containerizadas
-
-  // 🚀 CRÍTICO: Babel config para navegadores modernos (Remove 12 KiB de polyfills)
-  babel: {
-    presets: [
-      [
-        'next/babel',
-        {
-          'preset-env': {
-            targets: {
-              // Target ES2020+ apenas (navegadores modernos)
-              esmodules: true,
-              chrome: '91',
-              firefox: '89',
-              safari: '14',
-              edge: '91'
-            },
-            // NÃO incluir polyfills automáticos
-            useBuiltIns: false,
-            corejs: false
-          }
-        }
-      ]
-    ],
-    // Remove transformações desnecessárias
-    plugins: []
-  }
 };
 
 export default nextConfig;
