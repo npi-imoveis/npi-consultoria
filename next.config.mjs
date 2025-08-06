@@ -2,9 +2,8 @@
 const nextConfig = {
   trailingSlash: false, // ✅ MANTIDO: Sua configuração atual
   
-  // ✅ MANTIDO + ADICIONADO: Otimizações experimentais
+  // ✅ OTIMIZAÇÕES: Experimentais válidas
   experimental: {
-    skipTrailingSlashRedirect: true, // ✅ MANTIDO: Deixa o middleware gerenciar tudo
     optimizeCss: true, // 🚀 NOVO: Remove CSS não usado (10 KiB economia)
     optimizePackageImports: ['lucide-react'], // 🚀 NOVO: Tree shaking icons
   },
@@ -87,7 +86,6 @@ const nextConfig = {
     
     // 🚀 NOVO: Otimizações para resolver 176 KiB de imagens superdimensionadas
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384], // Tamanhos pequenos para thumbnails
-    quality: 85, // Qualidade otimizada (default: 75)
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
