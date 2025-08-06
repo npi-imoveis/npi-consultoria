@@ -1,4 +1,4 @@
-// src/app/components/sections/image-gallery.js - VERSÃO OTIMIZADA PERFORMANCE
+// src/app/components/sections/image-gallery.js - VERSÃO ORIGINAL + CONTRASTE CORRIGIDO
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -46,11 +46,7 @@ export function ImageGallery({
   shareTitle,
 
   // Layout da galeria
-  layout = "grid", // "grid" ou "single"
-  
-  // 🚀 PROPS PARA OTIMIZAÇÃO DE LCP
-  priority = false,
-  lcpOptimized = false
+  layout = "grid" // "grid" ou "single"
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(null);
@@ -168,19 +164,19 @@ export function ImageGallery({
 
   return (
     <>
-      {/* 🎨 LAYOUT OTIMIZADO */}
+      {/* 🎨 LAYOUT ORIGINAL */}
       {layout === "single" ? (
         // LAYOUT SINGLE
         <div 
           className="w-full h-full cursor-pointer relative overflow-hidden rounded-lg" 
-          onClick={() => openModal()} // ✅ CORRIGIDO: Abre grid primeiro
+          onClick={() => openModal()}
           role="button"
           tabIndex={0}
           aria-label={`Ver galeria completa de ${processedData.titulo}`}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
-              openModal(); // ✅ CORRIGIDO: Abre grid primeiro
+              openModal();
             }
           }}
         >
@@ -193,13 +189,12 @@ export function ImageGallery({
             sizes="100vw"
             placeholder="blur"
             blurDataURL={images[0].blurDataURL || "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="}
-            loading={lcpOptimized ? "eager" : "eager"}
-            priority={lcpOptimized ? true : true}
-            fetchPriority={lcpOptimized ? "high" : undefined}
+            loading="eager"
+            priority={true}
             className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-105"
           />
 
-          {/* Indicadores otimizados */}
+          {/* ✅ CONTRASTE CORRIGIDO: bg-yellow-500 → bg-gray-900 */}
           {images[0].Destaque === "Sim" && (
             <div className="absolute top-4 left-4 bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
               ⭐ DESTAQUE
@@ -211,21 +206,21 @@ export function ImageGallery({
           </div>
         </div>
       ) : (
-        // 📱 LAYOUT RESPONSIVO OTIMIZADO
+        // 📱 LAYOUT RESPONSIVO ORIGINAL
         <div className={`w-full ${isMobile ? '' : 'grid grid-cols-1 md:grid-cols-2 gap-1'}`}>
           
-          {/* 📱 MOBILE: Foto principal otimizada */}
+          {/* 📱 MOBILE: Foto principal */}
           {isMobile ? (
             <div 
               className="w-full h-[75vh] sm:h-[70vh] min-h-[320px] max-h-[450px] cursor-pointer relative overflow-hidden rounded-lg" 
-              onClick={() => openModal()} // ✅ CORRIGIDO: Abre grid primeiro
+              onClick={() => openModal()}
               role="button"
               tabIndex={0}
               aria-label={`Ver galeria de ${images.length} fotos de ${processedData.titulo}`}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
-                  openModal(); // ✅ CORRIGIDO: Abre grid primeiro
+                  openModal();
                 }
               }}
             >
@@ -237,13 +232,12 @@ export function ImageGallery({
                 sizes="100vw"
                 placeholder="blur"
                 blurDataURL={images[0].blurDataURL || "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="}
-                loading={lcpOptimized ? "eager" : "eager"}
-                priority={lcpOptimized ? true : true}
-                fetchPriority={lcpOptimized ? "high" : undefined}
+                loading="eager"
+                priority={true}
                 className="object-cover transition-transform duration-300 ease-in-out hover:scale-105"
               />
 
-              {/* Indicadores móveis */}
+              {/* ✅ CONTRASTE CORRIGIDO: bg-yellow-500 → bg-gray-900 */}
               {images[0].Destaque === "Sim" && (
                 <div className="absolute top-3 left-3 bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
                   ⭐ DESTAQUE
@@ -261,18 +255,18 @@ export function ImageGallery({
               )}
             </div>
           ) : (
-            // 💻 DESKTOP: Layout grid otimizado
+            // 💻 DESKTOP: Layout grid original
             <>
               <div 
                 className="col-span-1 h-[410px] cursor-pointer relative" 
-                onClick={() => openModal()} // ✅ CORRIGIDO: Abre grid primeiro
+                onClick={() => openModal()}
                 role="button"
                 tabIndex={0}
                 aria-label={`Ver galeria de ${images.length} fotos de ${processedData.titulo}`}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
-                    openModal(); // ✅ CORRIGIDO: Abre grid primeiro
+                    openModal();
                   }
                 }}
               >
@@ -286,14 +280,13 @@ export function ImageGallery({
                     sizes="(max-width: 768px) 100vw, 50vw"
                     placeholder="blur"
                     blurDataURL={images[0].blurDataURL || "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="}
-                    loading={lcpOptimized ? "eager" : "eager"}
-                    priority={lcpOptimized ? true : true}
-                    fetchPriority={lcpOptimized ? "high" : undefined}
+                    loading="eager"
+                    priority={true}
                     className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
                   />
                 </div>
 
-                {/* Indicadores desktop */}
+                {/* ✅ CONTRASTE CORRIGIDO: bg-yellow-500 → bg-gray-900 */}
                 {images[0].Destaque === "Sim" && (
                   <div className="absolute top-4 left-4 bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
                     ⭐ DESTAQUE
@@ -305,7 +298,7 @@ export function ImageGallery({
                 </div>
               </div>
 
-              {/* GRID 2x2 otimizado - só desktop */}
+              {/* GRID 2x2 original - só desktop */}
               <div className="col-span-1 grid grid-cols-2 grid-rows-2 gap-1 h-[410px]">
                 {images.slice(1, 5).map((image, index) => {
                   const isLastImage = index === 3;
@@ -313,14 +306,14 @@ export function ImageGallery({
                     <div
                       key={image.Codigo || index}
                       className="relative h-full overflow-hidden cursor-pointer rounded-lg"
-                      onClick={() => openModal()} // ✅ CORRIGIDO: Abre grid primeiro
+                      onClick={() => openModal()}
                       role="button"
                       tabIndex={0}
                       aria-label={`Ver galeria completa - imagem ${index + 2}`}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
                           e.preventDefault();
-                          openModal(); // ✅ CORRIGIDO: Abre grid primeiro
+                          openModal();
                         }
                       }}
                     >
@@ -337,7 +330,7 @@ export function ImageGallery({
                         className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
                       />
                       
-                      {/* Indicador de destaque nos thumbnails */}
+                      {/* ✅ CONTRASTE CORRIGIDO: bg-yellow-500 → bg-gray-900 */}
                       {image.Destaque === "Sim" && (
                         <div className="absolute top-2 left-2 bg-gray-900 text-white text-xs font-bold px-1.5 py-0.5 rounded">
                           ⭐
@@ -363,7 +356,7 @@ export function ImageGallery({
         </div>
       )}
 
-      {/* 🖼️ MODAL OTIMIZADO */}
+      {/* 🖼️ MODAL ORIGINAL */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-95 z-50 overflow-auto">
           {/* Header fixo */}
@@ -398,7 +391,6 @@ export function ImageGallery({
                 placeholder="blur"
                 blurDataURL={images[selectedIndex].blurDataURL || "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="}
                 loading="eager"
-                fetchPriority={selectedIndex === 0 && lcpOptimized ? "high" : "auto"}
                 className="max-w-full max-h-screen object-contain"
               />
 
@@ -425,7 +417,7 @@ export function ImageGallery({
               </button>
             </div>
           ) : (
-            // Grid de thumbnails otimizado
+            // Grid de thumbnails original
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
               {images.map((image, idx) => (
                 <div
@@ -459,7 +451,7 @@ export function ImageGallery({
                     {idx + 1}
                   </div>
                   
-                  {/* Indicador de destaque */}
+                  {/* ✅ CONTRASTE CORRIGIDO: bg-yellow-500 → bg-gray-900 */}
                   {image.Destaque === "Sim" && (
                     <div className="absolute top-2 left-2 bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded">
                       ⭐ DESTAQUE
