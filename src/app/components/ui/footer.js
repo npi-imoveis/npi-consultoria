@@ -97,17 +97,17 @@ export function Footer() {
           </nav>
         </div>
 
-        {/* Coluna 4 - Logo HUB OTIMIZADO */}
+        {/* Coluna 4 - Logo HUB OTIMIZADO - SINTAXE CORRIGIDA */}
         <div className="text-center md:text-right">
           <h3 className="font-semibold mb-1">Hub de Imobiliárias</h3>
           <p className="font-semibold">Boutique de Alto Padrão</p>
           <div className="mt-4 flex justify-center md:justify-end">
-           <div style={{ width: '120px', height: '120px', position: 'relative' }}>
-            {/* ✅ OTIMIZAÇÃO CRÍTICA: bg-hub.png (80 KiB economia) */}
+            {/* ✅ OTIMIZAÇÃO CRÍTICA: bg-hub.png (80 KiB economia) - SINTAXE CORRIGIDA */}
             <div 
               style={{ 
-                aspectRatio: '1/1', 
                 width: '120px',
+                height: '120px',
+                position: 'relative',
                 contain: 'layout style paint'
               }}
             >
@@ -120,6 +120,7 @@ export function Footer() {
                 loading="lazy"
                 quality={75}
                 className="object-contain"
+                priority={false}
               />
             </div>
           </div>
