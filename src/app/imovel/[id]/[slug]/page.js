@@ -1,7 +1,8 @@
 // app/imovel/[id]/[slug]/page.js
-// ✅ VERSÃO PERFORMANCE CRÍTICA - Corrige problemas específicos do PageSpeed
-// FOCO: bg-hub.png + Layout Shift + CSS Blocking + LCP + JS Legacy
-// META: 70 → 85+ pontos (15+ pontos de ganho)
+// ✅ VERSÃO HÍBRIDA OTIMIZADA - Performance + Funcionalidades Completas
+// PERFORMANCE: Layout Shift + Containment + Sidebar fixa + Duplicatas removidas
+// LOGS: Todos os logs detalhados mantidos
+// FUNCIONALIDADES: Validação robusta de vídeo + Meta tags completas
 
 import { ImageGallery } from "@/app/components/sections/image-gallery";
 import { FAQImovel } from "./componentes/FAQImovel";
@@ -186,7 +187,7 @@ function getWhatsAppOptimizedImageUrl(imovelFotos) {
   }
 }
 
-// ✅ FUNÇÃO CORRIGIDA: Remove duplicatas rigorosamente
+// ✅ FUNÇÃO HÍBRIDA: Remove duplicatas rigorosamente (melhor performance)
 function createSmartTitle(imovel) {
   console.log('📝 [SMART-TITLE] ========== PROCESSANDO TÍTULO ==========');
   console.log('📝 [SMART-TITLE] Input imovel:', {
@@ -293,7 +294,7 @@ function createSmartTitle(imovel) {
   return smartTitle;
 }
 
-// ✅ FUNÇÃO ADICIONAL: Limpa duplicatas em textos
+// ✅ FUNÇÃO ADICIONAL: Limpa duplicatas em textos (performance)
 function cleanDuplicateWords(text) {
   if (!text || typeof text !== 'string') return text;
   
@@ -336,7 +337,7 @@ export async function generateMetadata({ params }) {
     
     console.error(`[IMOVEL-META] ✅ Data final válida: ${modifiedDate}`);
     
-    // ✅ APLICA A FUNÇÃO CORRIGIDA
+    // ✅ APLICA A FUNÇÃO HÍBRIDA CORRIGIDA
     const title = createSmartTitle(imovel);
     
     // ✅ DESCRIÇÃO TAMBÉM COM LIMPEZA
@@ -513,24 +514,15 @@ export default async function ImovelPage({ params }) {
           <ImageGallery imovel={imovel} />
         </div>
 
-        {/* ✅ CONTAINER CRÍTICO - Layout Shift MÁXIMO */}
+        {/* ✅ CONTAINER HÍBRIDO OTIMIZADO - Layout Shift + Performance */}
         <div 
           className="container mx-auto gap-4 mt-3 px-4 md:px-0 flex flex-col lg:flex-row"
           style={{
-            minHeight: '80vh',           // ⚡ CRÍTICO: Aumentado de 60vh → 80vh (CLS fix)
-            contain: 'layout style paint size', // ⚡ CRÍTICO: Containment total
-            transform: 'translateZ(0)',  // ⚡ PERFORMANCE: Hardware acceleration
-            willChange: 'auto',          // ⚡ PERFORMANCE: Otimização GPU
-            isolation: 'isolate',        // ⚡ PERFORMANCE: Isola stacking context
+            minHeight: '60vh', // ✅ PERFORMANCE: Previne layout shift
+            contain: 'layout style', // ✅ PERFORMANCE: Isola mudanças de layout
           }}
         >
-          {/* ✅ CONTEÚDO PRINCIPAL - Performance otimizada */}
-          <div 
-            className="w-full lg:w-[65%]"
-            style={{
-              contain: 'layout style', // ⚡ PERFORMANCE: Isola mudanças
-            }}
-          >
+          <div className="w-full lg:w-[65%]">
             <TituloImovel imovel={imovel} currentUrl={currentUrl} />
             <DetalhesImovel imovel={imovel} />
             <DescricaoImovel imovel={imovel} />
@@ -538,7 +530,7 @@ export default async function ImovelPage({ params }) {
             <DetalhesCondominio imovel={imovel} />
             <Lazer imovel={imovel} />
             
-            {/* ✅ VALIDAÇÃO ROBUSTA DE VÍDEO (mantida) */}
+            {/* ✅ VALIDAÇÃO ROBUSTA DE VÍDEO (mantida do arquivo 2) */}
             {(() => {
               try {
                 if (!imovel?.Video || typeof imovel.Video !== 'object' || Array.isArray(imovel.Video)) {
@@ -624,29 +616,20 @@ export default async function ImovelPage({ params }) {
             <LocalizacaoCondominio imovel={imovel} />
           </div>
 
-          {/* ✅ SIDEBAR CRÍTICA - Performance máxima */}
+          {/* ✅ FORMULÁRIO SIDEBAR HÍBRIDO - Tamanho fixo + Performance */}
           <div 
             className="w-full lg:w-[35%] h-fit lg:sticky lg:top-24 order-first lg:order-last mb-6 lg:mb-0"
             style={{
-              maxWidth: '400px',      // ⚡ CRÍTICO: Força largura máxima
-              minWidth: '320px',      // ⚡ CRÍTICO: Força largura mínima
-              flexShrink: 0,          // ⚡ CRÍTICO: Impede compressão
-              contain: 'layout style size', // ⚡ PERFORMANCE: Containment total
-              transform: 'translateZ(0)',   // ⚡ PERFORMANCE: Hardware acceleration
-              backfaceVisibility: 'hidden', // ⚡ PERFORMANCE: Anti-flicker
+              maxWidth: '400px', // ✅ PERFORMANCE: Força largura máxima
+              minWidth: '320px', // ✅ PERFORMANCE: Força largura mínima
+              flexShrink: 0,     // ✅ PERFORMANCE: Impede compressão
             }}
           >
             <Contato imovel={imovel} currentUrl={currentUrl} />
           </div>
         </div>
 
-        {/* ✅ FAQ SECTION */}
-        <div 
-          className="container mx-auto px-4 md:px-0"
-          style={{
-            contain: 'layout style', // ⚡ PERFORMANCE: Isola mudanças
-          }}
-        >
+        <div className="container mx-auto px-4 md:px-0">
           <FAQImovel imovel={imovel} />
         </div>
 
