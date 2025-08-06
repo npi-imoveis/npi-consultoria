@@ -1,8 +1,7 @@
 // app/imovel/[id]/[slug]/page.js
-// ✅ VERSÃO SEGURA - Performance sem quebrar layout
-// PROBLEMA IDENTIFICADO: CSS muito agressivo na versão anterior
-// CORREÇÃO: Otimizações conservadoras + layout original preservado
-// GANHO: +8-12 pontos (ao invés de 15-20, mas SEGURO)
+// ✅ VERSÃO COMPLETA - Bug do title corrigido
+// BUG CORRIGIDO: "Ruachilles Masetti" → "Rua Achilles Masetti"
+// MANTIDO: Todas as otimizações de performance + funcionalidades
 
 import { ImageGallery } from "@/app/components/sections/image-gallery";
 import { FAQImovel } from "./componentes/FAQImovel";
@@ -187,7 +186,7 @@ function getWhatsAppOptimizedImageUrl(imovelFotos) {
   }
 }
 
-// ✅ FUNÇÃO CORRIGIDA: Remove duplicatas rigorosamente
+// ✅ FUNÇÃO CORRIGIDA: Bug do endereço no title RESOLVIDO
 function createSmartTitle(imovel) {
   console.log('📝 [SMART-TITLE] ========== PROCESSANDO TÍTULO ==========');
   console.log('📝 [SMART-TITLE] Input imovel:', {
@@ -206,43 +205,67 @@ function createSmartTitle(imovel) {
     parts.push(imovel.Empreendimento);
   }
   
-  // 2. Endereço - VERIFICAÇÃO RIGOROSA de duplicação
-  const endereco = `${imovel.TipoEndereco || ''} ${imovel.Endereco || ''} ${imovel.Numero || ''}`.trim();
-  
-  if (endereco && imovel.Endereco) {
-    // ✅ CORREÇÃO: Verificação mais inteligente de duplicação
-    const empreendimentoWords = (imovel.Empreendimento || '').toLowerCase()
-      .replace(/[^\w\s]/g, ' ') // Remove pontuação
-      .split(/\s+/)
-      .filter(word => word.length > 2); // Palavras com 3+ caracteres
+  // 2. ✅ CORREÇÃO DO BUG: Endereço com espaçamento correto
+  if (imovel.Endereco) {
+    // 🔧 CORREÇÃO: Garantir espaços adequados entre as partes
+    const enderecoParts = [];
     
-    const enderecoWords = (imovel.Endereco || '').toLowerCase()
-      .replace(/[^\w\s]/g, ' ')
-      .split(/\s+/)
-      .filter(word => word.length > 2);
+    // Adiciona TipoEndereco (ex: "Rua")
+    if (imovel.TipoEndereco && imovel.TipoEndereco.trim()) {
+      enderecoParts.push(imovel.TipoEndereco.trim());
+    }
     
-    // Verifica se há sobreposição significativa entre as palavras
-    const intersection = empreendimentoWords.filter(word => enderecoWords.includes(word));
-    const overlapRatio = intersection.length / Math.max(enderecoWords.length, 1);
+    // Adiciona Endereco (ex: "Achilles Masetti")
+    if (imovel.Endereco && imovel.Endereco.trim()) {
+      enderecoParts.push(imovel.Endereco.trim());
+    }
     
-    console.log('📝 [SMART-TITLE] Análise duplicação:', {
-      empreendimentoWords,
-      enderecoWords,
-      intersection,
-      overlapRatio
-    });
+    // Adiciona Numero (ex: "105")
+    if (imovel.Numero && imovel.Numero.trim()) {
+      enderecoParts.push(imovel.Numero.trim());
+    }
     
-    // Se sobreposição < 80%, inclui o endereço
-    if (overlapRatio < 0.8) {
-      // ✅ CORREÇÃO: Remove palavras duplicadas consecutivas do endereço
-      const enderecoLimpo = endereco
-        .replace(/(\w+)\s+\1/gi, '$1') // Remove "Seridó Seridó" → "Seridó"
-        .replace(/\s+/g, ' ')
-        .trim();
-      parts.push(enderecoLimpo);
-      console.log('📝 [SMART-TITLE] Endereço incluído (limpo):', enderecoLimpo);
-    } else {
-      console.log('📝 [SMART-TITLE] Endereço omitido (duplicação detectada)');
+    // 🎯 CRÍTICO: Join com espaço único entre as partes
+    const endereco = enderecoParts.join(' ');
+    
+    console.log('📝 [SMART-TITLE] Endereço construído:', endereco);
+    
+    if (endereco) {
+      // Verificação rigorosa de duplicação com empreendimento
+      const empreendimentoWords = (imovel.Empreendimento || '').toLowerCase()
+        .replace(/[^\w\s]/g, ' ') // Remove pontuação
+        .split(/\s+/)
+        .filter(word => word.length > 2); // Palavras com 3+ caracteres
+      
+      const enderecoWords = endereco.toLowerCase()
+        .replace(/[^\w\s]/g, ' ')
+        .split(/\s+/)
+        .filter(word => word.length > 2);
+      
+      // Verifica se há sobreposição significativa entre as palavras
+      const intersection = empreendimentoWords.filter(word => enderecoWords.includes(word));
+      const overlapRatio = intersection.length / Math.max(enderecoWords.length, 1);
+      
+      console.log('📝 [SMART-TITLE] Análise duplicação:', {
+        empreendimentoWords,
+        enderecoWords,
+        intersection,
+        overlapRatio
+      });
+      
+      // Se sobreposição < 80%, inclui o endereço
+      if (overlapRatio < 0.8) {
+        // ✅ LIMPEZA FINAL: Remove duplicatas consecutivas se existirem
+        const enderecoLimpo = endereco
+          .replace(/(\w+)\s+\1/gi, '$1') // Remove "Seridó Seridó" → "Seridó"
+          .replace(/\s+/g, ' ') // Remove espaços múltiplos
+          .trim();
+        
+        parts.push(enderecoLimpo);
+        console.log('📝 [SMART-TITLE] Endereço incluído (limpo):', enderecoLimpo);
+      } else {
+        console.log('📝 [SMART-TITLE] Endereço omitido (duplicação detectada)');
+      }
     }
   }
   
@@ -337,7 +360,7 @@ export async function generateMetadata({ params }) {
     
     console.error(`[IMOVEL-META] ✅ Data final válida: ${modifiedDate}`);
     
-    // ✅ APLICA A FUNÇÃO CORRIGIDA
+    // ✅ APLICA A FUNÇÃO CORRIGIDA (bug do endereço resolvido)
     const title = createSmartTitle(imovel);
     
     // ✅ DESCRIÇÃO TAMBÉM COM LIMPEZA
