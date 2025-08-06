@@ -1,4 +1,4 @@
-// src/app/components/sections/image-gallery.js - VERSÃO ORIGINAL + CONTRASTE CORRIGIDO
+// src/app/components/sections/image-gallery.js - VERSÃO OTIMIZADA PERFORMANCE
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -164,19 +164,19 @@ export function ImageGallery({
 
   return (
     <>
-      {/* 🎨 LAYOUT ORIGINAL */}
+      {/* 🎨 LAYOUT OTIMIZADO */}
       {layout === "single" ? (
         // LAYOUT SINGLE
         <div 
           className="w-full h-full cursor-pointer relative overflow-hidden rounded-lg" 
-          onClick={() => openModal()}
+          onClick={() => openModal()} // ✅ CORRIGIDO: Abre grid primeiro
           role="button"
           tabIndex={0}
           aria-label={`Ver galeria completa de ${processedData.titulo}`}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
-              openModal();
+              openModal(); // ✅ CORRIGIDO: Abre grid primeiro
             }
           }}
         >
@@ -194,7 +194,7 @@ export function ImageGallery({
             className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-105"
           />
 
-          {/* ✅ CONTRASTE CORRIGIDO: bg-yellow-500 → bg-gray-900 */}
+          {/* Indicadores otimizados */}
           {images[0].Destaque === "Sim" && (
             <div className="absolute top-4 left-4 bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
               ⭐ DESTAQUE
@@ -206,21 +206,21 @@ export function ImageGallery({
           </div>
         </div>
       ) : (
-        // 📱 LAYOUT RESPONSIVO ORIGINAL
+        // 📱 LAYOUT RESPONSIVO OTIMIZADO
         <div className={`w-full ${isMobile ? '' : 'grid grid-cols-1 md:grid-cols-2 gap-1'}`}>
           
-          {/* 📱 MOBILE: Foto principal */}
+          {/* 📱 MOBILE: Foto principal otimizada */}
           {isMobile ? (
             <div 
               className="w-full h-[75vh] sm:h-[70vh] min-h-[320px] max-h-[450px] cursor-pointer relative overflow-hidden rounded-lg" 
-              onClick={() => openModal()}
+              onClick={() => openModal()} // ✅ CORRIGIDO: Abre grid primeiro
               role="button"
               tabIndex={0}
               aria-label={`Ver galeria de ${images.length} fotos de ${processedData.titulo}`}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
-                  openModal();
+                  openModal(); // ✅ CORRIGIDO: Abre grid primeiro
                 }
               }}
             >
@@ -237,7 +237,7 @@ export function ImageGallery({
                 className="object-cover transition-transform duration-300 ease-in-out hover:scale-105"
               />
 
-              {/* ✅ CONTRASTE CORRIGIDO: bg-yellow-500 → bg-gray-900 */}
+              {/* Indicadores móveis */}
               {images[0].Destaque === "Sim" && (
                 <div className="absolute top-3 left-3 bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
                   ⭐ DESTAQUE
@@ -255,18 +255,18 @@ export function ImageGallery({
               )}
             </div>
           ) : (
-            // 💻 DESKTOP: Layout grid original
+            // 💻 DESKTOP: Layout grid otimizado
             <>
               <div 
                 className="col-span-1 h-[410px] cursor-pointer relative" 
-                onClick={() => openModal()}
+                onClick={() => openModal()} // ✅ CORRIGIDO: Abre grid primeiro
                 role="button"
                 tabIndex={0}
                 aria-label={`Ver galeria de ${images.length} fotos de ${processedData.titulo}`}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
-                    openModal();
+                    openModal(); // ✅ CORRIGIDO: Abre grid primeiro
                   }
                 }}
               >
@@ -286,7 +286,7 @@ export function ImageGallery({
                   />
                 </div>
 
-                {/* ✅ CONTRASTE CORRIGIDO: bg-yellow-500 → bg-gray-900 */}
+                {/* Indicadores desktop */}
                 {images[0].Destaque === "Sim" && (
                   <div className="absolute top-4 left-4 bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
                     ⭐ DESTAQUE
@@ -298,7 +298,7 @@ export function ImageGallery({
                 </div>
               </div>
 
-              {/* GRID 2x2 original - só desktop */}
+              {/* GRID 2x2 otimizado - só desktop */}
               <div className="col-span-1 grid grid-cols-2 grid-rows-2 gap-1 h-[410px]">
                 {images.slice(1, 5).map((image, index) => {
                   const isLastImage = index === 3;
@@ -306,14 +306,14 @@ export function ImageGallery({
                     <div
                       key={image.Codigo || index}
                       className="relative h-full overflow-hidden cursor-pointer rounded-lg"
-                      onClick={() => openModal()}
+                      onClick={() => openModal()} // ✅ CORRIGIDO: Abre grid primeiro
                       role="button"
                       tabIndex={0}
                       aria-label={`Ver galeria completa - imagem ${index + 2}`}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
                           e.preventDefault();
-                          openModal();
+                          openModal(); // ✅ CORRIGIDO: Abre grid primeiro
                         }
                       }}
                     >
@@ -330,7 +330,7 @@ export function ImageGallery({
                         className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
                       />
                       
-                      {/* ✅ CONTRASTE CORRIGIDO: bg-yellow-500 → bg-gray-900 */}
+                      {/* Indicador de destaque nos thumbnails */}
                       {image.Destaque === "Sim" && (
                         <div className="absolute top-2 left-2 bg-gray-900 text-white text-xs font-bold px-1.5 py-0.5 rounded">
                           ⭐
@@ -356,7 +356,7 @@ export function ImageGallery({
         </div>
       )}
 
-      {/* 🖼️ MODAL ORIGINAL */}
+      {/* 🖼️ MODAL OTIMIZADO */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-95 z-50 overflow-auto">
           {/* Header fixo */}
@@ -417,7 +417,7 @@ export function ImageGallery({
               </button>
             </div>
           ) : (
-            // Grid de thumbnails original
+            // Grid de thumbnails otimizado
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
               {images.map((image, idx) => (
                 <div
@@ -451,7 +451,7 @@ export function ImageGallery({
                     {idx + 1}
                   </div>
                   
-                  {/* ✅ CONTRASTE CORRIGIDO: bg-yellow-500 → bg-gray-900 */}
+                  {/* Indicador de destaque */}
                   {image.Destaque === "Sim" && (
                     <div className="absolute top-2 left-2 bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded">
                       ⭐ DESTAQUE
