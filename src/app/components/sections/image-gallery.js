@@ -196,7 +196,7 @@ export function ImageGallery({
 
           {/* Indicadores otimizados */}
           {images[0].Destaque === "Sim" && (
-            <div className="absolute top-4 left-4 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+            <div className="absolute top-4 left-4 bg-orange-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
               ⭐ DESTAQUE
             </div>
           )}
@@ -239,7 +239,7 @@ export function ImageGallery({
 
               {/* Indicadores móveis */}
               {images[0].Destaque === "Sim" && (
-                <div className="absolute top-3 left-3 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                <div className="absolute top-3 left-3 bg-orange-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
                   ⭐ DESTAQUE
                 </div>
               )}
@@ -288,7 +288,7 @@ export function ImageGallery({
 
                 {/* Indicadores desktop */}
                 {images[0].Destaque === "Sim" && (
-                  <div className="absolute top-4 left-4 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                  <div className="absolute top-4 left-4 bg-orange-600 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
                     ⭐ DESTAQUE
                   </div>
                 )}
@@ -332,7 +332,7 @@ export function ImageGallery({
                       
                       {/* Indicador de destaque nos thumbnails */}
                       {image.Destaque === "Sim" && (
-                        <div className="absolute top-2 left-2 bg-yellow-500 text-white text-xs font-bold px-1.5 py-0.5 rounded">
+                        <div className="absolute top-2 left-2 bg-orange-600 text-white text-xs font-bold px-1.5 py-0.5 rounded">
                           ⭐
                         </div>
                       )}
@@ -453,7 +453,7 @@ export function ImageGallery({
                   
                   {/* Indicador de destaque */}
                   {image.Destaque === "Sim" && (
-                    <div className="absolute top-2 left-2 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded">
+                    <div className="absolute top-2 left-2 bg-orange-600 text-white text-xs font-bold px-2 py-1 rounded">
                       ⭐ DESTAQUE
                     </div>
                   )}
