@@ -108,9 +108,9 @@ export function ImageGallery({
   }, [processedData]);
 
   // 🎯 HANDLERS OTIMIZADOS com useCallback
-  const openModal = useCallback((index = 0) => {
+  const openModal = useCallback((index = null) => {
     setIsModalOpen(true);
-    setSelectedIndex(index);
+    setSelectedIndex(index); // null = grid de thumbnails, número = imagem específica
   }, []);
 
   const closeModal = useCallback(() => {
@@ -169,14 +169,14 @@ export function ImageGallery({
         // LAYOUT SINGLE
         <div 
           className="w-full h-full cursor-pointer relative overflow-hidden rounded-lg" 
-          onClick={() => openModal(0)}
+          onClick={() => openModal()} // ✅ CORRIGIDO: Abre grid primeiro
           role="button"
           tabIndex={0}
           aria-label={`Ver galeria completa de ${processedData.titulo}`}
           onKeyDown={(e) => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault();
-              openModal(0);
+              openModal(); // ✅ CORRIGIDO: Abre grid primeiro
             }
           }}
         >
@@ -213,14 +213,14 @@ export function ImageGallery({
           {isMobile ? (
             <div 
               className="w-full h-[75vh] sm:h-[70vh] min-h-[320px] max-h-[450px] cursor-pointer relative overflow-hidden rounded-lg" 
-              onClick={() => openModal(0)}
+              onClick={() => openModal()} // ✅ CORRIGIDO: Abre grid primeiro
               role="button"
               tabIndex={0}
               aria-label={`Ver galeria de ${images.length} fotos de ${processedData.titulo}`}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' || e.key === ' ') {
                   e.preventDefault();
-                  openModal(0);
+                  openModal(); // ✅ CORRIGIDO: Abre grid primeiro
                 }
               }}
             >
@@ -259,14 +259,14 @@ export function ImageGallery({
             <>
               <div 
                 className="col-span-1 h-[410px] cursor-pointer relative" 
-                onClick={() => openModal(0)}
+                onClick={() => openModal()} // ✅ CORRIGIDO: Abre grid primeiro
                 role="button"
                 tabIndex={0}
                 aria-label={`Ver galeria de ${images.length} fotos de ${processedData.titulo}`}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
-                    openModal(0);
+                    openModal(); // ✅ CORRIGIDO: Abre grid primeiro
                   }
                 }}
               >
@@ -306,14 +306,14 @@ export function ImageGallery({
                     <div
                       key={image.Codigo || index}
                       className="relative h-full overflow-hidden cursor-pointer rounded-lg"
-                      onClick={() => openModal(0)}
+                      onClick={() => openModal()} // ✅ CORRIGIDO: Abre grid primeiro
                       role="button"
                       tabIndex={0}
                       aria-label={`Ver galeria completa - imagem ${index + 2}`}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
                           e.preventDefault();
-                          openModal(0);
+                          openModal(); // ✅ CORRIGIDO: Abre grid primeiro
                         }
                       }}
                     >
