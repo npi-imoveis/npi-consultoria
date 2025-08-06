@@ -1,12 +1,5 @@
 // app/imovel/[id]/[slug]/page.js
-// ✅ VERSÃO OTIMIZADA - LAYOUT SHIFT CORRIGIDO (CLS: 0.180 → <0.1)
-// 1. ✅ Valida formato YouTube (regex rigorosa)
-// 2. ✅ Rejeita URLs inválidas (canais, playlists)  
-// 3. ✅ Bloqueia vídeos deletados (lista expansível)
-// 4. ✅ Permite vídeos válidos funcionarem
-// 5. ✅ Meta tags WhatsApp (básicas)
-// 6. ✅ TODOS OS LOGS restaurados (DESTAQUE, WHATSAPP-ULTRA, etc.)
-// 7. ✅ CONTAINER LAYOUT SHIFT CORRIGIDO (CLS: 0.180 → <0.1)
+// ✅ VERSÃO LIMPA - Build funcional + Formulário tamanho correto + Layout Shift otimizado
 import { ImageGallery } from "@/app/components/sections/image-gallery";
 import { FAQImovel } from "./componentes/FAQImovel";
 import DetalhesCondominio from "./componentes/DetalhesCondominio";
@@ -429,12 +422,12 @@ export default async function ImovelPage({ params }) {
           <ImageGallery imovel={imovel} />
         </div>
 
-        {/* ✅ OTIMIZAÇÃO CRÍTICA: Layout Shift Prevention (CLS: 0.180 → <0.1) */}
+        {/* ✅ CONTAINER OTIMIZADO - Layout Shift + Formulário Tamanho Correto */}
         <div 
           className="container mx-auto gap-4 mt-3 px-4 md:px-0 flex flex-col lg:flex-row"
           style={{
-            minHeight: '800px', // Altura mínima para prevenir layout shift
-            contain: 'layout style', // Containment para otimização
+            minHeight: '1200px', // Previne layout shift
+            contain: 'layout style', // Containment otimizado
           }}
         >
           <div className="w-full lg:w-[65%]">
@@ -530,9 +523,14 @@ export default async function ImovelPage({ params }) {
             <LocalizacaoCondominio imovel={imovel} />
           </div>
 
-          <div className="w-full lg:w-[35%] h-fit lg:sticky lg:top-24 order-first lg:order-last mb-6 lg:mb-0"><div 
-          className="w-full lg:w-[35%] h-fit lg:sticky lg:top-24 order-first lg:order-last mb-6 lg:mb-0"
-          style={{ maxWidth: '400px' }}
+          {/* ✅ FORMULÁRIO SIDEBAR - Tamanho correto fixado */}
+          <div 
+            className="w-full lg:w-[35%] h-fit lg:sticky lg:top-24 order-first lg:order-last mb-6 lg:mb-0"
+            style={{
+              maxWidth: '400px', // ✅ FORÇA largura máxima
+              minWidth: '320px', // ✅ FORÇA largura mínima
+              flexShrink: 0,     // ✅ IMPEDE compressão
+            }}
           >
             <Contato imovel={imovel} currentUrl={currentUrl} />
           </div>
