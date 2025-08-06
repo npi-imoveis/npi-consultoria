@@ -186,10 +186,10 @@ function getWhatsAppOptimizedImageUrl(imovelFotos) {
   }
 }
 
-// ✅ FUNÇÃO CORRIGIDA: Bug do endereço no title RESOLVIDO
+// ✅ FUNÇÃO CORRIGIDA: Bug do endereço RESOLVIDO DE VERDADE
 function createSmartTitle(imovel) {
-  console.log('📝 [SMART-TITLE] ========== PROCESSANDO TÍTULO ==========');
-  console.log('📝 [SMART-TITLE] Input imovel:', {
+  console.log('📝 [SMART-TITLE-FIXED] ========== PROCESSANDO TÍTULO ==========');
+  console.log('📝 [SMART-TITLE-FIXED] Input imovel:', {
     Empreendimento: imovel.Empreendimento,
     TipoEndereco: imovel.TipoEndereco,
     Endereco: imovel.Endereco,
@@ -205,88 +205,64 @@ function createSmartTitle(imovel) {
     parts.push(imovel.Empreendimento);
   }
   
-  // 2. ✅ CORREÇÃO DO BUG: Endereço com espaçamento correto
+  // 2. 🔧 CORREÇÃO DEFINITIVA: Endereço com validação rigorosa de espaços
   if (imovel.Endereco) {
-    // 🔧 CORREÇÃO: Garantir espaços adequados entre as partes
     const enderecoParts = [];
     
-    // Adiciona TipoEndereco (ex: "Rua")
-    if (imovel.TipoEndereco && imovel.TipoEndereco.trim()) {
+    // 🎯 CRÍTICO: Trim em cada parte individualmente
+    if (imovel.TipoEndereco && imovel.TipoEndereco.trim() !== '') {
       enderecoParts.push(imovel.TipoEndereco.trim());
     }
     
-    // Adiciona Endereco (ex: "Achilles Masetti")
-    if (imovel.Endereco && imovel.Endereco.trim()) {
+    if (imovel.Endereco && imovel.Endereco.trim() !== '') {
       enderecoParts.push(imovel.Endereco.trim());
     }
     
-    // Adiciona Numero (ex: "105")
-    if (imovel.Numero && imovel.Numero.trim()) {
+    if (imovel.Numero && imovel.Numero.trim() !== '') {
       enderecoParts.push(imovel.Numero.trim());
     }
     
-    // 🎯 CRÍTICO: Join com espaço único entre as partes
-    const endereco = enderecoParts.join(' ');
+    // 🚨 CORREÇÃO CRÍTICA: Join com espaço E validação final
+    let endereco = enderecoParts.join(' ').trim();
     
-    console.log('📝 [SMART-TITLE] Endereço construído:', endereco);
+    // 🔍 VALIDAÇÃO EXTRA: Garantir que não há concatenação sem espaço
+    endereco = endereco
+      .replace(/([a-zA-Z])([A-Z][a-z])/g, '$1 $2') // "RuaAchilles" → "Rua Achilles"
+      .replace(/\s+/g, ' ') // Remove espaços múltiplos
+      .trim();
+    
+    console.log('📝 [SMART-TITLE-FIXED] Endereço construído:', endereco);
+    console.log('📝 [SMART-TITLE-FIXED] Partes do endereço:', enderecoParts);
     
     if (endereco) {
-      // Verificação rigorosa de duplicação com empreendimento
-      const empreendimentoWords = (imovel.Empreendimento || '').toLowerCase()
-        .replace(/[^\w\s]/g, ' ') // Remove pontuação
-        .split(/\s+/)
-        .filter(word => word.length > 2); // Palavras com 3+ caracteres
+      // Verificação de duplicação (simplificada)
+      const empreendimento = (imovel.Empreendimento || '').toLowerCase();
+      const enderecoLower = endereco.toLowerCase();
       
-      const enderecoWords = endereco.toLowerCase()
-        .replace(/[^\w\s]/g, ' ')
-        .split(/\s+/)
-        .filter(word => word.length > 2);
-      
-      // Verifica se há sobreposição significativa entre as palavras
-      const intersection = empreendimentoWords.filter(word => enderecoWords.includes(word));
-      const overlapRatio = intersection.length / Math.max(enderecoWords.length, 1);
-      
-      console.log('📝 [SMART-TITLE] Análise duplicação:', {
-        empreendimentoWords,
-        enderecoWords,
-        intersection,
-        overlapRatio
-      });
-      
-      // Se sobreposição < 80%, inclui o endereço
-      if (overlapRatio < 0.8) {
-        // ✅ LIMPEZA FINAL: Remove duplicatas consecutivas se existirem
-        const enderecoLimpo = endereco
-          .replace(/(\w+)\s+\1/gi, '$1') // Remove "Seridó Seridó" → "Seridó"
-          .replace(/\s+/g, ' ') // Remove espaços múltiplos
-          .trim();
-        
-        parts.push(enderecoLimpo);
-        console.log('📝 [SMART-TITLE] Endereço incluído (limpo):', enderecoLimpo);
+      // Se não há muita sobreposição, inclui o endereço
+      if (!empreendimento.includes(enderecoLower.slice(0, 10)) && 
+          !enderecoLower.includes(empreendimento.slice(0, 10))) {
+        parts.push(endereco);
+        console.log('📝 [SMART-TITLE-FIXED] Endereço incluído:', endereco);
       } else {
-        console.log('📝 [SMART-TITLE] Endereço omitido (duplicação detectada)');
+        console.log('📝 [SMART-TITLE-FIXED] Endereço omitido (duplicação detectada)');
       }
     }
   }
   
-  // 3. Bairro - evita duplicação com partes já incluídas
+  // 3. Bairro (se não duplica)
   if (imovel.BairroComercial) {
-    const bairroJaIncluido = parts.some(part => {
-      const partWords = part.toLowerCase().replace(/[^\w\s]/g, ' ').split(/\s+/);
-      const bairroWords = imovel.BairroComercial.toLowerCase().replace(/[^\w\s]/g, ' ').split(/\s+/);
-      const intersect = partWords.filter(word => bairroWords.includes(word) && word.length > 2);
-      return intersect.length / Math.max(bairroWords.length, 1) > 0.6;
-    });
+    const bairroJaIncluido = parts.some(part => 
+      part.toLowerCase().includes(imovel.BairroComercial.toLowerCase()) ||
+      imovel.BairroComercial.toLowerCase().includes(part.toLowerCase())
+    );
     
     if (!bairroJaIncluido) {
       parts.push(imovel.BairroComercial);
-      console.log('📝 [SMART-TITLE] Bairro incluído:', imovel.BairroComercial);
-    } else {
-      console.log('📝 [SMART-TITLE] Bairro omitido (já incluído)');
     }
   }
   
-  // 4. Cidade - evita duplicação
+  // 4. Cidade (se não duplica)
   if (imovel.Cidade) {
     const cidadeJaIncluida = parts.some(part => 
       part.toLowerCase().includes(imovel.Cidade.toLowerCase()) ||
@@ -295,24 +271,19 @@ function createSmartTitle(imovel) {
     
     if (!cidadeJaIncluida) {
       parts.push(imovel.Cidade);
-      console.log('📝 [SMART-TITLE] Cidade incluída:', imovel.Cidade);
-    } else {
-      console.log('📝 [SMART-TITLE] Cidade omitida (já incluída)');
     }
   }
   
-  // 5. LIMPEZA FINAL - Remove duplicatas globais
+  // 5. RESULTADO FINAL
   const smartTitle = parts
     .filter(part => part && part.trim() !== '')
     .join(', ')
-    .replace(/(\w+)(\s*,\s*)\1/gi, '$1') // Remove duplicatas separadas por vírgula "Seridó, Seridó" → "Seridó"
     .replace(/,\s*,+/g, ',') // Remove vírgulas duplas
     .replace(/^,+|,+$/g, '') // Remove vírgulas no início/fim
-    .replace(/\s+/g, ' ') // Remove espaços múltiplos
     .trim();
   
-  console.log('📝 [SMART-TITLE] Resultado final:', smartTitle);
-  console.log('📝 [SMART-TITLE] ========================================');
+  console.log('📝 [SMART-TITLE-FIXED] Resultado final:', smartTitle);
+  console.log('📝 [SMART-TITLE-FIXED] ========================================');
   
   return smartTitle;
 }
