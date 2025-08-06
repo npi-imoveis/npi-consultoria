@@ -1,5 +1,5 @@
 // app/imovel/[id]/[slug]/page.js
-// 🎯 VERSÃO ULTRA-OTIMIZADA PARA PAGESPEED 95+ - LCP < 2.5s
+// 🎯 VERSÃO ESTÁVEL PARA CLS 0.003
 
 import { ImageGallery } from "@/app/components/sections/image-gallery";
 import { FAQImovel } from "./componentes/FAQImovel";
