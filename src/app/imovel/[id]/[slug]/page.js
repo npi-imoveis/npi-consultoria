@@ -82,84 +82,7 @@ function convertBrazilianDateToISO(brazilianDate, imovelData) {
   }
 }
 
-// 🔥 FUNÇÃO ULTRA-OTIMIZADA para gerar URL da imagem LCP
-function getLCPOptimizedImageUrl(imovelFotos) {
-  console.log('🚀 [LCP-ULTRA] ========== PROCESSANDO IMAGEM LCP ==========');
-  
-  try {
-    let imageUrl = null;
-    
-    // MÉTODO 1: Array de fotos - pega a primeira
-    if (Array.isArray(imovelFotos) && imovelFotos.length > 0) {
-      const foto = imovelFotos[0];
-      
-      if (foto && typeof foto === 'object') {
-        // Prioridade para melhor qualidade (para LCP)
-        const possibleUrls = [
-          foto.FotoGrande,
-          foto.Foto, 
-          foto.FotoMedia,
-        ];
-        
-        for (const url of possibleUrls) {
-          if (url && typeof url === 'string' && url.trim() !== '') {
-            imageUrl = url.trim();
-            break;
-          }
-        }
-      } else if (foto && typeof foto === 'string' && foto.trim() !== '') {
-        imageUrl = foto.trim();
-      }
-    }
-    
-    // MÉTODO 2: String direta
-    if (!imageUrl && typeof imovelFotos === 'string' && imovelFotos.trim() !== '') {
-      imageUrl = imovelFotos.trim();
-    }
-    
-    // MÉTODO 3: Objeto único
-    if (!imageUrl && imovelFotos && typeof imovelFotos === 'object' && !Array.isArray(imovelFotos)) {
-      const possibleUrls = [
-        imovelFotos.FotoGrande,
-        imovelFotos.Foto,
-        imovelFotos.FotoMedia, 
-      ];
-      
-      for (const url of possibleUrls) {
-        if (url && typeof url === 'string' && url.trim() !== '') {
-          imageUrl = url.trim();
-          break;
-        }
-      }
-    }
-    
-    // VALIDAÇÃO E OTIMIZAÇÃO DA URL
-    if (imageUrl) {
-      // Garantir HTTPS
-      if (imageUrl.startsWith('http://')) {
-        imageUrl = imageUrl.replace('http://', 'https://');
-      }
-      
-      // Se URL relativa, converter para absoluta
-      if (imageUrl.startsWith('/')) {
-        imageUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://npiconsultoria.com.br'}${imageUrl}`;
-      }
-      
-      console.log('🚀 [LCP-ULTRA] ✅ URL otimizada para LCP:', imageUrl);
-      return imageUrl;
-    }
-    
-    // FALLBACK
-    const fallbackUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://npiconsultoria.com.br'}/og-image.png`;
-    console.log('🚀 [LCP-ULTRA] ⚠️ Usando fallback:', fallbackUrl);
-    return fallbackUrl;
-    
-  } catch (error) {
-    console.error('🚀 [LCP-ULTRA] ❌ Erro:', error);
-    return `${process.env.NEXT_PUBLIC_SITE_URL || 'https://npiconsultoria.com.br'}/og-image.png`;
-  }
-}
-
+// 🔥 FUNÇÃO ULTRA-OTIMIZADA para gerar URL da imagem WhatsApp
 function getWhatsAppOptimizedImageUrl(imovelFotos) {
   console.log('📱 [WHATSAPP-ULTRA] ========== PROCESSANDO IMAGEM ==========');
   console.log('📱 [WHATSAPP-ULTRA] Input:', JSON.stringify(imovelFotos, null, 2));
@@ -513,11 +436,7 @@ export default async function ImovelPage({ params }) {
     const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
     const modifiedDate = convertBrazilianDateToISO(imovel.DataHoraAtualizacao, imovel);
     
-    // 🔥 PRELOAD DA IMAGEM LCP - CRÍTICO PARA PERFORMANCE
-    const lcpImageUrl = getLCPOptimizedImageUrl(imovel.Foto);
-    
     console.log('🔍 Data convertida no componente:', modifiedDate);
-    console.log('🚀 [LCP-CRITICAL] URL da imagem LCP para preload:', lcpImageUrl);
     
     const structuredDataDates = {
       "@context": "https://schema.org",
@@ -537,19 +456,6 @@ export default async function ImovelPage({ params }) {
 
     return (
       <section className="w-full bg-white pb-32 pt-20">
-        {/* 🔥 PRELOAD CRÍTICO DA IMAGEM LCP - DEVE SER O PRIMEIRO ELEMENTO */}
-        <link
-          rel="preload"
-          as="image"
-          href={lcpImageUrl}
-          fetchPriority="high"
-        />
-        
-        {/* 🚀 PRECONNECT para CDNs de imagem - Acelera conexões */}
-        <link rel="preconnect" href="https://d1988evaubdc7a.cloudfront.net" crossOrigin="" />
-        <link rel="preconnect" href="https://npi-imoveis.s3.sa-east-1.amazonaws.com" crossOrigin="" />
-        <link rel="preconnect" href="https://cdn.vistahost.com.br" crossOrigin="" />
-        
         <StructuredDataApartment
           title={imovel.Empreendimento}
           price={imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}
