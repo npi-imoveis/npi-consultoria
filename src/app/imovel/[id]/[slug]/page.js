@@ -1,11 +1,5 @@
 // app/imovel/[id]/[slug]/page.js
-// ✅ VERSÃO RESTAURADA - TODOS OS LOGS E FUNCIONALIDADES DE VOLTA
-// 1. ✅ Valida formato YouTube (regex rigorosa)
-// 2. ✅ Rejeita URLs inválidas (canais, playlists)  
-// 3. ✅ Bloqueia vídeos deletados (lista expansível)
-// 4. ✅ Permite vídeos válidos funcionarem
-// 5. ✅ Meta tags WhatsApp (básicas)
-// 6. ✅ TODOS OS LOGS restaurados (DESTAQUE, WHATSAPP-ULTRA, etc.)
+// ✅ VERSÃO CORRIGIDA - Duplicação de títulos resolvida + Layout Shift otimizado
 import { ImageGallery } from "@/app/components/sections/image-gallery";
 import { FAQImovel } from "./componentes/FAQImovel";
 import DetalhesCondominio from "./componentes/DetalhesCondominio";
@@ -189,6 +183,123 @@ function getWhatsAppOptimizedImageUrl(imovelFotos) {
   }
 }
 
+// ✅ FUNÇÃO CORRIGIDA: Remove duplicatas rigorosamente
+function createSmartTitle(imovel) {
+  console.log('📝 [SMART-TITLE] ========== PROCESSANDO TÍTULO ==========');
+  console.log('📝 [SMART-TITLE] Input imovel:', {
+    Empreendimento: imovel.Empreendimento,
+    TipoEndereco: imovel.TipoEndereco,
+    Endereco: imovel.Endereco,
+    Numero: imovel.Numero,
+    BairroComercial: imovel.BairroComercial,
+    Cidade: imovel.Cidade
+  });
+  
+  const parts = [];
+  
+  // 1. Nome do empreendimento (sempre primeiro)
+  if (imovel.Empreendimento) {
+    parts.push(imovel.Empreendimento);
+  }
+  
+  // 2. Endereço - VERIFICAÇÃO RIGOROSA de duplicação
+  const endereco = `${imovel.TipoEndereco || ''} ${imovel.Endereco || ''} ${imovel.Numero || ''}`.trim();
+  
+  if (endereco && imovel.Endereco) {
+    // ✅ CORREÇÃO: Verificação mais inteligente de duplicação
+    const empreendimentoWords = (imovel.Empreendimento || '').toLowerCase()
+      .replace(/[^\w\s]/g, ' ') // Remove pontuação
+      .split(/\s+/)
+      .filter(word => word.length > 2); // Palavras com 3+ caracteres
+    
+    const enderecoWords = (imovel.Endereco || '').toLowerCase()
+      .replace(/[^\w\s]/g, ' ')
+      .split(/\s+/)
+      .filter(word => word.length > 2);
+    
+    // Verifica se há sobreposição significativa entre as palavras
+    const intersection = empreendimentoWords.filter(word => enderecoWords.includes(word));
+    const overlapRatio = intersection.length / Math.max(enderecoWords.length, 1);
+    
+    console.log('📝 [SMART-TITLE] Análise duplicação:', {
+      empreendimentoWords,
+      enderecoWords,
+      intersection,
+      overlapRatio
+    });
+    
+    // Se sobreposição < 80%, inclui o endereço
+    if (overlapRatio < 0.8) {
+      // ✅ CORREÇÃO: Remove palavras duplicadas consecutivas do endereço
+      const enderecoLimpo = endereco
+        .replace(/(\w+)\s+\1/gi, '$1') // Remove "Seridó Seridó" → "Seridó"
+        .replace(/\s+/g, ' ')
+        .trim();
+      parts.push(enderecoLimpo);
+      console.log('📝 [SMART-TITLE] Endereço incluído (limpo):', enderecoLimpo);
+    } else {
+      console.log('📝 [SMART-TITLE] Endereço omitido (duplicação detectada)');
+    }
+  }
+  
+  // 3. Bairro - evita duplicação com partes já incluídas
+  if (imovel.BairroComercial) {
+    const bairroJaIncluido = parts.some(part => {
+      const partWords = part.toLowerCase().replace(/[^\w\s]/g, ' ').split(/\s+/);
+      const bairroWords = imovel.BairroComercial.toLowerCase().replace(/[^\w\s]/g, ' ').split(/\s+/);
+      const intersect = partWords.filter(word => bairroWords.includes(word) && word.length > 2);
+      return intersect.length / Math.max(bairroWords.length, 1) > 0.6;
+    });
+    
+    if (!bairroJaIncluido) {
+      parts.push(imovel.BairroComercial);
+      console.log('📝 [SMART-TITLE] Bairro incluído:', imovel.BairroComercial);
+    } else {
+      console.log('📝 [SMART-TITLE] Bairro omitido (já incluído)');
+    }
+  }
+  
+  // 4. Cidade - evita duplicação
+  if (imovel.Cidade) {
+    const cidadeJaIncluida = parts.some(part => 
+      part.toLowerCase().includes(imovel.Cidade.toLowerCase()) ||
+      imovel.Cidade.toLowerCase().includes(part.toLowerCase())
+    );
+    
+    if (!cidadeJaIncluida) {
+      parts.push(imovel.Cidade);
+      console.log('📝 [SMART-TITLE] Cidade incluída:', imovel.Cidade);
+    } else {
+      console.log('📝 [SMART-TITLE] Cidade omitida (já incluída)');
+    }
+  }
+  
+  // 5. LIMPEZA FINAL - Remove duplicatas globais
+  const smartTitle = parts
+    .filter(part => part && part.trim() !== '')
+    .join(', ')
+    .replace(/(\w+)(\s*,\s*)\1/gi, '$1') // Remove duplicatas separadas por vírgula "Seridó, Seridó" → "Seridó"
+    .replace(/,\s*,+/g, ',') // Remove vírgulas duplas
+    .replace(/^,+|,+$/g, '') // Remove vírgulas no início/fim
+    .replace(/\s+/g, ' ') // Remove espaços múltiplos
+    .trim();
+  
+  console.log('📝 [SMART-TITLE] Resultado final:', smartTitle);
+  console.log('📝 [SMART-TITLE] ========================================');
+  
+  return smartTitle;
+}
+
+// ✅ FUNÇÃO ADICIONAL: Limpa duplicatas em textos
+function cleanDuplicateWords(text) {
+  if (!text || typeof text !== 'string') return text;
+  
+  return text
+    .replace(/(\w+)\s+\1/gi, '$1') // Remove palavras duplicadas consecutivas
+    .replace(/\s+/g, ' ') // Remove espaços múltiplos
+    .trim();
+}
+
 export const revalidate = 0;
 
 export async function generateMetadata({ params }) {
@@ -222,51 +333,22 @@ export async function generateMetadata({ params }) {
     
     console.error(`[IMOVEL-META] ✅ Data final válida: ${modifiedDate}`);
     
-    // ✅ TÍTULO INTELIGENTE - Remove duplicatas e melhora legibilidade
-    function createSmartTitle(imovel) {
-      const parts = [];
-      
-      // 1. Nome do empreendimento (sempre primeiro)
-      if (imovel.Empreendimento) {
-        parts.push(imovel.Empreendimento);
-      }
-      
-      // 2. Endereço (só se não estiver no nome do empreendimento)
-      const endereco = `${imovel.TipoEndereco || ''} ${imovel.Endereco || ''} ${imovel.Numero || ''}`.trim();
-      if (endereco && !imovel.Empreendimento?.toLowerCase().includes(imovel.Endereco?.toLowerCase() || '')) {
-        parts.push(endereco);
-      }
-      
-      // 3. Bairro (só se diferente do empreendimento e endereço)
-      if (imovel.BairroComercial && 
-          !parts.some(part => part.toLowerCase().includes(imovel.BairroComercial.toLowerCase()))) {
-        parts.push(imovel.BairroComercial);
-      }
-      
-      // 4. Cidade (sempre último)
-      if (imovel.Cidade && 
-          !parts.some(part => part.toLowerCase().includes(imovel.Cidade.toLowerCase()))) {
-        parts.push(imovel.Cidade);
-      }
-      
-      const smartTitle = parts.filter(part => part && part.trim() !== '').join(', ');
-      console.log('📝 [SMART-TITLE] Título original seria:', `${imovel.Empreendimento}, ${imovel.TipoEndereco} ${imovel.Endereco} ${imovel.Numero}, ${imovel.BairroComercial}, ${imovel.Cidade}`);
-      console.log('📝 [SMART-TITLE] Título inteligente:', smartTitle);
-      
-      return smartTitle;
-    }
-    
+    // ✅ APLICA A FUNÇÃO CORRIGIDA
     const title = createSmartTitle(imovel);
-    const description = `${imovel.Empreendimento}, ${imovel.Categoria} à venda no bairro ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.DormitoriosAntigo} dormitórios, ${imovel.SuiteAntigo} suítes, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt} m2. Preço: ${imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}.`;
-    const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
     
+    // ✅ DESCRIÇÃO TAMBÉM COM LIMPEZA
+    const descricaoLimpa = cleanDuplicateWords(
+      `${imovel.Empreendimento}, ${imovel.Categoria} à venda no bairro ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.DormitoriosAntigo} dormitórios, ${imovel.SuiteAntigo} suítes, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt} m2. Preço: ${imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}.`
+    );
+    
+    const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
     const imageUrl = getWhatsAppOptimizedImageUrl(imovel.Foto);
     
     console.log('📱 [WHATSAPP-META] URL final da imagem para WhatsApp:', imageUrl);
 
     return {
       title,
-      description,
+      description: descricaoLimpa,
       alternates: {
         canonical: currentUrl,
         languages: {
@@ -282,7 +364,7 @@ export async function generateMetadata({ params }) {
       },
       openGraph: {
         title,
-        description,
+        description: descricaoLimpa,
         url: currentUrl,
         type: "website",
         siteName: "NPI Consultoria",
@@ -309,7 +391,7 @@ export async function generateMetadata({ params }) {
       twitter: {
         card: "summary_large_image",
         title,
-        description,
+        description: descricaoLimpa,
         site: "@NPIImoveis",
         creator: "@NPIImoveis",
         images: [
@@ -321,7 +403,7 @@ export async function generateMetadata({ params }) {
       },
       other: {
         'og:title': title,
-        'og:description': description,
+        'og:description': descricaoLimpa,
         'og:image': imageUrl,
         'og:url': currentUrl,
         'og:type': 'website',
@@ -409,8 +491,8 @@ export default async function ImovelPage({ params }) {
         <StructuredDataApartment
           title={imovel.Empreendimento}
           price={imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}
-          description={`${imovel.Categoria} à venda em ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.Empreendimento}: ${imovel.DormitoriosAntigo} quartos, ${imovel.SuiteAntigo} suítes, ${imovel.BanheiroSocialQtd} banheiros, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt} m2. ${imovel.Situacao}. Valor: ${imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}. ${imovel.TipoEndereco} ${imovel.Endereco}.`}
-          address={`${imovel.TipoEndereco} ${imovel.Endereco}, ${imovel.Numero}, ${imovel.BairroComercial}, ${imovel.Cidade}`}
+          description={cleanDuplicateWords(`${imovel.Categoria} à venda em ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.Empreendimento}: ${imovel.DormitoriosAntigo} quartos, ${imovel.SuiteAntigo} suítes, ${imovel.BanheiroSocialQtd} banheiros, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt} m2. ${imovel.Situacao}. Valor: ${imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}. ${imovel.TipoEndereco} ${imovel.Endereco}.`)}
+          address={cleanDuplicateWords(`${imovel.TipoEndereco} ${imovel.Endereco}, ${imovel.Numero}, ${imovel.BairroComercial}, ${imovel.Cidade}`)}
           url={currentUrl}
           image={imovel.Foto}
         />
@@ -428,7 +510,14 @@ export default async function ImovelPage({ params }) {
           <ImageGallery imovel={imovel} />
         </div>
 
-        <div className="container mx-auto gap-4 mt-3 px-4 md:px-0 flex flex-col lg:flex-row">
+        {/* ✅ CONTAINER OTIMIZADO - Layout Shift Corrigido */}
+        <div 
+          className="container mx-auto gap-4 mt-3 px-4 md:px-0 flex flex-col lg:flex-row"
+          style={{
+            minHeight: '60vh', // ✅ CORREÇÃO: Previne layout shift
+            contain: 'layout style', // ✅ CORREÇÃO: Isola mudanças de layout
+          }}
+        >
           <div className="w-full lg:w-[65%]">
             <TituloImovel imovel={imovel} currentUrl={currentUrl} />
             <DetalhesImovel imovel={imovel} />
@@ -522,7 +611,15 @@ export default async function ImovelPage({ params }) {
             <LocalizacaoCondominio imovel={imovel} />
           </div>
 
-          <div className="w-full lg:w-[35%] h-fit lg:sticky lg:top-24 order-first lg:order-last mb-6 lg:mb-0">
+          {/* ✅ FORMULÁRIO SIDEBAR - Tamanho correto fixado */}
+          <div 
+            className="w-full lg:w-[35%] h-fit lg:sticky lg:top-24 order-first lg:order-last mb-6 lg:mb-0"
+            style={{
+              maxWidth: '400px', // ✅ FORÇA largura máxima
+              minWidth: '320px', // ✅ FORÇA largura mínima
+              flexShrink: 0,     // ✅ IMPEDE compressão
+            }}
+          >
             <Contato imovel={imovel} currentUrl={currentUrl} />
           </div>
         </div>
