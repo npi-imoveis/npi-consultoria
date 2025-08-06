@@ -4,7 +4,6 @@ const nextConfig = {
   
   // ✅ OTIMIZAÇÕES: Experimentais válidas
   experimental: {
-    optimizeCss: true, // 🚀 NOVO: Remove CSS não usado (10 KiB economia)
     optimizePackageImports: ['lucide-react'], // 🚀 NOVO: Tree shaking icons
   },
   
