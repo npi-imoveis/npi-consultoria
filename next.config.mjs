@@ -2,14 +2,15 @@
 const nextConfig = {
   trailingSlash: false, // ✅ MANTIDO: Sua configuração atual
   
-  // ✅ OTIMIZAÇÕES: Experimentais válidas
+  // ✅ MANTIDO + EXPANDIDO: Experimentais otimizadas
   experimental: {
-    optimizePackageImports: ['lucide-react'], // 🚀 Tree shaking icons
+    optimizePackageImports: ['lucide-react'], // 🚀 Tree shaking icons (mantido)
+    optimizeCss: true, // ✅ ADICIONADO: Otimiza CSS (pode ajudar com os 10 KiB CSS unused)
   },
   
-  // ✅ MANTIDO + OTIMIZADO: Configuração de imagens
+  // ✅ MANTIDO + OTIMIZADO: Configuração de imagens (exatamente igual + pequenos ajustes)
   images: {
-    // ✅ MANTIDO: Todos os remotePatterns existentes
+    // ✅ MANTIDO: Todos os remotePatterns existentes (zero mudanças)
     remotePatterns: [
       {
         protocol: "https",
@@ -78,52 +79,71 @@ const nextConfig = {
       },
     ],
     
-    // ✅ MANTIDO: Configuração existente
-    formats: ["image/avif", "image/webp"],
-    deviceSizes: [640, 750, 828, 1080, 1200],
-    minimumCacheTTL: 60, // Cache de 60 segundos
+    // ✅ MANTIDO + PEQUENO AJUSTE: Para resolver os 41 KiB de imagens restantes
+    formats: ["image/avif", "image/webp"], // Mantido
+    deviceSizes: [640, 750, 828, 1080, 1200], // Mantido
+    minimumCacheTTL: 60, // Cache de 60 segundos (mantido)
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384], // Mantido
+    dangerouslyAllowSVG: true, // Mantido
+    contentDispositionType: 'attachment', // Mantido
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;", // Mantido
     
-    // 🚀 OTIMIZADO: Tamanhos específicos para resolver 176 KiB de imagens superdimensionadas
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384], // Tamanhos pequenos para thumbnails
-    dangerouslyAllowSVG: true,
-    contentDispositionType: 'attachment',
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+    // ✅ ADICIONADO: Qualidade ligeiramente reduzida para economizar bytes
+    quality: 70, // Novo: era padrão 75, agora 70 (economiza bytes nas imagens)
   },
   
   // ✅ MANTIDO: TypeScript config
   typescript: {
-    ignoreBuildErrors: true, // ⚠️ Remover em produção
+    ignoreBuildErrors: true, // ⚠️ Mantido (sua configuração atual)
   },
 
-  // 🚀 OTIMIZADO: Compilação moderna - Otimizações gerais
+  // ✅ MANTIDO: Compilação
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production', // Remove console.log em produção
   },
   swcMinify: true, // Minificação otimizada
 
-  // ✅ REMOVIDO: target não é mais suportado no Next.js 14+
-  
-  // 🚀 NOVO: Webpack otimizado para JavaScript moderno
+  // 🚀 WEBPACK CIRÚRGICO: FOCO APENAS nos 7 polyfills detectados no PageSpeed
   webpack: (config, { dev, isServer }) => {
-    // Remove polyfills desnecessários apenas em produção
+    // ✅ MANTIDO: Sua configuração webpack existente
     if (!dev && !isServer) {
-      // Configurações para navegadores modernos
+      // ✅ MANTIDO: Configurações existentes
       config.resolve.fallback = {
         ...config.resolve.fallback,
         fs: false,
       };
       
-      // Otimizações para bundle menor
+      // ✅ MANTIDO: Otimizações existentes
       config.optimization = {
         ...config.optimization,
         usedExports: true,
         sideEffects: false,
       };
+      
+      // 🎯 ADIÇÃO CIRÚRGICA: APENAS os polyfills específicos detectados no PageSpeed
+      config.resolve.alias = {
+        ...config.resolve.alias,
+        
+        // ⚡ FOCO CIRÚRGICO: APENAS os 7 polyfills confirmados no relatório PageSpeed
+        'core-js/modules/es.array.at': false,                // ✅ Detectado: Array.prototype.at
+        'core-js/modules/es.object.has-own': false,           // ✅ Detectado: Object.hasOwn
+        'core-js/modules/es.array.flat': false,               // ✅ Detectado: Array.prototype.flat
+        'core-js/modules/es.array.flat-map': false,           // ✅ Detectado: Array.prototype.flatMap
+        'core-js/modules/es.object.from-entries': false,      // ✅ Detectado: Object.fromEntries
+        'core-js/modules/es.string.trim-end': false,          // ✅ Detectado: String.prototype.trimEnd
+        'core-js/modules/es.string.trim-start': false,        // ✅ Detectado: String.prototype.trimStart
+      };
+      
+      // 🎯 TARGET MODERNO: Apenas para remover polyfills (cuidadosamente)
+      if (config.target) {
+        config.target = ['web', 'es2022']; // Browsers que suportam Array.at (2022+)
+      }
     }
-    return config;
+    
+    return config; // ✅ MANTIDO: Return padrão
   },
 
-  // 🚀 NOVO: Headers de cache para performance (176 KiB economia em imagens)
+  // ✅ MANTIDO: Headers de cache (exatamente iguais)
   async headers() {
     return [
       {
@@ -159,7 +179,7 @@ const nextConfig = {
     ];
   },
   
-  // ✅ MANTIDO: Redirects existentes
+  // ✅ MANTIDO: Redirects existentes (exatamente iguais)
   async redirects() {
     return [
       // 🚫 Bloquear/Redirecionar URLs do iframe antigo (WordPress)
