@@ -7,13 +7,12 @@ import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import Script from "next/script";
 
-// ✅ OTIMIZADO: Fontes com display swap para performance
+// ✅ OTIMIZADO: Fontes sem preload desnecessário
 const oxanium = Oxanium({
   variable: "--font-oxanium",
   subsets: ["latin"],
   weight: ["400", "700"],
   display: "swap",
-  preload: false, // 🔧 CORRIGIDO: Remove preload desnecessário
 });
 
 const michroma = Michroma({
@@ -21,7 +20,6 @@ const michroma = Michroma({
   subsets: ["latin"],
   weight: ["400"],
   display: "swap",
-  preload: false, // 🔧 CORRIGIDO: Remove preload desnecessário
 });
 
 const GTM_ID = "GTM-NN6HZC";
@@ -61,7 +59,6 @@ export const metadata = {
     title: "NPi Consultoria - Imóveis de Alto Padrão",
     description: "Especialistas em imóveis de alto padrão com a melhor consultoria imobiliária.",
   },
-  // 🔧 REMOVIDO: manifest.json por enquanto (tem erro de sintaxe)
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -82,41 +79,41 @@ export default function RootLayout({ children }) {
   return (
     <html lang="pt-BR">
       <head>
-        {/* 🚀 CRITICAL CSS INLINE - Resolve 180ms CSS blocking */}
+        {/* 🚀 CRITICAL CSS INLINE - Resolve CSS blocking */}
         <style
           dangerouslySetInnerHTML={{
             __html: `
-              /* Critical CSS above the fold */
+              /* Critical CSS above the fold - Base */
               *,::before,::after{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}
               html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif}
               body{margin:0;line-height:inherit;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
               img,video{max-width:100%;height:auto}
               
-              /* Container utilities */
+              /* Layout essencial */
               .container{width:100%;margin-left:auto;margin-right:auto;padding-left:1rem;padding-right:1rem}
               @media (min-width:640px){.container{max-width:640px}}
               @media (min-width:768px){.container{max-width:768px;padding-left:0;padding-right:0}}
               @media (min-width:1024px){.container{max-width:1024px}}
               @media (min-width:1280px){.container{max-width:1280px}}
               
-              /* Flex utilities */
+              /* Flex utilities críticos */
               .flex{display:flex}
               .flex-col{flex-direction:column}
               @media (min-width:1024px){.lg\\:flex-row{flex-direction:row}}
               .w-full{width:100%}
               @media (min-width:1024px){.lg\\:w-\\[65\\%\\]{width:65%};.lg\\:w-\\[35\\%\\]{width:35%}}
               
-              /* Spacing */
+              /* Spacing crítico */
               .gap-4{gap:1rem}
               .mt-3{margin-top:0.75rem}
               .px-4{padding-left:1rem;padding-right:1rem}
               @media (min-width:768px){.md\\:px-0{padding-left:0;padding-right:0}}
               
-              /* Background */
+              /* Background essencial */
               .bg-white{background-color:#fff}
               .bg-zinc-200{background-color:#e4e4e7}
               
-              /* Text */
+              /* Text utilities críticos */
               .text-black{color:#000}
               .text-sm{font-size:0.875rem;line-height:1.25rem}
               .font-semibold{font-weight:600}
@@ -124,22 +121,22 @@ export default function RootLayout({ children }) {
               .text-center{text-align:center}
               @media (min-width:768px){.md\\:text-right{text-align:right}}
               
-              /* Image optimization classes */
+              /* Image optimization */
               img[data-nimg="fill"]{position:absolute;height:100%;width:100%;left:0;top:0;right:0;bottom:0;object-fit:cover}
               
-              /* Layout optimization */
-              .layout-optimized{min-height:1200px;contain:layout style paint;transform:translateZ(0);will-change:auto}
+              /* Layout optimization para prevenir shift */
+              .layout-optimized{min-height:1200px;contain:layout style paint;transform:translateZ(0)}
             `,
           }}
         />
         
-        {/* 🔧 CORRIGIDO: Viewport acessível */}
+        {/* Meta tags otimizadas */}
         <meta 
           name="viewport" 
           content="width=device-width, initial-scale=1.0, maximum-scale=5.0, minimum-scale=1.0, shrink-to-fit=no, viewport-fit=cover"
         />
         
-        {/* 🔧 CORRIGIDO: Meta tags atualizadas */}
+        {/* ✅ CORRIGIDO: Meta tags atualizadas */}
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
@@ -149,29 +146,21 @@ export default function RootLayout({ children }) {
         <meta name="theme-color" content="#000000" />
         <meta name="color-scheme" content="light" />
         
-        {/* 🚀 OTIMIZADO: Apenas preconnect essenciais, sem preload desnecessário */}
+        {/* ✅ LIMPO: Apenas preconnect essenciais */}
         <link rel="preconnect" href="https://www.googletagmanager.com" />
         <link rel="preconnect" href="https://npi-imoveis.s3.sa-east-1.amazonaws.com" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         
-        {/* 🚀 PRELOAD: Apenas recursos críticos */}
-        <link 
-          rel="preload" 
-          href="/assets/images/bg-hub.png" 
-          as="image" 
-          media="(max-width: 768px)"
-        />
-        
-        {/* ✅ Favicon otimizado */}
+        {/* Favicon */}
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         
-        {/* 🔧 OTIMIZADO: CSS inline para iOS - sem user-scalable */}
+        {/* iOS otimizações */}
         <style dangerouslySetInnerHTML={{
           __html: `
-            /* Chrome iOS otimizações */
+            /* Chrome iOS otimizações sem user-scalable */
             @supports (-webkit-appearance: none) and (not (-webkit-backdrop-filter: blur(1px))) {
               input, textarea, select {
                 font-size: 16px !important;
@@ -186,7 +175,6 @@ export default function RootLayout({ children }) {
               }
             }
             
-            /* Responsivo mobile */
             @media screen and (max-width: 768px) {
               input, textarea, select {
                 min-height: 44px !important;
@@ -199,14 +187,12 @@ export default function RootLayout({ children }) {
               }
             }
             
-            /* Desktop */
             @media screen and (min-width: 768px) {
               input::placeholder {
                 font-size: 14px !important;
               }
             }
             
-            /* Otimizações gerais */
             * {
               -webkit-tap-highlight-color: transparent !important;
             }
@@ -216,14 +202,6 @@ export default function RootLayout({ children }) {
             }
           `
         }} />
-        
-        {/* 🚀 DEFER: CSS não-crítico */}
-        <link
-          rel="stylesheet"
-          href="/_next/static/css/app/layout.css"
-          media="print"
-          onLoad="this.media='all'"
-        />
       </head>
       
       <body 
@@ -240,7 +218,7 @@ export default function RootLayout({ children }) {
           touchAction: "manipulation",
         }}
       >
-        {/* 🚀 OTIMIZADO: GTM com strategy afterInteractive */}
+        {/* GTM otimizado */}
         <Script
           id="gtm-script"
           strategy="afterInteractive"
