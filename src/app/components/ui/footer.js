@@ -1,5 +1,4 @@
 import { PhoneIcon, EnvelopeIcon } from "@heroicons/react/24/outline";
-
 import Link from "next/link";
 import Image from "next/image";
 
@@ -98,18 +97,31 @@ export function Footer() {
           </nav>
         </div>
 
-        {/* Coluna 4 - Logo e texto "Hub de Imobiliárias" */}
+        {/* Coluna 4 - Logo HUB OTIMIZADO */}
         <div className="text-center md:text-right">
           <h3 className="font-semibold mb-1">Hub de Imobiliárias</h3>
           <p className="font-semibold">Boutique de Alto Padrão</p>
           <div className="mt-4 flex justify-center md:justify-end">
-            <Image
-              src="/assets/images/bg-hub.png"
-              alt="Logo Hub de Imobiliárias Boutique de Alto Padrão da NPi"
-              title="Logo Hub de Imobiliárias Boutique de Alto Padrão da NPi"
-              width={120}
-              height={120}
-            />
+            {/* ✅ OTIMIZAÇÃO CRÍTICA: bg-hub.png (80 KiB economia) */}
+            <div 
+              style={{ 
+                aspectRatio: '1/1', 
+                width: '120px',
+                contain: 'layout style paint'
+              }}
+            >
+              <Image
+                src="/assets/images/bg-hub.png"
+                alt="Logo Hub de Imobiliárias Boutique de Alto Padrão da NPi"
+                title="Logo Hub de Imobiliárias Boutique de Alto Padrão da NPi"
+                fill
+                sizes="(max-width: 768px) 80px, 120px"
+                loading="lazy"
+                quality={85}
+                className="object-contain"
+                priority={false}
+              />
+            </div>
           </div>
         </div>
       </div>
