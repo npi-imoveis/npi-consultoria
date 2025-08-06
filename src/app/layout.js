@@ -7,12 +7,12 @@ import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import Script from "next/script";
 
-// ✅ OTIMIZADO: Fontes sem preload desnecessário
 const oxanium = Oxanium({
   variable: "--font-oxanium",
   subsets: ["latin"],
   weight: ["400", "700"],
   display: "swap",
+  preload: true, // ✅ OTIMIZAÇÃO: Preload crítico
 });
 
 const michroma = Michroma({
@@ -20,11 +20,13 @@ const michroma = Michroma({
   subsets: ["latin"],
   weight: ["400"],
   display: "swap",
+  preload: true, // ✅ OTIMIZAÇÃO: Preload crítico
 });
 
 const GTM_ID = "GTM-NN6HZC";
 const ANALYTICS_ID = "G-405E52JFGM";
 
+// METADATA SEM IMAGENS - Não interfere nas fotos de condomínio
 export const metadata = {
   title: {
     default: "NPi Consultoria - Imóveis de Alto Padrão",
@@ -46,6 +48,7 @@ export const metadata = {
       "max-snippet": -1,
     },
   },
+  // OpenGraph SEM imagens específicas - deixa o sistema usar as imagens das páginas
   openGraph: {
     type: "website",
     locale: "pt_BR",
@@ -53,12 +56,16 @@ export const metadata = {
     siteName: "NPi Consultoria",
     title: "NPi Consultoria - Imóveis de Alto Padrão",
     description: "Especialistas em imóveis de alto padrão com a melhor consultoria imobiliária.",
+    // REMOVIDO: images array para não interferir nas fotos de condomínio
   },
   twitter: {
     card: "summary_large_image",
     title: "NPi Consultoria - Imóveis de Alto Padrão",
     description: "Especialistas em imóveis de alto padrão com a melhor consultoria imobiliária.",
+    // REMOVIDO: images para não interferir
   },
+  // ✅ NOVO: Manifest e app metadata
+  manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -66,12 +73,14 @@ export const metadata = {
   },
 };
 
-// ✅ CORRIGIDO: Viewport acessível (removido user-scalable=no)
+// 🔥 CRÍTICO: Viewport específico para Chrome iOS (Android já funciona)
 export const viewport = {
   width: "device-width",
   initialScale: 1.0,
-  maximumScale: 5.0, // Para acessibilidade
+  maximumScale: 1.0,
   minimumScale: 1.0,
+  userScalable: false,
+  // ✅ Chrome iOS específico
   viewportFit: "cover",
   shrinkToFit: false,
 };
@@ -80,157 +89,76 @@ export default function RootLayout({ children }) {
   return (
     <html lang="pt-BR">
       <head>
-        {/* 🚀 CRITICAL CSS INLINE - Performance + Layout Fixes */}
-        <style
-          dangerouslySetInnerHTML={{
-            __html: `
-              /* Critical CSS above the fold */
-              *,::before,::after{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}
-              html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif}
-              body{margin:0;line-height:inherit;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
-              img,video{max-width:100%;height:auto}
-              
-              /* Layout essencial */
-              .container{width:100%;margin-left:auto;margin-right:auto;padding-left:1rem;padding-right:1rem}
-              @media (min-width:640px){.container{max-width:640px}}
-              @media (min-width:768px){.container{max-width:768px;padding-left:0;padding-right:0}}
-              @media (min-width:1024px){.container{max-width:1024px}}
-              @media (min-width:1280px){.container{max-width:1280px}}
-              
-              /* Flex utilities */
-              .flex{display:flex}
-              .flex-col{flex-direction:column}
-              @media (min-width:1024px){.lg\\:flex-row{flex-direction:row}}
-              .w-full{width:100%}
-              @media (min-width:1024px){.lg\\:w-\\[65\\%\\]{width:65%};.lg\\:w-\\[35\\%\\]{width:35%}}
-              
-              /* Spacing */
-              .gap-4{gap:1rem}
-              .mt-3{margin-top:0.75rem}
-              .px-4{padding-left:1rem;padding-right:1rem}
-              @media (min-width:768px){.md\\:px-0{padding-left:0;padding-right:0}}
-              
-              /* Background */
-              .bg-white{background-color:#fff}
-              .bg-zinc-200{background-color:#e4e4e7}
-              
-              /* Text utilities */
-              .text-black{color:#000}
-              .text-sm{font-size:0.875rem;line-height:1.25rem}
-              .font-semibold{font-weight:600}
-              .font-bold{font-weight:700}
-              .text-center{text-align:center}
-              @media (min-width:768px){.md\\:text-right{text-align:right}}
-              
-              /* Image optimization */
-              img[data-nimg="fill"]{position:absolute;height:100%;width:100%;left:0;top:0;right:0;bottom:0;object-fit:cover}
-              
-              /* Layout optimization */
-              .layout-optimized{min-height:1200px;contain:layout style paint;transform:translateZ(0)}
-              
-              /* ✅ CRÍTICO: CORREÇÃO LAYOUT TÍTULO - Igual ao Serido 106 */
-              .bg-white.container.mx-auto .flex.flex-col.sm\\:flex-row.sm\\:items-center.sm\\:justify-between {
-                display: flex !important;
-                flex-direction: column !important;
-                gap: 1rem !important;
-              }
-              
-              @media (min-width: 640px) {
-                .bg-white.container.mx-auto .flex.flex-col.sm\\:flex-row.sm\\:items-center.sm\\:justify-between {
-                  flex-direction: row !important;
-                  align-items: center !important;
-                  justify-content: space-between !important;
-                  gap: 1rem !important;
-                }
-              }
-              
-              /* TÍTULO H1 + BOTÕES INLINE */
-              .bg-white.container .flex-1 {
-                flex: 1 !important;
-              }
-              
-              .bg-white.container .flex.items-center.gap-3 {
-                display: flex !important;
-                align-items: center !important;
-                gap: 0.75rem !important;
-                flex-shrink: 0 !important;
-              }
-              
-              /* FORMULÁRIO SIDEBAR - Tamanho correto */
-              @media (min-width: 1024px) {
-                .lg\\:w-\\[35\\%\\] {
-                  width: 35% !important;
-                  max-width: 400px !important;
-                  min-width: 320px !important;
-                  flex-shrink: 0 !important;
-                }
-              }
-              
-              /* MOBILE - Formulário responsivo */
-              @media (max-width: 1023px) {
-                .lg\\:w-\\[35\\%\\] {
-                  width: 100% !important;
-                  max-width: none !important;
-                }
-              }
-            `,
-          }}
-        />
-        
-        {/* Meta tags otimizadas */}
+        {/* 🔥 CRÍTICO: Meta viewport específico para Chrome iOS */}
         <meta 
           name="viewport" 
-          content="width=device-width, initial-scale=1.0, maximum-scale=5.0, minimum-scale=1.0, shrink-to-fit=no, viewport-fit=cover"
+          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover"
         />
         
-        {/* Meta tags atualizadas */}
-        <meta name="mobile-web-app-capable" content="yes" />
+        {/* ✅ iOS específico: Safari + Chrome iOS */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="NPi Consultoria" />
         
+        {/* Meta tags essenciais SEM interferir em imagens */}
         <meta name="format-detection" content="telephone=no, email=no, address=no" />
+        
+        {/* ✅ Theme e color scheme para consistência iOS */}
         <meta name="theme-color" content="#000000" />
         <meta name="color-scheme" content="light" />
         
-        {/* Preconnect otimizados */}
+        {/* ✅ OTIMIZAÇÃO: DNS prefetch para performance */}
+        <link rel="dns-prefetch" href="//www.googletagmanager.com" />
+        <link rel="dns-prefetch" href="//www.google-analytics.com" />
+        <link rel="dns-prefetch" href="//fonts.googleapis.com" />
+        <link rel="dns-prefetch" href="//fonts.gstatic.com" />
+        
+        {/* Preconnect essenciais SEM preload de mídia */}
         <link rel="preconnect" href="https://www.googletagmanager.com" />
-        <link rel="preconnect" href="https://npi-imoveis.s3.sa-east-1.amazonaws.com" />
+        <link rel="preconnect" href="https://www.google-analytics.com" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         
-        {/* Favicon */}
+        {/* ✅ NOVO: Manifest PWA */}
+        <link rel="manifest" href="/manifest.json" />
+        
+        {/* Favicon otimizado */}
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         
-        {/* iOS otimizações */}
+        {/* ✅ CSS inline específico - placeholder pequeno */}
         <style dangerouslySetInnerHTML={{
           __html: `
-            /* Chrome iOS otimizações */
+            /* ✅ Chrome iOS detection: texto digitado para prevenir zoom */
             @supports (-webkit-appearance: none) and (not (-webkit-backdrop-filter: blur(1px))) {
               input, textarea, select {
                 font-size: 16px !important;
-                -webkit-text-size-adjust: 100% !important;
+                -webkit-user-scalable: 0 !important;
+                user-scalable: 0 !important;
+                -webkit-text-size-adjust: none !important;
                 -webkit-transform: translate3d(0,0,0) !important;
                 transform: translate3d(0,0,0) !important;
               }
               
+              /* Placeholder pequeno para Chrome iOS */
               input::placeholder, textarea::placeholder {
-                font-size: 12px !important;
+                font-size: 11px !important;
                 opacity: 0.7 !important;
               }
             }
             
+            /* ✅ Propriedades básicas para todos iOS */
             @media screen and (max-width: 768px) {
               input, textarea, select {
-                min-height: 44px !important;
-                -webkit-appearance: none !important;
-                touch-action: manipulation !important;
+                -webkit-user-scalable: 0 !important;
+                user-scalable: 0 !important;
+                min-height: 40px !important;
               }
               
+              /* Placeholder responsivo */
               input::placeholder {
-                font-size: 12px !important;
+                font-size: 11px !important;
               }
             }
             
@@ -260,15 +188,17 @@ export default function RootLayout({ children }) {
           WebkitTouchCallout: "none",
           WebkitUserSelect: "none",
           userSelect: "none",
+          // ✅ NOVO: Propriedades para prevenir zoom
           WebkitTextSizeAdjust: "100%",
           textSizeAdjust: "100%",
           touchAction: "manipulation",
         }}
       >
-        {/* GTM otimizado */}
+        {/* ✅ OTIMIZAÇÃO: GTM Script com priority */}
         <Script
           id="gtm-script"
           strategy="afterInteractive"
+          priority
           dangerouslySetInnerHTML={{
             __html: `
               (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -284,7 +214,6 @@ export default function RootLayout({ children }) {
           src={`https://www.googletagmanager.com/gtag/js?id=${ANALYTICS_ID}`}
           strategy="afterInteractive"
         />
-        
         <Script 
           id="gtag-init" 
           strategy="afterInteractive"
@@ -311,14 +240,19 @@ export default function RootLayout({ children }) {
           />
         </noscript>
 
+        {/* ✅ Structured data otimizado */}
         <Organization />
         <WebSite />
         
+        {/* ✅ Query provider com error boundary */}
         <QueryProvider>
           {children}
         </QueryProvider>
         
+        {/* ✅ Components com lazy loading */}
         <MusicPlayer />
+        
+        {/* ✅ Analytics otimizados */}
         <Analytics />
         <SpeedInsights />
       </body>
