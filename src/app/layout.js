@@ -73,14 +73,15 @@ export const metadata = {
   },
 };
 
-// 🔥 CRÍTICO: Viewport específico para Chrome iOS (Android já funciona)
+// 🔧 ACESSIBILIDADE CORRIGIDA: Viewport permite zoom geral, CSS específico bloqueia search
 export const viewport = {
   width: "device-width",
   initialScale: 1.0,
-  maximumScale: 1.0,
-  minimumScale: 1.0,
-  userScalable: false,
-  // ✅ Chrome iOS específico
+  // ✅ CORREÇÃO CIRÚRGICA: Remove restrições globais de zoom (acessibilidade)
+  // maximumScale: 1.0,     // ❌ REMOVIDO: Bloqueava zoom globalmente  
+  // minimumScale: 1.0,     // ❌ REMOVIDO: Bloqueava zoom globalmente
+  // userScalable: false,   // ❌ REMOVIDO: Bloqueava zoom globalmente
+  // ✅ MANTIDO: Configurações iOS específicas que não afetam acessibilidade
   viewportFit: "cover",
   shrinkToFit: false,
 };
@@ -89,50 +90,63 @@ export default function RootLayout({ children }) {
   return (
     <html lang="pt-BR">
       <head>
-        {/* 🔥 CRÍTICO: Meta viewport específico para Chrome iOS */}
+        {/* 🔧 ACESSIBILIDADE CORRIGIDA: Meta viewport permite zoom geral */}
         <meta 
           name="viewport" 
-          content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, shrink-to-fit=no, viewport-fit=cover"
+          content="width=device-width, initial-scale=1, viewport-fit=cover"
+          // ✅ CORREÇÃO: Remove maximum-scale=1.0, user-scalable=no (acessibilidade)
+          // ✅ MANTÉM: viewport-fit=cover (funcionalidade iOS)
         />
         
-        {/* ✅ iOS específico: Safari + Chrome iOS */}
+        {/* ✅ iOS específico: Safari + Chrome iOS (MANTIDO) */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="NPi Consultoria" />
         
-        {/* Meta tags essenciais SEM interferir em imagens */}
+        {/* Meta tags essenciais SEM interferir em imagens (MANTIDO) */}
         <meta name="format-detection" content="telephone=no, email=no, address=no" />
         
-        {/* ✅ Theme e color scheme para consistência iOS */}
+        {/* ✅ Theme e color scheme para consistência iOS (MANTIDO) */}
         <meta name="theme-color" content="#000000" />
         <meta name="color-scheme" content="light" />
         
-        {/* ✅ OTIMIZAÇÃO: DNS prefetch para performance */}
+        {/* ✅ OTIMIZAÇÃO: DNS prefetch para performance (MANTIDO) */}
         <link rel="dns-prefetch" href="//www.googletagmanager.com" />
         <link rel="dns-prefetch" href="//www.google-analytics.com" />
         <link rel="dns-prefetch" href="//fonts.googleapis.com" />
         <link rel="dns-prefetch" href="//fonts.gstatic.com" />
         
-        {/* Preconnect essenciais SEM preload de mídia */}
+        {/* Preconnect essenciais SEM preload de mídia (MANTIDO) */}
         <link rel="preconnect" href="https://www.googletagmanager.com" />
         <link rel="preconnect" href="https://www.google-analytics.com" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         
-        {/* ✅ NOVO: Manifest PWA */}
+        {/* ✅ NOVO: Manifest PWA (MANTIDO) */}
         <link rel="manifest" href="/manifest.json" />
         
-        {/* Favicon otimizado */}
+        {/* Favicon otimizado (MANTIDO) */}
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         
-        {/* ✅ CSS inline específico - placeholder pequeno */}
+        {/* ✅ CSS CIRÚRGICO: MANTÉM toda funcionalidade iOS + adiciona seletores específicos para search */}
         <style dangerouslySetInnerHTML={{
           __html: `
-            /* ✅ Chrome iOS detection: texto digitado para prevenir zoom */
+            /* ✅ MANTIDO: Chrome iOS detection para SEARCH ESPECÍFICO */
             @supports (-webkit-appearance: none) and (not (-webkit-backdrop-filter: blur(1px))) {
-              input, textarea, select {
+              
+              /* 🎯 CIRÚRGICO: Aplica apenas em campos de BUSCA/SEARCH (não todos inputs) */
+              input[type="search"],
+              input[placeholder*="Buscar"],
+              input[placeholder*="buscar"], 
+              input[placeholder*="Pesquisar"],
+              input[placeholder*="pesquisar"],
+              input[placeholder*="Procurar"],
+              input[placeholder*="procurar"],
+              .search-input,
+              [data-search="true"] input,
+              form[role="search"] input {
                 font-size: 16px !important;
                 -webkit-user-scalable: 0 !important;
                 user-scalable: 0 !important;
@@ -141,23 +155,44 @@ export default function RootLayout({ children }) {
                 transform: translate3d(0,0,0) !important;
               }
               
-              /* Placeholder pequeno para Chrome iOS */
-              input::placeholder, textarea::placeholder {
+              /* 🎯 CIRÚRGICO: Placeholder pequeno apenas para SEARCH */
+              input[type="search"]::placeholder,
+              input[placeholder*="Buscar"]::placeholder,
+              input[placeholder*="buscar"]::placeholder,
+              input[placeholder*="Pesquisar"]::placeholder,
+              input[placeholder*="pesquisar"]::placeholder,
+              .search-input::placeholder,
+              [data-search="true"] input::placeholder,
+              form[role="search"] input::placeholder {
                 font-size: 11px !important;
                 opacity: 0.7 !important;
               }
+              
+              /* ✅ OUTROS INPUTS: Comportamento normal (acessível) */
+              input:not([type="search"]):not([placeholder*="Buscar"]):not([placeholder*="buscar"]):not(.search-input),
+              textarea:not(.search-input) {
+                /* Permite zoom em formulários normais (acessibilidade) */
+                font-size: 16px;
+                /* Remove restrições de zoom para campos normais */
+              }
             }
             
-            /* ✅ Propriedades básicas para todos iOS */
+            /* ✅ MANTIDO: Propriedades básicas para iOS mobile */
             @media screen and (max-width: 768px) {
-              input, textarea, select {
+              /* Aplica apenas em campos de busca */
+              input[type="search"],
+              input[placeholder*="Buscar"],
+              input[placeholder*="buscar"],
+              .search-input {
                 -webkit-user-scalable: 0 !important;
                 user-scalable: 0 !important;
                 min-height: 40px !important;
               }
               
-              /* Placeholder responsivo */
-              input::placeholder {
+              /* Placeholder responsivo apenas para search */
+              input[type="search"]::placeholder,
+              input[placeholder*="Buscar"]::placeholder,
+              .search-input::placeholder {
                 font-size: 11px !important;
               }
             }
@@ -168,6 +203,7 @@ export default function RootLayout({ children }) {
               }
             }
             
+            /* ✅ MANTIDO: Propriedades gerais */
             * {
               -webkit-tap-highlight-color: transparent !important;
             }
@@ -182,19 +218,19 @@ export default function RootLayout({ children }) {
       <body 
         className={`${oxanium.variable} ${michroma.variable} antialiased`}
         style={{
+          // ✅ MANTIDO: Todas as propriedades originais
           WebkitFontSmoothing: "antialiased",
           MozOsxFontSmoothing: "grayscale",
           WebkitTapHighlightColor: "transparent",
           WebkitTouchCallout: "none",
           WebkitUserSelect: "none",
           userSelect: "none",
-          // ✅ NOVO: Propriedades para prevenir zoom
           WebkitTextSizeAdjust: "100%",
           textSizeAdjust: "100%",
           touchAction: "manipulation",
         }}
       >
-        {/* ✅ OTIMIZAÇÃO: GTM Script com priority */}
+        {/* ✅ MANTIDO: GTM Script com priority */}
         <Script
           id="gtm-script"
           strategy="afterInteractive"
@@ -240,19 +276,19 @@ export default function RootLayout({ children }) {
           />
         </noscript>
 
-        {/* ✅ Structured data otimizado */}
+        {/* ✅ MANTIDO: Structured data otimizado */}
         <Organization />
         <WebSite />
         
-        {/* ✅ Query provider com error boundary */}
+        {/* ✅ MANTIDO: Query provider com error boundary */}
         <QueryProvider>
           {children}
         </QueryProvider>
         
-        {/* ✅ Components com lazy loading */}
+        {/* ✅ MANTIDO: Components com lazy loading */}
         <MusicPlayer />
         
-        {/* ✅ Analytics otimizados */}
+        {/* ✅ MANTIDO: Analytics otimizados */}
         <Analytics />
         <SpeedInsights />
       </body>
