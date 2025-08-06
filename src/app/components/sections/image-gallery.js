@@ -46,7 +46,11 @@ export function ImageGallery({
   shareTitle,
 
   // Layout da galeria
-  layout = "grid" // "grid" ou "single"
+  layout = "grid", // "grid" ou "single"
+  
+  // 🚀 PROPS PARA OTIMIZAÇÃO DE LCP
+  priority = false,
+  lcpOptimized = false
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(null);
@@ -189,8 +193,9 @@ export function ImageGallery({
             sizes="100vw"
             placeholder="blur"
             blurDataURL={images[0].blurDataURL || "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="}
-            loading="eager"
-            priority={true}
+            loading={lcpOptimized ? "eager" : "eager"}
+            priority={lcpOptimized ? true : true}
+            fetchPriority={lcpOptimized ? "high" : undefined}
             className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-105"
           />
 
@@ -232,8 +237,9 @@ export function ImageGallery({
                 sizes="100vw"
                 placeholder="blur"
                 blurDataURL={images[0].blurDataURL || "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="}
-                loading="eager"
-                priority={true}
+                loading={lcpOptimized ? "eager" : "eager"}
+                priority={lcpOptimized ? true : true}
+                fetchPriority={lcpOptimized ? "high" : undefined}
                 className="object-cover transition-transform duration-300 ease-in-out hover:scale-105"
               />
 
@@ -280,8 +286,9 @@ export function ImageGallery({
                     sizes="(max-width: 768px) 100vw, 50vw"
                     placeholder="blur"
                     blurDataURL={images[0].blurDataURL || "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="}
-                    loading="eager"
-                    priority={true}
+                    loading={lcpOptimized ? "eager" : "eager"}
+                    priority={lcpOptimized ? true : true}
+                    fetchPriority={lcpOptimized ? "high" : undefined}
                     className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
                   />
                 </div>
@@ -391,6 +398,7 @@ export function ImageGallery({
                 placeholder="blur"
                 blurDataURL={images[selectedIndex].blurDataURL || "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="}
                 loading="eager"
+                fetchPriority={selectedIndex === 0 && lcpOptimized ? "high" : "auto"}
                 className="max-w-full max-h-screen object-contain"
               />
 
