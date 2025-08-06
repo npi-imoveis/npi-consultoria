@@ -2,19 +2,19 @@
 const nextConfig = {
   trailingSlash: false, // ✅ MANTIDO: Sua configuração atual
   
-  // ✅ MANTIDO + EXPANDIDO: Experimentais otimizadas
+  // ✅ MANTIDO: Apenas experimentais que já funcionavam
   experimental: {
-    optimizePackageImports: ['lucide-react'], // 🚀 Tree shaking icons (mantido)
-    optimizeCss: true, // ✅ ADICIONADO: Otimiza CSS (pode ajudar com os 10 KiB CSS unused)
+    optimizePackageImports: ['lucide-react'], // 🚀 Tree shaking icons (mantido - já funcionava)
+    // ❌ REMOVIDO: optimizeCss (causava erro 'critters')
   },
   
-  // ✅ MANTIDO: Configuração de imagens (SEM quality - era a causa do erro)
+  // ✅ MANTIDO: Configuração de imagens EXATA da sua versão original
   images: {
     // ✅ MANTIDO: Todos os remotePatterns existentes (zero mudanças)
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "**.npiconsultoria.com.br", // Permite todos subdomínios
+        hostname: "**.npiconsultoria.com.br",
       },
       {
         protocol: "https",
@@ -79,85 +79,73 @@ const nextConfig = {
       },
     ],
     
-    // ✅ MANTIDO: Configurações válidas para Next.js 14.2.3
-    formats: ["image/avif", "image/webp"], // Mantido
-    deviceSizes: [640, 750, 828, 1080, 1200], // Mantido
-    minimumCacheTTL: 60, // Cache de 60 segundos (mantido)
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384], // Mantido
-    dangerouslyAllowSVG: true, // Mantido
-    contentDispositionType: 'attachment', // Mantido
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;", // Mantido
-    
-    // ❌ REMOVIDO: quality não é válida aqui no Next.js 14.2.3
-    // A qualidade será controlada diretamente nos componentes Image
+    // ✅ MANTIDO: Configurações EXATAS da sua versão original
+    formats: ["image/avif", "image/webp"],
+    deviceSizes: [640, 750, 828, 1080, 1200],
+    minimumCacheTTL: 60, // Cache de 60 segundos
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    dangerouslyAllowSVG: true,
+    contentDispositionType: 'attachment',
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   
-  // ✅ MANTIDO: TypeScript config
+  // ✅ MANTIDO: TypeScript config EXATO
   typescript: {
-    ignoreBuildErrors: true, // ⚠️ Mantido (sua configuração atual)
+    ignoreBuildErrors: true,
   },
 
-  // ✅ MANTIDO: Compilação
+  // ✅ MANTIDO: Configurações EXATAS da sua versão original
   compiler: {
-    removeConsole: process.env.NODE_ENV === 'production', // Remove console.log em produção
+    removeConsole: process.env.NODE_ENV === 'production',
   },
-  swcMinify: true, // Minificação otimizada
+  swcMinify: true,
 
-  // 🚀 WEBPACK CIRÚRGICO: FOCO APENAS nos 7 polyfills detectados no PageSpeed
+  // 🎯 WEBPACK ULTRA CONSERVADOR: APENAS os polyfills essenciais
   webpack: (config, { dev, isServer }) => {
-    // ✅ MANTIDO: Sua configuração webpack existente
+    // ✅ MANTIDO: Suas configurações webpack originais
     if (!dev && !isServer) {
-      // ✅ MANTIDO: Configurações existentes
       config.resolve.fallback = {
         ...config.resolve.fallback,
         fs: false,
       };
       
-      // ✅ MANTIDO: Otimizações existentes
       config.optimization = {
         ...config.optimization,
         usedExports: true,
         sideEffects: false,
       };
       
-      // 🎯 ADIÇÃO CIRÚRGICA: APENAS os polyfills específicos detectados no PageSpeed
+      // 🎯 ADIÇÃO MÍNIMA: APENAS os 7 polyfills do PageSpeed (sem outras experimentações)
       config.resolve.alias = {
         ...config.resolve.alias,
         
-        // ⚡ FOCO CIRÚRGICO: APENAS os 7 polyfills confirmados no relatório PageSpeed
-        'core-js/modules/es.array.at': false,                // ✅ Detectado: Array.prototype.at
-        'core-js/modules/es.object.has-own': false,           // ✅ Detectado: Object.hasOwn
-        'core-js/modules/es.array.flat': false,               // ✅ Detectado: Array.prototype.flat
-        'core-js/modules/es.array.flat-map': false,           // ✅ Detectado: Array.prototype.flatMap
-        'core-js/modules/es.object.from-entries': false,      // ✅ Detectado: Object.fromEntries
-        'core-js/modules/es.string.trim-end': false,          // ✅ Detectado: String.prototype.trimEnd
-        'core-js/modules/es.string.trim-start': false,        // ✅ Detectado: String.prototype.trimStart
+        // ⚡ APENAS os polyfills confirmados no PageSpeed (sem mudanças no target)
+        'core-js/modules/es.array.at': false,
+        'core-js/modules/es.object.has-own': false,
+        'core-js/modules/es.array.flat': false,
+        'core-js/modules/es.array.flat-map': false,
+        'core-js/modules/es.object.from-entries': false,
+        'core-js/modules/es.string.trim-end': false,
+        'core-js/modules/es.string.trim-start': false,
       };
-      
-      // 🎯 TARGET MODERNO: Apenas para remover polyfills (cuidadosamente)
-      if (config.target) {
-        config.target = ['web', 'es2022']; // Browsers que suportam Array.at (2022+)
-      }
     }
     
-    return config; // ✅ MANTIDO: Return padrão
+    return config;
   },
 
-  // ✅ MANTIDO: Headers de cache (exatamente iguais)
+  // ✅ MANTIDO: Headers EXATOS da sua versão original
   async headers() {
     return [
       {
-        // Cache agressivo para imagens estáticas
         source: '/assets/images/:path*',
         headers: [
           {
             key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable', // 1 ano
+            value: 'public, max-age=31536000, immutable',
           },
         ],
       },
       {
-        // Cache para assets do Next.js
         source: '/_next/static/:path*',
         headers: [
           {
@@ -167,7 +155,6 @@ const nextConfig = {
         ],
       },
       {
-        // Cache para imagens otimizadas
         source: '/_next/image/:path*',
         headers: [
           {
@@ -179,26 +166,24 @@ const nextConfig = {
     ];
   },
   
-  // ✅ MANTIDO: Redirects existentes (exatamente iguais)
+  // ✅ MANTIDO: Redirects EXATOS da sua versão original
   async redirects() {
     return [
-      // 🚫 Bloquear/Redirecionar URLs do iframe antigo (WordPress)
       {
         source: '/iConatusIframe/:path*',
         destination: '/',
-        permanent: true // 301 para homepage ou página apropriada
+        permanent: true
       },
       {
         source: '/iframe.php',
         destination: '/',
         permanent: true
       },
-      // Seus outros redirects específicos podem ficar aqui
     ];
   },
   
-  // ✅ MANTIDO: Output config
-  output: "standalone", // Para builds containerizadas
+  // ✅ MANTIDO: Output EXATO da sua versão original
+  output: "standalone",
 };
 
 export default nextConfig;
