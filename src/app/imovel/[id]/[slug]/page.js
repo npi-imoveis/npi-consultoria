@@ -423,13 +423,7 @@ export default async function ImovelPage({ params }) {
         </div>
 
         {/* ✅ CONTAINER OTIMIZADO - Layout Shift + Formulário Tamanho Correto */}
-        <div 
-          className="container mx-auto gap-4 mt-3 px-4 md:px-0 flex flex-col lg:flex-row"
-          style={{
-            minHeight: '1200px', // Previne layout shift
-            contain: 'layout style', // Containment otimizado
-          }}
-        >
+        <div className="container mx-auto gap-4 mt-3 px-4 md:px-0 flex flex-col lg:flex-row">
           <div className="w-full lg:w-[65%]">
             <TituloImovel imovel={imovel} currentUrl={currentUrl} />
             <DetalhesImovel imovel={imovel} />
