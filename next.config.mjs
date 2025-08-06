@@ -8,7 +8,7 @@ const nextConfig = {
     optimizeCss: true, // ✅ ADICIONADO: Otimiza CSS (pode ajudar com os 10 KiB CSS unused)
   },
   
-  // ✅ MANTIDO + OTIMIZADO: Configuração de imagens (exatamente igual + pequenos ajustes)
+  // ✅ MANTIDO: Configuração de imagens (SEM quality - era a causa do erro)
   images: {
     // ✅ MANTIDO: Todos os remotePatterns existentes (zero mudanças)
     remotePatterns: [
@@ -79,7 +79,7 @@ const nextConfig = {
       },
     ],
     
-    // ✅ MANTIDO + PEQUENO AJUSTE: Para resolver os 41 KiB de imagens restantes
+    // ✅ MANTIDO: Configurações válidas para Next.js 14.2.3
     formats: ["image/avif", "image/webp"], // Mantido
     deviceSizes: [640, 750, 828, 1080, 1200], // Mantido
     minimumCacheTTL: 60, // Cache de 60 segundos (mantido)
@@ -88,8 +88,8 @@ const nextConfig = {
     contentDispositionType: 'attachment', // Mantido
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;", // Mantido
     
-    // ✅ ADICIONADO: Qualidade ligeiramente reduzida para economizar bytes
-    quality: 70, // Novo: era padrão 75, agora 70 (economiza bytes nas imagens)
+    // ❌ REMOVIDO: quality não é válida aqui no Next.js 14.2.3
+    // A qualidade será controlada diretamente nos componentes Image
   },
   
   // ✅ MANTIDO: TypeScript config
