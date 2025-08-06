@@ -2,30 +2,37 @@
 @tailwind components;
 @tailwind utilities;
 
-h1,
-h2,
-h3,
-h4,
-span,
-label,
-dl,
-dt,
-dd,
-ul,
-li,
-tr,
-th,
-option,
-select,
-input,
-textarea,
-button,
-address,
-a {
+/* 🔧 CORREÇÃO 1: Fonts APENAS para área pública (não admin) */
+:not([data-admin]) h1,
+:not([data-admin]) h2,
+:not([data-admin]) h3,
+:not([data-admin]) h4,
+:not([data-admin]) span,
+:not([data-admin]) label,
+:not([data-admin]) dl,
+:not([data-admin]) dt,
+:not([data-admin]) dd,
+:not([data-admin]) ul,
+:not([data-admin]) li,
+:not([data-admin]) tr,
+:not([data-admin]) th,
+:not([data-admin]) option,
+:not([data-admin]) select,
+:not([data-admin]) input,
+:not([data-admin]) textarea,
+:not([data-admin]) button,
+:not([data-admin]) address,
+:not([data-admin]) a {
   font-family: var(--font-michroma), Helvetica, sans-serif;
 }
 
-p {
+/* ✅ ADMIN: Usa fonte padrão do sistema */
+[data-admin] * {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+  font-size: inherit !important;
+}
+
+:not([data-admin]) p {
   font-family: var(--font-oxanium), Helvetica, sans-serif;
 }
 
@@ -270,62 +277,77 @@ p {
 }
 
 /* ============================================
-   📱 iOS CORREÇÕES OTIMIZADAS (Performance)
-   Mantém funcionalidade, remove excessos
+   📱 iOS CORREÇÕES OTIMIZADAS - APENAS ÁREA PÚBLICA
    ============================================ */
 
-/* 🎯 OTIMIZADO: Base essencial para todos inputs */
-input,
-textarea,
-select {
-  font-size: 16px !important; /* ✅ 16px para acessibilidade */
+/* 🔧 CORREÇÃO 2: Inputs APENAS para área pública */
+body:not([data-admin]) input,
+body:not([data-admin]) textarea,
+body:not([data-admin]) select {
+  font-size: 16px !important;
   -webkit-appearance: none !important;
-  -webkit-text-size-adjust: 100% !important; /* ✅ Mudado de 'none' para '100%' */
+  -webkit-text-size-adjust: 100% !important;
   touch-action: manipulation !important;
   -webkit-tap-highlight-color: transparent !important;
 }
 
-/* 🎯 OTIMIZADO: Chrome iOS detection específica */
-@supports (-webkit-appearance: none) and (not (-webkit-backdrop-filter: blur(1px))) {
-  input, textarea, select {
-    font-size: 16px !important;
-    /* ✅ REMOVIDO: user-scalable para acessibilidade */
-    -webkit-transform: translate3d(0,0,0) !important;
-    transform: translate3d(0,0,0) !important;
+/* 🔧 CORREÇÃO 3: Chrome iOS detection APENAS área pública */
+body:not([data-admin]) {
+  @supports (-webkit-appearance: none) and (not (-webkit-backdrop-filter: blur(1px))) {
+    input, textarea, select {
+      font-size: 16px !important;
+      -webkit-transform: translate3d(0,0,0) !important;
+      transform: translate3d(0,0,0) !important;
+    }
   }
 }
 
-/* 🎯 OTIMIZADO: Mobile iOS básico */
+/* 🔧 CORREÇÃO 4: Mobile iOS APENAS área pública */
 @media screen and (max-width: 768px) {
-  input, textarea, select {
+  body:not([data-admin]) input,
+  body:not([data-admin]) textarea,
+  body:not([data-admin]) select {
     font-size: 16px !important;
     line-height: 1.4 !important;
-    min-height: 44px !important; /* ✅ iOS touch target */
+    min-height: 44px !important;
     box-sizing: border-box !important;
   }
 }
 
-/* 🎯 OTIMIZADO: Input types específicos */
-input[type="search"],
-input[type="text"],
-input[type="email"],
-input[type="tel"],
-input[type="url"],
-input[type="password"],
-input[type="number"] {
+/* 🔧 CORREÇÃO 5: Input types APENAS área pública */
+body:not([data-admin]) input[type="search"],
+body:not([data-admin]) input[type="text"],
+body:not([data-admin]) input[type="email"],
+body:not([data-admin]) input[type="tel"],
+body:not([data-admin]) input[type="url"],
+body:not([data-admin]) input[type="password"],
+body:not([data-admin]) input[type="number"] {
   font-size: 16px !important;
   -webkit-search-decoration: none !important;
   -webkit-search-cancel-button: none !important;
   -webkit-appearance: none !important;
 }
 
-/* 🎯 ESPECÍFICO: SearchHero component - essencial apenas */
-.search-hero-input {
+/* ✅ ADMIN: Reset completo para tamanhos normais */
+[data-admin] input,
+[data-admin] textarea,
+[data-admin] select,
+[data-admin] button {
+  font-size: 14px !important;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  -webkit-text-size-adjust: auto !important;
+  text-size-adjust: auto !important;
+  min-height: auto !important;
+  line-height: normal !important;
+}
+
+/* 🎯 ESPECÍFICO: SearchHero component - área pública apenas */
+body:not([data-admin]) .search-hero-input {
   font-size: 16px !important;
   -webkit-appearance: none !important;
-  -webkit-text-size-adjust: 100% !important; /* ✅ Corrigido */
+  -webkit-text-size-adjust: 100% !important;
   touch-action: manipulation !important;
-  min-height: 44px !important; /* ✅ Touch target adequado */
+  min-height: 44px !important;
 }
 
 /* ✅ MANTIDO: Performance essenciais */
@@ -354,20 +376,22 @@ video {
 
 /* ✅ MANTIDO: Exceção para inputs do Leaflet */
 .leaflet-control-geosearch form input {
-  font-size: 15px !important; /* Mantém o estilo original do mapa */
+  font-size: 15px !important;
 }
 
 /* ============================================
-   🔧 PLACEHOLDER RESPONSIVO (Performance)
+   🔧 PLACEHOLDER RESPONSIVO - APENAS ÁREA PÚBLICA
    ============================================ */
 @media screen and (max-width: 768px) {
-  input::placeholder, textarea::placeholder {
-    font-size: 12px !important; /* ✅ Otimizado */
+  body:not([data-admin]) input::placeholder,
+  body:not([data-admin]) textarea::placeholder {
+    font-size: 12px !important;
   }
 }
 
 @media screen and (min-width: 768px) {
-  input::placeholder, textarea::placeholder {
+  body:not([data-admin]) input::placeholder,
+  body:not([data-admin]) textarea::placeholder {
     font-size: 14px !important;
   }
 }
