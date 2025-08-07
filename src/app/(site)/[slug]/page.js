@@ -21,64 +21,9 @@ import ScrollToImoveisButton from "./componentes/scroll-to-imovel-button";
 import { photoSorter } from "@/app/utils/photoSorter"; 
 import { ImageGallery } from "@/app/components/sections/image-gallery";
 
-// 🚀 LAZY LOADING APENAS DE COMPONENTES BELOW-THE-FOLD
-import { lazy, Suspense, useState } from 'react';
-
-// 🚀 REMOVER lazy loading de componentes que aparecem rapidamente (Speed Index)
-// Manter apenas os que realmente são below-the-fold
-const VideoCondominio = lazy(() => import("./componentes/VideoCondominio"));
-
-// 🚀 YOUTUBE FACADE INLINE (evita arquivo externo)
-function YouTubeFacadeInline({ videoId, title }) {
-  const [isLoaded, setIsLoaded] = useState(false);
-
-  if (isLoaded) {
-    return (
-      <iframe
-        src={`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`}
-        title={title}
-        className="w-full h-full"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-        allowFullScreen
-        loading="lazy"
-      />
-    );
-  }
-
-  return (
-    <div 
-      className="relative w-full cursor-pointer group bg-black rounded-lg overflow-hidden"
-      onClick={() => setIsLoaded(true)}
-      style={{ aspectRatio: '16/9' }}
-    >
-      <img
-        src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`}
-        alt={`Thumbnail: ${title}`}
-        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-        loading="lazy"
-      />
-      <div className="absolute inset-0 bg-black bg-opacity-30 group-hover:bg-opacity-20 transition-all duration-300" />
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="bg-red-600 hover:bg-red-700 rounded-full p-4 lg:p-6 transition-all duration-300 transform group-hover:scale-110 shadow-lg">
-          <svg className="w-8 h-8 lg:w-12 lg:h-12 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M8 5v14l11-7z"/>
-          </svg>
-        </div>
-      </div>
-      <div className="absolute top-3 right-3 bg-red-600 text-white px-2 py-1 rounded text-xs font-bold flex items-center gap-1">
-        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-        </svg>
-        YouTube
-      </div>
-      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/50 to-transparent p-4">
-        <h3 className="text-white font-semibold text-sm lg:text-base line-clamp-2">
-          {title}
-        </h3>
-      </div>
-    </div>
-  );
-}
+// 🚀 LAZY LOADING APENAS DE COMPONENTES BELOW-THE-FOLD  
+import { lazy, Suspense } from 'react';
+import VideoCondominio from "./componentes/VideoCondominio";
 
 // 🚀 OTIMIZAÇÃO DE IMAGEM S3 (inline)
 function optimizeS3ImageUrl(url, width = 800, quality = 85) {
@@ -433,7 +378,6 @@ export default async function CondominioPage({ params }) {
   const rawTitle = ensureCondominio(condominio.Empreendimento);
   const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`;
   const modifiedDate = new Date().toISOString();
-  const videoId = condominio?.Video ? Object.values(condominio.Video)[0]?.Video : null;
 
   // 🚀 URL da primeira imagem para preload LCP
   const primeiraImagemUrl = fotosOrdenadas?.[0]?.Foto || fotosOrdenadas?.[0]?.FotoPequena;
@@ -639,29 +583,9 @@ export default async function CondominioPage({ params }) {
 
         {condominio.DestaquesLazer && <Lazer condominio={condominio} />}
 
-        {/* 🚀 YOUTUBE FACADE INLINE - EVITA TBT */}
+        {/* 🚀 YOUTUBE COM FACADE EMBUTIDO - VideoCondominio já otimizado */}
         {condominio.Video && Object.keys(condominio.Video).length > 0 && (
-          <section className="w-full py-16 bg-white">
-            <div className="container mx-auto px-4">
-              <div className="text-center mb-12">
-                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                  Vídeo do Empreendimento
-                </h2>
-                <div className="w-24 h-1 bg-blue-600 mx-auto mb-6"></div>
-                <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-                  Conheça todos os detalhes e diferenciais do {condominio.Empreendimento} em um tour completo
-                </p>
-              </div>
-              <div className="max-w-6xl mx-auto">
-                <div className="relative w-full">
-                  <YouTubeFacadeInline
-                    videoId={videoId}
-                    title={`Conheça o ${condominio.Empreendimento} - ${condominio.BairroComercial}, ${condominio.Cidade}`}
-                  />
-                </div>
-              </div>
-            </div>
-          </section>
+          <VideoCondominio condominio={condominio} />
         )}
 
         {/* 🚀 LAZY LOADING APENAS PARA COMPONENTES REALMENTE BELOW-THE-FOLD */}
