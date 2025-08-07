@@ -1,4 +1,4 @@
-// src/app/(site)/[slug]/page.js
+// src/app/(site)/[slug]/page.js - VERSÃO OTIMIZADA PARA 90+ PAGESPEED
 
 import { Button } from "@/app/components/ui/button";
 import { getCondominioPorSlug } from "@/app/services";
@@ -8,20 +8,33 @@ import { Share } from "@/app/components/ui/share";
 import { PropertyTableOwner } from "./componentes/property-table-owner";
 import { WhatsappFloat } from "@/app/components/ui/whatsapp";
 import { PropertyTable } from "./componentes/property-table";
-import { ImoveisRelacionados } from "./componentes/related-properties";
-import SobreCondominio from "./componentes/SobreCondominio";
-import FichaTecnica from "./componentes/FichaTecnica";
-import DiferenciaisCondominio from "./componentes/DiferenciaisCondominio";
-import DetalhesCondominio from "./componentes/DetalhesCondominio";
-import Lazer from "./componentes/Lazer";
-import VideoCondominio from "./componentes/VideoCondominio";
-import TourVirtual from "./componentes/TourVirtual";
-import ExploreRegiao from "./componentes/ExploreRegiao";
 import { notFound, redirect } from "next/navigation";
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 import ScrollToImoveisButton from "./componentes/scroll-to-imovel-button";
 import { photoSorter } from "@/app/utils/photoSorter"; 
 import { ImageGallery } from "@/app/components/sections/image-gallery";
+import { optimizeImageGalleryProps, processPhotosForPerformance, PERFORMANCE_CONFIGS } from "@/app/utils/image-gallery-props";
+import PreloadResources from "@/app/components/performance/preload-resources";
+
+// 🚀 LAZY LOADING DOS COMPONENTES PESADOS (reduz TBT e Speed Index)
+import { lazy, Suspense } from 'react';
+
+const ImoveisRelacionados = lazy(() => import("./componentes/related-properties").then(module => ({ default: module.ImoveisRelacionados })));
+const SobreCondominio = lazy(() => import("./componentes/SobreCondominio"));
+const FichaTecnica = lazy(() => import("./componentes/FichaTecnica"));
+const DiferenciaisCondominio = lazy(() => import("./componentes/DiferenciaisCondominio"));
+const DetalhesCondominio = lazy(() => import("./componentes/DetalhesCondominio"));
+const Lazer = lazy(() => import("./componentes/Lazer"));
+const VideoCondominio = lazy(() => import("./componentes/VideoCondominio"));
+const TourVirtual = lazy(() => import("./componentes/TourVirtual"));
+const ExploreRegiao = lazy(() => import("./componentes/ExploreRegiao"));
+
+// 🎯 Loading Skeleton otimizado
+const LoadingSkeleton = ({ height = "h-64", className = "" }) => (
+  <div className={`animate-pulse bg-gray-200 rounded-lg ${height} ${className}`}>
+    <div className="h-full w-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded-lg"></div>
+  </div>
+);
 
 function ensureCondominio(text) {
   return /condom[ií]nio/i.test(text) ? text : `Condomínio ${text}`;
@@ -70,30 +83,23 @@ function processarFotosCondominio(fotos, codigoCondominio) {
 function limparMetragem(valor) {
   if (!valor) return valor;
   
-  // Se for string, converter para número e formatar
   if (typeof valor === 'string') {
-    // Remover qualquer formatação existente e converter
     const numero = parseFloat(valor.replace(/[^\d,.-]/g, '').replace(',', '.'));
     
     if (isNaN(numero)) return valor;
     
-    // Se é número inteiro, não mostrar decimais
     if (numero === Math.floor(numero)) {
       return numero.toString();
     }
     
-    // Se tem decimais significativos, manter apenas 1 casa
     return numero.toFixed(1).replace('.0', '');
   }
   
-  // Se for número
   if (typeof valor === 'number') {
-    // Se é inteiro, retornar sem decimais
     if (valor === Math.floor(valor)) {
       return valor.toString();
     }
     
-    // Se tem decimais, manter apenas 1 casa significativa
     return valor.toFixed(1).replace('.0', '');
   }
   
@@ -105,10 +111,8 @@ function processarDadosImoveis(imoveis) {
   if (!Array.isArray(imoveis)) return imoveis;
   
   return imoveis.map(imovel => {
-    // Criar cópia do imóvel para não alterar o original
     const imovelProcessado = { ...imovel };
     
-    // Limpar campos de metragem
     const camposMetragem = [
       'Metragem',
       'MetragemTotal', 
@@ -137,7 +141,6 @@ function processarDadosImoveis(imoveis) {
 }
 
 // 🎯 FUNÇÃO PARA ORDENAR IMÓVEIS RELACIONADOS
-// Coloca o imóvel principal primeiro + demais por valor (menor → maior)
 function ordenarImoveisRelacionados(imoveisRelacionados, codigoPrincipal) {
   if (!Array.isArray(imoveisRelacionados) || imoveisRelacionados.length === 0) {
     console.log('📋 ORDENAÇÃO: Nenhum imóvel relacionado para ordenar');
@@ -150,7 +153,6 @@ function ordenarImoveisRelacionados(imoveisRelacionados, codigoPrincipal) {
       codigoPrincipal: codigoPrincipal
     });
 
-    // 1️⃣ SEPARAR IMÓVEL PRINCIPAL DOS DEMAIS
     const imovelPrincipal = imoveisRelacionados.find(imovel => 
       imovel.Codigo === codigoPrincipal || 
       imovel.Codigo === parseInt(codigoPrincipal) ||
@@ -165,17 +167,8 @@ function ordenarImoveisRelacionados(imoveisRelacionados, codigoPrincipal) {
       imovel.CodigoImovel !== parseInt(codigoPrincipal)
     );
 
-    console.log('🔍 ORDENAÇÃO: Separação concluída', {
-      imovelPrincipalEncontrado: !!imovelPrincipal,
-      codigoImovelPrincipal: imovelPrincipal?.Codigo || imovelPrincipal?.CodigoImovel,
-      demaisImoveis: demaisImoveis.length
-    });
-
-    // 2️⃣ ORDENAR DEMAIS IMÓVEIS POR VALOR (MENOR → MAIOR)
     const demaisOrdenados = demaisImoveis.sort((a, b) => {
-      // Função para extrair valor numérico melhorada
       const extrairValor = (imovel) => {
-        // Tentar diferentes campos de valor (ordem de prioridade)
         const valorBruto = imovel.ValorVenda || 
                           imovel.ValorAntigo || 
                           imovel.Valor || 
@@ -184,23 +177,19 @@ function ordenarImoveisRelacionados(imoveisRelacionados, codigoPrincipal) {
                           imovel.ValorVendaSite ||
                           '0';
         
-        // Se for número, retornar direto
         if (typeof valorBruto === 'number') {
           return valorBruto;
         }
         
-        // Se for string, fazer limpeza mais robusta
         if (typeof valorBruto === 'string') {
-          // Remover R$, pontos, espaços, deixar apenas números e vírgula
           let valorLimpo = valorBruto
-            .replace(/R\$?\s*/g, '')           // Remove R$ e espaços
-            .replace(/\./g, '')               // Remove pontos (separadores de milhares)
-            .replace(/,/g, '.')               // Troca vírgula por ponto decimal
-            .replace(/[^\d.-]/g, '')          // Remove qualquer outro caractere
+            .replace(/R\$?\s*/g, '')
+            .replace(/\./g, '')
+            .replace(/,/g, '.')
+            .replace(/[^\d.-]/g, '')
             .trim();
           
           const valorNumerico = parseFloat(valorLimpo) || 0;
-          
           return valorNumerico;
         }
         
@@ -210,10 +199,9 @@ function ordenarImoveisRelacionados(imoveisRelacionados, codigoPrincipal) {
       const valorA = extrairValor(a);
       const valorB = extrairValor(b);
 
-      return valorA - valorB; // Ordem crescente (menor → maior)
+      return valorA - valorB;
     });
 
-    // 3️⃣ MONTAR ARRAY FINAL: PRINCIPAL PRIMEIRO + DEMAIS ORDENADOS
     const imoveisOrdenados = [];
     
     if (imovelPrincipal) {
@@ -222,23 +210,10 @@ function ordenarImoveisRelacionados(imoveisRelacionados, codigoPrincipal) {
     
     imoveisOrdenados.push(...demaisOrdenados);
 
-    console.log('✅ ORDENAÇÃO: Finalizada com sucesso', {
-      totalFinal: imoveisOrdenados.length,
-      primeiroEhPrincipal: imoveisOrdenados[0]?.Codigo === codigoPrincipal || 
-                          imoveisOrdenados[0]?.CodigoImovel === codigoPrincipal,
-      ordemValores: imoveisOrdenados.slice(1, 4).map(i => {
-        const valor = i.ValorVenda || i.ValorAntigo || i.Valor || 0;
-        return typeof valor === 'string' ? valor.substring(0, 15) + '...' : valor;
-      })
-    });
-
-    // 🧹 APLICAR LIMPEZA DE METRAGEM EM TODOS OS IMÓVEIS
     return processarDadosImoveis(imoveisOrdenados);
 
   } catch (error) {
     console.error('❌ ORDENAÇÃO: Erro ao ordenar imóveis relacionados:', error);
-    
-    // Fallback seguro - retornar array original com limpeza aplicada
     return processarDadosImoveis(imoveisRelacionados);
   }
 }
@@ -246,7 +221,6 @@ function ordenarImoveisRelacionados(imoveisRelacionados, codigoPrincipal) {
 export async function generateMetadata({ params }) {
   const { slug } = params;
   
-  // Detectar URLs que sigam o padrão imovel-{id} e retornar metadata vazio (não redirecionar aqui)
   if (slug.match(/^imovel-(\d+)$/)) {
     return {
       title: "Redirecionando...",
@@ -267,12 +241,13 @@ export async function generateMetadata({ params }) {
 
   const rawTitle = ensureCondominio(condominio.Empreendimento);
   
-  // 🎯 PROCESSAR FOTOS PARA METADATA TAMBÉM
+  // 🎯 PROCESSAR FOTOS PARA METADATA TAMBÉM  
   const fotosOrdenadas = processarFotosCondominio(condominio.Foto, condominio.Codigo);
+  const fotosOtimizadas = processPhotosForPerformance(fotosOrdenadas, 'single', 1);
   
   // Corrigir extração da imagem - buscar foto destacada ou primeira disponível
-  const destaqueFotoObj = fotosOrdenadas?.find((f) => f.Destaque === "Sim");
-  const primeiraFoto = Array.isArray(fotosOrdenadas) && fotosOrdenadas.length > 0 ? fotosOrdenadas[0] : null;
+  const destaqueFotoObj = fotosOtimizadas?.find((f) => f.Destaque === "Sim");
+  const primeiraFoto = Array.isArray(fotosOtimizadas) && fotosOtimizadas.length > 0 ? fotosOtimizadas[0] : null;
   
   const destaqueFotoUrl = destaqueFotoObj?.Foto || 
                          destaqueFotoObj?.FotoPequena || 
@@ -281,11 +256,7 @@ export async function generateMetadata({ params }) {
                          `${process.env.NEXT_PUBLIC_SITE_URL}/og-image.png`;
   
   const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`;
-  
-  // ✅ Gerar data para o condomínio
   const modifiedDate = new Date().toISOString();
-
-  // 🎯 EXTRAIR ID DO VÍDEO - ADICIONADO
   const videoId = condominio?.Video ? Object.values(condominio.Video)[0]?.Video : null;
 
   const description = `${rawTitle} em ${condominio.BairroComercial}, ${condominio.Cidade}. ${condominio.Categoria} com ${condominio.MetragemAnt} m2, ${condominio.DormitoriosAntigo} quartos, ${condominio.VagasAntigo} vagas. ${condominio.Situacao}.`;
@@ -324,7 +295,6 @@ export async function generateMetadata({ params }) {
           type: "image/jpeg",
         }
       ],
-      // 🎯 ADICIONAR VÍDEOS SE EXISTIR
       ...(videoId && {
         videos: [{
           url: `https://www.youtube.com/embed/${videoId}`,
@@ -337,7 +307,7 @@ export async function generateMetadata({ params }) {
       updated_time: modifiedDate,
     },
     twitter: {
-      card: videoId ? "player" : "summary_large_image", // 🎯 Muda para player se tiver vídeo
+      card: videoId ? "player" : "summary_large_image",
       title: rawTitle,
       description,
       site: "@NPIImoveis",
@@ -348,7 +318,6 @@ export async function generateMetadata({ params }) {
           alt: rawTitle,
         }
       ],
-      // 🎯 ADICIONAR PLAYER DO TWITTER SE TIVER VÍDEO
       ...(videoId && {
         players: [{
           playerUrl: `https://www.youtube.com/embed/${videoId}`,
@@ -369,7 +338,6 @@ export async function generateMetadata({ params }) {
       'date': modifiedDate,
       'DC.date.modified': modifiedDate,
       'DC.date.created': modifiedDate,
-      // 🎯 META TAGS DE VÍDEO ADICIONADAS CORRETAMENTE
       ...(videoId && {
         'og:video': `https://www.youtube.com/embed/${videoId}`,
         'og:video:url': `https://www.youtube.com/embed/${videoId}`,
@@ -388,9 +356,6 @@ export async function generateMetadata({ params }) {
 export default async function CondominioPage({ params }) {
   const { slug } = params;
   
-  // URLs imovel-{id} agora são interceptadas pelo next.config.mjs
-  // Esta página só deve processar slugs de condomínios reais
-  
   const response = await getCondominioPorSlug(slug);
 
   if (!response.data) {
@@ -400,21 +365,32 @@ export default async function CondominioPage({ params }) {
   const condominio = response.data;
   const imoveisRelacionados = response.imoveisRelacionados;
 
-  // 🎯 PROCESSAR FOTOS COM photoSorter ANTES DE USAR (igual ao admin que funcionou)
+  // 🎯 PROCESSAR FOTOS COM photoSorter ANTES DE USAR
   const fotosOrdenadas = processarFotosCondominio(condominio.Foto, condominio.Codigo);
 
-  // 🎯 NOVA IMPLEMENTAÇÃO: ORDENAR IMÓVEIS RELACIONADOS + LIMPAR METRAGEM
-  // Principal primeiro + demais por valor crescente + sem decimais desnecessários
+  // 🚀 OTIMIZAR FOTOS PARA PERFORMANCE 90+
+  const fotosOtimizadas = processPhotosForPerformance(fotosOrdenadas, 'single', 1);
+
+  // 🎯 ORDENAR IMÓVEIS RELACIONADOS + LIMPAR METRAGEM
   const imoveisOrdenados = ordenarImoveisRelacionados(imoveisRelacionados, condominio.Codigo);
 
   const rawTitle = ensureCondominio(condominio.Empreendimento);
   const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/${slug}`;
   const modifiedDate = new Date().toISOString();
-
-  // 🎯 EXTRAIR ID DO VÍDEO - ADICIONADO
   const videoId = condominio?.Video ? Object.values(condominio.Video)[0]?.Video : null;
 
-  // Structured Data adicional para datas
+  // 🚀 PRELOAD CRÍTICO: URL da primeira imagem para LCP
+  const primeiraImagemUrl = fotosOtimizadas?.[0]?.Foto || fotosOtimizadas?.[0]?.FotoPequena;
+  
+  // 🚀 OTIMIZAR PROPS DO IMAGEGALLERY
+  const imageGalleryProps = optimizeImageGalleryProps({
+    fotos: fotosOtimizadas,
+    title: rawTitle,
+    shareUrl: currentUrl,
+    shareTitle: `Compartilhe o imóvel ${rawTitle} em ${condominio.BairroComercial}`,
+    ...PERFORMANCE_CONFIGS.CONDOMINIO_HERO
+  }, true);
+
   const structuredDataDates = {
     "@context": "https://schema.org",
     "@type": "WebPage",
@@ -431,7 +407,6 @@ export default async function CondominioPage({ params }) {
     }
   };
 
-  // 🎯 STRUCTURED DATA DO VÍDEO - ADICIONADO
   let videoStructuredData = null;
   if (videoId) {
     videoStructuredData = {
@@ -463,125 +438,174 @@ export default async function CondominioPage({ params }) {
   }
 
   return (
-    <section className="w-full bg-zinc-100 pb-10">
-      {/* Structured Data para o condomínio */}
-      <StructuredDataApartment
-        title={rawTitle}
-        price={condominio.ValorAntigo ? `R$ ${condominio.ValorAntigo}` : "Consulte"}
-        description={`${condominio.Categoria} à venda em ${condominio.BairroComercial}, ${condominio.Cidade}. ${rawTitle}: ${condominio.DormitoriosAntigo} quartos, ${condominio.SuiteAntigo} suítes, ${condominio.BanheiroSocialQtd} banheiros, ${condominio.VagasAntigo} vagas, ${condominio.MetragemAnt} m2. ${condominio.Situacao}. Valor: ${condominio.ValorAntigo ? `R$ ${condominio.ValorAntigo}` : "Consulte"}. ${condominio.TipoEndereco} ${condominio.Endereco}.`}
-        address={`${condominio.TipoEndereco} ${condominio.Endereco} ${condominio.Numero}, ${condominio.BairroComercial}, ${condominio.Cidade}`}
-        url={currentUrl}
-        image={fotosOrdenadas} // 🎯 USAR FOTOS ORDENADAS NO STRUCTURED DATA
+    <>
+      {/* 🚀 PRELOAD INTELIGENTE DE RECURSOS CRÍTICOS */}
+      <PreloadResources 
+        criticalImage={primeiraImagemUrl}
+        videoThumbnail={videoId ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg` : undefined}
+        fonts={[
+          'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiA.woff2'
+        ]}
       />
 
-      {/* 🎯 STRUCTURED DATA DO VÍDEO - ADICIONADO */}
-      {videoStructuredData && (
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(videoStructuredData),
-          }}
+      {/* 🚀 PRELOAD CRÍTICO PARA LCP - PRIMEIRA IMAGEM */}
+      {primeiraImagemUrl && (
+        <link
+          rel="preload"
+          as="image"
+          href={primeiraImagemUrl}
+          fetchPriority="high"
         />
       )}
 
-      {/* Structured Data para datas */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(structuredDataDates),
-        }}
-      />
+      {/* 🚀 PRECONNECT PARA RECURSOS EXTERNOS */}
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
+      <link rel="preconnect" href="https://www.youtube.com" />
+      <link rel="preconnect" href="https://img.youtube.com" />
 
-      <ExitIntentModal condominio={rawTitle} link={currentUrl} />
+      <section className="w-full bg-zinc-100 pb-10">
+        {/* Structured Data para o condomínio */}
+        <StructuredDataApartment
+          title={rawTitle}
+          price={condominio.ValorAntigo ? `R$ ${condominio.ValorAntigo}` : "Consulte"}
+          description={`${condominio.Categoria} à venda em ${condominio.BairroComercial}, ${condominio.Cidade}. ${rawTitle}: ${condominio.DormitoriosAntigo} quartos, ${condominio.SuiteAntigo} suítes, ${condominio.BanheiroSocialQtd} banheiros, ${condominio.VagasAntigo} vagas, ${condominio.MetragemAnt} m2. ${condominio.Situacao}. Valor: ${condominio.ValorAntigo ? `R$ ${condominio.ValorAntigo}` : "Consulte"}. ${condominio.TipoEndereco} ${condominio.Endereco}.`}
+          address={`${condominio.TipoEndereco} ${condominio.Endereco} ${condominio.Numero}, ${condominio.BairroComercial}, ${condominio.Cidade}`}
+          url={currentUrl}
+          image={fotosOtimizadas} {/* 🚀 USAR FOTOS OTIMIZADAS */}
+        />
 
-      <div className="container mx-auto pt-20">
-        <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 ">
-          <div className="flex flex-col gap-4 ">
-            <div className="px-10 py-6 bg-white max-h-[400px] xl:max-h-[300px] rounded-lg flex-grow">
-              <div className="flex justify-between">
-                <span className="text-[10px]">Código:{condominio.Codigo}</span>
-                <Share
-                  url={currentUrl}
-                  title={`Compartilhe o imóvel ${rawTitle} em ${condominio.BairroComercial}`}
-                  variant="secondary"
-                />
-              </div>
+        {/* 🎯 STRUCTURED DATA DO VÍDEO */}
+        {videoStructuredData && (
+          <script
+            type="application/ld+json"
+            dangerouslySetInnerHTML={{
+              __html: JSON.stringify(videoStructuredData),
+            }}
+          />
+        )}
 
-              <h1 className="text-xl font-bold mt-2">{rawTitle}</h1>
-              <span className="text-xs text-zinc-700 font-semibold">
-                {condominio.TipoEndereco} {condominio.Endereco} {condominio.Numero}, {condominio.BairroComercial}, {condominio.Cidade}
-              </span>
-              <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-3 gap-3 mt-4 mb-8">
-                {condominio.ValorAluguelSite && (
-                  <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
-                    <h2 className="text-zinc-600 text-[10px] font-bold">Aluguel:</h2>
-                    <h2 className="text-black font-semibold text-[10px]">R$ {condominio.ValorAluguelSite}</h2>
-                  </div>
-                )}
+        {/* Structured Data para datas */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(structuredDataDates),
+          }}
+        />
 
-                {/* Este é o bloco do Valor de Venda. O erro estava aqui. */}
-                <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
-                  <h2 className="text-zinc-600 text-[10px] font-bold">Preço:</h2>
-                  <h2 className="text-black font-semibold text-[10px]">R$ {condominio.ValorAntigo}</h2>
+        <ExitIntentModal condominio={rawTitle} link={currentUrl} />
+
+        <div className="container mx-auto pt-20">
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 ">
+            <div className="flex flex-col gap-4 ">
+              <div className="px-10 py-6 bg-white max-h-[400px] xl:max-h-[300px] rounded-lg flex-grow">
+                <div className="flex justify-between">
+                  <span className="text-[10px]">Código:{condominio.Codigo}</span>
+                  <Share
+                    url={currentUrl}
+                    title={`Compartilhe o imóvel ${rawTitle} em ${condominio.BairroComercial}`}
+                    variant="secondary"
+                  />
                 </div>
-                {/* A linha 132 do erro anterior (onde estava o ')}') foi removida aqui. */}
 
-                {condominio.ValorCondominio && (
+                <h1 className="text-xl font-bold mt-2">{rawTitle}</h1>
+                <span className="text-xs text-zinc-700 font-semibold">
+                  {condominio.TipoEndereco} {condominio.Endereco} {condominio.Numero}, {condominio.BairroComercial}, {condominio.Cidade}
+                </span>
+                <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-3 gap-3 mt-4 mb-8">
+                  {condominio.ValorAluguelSite && (
+                    <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
+                      <h2 className="text-zinc-600 text-[10px] font-bold">Aluguel:</h2>
+                      <h2 className="text-black font-semibold text-[10px]">R$ {condominio.ValorAluguelSite}</h2>
+                    </div>
+                  )}
+
                   <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
-                    <h4 className="text-zinc-600 text-[10px] font-bold">Condomínio:</h4>
-                    <h2 className="text-black font-semibold text-[10px]">{formatterValue(condominio.ValorCondominio)}</h2>
+                    <h2 className="text-zinc-600 text-[10px] font-bold">Preço:</h2>
+                    <h2 className="text-black font-semibold text-[10px]">R$ {condominio.ValorAntigo}</h2>
                   </div>
-                )}
-                {condominio.ValorIptu && (
-                  <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
-                    <h4 className="text-zinc-600 text-[10px] font-bold">IPTU:</h4>
-                    <h2 className="text-black font-semibold text-[10px]">{formatterValue(condominio.ValorIptu)}</h2>
-                  </div>
+
+                  {condominio.ValorCondominio && (
+                    <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
+                      <h4 className="text-zinc-600 text-[10px] font-bold">Condomínio:</h4>
+                      <h2 className="text-black font-semibold text-[10px]">{formatterValue(condominio.ValorCondominio)}</h2>
+                    </div>
+                  )}
+                  {condominio.ValorIptu && (
+                    <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
+                      <h4 className="text-zinc-600 text-[10px] font-bold">IPTU:</h4>
+                      <h2 className="text-black font-semibold text-[10px]">{formatterValue(condominio.ValorIptu)}</h2>
+                    </div>
+                  )}
+                </div>
+                <ScrollToImoveisButton text={`Mostrar imóveis (${imoveisOrdenados.length})`} />
+              </div>
+              <div className="relative w-full h-[230px] overflow-y-auto bg-white rounded-lg overflow-hidden p-4">
+                {isValidValue(condominio.ValorVenda2) || isValidValue(condominio.ValorGarden) || isValidValue(condominio.ValorCobertura) ? (
+                  <PropertyTableOwner imovel={condominio} />
+                ) : (
+                  <PropertyTable imoveisRelacionados={imoveisOrdenados} />
                 )}
               </div>
-              <ScrollToImoveisButton text={`Mostrar imóveis (${imoveisOrdenados.length})`} />
             </div>
-            <div className="relative w-full h-[230px] overflow-y-auto bg-white rounded-lg overflow-hidden p-4">
-              {isValidValue(condominio.ValorVenda2) || isValidValue(condominio.ValorGarden) || isValidValue(condominio.ValorCobertura) ? (
-                <PropertyTableOwner imovel={condominio} />
-              ) : (
-                <PropertyTable imoveisRelacionados={imoveisOrdenados} />
-              )}
+            <div className="relative w-full min-h-[550px] overflow-hidden rounded-lg">
+              {/* 🚀 CRÍTICO: IMAGEGALLERY OTIMIZADA PARA LCP 90+ */}
+              <ImageGallery {...imageGalleryProps} />
             </div>
           </div>
-          <div className="relative w-full min-h-[550px] overflow-hidden rounded-lg">
-            {/* 🎯 ALTERAÇÃO: Usar layout="single" para mostrar apenas 1 foto principal ocupando todo espaço */}
-            <ImageGallery 
-              fotos={fotosOrdenadas}
-              title={rawTitle}
-              shareUrl={currentUrl}
-              shareTitle={`Compartilhe o imóvel ${rawTitle} em ${condominio.BairroComercial}`}
-              layout="single"
-            />
+        </div>
+
+        {/* 🚀 LAZY LOADING COM SUSPENSE - SEÇÕES ABAIXO DA DOBRA */}
+        {imoveisOrdenados && imoveisOrdenados.length > 0 && (
+          <div id="imoveis-relacionados">
+            <Suspense fallback={<LoadingSkeleton height="h-96" className="mx-4" />}>
+              <ImoveisRelacionados imoveisRelacionados={imoveisOrdenados} />
+            </Suspense>
           </div>
-        </div>
-      </div>
-      {imoveisOrdenados && imoveisOrdenados.length > 0 && (
-        <div id="imoveis-relacionados">
-          <ImoveisRelacionados imoveisRelacionados={imoveisOrdenados} />
-        </div>
-      )}
-      <SobreCondominio condominio={condominio} />
+        )}
 
-      {condominio.FichaTecnica && <FichaTecnica condominio={condominio} />}
-      {condominio.DestaquesDiferenciais && <DetalhesCondominio imovel={condominio} />}
-      {condominio.DestaquesLazer && <Lazer condominio={condominio} />}
-      {condominio.Video && Object.keys(condominio.Video).length > 0 && (
-        <VideoCondominio condominio={condominio} />
-      )}
-      {condominio.Tour360 && (
-        <TourVirtual link={condominio.Tour360} titulo={rawTitle} />
-      )}
+        <Suspense fallback={<LoadingSkeleton height="h-64" className="mx-4" />}>
+          <SobreCondominio condominio={condominio} />
+        </Suspense>
 
-      <ExploreRegiao condominio={condominio} currentUrl={currentUrl} />
-      <WhatsappFloat
-        message={`Quero saber mais sobre o ${rawTitle}, no bairro ${condominio.BairroComercial}, disponível na página de Condomínio: ${currentUrl}`}
-      />
-    </section>
+        {condominio.FichaTecnica && (
+          <Suspense fallback={<LoadingSkeleton height="h-48" className="mx-4" />}>
+            <FichaTecnica condominio={condominio} />
+          </Suspense>
+        )}
+
+        {condominio.DestaquesDiferenciais && (
+          <Suspense fallback={<LoadingSkeleton height="h-48" className="mx-4" />}>
+            <DetalhesCondominio imovel={condominio} />
+          </Suspense>
+        )}
+
+        {condominio.DestaquesLazer && (
+          <Suspense fallback={<LoadingSkeleton height="h-48" className="mx-4" />}>
+            <Lazer condominio={condominio} />
+          </Suspense>
+        )}
+
+        {condominio.Video && Object.keys(condominio.Video).length > 0 && (
+          <Suspense fallback={<LoadingSkeleton height="h-96" className="mx-4" />}>
+            <VideoCondominio condominio={condominio} />
+          </Suspense>
+        )}
+
+        {condominio.Tour360 && (
+          <Suspense fallback={<LoadingSkeleton height="h-96" className="mx-4" />}>
+            <TourVirtual link={condominio.Tour360} titulo={rawTitle} />
+          </Suspense>
+        )}
+
+        <Suspense fallback={<LoadingSkeleton height="h-64" className="mx-4" />}>
+          <ExploreRegiao condominio={condominio} currentUrl={currentUrl} />
+        </Suspense>
+
+        <WhatsappFloat
+          message={`Quero saber mais sobre o ${rawTitle}, no bairro ${condominio.BairroComercial}, disponível na página de Condomínio: ${currentUrl}`}
+        />
+      </section>
+    </>
   );
 }
