@@ -7,7 +7,7 @@ const nextConfig = {
     optimizePackageImports: ['lucide-react'],
   },
   
-  // 🔥 IMAGENS CONFIGURAÇÃO ESTÁVEL PARA CLS 0.003
+  // 🔥 IMAGENS OTIMIZADAS PARA FOTOS MAIORES
   images: {
     // ✅ MANTIDO: Todos os remotePatterns existentes
     remotePatterns: [
@@ -78,16 +78,16 @@ const nextConfig = {
       },
     ],
     
-    // 🎯 FORMATOS PADRÃO Next.js (estabilidade garantida)
-    formats: ["image/webp"],
+    // 🎯 FORMATOS OTIMIZADOS para qualidade
+    formats: ["image/webp", "image/avif"],
     
-    // 🔥 DEVICE SIZES PADRÃO Next.js
-    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
+    // 🔥 DEVICE SIZES OTIMIZADOS para fotos maiores
+    deviceSizes: [640, 750, 828, 1080, 1200, 1440, 1920],
     
-    // 🎯 IMAGE SIZES PADRÃO Next.js
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    // 🎯 IMAGE SIZES EXPANDIDOS para melhor responsive
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384, 512, 768],
     
-    // 🚀 CACHE PADRÃO Next.js
+    // 🚀 CACHE OTIMIZADO
     minimumCacheTTL: 60,
     
     // ✅ MANTIDO: Configurações de segurança
@@ -100,13 +100,13 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
-
-  // 🚀 COMPILER PADRÃO
+  
+  // 🚀 COMPILER OTIMIZADO
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
   },
   swcMinify: true,
-
+  
   // 🎯 WEBPACK CONSERVADOR
   webpack: (config, { dev, isServer }) => {
     if (!dev && !isServer) {
@@ -118,8 +118,8 @@ const nextConfig = {
     
     return config;
   },
-
-  // 🚀 HEADERS ESSENCIAIS
+  
+  // 🚀 HEADERS OTIMIZADOS para imagens
   async headers() {
     return [
       {
@@ -137,6 +137,10 @@ const nextConfig = {
           {
             key: 'Cache-Control',
             value: 'public, max-age=31536000, immutable',
+          },
+          {
+            key: 'Vary',
+            value: 'Accept',
           },
         ],
       },
