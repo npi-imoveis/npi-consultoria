@@ -6,7 +6,6 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ['lucide-react'],
     scrollRestoration: true,
-    // 🔧 REMOVIDO: optimizeCss (requer critters dependency)
     webVitalsAttribution: ['CLS', 'LCP', 'FID', 'FCP', 'TTFB'],
   },
   
@@ -108,7 +107,7 @@ const nextConfig = {
   // 🔥 COMPILER AGRESSIVO
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
-    styledComponents: false, // Remove se não usar
+    styledComponents: false,
   },
   swcMinify: true,
   
@@ -176,11 +175,6 @@ const nextConfig = {
             key: 'Referrer-Policy',
             value: 'origin-when-cross-origin'
           },
-          // 🔥 CRITICAL: Early Hints para recursos importantes
-          {
-            key: 'Link',
-            value: '</static/fonts/inter.woff2>; rel=preload; as=font; type=font/woff2; crossorigin'
-          }
         ],
       },
       {
