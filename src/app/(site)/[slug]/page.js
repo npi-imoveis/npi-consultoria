@@ -1,4 +1,4 @@
-// src/app/(site)/[slug]/page.js - VERSÃO OTIMIZADA PARA 90+ PAGESPEED
+// src/app/(site)/[slug]/page.js - VERSÃO SIMPLIFICADA QUE FUNCIONA IMEDIATAMENTE
 
 import { Button } from "@/app/components/ui/button";
 import { getCondominioPorSlug } from "@/app/services";
@@ -13,8 +13,6 @@ import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 import ScrollToImoveisButton from "./componentes/scroll-to-imovel-button";
 import { photoSorter } from "@/app/utils/photoSorter"; 
 import { ImageGallery } from "@/app/components/sections/image-gallery";
-import { optimizeImageGalleryProps, processPhotosForPerformance, PERFORMANCE_CONFIGS } from "@/app/utils/image-gallery-props";
-import PreloadResources from "@/app/components/performance/preload-resources";
 
 // 🚀 LAZY LOADING DOS COMPONENTES PESADOS (reduz TBT e Speed Index)
 import { lazy, Suspense } from 'react';
@@ -77,6 +75,19 @@ function processarFotosCondominio(fotos, codigoCondominio) {
     // Fallback seguro - retornar fotos originais
     return fotos;
   }
+}
+
+// 🚀 OTIMIZAR FOTOS PARA LCP (versão simplificada)
+function otimizarFotosParaLCP(fotos) {
+  if (!Array.isArray(fotos) || fotos.length === 0) return [];
+  
+  // Para página de condomínio, priorizar apenas primeira foto para LCP
+  return fotos.slice(0, 1).map(foto => ({
+    ...foto,
+    // Flags para o ImageGallery usar priority
+    _isLCP: true,
+    _priority: true
+  }));
 }
 
 // 🎯 FUNÇÃO PARA LIMPAR DECIMAIS DESNECESSÁRIOS DA METRAGEM
@@ -240,14 +251,10 @@ export async function generateMetadata({ params }) {
   }
 
   const rawTitle = ensureCondominio(condominio.Empreendimento);
-  
-  // 🎯 PROCESSAR FOTOS PARA METADATA TAMBÉM  
   const fotosOrdenadas = processarFotosCondominio(condominio.Foto, condominio.Codigo);
-  const fotosOtimizadas = processPhotosForPerformance(fotosOrdenadas, 'single', 1);
   
-  // Corrigir extração da imagem - buscar foto destacada ou primeira disponível
-  const destaqueFotoObj = fotosOtimizadas?.find((f) => f.Destaque === "Sim");
-  const primeiraFoto = Array.isArray(fotosOtimizadas) && fotosOtimizadas.length > 0 ? fotosOtimizadas[0] : null;
+  const destaqueFotoObj = fotosOrdenadas?.find((f) => f.Destaque === "Sim");
+  const primeiraFoto = Array.isArray(fotosOrdenadas) && fotosOrdenadas.length > 0 ? fotosOrdenadas[0] : null;
   
   const destaqueFotoUrl = destaqueFotoObj?.Foto || 
                          destaqueFotoObj?.FotoPequena || 
@@ -368,8 +375,8 @@ export default async function CondominioPage({ params }) {
   // 🎯 PROCESSAR FOTOS COM photoSorter ANTES DE USAR
   const fotosOrdenadas = processarFotosCondominio(condominio.Foto, condominio.Codigo);
 
-  // 🚀 OTIMIZAR FOTOS PARA PERFORMANCE 90+
-  const fotosOtimizadas = processPhotosForPerformance(fotosOrdenadas, 'single', 1);
+  // 🚀 OTIMIZAR FOTOS PARA LCP (apenas primeira foto)
+  const fotosParaLCP = otimizarFotosParaLCP(fotosOrdenadas);
 
   // 🎯 ORDENAR IMÓVEIS RELACIONADOS + LIMPAR METRAGEM
   const imoveisOrdenados = ordenarImoveisRelacionados(imoveisRelacionados, condominio.Codigo);
@@ -379,17 +386,8 @@ export default async function CondominioPage({ params }) {
   const modifiedDate = new Date().toISOString();
   const videoId = condominio?.Video ? Object.values(condominio.Video)[0]?.Video : null;
 
-  // 🚀 PRELOAD CRÍTICO: URL da primeira imagem para LCP
-  const primeiraImagemUrl = fotosOtimizadas?.[0]?.Foto || fotosOtimizadas?.[0]?.FotoPequena;
-  
-  // 🚀 OTIMIZAR PROPS DO IMAGEGALLERY
-  const imageGalleryProps = optimizeImageGalleryProps({
-    fotos: fotosOtimizadas,
-    title: rawTitle,
-    shareUrl: currentUrl,
-    shareTitle: `Compartilhe o imóvel ${rawTitle} em ${condominio.BairroComercial}`,
-    ...PERFORMANCE_CONFIGS.CONDOMINIO_HERO
-  }, true);
+  // 🚀 URL da primeira imagem para preload LCP
+  const primeiraImagemUrl = fotosParaLCP?.[0]?.Foto || fotosParaLCP?.[0]?.FotoPequena;
 
   const structuredDataDates = {
     "@context": "https://schema.org",
@@ -439,15 +437,6 @@ export default async function CondominioPage({ params }) {
 
   return (
     <>
-      {/* 🚀 PRELOAD INTELIGENTE DE RECURSOS CRÍTICOS */}
-      <PreloadResources 
-        criticalImage={primeiraImagemUrl}
-        videoThumbnail={videoId ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg` : undefined}
-        fonts={[
-          'https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hiA.woff2'
-        ]}
-      />
-
       {/* 🚀 PRELOAD CRÍTICO PARA LCP - PRIMEIRA IMAGEM */}
       {primeiraImagemUrl && (
         <link
@@ -465,14 +454,14 @@ export default async function CondominioPage({ params }) {
       <link rel="preconnect" href="https://img.youtube.com" />
 
       <section className="w-full bg-zinc-100 pb-10">
-        {/* Structured Data para o condomínio - usando fotos otimizadas */}
+        {/* Structured Data para o condomínio */}
         <StructuredDataApartment
           title={rawTitle}
           price={condominio.ValorAntigo ? `R$ ${condominio.ValorAntigo}` : "Consulte"}
           description={`${condominio.Categoria} à venda em ${condominio.BairroComercial}, ${condominio.Cidade}. ${rawTitle}: ${condominio.DormitoriosAntigo} quartos, ${condominio.SuiteAntigo} suítes, ${condominio.BanheiroSocialQtd} banheiros, ${condominio.VagasAntigo} vagas, ${condominio.MetragemAnt} m2. ${condominio.Situacao}. Valor: ${condominio.ValorAntigo ? `R$ ${condominio.ValorAntigo}` : "Consulte"}. ${condominio.TipoEndereco} ${condominio.Endereco}.`}
           address={`${condominio.TipoEndereco} ${condominio.Endereco} ${condominio.Numero}, ${condominio.BairroComercial}, ${condominio.Cidade}`}
           url={currentUrl}
-          image={fotosOtimizadas}
+          image={fotosOrdenadas}
         />
 
         {/* 🎯 STRUCTURED DATA DO VÍDEO */}
@@ -549,8 +538,16 @@ export default async function CondominioPage({ params }) {
               </div>
             </div>
             <div className="relative w-full min-h-[550px] overflow-hidden rounded-lg">
-              {/* 🚀 CRÍTICO: IMAGEGALLERY OTIMIZADA PARA LCP 90+ */}
-              <ImageGallery {...imageGalleryProps} />
+              {/* 🚀 CRÍTICO: PRIORITY NA IMAGEGALLERY PARA LCP */}
+              <ImageGallery 
+                fotos={fotosOrdenadas}
+                title={rawTitle}
+                shareUrl={currentUrl}
+                shareTitle={`Compartilhe o imóvel ${rawTitle} em ${condominio.BairroComercial}`}
+                layout="single"
+                priority={true}
+                fetchPriority="high"
+              />
             </div>
           </div>
         </div>
