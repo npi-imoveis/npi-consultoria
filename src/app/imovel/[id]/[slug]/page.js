@@ -1,5 +1,4 @@
-// app/imovel/[id]/[slug]/page.js
-// 🎯 VERSÃO ULTRA-OTIMIZADA PARA PAGESPEED 95+ - LCP < 2.5s
+// app/imovel/[id]/[slug]/page.js - VERSÃO ULTRA-OTIMIZADA PARA PAGESPEED 95+
 
 import { Suspense, lazy } from 'react';
 import { ImageGallery } from "@/app/components/sections/image-gallery";
@@ -7,8 +6,7 @@ import { getImovelById } from "@/app/services";
 import { WhatsappFloat } from "@/app/components/ui/whatsapp";
 import { Apartment as StructuredDataApartment } from "@/app/components/structured-data";
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
-import { notFound, redirect } from "next/navigation";
-import Script from "next/script";
+import { notFound } from "next/navigation";
 
 // 🔥 LAZY LOADING AGRESSIVO - Todos componentes below-the-fold
 const FAQImovel = lazy(() => import("./componentes/FAQImovel").then(mod => ({ default: mod.FAQImovel })));
@@ -49,35 +47,6 @@ const GenericSkeleton = ({ className = "h-32" }) => (
   <div className={`animate-pulse bg-gray-200 rounded-lg ${className}`}></div>
 );
 
-// 🔥 FUNÇÃO PARA GERAR PRELOAD LINKS
-function generateResourceHints(imovel) {
-  const hints = [];
-  
-  // DNS prefetch para domínios de imagens
-  const imageDomains = [
-    'npi-imoveis.s3.sa-east-1.amazonaws.com',
-    'cdn.vistahost.com.br',
-    'd1988evaubdc7a.cloudfront.net',
-    'images.usenonstop.com.br'
-  ];
-  
-  imageDomains.forEach(domain => {
-    hints.push(
-      <link key={`dns-${domain}`} rel="dns-prefetch" href={`https://${domain}`} />
-    );
-  });
-  
-  // Preconnect para primeira imagem
-  if (imovel?.Foto?.[0]?.Foto) {
-    const imageUrl = new URL(imovel.Foto[0].Foto);
-    hints.push(
-      <link key="preconnect-img" rel="preconnect" href={`${imageUrl.protocol}//${imageUrl.hostname}`} />
-    );
-  }
-  
-  return hints;
-}
-
 function convertBrazilianDateToISO(brazilianDate, imovelData) {
   const possibleDateFields = [
     brazilianDate,
@@ -97,9 +66,7 @@ function convertBrazilianDateToISO(brazilianDate, imovelData) {
   }
   
   if (!workingDate) {
-    const currentDate = new Date();
-    console.log(`[DATE-CONVERT] ⚠️  Usando data atual como fallback: ${currentDate.toISOString()}`);
-    return currentDate.toISOString();
+    return new Date().toISOString();
   }
   
   try {
@@ -118,31 +85,23 @@ function convertBrazilianDateToISO(brazilianDate, imovelData) {
       );
       
       if (!isNaN(date.getTime())) {
-        console.log(`[DATE-CONVERT] ✅ Formato brasileiro convertido: ${date.toISOString()}`);
         return date.toISOString();
       }
     }
     
     const date = new Date(workingDate);
     if (!isNaN(date.getTime())) {
-      console.log(`[DATE-CONVERT] ✅ Parse direto: ${date.toISOString()}`);
       return date.toISOString();
     }
     
-    const fallbackDate = new Date();
-    console.log(`[DATE-CONVERT] ⚠️  Fallback para data atual: ${fallbackDate.toISOString()}`);
-    return fallbackDate.toISOString();
+    return new Date().toISOString();
     
   } catch (error) {
-    console.error(`[DATE-CONVERT] ❌ Erro na conversão:`, error);
-    const errorFallbackDate = new Date();
-    return errorFallbackDate.toISOString();
+    return new Date().toISOString();
   }
 }
 
 function getLCPOptimizedImageUrl(imovelFotos) {
-  console.log('🚀 [LCP-ULTRA] ========== PROCESSANDO IMAGEM LCP ==========');
-  
   try {
     let imageUrl = null;
     
@@ -195,23 +154,17 @@ function getLCPOptimizedImageUrl(imovelFotos) {
         imageUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://npiconsultoria.com.br'}${imageUrl}`;
       }
       
-      console.log('🚀 [LCP-ULTRA] ✅ URL otimizada para LCP:', imageUrl);
       return imageUrl;
     }
     
-    const fallbackUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://npiconsultoria.com.br'}/og-image.png`;
-    console.log('🚀 [LCP-ULTRA] ⚠️ Usando fallback:', fallbackUrl);
-    return fallbackUrl;
+    return `${process.env.NEXT_PUBLIC_SITE_URL || 'https://npiconsultoria.com.br'}/og-image.png`;
     
   } catch (error) {
-    console.error('🚀 [LCP-ULTRA] ❌ Erro:', error);
     return `${process.env.NEXT_PUBLIC_SITE_URL || 'https://npiconsultoria.com.br'}/og-image.png`;
   }
 }
 
 function getWhatsAppOptimizedImageUrl(imovelFotos) {
-  console.log('📱 [WHATSAPP-ULTRA] ========== PROCESSANDO IMAGEM ==========');
-  
   try {
     let finalImageUrl = null;
     
@@ -234,13 +187,11 @@ function getWhatsAppOptimizedImageUrl(imovelFotos) {
           for (const url of possibleUrls) {
             if (url && typeof url === 'string' && url.trim() !== '') {
               finalImageUrl = url.trim();
-              console.log(`📱 [WHATSAPP-ULTRA] ✅ URL encontrada em objeto[${i}]:`, finalImageUrl);
               break;
             }
           }
         } else if (foto && typeof foto === 'string' && foto.trim() !== '') {
           finalImageUrl = foto.trim();
-          console.log(`📱 [WHATSAPP-ULTRA] ✅ URL string direta[${i}]:`, finalImageUrl);
           break;
         }
         
@@ -283,11 +234,9 @@ function getWhatsAppOptimizedImageUrl(imovelFotos) {
       return finalImageUrl;
     }
     
-    const fallbackUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://npiconsultoria.com.br'}/og-image.png`;
-    return fallbackUrl;
+    return `${process.env.NEXT_PUBLIC_SITE_URL || 'https://npiconsultoria.com.br'}/og-image.png`;
     
   } catch (error) {
-    console.error('📱 [WHATSAPP-ULTRA] ❌ Erro geral:', error);
     return `${process.env.NEXT_PUBLIC_SITE_URL || 'https://npiconsultoria.com.br'}/og-image.png`;
   }
 }
@@ -522,9 +471,6 @@ export default async function ImovelPage({ params }) {
 
     return (
       <>
-        {/* 🔥 RESOURCE HINTS NO HEAD */}
-        {generateResourceHints(imovel)}
-        
         {/* 🚀 PRELOAD CRÍTICO DA IMAGEM LCP */}
         <link 
           rel="preload" 
@@ -532,6 +478,11 @@ export default async function ImovelPage({ params }) {
           as="image" 
           fetchpriority="high"
         />
+        
+        {/* 🔥 DNS PREFETCH PARA DOMÍNIOS DE IMAGENS */}
+        <link rel="dns-prefetch" href="//npi-imoveis.s3.sa-east-1.amazonaws.com" />
+        <link rel="dns-prefetch" href="//cdn.vistahost.com.br" />
+        <link rel="dns-prefetch" href="//d1988evaubdc7a.cloudfront.net" />
         
         {/* 🔥 STRUCTURED DATA */}
         <StructuredDataApartment
@@ -697,34 +648,6 @@ export default async function ImovelPage({ params }) {
             message={`Quero saber mais sobre o ${imovel.Empreendimento}, no bairro ${imovel.BairroComercial}, disponível na página do Imóvel: ${currentUrl}`}
           />
         </section>
-
-        {/* 🔥 SCRIPTS OTIMIZADOS - afterInteractive */}
-        <Script
-          id="performance-observer"
-          strategy="afterInteractive"
-          dangerouslySetInnerHTML={{
-            __html: `
-              if ('PerformanceObserver' in window) {
-                const observer = new PerformanceObserver((list) => {
-                  for (const entry of list.getEntries()) {
-                    if (entry.entryType === 'largest-contentful-paint') {
-                      console.log('LCP:', entry.startTime);
-                    }
-                    if (entry.entryType === 'layout-shift' && !entry.hadRecentInput) {
-                      console.log('CLS:', entry.value);
-                    }
-                  }
-                });
-                
-                try {
-                  observer.observe({entryTypes: ['largest-contentful-paint', 'layout-shift']});
-                } catch (e) {
-                  console.log('Performance Observer not supported');
-                }
-              }
-            `
-          }}
-        />
       </>
     );
   } catch (error) {
