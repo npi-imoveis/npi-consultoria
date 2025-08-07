@@ -6,7 +6,7 @@ const nextConfig = {
   experimental: {
     optimizePackageImports: ['lucide-react'],
     scrollRestoration: true,
-    optimizeCss: true,
+    // 🔧 REMOVIDO: optimizeCss (requer critters dependency)
     webVitalsAttribution: ['CLS', 'LCP', 'FID', 'FCP', 'TTFB'],
   },
   
