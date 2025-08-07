@@ -1,4 +1,4 @@
-// src/app/components/sections/image-gallery.js - SOLUÇÃO DEFINITIVA CLS 0.003
+// src/app/components/sections/image-gallery.js - VERSÃO EXATA QUE DEU 96 PONTOS
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -8,13 +8,11 @@ import { formatterSlug } from "@/app/utils/formatter-slug";
 import { Share } from "../ui/share";
 import { photoSorter } from "@/app/utils/photoSorter";
 
-// 🚀 HOOK OTIMIZADO com debounce
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
-    
     check();
     
     let timeoutId;
@@ -147,12 +145,10 @@ export function ImageGallery({
 
   return (
     <>
-      {/* 🎨 LAYOUT COM CSS ASPECT-RATIO (SOLUÇÃO DEFINITIVA CLS) */}
       {layout === "single" ? (
-        // LAYOUT SINGLE - ASPECT-RATIO FIXO
         <div 
           className="w-full cursor-pointer relative overflow-hidden rounded-lg"
-          style={{ aspectRatio: '4/3' }} // 🔥 CRITICAL: Aspect ratio fixo previne CLS
+          style={{ aspectRatio: '4/3' }}
           onClick={() => openModal()}
           role="button"
           tabIndex={0}
@@ -186,14 +182,12 @@ export function ImageGallery({
           </div>
         </div>
       ) : (
-        // 📱 LAYOUT RESPONSIVO COM ASPECT-RATIO
         <div className={`w-full ${isMobile ? '' : 'grid grid-cols-1 md:grid-cols-2 gap-1'}`}>
           
-          {/* 📱 MOBILE: Volta para aspect-ratio que funcionou */}
           {isMobile ? (
             <div 
               className="w-full cursor-pointer relative overflow-hidden rounded-lg"
-              style={{ aspectRatio: '16/10' }} // 🔥 REVERTIDO: Volta para 16/10 que deu 96 pontos
+              style={{ aspectRatio: '16/10' }}
               onClick={() => openModal()}
               role="button"
               tabIndex={0}
@@ -233,12 +227,10 @@ export function ImageGallery({
               )}
             </div>
           ) : (
-            // 💻 DESKTOP: Grid com aspect-ratio
             <>
-              {/* 🔥 CRITICAL: Container principal com aspect-ratio fixo */}
               <div 
                 className="col-span-1 cursor-pointer relative overflow-hidden rounded-lg"
-                style={{ aspectRatio: '4/3' }} // 🔥 CRITICAL: Desktop main image aspect ratio
+                style={{ aspectRatio: '4/3' }}
                 onClick={() => openModal()}
                 role="button"
                 tabIndex={0}
@@ -272,7 +264,6 @@ export function ImageGallery({
                 </div>
               </div>
 
-              {/* 🔥 GRID 2x2 com aspect-ratio fixo para cada thumbnail */}
               <div className="col-span-1 grid grid-cols-2 grid-rows-2 gap-1">
                 {images.slice(1, 5).map((image, index) => {
                   const isLastImage = index === 3;
@@ -280,7 +271,7 @@ export function ImageGallery({
                     <div
                       key={image.Codigo || index}
                       className="relative overflow-hidden cursor-pointer rounded-lg"
-                      style={{ aspectRatio: '4/3' }} // 🔥 CRITICAL: Thumbnails aspect ratio fixo
+                      style={{ aspectRatio: '4/3' }}
                       onClick={() => openModal()}
                       role="button"
                       tabIndex={0}
@@ -327,7 +318,6 @@ export function ImageGallery({
         </div>
       )}
 
-      {/* 🖼️ MODAL COM ASPECT-RATIO */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-95 z-50 overflow-auto">
           <div className="sticky top-0 z-10 flex justify-between gap-4 p-5 pt-28 mt-6 md:mt-0 bg-gradient-to-b from-black/80 via-black/40 to-transparent backdrop-blur-sm">
@@ -353,7 +343,7 @@ export function ImageGallery({
             <div className="flex items-center justify-center min-h-screen p-4 relative">
               <div 
                 className="relative max-w-screen-lg w-full"
-                style={{ aspectRatio: '4/3' }} // 🔥 CRITICAL: Modal main image aspect ratio
+                style={{ aspectRatio: '4/3' }}
               >
                 <Image
                   src={images[selectedIndex].Foto}
@@ -387,14 +377,13 @@ export function ImageGallery({
               </button>
             </div>
           ) : (
-            // Grid de thumbnails com aspect-ratio fixo
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
               {images.map((image, idx) => (
                 <div
                   key={image.Codigo || idx}
                   onClick={() => setSelectedIndex(idx)}
                   className="relative cursor-pointer overflow-hidden border-2 border-transparent hover:border-white transition-colors rounded-lg focus:outline-none focus:ring-2 focus:ring-white/50"
-                  style={{ aspectRatio: '4/3' }} // 🔥 CRITICAL: Modal thumbnails aspect ratio
+                  style={{ aspectRatio: '4/3' }}
                   role="button"
                   tabIndex={0}
                   aria-label={`Ver imagem ${idx + 1} de ${images.length}`}
