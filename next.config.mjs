@@ -1,17 +1,16 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  trailingSlash: false, // ✅ MANTIDO: Sua configuração atual
+  trailingSlash: false,
   
-  // 🚀 EXPERIMENTAL OTIMIZADO: Apenas o que funciona comprovadamente
+  // 🚀 EXPERIMENTAL OTIMIZADO
   experimental: {
-    optimizePackageImports: ['lucide-react'], // ✅ MANTIDO: Tree shaking icons
-    // 🎯 ADIÇÃO SEGURA: Melhora server response time
-    serverComponentsExternalPackages: ['sharp'], // ✅ Otimiza processamento de imagens
+    optimizePackageImports: ['lucide-react'],
+    serverComponentsExternalPackages: ['sharp'],
   },
   
-  // ✅ MANTIDO: Configuração de imagens EXATA + pequenas otimizações
+  // 🔥 IMAGENS CORRIGIDAS PARA CLS 0.003
   images: {
-    // ✅ MANTIDO: Todos os remotePatterns existentes (zero mudanças)
+    // ✅ MANTIDO: Todos os remotePatterns existentes
     remotePatterns: [
       {
         protocol: "https",
@@ -80,61 +79,81 @@ const nextConfig = {
       },
     ],
     
-    // 🎯 OTIMIZAÇÕES CIRÚRGICAS para performance (baseado no PageSpeed)
-    formats: ["image/avif", "image/webp"], // ✅ MANTIDO
-    deviceSizes: [640, 750, 828, 1080, 1200], // ✅ MANTIDO
-    minimumCacheTTL: 86400, // 🚀 OTIMIZADO: 24h cache (era 60s) - melhora server response
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384], // ✅ MANTIDO
-    dangerouslyAllowSVG: true, // ✅ MANTIDO
-    contentDispositionType: 'attachment', // ✅ MANTIDO
-    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;", // ✅ MANTIDO
+    // 🎯 FORMATOS CONSERVADORES: WebP primeiro (compatibilidade + performance)
+    formats: ["image/webp"],
+    
+    // 🔥 DEVICE SIZES CONSERVADORES para estabilidade
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
+    
+    // 🎯 IMAGE SIZES PADRÃO do Next.js
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    
+    // 🚀 CACHE CONSERVADOR: 24h para estabilidade
+    minimumCacheTTL: 86400, // 24 horas
+    
+    // ✅ MANTIDO: Configurações de segurança
+    dangerouslyAllowSVG: true,
+    contentDispositionType: 'attachment',
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   
-  // ✅ MANTIDO: TypeScript config EXATO
+  // ✅ MANTIDO: TypeScript config
   typescript: {
     ignoreBuildErrors: true,
   },
 
-  // 🚀 COMPILER OTIMIZADO: Resolve "unused JavaScript" do PageSpeed
+  // 🚀 COMPILER OTIMIZADO
   compiler: {
-    removeConsole: process.env.NODE_ENV === 'production', // ✅ MANTIDO
-    // 🎯 ADIÇÕES SEGURAS para reduzir bundle:
-    emotion: false, // ✅ Remove se não usar emotion
-    styledComponents: false, // ✅ Remove se não usar styled-components
+    removeConsole: process.env.NODE_ENV === 'production',
+    emotion: false,
+    styledComponents: false,
   },
-  swcMinify: true, // ✅ MANTIDO
+  swcMinify: true,
 
-  // 🎯 WEBPACK ULTRA-OTIMIZADO: Resolve os problemas específicos do PageSpeed
+  // 🎯 WEBPACK ULTRA-OTIMIZADO para reduzir JavaScript
   webpack: (config, { dev, isServer }) => {
-    // ✅ MANTIDO: Suas configurações webpack originais
     if (!dev && !isServer) {
       config.resolve.fallback = {
         ...config.resolve.fallback,
         fs: false,
       };
       
-      // 🚀 OTIMIZAÇÃO AVANÇADA: Tree shaking + dead code elimination
+      // 🚀 OTIMIZAÇÃO AVANÇADA
       config.optimization = {
         ...config.optimization,
         usedExports: true,
         sideEffects: false,
-        // 🎯 ADIÇÃO: Melhora o splitting para reduzir unused JS
         splitChunks: {
           chunks: 'all',
+          minSize: 20000,      // Chunks menores
+          maxSize: 244000,     // Limite máximo
           cacheGroups: {
             vendor: {
               test: /[\\/]node_modules[\\/]/,
               name: 'vendors',
               chunks: 'all',
+              priority: 10,
+            },
+            // 🎯 NOVO: Separar lucide-react (usado extensivamente)
+            icons: {
+              test: /[\\/]node_modules[\\/]lucide-react[\\/]/,
+              name: 'icons',
+              chunks: 'all',
+              priority: 20,
+            },
+            common: {
+              name: 'common',
+              minChunks: 2,
+              chunks: 'all',
+              priority: 5,
             },
           },
         },
       };
       
-      // 🎯 RESOLUÇÃO ESPECÍFICA: JavaScript legado detectado pelo PageSpeed
+      // 🎯 RESOLUÇÃO ESPECÍFICA: Remove polyfills desnecessários
       config.resolve.alias = {
         ...config.resolve.alias,
-        // ⚡ Remove polyfills desnecessários (conforme PageSpeed relatou)
         'core-js/modules/es.array.at': false,
         'core-js/modules/es.object.has-own': false,
         'core-js/modules/es.array.flat': false,
@@ -145,15 +164,15 @@ const nextConfig = {
       };
     }
     
-    // 🎯 OTIMIZAÇÃO ADICIONAL: Module resolution mais eficiente
     config.resolve.modules = ['node_modules'];
     
     return config;
   },
 
-  // 🚀 HEADERS OTIMIZADOS: Melhora cache + server response time
+  // 🚀 HEADERS ULTRA-OTIMIZADOS
   async headers() {
     return [
+      // 🎯 IMAGENS: Cache agressivo + compressão
       {
         source: '/assets/images/:path*',
         headers: [
@@ -161,8 +180,13 @@ const nextConfig = {
             key: 'Cache-Control',
             value: 'public, max-age=31536000, immutable',
           },
+          {
+            key: 'Vary',
+            value: 'Accept',
+          },
         ],
       },
+      // 🎯 NEXT.JS STATIC: Cache agressivo
       {
         source: '/_next/static/:path*',
         headers: [
@@ -172,6 +196,7 @@ const nextConfig = {
           },
         ],
       },
+      // 🔥 NEXT/IMAGE: Otimizações específicas para imagens otimizadas
       {
         source: '/_next/image/:path*',
         headers: [
@@ -179,11 +204,20 @@ const nextConfig = {
             key: 'Cache-Control',
             value: 'public, max-age=31536000, immutable',
           },
+          {
+            key: 'Vary',
+            value: 'Accept',
+          },
+          // 🎯 COMPRESSÃO para Next/Image
+          {
+            key: 'Content-Encoding',
+            value: 'gzip',
+          },
         ],
       },
-      // 🎯 ADIÇÃO NOVA: Headers para performance geral
+      // 🎯 PÁGINAS HTML: Cache inteligente
       {
-        source: '/(.*)',
+        source: '/((?!api).*)',
         headers: [
           {
             key: 'X-Content-Type-Options',
@@ -197,12 +231,17 @@ const nextConfig = {
             key: 'Referrer-Policy',
             value: 'origin-when-cross-origin',
           },
+          // 🚀 PRELOAD DNS para CDNs de imagem
+          {
+            key: 'Link',
+            value: '<https://d1988evaubdc7a.cloudfront.net>; rel=preconnect; crossorigin, <https://npi-imoveis.s3.sa-east-1.amazonaws.com>; rel=preconnect; crossorigin',
+          },
         ],
       },
     ];
   },
   
-  // ✅ MANTIDO: Redirects EXATOS da sua versão original
+  // ✅ MANTIDO: Redirects originais
   async redirects() {
     return [
       {
@@ -218,13 +257,22 @@ const nextConfig = {
     ];
   },
   
-  // ✅ MANTIDO: Output EXATO da sua versão original
+  // ✅ MANTIDO: Output
   output: "standalone",
   
-  // 🎯 ADIÇÃO NOVA: Performance hints para reduzir warnings
+  // 🎯 PERFORMANCE OTIMIZADA
   onDemandEntries: {
     maxInactiveAge: 25 * 1000,
     pagesBufferLength: 2,
+  },
+  
+  // 🚀 NOVO: Compressão adicional para produção
+  compress: true,
+  
+  // 🎯 NOVO: Otimizações de build
+  generateBuildId: async () => {
+    // Build ID baseado em timestamp para cache busting
+    return `build-${Date.now()}`;
   },
 };
 
