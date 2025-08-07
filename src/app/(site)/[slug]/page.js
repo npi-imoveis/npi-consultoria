@@ -465,14 +465,14 @@ export default async function CondominioPage({ params }) {
       <link rel="preconnect" href="https://img.youtube.com" />
 
       <section className="w-full bg-zinc-100 pb-10">
-        {/* Structured Data para o condomínio */}
+        {/* Structured Data para o condomínio - usando fotos otimizadas */}
         <StructuredDataApartment
           title={rawTitle}
           price={condominio.ValorAntigo ? `R$ ${condominio.ValorAntigo}` : "Consulte"}
           description={`${condominio.Categoria} à venda em ${condominio.BairroComercial}, ${condominio.Cidade}. ${rawTitle}: ${condominio.DormitoriosAntigo} quartos, ${condominio.SuiteAntigo} suítes, ${condominio.BanheiroSocialQtd} banheiros, ${condominio.VagasAntigo} vagas, ${condominio.MetragemAnt} m2. ${condominio.Situacao}. Valor: ${condominio.ValorAntigo ? `R$ ${condominio.ValorAntigo}` : "Consulte"}. ${condominio.TipoEndereco} ${condominio.Endereco}.`}
           address={`${condominio.TipoEndereco} ${condominio.Endereco} ${condominio.Numero}, ${condominio.BairroComercial}, ${condominio.Cidade}`}
           url={currentUrl}
-          image={fotosOtimizadas} {/* 🚀 USAR FOTOS OTIMIZADAS */}
+          image={fotosOtimizadas}
         />
 
         {/* 🎯 STRUCTURED DATA DO VÍDEO */}
