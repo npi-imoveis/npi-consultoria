@@ -1,4 +1,4 @@
-// src/app/components/sections/image-gallery.js - SOLUÇÃO DEFINITIVA CLS 0.003
+// src/app/components/sections/image-gallery.js - VERSÃO 95+ OTIMIZADA
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -8,19 +8,24 @@ import { formatterSlug } from "@/app/utils/formatter-slug";
 import { Share } from "../ui/share";
 import { photoSorter } from "@/app/utils/photoSorter";
 
-// 🚀 HOOK OTIMIZADO com debounce
+// 🚀 HOOK OTIMIZADO com debounce MELHORADO
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768);
+    const check = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (!isLoaded) setIsLoaded(true);
+    };
     
     check();
     
     let timeoutId;
     const debouncedCheck = () => {
       clearTimeout(timeoutId);
-      timeoutId = setTimeout(check, 150);
+      timeoutId = setTimeout(check, 100); // Reduzido de 150 para 100ms
     };
     
     window.addEventListener("resize", debouncedCheck, { passive: true });
@@ -28,9 +33,28 @@ function useIsMobile() {
       clearTimeout(timeoutId);
       window.removeEventListener("resize", debouncedCheck);
     };
-  }, []);
+  }, [isLoaded]);
 
-  return isMobile;
+  return { isMobile, isLoaded };
+}
+
+// 🔥 FUNÇÃO PARA GERAR BLUR DATA URL OTIMIZADA
+function generateBlurDataURL(width = 8, height = 6) {
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  
+  // Gradiente suave
+  const gradient = ctx.createLinearGradient(0, 0, width, height);
+  gradient.addColorStop(0, '#f0f0f0');
+  gradient.addColorStop(0.5, '#e0e0e0');
+  gradient.addColorStop(1, '#f0f0f0');
+  
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, width, height);
+  
+  return canvas.toDataURL('image/jpeg', 0.1);
 }
 
 export function ImageGallery({ 
@@ -43,7 +67,7 @@ export function ImageGallery({
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(null);
-  const isMobile = useIsMobile();
+  const { isMobile, isLoaded } = useIsMobile();
 
   const isImovelMode = !!imovel;
   
@@ -83,6 +107,8 @@ export function ImageGallery({
       return fotosOrdenadas.map((foto, index) => ({
         ...foto,
         Codigo: `${processedData.codigo}-foto-${index}`,
+        // 🔥 BLUR DATA URL GERADA
+        blurDataURL: generateBlurDataURL(),
       }));
 
     } catch (error) {
@@ -90,6 +116,7 @@ export function ImageGallery({
       return [...processedData.fotos].map((foto, index) => ({
         ...foto,
         Codigo: `${processedData.codigo}-foto-${index}`,
+        blurDataURL: generateBlurDataURL(),
       }));
     }
   }, [processedData]);
@@ -116,6 +143,25 @@ export function ImageGallery({
     }
   }, [selectedIndex, images.length]);
 
+  // 🔥 PRELOAD PRÓXIMAS IMAGENS (melhora navegação)
+  useEffect(() => {
+    if (selectedIndex !== null && images.length > 1) {
+      const nextIndex = (selectedIndex + 1) % images.length;
+      const prevIndex = (selectedIndex - 1 + images.length) % images.length;
+      
+      // Preload próximas 2 imagens
+      [images[nextIndex], images[prevIndex]].forEach(img => {
+        if (img?.Foto) {
+          const link = document.createElement('link');
+          link.rel = 'prefetch';
+          link.href = img.Foto;
+          link.as = 'image';
+          document.head.appendChild(link);
+        }
+      });
+    }
+  }, [selectedIndex, images]);
+
   useEffect(() => {
     if (!isModalOpen) return;
 
@@ -137,9 +183,22 @@ export function ImageGallery({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isModalOpen, closeModal, goPrev, goNext]);
 
+  // 🔥 SKELETON ENQUANTO CARREGA (previne CLS)
+  if (!isLoaded) {
+    return (
+      <div 
+        className="w-full relative bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 rounded-lg animate-pulse"
+        style={{ aspectRatio: isMobile ? '4/3' : '16/10' }}
+      >
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
+      </div>
+    );
+  }
+
   if (!processedData.titulo || images.length === 0) {
     return (
-      <div className="w-full h-[410px] relative bg-gray-200 flex items-center justify-center rounded-lg">
+      <div className="w-full relative bg-gray-200 flex items-center justify-center rounded-lg"
+           style={{ aspectRatio: '4/3' }}>
         <span className="text-gray-500">Imagem não disponível</span>
       </div>
     );
@@ -147,12 +206,10 @@ export function ImageGallery({
 
   return (
     <>
-      {/* 🎨 LAYOUT COM CSS ASPECT-RATIO (SOLUÇÃO DEFINITIVA CLS) */}
       {layout === "single" ? (
-        // LAYOUT SINGLE - ASPECT-RATIO FIXO
         <div 
           className="w-full cursor-pointer relative overflow-hidden rounded-lg"
-          style={{ aspectRatio: '4/3' }} // 🔥 CRITICAL: Aspect ratio fixo previne CLS
+          style={{ aspectRatio: '4/3' }}
           onClick={() => openModal()}
           role="button"
           tabIndex={0}
@@ -169,10 +226,16 @@ export function ImageGallery({
             alt={`${processedData.titulo} - foto principal`}
             title={processedData.titulo}
             fill
-            sizes="(max-width: 768px) 100vw, 800px"
+            // 🔥 SIZES ULTRA-OTIMIZADO
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 800px"
             className="object-cover transition-transform duration-300 ease-in-out hover:scale-105"
             loading="eager"
             priority={true}
+            // 🔥 FETCH PRIORITY PARA LCP
+            fetchPriority="high"
+            placeholder="blur"
+            blurDataURL={images[0].blurDataURL}
+            quality={85} // Aumentado para imagem principal
           />
 
           {images[0].Destaque === "Sim" && (
@@ -186,14 +249,12 @@ export function ImageGallery({
           </div>
         </div>
       ) : (
-        // 📱 LAYOUT RESPONSIVO COM ASPECT-RATIO
         <div className={`w-full ${isMobile ? '' : 'grid grid-cols-1 md:grid-cols-2 gap-1'}`}>
           
-          {/* 📱 MOBILE: Aspect-ratio maior para fotos mais destacadas */}
           {isMobile ? (
             <div 
               className="w-full cursor-pointer relative overflow-hidden rounded-lg"
-              style={{ aspectRatio: '4/3' }} // 🔥 MOBILE MAIOR: Mudou de 16/10 para 4/3 (mais quadrado)
+              style={{ aspectRatio: '4/3' }}
               onClick={() => openModal()}
               role="button"
               tabIndex={0}
@@ -210,10 +271,15 @@ export function ImageGallery({
                 alt={`${processedData.titulo} - foto principal`}
                 title={processedData.titulo}
                 fill
+                // 🔥 SIZES MOBILE OTIMIZADO
                 sizes="100vw"
                 className="object-cover transition-transform duration-300 ease-in-out hover:scale-105"
                 loading="eager"
                 priority={true}
+                fetchPriority="high"
+                placeholder="blur"
+                blurDataURL={images[0].blurDataURL}
+                quality={85}
               />
 
               {images[0].Destaque === "Sim" && (
@@ -233,12 +299,10 @@ export function ImageGallery({
               )}
             </div>
           ) : (
-            // 💻 DESKTOP: Grid com aspect-ratio
             <>
-              {/* 🔥 CRITICAL: Container principal com aspect-ratio fixo */}
               <div 
                 className="col-span-1 cursor-pointer relative overflow-hidden rounded-lg"
-                style={{ aspectRatio: '4/3' }} // 🔥 CRITICAL: Desktop main image aspect ratio
+                style={{ aspectRatio: '4/3' }}
                 onClick={() => openModal()}
                 role="button"
                 tabIndex={0}
@@ -255,10 +319,15 @@ export function ImageGallery({
                   alt={`${processedData.titulo} - foto principal`}
                   title={processedData.titulo}
                   fill
+                  // 🔥 SIZES DESKTOP OTIMIZADO
                   sizes="(max-width: 768px) 100vw, 50vw"
                   className="object-cover transition-transform duration-300 ease-in-out hover:scale-110"
                   loading="eager"
                   priority={true}
+                  fetchPriority="high"
+                  placeholder="blur"
+                  blurDataURL={images[0].blurDataURL}
+                  quality={85}
                 />
 
                 {images[0].Destaque === "Sim" && (
@@ -272,7 +341,6 @@ export function ImageGallery({
                 </div>
               </div>
 
-              {/* 🔥 GRID 2x2 com aspect-ratio fixo para cada thumbnail */}
               <div className="col-span-1 grid grid-cols-2 grid-rows-2 gap-1">
                 {images.slice(1, 5).map((image, index) => {
                   const isLastImage = index === 3;
@@ -280,7 +348,7 @@ export function ImageGallery({
                     <div
                       key={image.Codigo || index}
                       className="relative overflow-hidden cursor-pointer rounded-lg"
-                      style={{ aspectRatio: '4/3' }} // 🔥 CRITICAL: Thumbnails aspect ratio fixo
+                      style={{ aspectRatio: '4/3' }}
                       onClick={() => openModal()}
                       role="button"
                       tabIndex={0}
@@ -297,9 +365,13 @@ export function ImageGallery({
                         alt={`${processedData.titulo} - imagem ${index + 2}`}
                         title={`${processedData.titulo} - imagem ${index + 2}`}
                         fill
+                        // 🔥 SIZES THUMBNAILS OTIMIZADO
                         sizes="(max-width: 768px) 50vw, 25vw"
                         className="object-cover transition-transform duration-300 ease-in-out hover:scale-110"
                         loading="lazy"
+                        placeholder="blur"
+                        blurDataURL={image.blurDataURL}
+                        quality={75} // Menor para thumbnails
                       />
                       
                       {image.Destaque === "Sim" && (
@@ -327,7 +399,7 @@ export function ImageGallery({
         </div>
       )}
 
-      {/* 🖼️ MODAL COM ASPECT-RATIO */}
+      {/* MODAL OTIMIZADO */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-95 z-50 overflow-auto">
           <div className="sticky top-0 z-10 flex justify-between gap-4 p-5 pt-28 mt-6 md:mt-0 bg-gradient-to-b from-black/80 via-black/40 to-transparent backdrop-blur-sm">
@@ -353,7 +425,7 @@ export function ImageGallery({
             <div className="flex items-center justify-center min-h-screen p-4 relative">
               <div 
                 className="relative max-w-screen-lg w-full"
-                style={{ aspectRatio: '4/3' }} // 🔥 CRITICAL: Modal main image aspect ratio
+                style={{ aspectRatio: '4/3' }}
               >
                 <Image
                   src={images[selectedIndex].Foto}
@@ -363,6 +435,9 @@ export function ImageGallery({
                   sizes="100vw"
                   className="object-contain"
                   loading="eager"
+                  placeholder="blur"
+                  blurDataURL={images[selectedIndex].blurDataURL}
+                  quality={90} // Alta qualidade no modal
                 />
               </div>
 
@@ -387,14 +462,13 @@ export function ImageGallery({
               </button>
             </div>
           ) : (
-            // Grid de thumbnails com aspect-ratio fixo
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
               {images.map((image, idx) => (
                 <div
                   key={image.Codigo || idx}
                   onClick={() => setSelectedIndex(idx)}
                   className="relative cursor-pointer overflow-hidden border-2 border-transparent hover:border-white transition-colors rounded-lg focus:outline-none focus:ring-2 focus:ring-white/50"
-                  style={{ aspectRatio: '4/3' }} // 🔥 CRITICAL: Modal thumbnails aspect ratio
+                  style={{ aspectRatio: '4/3' }}
                   role="button"
                   tabIndex={0}
                   aria-label={`Ver imagem ${idx + 1} de ${images.length}`}
@@ -413,6 +487,9 @@ export function ImageGallery({
                     sizes="(max-width: 768px) 50vw, 25vw"
                     className="object-cover"
                     loading="lazy"
+                    placeholder="blur"
+                    blurDataURL={image.blurDataURL}
+                    quality={70} // Baixa para thumbnails do modal
                   />
                   
                   <div className="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
@@ -430,6 +507,17 @@ export function ImageGallery({
           )}
         </div>
       )}
+      
+      {/* 🔥 CSS PARA SHIMMER ANIMATION */}
+      <style jsx>{`
+        @keyframes shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+        .animate-shimmer {
+          animation: shimmer 2s infinite;
+        }
+      `}</style>
     </>
   );
 }
