@@ -27,9 +27,6 @@ const nextConfig = {
     // 🚀 CACHE AGRESSIVO (1 dia em produção)
     minimumCacheTTL: 86400,
     
-    // 🔥 QUALIDADE OTIMIZADA (default 75 -> 80 para LCP)
-    quality: 80,
-    
     // ✅ MANTIDOS: Todos os remotePatterns existentes
     remotePatterns: [
       {
