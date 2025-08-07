@@ -154,7 +154,7 @@ export function ImageGallery({
 
   if (!processedData.titulo || images.length === 0) {
     return (
-      <div className="w-full h-[520px] relative">
+      <div className="w-full h-[440px] relative">
         <div className="w-full h-full overflow-hidden bg-gray-200 flex items-center justify-center rounded-lg">
           <span className="text-gray-500">Imagem não disponível</span>
         </div>
@@ -166,10 +166,9 @@ export function ImageGallery({
     <>
       {/* 🎨 LAYOUT OTIMIZADO COM FOTOS MAIORES */}
       {layout === "single" ? (
-        // LAYOUT SINGLE - MAIOR
+        // LAYOUT SINGLE
         <div 
-          className="w-full h-full min-h-[400px] md:min-h-[480px] cursor-pointer relative overflow-hidden rounded-lg" 
-          style={{ aspectRatio: '4/3' }}
+          className="w-full h-full cursor-pointer relative overflow-hidden rounded-lg"
           onClick={() => openModal()}
           role="button"
           tabIndex={0}
@@ -214,8 +213,7 @@ export function ImageGallery({
           {/* 📱 MOBILE: Foto principal MAIOR */}
           {isMobile ? (
             <div 
-              className="w-full h-[60vh] sm:h-[65vh] md:h-[70vh] min-h-[380px] max-h-[680px] cursor-pointer relative overflow-hidden rounded-lg" 
-              style={{ aspectRatio: '16/10' }}
+              className="w-full h-[75vh] sm:h-[70vh] min-h-[320px] max-h-[480px] cursor-pointer relative overflow-hidden rounded-lg"
               onClick={() => openModal()}
               role="button"
               tabIndex={0}
@@ -238,7 +236,7 @@ export function ImageGallery({
                 loading="eager"
                 priority={true}
                 fetchPriority="high"
-                quality={75}
+                quality={70}
                 className="object-cover transition-transform duration-300 ease-in-out hover:scale-105"
               />
 
@@ -263,8 +261,7 @@ export function ImageGallery({
             // 💻 DESKTOP: Layout grid MAIOR
             <>
               <div 
-                className="col-span-1 h-[520px] cursor-pointer relative" 
-                style={{ aspectRatio: '4/3' }}
+                className="col-span-1 h-[440px] cursor-pointer relative"
                 onClick={() => openModal()}
                 role="button"
                 tabIndex={0}
@@ -281,15 +278,15 @@ export function ImageGallery({
                     src={images[0].Foto}
                     alt={`${processedData.titulo} - foto principal`}
                     title={processedData.titulo}
-                    width={900}
-                    height={675}
+                    width={820}
+                    height={615}
                     sizes="(max-width: 768px) 100vw, 50vw"
                     placeholder="blur"
                     blurDataURL="data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="
                     loading="eager"
                     priority={true}
                     fetchPriority="high"
-                    quality={75}
+                    quality={70}
                     className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
                   />
                 </div>
@@ -307,14 +304,13 @@ export function ImageGallery({
               </div>
 
               {/* GRID 2x2 MAIOR */}
-              <div className="col-span-1 grid grid-cols-2 grid-rows-2 gap-1 h-[520px]">
+              <div className="col-span-1 grid grid-cols-2 grid-rows-2 gap-1 h-[440px]">
                 {images.slice(1, 5).map((image, index) => {
                   const isLastImage = index === 3;
                   return (
                     <div
                       key={image.Codigo || index}
                       className="relative h-full overflow-hidden cursor-pointer rounded-lg"
-                      style={{ aspectRatio: '4/3' }}
                       onClick={() => openModal()}
                       role="button"
                       tabIndex={0}
@@ -330,14 +326,14 @@ export function ImageGallery({
                         src={image.Foto}
                         alt={`${processedData.titulo} - imagem ${index + 2}`}
                         title={`${processedData.titulo} - imagem ${index + 2}`}
-                        width={450}
-                        height={338}
+                        width={420}
+                        height={315}
                         sizes="(max-width: 768px) 50vw, 25vw"
                         placeholder="blur"
                         blurDataURL={image.blurDataURL || "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="}
                         loading="lazy"
                         priority={false}
-                        quality={70}
+                        quality={60}
                         className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
                       />
                       
@@ -396,13 +392,13 @@ export function ImageGallery({
                 src={images[selectedIndex].Foto}
                 alt={`${processedData.titulo} - imagem ${selectedIndex + 1} de ${images.length}`}
                 title={`${processedData.titulo} - imagem ${selectedIndex + 1} de ${images.length}`}
-                width={1400}
-                height={1050}
+                width={1250}
+                height={850}
                 sizes="100vw"
                 placeholder="blur"
                 blurDataURL={images[selectedIndex].blurDataURL || "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="}
                 loading="eager"
-                quality={85}
+                quality={80}
                 className="max-w-full max-h-screen object-contain"
               />
 
@@ -436,7 +432,6 @@ export function ImageGallery({
                   key={image.Codigo || idx}
                   onClick={() => setSelectedIndex(idx)}
                   className="relative w-full h-48 sm:h-56 md:h-64 lg:h-72 xl:h-80 cursor-pointer overflow-hidden border-2 border-transparent hover:border-white transition-colors rounded-lg focus:outline-none focus:ring-2 focus:ring-white/50"
-                  style={{ aspectRatio: '4/3' }}
                   role="button"
                   tabIndex={0}
                   aria-label={`Ver imagem ${idx + 1} de ${images.length}`}
