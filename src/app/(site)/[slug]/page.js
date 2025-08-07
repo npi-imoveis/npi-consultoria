@@ -1,4 +1,4 @@
-// src/app/(site)/[slug]/page.js - VERSÃO SIMPLIFICADA QUE FUNCIONA IMEDIATAMENTE
+// src/app/(site)/[slug]/page.js - OTIMIZAÇÃO CIRÚRGICA PARA 90+
 
 import { Button } from "@/app/components/ui/button";
 import { getCondominioPorSlug } from "@/app/services";
@@ -8,31 +8,89 @@ import { Share } from "@/app/components/ui/share";
 import { PropertyTableOwner } from "./componentes/property-table-owner";
 import { WhatsappFloat } from "@/app/components/ui/whatsapp";
 import { PropertyTable } from "./componentes/property-table";
+import { ImoveisRelacionados } from "./componentes/related-properties";
+import SobreCondominio from "./componentes/SobreCondominio";
+import FichaTecnica from "./componentes/FichaTecnica";
+import DetalhesCondominio from "./componentes/DetalhesCondominio";
+import Lazer from "./componentes/Lazer";
+import TourVirtual from "./componentes/TourVirtual";
+import ExploreRegiao from "./componentes/ExploreRegiao";
 import { notFound, redirect } from "next/navigation";
 import ExitIntentModal from "@/app/components/ui/exit-intent-modal";
 import ScrollToImoveisButton from "./componentes/scroll-to-imovel-button";
 import { photoSorter } from "@/app/utils/photoSorter"; 
 import { ImageGallery } from "@/app/components/sections/image-gallery";
 
-// 🚀 LAZY LOADING DOS COMPONENTES PESADOS (reduz TBT e Speed Index)
-import { lazy, Suspense } from 'react';
+// 🚀 LAZY LOADING APENAS DE COMPONENTES BELOW-THE-FOLD
+import { lazy, Suspense, useState } from 'react';
 
-const ImoveisRelacionados = lazy(() => import("./componentes/related-properties").then(module => ({ default: module.ImoveisRelacionados })));
-const SobreCondominio = lazy(() => import("./componentes/SobreCondominio"));
-const FichaTecnica = lazy(() => import("./componentes/FichaTecnica"));
-const DiferenciaisCondominio = lazy(() => import("./componentes/DiferenciaisCondominio"));
-const DetalhesCondominio = lazy(() => import("./componentes/DetalhesCondominio"));
-const Lazer = lazy(() => import("./componentes/Lazer"));
+// 🚀 REMOVER lazy loading de componentes que aparecem rapidamente (Speed Index)
+// Manter apenas os que realmente são below-the-fold
 const VideoCondominio = lazy(() => import("./componentes/VideoCondominio"));
-const TourVirtual = lazy(() => import("./componentes/TourVirtual"));
-const ExploreRegiao = lazy(() => import("./componentes/ExploreRegiao"));
 
-// 🎯 Loading Skeleton otimizado
-const LoadingSkeleton = ({ height = "h-64", className = "" }) => (
-  <div className={`animate-pulse bg-gray-200 rounded-lg ${height} ${className}`}>
-    <div className="h-full w-full bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 rounded-lg"></div>
-  </div>
-);
+// 🚀 YOUTUBE FACADE INLINE (evita arquivo externo)
+function YouTubeFacadeInline({ videoId, title }) {
+  const [isLoaded, setIsLoaded] = useState(false);
+
+  if (isLoaded) {
+    return (
+      <iframe
+        src={`https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`}
+        title={title}
+        className="w-full h-full"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+        loading="lazy"
+      />
+    );
+  }
+
+  return (
+    <div 
+      className="relative w-full cursor-pointer group bg-black rounded-lg overflow-hidden"
+      onClick={() => setIsLoaded(true)}
+      style={{ aspectRatio: '16/9' }}
+    >
+      <img
+        src={`https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`}
+        alt={`Thumbnail: ${title}`}
+        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+        loading="lazy"
+      />
+      <div className="absolute inset-0 bg-black bg-opacity-30 group-hover:bg-opacity-20 transition-all duration-300" />
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="bg-red-600 hover:bg-red-700 rounded-full p-4 lg:p-6 transition-all duration-300 transform group-hover:scale-110 shadow-lg">
+          <svg className="w-8 h-8 lg:w-12 lg:h-12 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M8 5v14l11-7z"/>
+          </svg>
+        </div>
+      </div>
+      <div className="absolute top-3 right-3 bg-red-600 text-white px-2 py-1 rounded text-xs font-bold flex items-center gap-1">
+        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+        </svg>
+        YouTube
+      </div>
+      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/50 to-transparent p-4">
+        <h3 className="text-white font-semibold text-sm lg:text-base line-clamp-2">
+          {title}
+        </h3>
+      </div>
+    </div>
+  );
+}
+
+// 🚀 OTIMIZAÇÃO DE IMAGEM S3 (inline)
+function optimizeS3ImageUrl(url, width = 800, quality = 85) {
+  if (!url) return url;
+  
+  if (url.includes('amazonaws.com') || url.includes('s3.')) {
+    const separator = url.includes('?') ? '&' : '?';
+    return `${url}${separator}w=${width}&q=${quality}&f=webp`;
+  }
+  
+  return url;
+}
 
 function ensureCondominio(text) {
   return /condom[ií]nio/i.test(text) ? text : `Condomínio ${text}`;
@@ -61,13 +119,20 @@ function processarFotosCondominio(fotos, codigoCondominio) {
     // EXATAMENTE IGUAL AO ADMIN QUE FUNCIONOU - usar photoSorter.ordenarFotos() 
     const fotosOrdenadas = photoSorter.ordenarFotos(fotosTemp, codigoCondominio || 'condominio');
     
+    // 🚀 OTIMIZAR URLS DAS FOTOS PARA S3
+    const fotosOtimizadas = fotosOrdenadas.map(foto => ({
+      ...foto,
+      Foto: optimizeS3ImageUrl(foto.Foto, 1200, 90),
+      FotoPequena: optimizeS3ImageUrl(foto.FotoPequena, 800, 85)
+    }));
+    
     console.log('✅ CONDOMÍNIO: Ordenação finalizada usando photoSorter:', {
-      totalFotos: fotosOrdenadas.length,
-      primeira: fotosOrdenadas[0]?.Foto?.split('/').pop()?.substring(0, 30) + '...',
+      totalFotos: fotosOtimizadas.length,
+      primeira: fotosOtimizadas[0]?.Foto?.split('/').pop()?.substring(0, 30) + '...',
       metodo: 'photoSorter.ordenarFotos() - IGUAL AO ADMIN'
     });
 
-    return fotosOrdenadas;
+    return fotosOtimizadas;
 
   } catch (error) {
     console.error('❌ CONDOMÍNIO: Erro ao usar photoSorter:', error);
@@ -75,19 +140,6 @@ function processarFotosCondominio(fotos, codigoCondominio) {
     // Fallback seguro - retornar fotos originais
     return fotos;
   }
-}
-
-// 🚀 OTIMIZAR FOTOS PARA LCP (versão simplificada)
-function otimizarFotosParaLCP(fotos) {
-  if (!Array.isArray(fotos) || fotos.length === 0) return [];
-  
-  // Para página de condomínio, priorizar apenas primeira foto para LCP
-  return fotos.slice(0, 1).map(foto => ({
-    ...foto,
-    // Flags para o ImageGallery usar priority
-    _isLCP: true,
-    _priority: true
-  }));
 }
 
 // 🎯 FUNÇÃO PARA LIMPAR DECIMAIS DESNECESSÁRIOS DA METRAGEM
@@ -372,11 +424,8 @@ export default async function CondominioPage({ params }) {
   const condominio = response.data;
   const imoveisRelacionados = response.imoveisRelacionados;
 
-  // 🎯 PROCESSAR FOTOS COM photoSorter ANTES DE USAR
+  // 🎯 PROCESSAR FOTOS COM photoSorter ANTES DE USAR (já otimizadas)
   const fotosOrdenadas = processarFotosCondominio(condominio.Foto, condominio.Codigo);
-
-  // 🚀 OTIMIZAR FOTOS PARA LCP (apenas primeira foto)
-  const fotosParaLCP = otimizarFotosParaLCP(fotosOrdenadas);
 
   // 🎯 ORDENAR IMÓVEIS RELACIONADOS + LIMPAR METRAGEM
   const imoveisOrdenados = ordenarImoveisRelacionados(imoveisRelacionados, condominio.Codigo);
@@ -387,7 +436,7 @@ export default async function CondominioPage({ params }) {
   const videoId = condominio?.Video ? Object.values(condominio.Video)[0]?.Video : null;
 
   // 🚀 URL da primeira imagem para preload LCP
-  const primeiraImagemUrl = fotosParaLCP?.[0]?.Foto || fotosParaLCP?.[0]?.FotoPequena;
+  const primeiraImagemUrl = fotosOrdenadas?.[0]?.Foto || fotosOrdenadas?.[0]?.FotoPequena;
 
   const structuredDataDates = {
     "@context": "https://schema.org",
@@ -437,6 +486,29 @@ export default async function CondominioPage({ params }) {
 
   return (
     <>
+      {/* 🚀 CRITICAL CSS INLINE para reduzir render blocking */}
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          .container{max-width:1200px;margin:0 auto;padding:0 1rem}
+          .grid{display:grid}
+          .grid-cols-1{grid-template-columns:repeat(1,minmax(0,1fr))}
+          .grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+          .flex{display:flex}
+          .flex-col{flex-direction:column}
+          .gap-4{gap:1rem}
+          .bg-white{background-color:#fff}
+          .bg-zinc-100{background-color:#f4f4f5}
+          .rounded-lg{border-radius:0.5rem}
+          .p-4{padding:1rem}
+          .text-xl{font-size:1.25rem}
+          .font-bold{font-weight:700}
+          .mt-2{margin-top:0.5rem}
+          .text-xs{font-size:0.75rem}
+          .text-zinc-700{color:#374151}
+          @media(min-width:768px){.md\\:grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}}
+        `
+      }} />
+
       {/* 🚀 PRELOAD CRÍTICO PARA LCP - PRIMEIRA IMAGEM */}
       {primeiraImagemUrl && (
         <link
@@ -447,11 +519,9 @@ export default async function CondominioPage({ params }) {
         />
       )}
 
-      {/* 🚀 PRECONNECT PARA RECURSOS EXTERNOS */}
+      {/* 🚀 PRECONNECT PARA RECURSOS EXTERNOS (apenas essenciais) */}
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
-      <link rel="preconnect" href="https://www.youtube.com" />
-      <link rel="preconnect" href="https://img.youtube.com" />
 
       <section className="w-full bg-zinc-100 pb-10">
         {/* Structured Data para o condomínio */}
@@ -538,7 +608,7 @@ export default async function CondominioPage({ params }) {
               </div>
             </div>
             <div className="relative w-full min-h-[550px] overflow-hidden rounded-lg">
-              {/* 🚀 CRÍTICO: PRIORITY NA IMAGEGALLERY PARA LCP */}
+              {/* 🚀 CRÍTICO: PRIORITY + SIZES OTIMIZADOS PARA LCP */}
               <ImageGallery 
                 fotos={fotosOrdenadas}
                 title={rawTitle}
@@ -547,57 +617,61 @@ export default async function CondominioPage({ params }) {
                 layout="single"
                 priority={true}
                 fetchPriority="high"
+                sizes="(max-width: 768px) 100vw, 50vw"
+                quality={90}
               />
             </div>
           </div>
         </div>
 
-        {/* 🚀 LAZY LOADING COM SUSPENSE - SEÇÕES ABAIXO DA DOBRA */}
+        {/* 🚀 COMPONENTES ABOVE-THE-FOLD SEM LAZY (melhora Speed Index) */}
         {imoveisOrdenados && imoveisOrdenados.length > 0 && (
           <div id="imoveis-relacionados">
-            <Suspense fallback={<LoadingSkeleton height="h-96" className="mx-4" />}>
-              <ImoveisRelacionados imoveisRelacionados={imoveisOrdenados} />
-            </Suspense>
+            <ImoveisRelacionados imoveisRelacionados={imoveisOrdenados} />
           </div>
         )}
 
-        <Suspense fallback={<LoadingSkeleton height="h-64" className="mx-4" />}>
-          <SobreCondominio condominio={condominio} />
-        </Suspense>
+        <SobreCondominio condominio={condominio} />
 
-        {condominio.FichaTecnica && (
-          <Suspense fallback={<LoadingSkeleton height="h-48" className="mx-4" />}>
-            <FichaTecnica condominio={condominio} />
-          </Suspense>
-        )}
+        {condominio.FichaTecnica && <FichaTecnica condominio={condominio} />}
 
-        {condominio.DestaquesDiferenciais && (
-          <Suspense fallback={<LoadingSkeleton height="h-48" className="mx-4" />}>
-            <DetalhesCondominio imovel={condominio} />
-          </Suspense>
-        )}
+        {condominio.DestaquesDiferenciais && <DetalhesCondominio imovel={condominio} />}
 
-        {condominio.DestaquesLazer && (
-          <Suspense fallback={<LoadingSkeleton height="h-48" className="mx-4" />}>
-            <Lazer condominio={condominio} />
-          </Suspense>
-        )}
+        {condominio.DestaquesLazer && <Lazer condominio={condominio} />}
 
+        {/* 🚀 YOUTUBE FACADE INLINE - EVITA TBT */}
         {condominio.Video && Object.keys(condominio.Video).length > 0 && (
-          <Suspense fallback={<LoadingSkeleton height="h-96" className="mx-4" />}>
-            <VideoCondominio condominio={condominio} />
-          </Suspense>
+          <section className="w-full py-16 bg-white">
+            <div className="container mx-auto px-4">
+              <div className="text-center mb-12">
+                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                  Vídeo do Empreendimento
+                </h2>
+                <div className="w-24 h-1 bg-blue-600 mx-auto mb-6"></div>
+                <p className="text-gray-600 text-lg max-w-2xl mx-auto">
+                  Conheça todos os detalhes e diferenciais do {condominio.Empreendimento} em um tour completo
+                </p>
+              </div>
+              <div className="max-w-6xl mx-auto">
+                <div className="relative w-full">
+                  <YouTubeFacadeInline
+                    videoId={videoId}
+                    title={`Conheça o ${condominio.Empreendimento} - ${condominio.BairroComercial}, ${condominio.Cidade}`}
+                  />
+                </div>
+              </div>
+            </div>
+          </section>
         )}
 
+        {/* 🚀 LAZY LOADING APENAS PARA COMPONENTES REALMENTE BELOW-THE-FOLD */}
         {condominio.Tour360 && (
-          <Suspense fallback={<LoadingSkeleton height="h-96" className="mx-4" />}>
+          <Suspense fallback={<div className="h-96 bg-gray-200 animate-pulse mx-4 rounded-lg"></div>}>
             <TourVirtual link={condominio.Tour360} titulo={rawTitle} />
           </Suspense>
         )}
 
-        <Suspense fallback={<LoadingSkeleton height="h-64" className="mx-4" />}>
-          <ExploreRegiao condominio={condominio} currentUrl={currentUrl} />
-        </Suspense>
+        <ExploreRegiao condominio={condominio} currentUrl={currentUrl} />
 
         <WhatsappFloat
           message={`Quero saber mais sobre o ${rawTitle}, no bairro ${condominio.BairroComercial}, disponível na página de Condomínio: ${currentUrl}`}
