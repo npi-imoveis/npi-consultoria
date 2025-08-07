@@ -189,11 +189,11 @@ export function ImageGallery({
         // 📱 LAYOUT RESPONSIVO COM ASPECT-RATIO
         <div className={`w-full ${isMobile ? '' : 'grid grid-cols-1 md:grid-cols-2 gap-1'}`}>
           
-          {/* 📱 MOBILE: Aspect-ratio fixo */}
+          {/* 📱 MOBILE: Aspect-ratio maior para fotos mais destacadas */}
           {isMobile ? (
             <div 
               className="w-full cursor-pointer relative overflow-hidden rounded-lg"
-              style={{ aspectRatio: '16/10' }} // 🔥 CRITICAL: Mobile aspect ratio fixo
+              style={{ aspectRatio: '4/3' }} // 🔥 MOBILE MAIOR: Mudou de 16/10 para 4/3 (mais quadrado)
               onClick={() => openModal()}
               role="button"
               tabIndex={0}
