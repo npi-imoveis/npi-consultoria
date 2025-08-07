@@ -2,31 +2,14 @@
 const nextConfig = {
   trailingSlash: false,
   
-  // 🚀 EXPERIMENTAL FEATURES PARA PERFORMANCE
+  // 🚀 EXPERIMENTAL CONSERVADOR
   experimental: {
     optimizePackageImports: ['lucide-react'],
-    scrollRestoration: true,
-    webVitalsAttribution: ['CLS', 'LCP', 'FID', 'FCP', 'TTFB'],
   },
   
-  // 🔥 COMPRESSÃO AUTOMÁTICA
-  compress: true,
-  
-  // 🎯 IMAGENS ULTRA-OTIMIZADAS
+  // 🔥 IMAGENS CONFIGURAÇÃO ESTÁVEL PARA CLS 0.003
   images: {
-    // ✅ FORMATOS MODERNOS (WebP + AVIF = -30% tamanho)
-    formats: ["image/avif", "image/webp"],
-    
-    // 🔥 DEVICE SIZES OTIMIZADOS (reduz variações desnecessárias)
-    deviceSizes: [640, 828, 1200, 1920],
-    
-    // 🎯 IMAGE SIZES FOCADOS (apenas os necessários)
-    imageSizes: [16, 32, 64, 128, 256],
-    
-    // 🚀 CACHE AGRESSIVO (1 dia em produção)
-    minimumCacheTTL: 86400,
-    
-    // ✅ MANTIDOS: Todos os remotePatterns existentes
+    // ✅ MANTIDO: Todos os remotePatterns existentes
     remotePatterns: [
       {
         protocol: "https",
@@ -95,50 +78,38 @@ const nextConfig = {
       },
     ],
     
+    // 🎯 FORMATOS PADRÃO Next.js (estabilidade garantida)
+    formats: ["image/webp"],
+    
+    // 🔥 DEVICE SIZES PADRÃO Next.js
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
+    
+    // 🎯 IMAGE SIZES PADRÃO Next.js
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    
+    // 🚀 CACHE PADRÃO Next.js
+    minimumCacheTTL: 60,
+    
+    // ✅ MANTIDO: Configurações de segurança
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   
+  // ✅ MANTIDO: TypeScript config
   typescript: {
     ignoreBuildErrors: true,
   },
-  
-  // 🔥 COMPILER AGRESSIVO
+
+  // 🚀 COMPILER PADRÃO
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production',
-    styledComponents: false,
   },
   swcMinify: true,
-  
-  // 🚀 WEBPACK ULTRA-OTIMIZADO
+
+  // 🎯 WEBPACK CONSERVADOR
   webpack: (config, { dev, isServer }) => {
     if (!dev && !isServer) {
-      // 🔥 SPLIT CHUNKS OTIMIZADO
-      config.optimization.splitChunks = {
-        ...config.optimization.splitChunks,
-        cacheGroups: {
-          default: {
-            minChunks: 2,
-            priority: -20,
-            reuseExistingChunk: true,
-          },
-          vendor: {
-            test: /[\\/]node_modules[\\/]/,
-            name: 'vendors',
-            chunks: 'all',
-            priority: 10,
-          },
-          // 🎯 CHUNK ESPECÍFICO PARA LUCIDE (muito usado)
-          lucide: {
-            test: /[\\/]node_modules[\\/]lucide-react[\\/]/,
-            name: 'lucide',
-            chunks: 'all',
-            priority: 20,
-          },
-        },
-      };
-      
       config.resolve.fallback = {
         ...config.resolve.fallback,
         fs: false,
@@ -147,38 +118,11 @@ const nextConfig = {
     
     return config;
   },
-  
-  // 🔥 HEADERS ULTRA-OTIMIZADOS
+
+  // 🚀 HEADERS ESSENCIAIS
   async headers() {
     return [
       {
-        // 🚀 HEADERS GLOBAIS DE PERFORMANCE
-        source: '/(.*)',
-        headers: [
-          {
-            key: 'X-DNS-Prefetch-Control',
-            value: 'on'
-          },
-          {
-            key: 'Strict-Transport-Security',
-            value: 'max-age=63072000; includeSubDomains; preload'
-          },
-          {
-            key: 'X-Frame-Options',
-            value: 'SAMEORIGIN'
-          },
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff'
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'origin-when-cross-origin'
-          },
-        ],
-      },
-      {
-        // 🔥 CACHE AGRESSIVO PARA ESTÁTICOS
         source: '/_next/static/:path*',
         headers: [
           {
@@ -188,32 +132,18 @@ const nextConfig = {
         ],
       },
       {
-        // 🔥 CACHE OTIMIZADO PARA IMAGENS
         source: '/_next/image/:path*',
         headers: [
           {
             key: 'Cache-Control',
             value: 'public, max-age=31536000, immutable',
           },
-          {
-            key: 'Accept-Ranges',
-            value: 'bytes',
-          },
-        ],
-      },
-      {
-        // 🎯 PRECONNECT PARA DOMÍNIOS EXTERNOS
-        source: '/imovel-:id/:slug*',
-        headers: [
-          {
-            key: 'Link',
-            value: '<https://npi-imoveis.s3.sa-east-1.amazonaws.com>; rel=preconnect, <https://cdn.vistahost.com.br>; rel=preconnect, <https://d1988evaubdc7a.cloudfront.net>; rel=preconnect'
-          }
         ],
       },
     ];
   },
   
+  // ✅ MANTIDO: Redirects originais
   async redirects() {
     return [
       {
@@ -229,13 +159,8 @@ const nextConfig = {
     ];
   },
   
+  // ✅ MANTIDO: Output
   output: "standalone",
-  
-  // 🔥 POWEREDBYHEADER REMOVIDO (reduz overhead)
-  poweredByHeader: false,
-  
-  // 🚀 GENERATE ETAGS OTIMIZADO
-  generateEtags: true,
 };
 
 export default nextConfig;
