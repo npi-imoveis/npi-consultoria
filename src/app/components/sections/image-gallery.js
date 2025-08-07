@@ -25,7 +25,7 @@ function useIsMobile() {
     let timeoutId;
     const debouncedCheck = () => {
       clearTimeout(timeoutId);
-      timeoutId = setTimeout(check, 100); // Reduzido de 150 para 100ms
+      timeoutId = setTimeout(check, 100);
     };
     
     window.addEventListener("resize", debouncedCheck, { passive: true });
@@ -38,24 +38,10 @@ function useIsMobile() {
   return { isMobile, isLoaded };
 }
 
-// 🔥 FUNÇÃO PARA GERAR BLUR DATA URL OTIMIZADA
-function generateBlurDataURL(width = 8, height = 6) {
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext('2d');
-  
-  // Gradiente suave
-  const gradient = ctx.createLinearGradient(0, 0, width, height);
-  gradient.addColorStop(0, '#f0f0f0');
-  gradient.addColorStop(0.5, '#e0e0e0');
-  gradient.addColorStop(1, '#f0f0f0');
-  
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, width, height);
-  
-  return canvas.toDataURL('image/jpeg', 0.1);
-}
+// 🔥 FUNÇÃO PARA GERAR BLUR DATA URL INLINE
+const generateBlurDataURL = () => {
+  return "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAAIAAoDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAhEAACAQMDBQAAAAAAAAAAAAABAgMABAUGIWGRkqGx/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k=";
+};
 
 export function ImageGallery({ 
   imovel,
@@ -107,7 +93,6 @@ export function ImageGallery({
       return fotosOrdenadas.map((foto, index) => ({
         ...foto,
         Codigo: `${processedData.codigo}-foto-${index}`,
-        // 🔥 BLUR DATA URL GERADA
         blurDataURL: generateBlurDataURL(),
       }));
 
@@ -187,10 +172,10 @@ export function ImageGallery({
   if (!isLoaded) {
     return (
       <div 
-        className="w-full relative bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 rounded-lg animate-pulse"
+        className="w-full relative bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 rounded-lg"
         style={{ aspectRatio: isMobile ? '4/3' : '16/10' }}
       >
-        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-shimmer" />
+        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent animate-pulse" />
       </div>
     );
   }
@@ -226,16 +211,14 @@ export function ImageGallery({
             alt={`${processedData.titulo} - foto principal`}
             title={processedData.titulo}
             fill
-            // 🔥 SIZES ULTRA-OTIMIZADO
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 800px"
             className="object-cover transition-transform duration-300 ease-in-out hover:scale-105"
             loading="eager"
             priority={true}
-            // 🔥 FETCH PRIORITY PARA LCP
             fetchPriority="high"
             placeholder="blur"
             blurDataURL={images[0].blurDataURL}
-            quality={85} // Aumentado para imagem principal
+            quality={85}
           />
 
           {images[0].Destaque === "Sim" && (
@@ -271,7 +254,6 @@ export function ImageGallery({
                 alt={`${processedData.titulo} - foto principal`}
                 title={processedData.titulo}
                 fill
-                // 🔥 SIZES MOBILE OTIMIZADO
                 sizes="100vw"
                 className="object-cover transition-transform duration-300 ease-in-out hover:scale-105"
                 loading="eager"
@@ -319,7 +301,6 @@ export function ImageGallery({
                   alt={`${processedData.titulo} - foto principal`}
                   title={processedData.titulo}
                   fill
-                  // 🔥 SIZES DESKTOP OTIMIZADO
                   sizes="(max-width: 768px) 100vw, 50vw"
                   className="object-cover transition-transform duration-300 ease-in-out hover:scale-110"
                   loading="eager"
@@ -365,13 +346,12 @@ export function ImageGallery({
                         alt={`${processedData.titulo} - imagem ${index + 2}`}
                         title={`${processedData.titulo} - imagem ${index + 2}`}
                         fill
-                        // 🔥 SIZES THUMBNAILS OTIMIZADO
                         sizes="(max-width: 768px) 50vw, 25vw"
                         className="object-cover transition-transform duration-300 ease-in-out hover:scale-110"
                         loading="lazy"
                         placeholder="blur"
                         blurDataURL={image.blurDataURL}
-                        quality={75} // Menor para thumbnails
+                        quality={75}
                       />
                       
                       {image.Destaque === "Sim" && (
@@ -437,7 +417,7 @@ export function ImageGallery({
                   loading="eager"
                   placeholder="blur"
                   blurDataURL={images[selectedIndex].blurDataURL}
-                  quality={90} // Alta qualidade no modal
+                  quality={90}
                 />
               </div>
 
@@ -489,7 +469,7 @@ export function ImageGallery({
                     loading="lazy"
                     placeholder="blur"
                     blurDataURL={image.blurDataURL}
-                    quality={70} // Baixa para thumbnails do modal
+                    quality={70}
                   />
                   
                   <div className="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
@@ -507,17 +487,6 @@ export function ImageGallery({
           )}
         </div>
       )}
-      
-      {/* 🔥 CSS PARA SHIMMER ANIMATION */}
-      <style jsx>{`
-        @keyframes shimmer {
-          0% { transform: translateX(-100%); }
-          100% { transform: translateX(100%); }
-        }
-        .animate-shimmer {
-          animation: shimmer 2s infinite;
-        }
-      `}</style>
     </>
   );
 }
