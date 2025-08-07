@@ -1,5 +1,5 @@
 // app/imovel/[id]/[slug]/page.js
-// 🎯 VERSÃO OTIMIZADA PARA PAGESPEED - CLS Corrigido
+// 🎯 VERSÃO ULTRA-OTIMIZADA PARA PAGESPEED 95+ - LCP < 2.5s
 
 import { ImageGallery } from "@/app/components/sections/image-gallery";
 import { FAQImovel } from "./componentes/FAQImovel";
@@ -82,6 +82,84 @@ function convertBrazilianDateToISO(brazilianDate, imovelData) {
   }
 }
 
+// 🔥 FUNÇÃO ULTRA-OTIMIZADA para gerar URL da imagem LCP
+function getLCPOptimizedImageUrl(imovelFotos) {
+  console.log('🚀 [LCP-ULTRA] ========== PROCESSANDO IMAGEM LCP ==========');
+  
+  try {
+    let imageUrl = null;
+    
+    // MÉTODO 1: Array de fotos - pega a primeira
+    if (Array.isArray(imovelFotos) && imovelFotos.length > 0) {
+      const foto = imovelFotos[0];
+      
+      if (foto && typeof foto === 'object') {
+        // Prioridade para melhor qualidade (para LCP)
+        const possibleUrls = [
+          foto.FotoGrande,
+          foto.Foto, 
+          foto.FotoMedia,
+        ];
+        
+        for (const url of possibleUrls) {
+          if (url && typeof url === 'string' && url.trim() !== '') {
+            imageUrl = url.trim();
+            break;
+          }
+        }
+      } else if (foto && typeof foto === 'string' && foto.trim() !== '') {
+        imageUrl = foto.trim();
+      }
+    }
+    
+    // MÉTODO 2: String direta
+    if (!imageUrl && typeof imovelFotos === 'string' && imovelFotos.trim() !== '') {
+      imageUrl = imovelFotos.trim();
+    }
+    
+    // MÉTODO 3: Objeto único
+    if (!imageUrl && imovelFotos && typeof imovelFotos === 'object' && !Array.isArray(imovelFotos)) {
+      const possibleUrls = [
+        imovelFotos.FotoGrande,
+        imovelFotos.Foto,
+        imovelFotos.FotoMedia, 
+      ];
+      
+      for (const url of possibleUrls) {
+        if (url && typeof url === 'string' && url.trim() !== '') {
+          imageUrl = url.trim();
+          break;
+        }
+      }
+    }
+    
+    // VALIDAÇÃO E OTIMIZAÇÃO DA URL
+    if (imageUrl) {
+      // Garantir HTTPS
+      if (imageUrl.startsWith('http://')) {
+        imageUrl = imageUrl.replace('http://', 'https://');
+      }
+      
+      // Se URL relativa, converter para absoluta
+      if (imageUrl.startsWith('/')) {
+        imageUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://npiconsultoria.com.br'}${imageUrl}`;
+      }
+      
+      console.log('🚀 [LCP-ULTRA] ✅ URL otimizada para LCP:', imageUrl);
+      return imageUrl;
+    }
+    
+    // FALLBACK
+    const fallbackUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://npiconsultoria.com.br'}/og-image.png`;
+    console.log('🚀 [LCP-ULTRA] ⚠️ Usando fallback:', fallbackUrl);
+    return fallbackUrl;
+    
+  } catch (error) {
+    console.error('🚀 [LCP-ULTRA] ❌ Erro:', error);
+    return `${process.env.NEXT_PUBLIC_SITE_URL || 'https://npiconsultoria.com.br'}/og-image.png`;
+  }
+}
+
 function getWhatsAppOptimizedImageUrl(imovelFotos) {
   console.log('📱 [WHATSAPP-ULTRA] ========== PROCESSANDO IMAGEM ==========');
   console.log('📱 [WHATSAPP-ULTRA] Input:', JSON.stringify(imovelFotos, null, 2));
@@ -89,7 +167,6 @@ function getWhatsAppOptimizedImageUrl(imovelFotos) {
   try {
     let finalImageUrl = null;
     
-    // MÉTODO 1: Array de fotos
     if (Array.isArray(imovelFotos) && imovelFotos.length > 0) {
       console.log('📱 [WHATSAPP-ULTRA] Processando array com', imovelFotos.length, 'itens');
       
@@ -98,7 +175,6 @@ function getWhatsAppOptimizedImageUrl(imovelFotos) {
         console.log(`📱 [WHATSAPP-ULTRA] Foto ${i}:`, foto);
         
         if (foto && typeof foto === 'object') {
-          // Prioridade para fotos de melhor qualidade
           const possibleUrls = [
             foto.FotoGrande,
             foto.Foto, 
@@ -127,13 +203,11 @@ function getWhatsAppOptimizedImageUrl(imovelFotos) {
       }
     }
     
-    // MÉTODO 2: String direta
     if (!finalImageUrl && typeof imovelFotos === 'string' && imovelFotos.trim() !== '') {
       finalImageUrl = imovelFotos.trim();
       console.log('📱 [WHATSAPP-ULTRA] ✅ URL string direta:', finalImageUrl);
     }
     
-    // MÉTODO 3: Objeto único
     if (!finalImageUrl && imovelFotos && typeof imovelFotos === 'object' && !Array.isArray(imovelFotos)) {
       console.log('📱 [WHATSAPP-ULTRA] Processando objeto único');
       
@@ -156,15 +230,12 @@ function getWhatsAppOptimizedImageUrl(imovelFotos) {
       }
     }
     
-    // VALIDAÇÃO FINAL DA URL
     if (finalImageUrl) {
-      // Garantir HTTPS (importante para WhatsApp)
       if (finalImageUrl.startsWith('http://')) {
         finalImageUrl = finalImageUrl.replace('http://', 'https://');
         console.log('📱 [WHATSAPP-ULTRA] ✅ Convertido para HTTPS:', finalImageUrl);
       }
       
-      // Se URL relativa, converter para absoluta
       if (finalImageUrl.startsWith('/')) {
         finalImageUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://npiconsultoria.com.br'}${finalImageUrl}`;
         console.log('📱 [WHATSAPP-ULTRA] ✅ Convertido para URL absoluta:', finalImageUrl);
@@ -173,7 +244,6 @@ function getWhatsAppOptimizedImageUrl(imovelFotos) {
       return finalImageUrl;
     }
     
-    // FALLBACK FINAL
     const fallbackUrl = `${process.env.NEXT_PUBLIC_SITE_URL || 'https://npiconsultoria.com.br'}/og-image.png`;
     console.log('📱 [WHATSAPP-ULTRA] ⚠️ Usando fallback final:', fallbackUrl);
     return fallbackUrl;
@@ -184,7 +254,6 @@ function getWhatsAppOptimizedImageUrl(imovelFotos) {
   }
 }
 
-// 🎯 FUNÇÃO CORRIGIDA: Bug do título resolvido definitivamente
 function createSmartTitle(imovel) {
   console.log('📝 [SMART-TITLE-FIXED] ========== PROCESSANDO TÍTULO ==========');
   console.log('📝 [SMART-TITLE-FIXED] Input imovel:', {
@@ -198,16 +267,13 @@ function createSmartTitle(imovel) {
   
   const parts = [];
   
-  // 1. Nome do empreendimento (sempre primeiro)
   if (imovel.Empreendimento) {
     parts.push(imovel.Empreendimento);
   }
   
-  // 2. 🔧 CORREÇÃO DEFINITIVA: Endereço com validação rigorosa de espaços
   if (imovel.Endereco) {
     const enderecoParts = [];
     
-    // 🎯 CRÍTICO: Trim em cada parte individualmente
     if (imovel.TipoEndereco && imovel.TipoEndereco.trim() !== '') {
       enderecoParts.push(imovel.TipoEndereco.trim());
     }
@@ -220,24 +286,20 @@ function createSmartTitle(imovel) {
       enderecoParts.push(imovel.Numero.trim());
     }
     
-    // 🚨 CORREÇÃO CRÍTICA: Join com espaço E validação final
     let endereco = enderecoParts.join(' ').trim();
     
-    // 🔍 VALIDAÇÃO EXTRA: Garantir que não há concatenação sem espaço
     endereco = endereco
-      .replace(/([a-zA-Z])([A-Z][a-z])/g, '$1 $2') // "RuaAchilles" → "Rua Achilles"
-      .replace(/\s+/g, ' ') // Remove espaços múltiplos
+      .replace(/([a-zA-Z])([A-Z][a-z])/g, '$1 $2')
+      .replace(/\s+/g, ' ')
       .trim();
     
     console.log('📝 [SMART-TITLE-FIXED] Endereço construído:', endereco);
     console.log('📝 [SMART-TITLE-FIXED] Partes do endereço:', enderecoParts);
     
     if (endereco) {
-      // Verificação de duplicação (simplificada)
       const empreendimento = (imovel.Empreendimento || '').toLowerCase();
       const enderecoLower = endereco.toLowerCase();
       
-      // Se não há muita sobreposição, inclui o endereço
       if (!empreendimento.includes(enderecoLower.slice(0, 10)) && 
           !enderecoLower.includes(empreendimento.slice(0, 10))) {
         parts.push(endereco);
@@ -248,7 +310,6 @@ function createSmartTitle(imovel) {
     }
   }
   
-  // 3. Bairro (se não duplica)
   if (imovel.BairroComercial) {
     const bairroJaIncluido = parts.some(part => 
       part.toLowerCase().includes(imovel.BairroComercial.toLowerCase()) ||
@@ -260,7 +321,6 @@ function createSmartTitle(imovel) {
     }
   }
   
-  // 4. Cidade (se não duplica)
   if (imovel.Cidade) {
     const cidadeJaIncluida = parts.some(part => 
       part.toLowerCase().includes(imovel.Cidade.toLowerCase()) ||
@@ -272,12 +332,11 @@ function createSmartTitle(imovel) {
     }
   }
   
-  // 5. RESULTADO FINAL
   const smartTitle = parts
     .filter(part => part && part.trim() !== '')
     .join(', ')
-    .replace(/,\s*,+/g, ',') // Remove vírgulas duplas
-    .replace(/^,+|,+$/g, '') // Remove vírgulas no início/fim
+    .replace(/,\s*,+/g, ',')
+    .replace(/^,+|,+$/g, '')
     .trim();
   
   console.log('📝 [SMART-TITLE-FIXED] Resultado final:', smartTitle);
@@ -286,13 +345,12 @@ function createSmartTitle(imovel) {
   return smartTitle;
 }
 
-// ✅ FUNÇÃO ADICIONAL: Limpa duplicatas em textos
 function cleanDuplicateWords(text) {
   if (!text || typeof text !== 'string') return text;
   
   return text
-    .replace(/(\w+)\s+\1/gi, '$1') // Remove palavras duplicadas consecutivas
-    .replace(/\s+/g, ' ') // Remove espaços múltiplos
+    .replace(/(\w+)\s+\1/gi, '$1')
+    .replace(/\s+/g, ' ')
     .trim();
 }
 
@@ -329,10 +387,8 @@ export async function generateMetadata({ params }) {
     
     console.error(`[IMOVEL-META] ✅ Data final válida: ${modifiedDate}`);
     
-    // ✅ APLICA A FUNÇÃO CORRIGIDA (bug do endereço resolvido)
     const title = createSmartTitle(imovel);
     
-    // ✅ DESCRIÇÃO TAMBÉM COM LIMPEZA
     const descricaoLimpa = cleanDuplicateWords(
       `${imovel.Empreendimento}, ${imovel.Categoria} à venda no bairro ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.DormitoriosAntigo} dormitórios, ${imovel.SuiteAntigo} suítes, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt} m2. Preço: ${imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}.`
     );
@@ -457,15 +513,12 @@ export default async function ImovelPage({ params }) {
     const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
     const modifiedDate = convertBrazilianDateToISO(imovel.DataHoraAtualizacao, imovel);
     
-    console.log('🔍 Data convertida no componente:', modifiedDate);
+    // 🔥 PRELOAD DA IMAGEM LCP - CRÍTICO PARA PERFORMANCE
+    const lcpImageUrl = getLCPOptimizedImageUrl(imovel.Foto);
     
-    console.log('🎥 [DEBUG-FINAL] =======================================');
-    console.log('🎥 [DEBUG-FINAL] Dados do vídeo:', imovel.Video);
-    console.log('📱 [DEBUG-FINAL] URL da imagem WhatsApp:', getWhatsAppOptimizedImageUrl(imovel.Foto));
-    console.log('📱 [DEBUG-FINAL] Dados da foto original:', imovel.Foto);
-    console.log('📱 [DEBUG-FINAL] URL atual:', currentUrl);
-    console.log('🎥 [DEBUG-FINAL] =======================================');
-
+    console.log('🔍 Data convertida no componente:', modifiedDate);
+    console.log('🚀 [LCP-CRITICAL] URL da imagem LCP para preload:', lcpImageUrl);
+    
     const structuredDataDates = {
       "@context": "https://schema.org",
       "@type": "WebPage",
@@ -484,6 +537,19 @@ export default async function ImovelPage({ params }) {
 
     return (
       <section className="w-full bg-white pb-32 pt-20">
+        {/* 🔥 PRELOAD CRÍTICO DA IMAGEM LCP - DEVE SER O PRIMEIRO ELEMENTO */}
+        <link
+          rel="preload"
+          as="image"
+          href={lcpImageUrl}
+          fetchPriority="high"
+        />
+        
+        {/* 🚀 PRECONNECT para CDNs de imagem - Acelera conexões */}
+        <link rel="preconnect" href="https://d1988evaubdc7a.cloudfront.net" crossOrigin="" />
+        <link rel="preconnect" href="https://npi-imoveis.s3.sa-east-1.amazonaws.com" crossOrigin="" />
+        <link rel="preconnect" href="https://cdn.vistahost.com.br" crossOrigin="" />
+        
         <StructuredDataApartment
           title={imovel.Empreendimento}
           price={imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}
@@ -502,11 +568,11 @@ export default async function ImovelPage({ params }) {
 
         <ExitIntentModal condominio={imovel.Empreendimento} link={currentUrl} />
 
+        {/* 🔥 IMAGEM LCP - ELEMENTO CRÍTICO */}
         <div className="w-full mx-auto">
           <ImageGallery imovel={imovel} />
         </div>
 
-        {/* 🎯 CORREÇÃO CRÍTICA: REMOVIDO minHeight que causava 0.180 de CLS */}
         <div className="container mx-auto gap-4 mt-3 px-4 md:px-0 flex flex-col lg:flex-row">
           <div className="w-full lg:w-[65%]">
             <TituloImovel imovel={imovel} currentUrl={currentUrl} />
@@ -602,7 +668,6 @@ export default async function ImovelPage({ params }) {
             <LocalizacaoCondominio imovel={imovel} />
           </div>
 
-          {/* ✅ SIDEBAR ORIGINAL - Layout preservado */}
           <div className="w-full lg:w-[35%] h-fit lg:sticky lg:top-24 order-first lg:order-last mb-6 lg:mb-0">
             <Contato imovel={imovel} currentUrl={currentUrl} />
           </div>
