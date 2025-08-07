@@ -2,10 +2,9 @@
 const nextConfig = {
   trailingSlash: false,
   
-  // 🚀 EXPERIMENTAL OTIMIZADO para LCP
+  // 🚀 EXPERIMENTAL SEGURO (sem optimizeCss)
   experimental: {
     optimizePackageImports: ['lucide-react'],
-    optimizeCss: true,
   },
   
   // 🔥 IMAGENS OTIMIZADAS PARA FOTOS MAIORES
@@ -120,7 +119,7 @@ const nextConfig = {
     return config;
   },
   
-  // 🚀 HEADERS OTIMIZADOS para imagens
+  // 🚀 HEADERS ESSENCIAIS 
   async headers() {
     return [
       {
