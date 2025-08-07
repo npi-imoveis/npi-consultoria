@@ -1,4 +1,4 @@
-// src/app/components/sections/image-gallery.js - VERSÃO EXATA QUE DEU 96 PONTOS
+// src/app/components/sections/image-gallery.js - VERSÃO ORIGINAL + SÓ CSS ASPECT-RATIO
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -8,13 +8,17 @@ import { formatterSlug } from "@/app/utils/formatter-slug";
 import { Share } from "../ui/share";
 import { photoSorter } from "@/app/utils/photoSorter";
 
+// 🚀 HOOK OTIMIZADO com debounce
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
+    
+    // ✅ Check inicial sem layout shift
     check();
     
+    // ✅ Debounced resize para performance
     let timeoutId;
     const debouncedCheck = () => {
       clearTimeout(timeoutId);
@@ -32,19 +36,26 @@ function useIsMobile() {
 }
 
 export function ImageGallery({ 
+  // Props para página de IMÓVEL
   imovel,
+  
+  // Props para página de CONDOMÍNIO 
   fotos, 
   title,
   shareUrl,
   shareTitle,
-  layout = "grid"
+
+  // Layout da galeria
+  layout = "grid" // "grid" ou "single"
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(null);
   const isMobile = useIsMobile();
 
+  // 🎯 PROCESSAMENTO OTIMIZADO
   const isImovelMode = !!imovel;
   
+  // 🚀 DADOS PROCESSADOS - Memoized para performance
   const processedData = useMemo(() => {
     if (isImovelMode) {
       return {
@@ -65,12 +76,14 @@ export function ImageGallery({
     }
   }, [imovel, fotos, title, shareUrl, shareTitle, isImovelMode]);
 
+  // 🎯 IMAGENS PROCESSADAS - Otimizado
   const images = useMemo(() => {
     if (!Array.isArray(processedData.fotos) || processedData.fotos.length === 0) {
       return [];
     }
 
     try {
+      // ✅ LIMPEZA E ORDENAÇÃO OTIMIZADA
       const fotosLimpas = processedData.fotos.map(foto => {
         const { Ordem, ordem, ORDEM, ...fotoSemOrdem } = foto;
         return fotoSemOrdem;
@@ -85,6 +98,8 @@ export function ImageGallery({
 
     } catch (error) {
       console.error('❌ GALERIA: Erro ao processar imagens:', error);
+      
+      // Fallback seguro
       return [...processedData.fotos].map((foto, index) => ({
         ...foto,
         Codigo: `${processedData.codigo}-foto-${index}`,
@@ -92,9 +107,10 @@ export function ImageGallery({
     }
   }, [processedData]);
 
+  // 🎯 HANDLERS OTIMIZADOS com useCallback
   const openModal = useCallback((index = null) => {
     setIsModalOpen(true);
-    setSelectedIndex(index);
+    setSelectedIndex(index); // null = grid de thumbnails, número = imagem específica
   }, []);
 
   const closeModal = useCallback(() => {
@@ -114,6 +130,7 @@ export function ImageGallery({
     }
   }, [selectedIndex, images.length]);
 
+  // 🚀 KEYBOARD NAVIGATION - Otimizado
   useEffect(() => {
     if (!isModalOpen) return;
 
@@ -137,18 +154,22 @@ export function ImageGallery({
 
   if (!processedData.titulo || images.length === 0) {
     return (
-      <div className="w-full h-[410px] relative bg-gray-200 flex items-center justify-center rounded-lg">
-        <span className="text-gray-500">Imagem não disponível</span>
+      <div className="w-full h-[410px] relative">
+        <div className="w-full h-full overflow-hidden bg-gray-200 flex items-center justify-center rounded-lg">
+          <span className="text-gray-500">Imagem não disponível</span>
+        </div>
       </div>
     );
   }
 
   return (
     <>
+      {/* 🎨 LAYOUT ORIGINAL COM ASPECT-RATIO APENAS NOS CONTAINERS */}
       {layout === "single" ? (
+        // LAYOUT SINGLE
         <div 
-          className="w-full cursor-pointer relative overflow-hidden rounded-lg"
-          style={{ aspectRatio: '4/3' }}
+          className="w-full h-full cursor-pointer relative overflow-hidden rounded-lg" 
+          style={{ aspectRatio: '4/3' }} // 🔥 APENAS ESTA LINHA ADICIONADA
           onClick={() => openModal()}
           role="button"
           tabIndex={0}
@@ -164,13 +185,18 @@ export function ImageGallery({
             src={images[0].Foto}
             alt={`${processedData.titulo} - foto principal`}
             title={processedData.titulo}
-            fill
-            sizes="(max-width: 768px) 100vw, 800px"
-            className="object-cover transition-transform duration-300 ease-in-out hover:scale-105"
+            width={800}
+            height={600}
+            sizes="100vw"
+            placeholder="blur"
+            blurDataURL={images[0].blurDataURL || "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="}
             loading="eager"
             priority={true}
+            fetchPriority="high"
+            className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-105"
           />
 
+          {/* Indicadores otimizados */}
           {images[0].Destaque === "Sim" && (
             <div className="absolute top-4 left-4 bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
               ⭐ DESTAQUE
@@ -182,12 +208,14 @@ export function ImageGallery({
           </div>
         </div>
       ) : (
+        // 📱 LAYOUT RESPONSIVO ORIGINAL + ASPECT-RATIO
         <div className={`w-full ${isMobile ? '' : 'grid grid-cols-1 md:grid-cols-2 gap-1'}`}>
           
+          {/* 📱 MOBILE: Foto principal ORIGINAL + aspect-ratio */}
           {isMobile ? (
             <div 
-              className="w-full cursor-pointer relative overflow-hidden rounded-lg"
-              style={{ aspectRatio: '16/10' }}
+              className="w-full h-[75vh] sm:h-[70vh] min-h-[320px] max-h-[450px] cursor-pointer relative overflow-hidden rounded-lg" 
+              style={{ aspectRatio: '16/10' }} // 🔥 APENAS ESTA LINHA ADICIONADA
               onClick={() => openModal()}
               role="button"
               tabIndex={0}
@@ -205,11 +233,15 @@ export function ImageGallery({
                 title={processedData.titulo}
                 fill
                 sizes="100vw"
-                className="object-cover transition-transform duration-300 ease-in-out hover:scale-105"
+                placeholder="blur"
+                blurDataURL={images[0].blurDataURL || "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="}
                 loading="eager"
                 priority={true}
+                fetchPriority="high"
+                className="object-cover transition-transform duration-300 ease-in-out hover:scale-105"
               />
 
+              {/* Indicadores móveis */}
               {images[0].Destaque === "Sim" && (
                 <div className="absolute top-3 left-3 bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
                   ⭐ DESTAQUE
@@ -227,10 +259,11 @@ export function ImageGallery({
               )}
             </div>
           ) : (
+            // 💻 DESKTOP: Layout grid ORIGINAL + aspect-ratio
             <>
               <div 
-                className="col-span-1 cursor-pointer relative overflow-hidden rounded-lg"
-                style={{ aspectRatio: '4/3' }}
+                className="col-span-1 h-[410px] cursor-pointer relative" 
+                style={{ aspectRatio: '4/3' }} // 🔥 APENAS ESTA LINHA ADICIONADA
                 onClick={() => openModal()}
                 role="button"
                 tabIndex={0}
@@ -242,17 +275,24 @@ export function ImageGallery({
                   }
                 }}
               >
-                <Image
-                  src={images[0].Foto}
-                  alt={`${processedData.titulo} - foto principal`}
-                  title={processedData.titulo}
-                  fill
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                  className="object-cover transition-transform duration-300 ease-in-out hover:scale-110"
-                  loading="eager"
-                  priority={true}
-                />
+                <div className="w-full h-full overflow-hidden rounded-lg">
+                  <Image
+                    src={images[0].Foto}
+                    alt={`${processedData.titulo} - foto principal`}
+                    title={processedData.titulo}
+                    width={800}
+                    height={600}
+                    sizes="(max-width: 768px) 100vw, 50vw"
+                    placeholder="blur"
+                    blurDataURL={images[0].blurDataURL || "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="}
+                    loading="eager"
+                    priority={true}
+                    fetchPriority="high"
+                    className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
+                  />
+                </div>
 
+                {/* Indicadores desktop */}
                 {images[0].Destaque === "Sim" && (
                   <div className="absolute top-4 left-4 bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
                     ⭐ DESTAQUE
@@ -264,14 +304,15 @@ export function ImageGallery({
                 </div>
               </div>
 
-              <div className="col-span-1 grid grid-cols-2 grid-rows-2 gap-1">
+              {/* GRID 2x2 otimizado */}
+              <div className="col-span-1 grid grid-cols-2 grid-rows-2 gap-1 h-[410px]">
                 {images.slice(1, 5).map((image, index) => {
                   const isLastImage = index === 3;
                   return (
                     <div
                       key={image.Codigo || index}
-                      className="relative overflow-hidden cursor-pointer rounded-lg"
-                      style={{ aspectRatio: '4/3' }}
+                      className="relative h-full overflow-hidden cursor-pointer rounded-lg"
+                      style={{ aspectRatio: '4/3' }} // 🔥 APENAS ESTA LINHA ADICIONADA
                       onClick={() => openModal()}
                       role="button"
                       tabIndex={0}
@@ -287,12 +328,17 @@ export function ImageGallery({
                         src={image.Foto}
                         alt={`${processedData.titulo} - imagem ${index + 2}`}
                         title={`${processedData.titulo} - imagem ${index + 2}`}
-                        fill
+                        width={400}
+                        height={300}
                         sizes="(max-width: 768px) 50vw, 25vw"
-                        className="object-cover transition-transform duration-300 ease-in-out hover:scale-110"
+                        placeholder="blur"
+                        blurDataURL={image.blurDataURL || "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="}
                         loading="lazy"
+                        priority={false}
+                        className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
                       />
                       
+                      {/* Indicador de destaque nos thumbnails */}
                       {image.Destaque === "Sim" && (
                         <div className="absolute top-2 left-2 bg-gray-900 text-white text-xs font-bold px-1.5 py-0.5 rounded">
                           ⭐
@@ -318,8 +364,10 @@ export function ImageGallery({
         </div>
       )}
 
+      {/* 🖼️ MODAL ORIGINAL */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-95 z-50 overflow-auto">
+          {/* Header fixo */}
           <div className="sticky top-0 z-10 flex justify-between gap-4 p-5 pt-28 mt-6 md:mt-0 bg-gradient-to-b from-black/80 via-black/40 to-transparent backdrop-blur-sm">
             <button 
               onClick={closeModal} 
@@ -341,26 +389,26 @@ export function ImageGallery({
 
           {selectedIndex !== null ? (
             <div className="flex items-center justify-center min-h-screen p-4 relative">
-              <div 
-                className="relative max-w-screen-lg w-full"
-                style={{ aspectRatio: '4/3' }}
-              >
-                <Image
-                  src={images[selectedIndex].Foto}
-                  alt={`${processedData.titulo} - imagem ${selectedIndex + 1} de ${images.length}`}
-                  title={`${processedData.titulo} - imagem ${selectedIndex + 1} de ${images.length}`}
-                  fill
-                  sizes="100vw"
-                  className="object-contain"
-                  loading="eager"
-                />
-              </div>
+              <Image
+                src={images[selectedIndex].Foto}
+                alt={`${processedData.titulo} - imagem ${selectedIndex + 1} de ${images.length}`}
+                title={`${processedData.titulo} - imagem ${selectedIndex + 1} de ${images.length}`}
+                width={1200}
+                height={800}
+                sizes="100vw"
+                placeholder="blur"
+                blurDataURL={images[selectedIndex].blurDataURL || "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="}
+                loading="eager"
+                className="max-w-full max-h-screen object-contain"
+              />
 
+              {/* Contador */}
               <div className="absolute top-24 md:top-20 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm z-20">
                 {selectedIndex + 1} / {images.length}
                 {images[selectedIndex].Destaque === "Sim" && " ⭐"}
               </div>
 
+              {/* Navegação */}
               <button
                 onClick={goPrev}
                 className="absolute left-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2 hover:bg-black hover:bg-opacity-50 rounded-full transition-colors z-20 focus:outline-none focus:ring-2 focus:ring-white/50"
@@ -377,13 +425,14 @@ export function ImageGallery({
               </button>
             </div>
           ) : (
+            // Grid de thumbnails original
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
               {images.map((image, idx) => (
                 <div
                   key={image.Codigo || idx}
                   onClick={() => setSelectedIndex(idx)}
-                  className="relative cursor-pointer overflow-hidden border-2 border-transparent hover:border-white transition-colors rounded-lg focus:outline-none focus:ring-2 focus:ring-white/50"
-                  style={{ aspectRatio: '4/3' }}
+                  className="relative w-full h-48 sm:h-56 md:h-64 lg:h-72 xl:h-80 cursor-pointer overflow-hidden border-2 border-transparent hover:border-white transition-colors rounded-lg focus:outline-none focus:ring-2 focus:ring-white/50"
+                  style={{ aspectRatio: '4/3' }} // 🔥 APENAS ESTA LINHA ADICIONADA
                   role="button"
                   tabIndex={0}
                   aria-label={`Ver imagem ${idx + 1} de ${images.length}`}
@@ -400,14 +449,18 @@ export function ImageGallery({
                     title={`${processedData.titulo} - imagem ${idx + 1}`}
                     fill
                     sizes="(max-width: 768px) 50vw, 25vw"
-                    className="object-cover"
+                    placeholder="blur"
+                    blurDataURL={image.blurDataURL || "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAYEBQYFBAYGBQYHBwYIChAKCgkJChQODwwQFxQYGBcUFhYaHSUfGhsjHBYWICwgIyYnKSopGR8tMC0oMCUoKSj/2wBDAQcHBwoIChMKChMoGhYaKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCj/wAARCAABAAEDASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAv/xAAUEAEAAAAAAAAAAAAAAAAAAAAA/8QAFQEBAQAAAAAAAAAAAAAAAAAAAAX/xAAUEQEAAAAAAAAAAAAAAAAAAAAA/9oADAMBAAIRAxEAPwCdABmX/9k="}
                     loading="lazy"
+                    className="object-cover"
                   />
                   
+                  {/* Número da foto */}
                   <div className="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
                     {idx + 1}
                   </div>
                   
+                  {/* Indicador de destaque */}
                   {image.Destaque === "Sim" && (
                     <div className="absolute top-2 left-2 bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded">
                       ⭐ DESTAQUE
