@@ -2,9 +2,10 @@
 const nextConfig = {
   trailingSlash: false,
   
-  // 🚀 EXPERIMENTAL CONSERVADOR
+  // 🚀 EXPERIMENTAL OTIMIZADO para LCP
   experimental: {
     optimizePackageImports: ['lucide-react'],
+    optimizeCss: true,
   },
   
   // 🔥 IMAGENS OTIMIZADAS PARA FOTOS MAIORES
@@ -78,14 +79,14 @@ const nextConfig = {
       },
     ],
     
-    // 🎯 FORMATOS OTIMIZADOS para qualidade
-    formats: ["image/webp", "image/avif"],
+    // 🎯 FORMATOS PADRÃO Next.js (estabilidade garantida)
+    formats: ["image/webp"],
     
-    // 🔥 DEVICE SIZES OTIMIZADOS para fotos maiores
-    deviceSizes: [640, 750, 828, 1080, 1200, 1440, 1920],
+    // 🔥 DEVICE SIZES PADRÃO Next.js
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
     
-    // 🎯 IMAGE SIZES EXPANDIDOS para melhor responsive
-    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384, 512, 768],
+    // 🎯 IMAGE SIZES PADRÃO Next.js
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
     
     // 🚀 CACHE OTIMIZADO
     minimumCacheTTL: 60,
@@ -137,10 +138,6 @@ const nextConfig = {
           {
             key: 'Cache-Control',
             value: 'public, max-age=31536000, immutable',
-          },
-          {
-            key: 'Vary',
-            value: 'Accept',
           },
         ],
       },
