@@ -16,6 +16,17 @@ import { ReviewSection } from "./components/sections/review-section";
 import { WhatsappFloat } from "./components/ui/whatsapp";
 import { getContentSite } from "./services";
 
+// ✅ MUDANÇA 1: Lazy loading APENAS para componentes menos críticos
+import dynamic from 'next/dynamic';
+
+const TestimonialsSectionLazy = dynamic(() => import("./components/sections/testimonials-section").then(mod => ({ default: mod.TestimonialsSection })), {
+  ssr: true // ✅ Mantém SSR
+});
+
+const FaqSectionLazy = dynamic(() => import("./components/sections/faq-section").then(mod => ({ default: mod.FaqSection })), {
+  ssr: true // ✅ Mantém SSR
+});
+
 export const metadata = {
   title: "NPi Imóveis - HUB de Imobiliárias Boutique de Alto Padrão",
   description: "Somos um HUB de imobiliárias Boutique de alto padrão, e trabalhamos com Venda de apartamentos e casas de luxo.",
@@ -83,7 +94,7 @@ export const metadata = {
   },
 };
 
-// Disable static generation for pages that make API calls
+// ✅ MUDANÇA 2: Manter dynamic como está se necessário, ou mudar para 'auto' se possível
 export const dynamic = 'force-dynamic';
 
 export default async function Home() {
@@ -162,37 +173,38 @@ export default async function Home() {
   };
 
   return (
-    <>
+    <div>
+      {/* ✅ MUDANÇA 3: Adicionar apenas preloads críticos */}
       <link rel="preload" href="/assets/images/fasano.jpg" as="image" />
       <link rel="dns-prefetch" href="//www.googletagmanager.com" />
-      <link rel="preconnect" href="//fonts.googleapis.com" />
-      
-      <div>
-        {/* Structured Data para datas */}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(structuredDataDates),
-          }}
-        />
 
-        {/* ✅ COMPONENTES ORIGINAIS - SEM ALTERAR PROPS */}
-        <Header />
-        <HeroSection />
-        <ActionSection cards={content?.cards_destacados} />
-        <FeaturedCondosSection />
-        <PropertyList />
-        <ListCities />
-        <LuxuryGridSection />
-        <AboutSection about={content?.sobre} />
-        <ReviewSection stats={content?.stats} />
-        <SlidePartners />
-        <TestimonialsSection testimonials={content?.testemunhos} />
-        <FaqSection faqs={content?.faq} />
-        <ContactSection />
-        <WhatsappFloat />
-        <Footer />
-      </div>
-    </>
+      {/* Structured Data para datas */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(structuredDataDates),
+        }}
+      />
+
+      {/* ✅ COMPONENTES ORIGINAIS - SEM ALTERAR PROPS */}
+      <Header />
+      <HeroSection />
+      <ActionSection cards={content?.cards_destacados} />
+      <FeaturedCondosSection />
+      <PropertyList />
+      <ListCities />
+      <LuxuryGridSection />
+      <AboutSection about={content?.sobre} />
+      <ReviewSection stats={content?.stats} />
+      <SlidePartners />
+      
+      {/* ✅ MUDANÇA 4: Apenas estes 2 componentes com lazy loading */}
+      <TestimonialsSectionLazy testimonials={content?.testemunhos} />
+      <FaqSectionLazy faqs={content?.faq} />
+      
+      <ContactSection />
+      <WhatsappFloat />
+      <Footer />
+    </div>
   );
 }
