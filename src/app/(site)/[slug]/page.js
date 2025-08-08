@@ -30,44 +30,54 @@ function ensureCondominio(text) {
 // 🎯 NOVA FUNÇÃO: DETECTAR ORIENTAÇÃO DA FOTO PRINCIPAL
 function detectarOrientacaoFoto(fotosOrdenadas) {
   if (!fotosOrdenadas || fotosOrdenadas.length === 0) {
-    console.log('🔍 DETECÇÃO: Nenhuma foto encontrada, usando horizontal');
-    return 'horizontal';
+    console.log('🔍 DETECÇÃO: Nenhuma foto encontrada, usando VERTICAL por padrão');
+    return 'vertical'; // 🎯 MUDANÇA: Padrão agora é VERTICAL
   }
 
   const primeiraFoto = fotosOrdenadas[0];
   if (!primeiraFoto?.Foto) {
-    console.log('🔍 DETECÇÃO: Primeira foto sem URL, usando horizontal');
-    return 'horizontal';
+    console.log('🔍 DETECÇÃO: Primeira foto sem URL, usando VERTICAL por padrão');
+    return 'vertical'; // 🎯 MUDANÇA: Padrão agora é VERTICAL
   }
 
   console.log('🔍 DETECÇÃO: Analisando foto:', primeiraFoto.Foto);
+  console.log('🔍 DETECÇÃO: Metadados da foto:', {
+    Largura: primeiraFoto.Largura,
+    Altura: primeiraFoto.Altura,
+    FotoPequena: primeiraFoto.FotoPequena
+  });
 
-  // FORÇAR VERTICAL PARA OPERA VILA NOVA (TESTE DIRETO)
-  const fotoUrl = primeiraFoto.Foto.toLowerCase();
-  if (fotoUrl.includes('opera') || fotoUrl.includes('vila-nova')) {
-    console.log('🎯 DETECÇÃO: OPERA VILA NOVA detectado - FORÇANDO VERTICAL');
-    return 'vertical';
-  }
-
-  // Extrair dimensões se disponíveis nos metadados da foto
+  // 1️⃣ PRIORIDADE: Usar dimensões reais se disponíveis
   if (primeiraFoto.Largura && primeiraFoto.Altura) {
-    const ratio = primeiraFoto.Largura / primeiraFoto.Altura;
-    const orientacao = ratio >= 1 ? 'horizontal' : 'vertical';
-    console.log('🔍 DETECÇÃO: Por dimensões -', `${primeiraFoto.Largura}x${primeiraFoto.Altura}`, 'ratio:', ratio, '→', orientacao);
+    const largura = parseInt(primeiraFoto.Largura);
+    const altura = parseInt(primeiraFoto.Altura);
+    const ratio = largura / altura;
+    const orientacao = ratio < 0.8 ? 'vertical' : 'horizontal'; // 🎯 MAIS AGRESSIVO: ratio < 0.8
+    console.log('🔍 DETECÇÃO: Por dimensões -', `${largura}x${altura}`, 'ratio:', ratio.toFixed(2), '→', orientacao);
     return orientacao;
   }
 
-  // Fallback: tentar detectar pela URL/nome do arquivo
-  const padroesVerticais = [
-    'vertical', 'portrait', 'vert', 'torre', 'fachada',
-    '_v_', '_vert_', '_port_', 'elevation'
+  // 2️⃣ ESTRATÉGIA INVERSA: Procurar padrões que indicam HORIZONTAL
+  const fotoUrl = primeiraFoto.Foto.toLowerCase();
+  
+  // Padrões que indicam que a foto é HORIZONTAL
+  const padroesHorizontais = [
+    'horizontal', 'landscape', 'wide', 'banner', 'panoramic',
+    'sala', 'living', 'cozinha', 'quarto', 'bedroom', 'kitchen',
+    'interior', 'inside', 'room', 'varanda', 'balcony'
   ];
   
-  const isVertical = padroesVerticais.some(padrao => fotoUrl.includes(padrao));
-  const orientacao = isVertical ? 'vertical' : 'horizontal';
+  const isHorizontal = padroesHorizontais.some(padrao => fotoUrl.includes(padrao));
   
-  console.log('🔍 DETECÇÃO: Por padrões URL →', orientacao);
-  return orientacao;
+  if (isHorizontal) {
+    console.log('🔍 DETECÇÃO: Padrão HORIZONTAL detectado na URL →', 'horizontal');
+    return 'horizontal';
+  }
+
+  // 3️⃣ PADRÃO: Se não tem certeza que é horizontal, assume VERTICAL
+  // (porque a maioria das fotos de fachada de prédios são verticais)
+  console.log('🔍 DETECÇÃO: Nenhum padrão horizontal encontrado → assumindo VERTICAL');
+  return 'vertical';
 }
 
 // 🎯 FUNÇÃO PARA ORDENAR FOTOS DO CONDOMÍNIO (igual ao admin que funcionou)
@@ -610,13 +620,9 @@ export default async function CondominioPage({ params }) {
             </div>
             <div className={`relative w-full overflow-hidden rounded-lg ${
               orientacaoFoto === 'vertical' 
-                ? 'h-[550px] bg-red-100' // 🔍 ADICIONAR COR PARA TESTE VISUAL
-                : 'min-h-[550px] bg-blue-100' // 🔍 ADICIONAR COR PARA TESTE VISUAL
+                ? 'h-[550px]' // ✅ Altura fixa para vertical
+                : 'min-h-[550px]' // ✅ Altura mínima para horizontal
             }`}>
-              {/* 🔍 DEBUG: MOSTRAR ORIENTAÇÃO DETECTADA */}
-              <div className="absolute top-2 left-2 z-50 bg-black text-white px-2 py-1 text-xs rounded">
-                {orientacaoFoto.toUpperCase()}
-              </div>
               <ImageGallery 
                 fotos={fotosOrdenadas}
                 title={rawTitle}
