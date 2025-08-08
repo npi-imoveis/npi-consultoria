@@ -163,7 +163,7 @@ export default async function Home() {
 
   return (
     <>
-      <link rel="preload" href="/assets/images/fasano.webp" as="image" />
+      <link rel="preload" href="/assets/images/fasano.jpg" as="image" />
       <link rel="dns-prefetch" href="//www.googletagmanager.com" />
       <link rel="preconnect" href="//fonts.googleapis.com" />
       
