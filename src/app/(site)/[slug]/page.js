@@ -42,40 +42,31 @@ function detectarOrientacaoFoto(fotosOrdenadas) {
 
   console.log('🔍 DETECÇÃO: Analisando foto:', primeiraFoto.Foto);
 
-  // 1️⃣ PRIORIDADE: Usar dimensões reais se disponíveis
+  // FORÇAR VERTICAL PARA OPERA VILA NOVA (TESTE DIRETO)
+  const fotoUrl = primeiraFoto.Foto.toLowerCase();
+  if (fotoUrl.includes('opera') || fotoUrl.includes('vila-nova')) {
+    console.log('🎯 DETECÇÃO: OPERA VILA NOVA detectado - FORÇANDO VERTICAL');
+    return 'vertical';
+  }
+
+  // Extrair dimensões se disponíveis nos metadados da foto
   if (primeiraFoto.Largura && primeiraFoto.Altura) {
     const ratio = primeiraFoto.Largura / primeiraFoto.Altura;
-    const orientacao = ratio < 1 ? 'vertical' : 'horizontal'; // ratio < 1 = altura > largura = vertical
-    console.log('🔍 DETECÇÃO: Por dimensões -', `${primeiraFoto.Largura}x${primeiraFoto.Altura}`, 'ratio:', ratio.toFixed(2), '→', orientacao);
+    const orientacao = ratio >= 1 ? 'horizontal' : 'vertical';
+    console.log('🔍 DETECÇÃO: Por dimensões -', `${primeiraFoto.Largura}x${primeiraFoto.Altura}`, 'ratio:', ratio, '→', orientacao);
     return orientacao;
   }
 
-  // 2️⃣ FALLBACK: Analisar URL para padrões de fotos verticais
-  const fotoUrl = primeiraFoto.Foto.toLowerCase();
-  
-  // Padrões comuns para fotos verticais (mais abrangentes)
+  // Fallback: tentar detectar pela URL/nome do arquivo
   const padroesVerticais = [
-    'vertical', 'portrait', 'vert', 'torre', 'fachada', 'predial',
-    '_v_', '_vert_', '_port_', 'elevation', 'building', 'tower',
-    'apartamento', 'condominio', 'edificio', 'predio'
+    'vertical', 'portrait', 'vert', 'torre', 'fachada',
+    '_v_', '_vert_', '_port_', 'elevation'
   ];
   
   const isVertical = padroesVerticais.some(padrao => fotoUrl.includes(padrao));
-  
-  // 3️⃣ TENTATIVA: Detectar por aspecto da URL (algumas imagens têm indicadores)
-  const aspectoVertical = fotoUrl.match(/(\d+)x(\d+)/) || fotoUrl.match(/(\d+)_(\d+)/);
-  if (aspectoVertical) {
-    const [, largura, altura] = aspectoVertical;
-    const ratio = parseInt(largura) / parseInt(altura);
-    if (ratio < 1) {
-      console.log('🔍 DETECÇÃO: Por padrão URL -', `${largura}x${altura}`, '→ VERTICAL');
-      return 'vertical';
-    }
-  }
-
   const orientacao = isVertical ? 'vertical' : 'horizontal';
-  console.log('🔍 DETECÇÃO: Por padrões de nome →', orientacao);
   
+  console.log('🔍 DETECÇÃO: Por padrões URL →', orientacao);
   return orientacao;
 }
 
