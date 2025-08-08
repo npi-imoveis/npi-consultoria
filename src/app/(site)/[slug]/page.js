@@ -30,33 +30,53 @@ function ensureCondominio(text) {
 // 🎯 NOVA FUNÇÃO: DETECTAR ORIENTAÇÃO DA FOTO PRINCIPAL
 function detectarOrientacaoFoto(fotosOrdenadas) {
   if (!fotosOrdenadas || fotosOrdenadas.length === 0) {
-    return 'horizontal'; // fallback padrão
+    console.log('🔍 DETECÇÃO: Nenhuma foto encontrada, usando horizontal');
+    return 'horizontal';
   }
 
   const primeiraFoto = fotosOrdenadas[0];
   if (!primeiraFoto?.Foto) {
+    console.log('🔍 DETECÇÃO: Primeira foto sem URL, usando horizontal');
     return 'horizontal';
   }
 
-  // Extrair dimensões se disponíveis nos metadados da foto
+  console.log('🔍 DETECÇÃO: Analisando foto:', primeiraFoto.Foto);
+
+  // 1️⃣ PRIORIDADE: Usar dimensões reais se disponíveis
   if (primeiraFoto.Largura && primeiraFoto.Altura) {
     const ratio = primeiraFoto.Largura / primeiraFoto.Altura;
-    return ratio >= 1 ? 'horizontal' : 'vertical';
+    const orientacao = ratio < 1 ? 'vertical' : 'horizontal'; // ratio < 1 = altura > largura = vertical
+    console.log('🔍 DETECÇÃO: Por dimensões -', `${primeiraFoto.Largura}x${primeiraFoto.Altura}`, 'ratio:', ratio.toFixed(2), '→', orientacao);
+    return orientacao;
   }
 
-  // Fallback: tentar detectar pela URL/nome do arquivo
-  // Muitas vezes fotos verticais têm indicadores no nome
+  // 2️⃣ FALLBACK: Analisar URL para padrões de fotos verticais
   const fotoUrl = primeiraFoto.Foto.toLowerCase();
   
-  // Padrões comuns para fotos verticais
+  // Padrões comuns para fotos verticais (mais abrangentes)
   const padroesVerticais = [
-    'vertical', 'portrait', 'vert', 'torre', 'fachada',
-    '_v_', '_vert_', '_port_', 'elevation'
+    'vertical', 'portrait', 'vert', 'torre', 'fachada', 'predial',
+    '_v_', '_vert_', '_port_', 'elevation', 'building', 'tower',
+    'apartamento', 'condominio', 'edificio', 'predio'
   ];
   
   const isVertical = padroesVerticais.some(padrao => fotoUrl.includes(padrao));
   
-  return isVertical ? 'vertical' : 'horizontal';
+  // 3️⃣ TENTATIVA: Detectar por aspecto da URL (algumas imagens têm indicadores)
+  const aspectoVertical = fotoUrl.match(/(\d+)x(\d+)/) || fotoUrl.match(/(\d+)_(\d+)/);
+  if (aspectoVertical) {
+    const [, largura, altura] = aspectoVertical;
+    const ratio = parseInt(largura) / parseInt(altura);
+    if (ratio < 1) {
+      console.log('🔍 DETECÇÃO: Por padrão URL -', `${largura}x${altura}`, '→ VERTICAL');
+      return 'vertical';
+    }
+  }
+
+  const orientacao = isVertical ? 'vertical' : 'horizontal';
+  console.log('🔍 DETECÇÃO: Por padrões de nome →', orientacao);
+  
+  return orientacao;
 }
 
 // 🎯 FUNÇÃO PARA ORDENAR FOTOS DO CONDOMÍNIO (igual ao admin que funcionou)
@@ -599,9 +619,13 @@ export default async function CondominioPage({ params }) {
             </div>
             <div className={`relative w-full overflow-hidden rounded-lg ${
               orientacaoFoto === 'vertical' 
-                ? 'h-[550px]' 
-                : 'min-h-[550px]'
+                ? 'h-[550px] bg-red-100' // 🔍 ADICIONAR COR PARA TESTE VISUAL
+                : 'min-h-[550px] bg-blue-100' // 🔍 ADICIONAR COR PARA TESTE VISUAL
             }`}>
+              {/* 🔍 DEBUG: MOSTRAR ORIENTAÇÃO DETECTADA */}
+              <div className="absolute top-2 left-2 z-50 bg-black text-white px-2 py-1 text-xs rounded">
+                {orientacaoFoto.toUpperCase()}
+              </div>
               <ImageGallery 
                 fotos={fotosOrdenadas}
                 title={rawTitle}
