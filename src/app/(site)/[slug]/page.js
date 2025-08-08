@@ -545,9 +545,8 @@ export default async function CondominioPage({ params }) {
         <ExitIntentModal condominio={rawTitle} link={currentUrl} />
 
         <div className="container mx-auto pt-20">
-          {/* 🎯 LAYOUT ORIGINAL MANTIDO - APENAS CONTROLE DA ALTURA PARA FOTOS VERTICAIS */}
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-4">
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 ">
+            <div className="flex flex-col gap-4 ">
               <div className="px-10 py-6 bg-white max-h-[400px] xl:max-h-[300px] rounded-lg flex-grow">
                 <div className="flex justify-between">
                   <span className="text-[10px]">Código:{condominio.Codigo}</span>
@@ -598,12 +597,10 @@ export default async function CondominioPage({ params }) {
                 )}
               </div>
             </div>
-            
-            {/* 🎯 GALERIA COM ALTURA CONTROLADA PARA FOTOS VERTICAIS */}
             <div className={`relative w-full overflow-hidden rounded-lg ${
               orientacaoFoto === 'vertical' 
-                ? 'h-[550px]' // Altura fixa e controlada para fotos verticais
-                : 'min-h-[550px]' // Altura mínima para fotos horizontais (mantido original)
+                ? 'h-[550px]' 
+                : 'min-h-[550px]'
             }`}>
               <ImageGallery 
                 fotos={fotosOrdenadas}
@@ -617,7 +614,6 @@ export default async function CondominioPage({ params }) {
               />
             </div>
           </div>
-        </div>
         </div>
 
         {/* TUDO IGUAL À VERSÃO ORIGINAL - SEM LAZY LOADING */}
