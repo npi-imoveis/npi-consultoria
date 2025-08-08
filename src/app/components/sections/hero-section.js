@@ -18,12 +18,7 @@ export function HeroSection() {
         playsInline
         preload="none"
         aria-label="Vídeo de fundo mostrando imóveis de alto padrão"
-        poster="/assets/images/video-poster.jpg"
-      >
-        <track kind="captions" srcLang="pt-BR" label="Português" />
-        Seu navegador não suporta vídeos HTML5. 
-        <a href="/assets/video/video.mp4">Baixe o vídeo</a>.
-      </video>
+      ></video>
       
       <div className="absolute top-0 left-0 w-full h-full bg-black/80" aria-hidden="true"></div>
       
@@ -38,7 +33,7 @@ export function HeroSection() {
       
       <div className="relative flex flex-col items-center justify-end h-full text-center text-white pb-24 z-10">
         <Typewriter />
-        <div className="mt-8" role="search" aria-label="Buscar imóveis">
+        <div className="mt-8">
           <SearchHero />
         </div>
       </div>
@@ -75,13 +70,10 @@ function Typewriter() {
 
   return (
     <div className="w-full h-full flex flex-col justify-end items-center">
-      <span className="text-lg sm:text-xl md:text-2xl mb-2">
-        Uma nova experiência em
-      </span>
+      <span>Uma nova experiência em</span>
       <span 
-        className="text-xl sm:text-2xl md:text-3xl h-8 sm:h-10 md:h-12 font-bold text-zinc-400"
+        className="text-xl h-8 font-bold text-zinc-400"
         aria-live="polite"
-        aria-label={`Palavra atual: ${words[currentWordIndex]}`}
       >
         {text}
       </span>
