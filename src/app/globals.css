@@ -374,21 +374,3 @@ video {
     font-size: 14px !important;
   }
 }
-/* ============================================
-   🔧 ADMIN TEXTAREAS - Font-size específico
-   ============================================ */
-
-/* Textareas do admin em qualquer resolução */
-textarea {
-  font-size: 14px !important;
-}
-
-/* Alternativa mais específica se não funcionar */
-textarea[name*="descricao"],
-textarea[id*="descricao"], 
-textarea[placeholder*="buscar"],
-.admin-form textarea,
-[class*="admin"] textarea {
-  font-size: 14px !important;
-  line-height: 1.5 !important;
-}
