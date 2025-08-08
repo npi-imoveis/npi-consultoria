@@ -274,63 +274,66 @@ p {
    Mantém funcionalidade, remove excessos
    ============================================ */
 
-/* 🔧 CORREÇÃO 1: Base essencial para todos inputs - REMOVIDO !important */
+/* 🔧 CORREÇÃO 1: Base essencial para todos inputs - REMOVIDO font-size global */
 input,
 textarea,
 select {
-  font-size: 16px; /* ✅ CORRIGIDO: Removido !important */
   -webkit-appearance: none !important;
   -webkit-text-size-adjust: 100% !important;
   touch-action: manipulation !important;
-  -webkit-tap-highlight-color: transparent !important;
 }
 
 /* 🎯 OTIMIZADO: Chrome iOS detection específica */
 @supports (-webkit-appearance: none) and (not (-webkit-backdrop-filter: blur(1px))) {
   input, textarea, select {
-    font-size: 16px; /* ✅ CORRIGIDO: Removido !important */
     /* ✅ REMOVIDO: user-scalable para acessibilidade */
     -webkit-transform: translate3d(0,0,0) !important;
     transform: translate3d(0,0,0) !important;
   }
 }
 
-/* 🔧 CORREÇÃO 2: Mobile iOS básico - REMOVIDO !important */
+/* 🔧 CORREÇÃO 2: Mobile iOS básico - APENAS font-size em mobile */
 @media screen and (max-width: 768px) {
   input, textarea, select {
-    font-size: 16px; /* ✅ CORRIGIDO: Removido !important */
+    font-size: 16px !important;
     line-height: 1.4 !important;
     min-height: 44px !important; /* ✅ iOS touch target */
     box-sizing: border-box !important;
   }
 }
 
-/* 🔧 CORREÇÃO 3: Input types específicos - REMOVIDO !important */
-input[type="search"],
-input[type="text"],
-input[type="email"],
-input[type="tel"],
-input[type="url"],
-input[type="password"],
-input[type="number"] {
-  font-size: 16px; /* ✅ CORRIGIDO: Removido !important */
-  -webkit-search-decoration: none !important;
-  -webkit-search-cancel-button: none !important;
-  -webkit-appearance: none !important;
+/* 🔧 CORREÇÃO 3: Input types específicos - APENAS em mobile */
+@media screen and (max-width: 768px) {
+  input[type="search"],
+  input[type="text"],
+  input[type="email"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="password"],
+  input[type="number"] {
+    font-size: 16px !important;
+    -webkit-search-decoration: none !important;
+    -webkit-search-cancel-button: none !important;
+    -webkit-appearance: none !important;
+  }
 }
 
 /* 🎯 ESPECÍFICO: SearchHero component - essencial apenas */
-.search-hero-input {
-  font-size: 16px !important;
-  -webkit-appearance: none !important;
-  -webkit-text-size-adjust: 100% !important;
-  touch-action: manipulation !important;
-  min-height: 44px !important; /* ✅ Touch target adequado */
+@media screen and (max-width: 768px) {
+  .search-hero-input {
+    font-size: 16px !important;
+    -webkit-appearance: none !important;
+    -webkit-text-size-adjust: 100% !important;
+    touch-action: manipulation !important;
+    min-height: 44px !important; /* ✅ Touch target adequado */
+  }
 }
 
-/* ✅ MANTIDO: Performance essenciais */
-* {
-  -webkit-tap-highlight-color: transparent !important;
+/* ✅ CORRIGIDO: Performance essenciais - APENAS mobile */
+@media screen and (max-width: 768px) {
+  * {
+    -webkit-tap-highlight-color: transparent !important;
+  }
 }
 
 html {
