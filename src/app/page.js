@@ -162,31 +162,37 @@ export default async function Home() {
   };
 
   return (
-    <div>
-      {/* Structured Data para datas */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify(structuredDataDates),
-        }}
-      />
+    <>
+      <link rel="preload" href="/assets/images/fasano.jpg" as="image" />
+      <link rel="dns-prefetch" href="//www.googletagmanager.com" />
+      <link rel="preconnect" href="//fonts.googleapis.com" />
+      
+      <div>
+        {/* Structured Data para datas */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(structuredDataDates),
+          }}
+        />
 
-      {/* ✅ COMPONENTES ORIGINAIS - SEM ALTERAR PROPS */}
-      <Header />
-      <HeroSection />
-      <ActionSection cards={content?.cards_destacados} />
-      <FeaturedCondosSection />
-      <PropertyList />
-      <ListCities />
-      <LuxuryGridSection />
-      <AboutSection about={content?.sobre} />
-      <ReviewSection stats={content?.stats} />
-      <SlidePartners />
-      <TestimonialsSection testimonials={content?.testemunhos} />
-      <FaqSection faqs={content?.faq} />
-      <ContactSection />
-      <WhatsappFloat />
-      <Footer />
-    </div>
+        {/* ✅ COMPONENTES ORIGINAIS - SEM ALTERAR PROPS */}
+        <Header />
+        <HeroSection />
+        <ActionSection cards={content?.cards_destacados} />
+        <FeaturedCondosSection />
+        <PropertyList />
+        <ListCities />
+        <LuxuryGridSection />
+        <AboutSection about={content?.sobre} />
+        <ReviewSection stats={content?.stats} />
+        <SlidePartners />
+        <TestimonialsSection testimonials={content?.testemunhos} />
+        <FaqSection faqs={content?.faq} />
+        <ContactSection />
+        <WhatsappFloat />
+        <Footer />
+      </div>
+    </>
   );
 }
