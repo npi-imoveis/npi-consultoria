@@ -545,85 +545,147 @@ export default async function CondominioPage({ params }) {
         <ExitIntentModal condominio={rawTitle} link={currentUrl} />
 
         <div className="container mx-auto pt-20">
-          {/* 🎯 GRID PRINCIPAL COM CLASSES CONDICIONAIS BASEADAS NA ORIENTAÇÃO DA FOTO */}
-          <div className={`mt-6 gap-4 ${
-            orientacaoFoto === 'vertical' 
-              ? 'grid grid-cols-1 lg:grid-cols-3' // Layout 3 colunas para fotos verticais
-              : 'grid grid-cols-1 md:grid-cols-2'  // Layout 2 colunas para fotos horizontais
-          }`}>
-            {/* 🎯 COLUNA DE INFORMAÇÕES COM LARGURA CONDICIONAL */}
-            <div className={`flex flex-col gap-4 ${
-              orientacaoFoto === 'vertical' ? 'lg:col-span-2' : ''
-            }`}>
-              <div className="px-10 py-6 bg-white max-h-[400px] xl:max-h-[300px] rounded-lg flex-grow">
-                <div className="flex justify-between">
-                  <span className="text-[10px]">Código:{condominio.Codigo}</span>
-                  <Share
-                    url={currentUrl}
-                    title={`Compartilhe o imóvel ${rawTitle} em ${condominio.BairroComercial}`}
-                    variant="secondary"
-                  />
-                </div>
-
-                <h1 className="text-xl font-bold mt-2">{rawTitle}</h1>
-                <span className="text-xs text-zinc-700 font-semibold">
-                  {condominio.TipoEndereco} {condominio.Endereco} {condominio.Numero}, {condominio.BairroComercial}, {condominio.Cidade}
-                </span>
-                <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-3 gap-3 mt-4 mb-8">
-                  {condominio.ValorAluguelSite && (
-                    <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
-                      <h2 className="text-zinc-600 text-[10px] font-bold">Aluguel:</h2>
-                      <h2 className="text-black font-semibold text-[10px]">R$ {condominio.ValorAluguelSite}</h2>
-                    </div>
-                  )}
-
-                  <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
-                    <h2 className="text-zinc-600 text-[10px] font-bold">Preço:</h2>
-                    <h2 className="text-black font-semibold text-[10px]">R$ {condominio.ValorAntigo}</h2>
+          {/* 🎯 LAYOUT CONDICIONAL: EMPILHADO PARA FOTOS VERTICAIS, LADO A LADO PARA HORIZONTAIS */}
+          {orientacaoFoto === 'vertical' ? (
+            // 📱 LAYOUT EMPILHADO PARA FOTOS VERTICAIS
+            <div className="mt-6 flex flex-col gap-4">
+              {/* Galeria de fotos PRIMEIRO para fotos verticais */}
+              <div className="relative w-full h-[450px] md:h-[500px] lg:h-[550px] overflow-hidden rounded-lg">
+                <ImageGallery 
+                  fotos={fotosOrdenadas}
+                  title={rawTitle}
+                  shareUrl={currentUrl}
+                  shareTitle={`Compartilhe o imóvel ${rawTitle} em ${condominio.BairroComercial}`}
+                  layout="single"
+                  priority={true}
+                  fetchPriority="high"
+                  className="h-full w-full object-cover"
+                />
+              </div>
+              
+              {/* Grid de informações EMBAIXO para fotos verticais */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="px-10 py-6 bg-white rounded-lg">
+                  <div className="flex justify-between">
+                    <span className="text-[10px]">Código:{condominio.Codigo}</span>
+                    <Share
+                      url={currentUrl}
+                      title={`Compartilhe o imóvel ${rawTitle} em ${condominio.BairroComercial}`}
+                      variant="secondary"
+                    />
                   </div>
 
-                  {condominio.ValorCondominio && (
+                  <h1 className="text-xl font-bold mt-2">{rawTitle}</h1>
+                  <span className="text-xs text-zinc-700 font-semibold">
+                    {condominio.TipoEndereco} {condominio.Endereco} {condominio.Numero}, {condominio.BairroComercial}, {condominio.Cidade}
+                  </span>
+                  <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-3 gap-3 mt-4 mb-8">
+                    {condominio.ValorAluguelSite && (
+                      <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
+                        <h2 className="text-zinc-600 text-[10px] font-bold">Aluguel:</h2>
+                        <h2 className="text-black font-semibold text-[10px]">R$ {condominio.ValorAluguelSite}</h2>
+                      </div>
+                    )}
+
                     <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
-                      <h4 className="text-zinc-600 text-[10px] font-bold">Condomínio:</h4>
-                      <h2 className="text-black font-semibold text-[10px]">{formatterValue(condominio.ValorCondominio)}</h2>
+                      <h2 className="text-zinc-600 text-[10px] font-bold">Preço:</h2>
+                      <h2 className="text-black font-semibold text-[10px]">R$ {condominio.ValorAntigo}</h2>
                     </div>
-                  )}
-                  {condominio.ValorIptu && (
-                    <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
-                      <h4 className="text-zinc-600 text-[10px] font-bold">IPTU:</h4>
-                      <h2 className="text-black font-semibold text-[10px]">{formatterValue(condominio.ValorIptu)}</h2>
-                    </div>
+
+                    {condominio.ValorCondominio && (
+                      <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
+                        <h4 className="text-zinc-600 text-[10px] font-bold">Condomínio:</h4>
+                        <h2 className="text-black font-semibold text-[10px]">{formatterValue(condominio.ValorCondominio)}</h2>
+                      </div>
+                    )}
+                    {condominio.ValorIptu && (
+                      <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
+                        <h4 className="text-zinc-600 text-[10px] font-bold">IPTU:</h4>
+                        <h2 className="text-black font-semibold text-[10px]">{formatterValue(condominio.ValorIptu)}</h2>
+                      </div>
+                    )}
+                  </div>
+                  <ScrollToImoveisButton text={`Mostrar imóveis (${imoveisOrdenados.length})`} />
+                </div>
+                
+                <div className="relative w-full h-[300px] overflow-y-auto bg-white rounded-lg overflow-hidden p-4">
+                  {isValidValue(condominio.ValorVenda2) || isValidValue(condominio.ValorGarden) || isValidValue(condominio.ValorCobertura) ? (
+                    <PropertyTableOwner imovel={condominio} />
+                  ) : (
+                    <PropertyTable imoveisRelacionados={imoveisOrdenados} />
                   )}
                 </div>
-                <ScrollToImoveisButton text={`Mostrar imóveis (${imoveisOrdenados.length})`} />
-              </div>
-              <div className="relative w-full h-[230px] overflow-y-auto bg-white rounded-lg overflow-hidden p-4">
-                {isValidValue(condominio.ValorVenda2) || isValidValue(condominio.ValorGarden) || isValidValue(condominio.ValorCobertura) ? (
-                  <PropertyTableOwner imovel={condominio} />
-                ) : (
-                  <PropertyTable imoveisRelacionados={imoveisOrdenados} />
-                )}
               </div>
             </div>
-            
-            {/* 🎯 COLUNA DA GALERIA COM CLASSES CONDICIONAIS */}
-            <div className={`relative w-full overflow-hidden rounded-lg ${
-              orientacaoFoto === 'vertical' 
-                ? 'min-h-[650px] lg:col-span-1' // Para fotos verticais: mais altura + 1 coluna
-                : 'min-h-[550px]'               // Para fotos horizontais: altura padrão
-            }`}>
-              <ImageGallery 
-                fotos={fotosOrdenadas}
-                title={rawTitle}
-                shareUrl={currentUrl}
-                shareTitle={`Compartilhe o imóvel ${rawTitle} em ${condominio.BairroComercial}`}
-                layout="single"
-                priority={true}
-                fetchPriority="high"
-                className={orientacaoFoto === 'vertical' ? 'h-full object-cover' : ''}
-              />
+          ) : (
+            // 🖼️ LAYOUT LADO A LADO PARA FOTOS HORIZONTAIS (MANTIDO EXATAMENTE IGUAL)
+            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-4">
+                <div className="px-10 py-6 bg-white max-h-[400px] xl:max-h-[300px] rounded-lg flex-grow">
+                  <div className="flex justify-between">
+                    <span className="text-[10px]">Código:{condominio.Codigo}</span>
+                    <Share
+                      url={currentUrl}
+                      title={`Compartilhe o imóvel ${rawTitle} em ${condominio.BairroComercial}`}
+                      variant="secondary"
+                    />
+                  </div>
+
+                  <h1 className="text-xl font-bold mt-2">{rawTitle}</h1>
+                  <span className="text-xs text-zinc-700 font-semibold">
+                    {condominio.TipoEndereco} {condominio.Endereco} {condominio.Numero}, {condominio.BairroComercial}, {condominio.Cidade}
+                  </span>
+                  <div className="grid grid-cols-2 sm:grid-cols-2 xl:grid-cols-3 gap-3 mt-4 mb-8">
+                    {condominio.ValorAluguelSite && (
+                      <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
+                        <h2 className="text-zinc-600 text-[10px] font-bold">Aluguel:</h2>
+                        <h2 className="text-black font-semibold text-[10px]">R$ {condominio.ValorAluguelSite}</h2>
+                      </div>
+                    )}
+
+                    <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
+                      <h2 className="text-zinc-600 text-[10px] font-bold">Preço:</h2>
+                      <h2 className="text-black font-semibold text-[10px]">R$ {condominio.ValorAntigo}</h2>
+                    </div>
+
+                    {condominio.ValorCondominio && (
+                      <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
+                        <h4 className="text-zinc-600 text-[10px] font-bold">Condomínio:</h4>
+                        <h2 className="text-black font-semibold text-[10px]">{formatterValue(condominio.ValorCondominio)}</h2>
+                      </div>
+                    )}
+                    {condominio.ValorIptu && (
+                      <div className="flex flex-col rounded-lg bg-zinc-100 p-4">
+                        <h4 className="text-zinc-600 text-[10px] font-bold">IPTU:</h4>
+                        <h2 className="text-black font-semibold text-[10px]">{formatterValue(condominio.ValorIptu)}</h2>
+                      </div>
+                    )}
+                  </div>
+                  <ScrollToImoveisButton text={`Mostrar imóveis (${imoveisOrdenados.length})`} />
+                </div>
+                <div className="relative w-full h-[230px] overflow-y-auto bg-white rounded-lg overflow-hidden p-4">
+                  {isValidValue(condominio.ValorVenda2) || isValidValue(condominio.ValorGarden) || isValidValue(condominio.ValorCobertura) ? (
+                    <PropertyTableOwner imovel={condominio} />
+                  ) : (
+                    <PropertyTable imoveisRelacionados={imoveisOrdenados} />
+                  )}
+                </div>
+              </div>
+              
+              <div className="relative w-full min-h-[550px] overflow-hidden rounded-lg">
+                <ImageGallery 
+                  fotos={fotosOrdenadas}
+                  title={rawTitle}
+                  shareUrl={currentUrl}
+                  shareTitle={`Compartilhe o imóvel ${rawTitle} em ${condominio.BairroComercial}`}
+                  layout="single"
+                  priority={true}
+                  fetchPriority="high"
+                />
+              </div>
             </div>
-          </div>
+          )}
+        </div>
         </div>
 
         {/* TUDO IGUAL À VERSÃO ORIGINAL - SEM LAZY LOADING */}
