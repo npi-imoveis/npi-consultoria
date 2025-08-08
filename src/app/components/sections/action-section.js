@@ -79,7 +79,7 @@ export function ActionSection({ cards }) {
         <div className="relative w-full lg:w-[66%] h-[400px] overflow-hidden group">
           <div className="absolute inset-0 transition-transform duration-300 ease-in-out group-hover:scale-110">
             <Image
-              src="/assets/images/acao-home.jpg"
+              src="/assets/images/acao-home.webp"
               alt="Imóveis de luxo"
               title="Condomínios de luxo entre 4 e 10 milhões - NPi Imóveis"
               fill
