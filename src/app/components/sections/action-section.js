@@ -113,7 +113,7 @@ export function ActionSection({ cards }) {
         <div className="relative w-full lg:w-[33%] h-[400px] overflow-hidden group">
           <div className="absolute inset-0 transition-transform duration-300 ease-in-out group-hover:scale-110">
             <Image
-              src="/assets/images/fasano.jpg"
+              src="/assets/images/fasano.webp"
               alt="Imóveis de alto padrão"
               title="Imóveis exclusivos acima de 10 milhões - NPi Imóveis"
               fill
