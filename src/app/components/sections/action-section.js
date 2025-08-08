@@ -49,31 +49,17 @@ export function ActionSection({ cards }) {
     // Limpar filtros anteriores
     useFiltersStore.getState().limparFiltros();
 
-    // ✅ TESTE - Diferentes variações do valor
+    // Definir os novos filtros para imóveis acima de 10 milhões
     setFilters({
-      finalidade: "VENDA", // Tente também: "venda", "Venda", "SALE"
-      tipoNegocio: "VENDA", // Backup - pode ser outro campo
-      tipo: "VENDA", // Backup - pode ser outro campo
-      precoMin: 10000000,
-      categoriaSelecionada: "Apartamento",
-      cidadeSelecionada: "São Paulo",
-    });
-
-    // ✅ DEBUG - Ver o que está sendo setado
-    console.log("🔍 Filtros setados:", {
       finalidade: "VENDA",
       precoMin: 10000000,
+      // ✅ SEM precoMax para pegar todos acima de 10M
       categoriaSelecionada: "Apartamento",
       cidadeSelecionada: "São Paulo",
     });
 
     // Aplicar os filtros
     aplicarFiltros();
-
-    // ✅ DEBUG - Ver filtros após aplicar
-    setTimeout(() => {
-      console.log("🔍 Estado final do store:", useFiltersStore.getState());
-    }, 100);
 
     // Navegar para a página de busca
     router.push("/busca");
