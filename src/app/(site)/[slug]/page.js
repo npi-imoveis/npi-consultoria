@@ -1,4 +1,4 @@
-// src/app/(site)/[slug]/page.js - VERSÃO CONSERVADORA (FIX 404)
+// src/app/(site)/[slug]/page.js - AJUSTE CIRÚRGICO PARA FOTOS VERTICAIS
 
 import { Button } from "@/app/components/ui/button";
 import { getCondominioPorSlug } from "@/app/services";
@@ -25,6 +25,38 @@ import { ImageGallery } from "@/app/components/sections/image-gallery";
 
 function ensureCondominio(text) {
   return /condom[ií]nio/i.test(text) ? text : `Condomínio ${text}`;
+}
+
+// 🎯 NOVA FUNÇÃO: DETECTAR ORIENTAÇÃO DA FOTO PRINCIPAL
+function detectarOrientacaoFoto(fotosOrdenadas) {
+  if (!fotosOrdenadas || fotosOrdenadas.length === 0) {
+    return 'horizontal'; // fallback padrão
+  }
+
+  const primeiraFoto = fotosOrdenadas[0];
+  if (!primeiraFoto?.Foto) {
+    return 'horizontal';
+  }
+
+  // Extrair dimensões se disponíveis nos metadados da foto
+  if (primeiraFoto.Largura && primeiraFoto.Altura) {
+    const ratio = primeiraFoto.Largura / primeiraFoto.Altura;
+    return ratio >= 1 ? 'horizontal' : 'vertical';
+  }
+
+  // Fallback: tentar detectar pela URL/nome do arquivo
+  // Muitas vezes fotos verticais têm indicadores no nome
+  const fotoUrl = primeiraFoto.Foto.toLowerCase();
+  
+  // Padrões comuns para fotos verticais
+  const padroesVerticais = [
+    'vertical', 'portrait', 'vert', 'torre', 'fachada',
+    '_v_', '_vert_', '_port_', 'elevation'
+  ];
+  
+  const isVertical = padroesVerticais.some(padrao => fotoUrl.includes(padrao));
+  
+  return isVertical ? 'vertical' : 'horizontal';
 }
 
 // 🎯 FUNÇÃO PARA ORDENAR FOTOS DO CONDOMÍNIO (igual ao admin que funcionou)
@@ -403,6 +435,10 @@ export default async function CondominioPage({ params }) {
   // 🎯 PROCESSAR FOTOS COM photoSorter ANTES DE USAR (igual ao admin que funcionou)
   const fotosOrdenadas = processarFotosCondominio(condominio.Foto, condominio.Codigo);
 
+  // 🎯 DETECTAR ORIENTAÇÃO DA FOTO PRINCIPAL
+  const orientacaoFoto = detectarOrientacaoFoto(fotosOrdenadas);
+  console.log('📐 ORIENTAÇÃO DA FOTO DETECTADA:', orientacaoFoto);
+
   // 🎯 NOVA IMPLEMENTAÇÃO: ORDENAR IMÓVEIS RELACIONADOS + LIMPAR METRAGEM
   // Principal primeiro + demais por valor crescente + sem decimais desnecessários
   const imoveisOrdenados = ordenarImoveisRelacionados(imoveisRelacionados, condominio.Codigo);
@@ -509,8 +545,16 @@ export default async function CondominioPage({ params }) {
         <ExitIntentModal condominio={rawTitle} link={currentUrl} />
 
         <div className="container mx-auto pt-20">
-          <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 ">
-            <div className="flex flex-col gap-4 ">
+          {/* 🎯 GRID PRINCIPAL COM CLASSES CONDICIONAIS BASEADAS NA ORIENTAÇÃO DA FOTO */}
+          <div className={`mt-6 gap-4 ${
+            orientacaoFoto === 'vertical' 
+              ? 'grid grid-cols-1 lg:grid-cols-3' // Layout 3 colunas para fotos verticais
+              : 'grid grid-cols-1 md:grid-cols-2'  // Layout 2 colunas para fotos horizontais
+          }`}>
+            {/* 🎯 COLUNA DE INFORMAÇÕES COM LARGURA CONDICIONAL */}
+            <div className={`flex flex-col gap-4 ${
+              orientacaoFoto === 'vertical' ? 'lg:col-span-2' : ''
+            }`}>
               <div className="px-10 py-6 bg-white max-h-[400px] xl:max-h-[300px] rounded-lg flex-grow">
                 <div className="flex justify-between">
                   <span className="text-[10px]">Código:{condominio.Codigo}</span>
@@ -561,8 +605,13 @@ export default async function CondominioPage({ params }) {
                 )}
               </div>
             </div>
-            <div className="relative w-full min-h-[550px] overflow-hidden rounded-lg">
-              {/* 🚀 APENAS PRIORITY ADICIONADO - RESTO IGUAL */}
+            
+            {/* 🎯 COLUNA DA GALERIA COM CLASSES CONDICIONAIS */}
+            <div className={`relative w-full overflow-hidden rounded-lg ${
+              orientacaoFoto === 'vertical' 
+                ? 'min-h-[650px] lg:col-span-1' // Para fotos verticais: mais altura + 1 coluna
+                : 'min-h-[550px]'               // Para fotos horizontais: altura padrão
+            }`}>
               <ImageGallery 
                 fotos={fotosOrdenadas}
                 title={rawTitle}
@@ -571,6 +620,7 @@ export default async function CondominioPage({ params }) {
                 layout="single"
                 priority={true}
                 fetchPriority="high"
+                className={orientacaoFoto === 'vertical' ? 'h-full object-cover' : ''}
               />
             </div>
           </div>
