@@ -1,5 +1,306 @@
-// src/app/busca/page.js - SOLUÇÃO COMPLETA SEO + FUNCIONALIDADE EM 1 ARQUIVO
+// src/app/busca/page.js - SOLUÇÃO COMPLETA EM 1 ARQUIVO
 
+// 🎯 METADADOS SERVER-SIDE (ANTES DO "use client")
+export async function generateMetadata({ searchParams, params }) {
+  try {
+    const currentDate = new Date().toISOString();
+    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://npiconsultoria.com.br';
+    
+    // 🔥 EXTRAIR PARÂMETROS DA URL ATUAL (para URLs SEO-friendly)
+    let urlParams = {};
+    
+    // Se a função for chamada com uma URL SEO-friendly, extrair da própria URL
+    if (typeof window === 'undefined') {
+      // Estamos no servidor, usar searchParams diretamente
+      urlParams = searchParams;
+    }
+    
+    const {
+      cidade,
+      finalidade = 'venda',
+      categoria,
+      bairros,
+      quartos,
+      precoMin,
+      precoMax,
+      q: searchQuery
+    } = urlParams;
+
+    // 🎯 GERAR TÍTULO DINÂMICO ESPECÍFICO - IGUAL AO AHREFS
+    let title = 'Busca de Imóveis | NPi Imóveis';
+    let description = 'Encontre apartamentos, casas e imóveis de alto padrão com filtros avançados, mapa interativo e as melhores oportunidades do mercado imobiliário.';
+    let keywords = 'busca imóveis, apartamentos luxo, casas alto padrão, imóveis São Paulo, NPi Imóveis';
+
+    // Para busca com filtros
+    if (cidade || categoria || searchQuery) {
+      const titleParts = [];
+      
+      // 1. Categoria (plural)
+      if (categoria) {
+        const categoriaPluralMap = {
+          'Apartamento': 'Apartamentos',
+          'apartamento': 'Apartamentos', 
+          'apartamentos': 'Apartamentos',
+          'Casa': 'Casas',
+          'casa': 'Casas',
+          'casas': 'Casas',
+          'Cobertura': 'Coberturas',
+          'cobertura': 'Coberturas',
+          'coberturas': 'Coberturas',
+          'Terreno': 'Terrenos',
+          'terreno': 'Terrenos',
+          'terrenos': 'Terrenos',
+          'Flat': 'Flats',
+          'flat': 'Flats',
+          'flats': 'Flats'
+        };
+        titleParts.push(categoriaPluralMap[categoria] || 'Imóveis');
+      } else {
+        titleParts.push('Imóveis');
+      }
+      
+      // 2. Finalidade
+      if (finalidade === 'venda' || finalidade === 'Comprar') {
+        titleParts.push('para venda');
+      } else if (finalidade === 'aluguel' || finalidade === 'Alugar') {
+        titleParts.push('para aluguel');
+      } else {
+        titleParts.push('para venda');
+      }
+      
+      // 3. Localização
+      if (cidade) {
+        const cidadeFormatada = cidade
+          .replace(/-/g, ' ')
+          .replace(/\b\w/g, l => l.toUpperCase());
+        titleParts.push(`em ${cidadeFormatada}`);
+      }
+      
+      // 4. Construir título final
+      title = titleParts.join(' ');
+      
+      // 5. Gerar descrição específica
+      description = `Encontre ${titleParts.join(' ')} com a melhor consultoria imobiliária. Imóveis de alto padrão com fotos, plantas e informações completas. NPi Imóveis - sua imobiliária de confiança.`;
+      
+      // 6. Keywords específicas
+      const keywordsList = ['imóveis', 'NPi Imóveis'];
+      if (categoria) keywordsList.push(categoria.toLowerCase());
+      if (cidade) keywordsList.push(cidade.replace(/-/g, ' '));
+      if (bairros) keywordsList.push(...bairros.split(','));
+      keywords = keywordsList.join(', ');
+    }
+    
+    // Para busca por termo
+    if (searchQuery) {
+      title = `Busca: "${searchQuery}" | NPi Imóveis`;
+      description = `Resultados da busca por "${searchQuery}". Encontre apartamentos, casas e imóveis de alto padrão com a NPi Imóveis.`;
+      keywords = `${searchQuery}, imóveis, apartamentos, casas, busca, NPi Imóveis`;
+    }
+
+    // Limitar título a 60 caracteres
+    if (title.length > 60) {
+      title = title.substring(0, 57) + '...';
+    }
+
+    // Limitar descrição a 160 caracteres  
+    if (description.length > 160) {
+      description = description.substring(0, 157) + '...';
+    }
+
+    // 🎯 URL CANÔNICA CORRETA
+    let canonicalUrl = `${baseUrl}/busca`;
+    
+    // Construir URL canônica com parâmetros
+    const params = new URLSearchParams();
+    if (cidade) params.set('cidade', cidade);
+    if (finalidade && finalidade !== 'venda') params.set('finalidade', finalidade);
+    if (categoria) params.set('categoria', categoria);
+    if (bairros) params.set('bairros', bairros);
+    if (quartos) params.set('quartos', quartos);
+    if (precoMin) params.set('precoMin', precoMin);
+    if (precoMax) params.set('precoMax', precoMax);
+    if (searchQuery) params.set('q', searchQuery);
+    
+    if (params.toString()) {
+      canonicalUrl += `?${params.toString()}`;
+    }
+
+    console.log('🎯 [SERVER-META] Título gerado:', title);
+    console.log('🎯 [SERVER-META] URL canônica:', canonicalUrl);
+
+    return {
+      // 🎯 TÍTULO E DESCRIÇÃO DINÂMICOS
+      title,
+      description,
+      keywords,
+      
+      // Metadados básicos
+      authors: [{ name: "NPi Imóveis" }],
+      creator: "NPi Imóveis",
+      publisher: "NPi Imóveis",
+      metadataBase: new URL(baseUrl),
+      
+      // 🎯 ROBOTS OTIMIZADO
+      robots: {
+        index: true,
+        follow: true,
+        'max-video-preview': -1,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+        googleBot: {
+          index: true,
+          follow: true,
+          'max-video-preview': -1,
+          'max-image-preview': 'large',
+          'max-snippet': -1,
+        },
+        bingBot: {
+          index: true,
+          follow: true,
+        }
+      },
+      
+      // 🎯 CANONICAL E ALTERNATES - RESOLVE PROBLEMA AHREFS
+      alternates: {
+        canonical: canonicalUrl,
+        languages: {
+          "pt-BR": canonicalUrl,
+        },
+      },
+      
+      // 🎯 OPEN GRAPH COMPLETO - RESOLVE MISSING NO AHREFS
+      openGraph: {
+        title,
+        description,
+        url: canonicalUrl,
+        siteName: "NPi Imóveis",
+        type: "website",
+        locale: "pt_BR",
+        publishedTime: currentDate,
+        modifiedTime: currentDate,
+        
+        // 🎯 IMAGENS OTIMIZADAS
+        images: [
+          {
+            url: `${baseUrl}/assets/busca-${categoria || 'imoveis'}.jpg`,
+            width: 1200,
+            height: 630,
+            alt: title,
+            type: "image/jpeg",
+          },
+          {
+            url: `${baseUrl}/assets/thumbnail-search.jpg`,
+            width: 1200,
+            height: 630,
+            alt: "NPi Imóveis - Busca de Imóveis",
+            type: "image/jpeg",
+          }
+        ],
+        
+        // Propriedades específicas
+        'property:location': cidade ? cidade.replace(/-/g, ' ') : 'São Paulo',
+        'property:type': categoria || 'imóveis',
+        'property:purpose': finalidade,
+      },
+      
+      // 🎯 TWITTER CARDS COMPLETO - RESOLVE MISSING NO AHREFS
+      twitter: {
+        card: "summary_large_image",
+        site: "@NPIImoveis",
+        creator: "@NPIImoveis",
+        title,
+        description,
+        images: [`${baseUrl}/assets/busca-${categoria || 'imoveis'}.jpg`],
+      },
+      
+      // 🎯 METADADOS ADICIONAIS COM DATAS - RESOLVE MISSING DATES
+      other: {
+        "google-site-verification": "jIbU4BYULeE_XJZo-2yGSOdfyz-3v0JuI0mqUItNU-4",
+        
+        // 🎯 DATAS COMPLETAS - RESOLVE PROBLEMA AHREFS
+        'article:published_time': currentDate,
+        'article:modified_time': currentDate,
+        'article:author': 'NPi Imóveis',
+        'article:section': 'Busca de Imóveis',
+        'article:tag': keywords,
+        'og:updated_time': currentDate,
+        'last-modified': currentDate,
+        'date': currentDate,
+        'DC.date.modified': currentDate,
+        'DC.date.created': currentDate,
+        
+        // Dados específicos da busca
+        'search:type': categoria || 'imóveis',
+        'search:location': cidade || '',
+        'search:purpose': finalidade,
+        'search:query': searchQuery || '',
+        'geo.region': cidade ? `BR-SP-${cidade}` : 'BR-SP',
+        'geo.placename': cidade ? cidade.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'São Paulo',
+        
+        // Schema.org properties
+        'property:type': categoria || 'imóveis',
+        'property:purpose': finalidade,
+        'property:location': cidade || '',
+        'property:neighborhood': bairros || '',
+        
+        // Dublin Core
+        'DC.title': title,
+        'DC.description': description,
+        'DC.subject': keywords,
+        'DC.type': 'Text.SearchResults',
+        'DC.format': 'text/html',
+        'DC.language': 'pt-BR',
+        'DC.coverage': cidade ? `${cidade.replace(/-/g, ' ')}, São Paulo, Brasil` : 'São Paulo, Brasil',
+        
+        // Additional SEO
+        'revisit-after': '1 day',
+        'expires': new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
+        'cache-control': 'public, max-age=3600',
+      },
+      
+      icons: {
+        icon: "/favicon.ico",
+        apple: "/apple-touch-icon.png",
+      },
+      
+      // 🎯 MANIFEST E PWA
+      manifest: "/manifest.json",
+      
+      // 🎯 VIEWPORT OTIMIZADO
+      viewport: {
+        width: 'device-width',
+        initialScale: 1,
+        maximumScale: 5,
+        userScalable: true,
+      }
+    };
+  } catch (error) {
+    console.error("Erro ao gerar metadata de busca:", error);
+    
+    // Fallback metadata
+    const currentDate = new Date().toISOString();
+    return {
+      title: "Busca de Imóveis | NPi Imóveis",
+      description: "Encontre os melhores imóveis de alto padrão com a NPi Imóveis.",
+      other: {
+        'article:published_time': currentDate,
+        'article:modified_time': currentDate,
+        'last-modified': currentDate,
+        'date': currentDate,
+      },
+      robots: {
+        index: true,
+        follow: true,
+      },
+    };
+  }
+}
+
+// 🎯 CONFIGURAÇÃO DINÂMICA
+export const dynamic = 'force-dynamic';
+export const revalidate = 300; // 5 minutos
+
+// 🔥 TUDO CLIENT-SIDE A PARTIR DAQUI
 "use client";
 
 import { useEffect, useState } from "react";
@@ -21,263 +322,6 @@ import useImovelStore from "../store/imovelStore";
 import { gerarTituloSeoFriendly, gerarDescricaoSeoFriendly, gerarUrlSeoFriendly } from "../utils/url-slugs";
 import { useRouter } from "next/navigation";
 
-// 🎯 FUNÇÕES SEO INLINE
-function updateDynamicSEO(filtros, totalItems = 0) {
-  if (typeof document === 'undefined') return;
-  
-  try {
-    const currentDate = new Date().toISOString();
-    
-    // 🔥 GERAR TÍTULO DINÂMICO OTIMIZADO
-    let title = 'Busca de Imóveis | NPi Imóveis';
-    let description = 'Encontre apartamentos, casas e imóveis de alto padrão com a NPi Imóveis.';
-    
-    if (filtros.cidadeSelecionada || filtros.categoriaSelecionada || filtros.searchTerm) {
-      // Gerar título específico baseado nos filtros
-      const titleParts = [];
-      
-      // 1. Categoria (plural)
-      if (filtros.categoriaSelecionada) {
-        const categoriaPluralMap = {
-          'Apartamento': 'Apartamentos',
-          'Casa': 'Casas',
-          'Casa Comercial': 'Casas comerciais',
-          'Casa em Condominio': 'Casas em condomínio',
-          'Cobertura': 'Coberturas',
-          'Flat': 'Flats',
-          'Garden': 'Gardens',
-          'Loft': 'Lofts',
-          'Loja': 'Lojas',
-          'Prédio Comercial': 'Prédios comerciais',
-          'Sala Comercial': 'Salas comerciais',
-          'Sobrado': 'Sobrados',
-          'Terreno': 'Terrenos'
-        };
-        titleParts.push(categoriaPluralMap[filtros.categoriaSelecionada] || 'Imóveis');
-      } else {
-        titleParts.push('Imóveis');
-      }
-      
-      // 2. Finalidade
-      const finalidade = filtros.finalidade || 'Comprar';
-      if (finalidade === 'Comprar') {
-        titleParts.push('para venda');
-      } else if (finalidade === 'Alugar') {
-        titleParts.push('para aluguel');
-      } else {
-        titleParts.push('para venda');
-      }
-      
-      // 3. Localização
-      if (filtros.cidadeSelecionada) {
-        const cidadeFormatada = filtros.cidadeSelecionada
-          .replace(/-/g, ' ')
-          .replace(/\b\w/g, l => l.toUpperCase());
-        titleParts.push(`em ${cidadeFormatada}`);
-      }
-      
-      // 4. Bairro específico (se houver apenas 1)
-      if (filtros.bairrosSelecionados && filtros.bairrosSelecionados.length === 1) {
-        titleParts.push(`- ${filtros.bairrosSelecionados[0]}`);
-      }
-      
-      // 5. Especificações (quartos, etc)
-      const specs = [];
-      if (filtros.quartos) specs.push(`${filtros.quartos} quartos`);
-      if (filtros.vagas) specs.push(`${filtros.vagas} vagas`);
-      
-      if (specs.length > 0) {
-        titleParts.push(`- ${specs.join(', ')}`);
-      }
-      
-      // Construir título final
-      title = titleParts.join(' ');
-      
-      // Adicionar quantidade se disponível
-      if (totalItems > 0) {
-        title = `${totalItems} ${title.toLowerCase()}`;
-      }
-      
-      // Limitar a 60 caracteres para SEO
-      if (title.length > 60) {
-        title = title.substring(0, 57) + '...';
-      }
-      
-      // Gerar descrição usando função existente ou criar nova
-      if (typeof gerarDescricaoSeoFriendly === 'function') {
-        description = gerarDescricaoSeoFriendly(filtros);
-      } else {
-        // Descrição básica se função não existir
-        description = `Encontre ${titleParts.join(' ')} com a melhor consultoria imobiliária. Imóveis de alto padrão com fotos, plantas e informações completas.`;
-      }
-    }
-    
-    // Para busca por termo
-    if (filtros.searchTerm) {
-      title = `Busca: "${filtros.searchTerm}" - Imóveis`;
-      description = `Resultados da busca por "${filtros.searchTerm}". Encontre apartamentos, casas e imóveis de alto padrão.`;
-    }
-    
-    // Atualizar título da página
-    document.title = title;
-    
-    // Atualizar meta description
-    const metaDescription = document.querySelector('meta[name="description"]');
-    if (metaDescription) {
-      metaDescription.setAttribute('content', description);
-    } else {
-      const newMeta = document.createElement('meta');
-      newMeta.name = 'description';
-      newMeta.content = description;
-      document.head.appendChild(newMeta);
-    }
-    
-    // Atualizar Open Graph tags
-    const updateOrCreateMeta = (property, content) => {
-      let meta = document.querySelector(`meta[property="${property}"]`);
-      if (!meta) {
-        meta = document.createElement('meta');
-        meta.setAttribute('property', property);
-        document.head.appendChild(meta);
-      }
-      meta.setAttribute('content', content);
-    };
-    
-    updateOrCreateMeta('og:title', title);
-    updateOrCreateMeta('og:description', description);
-    updateOrCreateMeta('og:url', window.location.href);
-    updateOrCreateMeta('og:updated_time', currentDate);
-    
-    // Atualizar Twitter Cards
-    const updateOrCreateTwitterMeta = (name, content) => {
-      let meta = document.querySelector(`meta[name="${name}"]`);
-      if (!meta) {
-        meta = document.createElement('meta');
-        meta.setAttribute('name', name);
-        document.head.appendChild(meta);
-      }
-      meta.setAttribute('content', content);
-    };
-    
-    updateOrCreateTwitterMeta('twitter:title', title);
-    updateOrCreateTwitterMeta('twitter:description', description);
-    
-    // Atualizar last-modified
-    const lastModified = document.querySelector('meta[http-equiv="last-modified"]');
-    if (lastModified) {
-      lastModified.setAttribute('content', currentDate);
-    } else {
-      const newLastModified = document.createElement('meta');
-      newLastModified.setAttribute('http-equiv', 'last-modified');
-      newLastModified.content = currentDate;
-      document.head.appendChild(newLastModified);
-    }
-    
-    // Atualizar Structured Data dinamicamente
-    updateStructuredData(totalItems, filtros);
-    
-    console.log('✅ SEO atualizado dinamicamente:', { title, description, totalItems });
-  } catch (error) {
-    console.error('❌ Erro ao atualizar SEO:', error);
-  }
-}
-
-function updateStructuredData(totalItems, filtros) {
-  try {
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://npiconsultoria.com.br';
-    const currentDate = new Date().toISOString();
-    
-    // Buscar script existente ou criar novo
-    let script = document.querySelector('script[type="application/ld+json"]');
-    if (!script) {
-      script = document.createElement('script');
-      script.type = 'application/ld+json';
-      document.head.appendChild(script);
-    }
-    
-    const structuredData = {
-      "@context": "https://schema.org",
-      "@graph": [
-        {
-          "@type": "SearchResultsPage",
-          "@id": `${baseUrl}/busca#webpage`,
-          url: window.location.href,
-          name: document.title,
-          description: document.querySelector('meta[name="description"]')?.content || '',
-          datePublished: currentDate,
-          dateModified: currentDate,
-          isPartOf: {
-            "@type": "WebSite",
-            "@id": `${baseUrl}#website`,
-            name: "NPi Imóveis",
-            url: baseUrl,
-            potentialAction: {
-              "@type": "SearchAction",
-              target: {
-                "@type": "EntryPoint",
-                urlTemplate: `${baseUrl}/busca?q={search_term_string}`
-              },
-              "query-input": "required name=search_term_string"
-            }
-          },
-          mainEntity: {
-            "@type": "ItemList",
-            numberOfItems: totalItems
-          }
-        },
-        {
-          "@type": "Organization",
-          "@id": `${baseUrl}#organization`,
-          name: "NPi Imóveis",
-          url: baseUrl,
-          logo: {
-            "@type": "ImageObject",
-            url: `${baseUrl}/assets/images/logo-npi.png`,
-            width: 300,
-            height: 100
-          },
-          contactPoint: {
-            "@type": "ContactPoint",
-            telephone: "+55-11-99999-9999",
-            contactType: "customer service",
-            areaServed: "BR",
-            availableLanguage: "Portuguese"
-          },
-          sameAs: [
-            "https://www.instagram.com/npiimoveis",
-            "https://www.linkedin.com/company/npi-imoveis",
-            "https://www.facebook.com/npiimoveis"
-          ]
-        },
-        {
-          "@type": "BreadcrumbList",
-          "@id": `${window.location.href}#breadcrumb`,
-          itemListElement: [
-            {
-              "@type": "ListItem",
-              position: 1,
-              name: "Home",
-              item: baseUrl
-            },
-            {
-              "@type": "ListItem",
-              position: 2,
-              name: "Busca de Imóveis",
-              item: `${baseUrl}/busca`
-            }
-          ]
-        }
-      ]
-    };
-    
-    script.textContent = JSON.stringify(structuredData);
-    console.log('✅ Structured Data atualizado');
-  } catch (error) {
-    console.error('❌ Erro ao atualizar Structured Data:', error);
-  }
-}
-
-// 🎯 COMPONENTE PRINCIPAL COM SEO INTEGRADO
 export default function BuscaImoveis() {
   const [imoveis, setImoveis] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -316,97 +360,159 @@ export default function BuscaImoveis() {
   const [fullyInitialized, setFullyInitialized] = useState(false);
   const [uiVisible, setUiVisible] = useState(false);
 
-  // 🎯 EFEITO PARA INICIALIZAR SEO ESTÁTICO NO MOUNT
-  useEffect(() => {
-    if (typeof document === 'undefined') return;
-    
-    // Adicionar meta tags SEO básicas se não existirem
-    const addMetaIfNotExists = (attribute, value, content) => {
-      const selector = attribute === 'name' ? `meta[name="${value}"]` : `meta[property="${value}"]`;
-      if (!document.querySelector(selector)) {
-        const meta = document.createElement('meta');
-        meta.setAttribute(attribute, value);
-        meta.content = content;
-        document.head.appendChild(meta);
+  // 🎯 FUNÇÃO PARA ATUALIZAR STRUCTURED DATA DINAMICAMENTE
+  const updateStructuredData = (totalItems = 0, imoveisData = []) => {
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://npiconsultoria.com.br';
+      const currentDate = new Date().toISOString();
+      
+      // Buscar script existente ou criar novo
+      let script = document.querySelector('script[type="application/ld+json"]');
+      if (!script) {
+        script = document.createElement('script');
+        script.type = 'application/ld+json';
+        document.head.appendChild(script);
       }
-    };
+      
+      const structuredData = {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "SearchResultsPage",
+            "@id": `${baseUrl}/busca#webpage`,
+            url: window.location.href,
+            name: document.title,
+            description: document.querySelector('meta[name="description"]')?.content || '',
+            datePublished: currentDate,
+            dateModified: currentDate,
+            isPartOf: {
+              "@type": "WebSite",
+              "@id": `${baseUrl}#website`,
+              name: "NPi Imóveis",
+              url: baseUrl,
+              potentialAction: {
+                "@type": "SearchAction",
+                target: {
+                  "@type": "EntryPoint",
+                  urlTemplate: `${baseUrl}/busca?q={search_term_string}`
+                },
+                "query-input": "required name=search_term_string"
+              }
+            },
+            mainEntity: {
+              "@type": "ItemList",
+              numberOfItems: totalItems,
+              itemListElement: imoveisData.slice(0, 10).map((imovel, index) => ({
+                "@type": "ListItem",
+                position: index + 1,
+                item: {
+                  "@type": "RealEstateAgent",
+                  name: imovel.NomeImovel || `Imóvel ${imovel.Codigo}`,
+                  url: `${baseUrl}/imovel/${imovel.Codigo}`,
+                  image: imovel.Foto1 || `${baseUrl}/assets/default-property.jpg`,
+                  description: imovel.Observacoes?.substring(0, 200) || `Imóvel código ${imovel.Codigo}`,
+                  offers: {
+                    "@type": "Offer",
+                    price: imovel.ValorNumerico || 0,
+                    priceCurrency: "BRL",
+                    availability: "https://schema.org/InStock"
+                  },
+                  address: {
+                    "@type": "PostalAddress",
+                    addressLocality: imovel.Cidade || "São Paulo",
+                    addressRegion: "SP",
+                    addressCountry: "BR"
+                  }
+                }
+              }))
+            }
+          },
+          {
+            "@type": "Organization",
+            "@id": `${baseUrl}#organization`,
+            name: "NPi Imóveis",
+            url: baseUrl,
+            logo: {
+              "@type": "ImageObject",
+              url: `${baseUrl}/assets/images/logo-npi.png`,
+              width: 300,
+              height: 100
+            },
+            contactPoint: {
+              "@type": "ContactPoint",
+              telephone: "+55-11-99999-9999",
+              contactType: "customer service",
+              areaServed: "BR",
+              availableLanguage: "Portuguese"
+            },
+            sameAs: [
+              "https://www.instagram.com/npiimoveis",
+              "https://www.linkedin.com/company/npi-imoveis",
+              "https://www.facebook.com/npiimoveis"
+            ]
+          }
+        ]
+      };
+      
+      script.textContent = JSON.stringify(structuredData);
+      console.log('✅ Structured Data atualizado:', { totalItems, imoveisCount: imoveisData.length });
+    } catch (error) {
+      console.error('❌ Erro ao atualizar Structured Data:', error);
+    }
+  };
+
+  // 🎯 FUNÇÃO PARA ATUALIZAR TÍTULO COM QUANTIDADE
+  const updateTitleWithCount = (totalItems = 0) => {
+    try {
+      const currentTitle = document.title;
+      
+      // Se o título ainda não tem quantidade e há resultados, adicionar
+      if (totalItems > 0 && !currentTitle.match(/^\d+\s/)) {
+        const newTitle = `${totalItems} ${currentTitle.toLowerCase()}`;
+        
+        // Limitar a 60 caracteres
+        document.title = newTitle.length > 60 ? newTitle.substring(0, 57) + '...' : newTitle;
+        
+        console.log('🎯 [TITLE] Título atualizado com quantidade:', document.title);
+      }
+    } catch (error) {
+      console.error('❌ Erro ao atualizar título:', error);
+    }
+  };
+
+  // 🎯 FUNÇÃO PARA EXTRAIR PARÂMETROS DE URL SEO-FRIENDLY
+  const extractFromSeoUrl = () => {
+    const path = window.location.pathname;
     
-    const currentDate = new Date().toISOString();
+    // Detectar padrão: /buscar/venda/apartamentos/guaruja
+    const seoUrlMatch = path.match(/\/buscar?\/([^\/]+)\/([^\/]+)\/([^\/]+)(?:\/([^\/]+))?/);
     
-    // Meta tags básicas
-    addMetaIfNotExists('name', 'description', 'Encontre apartamentos, casas e imóveis de alto padrão com filtros avançados, mapa interativo e as melhores oportunidades do mercado imobiliário.');
-    addMetaIfNotExists('name', 'keywords', 'busca imóveis, apartamentos luxo, casas alto padrão, imóveis São Paulo, NPi Imóveis');
-    addMetaIfNotExists('name', 'robots', 'index, follow, max-snippet:-1, max-video-preview:-1, max-image-preview:large');
-    
-    // Open Graph
-    addMetaIfNotExists('property', 'og:title', 'Busca de Imóveis de Luxo | NPi Imóveis');
-    addMetaIfNotExists('property', 'og:description', 'Encontre apartamentos, casas e imóveis de alto padrão com filtros avançados, mapa interativo e as melhores oportunidades do mercado imobiliário.');
-    addMetaIfNotExists('property', 'og:type', 'website');
-    addMetaIfNotExists('property', 'og:url', window.location.href);
-    addMetaIfNotExists('property', 'og:site_name', 'NPi Imóveis');
-    addMetaIfNotExists('property', 'og:locale', 'pt_BR');
-    addMetaIfNotExists('property', 'og:image', `${process.env.NEXT_PUBLIC_SITE_URL || 'https://npiconsultoria.com.br'}/assets/busca-imoveis-seo.jpg`);
-    addMetaIfNotExists('property', 'og:published_time', currentDate);
-    addMetaIfNotExists('property', 'og:modified_time', currentDate);
-    addMetaIfNotExists('property', 'og:updated_time', currentDate);
-    
-    // Twitter Cards
-    addMetaIfNotExists('name', 'twitter:card', 'summary_large_image');
-    addMetaIfNotExists('name', 'twitter:site', '@NPIImoveis');
-    addMetaIfNotExists('name', 'twitter:creator', '@NPIImoveis');
-    addMetaIfNotExists('name', 'twitter:title', 'Busca de Imóveis de Luxo | NPi Imóveis');
-    addMetaIfNotExists('name', 'twitter:description', 'Encontre apartamentos, casas e imóveis de alto padrão com filtros avançados, mapa interativo e as melhores oportunidades do mercado imobiliário.');
-    addMetaIfNotExists('name', 'twitter:image', `${process.env.NEXT_PUBLIC_SITE_URL || 'https://npiconsultoria.com.br'}/assets/busca-imoveis-seo.jpg`);
-    
-    // Datas - RESOLVE PROBLEMA AHREFS
-    addMetaIfNotExists('name', 'article:published_time', currentDate);
-    addMetaIfNotExists('name', 'article:modified_time', currentDate);
-    addMetaIfNotExists('name', 'article:author', 'NPi Imóveis');
-    addMetaIfNotExists('name', 'article:section', 'Busca de Imóveis');
-    addMetaIfNotExists('name', 'last-modified', currentDate);
-    addMetaIfNotExists('name', 'date', currentDate);
-    
-    // Adicionar canonical se não existir
-    if (!document.querySelector('link[rel="canonical"]')) {
-      const canonical = document.createElement('link');
-      canonical.rel = 'canonical';
-      canonical.href = window.location.href;
-      document.head.appendChild(canonical);
+    if (seoUrlMatch) {
+      const [, finalidade, categoria, cidade, bairro] = seoUrlMatch;
+      
+      console.log('🎯 [SEO-URL] URL detectada:', { finalidade, categoria, cidade, bairro });
+      
+      return {
+        finalidade: finalidade === 'venda' ? 'Comprar' : 'Alugar',
+        categoria: categoria,
+        cidade: cidade.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        bairro: bairro ? bairro.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : null
+      };
     }
     
-    // Inicializar Structured Data
-    updateStructuredData(0, {});
-    
-    console.log('✅ SEO básico inicializado');
-  }, []);
-
-  // Função para atualizar título dinâmico
-  const updateDynamicTitle = (totalItems = null) => {
-    const filtrosAtuais = useFiltersStore.getState();
-    updateDynamicSEO(filtrosAtuais, totalItems || pagination.totalItems);
+    return null;
   };
 
   // Função para atualizar URL quando filtros mudam
   const updateUrlFromFilters = () => {
     const filtrosAtuais = useFiltersStore.getState();
     
-    console.log('🔍 [BUSCA] Atualizando URL com filtros:', {
-      cidadeSelecionada: filtrosAtuais.cidadeSelecionada,
-      finalidade: filtrosAtuais.finalidade,
-      categoriaSelecionada: filtrosAtuais.categoriaSelecionada,
-      bairrosSelecionados: filtrosAtuais.bairrosSelecionados,
-      quartos: filtrosAtuais.quartos
-    });
+    console.log('🔍 [BUSCA] Atualizando URL:', filtrosAtuais);
     
-    // Verificar se os filtros básicos estão preenchidos para URL amigável
     if (filtrosAtuais.cidadeSelecionada && filtrosAtuais.finalidade && filtrosAtuais.categoriaSelecionada) {
       const urlAmigavel = gerarUrlSeoFriendly(filtrosAtuais);
-      console.log('🔍 [BUSCA] Atualizando URL para:', urlAmigavel);
-      
       router.push(urlAmigavel, { scroll: false });
     } else {
-      console.log('🔍 [BUSCA] Filtros básicos não estão completos, mantendo /busca');
-      
       const params = new URLSearchParams();
       if (filtrosAtuais.cidadeSelecionada) params.set('cidade', filtrosAtuais.cidadeSelecionada);
       if (filtrosAtuais.finalidade) params.set('finalidade', filtrosAtuais.finalidade);
@@ -420,12 +526,6 @@ export default function BuscaImoveis() {
       
       const urlComParams = params.toString() ? `/busca?${params.toString()}` : '/busca';
       router.push(urlComParams, { scroll: false });
-      
-      // Atualizar canonical com nova URL
-      const canonical = document.querySelector('link[rel="canonical"]');
-      if (canonical) {
-        canonical.href = `${window.location.origin}${urlComParams}`;
-      }
     }
   };
 
@@ -438,6 +538,10 @@ export default function BuscaImoveis() {
   useEffect(() => {
     if (!isBrowser) return;
     
+    // 1. Tentar extrair de URL SEO-friendly primeiro
+    const seoParams = extractFromSeoUrl();
+    
+    // 2. Tentar extrair de query parameters
     const searchParams = new URLSearchParams(window.location.search);
     const cidade = searchParams.get('cidade');
     const finalidade = searchParams.get('finalidade');
@@ -449,32 +553,54 @@ export default function BuscaImoveis() {
     const searchQuery = searchParams.get('q');
     
     // Se há parâmetros de filtros na URL, aplicá-los
-    if (cidade || finalidade || categoria || bairros || quartos || precoMin || precoMax) {
-      console.log('🔍 [BUSCA] Carregando filtros dos parâmetros da URL:', {
-        cidade, finalidade, categoria, bairros, quartos, precoMin, precoMax
-      });
-      
+    if (seoParams || cidade || finalidade || categoria || bairros || quartos || precoMin || precoMax) {
       const filtrosStore = useFiltersStore.getState();
-      
       const filtrosParaAplicar = {};
       
-      if (cidade) filtrosParaAplicar.cidadeSelecionada = cidade;
-      if (finalidade) filtrosParaAplicar.finalidade = finalidade;
-      if (categoria) filtrosParaAplicar.categoriaSelecionada = categoria;
-      if (bairros) {
-        const bairrosArray = bairros.split(',').map(b => b.trim()).filter(b => b.length > 0);
-        filtrosParaAplicar.bairrosSelecionados = bairrosArray;
+      // Priorizar parâmetros SEO-friendly
+      if (seoParams) {
+        filtrosParaAplicar.cidadeSelecionada = seoParams.cidade.toLowerCase().replace(/ /g, '-');
+        filtrosParaAplicar.finalidade = seoParams.finalidade;
+        
+        // 🎯 MAPEAMENTO CATEGORIA PLURAL → SINGULAR
+        const categoriaSingularMap = {
+          'apartamentos': 'Apartamento',
+          'casas': 'Casa',
+          'coberturas': 'Cobertura',
+          'terrenos': 'Terreno',
+          'flats': 'Flat',
+          'gardens': 'Garden',
+          'lofts': 'Loft',
+          'lojas': 'Loja',
+          'sobrados': 'Sobrado'
+        };
+        
+        const categoriaUrl = seoParams.categoria.toLowerCase();
+        filtrosParaAplicar.categoriaSelecionada = categoriaSingularMap[categoriaUrl] || 
+          seoParams.categoria.charAt(0).toUpperCase() + seoParams.categoria.slice(1);
+        
+        if (seoParams.bairro) {
+          filtrosParaAplicar.bairrosSelecionados = [seoParams.bairro];
+        }
+      } else {
+        // Usar query parameters como fallback
+        if (cidade) filtrosParaAplicar.cidadeSelecionada = cidade;
+        if (finalidade) filtrosParaAplicar.finalidade = finalidade;
+        if (categoria) filtrosParaAplicar.categoriaSelecionada = categoria;
+        if (bairros) {
+          const bairrosArray = bairros.split(',').map(b => b.trim()).filter(b => b.length > 0);
+          filtrosParaAplicar.bairrosSelecionados = bairrosArray;
+        }
       }
+      
+      // Parâmetros adicionais sempre vêm de query string
       if (quartos) filtrosParaAplicar.quartos = parseInt(quartos);
       if (precoMin) filtrosParaAplicar.precoMin = parseFloat(precoMin);
       if (precoMax) filtrosParaAplicar.precoMax = parseFloat(precoMax);
       
+      // Aplicar filtros no store
       filtrosStore.setFilters(filtrosParaAplicar);
       filtrosStore.aplicarFiltros();
-      
-      setTimeout(() => {
-        updateDynamicTitle();
-      }, 100);
     }
     
     // Se há query de busca, definir no estado
@@ -483,22 +609,19 @@ export default function BuscaImoveis() {
     }
   }, [isBrowser]);
 
-  // Efeito para atualizar título e URL quando filtros são aplicados manualmente
+  // Efeito para atualizar URL quando filtros são aplicados manualmente
   useEffect(() => {
     if (!isBrowser) return;
     
     const filtrosAtuais = useFiltersStore.getState();
     if (filtrosAtuais.filtrosAplicados) {
-      console.log('🔍 [BUSCA] Filtros aplicados detectados, atualizando título e URL...');
-      updateDynamicTitle();
-      
       setTimeout(() => {
         updateUrlFromFilters();
       }, 50);
     }
   }, [atualizacoesFiltros, isBrowser]);
 
-  // Detectar ambiente de cliente
+  // Detectar ambiente de cliente e tamanho da tela
   useEffect(() => {
     setIsClient(true);
   }, []);
@@ -508,7 +631,6 @@ export default function BuscaImoveis() {
       const timer = setTimeout(() => {
         setUiVisible(true);
       }, 100);
-
       return () => clearTimeout(timer);
     }
   }, [fullyInitialized]);
@@ -528,7 +650,6 @@ export default function BuscaImoveis() {
 
     checkScreenSize();
     window.addEventListener("resize", checkScreenSize);
-
     return () => window.removeEventListener("resize", checkScreenSize);
   }, [isClient]);
 
@@ -551,8 +672,9 @@ export default function BuscaImoveis() {
       setPagination(paginationData);
       setIsLoading(false);
       
-      // 🎯 ATUALIZAR SEO COM RESULTADOS
-      updateDynamicSEO(useFiltersStore.getState(), favoritos.length);
+      // 🎯 ATUALIZAR SEO
+      updateStructuredData(favoritos.length, favoritos);
+      updateTitleWithCount(favoritos.length);
       return;
     }
 
@@ -625,7 +747,8 @@ export default function BuscaImoveis() {
         setPagination(validPagination);
         
         // 🎯 ATUALIZAR SEO COM RESULTADOS
-        updateDynamicSEO(useFiltersStore.getState(), validPagination.totalItems);
+        updateStructuredData(validPagination.totalItems, response.imoveis || []);
+        updateTitleWithCount(validPagination.totalItems);
       }
     } catch (error) {
       console.error("Erro ao buscar imóveis:", error);
@@ -638,8 +761,7 @@ export default function BuscaImoveis() {
         limit: 12,
       });
       
-      // 🎯 ATUALIZAR SEO PARA ERRO
-      updateDynamicSEO(useFiltersStore.getState(), 0);
+      updateStructuredData(0, []);
     } finally {
       setIsLoading(false);
     }
@@ -648,7 +770,6 @@ export default function BuscaImoveis() {
   const toggleFavoritos = () => {
     const novoEstado = !mostrandoFavoritos;
     setMostrandoFavoritos(novoEstado);
-
     setCurrentPage(1);
 
     if (novoEstado) {
@@ -662,8 +783,8 @@ export default function BuscaImoveis() {
       };
       setPagination(paginationData);
       
-      // 🎯 ATUALIZAR SEO
-      updateDynamicSEO(useFiltersStore.getState(), favoritos.length);
+      updateStructuredData(favoritos.length, favoritos);
+      updateTitleWithCount(favoritos.length);
     } else {
       buscarImoveis(filtrosAplicados);
     }
@@ -671,7 +792,6 @@ export default function BuscaImoveis() {
 
   const handleSearch = async (term) => {
     useFiltersStore.getState().limparFiltros();
-    updateDynamicTitle();
 
     if (!term || term.trim() === "") {
       buscarImoveis(false);
@@ -696,16 +816,16 @@ export default function BuscaImoveis() {
           adicionarVariosImoveisCache(response.data);
         }
         
-        // 🎯 ATUALIZAR SEO
-        updateDynamicSEO({ searchTerm: term }, response.data.length);
+        updateStructuredData(response.data.length, response.data);
+        updateTitleWithCount(response.data.length);
       } else {
         setImoveis([]);
-        updateDynamicSEO({ searchTerm: term }, 0);
+        updateStructuredData(0, []);
       }
     } catch (error) {
       console.error("Erro na busca:", error);
       setImoveis([]);
-      updateDynamicSEO({ searchTerm: term }, 0);
+      updateStructuredData(0, []);
     } finally {
       setIsLoading(false);
     }
