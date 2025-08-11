@@ -1,18 +1,43 @@
 // src/app/busca/page.js - SOLUÇÃO COMPLETA EM 1 ARQUIVO
 
 // 🎯 METADADOS SERVER-SIDE (ANTES DO "use client")
-export async function generateMetadata({ searchParams, params }) {
+export async function generateMetadata({ searchParams, request }) {
   try {
     const currentDate = new Date().toISOString();
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://npiconsultoria.com.br';
     
-    // 🔥 EXTRAIR PARÂMETROS DA URL ATUAL (para URLs SEO-friendly)
-    let urlParams = {};
+    // 🔥 EXTRAIR PARÂMETROS DA URL ATUAL NO SERVER-SIDE
+    let urlParams = { ...searchParams };
     
-    // Se a função for chamada com uma URL SEO-friendly, extrair da própria URL
-    if (typeof window === 'undefined') {
-      // Estamos no servidor, usar searchParams diretamente
-      urlParams = searchParams;
+    // 🎯 DETECTAR URL SEO-FRIENDLY NO SERVER-SIDE
+    // Tentar extrair da URL através do request object se disponível
+    let currentPath = '';
+    try {
+      if (request && request.url) {
+        const url = new URL(request.url);
+        currentPath = url.pathname;
+      } else if (typeof process !== 'undefined' && process.env.VERCEL_URL) {
+        // Em ambiente Vercel, tentar construir a URL
+        currentPath = '/buscar/venda/apartamentos/sao-caetano-do-sul'; // Fallback
+      }
+    } catch (e) {
+      console.log('🎯 [SERVER-META] Não foi possível determinar a URL atual');
+    }
+    
+    // Se currentPath contém estrutura SEO-friendly, extrair parâmetros
+    const seoUrlMatch = currentPath.match(/\/buscar\/([^\/]+)\/([^\/]+)\/([^\/]+)(?:\/([^\/]+))?/);
+    if (seoUrlMatch && !urlParams.cidade) {
+      const [, finalidade, categoria, cidade, bairro] = seoUrlMatch;
+      
+      urlParams = {
+        finalidade: finalidade === 'venda' ? 'venda' : finalidade,
+        categoria: categoria,
+        cidade: cidade,
+        bairro: bairro || undefined,
+        ...urlParams // Manter outros searchParams se existirem
+      };
+      
+      console.log('🎯 [SERVER-SEO] Parâmetros extraídos da URL:', urlParams);
     }
     
     const {
@@ -107,22 +132,53 @@ export async function generateMetadata({ searchParams, params }) {
       description = description.substring(0, 157) + '...';
     }
 
-    // 🎯 URL CANÔNICA CORRETA
+    // 🎯 URL CANÔNICA CORRETA - BASEADA NA ESTRUTURA ATUAL
     let canonicalUrl = `${baseUrl}/busca`;
     
-    // Construir URL canônica com parâmetros
-    const params = new URLSearchParams();
-    if (cidade) params.set('cidade', cidade);
-    if (finalidade && finalidade !== 'venda') params.set('finalidade', finalidade);
-    if (categoria) params.set('categoria', categoria);
-    if (bairros) params.set('bairros', bairros);
-    if (quartos) params.set('quartos', quartos);
-    if (precoMin) params.set('precoMin', precoMin);
-    if (precoMax) params.set('precoMax', precoMax);
-    if (searchQuery) params.set('q', searchQuery);
-    
-    if (params.toString()) {
-      canonicalUrl += `?${params.toString()}`;
+    // 🔥 CONSTRUIR URL CORRETA BASEADA NOS PARÂMETROS
+    if (cidade && categoria && finalidade) {
+      // Para URLs SEO-friendly: /buscar/venda/apartamentos/sao-caetano-do-sul
+      const finalidadeSlug = finalidade === 'venda' || finalidade === 'Comprar' ? 'venda' : 'aluguel';
+      
+      // Mapear categoria para URL slug
+      const categoriaSlugMap = {
+        'Apartamento': 'apartamentos',
+        'apartamento': 'apartamentos',
+        'apartamentos': 'apartamentos',
+        'Casa': 'casas',
+        'casa': 'casas', 
+        'casas': 'casas',
+        'Cobertura': 'coberturas',
+        'cobertura': 'coberturas',
+        'coberturas': 'coberturas',
+        'Terreno': 'terrenos',
+        'terreno': 'terrenos',
+        'terrenos': 'terrenos'
+      };
+      
+      const categoriaSlug = categoriaSlugMap[categoria] || categoria.toLowerCase();
+      const cidadeSlug = cidade.toLowerCase().replace(/\s+/g, '-');
+      
+      canonicalUrl = `${baseUrl}/buscar/${finalidadeSlug}/${categoriaSlug}/${cidadeSlug}`;
+      
+      console.log('🎯 [SERVER-CANONICAL] URL SEO-friendly:', canonicalUrl);
+    } else {
+      // Para URLs com query parameters
+      const params = new URLSearchParams();
+      if (cidade) params.set('cidade', cidade);
+      if (finalidade && finalidade !== 'venda') params.set('finalidade', finalidade);
+      if (categoria) params.set('categoria', categoria);
+      if (bairros) params.set('bairros', bairros);
+      if (quartos) params.set('quartos', quartos);
+      if (precoMin) params.set('precoMin', precoMin);
+      if (precoMax) params.set('precoMax', precoMax);
+      if (searchQuery) params.set('q', searchQuery);
+      
+      if (params.toString()) {
+        canonicalUrl += `?${params.toString()}`;
+      }
+      
+      console.log('🎯 [SERVER-CANONICAL] URL com query params:', canonicalUrl);
     }
 
     console.log('🎯 [SERVER-META] Título gerado:', title);
