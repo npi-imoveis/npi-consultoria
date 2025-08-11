@@ -1,446 +1,5 @@
 // src/app/busca/page.js - SOLUÇÃO COMPLETA EM 1 ARQUIVO - SEO OTIMIZADO
 
-// 🎯 METADADOS SERVER-SIDE (ANTES DO "use client")
-export async function generateMetadata({ searchParams, request }) {
-  try {
-    const currentDate = new Date().toISOString();
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://npiconsultoria.com.br';
-    
-    // 🔥 EXTRAIR PARÂMETROS DA URL ATUAL NO SERVER-SIDE
-    let urlParams = { ...searchParams };
-    
-    // 🎯 DETECTAR URL SEO-FRIENDLY NO SERVER-SIDE
-    // Tentar extrair da URL através do request object se disponível
-    let currentPath = '';
-    try {
-      if (request && request.url) {
-        const url = new URL(request.url);
-        currentPath = url.pathname;
-      } else if (typeof process !== 'undefined' && process.env.VERCEL_URL) {
-        // Em ambiente Vercel, tentar construir a URL
-        currentPath = '/buscar/venda/apartamentos/sao-caetano-do-sul'; // Fallback
-      }
-    } catch (e) {
-      console.log('🎯 [SERVER-META] Não foi possível determinar a URL atual');
-    }
-    
-    // Se currentPath contém estrutura SEO-friendly, extrair parâmetros
-    const seoUrlMatch = currentPath.match(/\/buscar\/([^\/]+)\/([^\/]+)\/([^\/]+)(?:\/([^\/]+))?/);
-    if (seoUrlMatch && !urlParams.cidade) {
-      const [, finalidade, categoria, cidade, bairro] = seoUrlMatch;
-      
-      urlParams = {
-        finalidade: finalidade === 'venda' ? 'venda' : finalidade,
-        categoria: categoria,
-        cidade: cidade,
-        bairro: bairro || undefined,
-        ...urlParams // Manter outros searchParams se existirem
-      };
-      
-      console.log('🎯 [SERVER-SEO] Parâmetros extraídos da URL:', urlParams);
-    }
-    
-    const {
-      cidade,
-      finalidade = 'venda',
-      categoria,
-      bairros,
-      quartos,
-      precoMin,
-      precoMax,
-      q: searchQuery
-    } = urlParams;
-
-    // 🎯 GERAR TÍTULO DINÂMICO ESPECÍFICO - IGUAL AO AHREFS
-    let title = 'Busca de Imóveis | NPi Imóveis';
-    let description = 'Encontre apartamentos, casas e imóveis de alto padrão com filtros avançados, mapa interativo e as melhores oportunidades do mercado imobiliário.';
-    let keywords = 'busca imóveis, apartamentos luxo, casas alto padrão, imóveis São Paulo, NPi Imóveis';
-
-    // Para busca com filtros
-    if (cidade || categoria || searchQuery) {
-      const titleParts = [];
-      
-      // 1. Categoria (plural)
-      if (categoria) {
-        const categoriaPluralMap = {
-          'Apartamento': 'Apartamentos',
-          'apartamento': 'Apartamentos', 
-          'apartamentos': 'Apartamentos',
-          'Casa': 'Casas',
-          'casa': 'Casas',
-          'casas': 'Casas',
-          'Cobertura': 'Coberturas',
-          'cobertura': 'Coberturas',
-          'coberturas': 'Coberturas',
-          'Terreno': 'Terrenos',
-          'terreno': 'Terrenos',
-          'terrenos': 'Terrenos',
-          'Flat': 'Flats',
-          'flat': 'Flats',
-          'flats': 'Flats'
-        };
-        titleParts.push(categoriaPluralMap[categoria] || 'Imóveis');
-      } else {
-        titleParts.push('Imóveis');
-      }
-      
-      // 2. Finalidade
-      if (finalidade === 'venda' || finalidade === 'Comprar') {
-        titleParts.push('para venda');
-      } else if (finalidade === 'aluguel' || finalidade === 'Alugar') {
-        titleParts.push('para aluguel');
-      } else {
-        titleParts.push('para venda');
-      }
-      
-      // 3. Localização
-      if (cidade) {
-        const cidadeFormatada = cidade
-          .replace(/-/g, ' ')
-          .replace(/\b\w/g, l => l.toUpperCase());
-        titleParts.push(`em ${cidadeFormatada}`);
-      }
-      
-      // 4. Construir título final
-      title = titleParts.join(' ');
-      
-      // 5. Gerar descrição específica
-      description = `Encontre ${titleParts.join(' ')} com a melhor consultoria imobiliária. Imóveis de alto padrão com fotos, plantas e informações completas. NPi Imóveis - sua imobiliária de confiança.`;
-      
-      // 6. Keywords específicas
-      const keywordsList = ['imóveis', 'NPi Imóveis'];
-      if (categoria) keywordsList.push(categoria.toLowerCase());
-      if (cidade) keywordsList.push(cidade.replace(/-/g, ' '));
-      if (bairros) keywordsList.push(...bairros.split(','));
-      keywords = keywordsList.join(', ');
-    }
-    
-    // Para busca por termo
-    if (searchQuery) {
-      title = `Busca: "${searchQuery}" | NPi Imóveis`;
-      description = `Resultados da busca por "${searchQuery}". Encontre apartamentos, casas e imóveis de alto padrão com a NPi Imóveis.`;
-      keywords = `${searchQuery}, imóveis, apartamentos, casas, busca, NPi Imóveis`;
-    }
-
-    // Limitar título a 60 caracteres
-    if (title.length > 60) {
-      title = title.substring(0, 57) + '...';
-    }
-
-    // Limitar descrição a 160 caracteres  
-    if (description.length > 160) {
-      description = description.substring(0, 157) + '...';
-    }
-
-    // 🎯 URL CANÔNICA CORRETA - BASEADA NA ESTRUTURA ATUAL
-    let canonicalUrl = `${baseUrl}/busca`;
-    
-    // 🔥 CONSTRUIR URL CORRETA BASEADA NOS PARÂMETROS
-    if (cidade && categoria && finalidade) {
-      // Para URLs SEO-friendly: /buscar/venda/apartamentos/sao-caetano-do-sul
-      const finalidadeSlug = finalidade === 'venda' || finalidade === 'Comprar' ? 'venda' : 'aluguel';
-      
-      // Mapear categoria para URL slug
-      const categoriaSlugMap = {
-        'Apartamento': 'apartamentos',
-        'apartamento': 'apartamentos',
-        'apartamentos': 'apartamentos',
-        'Casa': 'casas',
-        'casa': 'casas', 
-        'casas': 'casas',
-        'Cobertura': 'coberturas',
-        'cobertura': 'coberturas',
-        'coberturas': 'coberturas',
-        'Terreno': 'terrenos',
-        'terreno': 'terrenos',
-        'terrenos': 'terrenos'
-      };
-      
-      const categoriaSlug = categoriaSlugMap[categoria] || categoria.toLowerCase();
-      const cidadeSlug = cidade.toLowerCase().replace(/\s+/g, '-');
-      
-      canonicalUrl = `${baseUrl}/buscar/${finalidadeSlug}/${categoriaSlug}/${cidadeSlug}`;
-      
-      console.log('🎯 [SERVER-CANONICAL] URL SEO-friendly:', canonicalUrl);
-    } else {
-      // Para URLs com query parameters
-      const params = new URLSearchParams();
-      if (cidade) params.set('cidade', cidade);
-      if (finalidade && finalidade !== 'venda') params.set('finalidade', finalidade);
-      if (categoria) params.set('categoria', categoria);
-      if (bairros) params.set('bairros', bairros);
-      if (quartos) params.set('quartos', quartos);
-      if (precoMin) params.set('precoMin', precoMin);
-      if (precoMax) params.set('precoMax', precoMax);
-      if (searchQuery) params.set('q', searchQuery);
-      
-      if (params.toString()) {
-        canonicalUrl += `?${params.toString()}`;
-      }
-      
-      console.log('🎯 [SERVER-CANONICAL] URL com query params:', canonicalUrl);
-    }
-
-    console.log('🎯 [SERVER-META] Título gerado:', title);
-    console.log('🎯 [SERVER-META] URL canônica:', canonicalUrl);
-
-    return {
-      // 🎯 TÍTULO E DESCRIÇÃO DINÂMICOS
-      title,
-      description,
-      keywords,
-      
-      // Metadados básicos
-      authors: [{ name: "NPi Imóveis" }],
-      creator: "NPi Imóveis",
-      publisher: "NPi Imóveis",
-      metadataBase: new URL(baseUrl),
-      
-      // 🎯 ROBOTS OTIMIZADO
-      robots: {
-        index: true,
-        follow: true,
-        'max-video-preview': -1,
-        'max-image-preview': 'large',
-        'max-snippet': -1,
-        googleBot: {
-          index: true,
-          follow: true,
-          'max-video-preview': -1,
-          'max-image-preview': 'large',
-          'max-snippet': -1,
-        },
-        bingBot: {
-          index: true,
-          follow: true,
-        }
-      },
-      
-      // 🎯 CANONICAL E ALTERNATES - RESOLVE PROBLEMA AHREFS
-      alternates: {
-        canonical: canonicalUrl,
-        languages: {
-          "pt-BR": canonicalUrl,
-          "pt": canonicalUrl,
-          "x-default": canonicalUrl
-        },
-      },
-      
-      // 🎯 OPEN GRAPH COMPLETO - RESOLVE MISSING NO AHREFS
-      openGraph: {
-        title,
-        description,
-        url: canonicalUrl,
-        siteName: "NPi Imóveis",
-        type: "website",
-        locale: "pt_BR",
-        publishedTime: currentDate,
-        modifiedTime: currentDate,
-        
-        // 🎯 IMAGENS OTIMIZADAS
-        images: [
-          {
-            url: `${baseUrl}/assets/busca-${categoria?.toLowerCase() || 'imoveis'}.jpg`,
-            width: 1200,
-            height: 630,
-            alt: title,
-            type: "image/jpeg",
-          },
-          {
-            url: `${baseUrl}/assets/thumbnail-search.jpg`,
-            width: 1200,
-            height: 630,
-            alt: "NPi Imóveis - Busca de Imóveis",
-            type: "image/jpeg",
-          }
-        ],
-        
-        // Propriedades específicas para SEO
-        'property:location': cidade ? cidade.replace(/-/g, ' ') : 'São Paulo',
-        'property:type': categoria || 'imóveis',
-        'property:purpose': finalidade,
-      },
-      
-      // 🎯 TWITTER CARDS COMPLETO - RESOLVE MISSING NO AHREFS
-      twitter: {
-        card: "summary_large_image",
-        site: "@NPIImoveis",
-        creator: "@NPIImoveis",
-        title,
-        description,
-        images: [`${baseUrl}/assets/busca-${categoria?.toLowerCase() || 'imoveis'}.jpg`],
-      },
-      
-      // 🎯 METADADOS ADICIONAIS COMPLETOS - RESOLVE TODOS OS MISSING
-      other: {
-        // 🔥 CANONICAL TAG EXPLÍCITA (resolve problema Ahrefs)
-        'canonical': canonicalUrl,
-        
-        // 🔥 GOOGLE VERIFICATION
-        "google-site-verification": "jIbU4BYULeE_XJZo-2yGSOdfyz-3v0JuI0mqUItNU-4",
-        
-        // 🎯 DATAS COMPLETAS E ESPECÍFICAS - RESOLVE PROBLEMA DATES NO AHREFS
-        'article:published_time': currentDate,
-        'article:modified_time': currentDate,
-        'article:author': 'NPi Imóveis',
-        'article:section': 'Busca de Imóveis',
-        'article:tag': keywords,
-        'og:updated_time': currentDate,
-        'last-modified': currentDate,
-        'date': currentDate,
-        'DC.date.modified': currentDate,
-        'DC.date.created': currentDate,
-        'published_time': currentDate,
-        'modified_time': currentDate,
-        
-        // 🔥 META TAGS DE DATA ADICIONAIS (específicas para Ahrefs)
-        'datePublished': currentDate,
-        'dateModified': currentDate,
-        'pubdate': currentDate,
-        'lastmod': currentDate,
-        
-        // 🎯 HREFLANG EXPLÍCITO (resolve problema Ahrefs)
-        'hreflang:pt-BR': canonicalUrl,
-        'hreflang:pt': canonicalUrl,
-        'hreflang:x-default': canonicalUrl,
-        
-        // 🔥 SOCIAL MEDIA OTIMIZADO (resolve problema Social no Ahrefs)
-        'og:site_name': 'NPi Imóveis',
-        'og:type': 'website',
-        'og:locale': 'pt_BR',
-        'og:locale:alternate': 'pt_PT',
-        'twitter:domain': 'npiconsultoria.com.br',
-        'twitter:url': canonicalUrl,
-        'fb:app_id': '123456789', // Adicione seu FB App ID se tiver
-        
-        // 🎯 X-ROBOTS-TAG META (adicional para crawlers)
-        'x-robots-tag': 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
-        
-        // Dados específicos da busca
-        'search:type': categoria || 'imóveis',
-        'search:location': cidade || '',
-        'search:purpose': finalidade,
-        'search:query': searchQuery || '',
-        'geo.region': cidade ? `BR-SP-${cidade}` : 'BR-SP',
-        'geo.placename': cidade ? cidade.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : 'São Paulo',
-        
-        // Schema.org properties adicionais
-        'property:type': categoria || 'imóveis',
-        'property:purpose': finalidade,
-        'property:location': cidade || '',
-        'property:neighborhood': bairros || '',
-        
-        // Dublin Core completo
-        'DC.title': title,
-        'DC.description': description,
-        'DC.subject': keywords,
-        'DC.type': 'Text.SearchResults',
-        'DC.format': 'text/html',
-        'DC.language': 'pt-BR',
-        'DC.coverage': cidade ? `${cidade.replace(/-/g, ' ')}, São Paulo, Brasil` : 'São Paulo, Brasil',
-        'DC.creator': 'NPi Imóveis',
-        'DC.publisher': 'NPi Imóveis',
-        'DC.rights': '© 2024 NPi Imóveis. Todos os direitos reservados.',
-        
-        // 🔥 CACHE E PERFORMANCE
-        'revisit-after': '1 day',
-        'expires': new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-        'cache-control': 'public, max-age=3600',
-        'pragma': 'public',
-        
-        // 🎯 ADDITIONAL SEO TAGS
-        'format-detection': 'telephone=yes',
-        'mobile-web-app-capable': 'yes',
-        'apple-mobile-web-app-capable': 'yes',
-        'apple-mobile-web-app-status-bar-style': 'black-translucent',
-        'theme-color': '#000000',
-        'msapplication-TileColor': '#000000',
-        
-        // 🔥 BUSINESS INFO
-        'geo.position': '-23.5505;-46.6333', // São Paulo coordinates
-        'ICBM': '-23.5505;-46.6333',
-        'geo.country': 'BR',
-        'geo.region': 'SP',
-      },
-      
-      icons: {
-        icon: "/favicon.ico",
-        apple: "/apple-touch-icon.png",
-        shortcut: "/favicon.ico",
-      },
-      
-      // 🎯 MANIFEST E PWA
-      manifest: "/manifest.json",
-      
-      // 🎯 VIEWPORT OTIMIZADO
-      viewport: {
-        width: 'device-width',
-        initialScale: 1,
-        maximumScale: 5,
-        userScalable: true,
-        themeColor: '#000000',
-      },
-      
-      // 🔥 VERIFICATION TAGS ADICIONAIS
-      verification: {
-        google: "jIbU4BYULeE_XJZo-2yGSOdfyz-3v0JuI0mqUItNU-4",
-        // yahoo: "your-yahoo-verification", // Se necessário
-        // bing: "your-bing-verification", // Se necessário
-      },
-      
-      // 🎯 CATEGORY E CLASSIFICATION
-      category: 'Real Estate',
-      classification: 'Property Search',
-      
-      // 🔥 ADDITIONAL HEADERS PARA X-ROBOTS-TAG
-      headers: {
-        'X-Robots-Tag': 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
-      },
-    };
-  } catch (error) {
-    console.error("Erro ao gerar metadata de busca:", error);
-    
-    // Fallback metadata
-    const currentDate = new Date().toISOString();
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://npiconsultoria.com.br';
-    
-    return {
-      title: "Busca de Imóveis | NPi Imóveis",
-      description: "Encontre os melhores imóveis de alto padrão com a NPi Imóveis.",
-      alternates: {
-        canonical: `${baseUrl}/busca`,
-        languages: {
-          "pt-BR": `${baseUrl}/busca`,
-          "pt": `${baseUrl}/busca`,
-          "x-default": `${baseUrl}/busca`
-        },
-      },
-      other: {
-        'canonical': `${baseUrl}/busca`,
-        'article:published_time': currentDate,
-        'article:modified_time': currentDate,
-        'last-modified': currentDate,
-        'date': currentDate,
-        'datePublished': currentDate,
-        'dateModified': currentDate,
-        'x-robots-tag': 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
-      },
-      robots: {
-        index: true,
-        follow: true,
-      },
-      headers: {
-        'X-Robots-Tag': 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1',
-      },
-    };
-  }
-}
-
-// 🎯 CONFIGURAÇÃO DINÂMICA
-export const dynamic = 'force-dynamic';
-export const revalidate = 300; // 5 minutos
-
-// 🔥 TUDO CLIENT-SIDE A PARTIR DAQUI
 "use client";
 
 import { useEffect, useState } from "react";
@@ -624,9 +183,73 @@ export default function BuscaImoveis() {
   const updateClientMetaTags = () => {
     try {
       const currentDate = new Date().toISOString();
+      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://npiconsultoria.com.br';
       
-      // Atualizar/criar meta tags de data se não existirem
+      // 🎯 GERAR TÍTULO DINÂMICO BASEADO NA URL ATUAL
+      let title = 'Busca de Imóveis | NPi Imóveis';
+      let description = 'Encontre apartamentos, casas e imóveis de alto padrão com filtros avançados, mapa interativo e as melhores oportunidades do mercado imobiliário.';
+      let keywords = 'busca imóveis, apartamentos luxo, casas alto padrão, imóveis São Paulo, NPi Imóveis';
+      let canonicalUrl = `${baseUrl}/busca`;
+
+      // Extrair parâmetros da URL atual
+      const searchParams = new URLSearchParams(window.location.search);
+      const path = window.location.pathname;
+      
+      // Detectar URL SEO-friendly
+      const seoUrlMatch = path.match(/\/buscar\/([^\/]+)\/([^\/]+)\/([^\/]+)(?:\/([^\/]+))?/);
+      
+      let cidade, finalidade, categoria, bairro;
+      
+      if (seoUrlMatch) {
+        [, finalidade, categoria, cidade, bairro] = seoUrlMatch;
+        canonicalUrl = window.location.origin + path;
+      } else {
+        cidade = searchParams.get('cidade');
+        finalidade = searchParams.get('finalidade');
+        categoria = searchParams.get('categoria');
+        
+        if (cidade || finalidade || categoria) {
+          canonicalUrl = window.location.href;
+        }
+      }
+
+      // Gerar título dinâmico
+      if (cidade || categoria) {
+        const titleParts = [];
+        
+        if (categoria) {
+          const categoriaPluralMap = {
+            'apartamentos': 'Apartamentos',
+            'casas': 'Casas',
+            'coberturas': 'Coberturas',
+            'terrenos': 'Terrenos',
+            'flats': 'Flats'
+          };
+          titleParts.push(categoriaPluralMap[categoria] || 'Imóveis');
+        } else {
+          titleParts.push('Imóveis');
+        }
+        
+        if (finalidade === 'venda') {
+          titleParts.push('para venda');
+        } else if (finalidade === 'aluguel') {
+          titleParts.push('para aluguel');
+        }
+        
+        if (cidade) {
+          const cidadeFormatada = cidade.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+          titleParts.push(`em ${cidadeFormatada}`);
+        }
+        
+        title = titleParts.join(' ') + ' | NPi Imóveis';
+        description = `Encontre ${titleParts.join(' ')} com a melhor consultoria imobiliária. Imóveis de alto padrão com fotos, plantas e informações completas.`;
+      }
+
+      // Atualizar/criar meta tags
       const metaTags = [
+        { tag: 'title', content: title },
+        { name: 'description', content: description },
+        { name: 'keywords', content: keywords },
         { name: 'date', content: currentDate },
         { name: 'last-modified', content: currentDate },
         { name: 'datePublished', content: currentDate },
@@ -634,11 +257,27 @@ export default function BuscaImoveis() {
         { property: 'article:published_time', content: currentDate },
         { property: 'article:modified_time', content: currentDate },
         { property: 'og:updated_time', content: currentDate },
+        { property: 'og:title', content: title },
+        { property: 'og:description', content: description },
+        { property: 'og:url', content: canonicalUrl },
+        { property: 'og:type', content: 'website' },
+        { property: 'og:site_name', content: 'NPi Imóveis' },
+        { property: 'og:locale', content: 'pt_BR' },
+        { name: 'twitter:title', content: title },
+        { name: 'twitter:description', content: description },
+        { name: 'twitter:card', content: 'summary_large_image' },
         { name: 'DC.date.created', content: currentDate },
         { name: 'DC.date.modified', content: currentDate },
+        { name: 'x-robots-tag', content: 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1' },
       ];
       
+      // Atualizar título da página
+      document.title = title;
+      
+      // Atualizar meta tags
       metaTags.forEach(tag => {
+        if (tag.tag === 'title') return; // Já foi atualizado acima
+        
         const selector = tag.name ? `meta[name="${tag.name}"]` : `meta[property="${tag.property}"]`;
         let existingTag = document.querySelector(selector);
         
@@ -657,11 +296,21 @@ export default function BuscaImoveis() {
       if (!canonicalLink) {
         canonicalLink = document.createElement('link');
         canonicalLink.setAttribute('rel', 'canonical');
-        canonicalLink.setAttribute('href', window.location.href);
         document.head.appendChild(canonicalLink);
       }
+      canonicalLink.setAttribute('href', canonicalUrl);
       
-      console.log('✅ Meta tags de data atualizadas no client-side');
+      // Adicionar hreflang
+      let hreflangPtBr = document.querySelector('link[rel="alternate"][hreflang="pt-BR"]');
+      if (!hreflangPtBr) {
+        hreflangPtBr = document.createElement('link');
+        hreflangPtBr.setAttribute('rel', 'alternate');
+        hreflangPtBr.setAttribute('hreflang', 'pt-BR');
+        document.head.appendChild(hreflangPtBr);
+      }
+      hreflangPtBr.setAttribute('href', canonicalUrl);
+      
+      console.log('✅ Meta tags SEO atualizadas:', { title, canonicalUrl });
     } catch (error) {
       console.error('❌ Erro ao atualizar meta tags:', error);
     }
@@ -722,6 +371,13 @@ export default function BuscaImoveis() {
     // 🔥 Atualizar meta tags ao carregar no cliente
     updateClientMetaTags();
   }, []);
+
+  // Efeito para atualizar meta tags quando URL muda
+  useEffect(() => {
+    if (isBrowser) {
+      updateClientMetaTags();
+    }
+  }, [isBrowser, window.location?.pathname, window.location?.search]);
 
   // Efeito para carregar filtros dos parâmetros da URL
   useEffect(() => {
