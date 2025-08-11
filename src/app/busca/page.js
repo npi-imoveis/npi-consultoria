@@ -1,27 +1,4 @@
-// Efeito adicional para atualizar quando filtros mudam
-  useEffect(() => {
-    if (isBrowser) {
-      setTimeout(() => {
-        updateClientMetaTags();
-      }, 100);
-    }
-  }, [filtrosAplicados, atualizacoesFiltros, searchTerm, isBrowser]);
-
-  // 🔥 EFEITO PARA ATUALIZAR TÍTULO QUANDO FILTROS ESPECÍFICOS MUDAM
-  useEffect(() => {
-    if (isBrowser) {
-      setTimeout(() => {
-        updateClientMetaTags();
-        console.log('🎯 [FILTROS MUDARAM] Atualizando título...'); 
-      }, 150);
-    }
-  }, [
-    filtrosAtuais.cidadeSelecionada,
-    filtrosAtuais.categoriaSelecionada, 
-    filtrosAtuais.finalidade,
-    filtrosAtuais.bairrosSelecionados,
-    isBrowser
-  ]);// src/app/busca/page.js - SOLUÇÃO COMPLETA EM 1 ARQUIVO - SEO OTIMIZADO
+// src/app/busca/page.js - SOLUÇÃO COMPLETA EM 1 ARQUIVO - SEO OTIMIZADO
 
 "use client";
 
@@ -211,7 +188,7 @@ export default function BuscaImoveis() {
       // 🎯 OBTER FILTROS ATUAIS DO STORE
       const filtrosAtuais = useFiltersStore.getState();
       
-      let title = '${titleParts.join(' ')}. NPi'; // Título padrão
+      let title = 'NPi Consultoria - Imóveis de Alto Padrão'; // Título padrão
       let description = 'Especialistas em imóveis de alto padrão. Encontre apartamentos, casas e terrenos exclusivos com a melhor consultoria imobiliária.';
       let keywords = 'busca imóveis, apartamentos luxo, casas alto padrão, imóveis São Paulo, NPi Imóveis';
       let canonicalUrl = `${baseUrl}/busca`;
@@ -268,7 +245,7 @@ export default function BuscaImoveis() {
         }
         
         // 🎯 CONSTRUIR TÍTULO FINAL NO PADRÃO DA DESCRIÇÃO
-        title = `${titleParts.join(' ')}. NPi Imóveis`;
+        title = `Especialistas em ${titleParts.join(' ')}. NPi Imóveis`;
         
         // 🎯 CONSTRUIR DESCRIÇÃO CORRESPONDENTE
         description = `Encontre ${titleParts.join(' ')} com a melhor consultoria imobiliária. Imóveis de alto padrão com fotos, plantas e informações completas.`;
@@ -452,6 +429,31 @@ export default function BuscaImoveis() {
       }, 200);
     }
   }, [isBrowser, isLoading, filtrosAplicados]);
+
+  // Efeito adicional para atualizar quando filtros mudam
+  useEffect(() => {
+    if (isBrowser) {
+      setTimeout(() => {
+        updateClientMetaTags();
+      }, 100);
+    }
+  }, [filtrosAplicados, atualizacoesFiltros, searchTerm, isBrowser]);
+
+  // 🔥 EFEITO PARA ATUALIZAR TÍTULO QUANDO FILTROS ESPECÍFICOS MUDAM
+  useEffect(() => {
+    if (isBrowser) {
+      setTimeout(() => {
+        updateClientMetaTags();
+        console.log('🎯 [FILTROS MUDARAM] Atualizando título...'); 
+      }, 150);
+    }
+  }, [
+    filtrosAtuais.cidadeSelecionada,
+    filtrosAtuais.categoriaSelecionada, 
+    filtrosAtuais.finalidade,
+    filtrosAtuais.bairrosSelecionados,
+    isBrowser
+  ]);
 
   // Efeito para carregar filtros dos parâmetros da URL
   useEffect(() => {
