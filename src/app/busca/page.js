@@ -213,21 +213,21 @@ export default function BuscaImoveis() {
         }
       }
 
-      // Gerar título dinâmico
+      // Gerar título dinâmico no mesmo padrão da descrição
       if (cidade || categoria) {
         const titleParts = [];
         
         if (categoria) {
           const categoriaPluralMap = {
-            'apartamentos': 'Apartamentos',
-            'casas': 'Casas',
-            'coberturas': 'Coberturas',
-            'terrenos': 'Terrenos',
-            'flats': 'Flats'
+            'apartamentos': 'apartamentos',
+            'casas': 'casas',
+            'coberturas': 'coberturas',
+            'terrenos': 'terrenos',
+            'flats': 'flats'
           };
-          titleParts.push(categoriaPluralMap[categoria] || 'Imóveis');
+          titleParts.push(categoriaPluralMap[categoria] || 'imóveis');
         } else {
-          titleParts.push('Imóveis');
+          titleParts.push('imóveis');
         }
         
         if (finalidade === 'venda') {
@@ -241,7 +241,8 @@ export default function BuscaImoveis() {
           titleParts.push(`em ${cidadeFormatada}`);
         }
         
-        title = titleParts.join(' ') + ' | NPi Imóveis';
+        // Título no mesmo padrão da descrição
+        title = `Especialistas em ${titleParts.join(' ')}. NPi Imóveis`;
         description = `Encontre ${titleParts.join(' ')} com a melhor consultoria imobiliária. Imóveis de alto padrão com fotos, plantas e informações completas.`;
       }
 
