@@ -1,11 +1,27 @@
 // Efeito adicional para atualizar quando filtros mudam
   useEffect(() => {
-    if (isBrowser && (filtrosAplicados || searchTerm)) {
+    if (isBrowser) {
       setTimeout(() => {
         updateClientMetaTags();
-      }, 200);
+      }, 100);
     }
-  }, [filtrosAplicados, searchTerm, isBrowser]);// src/app/busca/page.js - SOLUÇÃO COMPLETA EM 1 ARQUIVO - SEO OTIMIZADO
+  }, [filtrosAplicados, atualizacoesFiltros, searchTerm, isBrowser]);
+
+  // 🔥 EFEITO PARA ATUALIZAR TÍTULO QUANDO FILTROS ESPECÍFICOS MUDAM
+  useEffect(() => {
+    if (isBrowser) {
+      setTimeout(() => {
+        updateClientMetaTags();
+        console.log('🎯 [FILTROS MUDARAM] Atualizando título...'); 
+      }, 150);
+    }
+  }, [
+    filtrosAtuais.cidadeSelecionada,
+    filtrosAtuais.categoriaSelecionada, 
+    filtrosAtuais.finalidade,
+    filtrosAtuais.bairrosSelecionados,
+    isBrowser
+  ]);// src/app/busca/page.js - SOLUÇÃO COMPLETA EM 1 ARQUIVO - SEO OTIMIZADO
 
 "use client";
 
@@ -186,76 +202,98 @@ export default function BuscaImoveis() {
     }
   };
 
-  // 🔥 FUNÇÃO PARA ATUALIZAR META TAGS DINAMICAMENTE NO CLIENT
+  // 🔥 FUNÇÃO PARA ATUALIZAR META TAGS DINAMICAMENTE BASEADO NOS FILTROS ATUAIS
   const updateClientMetaTags = () => {
     try {
       const currentDate = new Date().toISOString();
       const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://npiconsultoria.com.br';
       
-      // 🎯 GERAR TÍTULO DINÂMICO BASEADO NA URL ATUAL
+      // 🎯 OBTER FILTROS ATUAIS DO STORE
+      const filtrosAtuais = useFiltersStore.getState();
+      
       let title = 'NPi Consultoria - Imóveis de Alto Padrão'; // Título padrão
       let description = 'Especialistas em imóveis de alto padrão. Encontre apartamentos, casas e terrenos exclusivos com a melhor consultoria imobiliária.';
       let keywords = 'busca imóveis, apartamentos luxo, casas alto padrão, imóveis São Paulo, NPi Imóveis';
       let canonicalUrl = `${baseUrl}/busca`;
 
-      // Extrair parâmetros da URL atual
-      const searchParams = new URLSearchParams(window.location.search);
-      const path = window.location.pathname;
-      
-      // Detectar URL SEO-friendly
-      const seoUrlMatch = path.match(/\/buscar\/([^\/]+)\/([^\/]+)\/([^\/]+)(?:\/([^\/]+))?/);
-      
-      let cidade, finalidade, categoria, bairro;
-      
-      if (seoUrlMatch) {
-        [, finalidade, categoria, cidade, bairro] = seoUrlMatch;
-        canonicalUrl = window.location.origin + path;
-      } else {
-        cidade = searchParams.get('cidade');
-        finalidade = searchParams.get('finalidade');
-        categoria = searchParams.get('categoria');
-        
-        if (cidade || finalidade || categoria) {
-          canonicalUrl = window.location.href;
-        }
-      }
-
-      // 🔥 GERAR TÍTULO ESPECÍFICO BASEADO NOS FILTROS OU URL
-      if (cidade || categoria) {
+      // 🔥 GERAR TÍTULO DINÂMICO BASEADO NOS FILTROS APLICADOS
+      if (filtrosAtuais.cidadeSelecionada || filtrosAtuais.categoriaSelecionada || filtrosAtuais.finalidade) {
         const titleParts = [];
         
-        if (categoria) {
+        // 1. Categoria (plural)
+        if (filtrosAtuais.categoriaSelecionada) {
           const categoriaPluralMap = {
-            'apartamentos': 'apartamentos',
-            'casas': 'casas',
-            'coberturas': 'coberturas',
-            'terrenos': 'terrenos',
-            'flats': 'flats'
+            'Apartamento': 'apartamentos',
+            'Casa': 'casas',
+            'Casa Comercial': 'casas comerciais',
+            'Casa em Condominio': 'casas em condomínio',
+            'Cobertura': 'coberturas',
+            'Flat': 'flats',
+            'Garden': 'gardens',
+            'Loft': 'lofts',
+            'Loja': 'lojas',
+            'Prédio Comercial': 'prédios comerciais',
+            'Sala Comercial': 'salas comerciais',
+            'Sobrado': 'sobrados',
+            'Terreno': 'terrenos'
           };
-          titleParts.push(categoriaPluralMap[categoria] || 'imóveis');
+          const categoriaPlural = categoriaPluralMap[filtrosAtuais.categoriaSelecionada] || 'imóveis';
+          titleParts.push(categoriaPlural);
         } else {
           titleParts.push('imóveis');
         }
         
-        if (finalidade === 'venda') {
+        // 2. Finalidade
+        if (filtrosAtuais.finalidade === 'Comprar') {
           titleParts.push('para venda');
-        } else if (finalidade === 'aluguel') {
+        } else if (filtrosAtuais.finalidade === 'Alugar') {
           titleParts.push('para aluguel');
         }
         
-        if (cidade) {
-          const cidadeFormatada = cidade.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        // 3. Localização
+        if (filtrosAtuais.cidadeSelecionada) {
+          const cidadeFormatada = filtrosAtuais.cidadeSelecionada
+            .replace(/-/g, ' ')
+            .replace(/\b\w/g, l => l.toUpperCase());
           titleParts.push(`em ${cidadeFormatada}`);
         }
         
-        // 🎯 TÍTULO NO MESMO PADRÃO DA DESCRIÇÃO
+        // 4. Bairros específicos
+        if (filtrosAtuais.bairrosSelecionados && filtrosAtuais.bairrosSelecionados.length > 0) {
+          if (filtrosAtuais.bairrosSelecionados.length === 1) {
+            titleParts.push(`- ${filtrosAtuais.bairrosSelecionados[0]}`);
+          } else if (filtrosAtuais.bairrosSelecionados.length <= 2) {
+            titleParts.push(`- ${filtrosAtuais.bairrosSelecionados.join(', ')}`);
+          }
+        }
+        
+        // 🎯 CONSTRUIR TÍTULO FINAL NO PADRÃO DA DESCRIÇÃO
         title = `Especialistas em ${titleParts.join(' ')}. NPi Imóveis`;
+        
+        // 🎯 CONSTRUIR DESCRIÇÃO CORRESPONDENTE
         description = `Encontre ${titleParts.join(' ')} com a melhor consultoria imobiliária. Imóveis de alto padrão com fotos, plantas e informações completas.`;
         
-        console.log('🎯 [TITLE-UPDATE] Título específico gerado:', title);
+        // 🎯 CONSTRUIR URL CANÔNICA
+        if (filtrosAtuais.cidadeSelecionada && filtrosAtuais.categoriaSelecionada && filtrosAtuais.finalidade) {
+          const finalidadeSlug = filtrosAtuais.finalidade === 'Comprar' ? 'venda' : 'aluguel';
+          const categoriaSlugMap = {
+            'Apartamento': 'apartamentos',
+            'Casa': 'casas',
+            'Cobertura': 'coberturas',
+            'Terreno': 'terrenos',
+            'Flat': 'flats'
+          };
+          const categoriaSlug = categoriaSlugMap[filtrosAtuais.categoriaSelecionada] || filtrosAtuais.categoriaSelecionada.toLowerCase();
+          const cidadeSlug = filtrosAtuais.cidadeSelecionada.toLowerCase().replace(/\s+/g, '-');
+          
+          canonicalUrl = `${baseUrl}/buscar/${finalidadeSlug}/${categoriaSlug}/${cidadeSlug}`;
+        }
+        
+        console.log('🎯 [TÍTULO DINÂMICO]:', title);
+        console.log('🎯 [FILTROS ATUAIS]:', filtrosAtuais);
       }
 
-      // 🔥 FORÇAR ATUALIZAÇÃO DO TÍTULO - SOBRESCREVER QUALQUER TÍTULO ANTERIOR
+      // 🔥 FORÇAR ATUALIZAÇÃO DO TÍTULO
       document.title = title;
       
       // Remover qualquer meta title existente e criar novo
@@ -400,19 +438,20 @@ export default function BuscaImoveis() {
     }
   }, [isBrowser]);
 
-  // 🔥 EFEITO PARA GARANTIR ATUALIZAÇÃO APÓS CARREGAR DADOS
+  // 🔥 EFEITO PARA GARANTIR ATUALIZAÇÃO APÓS CARREGAR DADOS E APLICAR FILTROS
   useEffect(() => {
-    if (isBrowser && !isLoading && imoveis.length >= 0) {
+    if (isBrowser && !isLoading) {
       // Atualizar título após dados carregarem
       setTimeout(() => {
         updateClientMetaTags();
         
         // Log para debug
         console.log('🎯 [DEBUG] Título atual:', document.title);
+        console.log('🎯 [DEBUG] Filtros aplicados:', filtrosAplicados);
         console.log('🎯 [DEBUG] URL atual:', window.location.href);
-      }, 300);
+      }, 200);
     }
-  }, [isBrowser, isLoading, imoveis.length]);
+  }, [isBrowser, isLoading, filtrosAplicados]);
 
   // Efeito para carregar filtros dos parâmetros da URL
   useEffect(() => {
@@ -833,7 +872,7 @@ export default function BuscaImoveis() {
     }
     
     if (filtrosAtuais.finalidade) {
-      const finalidadeTexto = filtrosAtuais.finalidade === 'Comprar' ? 'à venda' : 'para venda';
+      const finalidadeTexto = filtrosAtuais.finalidade === 'Comprar' ? 'à venda' : 'para aluguel';
       texto += ` ${finalidadeTexto}`;
     }
     
@@ -846,7 +885,15 @@ export default function BuscaImoveis() {
         texto += ` em ${filtrosAtuais.bairrosSelecionados.slice(0, 2).join(', ')} e mais ${filtrosAtuais.bairrosSelecionados.length - 2} bairros`;
       }
     } else if (filtrosAtuais.cidadeSelecionada) {
-      texto += ` em ${filtrosAtuais.cidadeSelecionada}`;
+      const cidadeFormatada = filtrosAtuais.cidadeSelecionada
+        .replace(/-/g, ' ')
+        .replace(/\b\w/g, l => l.toUpperCase());
+      texto += ` em ${cidadeFormatada}`;
+    }
+
+    // 🔥 ATUALIZAR TÍTULO QUANDO QUANTIDADE MUDAR
+    if (isBrowser && quantidade > 0) {
+      setTimeout(() => updateClientMetaTags(), 50);
     }
 
     return texto || 'Busca de imóveis';
