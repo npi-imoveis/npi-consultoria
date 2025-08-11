@@ -1,4 +1,11 @@
-// src/app/busca/page.js - SOLUÇÃO COMPLETA EM 1 ARQUIVO - SEO OTIMIZADO
+// Efeito adicional para atualizar quando filtros mudam
+  useEffect(() => {
+    if (isBrowser && (filtrosAplicados || searchTerm)) {
+      setTimeout(() => {
+        updateClientMetaTags();
+      }, 200);
+    }
+  }, [filtrosAplicados, searchTerm, isBrowser]);// src/app/busca/page.js - SOLUÇÃO COMPLETA EM 1 ARQUIVO - SEO OTIMIZADO
 
 "use client";
 
@@ -186,8 +193,8 @@ export default function BuscaImoveis() {
       const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://npiconsultoria.com.br';
       
       // 🎯 GERAR TÍTULO DINÂMICO BASEADO NA URL ATUAL
-      let title = 'Busca de Imóveis | NPi Imóveis';
-      let description = 'Encontre apartamentos, casas e imóveis de alto padrão com filtros avançados, mapa interativo e as melhores oportunidades do mercado imobiliário.';
+      let title = 'NPi Consultoria - Imóveis de Alto Padrão'; // Título padrão
+      let description = 'Especialistas em imóveis de alto padrão. Encontre apartamentos, casas e terrenos exclusivos com a melhor consultoria imobiliária.';
       let keywords = 'busca imóveis, apartamentos luxo, casas alto padrão, imóveis São Paulo, NPi Imóveis';
       let canonicalUrl = `${baseUrl}/busca`;
 
@@ -213,7 +220,7 @@ export default function BuscaImoveis() {
         }
       }
 
-      // Gerar título dinâmico no mesmo padrão da descrição
+      // 🔥 GERAR TÍTULO ESPECÍFICO BASEADO NOS FILTROS OU URL
       if (cidade || categoria) {
         const titleParts = [];
         
@@ -241,14 +248,29 @@ export default function BuscaImoveis() {
           titleParts.push(`em ${cidadeFormatada}`);
         }
         
-        // Título no mesmo padrão da descrição
+        // 🎯 TÍTULO NO MESMO PADRÃO DA DESCRIÇÃO
         title = `Especialistas em ${titleParts.join(' ')}. NPi Imóveis`;
         description = `Encontre ${titleParts.join(' ')} com a melhor consultoria imobiliária. Imóveis de alto padrão com fotos, plantas e informações completas.`;
+        
+        console.log('🎯 [TITLE-UPDATE] Título específico gerado:', title);
       }
 
-      // Atualizar/criar meta tags
+      // 🔥 FORÇAR ATUALIZAÇÃO DO TÍTULO - SOBRESCREVER QUALQUER TÍTULO ANTERIOR
+      document.title = title;
+      
+      // Remover qualquer meta title existente e criar novo
+      const existingTitleMeta = document.querySelector('meta[name="title"]');
+      if (existingTitleMeta) {
+        existingTitleMeta.remove();
+      }
+      
+      const titleMeta = document.createElement('meta');
+      titleMeta.setAttribute('name', 'title');
+      titleMeta.setAttribute('content', title);
+      document.head.appendChild(titleMeta);
+      
+      // Atualizar/criar meta tags restantes
       const metaTags = [
-        { tag: 'title', content: title },
         { name: 'description', content: description },
         { name: 'keywords', content: keywords },
         { name: 'date', content: currentDate },
@@ -272,13 +294,8 @@ export default function BuscaImoveis() {
         { name: 'x-robots-tag', content: 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1' },
       ];
       
-      // Atualizar título da página
-      document.title = title;
-      
       // Atualizar meta tags
       metaTags.forEach(tag => {
-        if (tag.tag === 'title') return; // Já foi atualizado acima
-        
         const selector = tag.name ? `meta[name="${tag.name}"]` : `meta[property="${tag.property}"]`;
         let existingTag = document.querySelector(selector);
         
@@ -376,9 +393,26 @@ export default function BuscaImoveis() {
   // Efeito para atualizar meta tags quando URL muda
   useEffect(() => {
     if (isBrowser) {
-      updateClientMetaTags();
+      // Delay para garantir que a página carregou completamente
+      setTimeout(() => {
+        updateClientMetaTags();
+      }, 100);
     }
-  }, [isBrowser, window.location?.pathname, window.location?.search]);
+  }, [isBrowser]);
+
+  // 🔥 EFEITO PARA GARANTIR ATUALIZAÇÃO APÓS CARREGAR DADOS
+  useEffect(() => {
+    if (isBrowser && !isLoading && imoveis.length >= 0) {
+      // Atualizar título após dados carregarem
+      setTimeout(() => {
+        updateClientMetaTags();
+        
+        // Log para debug
+        console.log('🎯 [DEBUG] Título atual:', document.title);
+        console.log('🎯 [DEBUG] URL atual:', window.location.href);
+      }, 300);
+    }
+  }, [isBrowser, isLoading, imoveis.length]);
 
   // Efeito para carregar filtros dos parâmetros da URL
   useEffect(() => {
