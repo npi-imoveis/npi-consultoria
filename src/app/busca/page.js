@@ -211,7 +211,7 @@ export default function BuscaImoveis() {
       // 🎯 OBTER FILTROS ATUAIS DO STORE
       const filtrosAtuais = useFiltersStore.getState();
       
-      let title = 'NPi Consultoria - Imóveis de Alto Padrão'; // Título padrão
+      let title = '${titleParts.join(' ')}. NPi'; // Título padrão
       let description = 'Especialistas em imóveis de alto padrão. Encontre apartamentos, casas e terrenos exclusivos com a melhor consultoria imobiliária.';
       let keywords = 'busca imóveis, apartamentos luxo, casas alto padrão, imóveis São Paulo, NPi Imóveis';
       let canonicalUrl = `${baseUrl}/busca`;
@@ -268,7 +268,7 @@ export default function BuscaImoveis() {
         }
         
         // 🎯 CONSTRUIR TÍTULO FINAL NO PADRÃO DA DESCRIÇÃO
-        title = `Especialistas em ${titleParts.join(' ')}. NPi Imóveis`;
+        title = `${titleParts.join(' ')}. NPi Imóveis`;
         
         // 🎯 CONSTRUIR DESCRIÇÃO CORRESPONDENTE
         description = `Encontre ${titleParts.join(' ')} com a melhor consultoria imobiliária. Imóveis de alto padrão com fotos, plantas e informações completas.`;
