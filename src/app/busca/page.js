@@ -160,27 +160,20 @@ export default function BuscaImoveis() {
     }
   };
 
-  // 🎯 FUNÇÃO PARA ATUALIZAR TÍTULO COM QUANTIDADE
+  // 🎯 FUNÇÃO PARA ATUALIZAR TÍTULO COM QUANTIDADE (AGORA INTEGRADA NO TÍTULO PRINCIPAL)
   const updateTitleWithCount = (totalItems = 0) => {
     try {
-      const currentTitle = document.title;
-      
-      // Se o título ainda não tem quantidade e há resultados, adicionar
-      if (totalItems > 0 && !currentTitle.match(/^\d+\s/)) {
-        const newTitle = `${totalItems} ${currentTitle.toLowerCase()}`;
-        
-        // Limitar a 60 caracteres
-        document.title = newTitle.length > 60 ? newTitle.substring(0, 57) + '...' : newTitle;
-        
-        console.log('🎯 [TITLE] Título atualizado com quantidade:', document.title);
-      }
+      // A quantidade agora já está integrada na função updateClientMetaTags
+      // Esta função mantida para compatibilidade, mas a lógica principal foi movida
+      updateClientMetaTags(totalItems);
+      console.log('🎯 [TITLE] Título atualizado com quantidade:', document.title);
     } catch (error) {
       console.error('❌ Erro ao atualizar título:', error);
     }
   };
 
   // 🔥 FUNÇÃO PARA ATUALIZAR META TAGS DINAMICAMENTE BASEADO NOS FILTROS ATUAIS
-  const updateClientMetaTags = () => {
+  const updateClientMetaTags = (quantidadeResultados = null) => {
     try {
       const currentDate = new Date().toISOString();
       const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://npiconsultoria.com.br';
@@ -196,35 +189,45 @@ export default function BuscaImoveis() {
       // 🔥 GERAR TÍTULO DINÂMICO BASEADO NOS FILTROS APLICADOS
       if (filtrosAtuais.cidadeSelecionada || filtrosAtuais.categoriaSelecionada || filtrosAtuais.finalidade) {
         const titleParts = [];
+        const descriptionParts = [];
         
-        // 1. Categoria (plural)
+        // 1. Categoria (plural para título, normal para descrição)
+        let categoriaPlural = 'Imóveis';
         if (filtrosAtuais.categoriaSelecionada) {
           const categoriaPluralMap = {
-            'Apartamento': 'apartamentos',
-            'Casa': 'casas',
-            'Casa Comercial': 'casas comerciais',
-            'Casa em Condominio': 'casas em condomínio',
-            'Cobertura': 'coberturas',
-            'Flat': 'flats',
-            'Garden': 'gardens',
-            'Loft': 'lofts',
-            'Loja': 'lojas',
-            'Prédio Comercial': 'prédios comerciais',
-            'Sala Comercial': 'salas comerciais',
-            'Sobrado': 'sobrados',
-            'Terreno': 'terrenos'
+            'Apartamento': 'Apartamentos',
+            'Casa': 'Casas',
+            'Casa Comercial': 'Casas comerciais',
+            'Casa em Condominio': 'Casas em condomínio',
+            'Cobertura': 'Coberturas',
+            'Flat': 'Flats',
+            'Garden': 'Gardens',
+            'Loft': 'Lofts',
+            'Loja': 'Lojas',
+            'Prédio Comercial': 'Prédios comerciais',
+            'Sala Comercial': 'Salas comerciais',
+            'Sobrado': 'Sobrados',
+            'Terreno': 'Terrenos'
           };
-          const categoriaPlural = categoriaPluralMap[filtrosAtuais.categoriaSelecionada] || 'imóveis';
+          categoriaPlural = categoriaPluralMap[filtrosAtuais.categoriaSelecionada] || 'Imóveis';
           titleParts.push(categoriaPlural);
+          descriptionParts.push(categoriaPlural.toLowerCase());
         } else {
-          titleParts.push('imóveis');
+          titleParts.push('Imóveis');
+          descriptionParts.push('imóveis');
         }
         
         // 2. Finalidade
+        let finalidadeTexto = '';
         if (filtrosAtuais.finalidade === 'Comprar') {
-          titleParts.push('para venda');
+          finalidadeTexto = 'a venda';
         } else if (filtrosAtuais.finalidade === 'Alugar') {
-          titleParts.push('para aluguel');
+          finalidadeTexto = 'para aluguel';
+        }
+        
+        if (finalidadeTexto) {
+          titleParts.push(finalidadeTexto);
+          descriptionParts.push(finalidadeTexto);
         }
         
         // 3. Localização
@@ -232,23 +235,30 @@ export default function BuscaImoveis() {
           const cidadeFormatada = filtrosAtuais.cidadeSelecionada
             .replace(/-/g, ' ')
             .replace(/\b\w/g, l => l.toUpperCase());
-          titleParts.push(`em ${cidadeFormatada}`);
+          titleParts.push(`no ${cidadeFormatada}`);
+          descriptionParts.push(cidadeFormatada);
         }
         
-        // 4. Bairros específicos
+        // 4. Bairros específicos (só na descrição)
         if (filtrosAtuais.bairrosSelecionados && filtrosAtuais.bairrosSelecionados.length > 0) {
           if (filtrosAtuais.bairrosSelecionados.length === 1) {
-            titleParts.push(`- ${filtrosAtuais.bairrosSelecionados[0]}`);
+            descriptionParts.push(`- ${filtrosAtuais.bairrosSelecionados[0]}`);
           } else if (filtrosAtuais.bairrosSelecionados.length <= 2) {
-            titleParts.push(`- ${filtrosAtuais.bairrosSelecionados.join(', ')}`);
+            descriptionParts.push(`- ${filtrosAtuais.bairrosSelecionados.join(', ')}`);
           }
         }
         
-        // 🎯 CONSTRUIR TÍTULO FINAL NO PADRÃO DA DESCRIÇÃO
-        title = `Especialistas em ${titleParts.join(' ')}. NPi Imóveis`;
+        // 🎯 CONSTRUIR TÍTULO NO NOVO FORMATO: "Apartamentos a venda no Guarujá 54 imóveis"
+        // Usar quantidade passada por parâmetro ou do estado pagination
+        const quantidadeAtual = quantidadeResultados !== null ? quantidadeResultados : (pagination?.totalItems || 0);
+        if (quantidadeAtual > 0) {
+          title = `${titleParts.join(' ')} ${quantidadeAtual} imóveis`;
+        } else {
+          title = `${titleParts.join(' ')}`;
+        }
         
-        // 🎯 CONSTRUIR DESCRIÇÃO CORRESPONDENTE
-        description = `Encontre ${titleParts.join(' ')} com a melhor consultoria imobiliária. Imóveis de alto padrão com fotos, plantas e informações completas.`;
+        // 🎯 CONSTRUIR DESCRIÇÃO: "Especialistas em apartamentos a venda Guarujá. NPi"
+        description = `Especialistas em ${descriptionParts.join(' ')}. NPi`;
         
         // 🎯 CONSTRUIR URL CANÔNICA
         if (filtrosAtuais.cidadeSelecionada && filtrosAtuais.categoriaSelecionada && filtrosAtuais.finalidade) {
@@ -595,7 +605,7 @@ export default function BuscaImoveis() {
       
       // 🎯 ATUALIZAR SEO
       updateStructuredData(favoritos.length, favoritos);
-      updateTitleWithCount(favoritos.length);
+      updateClientMetaTags(favoritos.length);
       return;
     }
 
@@ -669,7 +679,7 @@ export default function BuscaImoveis() {
         
         // 🎯 ATUALIZAR SEO COM RESULTADOS
         updateStructuredData(validPagination.totalItems, response.imoveis || []);
-        updateTitleWithCount(validPagination.totalItems);
+        updateClientMetaTags(validPagination.totalItems);
       }
     } catch (error) {
       console.error("Erro ao buscar imóveis:", error);
@@ -705,7 +715,7 @@ export default function BuscaImoveis() {
       setPagination(paginationData);
       
       updateStructuredData(favoritos.length, favoritos);
-      updateTitleWithCount(favoritos.length);
+      updateClientMetaTags(favoritos.length);
     } else {
       buscarImoveis(filtrosAplicados);
     }
@@ -738,7 +748,7 @@ export default function BuscaImoveis() {
         }
         
         updateStructuredData(response.data.length, response.data);
-        updateTitleWithCount(response.data.length);
+        updateClientMetaTags(response.data.length);
       } else {
         setImoveis([]);
         updateStructuredData(0, []);
@@ -874,7 +884,7 @@ export default function BuscaImoveis() {
     }
     
     if (filtrosAtuais.finalidade) {
-      const finalidadeTexto = filtrosAtuais.finalidade === 'Comprar' ? 'à venda' : 'para aluguel';
+      const finalidadeTexto = filtrosAtuais.finalidade === 'Comprar' ? 'a venda' : 'para aluguel';
       texto += ` ${finalidadeTexto}`;
     }
     
@@ -894,8 +904,8 @@ export default function BuscaImoveis() {
     }
 
     // 🔥 ATUALIZAR TÍTULO QUANDO QUANTIDADE MUDAR
-    if (isBrowser && quantidade > 0) {
-      setTimeout(() => updateClientMetaTags(), 50);
+    if (isBrowser && quantidade >= 0) {
+      setTimeout(() => updateClientMetaTags(quantidade), 50);
     }
 
     return texto || 'Busca de imóveis';
