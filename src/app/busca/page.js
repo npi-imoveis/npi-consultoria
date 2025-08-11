@@ -796,7 +796,7 @@ export default function BuscaImoveis() {
             ) : (
               <div className="w-full z-0">
                 <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 sm:gap-0 mb-4">
-                  <h3 className="text-xs font-bold text-zinc-500">{construirTextoFiltros()}</h3>
+                  <h2 className="text-xs font-bold text-zinc-500">{construirTextoFiltros()}</h2>
                   <select
                     className="text-xs font-bold text-zinc-500 bg-zinc-100 p-2 rounded-md w-full sm:w-auto"
                     value={ordenacao}
