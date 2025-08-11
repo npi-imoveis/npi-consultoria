@@ -28,13 +28,94 @@ function updateDynamicSEO(filtros, totalItems = 0) {
   try {
     const currentDate = new Date().toISOString();
     
-    // Atualizar título dinâmico
+    // 🔥 GERAR TÍTULO DINÂMICO OTIMIZADO
     let title = 'Busca de Imóveis | NPi Imóveis';
     let description = 'Encontre apartamentos, casas e imóveis de alto padrão com a NPi Imóveis.';
     
-    if (filtros.cidadeSelecionada || filtros.categoriaSelecionada) {
-      title = gerarTituloSeoFriendly(filtros);
-      description = gerarDescricaoSeoFriendly(filtros);
+    if (filtros.cidadeSelecionada || filtros.categoriaSelecionada || filtros.searchTerm) {
+      // Gerar título específico baseado nos filtros
+      const titleParts = [];
+      
+      // 1. Categoria (plural)
+      if (filtros.categoriaSelecionada) {
+        const categoriaPluralMap = {
+          'Apartamento': 'Apartamentos',
+          'Casa': 'Casas',
+          'Casa Comercial': 'Casas comerciais',
+          'Casa em Condominio': 'Casas em condomínio',
+          'Cobertura': 'Coberturas',
+          'Flat': 'Flats',
+          'Garden': 'Gardens',
+          'Loft': 'Lofts',
+          'Loja': 'Lojas',
+          'Prédio Comercial': 'Prédios comerciais',
+          'Sala Comercial': 'Salas comerciais',
+          'Sobrado': 'Sobrados',
+          'Terreno': 'Terrenos'
+        };
+        titleParts.push(categoriaPluralMap[filtros.categoriaSelecionada] || 'Imóveis');
+      } else {
+        titleParts.push('Imóveis');
+      }
+      
+      // 2. Finalidade
+      const finalidade = filtros.finalidade || 'Comprar';
+      if (finalidade === 'Comprar') {
+        titleParts.push('para venda');
+      } else if (finalidade === 'Alugar') {
+        titleParts.push('para aluguel');
+      } else {
+        titleParts.push('para venda');
+      }
+      
+      // 3. Localização
+      if (filtros.cidadeSelecionada) {
+        const cidadeFormatada = filtros.cidadeSelecionada
+          .replace(/-/g, ' ')
+          .replace(/\b\w/g, l => l.toUpperCase());
+        titleParts.push(`em ${cidadeFormatada}`);
+      }
+      
+      // 4. Bairro específico (se houver apenas 1)
+      if (filtros.bairrosSelecionados && filtros.bairrosSelecionados.length === 1) {
+        titleParts.push(`- ${filtros.bairrosSelecionados[0]}`);
+      }
+      
+      // 5. Especificações (quartos, etc)
+      const specs = [];
+      if (filtros.quartos) specs.push(`${filtros.quartos} quartos`);
+      if (filtros.vagas) specs.push(`${filtros.vagas} vagas`);
+      
+      if (specs.length > 0) {
+        titleParts.push(`- ${specs.join(', ')}`);
+      }
+      
+      // Construir título final
+      title = titleParts.join(' ');
+      
+      // Adicionar quantidade se disponível
+      if (totalItems > 0) {
+        title = `${totalItems} ${title.toLowerCase()}`;
+      }
+      
+      // Limitar a 60 caracteres para SEO
+      if (title.length > 60) {
+        title = title.substring(0, 57) + '...';
+      }
+      
+      // Gerar descrição usando função existente ou criar nova
+      if (typeof gerarDescricaoSeoFriendly === 'function') {
+        description = gerarDescricaoSeoFriendly(filtros);
+      } else {
+        // Descrição básica se função não existir
+        description = `Encontre ${titleParts.join(' ')} com a melhor consultoria imobiliária. Imóveis de alto padrão com fotos, plantas e informações completas.`;
+      }
+    }
+    
+    // Para busca por termo
+    if (filtros.searchTerm) {
+      title = `Busca: "${filtros.searchTerm}" - Imóveis`;
+      description = `Resultados da busca por "${filtros.searchTerm}". Encontre apartamentos, casas e imóveis de alto padrão.`;
     }
     
     // Atualizar título da página
