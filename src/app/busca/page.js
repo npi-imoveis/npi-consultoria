@@ -275,7 +275,7 @@ export default function BuscaImoveis() {
         // Usar quantidade passada por parâmetro ou do estado pagination
         const quantidadeAtual = quantidadeResultados !== null ? quantidadeResultados : (pagination?.totalItems || 0);
         if (quantidadeAtual > 0) {
-          title = `${titleParts.join(' ')} ${quantidadeAtual} imóveis`;
+          title = `${titleParts.join(' ')} ${quantidadeAtual} imóveis | NPi`;
         } else {
           title = `${titleParts.join(' ')}`;
         }
