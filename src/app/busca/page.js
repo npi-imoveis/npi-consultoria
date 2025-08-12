@@ -181,6 +181,10 @@ export default function BuscaImoveis() {
       // 🎯 OBTER FILTROS ATUAIS DO STORE
       const filtrosAtuais = useFiltersStore.getState();
       
+      // 🔥 DEBUG PARA VERIFICAR FINALIDADE
+      console.log('🎯 [META-TAGS] Filtros atuais completos:', filtrosAtuais);
+      console.log('🎯 [META-TAGS] Finalidade detectada:', filtrosAtuais.finalidade);
+      
       let title = 'NPi Consultoria - Imóveis de Alto Padrão'; // Título padrão
       let description = 'Especialistas em imóveis de alto padrão. Encontre apartamentos, casas e terrenos exclusivos com a melhor consultoria imobiliária.';
       let keywords = 'busca imóveis, apartamentos luxo, casas alto padrão, imóveis São Paulo, NPi Imóveis';
@@ -262,18 +266,44 @@ export default function BuscaImoveis() {
         
         // 🎯 CONSTRUIR URL CANÔNICA
         if (filtrosAtuais.cidadeSelecionada && filtrosAtuais.categoriaSelecionada && filtrosAtuais.finalidade) {
-          const finalidadeSlug = filtrosAtuais.finalidade === 'Comprar' ? 'venda' : 'aluguel';
+          // 🔥 CORRIGIR MAPEAMENTO DE FINALIDADE
+          let finalidadeSlug = 'venda'; // Default para venda
+          if (filtrosAtuais.finalidade === 'Comprar' || filtrosAtuais.finalidade === 'venda') {
+            finalidadeSlug = 'venda';
+          } else if (filtrosAtuais.finalidade === 'Alugar' || filtrosAtuais.finalidade === 'aluguel') {
+            finalidadeSlug = 'aluguel';
+          }
+          
           const categoriaSlugMap = {
             'Apartamento': 'apartamentos',
             'Casa': 'casas',
             'Cobertura': 'coberturas',
             'Terreno': 'terrenos',
-            'Flat': 'flats'
+            'Flat': 'flats',
+            'Garden': 'gardens',
+            'Loft': 'lofts',
+            'Loja': 'lojas',
+            'Sobrado': 'sobrados'
           };
           const categoriaSlug = categoriaSlugMap[filtrosAtuais.categoriaSelecionada] || filtrosAtuais.categoriaSelecionada.toLowerCase();
           const cidadeSlug = filtrosAtuais.cidadeSelecionada.toLowerCase().replace(/\s+/g, '-');
           
           canonicalUrl = `${baseUrl}/buscar/${finalidadeSlug}/${categoriaSlug}/${cidadeSlug}`;
+          
+          // 🔥 SE ESTAMOS JÁ NA URL SEO-FRIENDLY, USAR A URL ATUAL COMO CANONICAL
+          const urlAtual = window.location.pathname;
+          const urlSeoPattern = `/buscar/${finalidadeSlug}/${categoriaSlug}/${cidadeSlug}`;
+          if (urlAtual === urlSeoPattern) {
+            canonicalUrl = window.location.origin + urlAtual;
+            console.log('🎯 [URL-CANONICAL] Usando URL atual como canonical (já é SEO-friendly)');
+          }
+          
+          console.log('🎯 [URL-CANONICAL] Finalidade detectada:', filtrosAtuais.finalidade, '→', finalidadeSlug);
+          console.log('🎯 [URL-CANONICAL] URL gerada:', canonicalUrl);
+        } else {
+          // 🔥 USAR URL ATUAL COMO CANONICAL SE NÃO CONSEGUIR GERAR SEO-FRIENDLY
+          canonicalUrl = window.location.origin + window.location.pathname + (window.location.search || '');
+          console.log('🎯 [URL-CANONICAL] Usando URL atual:', canonicalUrl);
         }
         
         console.log('🎯 [TÍTULO DINÂMICO]:', title);
@@ -342,14 +372,21 @@ export default function BuscaImoveis() {
         existingTag.setAttribute('content', tag.content);
       });
       
-      // Verificar se canonical existe, se não, criar
+      // 🔥 VERIFICAR E ATUALIZAR CANONICAL LINK
       let canonicalLink = document.querySelector('link[rel="canonical"]');
       if (!canonicalLink) {
         canonicalLink = document.createElement('link');
         canonicalLink.setAttribute('rel', 'canonical');
         document.head.appendChild(canonicalLink);
+        console.log('🎯 [CANONICAL] Link canonical criado');
+      } else {
+        console.log('🎯 [CANONICAL] Link canonical já existe, atualizando');
       }
+      
+      // 🔥 FORÇAR ATUALIZAÇÃO DA URL CANONICAL
       canonicalLink.setAttribute('href', canonicalUrl);
+      console.log('🎯 [CANONICAL] URL canonical definida:', canonicalUrl);
+      console.log('🎯 [CANONICAL] URL atual da página:', window.location.href);
       
       // Adicionar hreflang
       let hreflangPtBr = document.querySelector('link[rel="alternate"][hreflang="pt-BR"]');
@@ -362,6 +399,17 @@ export default function BuscaImoveis() {
       hreflangPtBr.setAttribute('href', canonicalUrl);
       
       console.log('✅ Meta tags SEO atualizadas:', { title, canonicalUrl });
+      
+      // 🔥 VERIFICAÇÃO FINAL PARA CANONICAL
+      const urlAtual = window.location.href;
+      if (canonicalUrl !== urlAtual) {
+        console.log('⚠️ [CANONICAL] URL canonical diferente da atual:');
+        console.log('   - URL atual:', urlAtual);
+        console.log('   - URL canonical:', canonicalUrl);
+        console.log('   - Isso pode causar "Non-canonical" no Ahrefs');
+      } else {
+        console.log('✅ [CANONICAL] URL canonical igual à atual - OK!');
+      }
     } catch (error) {
       console.error('❌ Erro ao atualizar meta tags:', error);
     }
@@ -395,9 +443,11 @@ export default function BuscaImoveis() {
     const filtrosAtuais = useFiltersStore.getState();
     
     console.log('🔍 [BUSCA] Atualizando URL:', filtrosAtuais);
+    console.log('🔍 [BUSCA] Finalidade atual:', filtrosAtuais.finalidade);
     
     if (filtrosAtuais.cidadeSelecionada && filtrosAtuais.finalidade && filtrosAtuais.categoriaSelecionada) {
       const urlAmigavel = gerarUrlSeoFriendly(filtrosAtuais);
+      console.log('🔍 [BUSCA] URL SEO-friendly gerada:', urlAmigavel);
       router.push(urlAmigavel, { scroll: false });
     } else {
       const params = new URLSearchParams();
@@ -412,6 +462,7 @@ export default function BuscaImoveis() {
       if (filtrosAtuais.precoMax) params.set('precoMax', filtrosAtuais.precoMax);
       
       const urlComParams = params.toString() ? `/busca?${params.toString()}` : '/busca';
+      console.log('🔍 [BUSCA] URL com params gerada:', urlComParams);
       router.push(urlComParams, { scroll: false });
     }
   };
