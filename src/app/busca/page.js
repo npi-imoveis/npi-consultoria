@@ -1055,7 +1055,7 @@ export default function BuscaImoveis() {
     }
     
     if (filtrosAtuais.finalidade) {
-      const finalidadeTexto = filtrosAtuais.finalidade === 'Comprar' ? 'a venda' : 'para aluguel';
+      const finalidadeTexto = filtrosAtuais.finalidade === 'Comprar' ? 'a venda' : 'para venda';
       texto += ` ${finalidadeTexto}`;
     }
     
