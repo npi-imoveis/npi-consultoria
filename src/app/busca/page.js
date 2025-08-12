@@ -1,4 +1,4 @@
-// src/app/busca/page.js - SOLUÇÃO COMPLETA EM 1 ARQUIVO - SEO OTIMIZADO - CORRIGIDO RELOAD
+// src/app/busca/page.js - SOLUÇÃO COMPLETA EM 1 ARQUIVO - SEO OTIMIZADO - CORRIGIDO RELOAD v2
 
 "use client";
 
@@ -59,10 +59,8 @@ export default function BuscaImoveis() {
   const [fullyInitialized, setFullyInitialized] = useState(false);
   const [uiVisible, setUiVisible] = useState(false);
 
-  // 🔥 CONTROLE DE INICIALIZAÇÃO
-  const [urlProcessed, setUrlProcessed] = useState(false);
-  const [initialSearchDone, setInitialSearchDone] = useState(false);
-  const [filtersFromUrl, setFiltersFromUrl] = useState(null);
+  // 🔥 CONTROLE DE INICIALIZAÇÃO SIMPLIFICADO
+  const [initialLoad, setInitialLoad] = useState(true);
 
   // 🎯 FUNÇÃO PARA ATUALIZAR STRUCTURED DATA DINAMICAMENTE
   const updateStructuredData = (totalItems = 0, imoveisData = []) => {
@@ -476,247 +474,6 @@ export default function BuscaImoveis() {
     }
   };
 
-  // 🔥 EFEITO 1: INICIALIZAÇÃO DO BROWSER
-  useEffect(() => {
-    console.log('🚀 [INIT] Componente montado, marcando browser como ativo');
-    setIsBrowser(true);
-    updateClientMetaTags();
-  }, []);
-
-  // 🔥 EFEITO 2: PROCESSAR URL E EXTRAIR FILTROS (EXECUTADO UMA VEZ)
-  useEffect(() => {
-    if (!isBrowser || urlProcessed) return;
-    
-    console.log('🔍 [URL-PROCESS] Iniciando processamento da URL...');
-    setUrlProcessed(true);
-    
-    // 1. Extrair parâmetros de URL SEO-friendly primeiro
-    const seoParams = extractFromSeoUrl();
-    
-    // 2. Extrair parâmetros de query string como fallback
-    const searchParams = new URLSearchParams(window.location.search);
-    const cidade = searchParams.get('cidade');
-    const finalidade = searchParams.get('finalidade');
-    const categoria = searchParams.get('categoria');
-    const bairros = searchParams.get('bairros');
-    const quartos = searchParams.get('quartos');
-    const precoMin = searchParams.get('precoMin');
-    const precoMax = searchParams.get('precoMax');
-    const searchQuery = searchParams.get('q');
-    
-    console.log('🔍 [URL-PROCESS] Parâmetros encontrados:', {
-      seoParams,
-      queryParams: { cidade, finalidade, categoria, bairros, quartos, precoMin, precoMax, searchQuery }
-    });
-    
-    // Se há parâmetros para aplicar
-    if (seoParams || cidade || finalidade || categoria || bairros || quartos || precoMin || precoMax) {
-      const filtrosParaAplicar = {};
-      
-      // Priorizar parâmetros SEO-friendly
-      if (seoParams) {
-        console.log('🔍 [URL-PROCESS] Usando parâmetros SEO-friendly:', seoParams);
-        filtrosParaAplicar.cidadeSelecionada = seoParams.cidade; // 🔥 USAR DIRETAMENTE SEM TRANSFORMAÇÕES
-        filtrosParaAplicar.finalidade = seoParams.finalidade;
-        filtrosParaAplicar.categoriaSelecionada = seoParams.categoria;
-        
-        if (seoParams.bairro) {
-          filtrosParaAplicar.bairrosSelecionados = [seoParams.bairro];
-        }
-      } else {
-        console.log('🔍 [URL-PROCESS] Usando query parameters como fallback');
-        if (cidade) filtrosParaAplicar.cidadeSelecionada = cidade;
-        if (finalidade) filtrosParaAplicar.finalidade = finalidade;
-        if (categoria) filtrosParaAplicar.categoriaSelecionada = categoria;
-        if (bairros) {
-          const bairrosArray = bairros.split(',').map(b => b.trim()).filter(b => b.length > 0);
-          filtrosParaAplicar.bairrosSelecionados = bairrosArray;
-        }
-      }
-      
-      // Parâmetros adicionais sempre vêm de query string
-      if (quartos) filtrosParaAplicar.quartos = parseInt(quartos);
-      if (precoMin) filtrosParaAplicar.precoMin = parseFloat(precoMin);
-      if (precoMax) filtrosParaAplicar.precoMax = parseFloat(precoMax);
-      
-      console.log('🔍 [URL-PROCESS] Filtros finais extraídos da URL:', filtrosParaAplicar);
-      
-      // 🔥 SALVAR FILTROS EXTRAÍDOS DA URL PARA USAR DEPOIS
-      setFiltersFromUrl(filtrosParaAplicar);
-      
-    } else {
-      console.log('🔍 [URL-PROCESS] Nenhum filtro encontrado na URL');
-      setFiltersFromUrl(null);
-    }
-    
-    // Query de busca
-    if (searchQuery) {
-      console.log('🔍 [URL-PROCESS] Query de busca encontrada:', searchQuery);
-      setSearchTerm(searchQuery);
-    }
-  }, [isBrowser, urlProcessed]);
-
-  // 🔥 EFEITO 3: APLICAR FILTROS DA URL AO STORE (QUANDO DISPONÍVEIS)
-  useEffect(() => {
-    if (!filtersFromUrl || initialSearchDone) return;
-    
-    console.log('🔍 [APPLY-FILTERS] Aplicando filtros da URL ao store:', filtersFromUrl);
-    
-    const filtrosStore = useFiltersStore.getState();
-    
-    // 🔥 APLICAR FILTROS NO STORE DE FORMA SÍNCRONA
-    filtrosStore.setFilters(filtersFromUrl);
-    filtrosStore.aplicarFiltros();
-    
-    console.log('🔍 [APPLY-FILTERS] Filtros aplicados, executando busca...');
-    
-    // 🔥 EXECUTAR BUSCA COM PEQUENO DELAY PARA GARANTIR SINCRONIA
-    setTimeout(() => {
-      buscarImoveis(true);
-      setInitialSearchDone(true);
-    }, 50);
-    
-  }, [filtersFromUrl, initialSearchDone]);
-
-  // 🔥 EFEITO 4: BUSCA PADRÃO (SEM FILTROS) - APENAS SE NÃO HOUVER FILTROS DA URL
-  useEffect(() => {
-    if (!isBrowser || filtersFromUrl !== null || initialSearchDone) return;
-    
-    console.log('🔍 [DEFAULT-SEARCH] Executando busca padrão (sem filtros)');
-    setTimeout(() => {
-      buscarImoveis(false);
-      setInitialSearchDone(true);
-    }, 100);
-    
-  }, [isBrowser, filtersFromUrl, initialSearchDone]);
-
-  // 🔥 EFEITO 5: BUSCA QUANDO FILTROS SÃO APLICADOS MANUALMENTE (APÓS INICIALIZAÇÃO)
-  useEffect(() => {
-    if (!initialSearchDone || !filtrosAplicados) return;
-    
-    console.log('🔍 [MANUAL-FILTERS] Executando busca após aplicação manual de filtros');
-    buscarImoveis(true);
-    
-  }, [filtrosAplicados, atualizacoesFiltros, initialSearchDone]);
-
-  // 🔥 EFEITO 6: BUSCA POR TERMO (SEARCH)
-  useEffect(() => {
-    if (!initialSearchDone) return;
-    
-    const searchParams = new URLSearchParams(window.location.search);
-    const searchQuery = searchParams.get("q");
-    
-    if (searchQuery || searchTerm) {
-      const termToSearch = searchQuery || searchTerm;
-      
-      if (searchQuery && searchQuery !== searchTerm) {
-        setSearchTerm(searchQuery);
-      }
-      
-      console.log('🔍 [SEARCH-TERM] Executando busca por termo:', termToSearch);
-      handleSearch(termToSearch);
-    }
-    
-  }, [searchTerm, initialSearchDone]);
-
-  // 🔥 EFEITO 7: FAVORITOS
-  useEffect(() => {
-    if (!initialSearchDone) return;
-    
-    if (mostrandoFavoritos) {
-      console.log('🔍 [FAVORITES] Mostrando favoritos');
-      setImoveis(favoritos);
-      setPagination({
-        totalItems: favoritos.length,
-        totalPages: Math.ceil(favoritos.length / 12),
-        currentPage: 1,
-        itemsPerPage: 12,
-        limit: 12,
-      });
-      setIsLoading(false);
-      
-      updateStructuredData(favoritos.length, favoritos);
-      setTimeout(() => updateClientMetaTags(favoritos.length), 100);
-    }
-    
-  }, [mostrandoFavoritos, favoritos, initialSearchDone]);
-
-  // 🔥 EFEITO 8: PAGINAÇÃO
-  useEffect(() => {
-    if (!initialSearchDone || currentPage === 1) return;
-    
-    console.log('🔍 [PAGINATION] Mudança de página:', currentPage);
-    
-    if (mostrandoFavoritos) {
-      // Lógica de paginação para favoritos se necessário
-    } else if (filtrosAplicados) {
-      buscarImoveis(true);
-    } else {
-      buscarImoveis(false);
-    }
-    
-  }, [currentPage, initialSearchDone]);
-
-  // 🔥 EFEITO 9: ATUALIZAR URL QUANDO FILTROS MUDAM (APLICAÇÃO MANUAL)
-  useEffect(() => {
-    if (!isBrowser || !initialSearchDone) return;
-    
-    // Só atualizar URL se os filtros foram aplicados manualmente (não da URL inicial)
-    const filtrosAtuais = useFiltersStore.getState();
-    if (filtrosAtuais.filtrosAplicados) {
-      setTimeout(() => {
-        updateUrlFromFilters();
-      }, 100);
-    }
-  }, [atualizacoesFiltros, isBrowser, initialSearchDone]);
-
-  // 🔥 EFEITO 10: ATUALIZAR META TAGS QUANDO DADOS CARREGAM
-  useEffect(() => {
-    if (isBrowser && !isLoading && pagination.totalItems >= 0) {
-      setTimeout(() => {
-        updateClientMetaTags(pagination.totalItems);
-        console.log('🎯 [META-UPDATE] Meta tags atualizadas após carregamento de dados');
-      }, 100);
-    }
-  }, [isBrowser, isLoading, pagination.totalItems]);
-
-  // Detectar ambiente de cliente e tamanho da tela
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  useEffect(() => {
-    if (fullyInitialized) {
-      const timer = setTimeout(() => {
-        setUiVisible(true);
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, [fullyInitialized]);
-
-  useEffect(() => {
-    if (!isClient) return;
-    setFiltroVisivel(!isMobile);
-  }, [isClient, isMobile]);
-
-  useEffect(() => {
-    if (!isClient) return;
-
-    const checkScreenSize = () => {
-      setIsMobile(window.innerWidth < 768);
-      setFullyInitialized(true);
-    };
-
-    checkScreenSize();
-    window.addEventListener("resize", checkScreenSize);
-    return () => window.removeEventListener("resize", checkScreenSize);
-  }, [isClient]);
-
-  const handlePageChange = (newPage) => {
-    setCurrentPage(newPage);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
   // 🔥 FUNÇÃO SIMPLIFICADA PARA BUSCAR IMÓVEIS
   const buscarImoveis = async (comFiltros = false) => {
     console.log('🔍 [BUSCAR] Iniciando busca de imóveis, comFiltros:', comFiltros);
@@ -824,6 +581,213 @@ export default function BuscaImoveis() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // 🔥 EFEITO PRINCIPAL INICIAL: PROCESSAR URL E BUSCAR
+  useEffect(() => {
+    if (!initialLoad) return;
+    
+    console.log('🚀 [INITIAL] Iniciando carregamento da página');
+    setIsBrowser(true);
+    
+    // 1. Extrair parâmetros de URL SEO-friendly primeiro
+    const seoParams = extractFromSeoUrl();
+    
+    // 2. Extrair parâmetros de query string como fallback
+    const searchParams = new URLSearchParams(window.location.search);
+    const cidade = searchParams.get('cidade');
+    const finalidade = searchParams.get('finalidade');
+    const categoria = searchParams.get('categoria');
+    const bairros = searchParams.get('bairros');
+    const quartos = searchParams.get('quartos');
+    const precoMin = searchParams.get('precoMin');
+    const precoMax = searchParams.get('precoMax');
+    const searchQuery = searchParams.get('q');
+    
+    console.log('🚀 [INITIAL] Parâmetros encontrados:', {
+      seoParams,
+      queryParams: { cidade, finalidade, categoria, bairros, quartos, precoMin, precoMax, searchQuery }
+    });
+    
+    // 3. Se há parâmetros para aplicar
+    if (seoParams || cidade || finalidade || categoria || bairros || quartos || precoMin || precoMax) {
+      const filtrosParaAplicar = {};
+      
+      // Priorizar parâmetros SEO-friendly
+      if (seoParams) {
+        console.log('🚀 [INITIAL] Usando parâmetros SEO-friendly:', seoParams);
+        filtrosParaAplicar.cidadeSelecionada = seoParams.cidade; // 🔥 USAR DIRETAMENTE SEM TRANSFORMAÇÕES
+        filtrosParaAplicar.finalidade = seoParams.finalidade;
+        filtrosParaAplicar.categoriaSelecionada = seoParams.categoria;
+        
+        if (seoParams.bairro) {
+          filtrosParaAplicar.bairrosSelecionados = [seoParams.bairro];
+        }
+      } else {
+        console.log('🚀 [INITIAL] Usando query parameters como fallback');
+        if (cidade) filtrosParaAplicar.cidadeSelecionada = cidade;
+        if (finalidade) filtrosParaAplicar.finalidade = finalidade;
+        if (categoria) filtrosParaAplicar.categoriaSelecionada = categoria;
+        if (bairros) {
+          const bairrosArray = bairros.split(',').map(b => b.trim()).filter(b => b.length > 0);
+          filtrosParaAplicar.bairrosSelecionados = bairrosArray;
+        }
+      }
+      
+      // Parâmetros adicionais sempre vêm de query string
+      if (quartos) filtrosParaAplicar.quartos = parseInt(quartos);
+      if (precoMin) filtrosParaAplicar.precoMin = parseFloat(precoMin);
+      if (precoMax) filtrosParaAplicar.precoMax = parseFloat(precoMax);
+      
+      console.log('🚀 [INITIAL] Filtros finais extraídos da URL:', filtrosParaAplicar);
+      
+      // 4. Aplicar filtros no store
+      const filtrosStore = useFiltersStore.getState();
+      filtrosStore.setFilters(filtrosParaAplicar);
+      filtrosStore.aplicarFiltros();
+      
+      console.log('🚀 [INITIAL] Filtros aplicados, verificando store:', useFiltersStore.getState());
+      
+      // 5. Executar busca COM filtros
+      setTimeout(() => {
+        console.log('🚀 [INITIAL] Executando busca com filtros...');
+        buscarImoveis(true);
+        setInitialLoad(false);
+      }, 100);
+      
+    } else {
+      console.log('🚀 [INITIAL] Nenhum filtro encontrado na URL, busca padrão');
+      
+      // Query de busca
+      if (searchQuery) {
+        console.log('🚀 [INITIAL] Query de busca encontrada:', searchQuery);
+        setSearchTerm(searchQuery);
+        setTimeout(() => {
+          handleSearch(searchQuery);
+          setInitialLoad(false);
+        }, 100);
+      } else {
+        // Busca padrão sem filtros
+        setTimeout(() => {
+          console.log('🚀 [INITIAL] Executando busca padrão...');
+          buscarImoveis(false);
+          setInitialLoad(false);
+        }, 100);
+      }
+    }
+    
+    // Atualizar meta tags iniciais
+    setTimeout(() => {
+      updateClientMetaTags();
+    }, 200);
+    
+  }, [initialLoad]);
+
+  // 🔥 EFEITO PARA BUSCA QUANDO FILTROS SÃO APLICADOS MANUALMENTE (APÓS INICIALIZAÇÃO)
+  useEffect(() => {
+    if (initialLoad || !filtrosAplicados) return;
+    
+    console.log('🔍 [MANUAL-FILTERS] Executando busca após aplicação manual de filtros');
+    buscarImoveis(true);
+    
+  }, [filtrosAplicados, atualizacoesFiltros, initialLoad]);
+
+  // 🔥 EFEITO PARA FAVORITOS
+  useEffect(() => {
+    if (initialLoad) return;
+    
+    if (mostrandoFavoritos) {
+      console.log('🔍 [FAVORITES] Mostrando favoritos');
+      setImoveis(favoritos);
+      setPagination({
+        totalItems: favoritos.length,
+        totalPages: Math.ceil(favoritos.length / 12),
+        currentPage: 1,
+        itemsPerPage: 12,
+        limit: 12,
+      });
+      setIsLoading(false);
+      
+      updateStructuredData(favoritos.length, favoritos);
+      setTimeout(() => updateClientMetaTags(favoritos.length), 100);
+    }
+    
+  }, [mostrandoFavoritos, favoritos, initialLoad]);
+
+  // 🔥 EFEITO PARA PAGINAÇÃO
+  useEffect(() => {
+    if (initialLoad || currentPage === 1) return;
+    
+    console.log('🔍 [PAGINATION] Mudança de página:', currentPage);
+    
+    if (mostrandoFavoritos) {
+      // Lógica de paginação para favoritos se necessário
+    } else if (filtrosAplicados) {
+      buscarImoveis(true);
+    } else {
+      buscarImoveis(false);
+    }
+    
+  }, [currentPage, initialLoad]);
+
+  // 🔥 EFEITO PARA ATUALIZAR URL QUANDO FILTROS MUDAM (APLICAÇÃO MANUAL)
+  useEffect(() => {
+    if (!isBrowser || initialLoad) return;
+    
+    // Só atualizar URL se os filtros foram aplicados manualmente (não da URL inicial)
+    const filtrosAtuais = useFiltersStore.getState();
+    if (filtrosAtuais.filtrosAplicados) {
+      setTimeout(() => {
+        updateUrlFromFilters();
+      }, 100);
+    }
+  }, [atualizacoesFiltros, isBrowser, initialLoad]);
+
+  // 🔥 EFEITO PARA ATUALIZAR META TAGS QUANDO DADOS CARREGAM
+  useEffect(() => {
+    if (isBrowser && !isLoading && pagination.totalItems >= 0) {
+      setTimeout(() => {
+        updateClientMetaTags(pagination.totalItems);
+        console.log('🎯 [META-UPDATE] Meta tags atualizadas após carregamento de dados');
+      }, 100);
+    }
+  }, [isBrowser, isLoading, pagination.totalItems]);
+
+  // Detectar ambiente de cliente e tamanho da tela
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (fullyInitialized) {
+      const timer = setTimeout(() => {
+        setUiVisible(true);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [fullyInitialized]);
+
+  useEffect(() => {
+    if (!isClient) return;
+    setFiltroVisivel(!isMobile);
+  }, [isClient, isMobile]);
+
+  useEffect(() => {
+    if (!isClient) return;
+
+    const checkScreenSize = () => {
+      setIsMobile(window.innerWidth < 768);
+      setFullyInitialized(true);
+    };
+
+    checkScreenSize();
+    window.addEventListener("resize", checkScreenSize);
+    return () => window.removeEventListener("resize", checkScreenSize);
+  }, [isClient]);
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const toggleFavoritos = () => {
