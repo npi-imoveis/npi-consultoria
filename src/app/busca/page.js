@@ -1,4 +1,4 @@
-// src/app/busca/page.js - SOLUÇÃO COMPLETA EM 1 ARQUIVO - SEO OTIMIZADO - CORRIGIDO RELOAD v2
+// src/app/busca/page.js - SOLUÇÃO COMPLETA - CORRIGIDO FINALIDADE + NAVEGAÇÃO
 
 "use client";
 
@@ -387,6 +387,47 @@ export default function BuscaImoveis() {
     }
   };
 
+  // 🔥 FUNÇÃO PARA NORMALIZAR NOME DE CIDADE
+  const normalizarCidade = (cidade) => {
+    if (!cidade) return null;
+    
+    // Mapeamento de cidades conhecidas
+    const cidadesMapeadas = {
+      'guaruja': 'Guarujá',
+      'guarujá': 'Guarujá',
+      'Guaruja': 'Guarujá',
+      'GUARUJA': 'Guarujá',
+      'sao-paulo': 'São Paulo',
+      'sao_paulo': 'São Paulo',
+      'santo-andre': 'Santo André',
+      'santos': 'Santos',
+      'praia-grande': 'Praia Grande',
+      'bertioga': 'Bertioga',
+      'mongagua': 'Mongaguá',
+      'mongaguá': 'Mongaguá',
+      'ubatuba': 'Ubatuba',
+      'caraguatatuba': 'Caraguatatuba',
+      'sao-sebastiao': 'São Sebastião',
+      'ilhabela': 'Ilhabela'
+    };
+    
+    // Tentar mapeamento direto primeiro
+    const cidadeNormalizada = cidadesMapeadas[cidade.toLowerCase()];
+    if (cidadeNormalizada) {
+      console.log(`🏙️ [CIDADE] Mapeamento: "${cidade}" → "${cidadeNormalizada}"`);
+      return cidadeNormalizada;
+    }
+    
+    // Se não houver mapeamento, aplicar normalização padrão
+    const resultado = cidade
+      .replace(/-/g, ' ')
+      .replace(/\b\w/g, l => l.toUpperCase())
+      .trim();
+    
+    console.log(`🏙️ [CIDADE] Normalização padrão: "${cidade}" → "${resultado}"`);
+    return resultado;
+  };
+
   // 🔥 FUNÇÃO CORRIGIDA PARA EXTRAIR PARÂMETROS DE URL SEO-FRIENDLY
   const extractFromSeoUrl = () => {
     const path = window.location.pathname;
@@ -401,13 +442,16 @@ export default function BuscaImoveis() {
       
       console.log('🔍 [EXTRACT-SEO] Parâmetros extraídos da URL:', { finalidade, categoria, cidade, bairro });
       
-      // 🔥 MAPEAMENTO DIRETO E CORRETO: URL → STORE
-      let finalidadeStore = 'Comprar'; // Default
-      if (finalidade === 'venda') {
+      // 🔥 MAPEAMENTO CORRIGIDO E ROBUSTO: URL → STORE
+      let finalidadeStore = 'Comprar'; // Default para manter compatibilidade com links da home
+      
+      if (finalidade === 'venda' || finalidade === 'comprar' || finalidade === 'compra') {
         finalidadeStore = 'Comprar';
-      } else if (finalidade === 'aluguel') {
+      } else if (finalidade === 'aluguel' || finalidade === 'alugar' || finalidade === 'locacao') {
         finalidadeStore = 'Alugar';
       }
+      
+      console.log(`🎯 [FINALIDADE] Mapeamento URL → Store: "${finalidade}" → "${finalidadeStore}"`);
       
       // 🔥 MAPEAMENTO CATEGORIA PLURAL → SINGULAR
       const categoriaSingularMap = {
@@ -419,14 +463,21 @@ export default function BuscaImoveis() {
         'gardens': 'Garden',
         'lofts': 'Loft',
         'lojas': 'Loja',
-        'sobrados': 'Sobrado'
+        'sobrados': 'Sobrado',
+        // Adicionar variações
+        'apartamento': 'Apartamento',
+        'casa': 'Casa',
+        'cobertura': 'Cobertura',
+        'terreno': 'Terreno'
       };
       
-      const categoriaStore = categoriaSingularMap[categoria] || 
+      const categoriaStore = categoriaSingularMap[categoria.toLowerCase()] || 
         categoria.charAt(0).toUpperCase() + categoria.slice(1);
       
-      // 🔥 CIDADE: MANTER O FORMATO SLUG DA URL (guaruja → guaruja)
-      const cidadeStore = cidade; // Não transformar aqui, manter como veio da URL
+      console.log(`🏠 [CATEGORIA] Mapeamento URL → Store: "${categoria}" → "${categoriaStore}"`);
+      
+      // 🔥 CIDADE: USAR FUNÇÃO DE NORMALIZAÇÃO
+      const cidadeStore = normalizarCidade(cidade);
       
       console.log('🔍 [EXTRACT-SEO] Mapeamentos finais:', {
         finalidade: finalidade + ' → ' + finalidadeStore,
@@ -438,7 +489,7 @@ export default function BuscaImoveis() {
         finalidade: finalidadeStore,
         categoria: categoriaStore,
         cidade: cidadeStore,
-        bairro: bairro || null
+        bairro: bairro ? normalizarCidade(bairro) : null
       };
     }
     
@@ -446,7 +497,7 @@ export default function BuscaImoveis() {
     return null;
   };
 
-  // 🔥 FUNÇÃO PARA ATUALIZAR URL QUANDO FILTROS MUDAM (APENAS PARA APLICAÇÃO MANUAL)
+  // 🔥 FUNÇÃO CORRIGIDA PARA ATUALIZAR URL (PRESERVAR HISTÓRICO)
   const updateUrlFromFilters = () => {
     const filtrosAtuais = useFiltersStore.getState();
     
@@ -455,7 +506,10 @@ export default function BuscaImoveis() {
     if (filtrosAtuais.cidadeSelecionada && filtrosAtuais.finalidade && filtrosAtuais.categoriaSelecionada) {
       const urlAmigavel = gerarUrlSeoFriendly(filtrosAtuais);
       console.log('🔍 [UPDATE-URL] URL SEO-friendly gerada:', urlAmigavel);
-      router.push(urlAmigavel, { scroll: false });
+      
+      // 🔥 USAR replace PARA NÃO QUEBRAR NAVEGAÇÃO
+      router.replace(urlAmigavel);
+      console.log('🔄 [NAVEGAÇÃO] URL atualizada com router.replace (preserva histórico)');
     } else {
       const params = new URLSearchParams();
       if (filtrosAtuais.cidadeSelecionada) params.set('cidade', filtrosAtuais.cidadeSelecionada);
@@ -470,11 +524,14 @@ export default function BuscaImoveis() {
       
       const urlComParams = params.toString() ? `/busca?${params.toString()}` : '/busca';
       console.log('🔍 [UPDATE-URL] URL com params gerada:', urlComParams);
-      router.push(urlComParams, { scroll: false });
+      
+      // 🔥 USAR replace PARA NÃO QUEBRAR NAVEGAÇÃO
+      router.replace(urlComParams);
+      console.log('🔄 [NAVEGAÇÃO] URL atualizada com router.replace (preserva histórico)');
     }
   };
 
-  // 🔥 FUNÇÃO SIMPLIFICADA PARA BUSCAR IMÓVEIS
+  // 🔥 FUNÇÃO SIMPLIFICADA PARA BUSCAR IMÓVEIS COM DEBUG DETALHADO
   const buscarImoveis = async (comFiltros = false) => {
     console.log('🔍 [BUSCAR] Iniciando busca de imóveis, comFiltros:', comFiltros);
     
@@ -531,17 +588,49 @@ export default function BuscaImoveis() {
         }
         
         console.log('🔍 [BUSCAR] Parâmetros finais da API:', params);
+        
+        // 🚨 DEBUG ESPECIAL PARA GUARUJÁ
+        if (params.cidade) {
+          console.log('🏙️ [GUARUJA-DEBUG] Cidade sendo enviada para API:', params.cidade);
+          console.log('🏙️ [GUARUJA-DEBUG] Tipo da cidade:', typeof params.cidade);
+          console.log('🏙️ [GUARUJA-DEBUG] Comprimento:', params.cidade.length);
+          console.log('🏙️ [GUARUJA-DEBUG] Caracteres:', params.cidade.split('').map(c => c.charCodeAt(0)));
+        }
+        
+        // 🚨 DEBUG ESPECIAL PARA FINALIDADE
+        console.log('🎯 [FINALIDADE-DEBUG] Finalidade sendo enviada para API:', params.finalidade);
+        console.log('🎯 [FINALIDADE-DEBUG] Store finalidade:', filtrosAtuais.finalidade);
       }
 
+      console.log('🚀 [API-CALL] Chamando getImoveis com params:', params);
       const response = await getImoveis(params, currentPage, 12);
-      console.log('🔍 [BUSCAR] Resposta da API:', response);
+      console.log('🔍 [BUSCAR] Resposta completa da API:', response);
 
       if (response && response.imoveis) {
         setImoveis(response.imoveis);
         console.log('🔍 [BUSCAR] Imóveis encontrados:', response.imoveis.length);
+        
+        // 🚨 DEBUG: Se 0 imóveis, mostrar algumas amostras do banco para comparação
+        if (response.imoveis.length === 0 && params.cidade) {
+          console.log('❌ [GUARUJA-DEBUG] 0 imóveis encontrados! Possíveis problemas:');
+          console.log('   1. Nome da cidade no banco é diferente de:', params.cidade);
+          console.log('   2. Cidade está em outro campo (ex: municipio, localidade)');
+          console.log('   3. Cidade tem caracteres especiais/encoding diferentes');
+          console.log('   4. Case sensitive (maiúscula/minúscula)');
+          console.log('   5. Finalidade incompatível:', params.finalidade);
+        }
 
         if (Array.isArray(response.imoveis) && response.imoveis.length > 0) {
           adicionarVariosImoveisCache(response.imoveis);
+          
+          // 🚨 DEBUG: Mostrar algumas amostras das cidades encontradas
+          const cidadesAmostra = response.imoveis.slice(0, 5).map(imovel => ({
+            codigo: imovel.Codigo,
+            cidade: imovel.Cidade || imovel.cidade || imovel.municipio || imovel.localidade,
+            finalidade: imovel.Finalidade || imovel.Status || imovel.TipoNegocio,
+            outros: Object.keys(imovel).filter(k => k.toLowerCase().includes('cidad') || k.toLowerCase().includes('munic'))
+          }));
+          console.log('🏙️ [CIDADES-AMOSTRA] Primeiros 5 imóveis encontrados:', cidadesAmostra);
         }
       } else {
         setImoveis([]);
@@ -616,16 +705,20 @@ export default function BuscaImoveis() {
       // Priorizar parâmetros SEO-friendly
       if (seoParams) {
         console.log('🚀 [INITIAL] Usando parâmetros SEO-friendly:', seoParams);
-        filtrosParaAplicar.cidadeSelecionada = seoParams.cidade; // 🔥 USAR DIRETAMENTE SEM TRANSFORMAÇÕES
-        filtrosParaAplicar.finalidade = seoParams.finalidade;
+        filtrosParaAplicar.cidadeSelecionada = seoParams.cidade; // 🔥 USAR CIDADE NORMALIZADA
+        filtrosParaAplicar.finalidade = seoParams.finalidade; // 🔥 USAR FINALIDADE CORRIGIDA
         filtrosParaAplicar.categoriaSelecionada = seoParams.categoria;
         
         if (seoParams.bairro) {
           filtrosParaAplicar.bairrosSelecionados = [seoParams.bairro];
         }
+        
+        // 🚨 DEBUG ESPECIAL PARA FINALIDADE
+        console.log('🎯 [FINALIDADE-DEBUG] Finalidade extraída da URL:', seoParams.finalidade);
+        console.log('🎯 [FINALIDADE-DEBUG] Finalidade que será aplicada no store:', filtrosParaAplicar.finalidade);
       } else {
         console.log('🚀 [INITIAL] Usando query parameters como fallback');
-        if (cidade) filtrosParaAplicar.cidadeSelecionada = cidade;
+        if (cidade) filtrosParaAplicar.cidadeSelecionada = normalizarCidade(cidade);
         if (finalidade) filtrosParaAplicar.finalidade = finalidade;
         if (categoria) filtrosParaAplicar.categoriaSelecionada = categoria;
         if (bairros) {
@@ -643,17 +736,42 @@ export default function BuscaImoveis() {
       
       // 4. Aplicar filtros no store
       const filtrosStore = useFiltersStore.getState();
-      filtrosStore.setFilters(filtrosParaAplicar);
-      filtrosStore.aplicarFiltros();
       
-      console.log('🚀 [INITIAL] Filtros aplicados, verificando store:', useFiltersStore.getState());
+      // 🚨 DEBUG: Estado do store ANTES da aplicação
+      console.log('🗃️ [STORE-ANTES] Estado atual do store:', filtrosStore);
+      
+      // 🔥 LIMPAR STORE ANTES DE APLICAR NOVOS FILTROS
+      filtrosStore.limparFiltros();
+      
+      // 🔥 AGUARDAR UM TICK PARA LIMPEZA
+      setTimeout(() => {
+        filtrosStore.setFilters(filtrosParaAplicar);
+        filtrosStore.aplicarFiltros();
+        
+        // 🚨 DEBUG: Estado do store DEPOIS da aplicação
+        setTimeout(() => {
+          const storeDepois = useFiltersStore.getState();
+          console.log('🗃️ [STORE-DEPOIS] Estado do store após aplicação:', storeDepois);
+          console.log('🗃️ [STORE-DEPOIS] Filtros aplicados?', storeDepois.filtrosAplicados);
+          console.log('🗃️ [STORE-DEPOIS] Cidade no store:', storeDepois.cidadeSelecionada);
+          console.log('🗃️ [STORE-DEPOIS] Finalidade no store:', storeDepois.finalidade);
+          
+          // 🔥 FORÇAR REFRESH DOS COMPONENTES DE FILTRO
+          const event = new CustomEvent('filtrosUpdated', { 
+            detail: storeDepois 
+          });
+          window.dispatchEvent(event);
+          console.log('📡 [EVENT] Evento filtrosUpdated disparado para atualizar componentes');
+          
+        }, 50);
+      }, 50);
       
       // 5. Executar busca COM filtros
       setTimeout(() => {
         console.log('🚀 [INITIAL] Executando busca com filtros...');
         buscarImoveis(true);
         setInitialLoad(false);
-      }, 100);
+      }, 200);
       
     } else {
       console.log('🚀 [INITIAL] Nenhum filtro encontrado na URL, busca padrão');
@@ -679,7 +797,7 @@ export default function BuscaImoveis() {
     // Atualizar meta tags iniciais
     setTimeout(() => {
       updateClientMetaTags();
-    }, 200);
+    }, 300);
     
   }, [initialLoad]);
 
