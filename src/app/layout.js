@@ -12,7 +12,7 @@ const oxanium = Oxanium({
   subsets: ["latin"],
   weight: ["400", "700"],
   display: "swap",
-  preload: true, // ✅ OTIMIZAÇÃO: Preload crítico
+  preload: true,
 });
 
 const michroma = Michroma({
@@ -20,13 +20,12 @@ const michroma = Michroma({
   subsets: ["latin"],
   weight: ["400"],
   display: "swap",
-  preload: true, // ✅ OTIMIZAÇÃO: Preload crítico
+  preload: true,
 });
 
 const GTM_ID = "GTM-NN6HZC";
 const ANALYTICS_ID = "G-405E52JFGM";
 
-// METADATA SEM IMAGENS - Não interfere nas fotos de condomínio
 export const metadata = {
   title: {
     default: "NPi Consultoria - Imóveis de Alto Padrão",
@@ -48,7 +47,6 @@ export const metadata = {
       "max-snippet": -1,
     },
   },
-  // OpenGraph SEM imagens específicas - deixa o sistema usar as imagens das páginas
   openGraph: {
     type: "website",
     locale: "pt_BR",
@@ -56,15 +54,12 @@ export const metadata = {
     siteName: "NPi Consultoria",
     title: "NPi Consultoria - Imóveis de Alto Padrão",
     description: "Especialistas em imóveis de alto padrão com a melhor consultoria imobiliária.",
-    // REMOVIDO: images array para não interferir nas fotos de condomínio
   },
   twitter: {
     card: "summary_large_image",
     title: "NPi Consultoria - Imóveis de Alto Padrão",
     description: "Especialistas em imóveis de alto padrão com a melhor consultoria imobiliária.",
-    // REMOVIDO: images para não interferir
   },
-  // ✅ NOVO: Manifest e app metadata
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -73,15 +68,9 @@ export const metadata = {
   },
 };
 
-// 🔧 ACESSIBILIDADE CORRIGIDA: Viewport permite zoom geral, CSS específico bloqueia search
 export const viewport = {
   width: "device-width",
   initialScale: 1.0,
-  // ✅ CORREÇÃO CIRÚRGICA: Remove restrições globais de zoom (acessibilidade)
-  // maximumScale: 1.0,     // ❌ REMOVIDO: Bloqueava zoom globalmente  
-  // minimumScale: 1.0,     // ❌ REMOVIDO: Bloqueava zoom globalmente
-  // userScalable: false,   // ❌ REMOVIDO: Bloqueava zoom globalmente
-  // ✅ MANTIDO: Configurações iOS específicas que não afetam acessibilidade
   viewportFit: "cover",
   shrinkToFit: false,
 };
@@ -90,53 +79,40 @@ export default function RootLayout({ children }) {
   return (
     <html lang="pt-BR">
       <head>
-        {/* 🔧 ACESSIBILIDADE CORRIGIDA: Meta viewport permite zoom geral */}
         <meta 
           name="viewport" 
           content="width=device-width, initial-scale=1, viewport-fit=cover"
-          // ✅ CORREÇÃO: Remove maximum-scale=1.0, user-scalable=no (acessibilidade)
-          // ✅ MANTÉM: viewport-fit=cover (funcionalidade iOS)
         />
         
-        {/* ✅ iOS específico: Safari + Chrome iOS (MANTIDO) */}
-        <meta name="apple-mobile-web-app-capable" content="yes" />
+        {/* ✅ CORREÇÃO 1: Meta tag atualizada (não depreciada) */}
+        <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="NPi Consultoria" />
         
-        {/* Meta tags essenciais SEM interferir em imagens (MANTIDO) */}
         <meta name="format-detection" content="telephone=no, email=no, address=no" />
-        
-        {/* ✅ Theme e color scheme para consistência iOS (MANTIDO) */}
         <meta name="theme-color" content="#000000" />
         <meta name="color-scheme" content="light" />
         
-        {/* ✅ OTIMIZAÇÃO: DNS prefetch para performance (MANTIDO) */}
+        {/* ✅ CORREÇÃO 2: DNS prefetch apenas essenciais */}
         <link rel="dns-prefetch" href="//www.googletagmanager.com" />
-        <link rel="dns-prefetch" href="//www.google-analytics.com" />
         <link rel="dns-prefetch" href="//fonts.googleapis.com" />
         <link rel="dns-prefetch" href="//fonts.gstatic.com" />
         
-        {/* Preconnect essenciais SEM preload de mídia (MANTIDO) */}
+        {/* ✅ CORREÇÃO 3: Preconnect apenas essenciais */}
         <link rel="preconnect" href="https://www.googletagmanager.com" />
-        <link rel="preconnect" href="https://www.google-analytics.com" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         
-        {/* ✅ NOVO: Manifest PWA (MANTIDO) */}
         <link rel="manifest" href="/manifest.json" />
-        
-        {/* Favicon otimizado (MANTIDO) */}
         <link rel="icon" href="/favicon.ico" sizes="any" />
         <link rel="icon" href="/icon.svg" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
         
-        {/* ✅ CSS CIRÚRGICO: MANTÉM toda funcionalidade iOS + adiciona seletores específicos para search */}
+        {/* ✅ MANTIDO: CSS cirúrgico para search (sem mudanças) */}
         <style dangerouslySetInnerHTML={{
           __html: `
-            /* ✅ MANTIDO: Chrome iOS detection para SEARCH ESPECÍFICO */
             @supports (-webkit-appearance: none) and (not (-webkit-backdrop-filter: blur(1px))) {
               
-              /* 🎯 CIRÚRGICO: Aplica apenas em campos de BUSCA/SEARCH (não todos inputs) */
               input[type="search"],
               input[placeholder*="Buscar"],
               input[placeholder*="buscar"], 
@@ -155,7 +131,6 @@ export default function RootLayout({ children }) {
                 transform: translate3d(0,0,0) !important;
               }
               
-              /* 🎯 CIRÚRGICO: Placeholder pequeno apenas para SEARCH */
               input[type="search"]::placeholder,
               input[placeholder*="Buscar"]::placeholder,
               input[placeholder*="buscar"]::placeholder,
@@ -168,18 +143,13 @@ export default function RootLayout({ children }) {
                 opacity: 0.7 !important;
               }
               
-              /* ✅ OUTROS INPUTS: Comportamento normal (acessível) */
               input:not([type="search"]):not([placeholder*="Buscar"]):not([placeholder*="buscar"]):not(.search-input),
               textarea:not(.search-input) {
-                /* Permite zoom em formulários normais (acessibilidade) */
                 font-size: 12px;
-                /* Remove restrições de zoom para campos normais */
               }
             }
             
-            /* ✅ MANTIDO: Propriedades básicas para iOS mobile */
             @media screen and (max-width: 768px) {
-              /* Aplica apenas em campos de busca */
               input[type="search"],
               input[placeholder*="Buscar"],
               input[placeholder*="buscar"],
@@ -189,7 +159,6 @@ export default function RootLayout({ children }) {
                 min-height: 40px !important;
               }
               
-              /* Placeholder responsivo apenas para search */
               input[type="search"]::placeholder,
               input[placeholder*="Buscar"]::placeholder,
               .search-input::placeholder {
@@ -203,7 +172,6 @@ export default function RootLayout({ children }) {
               }
             }
             
-            /* ✅ MANTIDO: Propriedades gerais */
             * {
               -webkit-tap-highlight-color: transparent !important;
             }
@@ -218,19 +186,18 @@ export default function RootLayout({ children }) {
       <body 
         className={`${oxanium.variable} ${michroma.variable} antialiased`}
         style={{
-          // ✅ MANTIDO: Todas as propriedades originais
           WebkitFontSmoothing: "antialiased",
           MozOsxFontSmoothing: "grayscale",
           WebkitTapHighlightColor: "transparent",
           WebkitTouchCallout: "none",
           WebkitUserSelect: "none",
           userSelect: "none",
-          WebkitTextSizeAdjust: "100%",
-          textSizeAdjust: "100%",
+          // ✅ CORREÇÃO 4: Remove text-size-adjust do body (problema admin)
+          // WebkitTextSizeAdjust: "100%",  // ❌ REMOVIDO
+          // textSizeAdjust: "100%",        // ❌ REMOVIDO
           touchAction: "manipulation",
         }}
       >
-        {/* ✅ MANTIDO: GTM Script com priority */}
         <Script
           id="gtm-script"
           strategy="afterInteractive"
@@ -276,19 +243,14 @@ export default function RootLayout({ children }) {
           />
         </noscript>
 
-        {/* ✅ MANTIDO: Structured data otimizado */}
         <Organization />
         <WebSite />
         
-        {/* ✅ MANTIDO: Query provider com error boundary */}
         <QueryProvider>
           {children}
         </QueryProvider>
         
-        {/* ✅ MANTIDO: Components com lazy loading */}
         <MusicPlayer />
-        
-        {/* ✅ MANTIDO: Analytics otimizados */}
         <Analytics />
         <SpeedInsights />
       </body>
