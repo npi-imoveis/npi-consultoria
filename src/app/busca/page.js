@@ -265,9 +265,16 @@ export default function BuscaImoveis() {
         description = `Especialistas em ${descriptionParts.join(' ')}. NPi`;
         
         // 🎯 CONSTRUIR URL CANÔNICA
-        if (filtrosAtuais.cidadeSelecionada && filtrosAtuais.categoriaSelecionada && filtrosAtuais.finalidade) {
-          // 🔥 CORRIGIR MAPEAMENTO DE FINALIDADE
-          let finalidadeSlug = 'venda'; // Default para venda
+        const urlAtual = window.location.pathname;
+        
+        // 🔥 SE JÁ ESTAMOS NUMA URL SEO-FRIENDLY (/buscar/...), USAR ELA COMO CANONICAL
+        if (urlAtual.startsWith('/buscar/') && urlAtual.split('/').length >= 5) {
+          // Já é uma URL SEO-friendly, usar a URL atual como canonical
+          canonicalUrl = window.location.origin + urlAtual;
+          console.log('🎯 [URL-CANONICAL] URL SEO detectada, usando atual como canonical:', canonicalUrl);
+        } else if (filtrosAtuais.cidadeSelecionada && filtrosAtuais.categoriaSelecionada && filtrosAtuais.finalidade) {
+          // Gerar URL SEO-friendly
+          let finalidadeSlug = 'venda';
           if (filtrosAtuais.finalidade === 'Comprar' || filtrosAtuais.finalidade === 'venda') {
             finalidadeSlug = 'venda';
           } else if (filtrosAtuais.finalidade === 'Alugar' || filtrosAtuais.finalidade === 'aluguel') {
@@ -289,9 +296,29 @@ export default function BuscaImoveis() {
           const cidadeSlug = filtrosAtuais.cidadeSelecionada.toLowerCase().replace(/\s+/g, '-');
           
           canonicalUrl = `${baseUrl}/buscar/${finalidadeSlug}/${categoriaSlug}/${cidadeSlug}`;
+          console.log('🎯 [URL-CANONICAL] URL SEO gerada:', canonicalUrl);
+        } else {
+          // Usar URL atual como fallback
+          canonicalUrl = window.location.origin + window.location.pathname + (window.location.search || '');
+          console.log('🎯 [URL-CANONICAL] Usando URL atual como fallback:', canonicalUrl);
+        }.toLowerCase();
+          
+          // 🔥 USAR A CIDADE EXATAMENTE COMO ESTÁ NA URL ATUAL (SEM ACENTOS)
+          const urlAtual = window.location.pathname;
+          const urlSeoMatch = urlAtual.match(/\/buscar\/([^\/]+)\/([^\/]+)\/([^\/]+)/);
+          
+          let cidadeSlug = filtrosAtuais.cidadeSelecionada.toLowerCase().replace(/\s+/g, '-');
+          
+          // Se já estamos numa URL SEO-friendly, usar a cidade exatamente como está na URL
+          if (urlSeoMatch) {
+            const [, , , cidadeNaUrl] = urlSeoMatch;
+            cidadeSlug = cidadeNaUrl; // Usar exatamente como está na URL atual
+            console.log('🎯 [CIDADE-SLUG] Usando cidade da URL atual:', cidadeNaUrl);
+          }
+          
+          canonicalUrl = `${baseUrl}/buscar/${finalidadeSlug}/${categoriaSlug}/${cidadeSlug}`;
           
           // 🔥 SE ESTAMOS JÁ NA URL SEO-FRIENDLY, USAR A URL ATUAL COMO CANONICAL
-          const urlAtual = window.location.pathname;
           const urlSeoPattern = `/buscar/${finalidadeSlug}/${categoriaSlug}/${cidadeSlug}`;
           if (urlAtual === urlSeoPattern) {
             canonicalUrl = window.location.origin + urlAtual;
@@ -299,6 +326,7 @@ export default function BuscaImoveis() {
           }
           
           console.log('🎯 [URL-CANONICAL] Finalidade detectada:', filtrosAtuais.finalidade, '→', finalidadeSlug);
+          console.log('🎯 [URL-CANONICAL] Cidade slug final:', cidadeSlug);
           console.log('🎯 [URL-CANONICAL] URL gerada:', canonicalUrl);
         } else {
           // 🔥 USAR URL ATUAL COMO CANONICAL SE NÃO CONSEGUIR GERAR SEO-FRIENDLY
