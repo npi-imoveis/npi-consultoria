@@ -301,37 +301,6 @@ export default function BuscaImoveis() {
           // Usar URL atual como fallback
           canonicalUrl = window.location.origin + window.location.pathname + (window.location.search || '');
           console.log('🎯 [URL-CANONICAL] Usando URL atual como fallback:', canonicalUrl);
-        }.toLowerCase();
-          
-          // 🔥 USAR A CIDADE EXATAMENTE COMO ESTÁ NA URL ATUAL (SEM ACENTOS)
-          const urlAtual = window.location.pathname;
-          const urlSeoMatch = urlAtual.match(/\/buscar\/([^\/]+)\/([^\/]+)\/([^\/]+)/);
-          
-          let cidadeSlug = filtrosAtuais.cidadeSelecionada.toLowerCase().replace(/\s+/g, '-');
-          
-          // Se já estamos numa URL SEO-friendly, usar a cidade exatamente como está na URL
-          if (urlSeoMatch) {
-            const [, , , cidadeNaUrl] = urlSeoMatch;
-            cidadeSlug = cidadeNaUrl; // Usar exatamente como está na URL atual
-            console.log('🎯 [CIDADE-SLUG] Usando cidade da URL atual:', cidadeNaUrl);
-          }
-          
-          canonicalUrl = `${baseUrl}/buscar/${finalidadeSlug}/${categoriaSlug}/${cidadeSlug}`;
-          
-          // 🔥 SE ESTAMOS JÁ NA URL SEO-FRIENDLY, USAR A URL ATUAL COMO CANONICAL
-          const urlSeoPattern = `/buscar/${finalidadeSlug}/${categoriaSlug}/${cidadeSlug}`;
-          if (urlAtual === urlSeoPattern) {
-            canonicalUrl = window.location.origin + urlAtual;
-            console.log('🎯 [URL-CANONICAL] Usando URL atual como canonical (já é SEO-friendly)');
-          }
-          
-          console.log('🎯 [URL-CANONICAL] Finalidade detectada:', filtrosAtuais.finalidade, '→', finalidadeSlug);
-          console.log('🎯 [URL-CANONICAL] Cidade slug final:', cidadeSlug);
-          console.log('🎯 [URL-CANONICAL] URL gerada:', canonicalUrl);
-        } else {
-          // 🔥 USAR URL ATUAL COMO CANONICAL SE NÃO CONSEGUIR GERAR SEO-FRIENDLY
-          canonicalUrl = window.location.origin + window.location.pathname + (window.location.search || '');
-          console.log('🎯 [URL-CANONICAL] Usando URL atual:', canonicalUrl);
         }
         
         console.log('🎯 [TÍTULO DINÂMICO]:', title);
