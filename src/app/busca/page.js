@@ -221,16 +221,18 @@ export default function BuscaImoveis() {
           descriptionParts.push('imóveis');
         }
         
-        // 2. Finalidade
+        // 2. Finalidade (para descrição)
         let finalidadeTexto = '';
+        let finalidadeTitulo = '';
         if (filtrosAtuais.finalidade === 'Comprar') {
           finalidadeTexto = 'a venda';
+          finalidadeTitulo = 'Venda';
         } else if (filtrosAtuais.finalidade === 'Alugar') {
           finalidadeTexto = 'para aluguel';
+          finalidadeTitulo = 'Aluguel';
         }
         
         if (finalidadeTexto) {
-          titleParts.push(finalidadeTexto);
           descriptionParts.push(finalidadeTexto);
         }
         
@@ -243,7 +245,12 @@ export default function BuscaImoveis() {
           descriptionParts.push(cidadeFormatada);
         }
         
-        // 4. Bairros específicos (só na descrição)
+        // 4. Finalidade no título (após localização)
+        if (finalidadeTitulo) {
+          titleParts.push(finalidadeTitulo);
+        }
+        
+        // 5. Bairros específicos (só na descrição)
         if (filtrosAtuais.bairrosSelecionados && filtrosAtuais.bairrosSelecionados.length > 0) {
           if (filtrosAtuais.bairrosSelecionados.length === 1) {
             descriptionParts.push(`- ${filtrosAtuais.bairrosSelecionados[0]}`);
@@ -252,7 +259,7 @@ export default function BuscaImoveis() {
           }
         }
         
-        // 🎯 CONSTRUIR TÍTULO NO NOVO FORMATO: "Apartamentos a venda no Guarujá 54 imóveis"
+        // 🎯 CONSTRUIR TÍTULO NO NOVO FORMATO: "Apartamentos no Guarujá Venda 54 imóveis"
         // Usar quantidade passada por parâmetro ou do estado pagination
         const quantidadeAtual = quantidadeResultados !== null ? quantidadeResultados : (pagination?.totalItems || 0);
         if (quantidadeAtual > 0) {
