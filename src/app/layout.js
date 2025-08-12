@@ -172,7 +172,7 @@ export default function RootLayout({ children }) {
               input:not([type="search"]):not([placeholder*="Buscar"]):not([placeholder*="buscar"]):not(.search-input),
               textarea:not(.search-input) {
                 /* Permite zoom em formulários normais (acessibilidade) */
-                font-size: 16px;
+                font-size: 12px;
                 /* Remove restrições de zoom para campos normais */
               }
             }
