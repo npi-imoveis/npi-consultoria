@@ -58,6 +58,7 @@ export default function BuscaImoveis() {
   const [isClient, setIsClient] = useState(false);
   const [fullyInitialized, setFullyInitialized] = useState(false);
   const [uiVisible, setUiVisible] = useState(false);
+  const [urlProcessed, setUrlProcessed] = useState(false); // 🔥 NOVO ESTADO PARA CONTROLAR PROCESSAMENTO DA URL
 
   // 🎯 FUNÇÃO PARA ATUALIZAR STRUCTURED DATA DINAMICAMENTE
   const updateStructuredData = (totalItems = 0, imoveisData = []) => {
@@ -275,7 +276,7 @@ export default function BuscaImoveis() {
         // Usar quantidade passada por parâmetro ou do estado pagination
         const quantidadeAtual = quantidadeResultados !== null ? quantidadeResultados : (pagination?.totalItems || 0);
         if (quantidadeAtual > 0) {
-          title = `${titleParts.join(' ')} ${quantidadeAtual} imóveis | NPi`;
+          title = `${titleParts.join(' ')} ${quantidadeAtual} imóveis`;
         } else {
           title = `${titleParts.join(' ')}`;
         }
@@ -572,6 +573,8 @@ export default function BuscaImoveis() {
   useEffect(() => {
     if (!isBrowser) return;
     
+    console.log('🎯 [URL-PARAMS] Iniciando extração de parâmetros da URL');
+    
     // 1. Tentar extrair de URL SEO-friendly primeiro
     const seoParams = extractFromSeoUrl();
     
@@ -588,11 +591,14 @@ export default function BuscaImoveis() {
     
     // Se há parâmetros de filtros na URL, aplicá-los
     if (seoParams || cidade || finalidade || categoria || bairros || quartos || precoMin || precoMax) {
+      console.log('🎯 [URL-PARAMS] Parâmetros encontrados, aplicando filtros...');
+      
       const filtrosStore = useFiltersStore.getState();
       const filtrosParaAplicar = {};
       
       // Priorizar parâmetros SEO-friendly
       if (seoParams) {
+        console.log('🎯 [URL-PARAMS] Usando parâmetros SEO:', seoParams);
         filtrosParaAplicar.cidadeSelecionada = seoParams.cidade.toLowerCase().replace(/ /g, '-');
         filtrosParaAplicar.finalidade = seoParams.finalidade;
         
@@ -617,6 +623,7 @@ export default function BuscaImoveis() {
           filtrosParaAplicar.bairrosSelecionados = [seoParams.bairro];
         }
       } else {
+        console.log('🎯 [URL-PARAMS] Usando query parameters');
         // Usar query parameters como fallback
         if (cidade) filtrosParaAplicar.cidadeSelecionada = cidade;
         if (finalidade) filtrosParaAplicar.finalidade = finalidade;
@@ -632,13 +639,33 @@ export default function BuscaImoveis() {
       if (precoMin) filtrosParaAplicar.precoMin = parseFloat(precoMin);
       if (precoMax) filtrosParaAplicar.precoMax = parseFloat(precoMax);
       
-      // Aplicar filtros no store
+      console.log('🎯 [URL-PARAMS] Filtros a aplicar:', filtrosParaAplicar);
+      
+      // 🔥 APLICAR FILTROS E AGUARDAR ELES SEREM PROCESSADOS
       filtrosStore.setFilters(filtrosParaAplicar);
       filtrosStore.aplicarFiltros();
+      
+      console.log('🎯 [URL-PARAMS] Filtros aplicados no store');
+      
+      // 🔥 AGUARDAR UM POUCO PARA OS FILTROS SEREM PROCESSADOS E ENTÃO BUSCAR
+      setTimeout(() => {
+        console.log('🎯 [URL-PARAMS] Executando busca com filtros após delay');
+        buscarImoveis(true);
+        setUrlProcessed(true); // 🔥 MARCAR QUE URL FOI PROCESSADA
+      }, 300);
+      
+    } else {
+      console.log('🎯 [URL-PARAMS] Nenhum parâmetro encontrado, executando busca padrão');
+      // Se não há filtros na URL, fazer busca padrão
+      setTimeout(() => {
+        buscarImoveis(false);
+        setUrlProcessed(true); // 🔥 MARCAR QUE URL FOI PROCESSADA
+      }, 100);
     }
     
     // Se há query de busca, definir no estado
     if (searchQuery) {
+      console.log('🎯 [URL-PARAMS] Query de busca encontrada:', searchQuery);
       setSearchTerm(searchQuery);
     }
   }, [isBrowser]);
@@ -932,12 +959,34 @@ export default function BuscaImoveis() {
   };
 
   useEffect(() => {
+    // 🔥 NÃO EXECUTAR BUSCA AUTOMÁTICA NO CARREGAMENTO INICIAL
+    // A busca será executada pelo useEffect que processa a URL
+    if (!isBrowser) {
+      console.log('🎯 [BUSCA-PRINCIPAL] Aguardando browser estar pronto...');
+      return;
+    }
+
     const searchParams = new URLSearchParams(window.location.search);
     const searchQuery = searchParams.get("q");
+
+    console.log('🎯 [BUSCA-PRINCIPAL] Verificando condições de busca...');
+    console.log('🎯 [BUSCA-PRINCIPAL] mostrandoFavoritos:', mostrandoFavoritos);
+    console.log('🎯 [BUSCA-PRINCIPAL] filtrosAplicados:', filtrosAplicados);
+    console.log('🎯 [BUSCA-PRINCIPAL] searchQuery:', searchQuery);
+    console.log('🎯 [BUSCA-PRINCIPAL] searchTerm:', searchTerm);
+
+    // 🔥 SE ESTÁ NA URL INICIAL E NÃO TEM FILTROS OU BUSCA, NÃO FAZER NADA
+    // A busca será feita pelo useEffect da URL
+    const isInitialLoad = !filtrosAplicados && !searchQuery && !searchTerm && !mostrandoFavoritos;
+    if (isInitialLoad) {
+      console.log('🎯 [BUSCA-PRINCIPAL] Carregamento inicial detectado, aguardando processamento da URL...');
+      return;
+    }
 
     setIsLoading(true);
 
     if (mostrandoFavoritos) {
+      console.log('🎯 [BUSCA-PRINCIPAL] Mostrando favoritos...');
       setImoveis(favoritos);
       setPagination({
         totalItems: favoritos.length,
@@ -951,12 +1000,14 @@ export default function BuscaImoveis() {
     }
 
     if (filtrosAplicados) {
+      console.log('🎯 [BUSCA-PRINCIPAL] Executando busca com filtros aplicados...');
       if (searchTerm) setSearchTerm("");
       buscarImoveis(true);
       return;
     }
 
     if (searchQuery || searchTerm) {
+      console.log('🎯 [BUSCA-PRINCIPAL] Executando busca por termo...');
       const termToSearch = searchQuery || searchTerm;
 
       if (searchQuery && searchQuery !== searchTerm) {
@@ -967,8 +1018,10 @@ export default function BuscaImoveis() {
       return;
     }
 
+    // Se chegou até aqui sem condições específicas, fazer busca padrão
+    console.log('🎯 [BUSCA-PRINCIPAL] Executando busca padrão...');
     buscarImoveis(false);
-  }, [filtrosAplicados, atualizacoesFiltros, currentPage, mostrandoFavoritos, favoritos]);
+  }, [filtrosAplicados, atualizacoesFiltros, currentPage, mostrandoFavoritos, favoritos, isBrowser]);
 
   const construirTextoFiltros = () => {
     const filtrosAtuais = useFiltersStore.getState();
