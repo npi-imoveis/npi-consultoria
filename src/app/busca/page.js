@@ -184,6 +184,8 @@ export default function BuscaImoveis() {
       // 🔥 DEBUG PARA VERIFICAR FINALIDADE
       console.log('🎯 [META-TAGS] Filtros atuais completos:', filtrosAtuais);
       console.log('🎯 [META-TAGS] Finalidade detectada:', filtrosAtuais.finalidade);
+      console.log('🎯 [META-TAGS] URL atual:', window.location.pathname);
+      console.log('🎯 [META-TAGS] Quantidade recebida:', quantidadeResultados);
       
       let title = 'NPi Consultoria - Imóveis de Alto Padrão'; // Título padrão
       let description = 'Especialistas em imóveis de alto padrão. Encontre apartamentos, casas e terrenos exclusivos com a melhor consultoria imobiliária.';
@@ -221,16 +223,26 @@ export default function BuscaImoveis() {
           descriptionParts.push('imóveis');
         }
         
-        // 2. Finalidade (para descrição)
+        // 2. Finalidade (para descrição e título)
         let finalidadeTexto = '';
         let finalidadeTitulo = '';
-        if (filtrosAtuais.finalidade === 'Comprar') {
+        
+        // 🔥 MAPEAMENTO ROBUSTO DA FINALIDADE
+        console.log('🎯 [FINALIDADE] Valor atual no store:', filtrosAtuais.finalidade);
+        
+        if (filtrosAtuais.finalidade === 'Comprar' || filtrosAtuais.finalidade === 'venda') {
           finalidadeTexto = 'a venda';
           finalidadeTitulo = 'Venda';
-        } else if (filtrosAtuais.finalidade === 'Alugar') {
+        } else if (filtrosAtuais.finalidade === 'Alugar' || filtrosAtuais.finalidade === 'aluguel') {
           finalidadeTexto = 'para aluguel';
           finalidadeTitulo = 'Aluguel';
         }
+        
+        console.log('🎯 [FINALIDADE] Mapeamento:', {
+          storeValue: filtrosAtuais.finalidade,
+          finalidadeTexto,
+          finalidadeTitulo
+        });
         
         if (finalidadeTexto) {
           descriptionParts.push(finalidadeTexto);
@@ -268,8 +280,14 @@ export default function BuscaImoveis() {
           title = `${titleParts.join(' ')}`;
         }
         
+        console.log('🎯 [TÍTULO] Partes do título:', titleParts);
+        console.log('🎯 [TÍTULO] Título final:', title);
+        
         // 🎯 CONSTRUIR DESCRIÇÃO: "Especialistas em apartamentos a venda Guarujá. NPi"
         description = `Especialistas em ${descriptionParts.join(' ')}. NPi`;
+        
+        console.log('🎯 [DESCRIÇÃO] Partes da descrição:', descriptionParts);
+        console.log('🎯 [DESCRIÇÃO] Descrição final:', description);
         
         // 🎯 CONSTRUIR URL CANÔNICA
         const urlAtual = window.location.pathname;
@@ -281,12 +299,16 @@ export default function BuscaImoveis() {
           console.log('🎯 [URL-CANONICAL] URL SEO detectada, usando atual como canonical:', canonicalUrl);
         } else if (filtrosAtuais.cidadeSelecionada && filtrosAtuais.categoriaSelecionada && filtrosAtuais.finalidade) {
           // Gerar URL SEO-friendly
-          let finalidadeSlug = 'venda';
+          let finalidadeSlug = 'venda'; // Default
+          
+          // 🔥 MAPEAMENTO ROBUSTO STORE → URL
           if (filtrosAtuais.finalidade === 'Comprar' || filtrosAtuais.finalidade === 'venda') {
             finalidadeSlug = 'venda';
           } else if (filtrosAtuais.finalidade === 'Alugar' || filtrosAtuais.finalidade === 'aluguel') {
             finalidadeSlug = 'aluguel';
           }
+          
+          console.log('🎯 [URL-SLUG] Finalidade store → slug:', filtrosAtuais.finalidade, '→', finalidadeSlug);
           
           const categoriaSlugMap = {
             'Apartamento': 'apartamentos',
@@ -431,8 +453,18 @@ export default function BuscaImoveis() {
       
       console.log('🎯 [SEO-URL] URL detectada:', { finalidade, categoria, cidade, bairro });
       
+      // 🔥 MAPEAMENTO CORRETO: URL → STORE
+      let finalidadeStore = 'Comprar'; // Default
+      if (finalidade === 'venda') {
+        finalidadeStore = 'Comprar';
+      } else if (finalidade === 'aluguel') {
+        finalidadeStore = 'Alugar';
+      }
+      
+      console.log('🎯 [SEO-URL] Finalidade mapeada:', finalidade, '→', finalidadeStore);
+      
       return {
-        finalidade: finalidade === 'venda' ? 'Comprar' : 'Alugar',
+        finalidade: finalidadeStore,
         categoria: categoria,
         cidade: cidade.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
         bairro: bairro ? bairro.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : null
@@ -474,24 +506,28 @@ export default function BuscaImoveis() {
   // Efeito para marcar quando estamos no navegador
   useEffect(() => {
     setIsBrowser(true);
-    // 🔥 Atualizar meta tags ao carregar no cliente
-    updateClientMetaTags();
+    // 🔥 DELAY INICIAL PARA GARANTIR CARREGAMENTO COMPLETO
+    setTimeout(() => {
+      updateClientMetaTags();
+      console.log('🎯 [INICIAL] Meta tags atualizadas no carregamento inicial');
+    }, 500);
   }, []);
 
   // Efeito para atualizar meta tags quando URL muda
   useEffect(() => {
     if (isBrowser) {
-      // Delay para garantir que a página carregou completamente
+      // 🔥 DELAY PARA GARANTIR QUE A PÁGINA CARREGOU COMPLETAMENTE
       setTimeout(() => {
         updateClientMetaTags();
-      }, 100);
+        console.log('🎯 [URL-MUDOU] Meta tags atualizadas após mudança de URL');
+      }, 200);
     }
   }, [isBrowser]);
 
   // 🔥 EFEITO PARA GARANTIR ATUALIZAÇÃO APÓS CARREGAR DADOS E APLICAR FILTROS
   useEffect(() => {
     if (isBrowser && !isLoading) {
-      // Atualizar título após dados carregarem
+      // 🔥 DELAY MAIOR PARA GARANTIR QUE TODOS OS DADOS ESTEJAM CARREGADOS
       setTimeout(() => {
         updateClientMetaTags();
         
@@ -499,26 +535,30 @@ export default function BuscaImoveis() {
         console.log('🎯 [DEBUG] Título atual:', document.title);
         console.log('🎯 [DEBUG] Filtros aplicados:', filtrosAplicados);
         console.log('🎯 [DEBUG] URL atual:', window.location.href);
-      }, 200);
+        console.log('🎯 [DEBUG] Pagination:', pagination);
+      }, 400);
     }
   }, [isBrowser, isLoading, filtrosAplicados]);
 
   // Efeito adicional para atualizar quando filtros mudam
   useEffect(() => {
-    if (isBrowser) {
+    if (isBrowser && (filtrosAplicados || searchTerm)) {
+      // 🔥 DELAY MAIOR PARA EVITAR MÚLTIPLAS CHAMADAS
       setTimeout(() => {
         updateClientMetaTags();
-      }, 100);
+        console.log('🎯 [FILTROS-APLICADOS] Meta tags atualizadas');
+      }, 250);
     }
   }, [filtrosAplicados, atualizacoesFiltros, searchTerm, isBrowser]);
 
   // 🔥 EFEITO PARA ATUALIZAR TÍTULO QUANDO FILTROS ESPECÍFICOS MUDAM
   useEffect(() => {
     if (isBrowser) {
+      // 🔥 DELAY MAIOR PARA EVITAR CONFLITOS
       setTimeout(() => {
         updateClientMetaTags();
-        console.log('🎯 [FILTROS MUDARAM] Atualizando título...'); 
-      }, 150);
+        console.log('🎯 [FILTROS MUDARAM] Atualizando título após mudança de filtros...'); 
+      }, 300);
     }
   }, [
     filtrosAtuais.cidadeSelecionada,
@@ -668,7 +708,10 @@ export default function BuscaImoveis() {
       
       // 🎯 ATUALIZAR SEO
       updateStructuredData(favoritos.length, favoritos);
-      updateClientMetaTags(favoritos.length);
+      setTimeout(() => {
+        updateClientMetaTags(favoritos.length);
+        console.log('🎯 [FAVORITOS] Meta tags atualizadas com quantidade:', favoritos.length);
+      }, 200);
       return;
     }
 
@@ -742,7 +785,12 @@ export default function BuscaImoveis() {
         
         // 🎯 ATUALIZAR SEO COM RESULTADOS
         updateStructuredData(validPagination.totalItems, response.imoveis || []);
-        updateClientMetaTags(validPagination.totalItems);
+        
+        // 🔥 AGUARDAR UM POUCO ANTES DE ATUALIZAR META TAGS PARA GARANTIR QUE PAGINATION ESTEJA SETADO
+        setTimeout(() => {
+          updateClientMetaTags(validPagination.totalItems);
+          console.log('🎯 [BUSCAR] Meta tags atualizadas com quantidade:', validPagination.totalItems);
+        }, 200);
       }
     } catch (error) {
       console.error("Erro ao buscar imóveis:", error);
@@ -778,7 +826,10 @@ export default function BuscaImoveis() {
       setPagination(paginationData);
       
       updateStructuredData(favoritos.length, favoritos);
-      updateClientMetaTags(favoritos.length);
+      setTimeout(() => {
+        updateClientMetaTags(favoritos.length);
+        console.log('🎯 [TOGGLE-FAVORITOS] Meta tags atualizadas com quantidade:', favoritos.length);
+      }, 200);
     } else {
       buscarImoveis(filtrosAplicados);
     }
@@ -811,7 +862,10 @@ export default function BuscaImoveis() {
         }
         
         updateStructuredData(response.data.length, response.data);
-        updateClientMetaTags(response.data.length);
+        setTimeout(() => {
+          updateClientMetaTags(response.data.length);
+          console.log('🎯 [SEARCH] Meta tags atualizadas com quantidade:', response.data.length);
+        }, 200);
       } else {
         setImoveis([]);
         updateStructuredData(0, []);
@@ -947,8 +1001,19 @@ export default function BuscaImoveis() {
     }
     
     if (filtrosAtuais.finalidade) {
-      const finalidadeTexto = filtrosAtuais.finalidade === 'Comprar' ? 'a venda' : 'para aluguel';
-      texto += ` ${finalidadeTexto}`;
+      // 🔥 MAPEAMENTO CONSISTENTE DA FINALIDADE
+      let finalidadeTexto = '';
+      if (filtrosAtuais.finalidade === 'Comprar' || filtrosAtuais.finalidade === 'venda') {
+        finalidadeTexto = 'a venda';
+      } else if (filtrosAtuais.finalidade === 'Alugar' || filtrosAtuais.finalidade === 'aluguel') {
+        finalidadeTexto = 'para aluguel';
+      }
+      
+      if (finalidadeTexto) {
+        texto += ` ${finalidadeTexto}`;
+      }
+      
+      console.log('🎯 [TEXTO-FILTROS] Finalidade:', filtrosAtuais.finalidade, '→', finalidadeTexto);
     }
     
     if (filtrosAtuais.bairrosSelecionados && filtrosAtuais.bairrosSelecionados.length > 0) {
@@ -966,9 +1031,12 @@ export default function BuscaImoveis() {
       texto += ` em ${cidadeFormatada}`;
     }
 
-    // 🔥 ATUALIZAR TÍTULO QUANDO QUANTIDADE MUDAR
+    // 🔥 ATUALIZAR TÍTULO QUANDO QUANTIDADE MUDAR (COM DELAY PARA EVITAR CONFLITOS)
     if (isBrowser && quantidade >= 0) {
-      setTimeout(() => updateClientMetaTags(quantidade), 50);
+      setTimeout(() => {
+        updateClientMetaTags(quantidade);
+        console.log('🎯 [QUANTIDADE] Atualizando título com quantidade:', quantidade);
+      }, 100);
     }
 
     return texto || 'Busca de imóveis';
