@@ -58,7 +58,6 @@ export default function BuscaImoveis() {
   const [isClient, setIsClient] = useState(false);
   const [fullyInitialized, setFullyInitialized] = useState(false);
   const [uiVisible, setUiVisible] = useState(false);
-  const [urlProcessed, setUrlProcessed] = useState(false); // 🔥 NOVO ESTADO PARA CONTROLAR PROCESSAMENTO DA URL
 
   // 🎯 FUNÇÃO PARA ATUALIZAR STRUCTURED DATA DINAMICAMENTE
   const updateStructuredData = (totalItems = 0, imoveisData = []) => {
@@ -651,7 +650,6 @@ export default function BuscaImoveis() {
       setTimeout(() => {
         console.log('🎯 [URL-PARAMS] Executando busca com filtros após delay');
         buscarImoveis(true);
-        setUrlProcessed(true); // 🔥 MARCAR QUE URL FOI PROCESSADA
       }, 300);
       
     } else {
@@ -659,7 +657,6 @@ export default function BuscaImoveis() {
       // Se não há filtros na URL, fazer busca padrão
       setTimeout(() => {
         buscarImoveis(false);
-        setUrlProcessed(true); // 🔥 MARCAR QUE URL FOI PROCESSADA
       }, 100);
     }
     
