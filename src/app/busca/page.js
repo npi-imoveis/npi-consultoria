@@ -956,34 +956,12 @@ export default function BuscaImoveis() {
   };
 
   useEffect(() => {
-    // 🔥 NÃO EXECUTAR BUSCA AUTOMÁTICA NO CARREGAMENTO INICIAL
-    // A busca será executada pelo useEffect que processa a URL
-    if (!isBrowser) {
-      console.log('🎯 [BUSCA-PRINCIPAL] Aguardando browser estar pronto...');
-      return;
-    }
-
     const searchParams = new URLSearchParams(window.location.search);
     const searchQuery = searchParams.get("q");
-
-    console.log('🎯 [BUSCA-PRINCIPAL] Verificando condições de busca...');
-    console.log('🎯 [BUSCA-PRINCIPAL] mostrandoFavoritos:', mostrandoFavoritos);
-    console.log('🎯 [BUSCA-PRINCIPAL] filtrosAplicados:', filtrosAplicados);
-    console.log('🎯 [BUSCA-PRINCIPAL] searchQuery:', searchQuery);
-    console.log('🎯 [BUSCA-PRINCIPAL] searchTerm:', searchTerm);
-
-    // 🔥 SE ESTÁ NA URL INICIAL E NÃO TEM FILTROS OU BUSCA, NÃO FAZER NADA
-    // A busca será feita pelo useEffect da URL
-    const isInitialLoad = !filtrosAplicados && !searchQuery && !searchTerm && !mostrandoFavoritos;
-    if (isInitialLoad) {
-      console.log('🎯 [BUSCA-PRINCIPAL] Carregamento inicial detectado, aguardando processamento da URL...');
-      return;
-    }
 
     setIsLoading(true);
 
     if (mostrandoFavoritos) {
-      console.log('🎯 [BUSCA-PRINCIPAL] Mostrando favoritos...');
       setImoveis(favoritos);
       setPagination({
         totalItems: favoritos.length,
@@ -997,14 +975,12 @@ export default function BuscaImoveis() {
     }
 
     if (filtrosAplicados) {
-      console.log('🎯 [BUSCA-PRINCIPAL] Executando busca com filtros aplicados...');
       if (searchTerm) setSearchTerm("");
       buscarImoveis(true);
       return;
     }
 
     if (searchQuery || searchTerm) {
-      console.log('🎯 [BUSCA-PRINCIPAL] Executando busca por termo...');
       const termToSearch = searchQuery || searchTerm;
 
       if (searchQuery && searchQuery !== searchTerm) {
@@ -1015,10 +991,8 @@ export default function BuscaImoveis() {
       return;
     }
 
-    // Se chegou até aqui sem condições específicas, fazer busca padrão
-    console.log('🎯 [BUSCA-PRINCIPAL] Executando busca padrão...');
     buscarImoveis(false);
-  }, [filtrosAplicados, atualizacoesFiltros, currentPage, mostrandoFavoritos, favoritos, isBrowser]);
+  }, [filtrosAplicados, atualizacoesFiltros, currentPage, mostrandoFavoritos, favoritos]);
 
   const construirTextoFiltros = () => {
     const filtrosAtuais = useFiltersStore.getState();
