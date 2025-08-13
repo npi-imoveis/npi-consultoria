@@ -146,8 +146,21 @@ const nextConfig = {
     ];
   },
   
-  // 🧹 REDIRECTS REMOVIDOS: iConatusIframe já não aparece mais na lista noindex (0 URLs)
-  // async redirects() { return []; },
+  // ✅ MANTIDO: Redirects essenciais (URLs antigas ainda indexadas no Google!)
+  async redirects() {
+    return [
+      {
+        source: '/iConatusIframe/:path*',
+        destination: '/',
+        permanent: true
+      },
+      {
+        source: '/iframe.php',
+        destination: '/',
+        permanent: true
+      },
+    ];
+  },
   
   // ✅ MANTIDO: Output
   output: "standalone",
