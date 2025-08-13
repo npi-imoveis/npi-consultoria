@@ -7,12 +7,13 @@ import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import Script from "next/script";
 
+// ✅ CORREÇÃO: Fontes sem preload (evita warnings)
 const oxanium = Oxanium({
   variable: "--font-oxanium",
   subsets: ["latin"],
   weight: ["400", "700"],
   display: "swap",
-  preload: true, // ✅ MANTIDO: Preload crítico
+  // preload: true, // ❌ REMOVIDO: Causa warnings
 });
 
 const michroma = Michroma({
@@ -20,13 +21,13 @@ const michroma = Michroma({
   subsets: ["latin"],
   weight: ["400"],
   display: "swap",
-  preload: true, // ✅ MANTIDO: Preload crítico
+  // preload: true, // ❌ REMOVIDO: Causa warnings
 });
 
 const GTM_ID = "GTM-NN6HZC";
 const ANALYTICS_ID = "G-405E52JFGM";
 
-// METADATA SEM IMAGENS - Não interfere nas fotos de condomínio
+// METADATA SEM MANIFEST - Evita erros
 export const metadata = {
   title: {
     default: "NPi Consultoria - Imóveis de Alto Padrão",
@@ -64,8 +65,8 @@ export const metadata = {
     description: "Especialistas em imóveis de alto padrão com a melhor consultoria imobiliária.",
     // REMOVIDO: images para não interferir
   },
-  // ✅ NOVO: Manifest e app metadata
-  manifest: "/manifest.json",
+  // ✅ CORREÇÃO: Manifest completamente removido
+  // manifest: "/manifest.json", // ❌ REMOVIDO: Evita erros
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -98,7 +99,7 @@ export default function RootLayout({ children }) {
           // ✅ MANTÉM: viewport-fit=cover (funcionalidade iOS)
         />
         
-        {/* ✅ iOS específico: Safari + Chrome iOS (MANTIDO) */}
+        {/* ✅ iOS específico: Safari + Chrome iOS (CORRIGIDO) */}
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="NPi Consultoria" />
@@ -110,7 +111,7 @@ export default function RootLayout({ children }) {
         <meta name="theme-color" content="#000000" />
         <meta name="color-scheme" content="light" />
         
-        {/* ✅ OTIMIZAÇÃO: DNS prefetch para performance (MANTIDO) */}
+        {/* ✅ OTIMIZAÇÃO: DNS prefetch apenas essencial */}
         <link rel="dns-prefetch" href="//www.googletagmanager.com" />
         <link rel="dns-prefetch" href="//www.google-analytics.com" />
         <link rel="dns-prefetch" href="//fonts.googleapis.com" />
@@ -122,8 +123,8 @@ export default function RootLayout({ children }) {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         
-        {/* ✅ NOVO: Manifest PWA (MANTIDO) */}
-        <link rel="manifest" href="/manifest.json" />
+        {/* ✅ CORREÇÃO: Manifest link completamente removido */}
+        {/* <link rel="manifest" href="/manifest.json" /> */}
         
         {/* Favicon otimizado (MANTIDO) */}
         <link rel="icon" href="/favicon.ico" sizes="any" />
