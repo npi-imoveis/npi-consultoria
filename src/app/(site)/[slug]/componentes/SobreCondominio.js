@@ -145,9 +145,9 @@ function DetalhesCondominioMelhorado({ condominio, expanded, setExpanded }) {
                 
                 {/* 🏠 SEÇÃO: APARTAMENTO VENDA */}
                 <div>
-                    <h1 className="font-semibold text-lg mb-3">
-                        {condominio.Categoria} {condominio.Status}
-                    </h1>
+                    <h2 className="font-semibold text-lg mb-3">
+                        {condominio.Categoria} {condominio.BairroComercial} {condominio.Status}
+                    </h2>
                     <div className="space-y-2">
                         <div className="flex items-center gap-2">
                             <Home size={18} />
@@ -162,7 +162,7 @@ function DetalhesCondominioMelhorado({ condominio, expanded, setExpanded }) {
 
                 {/* 🏢 SEÇÃO: CONDOMÍNIO */}
                 <div>
-                    <h1 className="font-semibold text-lg mb-3">Condomínio</h1>
+                    <h2 className="font-semibold text-lg mb-3">Condomínio</h2>
                     <div className="space-y-2">
                         <div className="flex items-center gap-2">
                             <Car size={18} />
