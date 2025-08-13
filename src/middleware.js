@@ -1,4 +1,4 @@
-// middleware.js - VERSÃO CORRIGIDA para URLs únicas
+// middleware.js - VERSÃO CORRIGIDA para URLs únicas + TRAILING SLASH FIX
 import { NextResponse } from "next/server";
 import { getCityValidSlugsSync, converterSlugCidadeSync } from "@/app/utils/url-slugs";
 
@@ -9,6 +9,21 @@ export async function middleware(request) {
   console.log(`🔍 [MIDDLEWARE] =================== INÍCIO ===================`);
   console.log(`🔍 [MIDDLEWARE] Processando: ${pathname}`);
   console.log(`🔍 [MIDDLEWARE] Origin: ${origin}`);
+
+  // 🚨 CORREÇÃO CIRÚRGICA ADICIONADA: TRAILING SLASH (resolverá 367 URLs - 37% do problema)
+  if (pathname.endsWith('/') && pathname.length > 1) {
+    const withoutTrailingSlash = pathname.slice(0, -1);
+    console.log(`🔍 [MIDDLEWARE] 🚨 TRAILING SLASH detectado: ${pathname}`);
+    console.log(`🔍 [MIDDLEWARE] ✅ Redirecionando (301): ${pathname} → ${withoutTrailingSlash}`);
+    
+    // Preservar query parameters se existirem
+    const redirectUrl = new URL(withoutTrailingSlash, origin);
+    url.searchParams.forEach((value, key) => {
+      redirectUrl.searchParams.set(key, value);
+    });
+    
+    return NextResponse.redirect(redirectUrl, 301);
+  }
 
   // ✅ NOVO: Bloquear formato /imovel/ID/slug e redirecionar para /imovel-ID/slug
   const formatoErradoMatch = pathname.match(/^\/imovel\/(\d+)\/(.+)$/);
