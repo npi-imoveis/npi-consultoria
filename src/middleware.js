@@ -1,4 +1,4 @@
-// middleware.js - VERSÃO UNIVERSAL: 404 → 301 HOME (IMÓVEIS VENDIDOS = NORMAL)
+// middleware.js - VERSÃO CORRIGIDA: Imóveis Vendidos OK | Condomínios OK | Deletados → HOME
 import { NextResponse } from "next/server";
 import { getCityValidSlugsSync, converterSlugCidadeSync } from "@/app/utils/url-slugs";
 
@@ -13,12 +13,15 @@ export async function middleware(request) {
   🎯 ESTRATÉGIA SEO OTIMIZADA:
   
   1. IMÓVEIS VENDIDOS → Páginas funcionam NORMALMENTE (não redirecionar!)
-  2. IMÓVEIS DELETADOS (não existem no banco) → Redirect 301 para HOME
-  3. URLs MALFORMADAS → HOME 
-  4. URLs SEO INVÁLIDAS → HOME
-  5. TRAILING SLASHES → Versão sem trailing slash
+  2. CONDOMÍNIOS → Páginas funcionam NORMALMENTE (/slug-condominio)
+  3. IMÓVEIS DELETADOS (não existem no banco) → Redirect 301 para HOME
+  4. URLs MALFORMADAS → HOME 
+  5. URLs SEO INVÁLIDAS → HOME
+  6. TRAILING SLASHES → Versão sem trailing slash
   
-  ⚠️ IMPORTANTE: Só redirecionar quando imóvel NÃO EXISTE no banco!
+  ⚠️ IMPORTANTE: 
+  - Só redirecionar quando imóvel NÃO EXISTE no banco!
+  - Permitir páginas de condomínio (pattern: /slug-nome)
   */
 
   // 🚨 MELHORIA: URLs com caracteres especiais ou malformadas → HOME
@@ -254,6 +257,16 @@ export async function middleware(request) {
     const rewriteUrl = url.clone();
     rewriteUrl.pathname = `/imovel/${id}/${currentSlug}`;
     return NextResponse.rewrite(rewriteUrl);
+  }
+
+  // ✅ PÁGINAS DE CONDOMÍNIO: /slug-condominio (sem ID)
+  // Padrão simples: apenas letras, números e hífens (sem barras)
+  const isCondominioPattern = pathname.match(/^\/[a-z0-9-]+$/);
+  
+  if (isCondominioPattern) {
+    console.log(`🔍 [MIDDLEWARE] 🏢 Condomínio permitido: ${pathname} → NEXT()`);
+    // Deixar passar para o Next.js resolver (página de condomínio ou 404 natural)
+    return NextResponse.next();
   }
 
   // 🎯 MELHORIA: Lista expandida de URLs válidas (páginas que realmente existem)
