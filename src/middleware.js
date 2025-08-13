@@ -9,6 +9,15 @@ export async function middleware(request) {
   console.log(`🔍 [MIDDLEWARE] =================== INÍCIO ===================`);
   console.log(`🔍 [MIDDLEWARE] Processando: ${pathname}`);
 
+  // 🚨 MELHORIA: URLs com caracteres especiais ou malformadas → HOME
+  try {
+    // Teste se a URL é válida
+    decodeURIComponent(pathname);
+  } catch (error) {
+    console.log(`🔍 [MIDDLEWARE] 🏠 URL malformada → HOME: ${pathname}`);
+    return NextResponse.redirect(new URL('/', origin), 301);
+  }
+
   // 🚨 CORREÇÃO: TRAILING SLASH (resolverá 367 URLs)
   if (pathname.endsWith('/') && pathname.length > 1) {
     const withoutTrailingSlash = pathname.slice(0, -1);
@@ -174,6 +183,10 @@ export async function middleware(request) {
       
       console.log(`🔍 [MIDDLEWARE] ⚡ Rewrite: ${rewriteUrl.toString()}`);
       return NextResponse.rewrite(rewriteUrl);
+    } else {
+      // 🎯 NOVA MELHORIA: URLs SEO inválidas → HOME
+      console.log(`🔍 [MIDDLEWARE] 🏠 URL SEO inválida → HOME: ${pathname}`);
+      return NextResponse.redirect(new URL('/', origin), 301);
     }
   }
 
@@ -225,14 +238,41 @@ export async function middleware(request) {
     return NextResponse.rewrite(rewriteUrl);
   }
 
-  // 🎯 SOLUÇÃO UNIVERSAL: Qualquer URL não reconhecida → HOME (resolve TODAS as páginas antigas)
-  // Exceto URLs válidas conhecidas (API, assets, páginas existentes)
+  // 🎯 MELHORIA: Lista expandida de URLs válidas (páginas que realmente existem)
   const urlsValidas = [
-    '/busca', '/sobre', '/contato', '/politica-de-privacidade', 
-    '/venda-seu-imovel', '/sobre/hub-imobiliarias', '/sobre/npi-imoveis', '/sobre/nossos-servicos'
+    '/',
+    '/busca', 
+    '/sobre', 
+    '/contato', 
+    '/politica-de-privacidade', 
+    '/termos-de-uso',
+    '/venda-seu-imovel', 
+    '/sobre/hub-imobiliarias', 
+    '/sobre/npi-imoveis', 
+    '/sobre/nossos-servicos',
+    '/admin',
+    '/login',
+    '/cadastro',
+    '/recuperar-senha'
   ];
-  
-  if (!urlsValidas.includes(pathname) && !pathname.startsWith('/api') && !pathname.startsWith('/_next')) {
+
+  // 🎯 MELHORIA: URLs que devem ser permitidas (patterns)
+  const padroesPemitidos = [
+    /^\/api\//,           // APIs
+    /^\/admin\//,         // Admin routes
+    /^\/_next\//,         // Next.js assets
+    /^\/favicon\./,       // Favicons
+    /^\/robots\.txt$/,    // Robots
+    /^\/sitemap/,         // Sitemaps
+    /^\/.*\.(ico|png|jpg|jpeg|gif|svg|css|js|woff|woff2|ttf|eot)$/  // Assets estáticos
+  ];
+
+  // Verificar se URL é válida por lista ou pattern
+  const urlPermitida = urlsValidas.includes(pathname) || 
+                      padroesPemitidos.some(pattern => pattern.test(pathname));
+
+  if (!urlPermitida) {
+    // 🎯 SOLUÇÃO UNIVERSAL MELHORADA: Qualquer URL não reconhecida → HOME
     console.log(`🔍 [MIDDLEWARE] 🏠 URL não reconhecida → HOME: ${pathname}`);
     return NextResponse.redirect(new URL('/', origin), 301);
   }
@@ -243,6 +283,16 @@ export async function middleware(request) {
 
 export const config = {
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap).*)',
+    /*
+     * Match all request paths except for the ones starting with:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - robots.txt
+     * - sitemap.xml
+     * Also excludes files with extensions (assets)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap|.*\\..*).*)',
   ],
 };
