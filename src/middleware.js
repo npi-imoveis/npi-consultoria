@@ -1,4 +1,4 @@
-// middleware.js - VERSÃO UNIVERSAL: 404 → 301 HOME
+// middleware.js - VERSÃO UNIVERSAL: 404 → 301 HOME (IMÓVEIS VENDIDOS = NORMAL)
 import { NextResponse } from "next/server";
 import { getCityValidSlugsSync, converterSlugCidadeSync } from "@/app/utils/url-slugs";
 
@@ -8,6 +8,18 @@ export async function middleware(request) {
 
   console.log(`🔍 [MIDDLEWARE] =================== INÍCIO ===================`);
   console.log(`🔍 [MIDDLEWARE] Processando: ${pathname}`);
+
+  /* 
+  🎯 ESTRATÉGIA SEO OTIMIZADA:
+  
+  1. IMÓVEIS VENDIDOS → Páginas funcionam NORMALMENTE (não redirecionar!)
+  2. IMÓVEIS DELETADOS (não existem no banco) → Redirect 301 para HOME
+  3. URLs MALFORMADAS → HOME 
+  4. URLs SEO INVÁLIDAS → HOME
+  5. TRAILING SLASHES → Versão sem trailing slash
+  
+  ⚠️ IMPORTANTE: Só redirecionar quando imóvel NÃO EXISTE no banco!
+  */
 
   // 🚨 MELHORIA: URLs com caracteres especiais ou malformadas → HOME
   try {
@@ -74,15 +86,19 @@ export async function middleware(request) {
           const finalUrl = `/imovel-${id}/${slugGerado}`;
           console.log(`🔍 [MIDDLEWARE] ✅ Redirect slug gerado: ${pathname} → ${finalUrl}`);
           return NextResponse.redirect(new URL(finalUrl, origin), 301);
+        } else if (imovel) {
+          // 🎯 NOVO: Se imóvel existe mas sem slug, redirecionar para HOME
+          console.log(`🔍 [MIDDLEWARE] 🏠 Imóvel sem slug → HOME: ${pathname}`);
+          return NextResponse.redirect(new URL('/', origin), 301);
         }
       }
     } catch (error) {
       console.error('🔍 [MIDDLEWARE] ❌ Erro API:', error.message);
     }
     
-    // 🎯 SOLUÇÃO UNIVERSAL: Se imóvel não existe → HOME
-    console.log(`🔍 [MIDDLEWARE] 🏠 Imóvel não encontrado → HOME: ${pathname}`);
-    return NextResponse.redirect(new URL('/', origin), 301);
+    // 🎯 SOLUÇÃO UNIVERSAL: Se imóvel não existe → BUSCA RELEVANTE
+    console.log(`🔍 [MIDDLEWARE] 🔍 Imóvel não encontrado → BUSCA RELEVANTE: ${pathname}`);
+    return NextResponse.redirect(new URL('/busca', origin), 301);
   }
 
   // ✅ URLs SEO-FRIENDLY: /buscar/finalidade/categoria/cidade
@@ -207,11 +223,13 @@ export async function middleware(request) {
         const data = await response.json();
         const imovel = data.data;
         
-        // Se imóvel não existe ou está inativo → HOME
-        if (!imovel || imovel.Ativo !== 'Sim') {
-          console.log(`🔍 [MIDDLEWARE] 🏠 Imóvel inativo/inexistente → HOME: ${pathname}`);
+        // Se imóvel NÃO EXISTE (deletado do banco) → REDIRECT HOME
+        if (!imovel) {
+          console.log(`🔍 [MIDDLEWARE] 🏠 Imóvel não existe → HOME: ${pathname}`);
           return NextResponse.redirect(new URL('/', origin), 301);
         }
+        
+        // ✅ IMÓVEL EXISTE (mesmo que vendido) → Continuar normal
         
         // Se slug está desatualizado → slug correto
         if (imovel.Slug && imovel.Slug !== currentSlug) {
@@ -220,15 +238,15 @@ export async function middleware(request) {
           return NextResponse.redirect(new URL(correctUrl, origin), 301);
         }
       } else {
-        // 🎯 SOLUÇÃO UNIVERSAL: API retornou erro → HOME
-        console.log(`🔍 [MIDDLEWARE] 🏠 API erro (${response.status}) → HOME: ${pathname}`);
-        return NextResponse.redirect(new URL('/', origin), 301);
+        // 🎯 SOLUÇÃO OTIMIZADA: API retornou erro → BUSCA RELEVANTE
+        console.log(`🔍 [MIDDLEWARE] 🔍 API erro (${response.status}) → BUSCA: ${pathname}`);
+        return NextResponse.redirect(new URL('/busca', origin), 301);
       }
     } catch (error) {
       console.error('🔍 [MIDDLEWARE] ❌ Erro verificação:', error.message);
-      // 🎯 SOLUÇÃO UNIVERSAL: Erro na verificação → HOME
-      console.log(`🔍 [MIDDLEWARE] 🏠 Erro técnico → HOME: ${pathname}`);
-      return NextResponse.redirect(new URL('/', origin), 301);
+      // 🎯 SOLUÇÃO OTIMIZADA: Erro na verificação → BUSCA RELEVANTE
+      console.log(`🔍 [MIDDLEWARE] 🔍 Erro técnico → BUSCA: ${pathname}`);
+      return NextResponse.redirect(new URL('/busca', origin), 301);
     }
     
     // Se chegou aqui, imóvel existe e slug está correto → rewrite
@@ -272,7 +290,8 @@ export async function middleware(request) {
                       padroesPemitidos.some(pattern => pattern.test(pathname));
 
   if (!urlPermitida) {
-    // 🎯 SOLUÇÃO UNIVERSAL MELHORADA: Qualquer URL não reconhecida → HOME
+    // 🎯 SOLUÇÃO UNIVERSAL: URLs não reconhecidas → HOME
+    // (Usado apenas para URLs que não têm contexto imobiliário)
     console.log(`🔍 [MIDDLEWARE] 🏠 URL não reconhecida → HOME: ${pathname}`);
     return NextResponse.redirect(new URL('/', origin), 301);
   }
