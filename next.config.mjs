@@ -2,6 +2,9 @@
 const nextConfig = {
   trailingSlash: false,
   
+  // 🚨 ADIÇÃO CIRÚRGICA: Permitir que middleware controle trailing slash
+  skipTrailingSlashRedirect: true,
+  
   // 🚀 EXPERIMENTAL SEGURO (sem optimizeCss)
   experimental: {
     optimizePackageImports: ['lucide-react'],
@@ -143,24 +146,10 @@ const nextConfig = {
     ];
   },
   
-  // ✅ MANTIDO: Redirects originais
-  async redirects() {
-    return [
-      {
-        source: '/iConatusIframe/:path*',
-        destination: '/',
-        permanent: true
-      },
-      {
-        source: '/iframe.php',
-        destination: '/',
-        permanent: true
-      },
-    ];
-  },
+  // 🧹 REDIRECTS REMOVIDOS: iConatusIframe já não aparece mais na lista noindex (0 URLs)
+  // async redirects() { return []; },
   
   // ✅ MANTIDO: Output
   output: "standalone",
 };
-
 export default nextConfig;
