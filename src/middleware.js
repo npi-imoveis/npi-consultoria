@@ -1,4 +1,4 @@
-// middleware.js - VERSÃO CORRIGIDA para URLs únicas + TRAILING SLASH FIX
+// middleware.js - VERSÃO UNIVERSAL: 404 → 301 HOME
 import { NextResponse } from "next/server";
 import { getCityValidSlugsSync, converterSlugCidadeSync } from "@/app/utils/url-slugs";
 
@@ -8,15 +8,12 @@ export async function middleware(request) {
 
   console.log(`🔍 [MIDDLEWARE] =================== INÍCIO ===================`);
   console.log(`🔍 [MIDDLEWARE] Processando: ${pathname}`);
-  console.log(`🔍 [MIDDLEWARE] Origin: ${origin}`);
 
-  // 🚨 CORREÇÃO CIRÚRGICA ADICIONADA: TRAILING SLASH (resolverá 367 URLs - 37% do problema)
+  // 🚨 CORREÇÃO: TRAILING SLASH (resolverá 367 URLs)
   if (pathname.endsWith('/') && pathname.length > 1) {
     const withoutTrailingSlash = pathname.slice(0, -1);
-    console.log(`🔍 [MIDDLEWARE] 🚨 TRAILING SLASH detectado: ${pathname}`);
-    console.log(`🔍 [MIDDLEWARE] ✅ Redirecionando (301): ${pathname} → ${withoutTrailingSlash}`);
+    console.log(`🔍 [MIDDLEWARE] 🚨 TRAILING SLASH: ${pathname} → ${withoutTrailingSlash}`);
     
-    // Preservar query parameters se existirem
     const redirectUrl = new URL(withoutTrailingSlash, origin);
     url.searchParams.forEach((value, key) => {
       redirectUrl.searchParams.set(key, value);
@@ -25,25 +22,20 @@ export async function middleware(request) {
     return NextResponse.redirect(redirectUrl, 301);
   }
 
-  // ✅ NOVO: Bloquear formato /imovel/ID/slug e redirecionar para /imovel-ID/slug
+  // ✅ FORMATO INCORRETO: /imovel/ID/slug → /imovel-ID/slug
   const formatoErradoMatch = pathname.match(/^\/imovel\/(\d+)\/(.+)$/);
   if (formatoErradoMatch) {
     const [, id, slug] = formatoErradoMatch;
     const formatoCorreto = `/imovel-${id}/${slug}`;
-    
-    console.log(`🔍 [MIDDLEWARE] ❌ Formato incorreto detectado: ${pathname}`);
-    console.log(`🔍 [MIDDLEWARE] ✅ Redirecionando para formato correto (301): ${pathname} → ${formatoCorreto}`);
-    
+    console.log(`🔍 [MIDDLEWARE] ❌ Formato incorreto: ${pathname} → ${formatoCorreto}`);
     return NextResponse.redirect(new URL(formatoCorreto, origin), 301);
   }
 
-  // URLs de imóveis sem slug - redirect DIRETO para slug completo
-  const imovelMatch = pathname.match(/^\/imovel-(\d+)\/?$/);
+  // ✅ IMÓVEIS SEM SLUG: /imovel-ID → /imovel-ID/slug
+  const imovelMatch = pathname.match(/^\/imovel-(\d+)$/);
   if (imovelMatch) {
     const id = imovelMatch[1];
-    const hasTrailingSlash = pathname.endsWith('/');
-    
-    console.log(`🔍 [MIDDLEWARE] 🔧 Imóvel detectado: ${pathname}`);
+    console.log(`🔍 [MIDDLEWARE] 🔧 Imóvel sem slug: ${pathname}`);
     
     try {
       const apiUrl = new URL(`/api/imoveis/${id}`, origin);
@@ -57,9 +49,8 @@ export async function middleware(request) {
         const imovel = data.data;
         
         if (imovel?.Slug) {
-          // ✅ REDIRECT DIRETO - sem cascata!
           const finalUrl = `/imovel-${id}/${imovel.Slug}`;
-          console.log(`🔍 [MIDDLEWARE] ✅ Redirecionamento ÚNICO (301): ${pathname} → ${finalUrl}`);
+          console.log(`🔍 [MIDDLEWARE] ✅ Redirect para slug: ${pathname} → ${finalUrl}`);
           return NextResponse.redirect(new URL(finalUrl, origin), 301);
         } else if (imovel?.Empreendimento) {
           const slugGerado = imovel.Empreendimento
@@ -69,30 +60,27 @@ export async function middleware(request) {
             .replace(/[^a-z0-9\s-]/g, '')
             .replace(/\s+/g, '-')
             .replace(/-+/g, '-')
-            .replace(/^-|-$/g, '')
-            || `imovel-${id}`;
+            .replace(/^-|-$/g, '') || `imovel-${id}`;
           
           const finalUrl = `/imovel-${id}/${slugGerado}`;
-          console.log(`🔍 [MIDDLEWARE] ✅ Redirecionamento ÚNICO (301 - slug gerado): ${pathname} → ${finalUrl}`);
+          console.log(`🔍 [MIDDLEWARE] ✅ Redirect slug gerado: ${pathname} → ${finalUrl}`);
           return NextResponse.redirect(new URL(finalUrl, origin), 301);
         }
       }
     } catch (error) {
-      console.error('🔍 [MIDDLEWARE] ❌ Erro ao buscar slug:', error.message);
+      console.error('🔍 [MIDDLEWARE] ❌ Erro API:', error.message);
     }
     
-    // Se falhou, redireciona para busca
-    console.log(`🔍 [MIDDLEWARE] ❌ Imóvel ${id} não encontrado - redirecionando para /busca`);
-    return NextResponse.redirect(new URL('/busca', origin), 302);
+    // 🎯 SOLUÇÃO UNIVERSAL: Se imóvel não existe → HOME
+    console.log(`🔍 [MIDDLEWARE] 🏠 Imóvel não encontrado → HOME: ${pathname}`);
+    return NextResponse.redirect(new URL('/', origin), 301);
   }
 
-  // 1. Verificar se é URL SEO-friendly (/buscar/finalidade/categoria/cidade/bairro)
+  // ✅ URLs SEO-FRIENDLY: /buscar/finalidade/categoria/cidade
   const seoMatch = pathname.match(/^\/buscar\/([^\/]+)\/([^\/]+)\/([^\/]+)(.*)$/);
-  
   if (seoMatch) {
     const [, finalidade, categoria, cidade, restPath] = seoMatch;
     
-    // Buscar cidades válidas do banco de dados
     const cidadesValidas = getCityValidSlugsSync();
     const finalidadesValidas = ['compra', 'venda', 'aluguel'];
     const categoriasValidas = [
@@ -102,83 +90,52 @@ export async function middleware(request) {
     ];
     
     if (cidadesValidas.includes(cidade) && finalidadesValidas.includes(finalidade) && categoriasValidas.includes(categoria)) {
-      console.log(`🔍 [MIDDLEWARE] ✅ URL SEO-friendly detectada: /buscar/${finalidade}/${categoria}/${cidade}${restPath}`);
+      console.log(`🔍 [MIDDLEWARE] ✅ URL SEO-friendly: /buscar/${finalidade}/${categoria}/${cidade}${restPath}`);
       
-      // Converter parâmetros de URL para filtros
       const parametrosUrl = { finalidade, categoria, cidade };
       
-      // Processar parâmetros extras se existirem
       if (restPath && restPath.length > 1) {
         const params = restPath.substring(1).split('/').filter(p => p.length > 0);
-        
         params.forEach((param, index) => {
           if (param.includes('+')) {
-            // Múltiplos bairros
             parametrosUrl.bairros = param;
           } else if (param.includes('-quarto')) {
-            // Quartos
             parametrosUrl.quartos = param;
           } else if (param.includes('mil') || param.includes('ate-') || param.includes('acima-')) {
-            // Preço
             parametrosUrl.preco = param;
           } else if (index === 0 && !param.includes('-quarto') && !param.includes('mil')) {
-            // Primeiro parâmetro provavelmente é bairro único
             parametrosUrl.bairros = param;
           }
         });
       }
       
-      // Converter parâmetros URL para filtros diretamente (sem import)
       const filtros = {
-        cidadeSelecionada: '',
-        finalidade: '',
-        categoriaSelecionada: '',
-        bairrosSelecionados: [],
-        quartos: null,
-        precoMin: null,
-        precoMax: null
+        cidadeSelecionada: '', finalidade: '', categoriaSelecionada: '',
+        bairrosSelecionados: [], quartos: null, precoMin: null, precoMax: null
       };
 
-      // Mapeamentos de conversão usando banco de dados
-
       const MAPEAMENTO_CATEGORIAS = {
-        'apartamentos': 'Apartamento',
-        'casas': 'Casa',
-        'casas-comerciais': 'Casa Comercial',
-        'casas-em-condominio': 'Casa em Condominio',
-        'coberturas': 'Cobertura',
-        'flats': 'Flat',
-        'gardens': 'Garden',
-        'lofts': 'Loft',
-        'lojas': 'Loja',
-        'predios-comerciais': 'Prédio Comercial',
-        'salas-comerciais': 'Sala Comercial',
-        'sobrados': 'Sobrado',
-        'terrenos': 'Terreno'
+        'apartamentos': 'Apartamento', 'casas': 'Casa', 'casas-comerciais': 'Casa Comercial',
+        'casas-em-condominio': 'Casa em Condominio', 'coberturas': 'Cobertura',
+        'flats': 'Flat', 'gardens': 'Garden', 'lofts': 'Loft', 'lojas': 'Loja',
+        'predios-comerciais': 'Prédio Comercial', 'salas-comerciais': 'Sala Comercial',
+        'sobrados': 'Sobrado', 'terrenos': 'Terreno'
       };
 
       const MAPEAMENTO_FINALIDADES = {
-        'compra': 'Comprar',
-        'venda': 'Comprar',
-        'aluguel': 'Alugar'
+        'compra': 'Comprar', 'venda': 'Comprar', 'aluguel': 'Alugar'
       };
 
-      // Converter parâmetros básicos
       filtros.cidadeSelecionada = converterSlugCidadeSync(parametrosUrl.cidade);
       filtros.finalidade = MAPEAMENTO_FINALIDADES[parametrosUrl.finalidade] || parametrosUrl.finalidade;
       filtros.categoriaSelecionada = MAPEAMENTO_CATEGORIAS[parametrosUrl.categoria] || parametrosUrl.categoria;
 
-      // Converter bairros se existirem
       if (parametrosUrl.bairros) {
         filtros.bairrosSelecionados = parametrosUrl.bairros.split('+').map(bairroSlug => {
-          return bairroSlug
-            .split('-')
-            .map(palavra => palavra.charAt(0).toUpperCase() + palavra.slice(1))
-            .join(' ');
+          return bairroSlug.split('-').map(palavra => palavra.charAt(0).toUpperCase() + palavra.slice(1)).join(' ');
         });
       }
 
-      // Converter quartos se existir
       if (parametrosUrl.quartos) {
         if (parametrosUrl.quartos === '1-quarto') {
           filtros.quartos = 1;
@@ -188,23 +145,17 @@ export async function middleware(request) {
         }
       }
 
-      // Converter preços se existir
       if (parametrosUrl.preco) {
         const converterValor = (valorStr) => {
-          if (valorStr.includes('mi')) {
-            return parseFloat(valorStr.replace('mi', '')) * 1000000;
-          } else if (valorStr.includes('mil')) {
-            return parseFloat(valorStr.replace('mil', '')) * 1000;
-          }
+          if (valorStr.includes('mi')) return parseFloat(valorStr.replace('mi', '')) * 1000000;
+          if (valorStr.includes('mil')) return parseFloat(valorStr.replace('mil', '')) * 1000;
           return parseFloat(valorStr);
         };
         
         if (parametrosUrl.preco.startsWith('ate-')) {
-          const valor = parametrosUrl.preco.replace('ate-', '');
-          filtros.precoMax = converterValor(valor);
+          filtros.precoMax = converterValor(parametrosUrl.preco.replace('ate-', ''));
         } else if (parametrosUrl.preco.startsWith('acima-')) {
-          const valor = parametrosUrl.preco.replace('acima-', '');
-          filtros.precoMin = converterValor(valor);
+          filtros.precoMin = converterValor(parametrosUrl.preco.replace('acima-', ''));
         } else if (parametrosUrl.preco.includes('-')) {
           const [minStr, maxStr] = parametrosUrl.preco.split('-');
           filtros.precoMin = converterValor(minStr);
@@ -212,72 +163,86 @@ export async function middleware(request) {
         }
       }
       
-      // Construir URL de rewrite para /busca (mantém URL amigável)
       const rewriteUrl = new URL('/busca', request.url);
-      
       if (filtros.cidadeSelecionada) rewriteUrl.searchParams.set('cidade', filtros.cidadeSelecionada);
       if (filtros.finalidade) rewriteUrl.searchParams.set('finalidade', filtros.finalidade);
       if (filtros.categoriaSelecionada) rewriteUrl.searchParams.set('categoria', filtros.categoriaSelecionada);
-      if (filtros.bairrosSelecionados && filtros.bairrosSelecionados.length > 0) {
-        rewriteUrl.searchParams.set('bairros', filtros.bairrosSelecionados.join(','));
-      }
+      if (filtros.bairrosSelecionados?.length) rewriteUrl.searchParams.set('bairros', filtros.bairrosSelecionados.join(','));
       if (filtros.quartos) rewriteUrl.searchParams.set('quartos', filtros.quartos.toString());
       if (filtros.precoMin) rewriteUrl.searchParams.set('precoMin', filtros.precoMin.toString());
       if (filtros.precoMax) rewriteUrl.searchParams.set('precoMax', filtros.precoMax.toString());
       
-      console.log(`🔍 [MIDDLEWARE] ⚡ Rewrite para: ${rewriteUrl.toString()}`);
+      console.log(`🔍 [MIDDLEWARE] ⚡ Rewrite: ${rewriteUrl.toString()}`);
       return NextResponse.rewrite(rewriteUrl);
     }
   }
 
-  // 2. Processar URLs de imóveis COM slug - verificar se slug está correto
+  // ✅ IMÓVEIS COM SLUG: Verificar se slug está correto
   const imovelComSlugMatch = pathname.match(/^\/imovel-(\d+)\/(.+)$/);
-  
-  if (!imovelComSlugMatch) {
-    console.log(`🔍 [MIDDLEWARE] ➡️ Não é URL de imóvel: ${pathname}`);
-    return NextResponse.next();
-  }
+  if (imovelComSlugMatch) {
+    const [, id, currentSlug] = imovelComSlugMatch;
+    console.log(`🔍 [MIDDLEWARE] ✅ Imóvel com slug: ID=${id}, SLUG=${currentSlug}`);
 
-  const [, id, currentSlug] = imovelComSlugMatch;
-  console.log(`🔍 [MIDDLEWARE] ✅ URL de imóvel COM SLUG detectada: ID=${id}, SLUG=${currentSlug}`);
+    try {
+      const apiUrl = new URL(`/api/imoveis/${id}`, origin);
+      const response = await fetch(apiUrl, {
+        headers: { 'Content-Type': 'application/json' },
+        signal: AbortSignal.timeout(5000),
+      });
 
-  // Verificar se slug está correto e redirecionar se necessário
-  try {
-    const apiUrl = new URL(`/api/imoveis/${id}`, origin);
-    
-    const response = await fetch(apiUrl, {
-      headers: { 'Content-Type': 'application/json' },
-      signal: AbortSignal.timeout(5000),
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      const imovel = data.data;
-      
-      // Se slug está desatualizado, redireciona para slug correto
-      if (imovel?.Slug && imovel.Slug !== currentSlug) {
-        const correctUrl = `/imovel-${id}/${imovel.Slug}`;
-        console.log(`🔍 [MIDDLEWARE] ✅ Redirecionando slug antigo para correto (301): ${currentSlug} → ${imovel.Slug}`);
-        return NextResponse.redirect(new URL(correctUrl, origin), 301);
+      if (response.ok) {
+        const data = await response.json();
+        const imovel = data.data;
+        
+        // Se imóvel não existe ou está inativo → HOME
+        if (!imovel || imovel.Ativo !== 'Sim') {
+          console.log(`🔍 [MIDDLEWARE] 🏠 Imóvel inativo/inexistente → HOME: ${pathname}`);
+          return NextResponse.redirect(new URL('/', origin), 301);
+        }
+        
+        // Se slug está desatualizado → slug correto
+        if (imovel.Slug && imovel.Slug !== currentSlug) {
+          const correctUrl = `/imovel-${id}/${imovel.Slug}`;
+          console.log(`🔍 [MIDDLEWARE] ✅ Slug antigo → correto: ${currentSlug} → ${imovel.Slug}`);
+          return NextResponse.redirect(new URL(correctUrl, origin), 301);
+        }
+      } else {
+        // 🎯 SOLUÇÃO UNIVERSAL: API retornou erro → HOME
+        console.log(`🔍 [MIDDLEWARE] 🏠 API erro (${response.status}) → HOME: ${pathname}`);
+        return NextResponse.redirect(new URL('/', origin), 301);
       }
+    } catch (error) {
+      console.error('🔍 [MIDDLEWARE] ❌ Erro verificação:', error.message);
+      // 🎯 SOLUÇÃO UNIVERSAL: Erro na verificação → HOME
+      console.log(`🔍 [MIDDLEWARE] 🏠 Erro técnico → HOME: ${pathname}`);
+      return NextResponse.redirect(new URL('/', origin), 301);
     }
-  } catch (error) {
-    console.error('🔍 [MIDDLEWARE] ❌ Erro ao verificar slug:', error.message);
+    
+    // Se chegou aqui, imóvel existe e slug está correto → rewrite
+    console.log(`🔍 [MIDDLEWARE] 🔄 Rewrite: /imovel/${id}/${currentSlug}`);
+    const rewriteUrl = url.clone();
+    rewriteUrl.pathname = `/imovel/${id}/${currentSlug}`;
+    return NextResponse.rewrite(rewriteUrl);
   }
+
+  // 🎯 SOLUÇÃO UNIVERSAL: Qualquer URL não reconhecida → HOME (resolve TODAS as páginas antigas)
+  // Exceto URLs válidas conhecidas (API, assets, páginas existentes)
+  const urlsValidas = [
+    '/busca', '/sobre', '/contato', '/politica-de-privacidade', 
+    '/venda-seu-imovel', '/sobre/hub-imobiliarias', '/sobre/npi-imoveis', '/sobre/nossos-servicos'
+  ];
   
-  // Se slug está correto, faz rewrite
-  console.log(`🔍 [MIDDLEWARE] 🔄 Rewrite para: /imovel/${id}/${currentSlug}`);
-  const rewriteUrl = url.clone();
-  rewriteUrl.pathname = `/imovel/${id}/${currentSlug}`;
-  return NextResponse.rewrite(rewriteUrl);
+  if (!urlsValidas.includes(pathname) && !pathname.startsWith('/api') && !pathname.startsWith('/_next')) {
+    console.log(`🔍 [MIDDLEWARE] 🏠 URL não reconhecida → HOME: ${pathname}`);
+    return NextResponse.redirect(new URL('/', origin), 301);
+  }
+
+  console.log(`🔍 [MIDDLEWARE] ➡️ Seguindo normalmente: ${pathname}`);
+  return NextResponse.next();
 }
 
 export const config = {
   matcher: [
-    /*
-     * ✅ AGORA FUNCIONA: Com skipTrailingSlashRedirect=true, 
-     * o middleware tem controle total sobre trailing slashes
-     */
     '/((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap).*)',
   ],
 };
