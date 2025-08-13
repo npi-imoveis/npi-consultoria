@@ -31,7 +31,7 @@ const ANALYTICS_ID = "G-405E52JFGM";
 export const metadata = {
   title: {
     default: "NPi Consultoria - Imóveis de Alto Padrão",
-    template: "%s | NPi Consultoria"
+    template: "%s | NPi"
   },
   description: "Especialistas em imóveis de alto padrão. Encontre apartamentos, casas e terrenos exclusivos com a melhor consultoria imobiliária.",
   keywords: ["imóveis alto padrão", "consultoria imobiliária", "apartamentos luxo", "casas exclusivas"],
