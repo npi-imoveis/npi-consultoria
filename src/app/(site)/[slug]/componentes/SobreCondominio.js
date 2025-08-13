@@ -162,7 +162,7 @@ function DetalhesCondominioMelhorado({ condominio, expanded, setExpanded }) {
 
                 {/* 🏢 SEÇÃO: CONDOMÍNIO */}
                 <div>
-                    <h2 className="font-semibold text-lg mb-3">Condomínio</h2>
+                    <h2 className="font-semibold text-lg mb-3">Condomínio {condominio.Empreendimento}</h2>
                     <div className="space-y-2">
                         <div className="flex items-center gap-2">
                             <Car size={18} />
