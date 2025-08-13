@@ -419,7 +419,7 @@ export async function generateMetadata({ params }) {
         description: descricaoLimpa,
         url: currentUrl,
         type: "website",
-        siteName: "NPI Consultoria",
+        siteName: "NPI",
         locale: "pt_BR",
         images: [
           {
