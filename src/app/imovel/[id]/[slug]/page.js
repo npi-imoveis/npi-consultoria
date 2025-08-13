@@ -459,7 +459,7 @@ export async function generateMetadata({ params }) {
         'og:image': imageUrl,
         'og:url': currentUrl,
         'og:type': 'website',
-        'og:site_name': 'NPI Consultoria',
+        'og:site_name': 'NPI',
         'og:locale': 'pt_BR',
         'article:published_time': modifiedDate,
         'article:modified_time': modifiedDate,
