@@ -225,12 +225,17 @@ export function ImageGallery({
             className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-105"
           />
 
-          {/* Indicadores otimizados */}
-          {images[0].Destaque === "Sim" && (
-            <div className="absolute top-4 left-4 bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
-              ⭐ DESTAQUE
-            </div>
-          )}
+          {/* 🔧 CLS FIX: Badge sempre presente, visualmente oculto quando não há destaque */}
+          <div 
+            className={`absolute top-4 left-4 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg transition-opacity duration-200 ${
+              images[0].Destaque === "Sim" 
+                ? "bg-gray-900 opacity-100" 
+                : "bg-transparent opacity-0 pointer-events-none"
+            }`}
+            aria-hidden={images[0].Destaque !== "Sim"}
+          >
+            ⭐ DESTAQUE
+          </div>
 
           <div className="absolute top-4 right-4 bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg">
             {images.length} foto{images.length > 1 ? 's' : ''}
@@ -271,12 +276,17 @@ export function ImageGallery({
                 className="object-cover transition-transform duration-300 ease-in-out hover:scale-105"
               />
 
-              {/* Indicadores móveis */}
-              {images[0].Destaque === "Sim" && (
-                <div className="absolute top-3 left-3 bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
-                  ⭐ DESTAQUE
-                </div>
-              )}
+              {/* 🔧 CLS FIX: Badge móvel sempre presente */}
+              <div 
+                className={`absolute top-3 left-3 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg transition-opacity duration-200 ${
+                  images[0].Destaque === "Sim" 
+                    ? "bg-gray-900 opacity-100" 
+                    : "bg-transparent opacity-0 pointer-events-none"
+                }`}
+                aria-hidden={images[0].Destaque !== "Sim"}
+              >
+                ⭐ DESTAQUE
+              </div>
 
               <div className="absolute top-3 right-3 bg-black bg-opacity-80 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-sm font-medium shadow-lg">
                 1 / {images.length}
@@ -331,12 +341,17 @@ export function ImageGallery({
                   />
                 </div>
 
-                {/* Indicadores desktop */}
-                {images[0].Destaque === "Sim" && (
-                  <div className="absolute top-4 left-4 bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
-                    ⭐ DESTAQUE
-                  </div>
-                )}
+                {/* 🔧 CLS FIX: Badge desktop sempre presente */}
+                <div 
+                  className={`absolute top-4 left-4 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg transition-opacity duration-200 ${
+                    images[0].Destaque === "Sim" 
+                      ? "bg-gray-900 opacity-100" 
+                      : "bg-transparent opacity-0 pointer-events-none"
+                  }`}
+                  aria-hidden={images[0].Destaque !== "Sim"}
+                >
+                  ⭐ DESTAQUE
+                </div>
 
                 <div className="absolute top-4 right-4 bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg">
                   {images.length} foto{images.length > 1 ? 's' : ''}
@@ -376,12 +391,17 @@ export function ImageGallery({
                         className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
                       />
                       
-                      {/* Indicador de destaque nos thumbnails */}
-                      {image.Destaque === "Sim" && (
-                        <div className="absolute top-2 left-2 bg-gray-900 text-white text-xs font-bold px-1.5 py-0.5 rounded">
-                          ⭐
-                        </div>
-                      )}
+                      {/* 🔧 CLS FIX: Badge thumbnails sempre presente */}
+                      <div 
+                        className={`absolute top-2 left-2 text-white text-xs font-bold px-1.5 py-0.5 rounded transition-opacity duration-200 ${
+                          image.Destaque === "Sim" 
+                            ? "bg-gray-900 opacity-100" 
+                            : "bg-transparent opacity-0 pointer-events-none"
+                        }`}
+                        aria-hidden={image.Destaque !== "Sim"}
+                      >
+                        ⭐
+                      </div>
                       
                       {isLastImage && images.length > 5 && (
                         <div className="absolute inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center rounded-lg">
@@ -440,10 +460,16 @@ export function ImageGallery({
                 className="max-w-full max-h-screen object-contain"
               />
 
-              {/* Contador */}
+              {/* Contador - Badge sempre presente no modal */}
               <div className="absolute top-24 md:top-20 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm z-20">
                 {selectedIndex + 1} / {images.length}
-                {images[selectedIndex].Destaque === "Sim" && " ⭐"}
+                <span 
+                  className={`transition-opacity duration-200 ${
+                    images[selectedIndex].Destaque === "Sim" ? "opacity-100" : "opacity-0"
+                  }`}
+                >
+                  {" ⭐"}
+                </span>
               </div>
 
               {/* Navegação */}
@@ -497,12 +523,17 @@ export function ImageGallery({
                     {idx + 1}
                   </div>
                   
-                  {/* Indicador de destaque */}
-                  {image.Destaque === "Sim" && (
-                    <div className="absolute top-2 left-2 bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded">
-                      ⭐ DESTAQUE
-                    </div>
-                  )}
+                  {/* 🔧 CLS FIX: Badge grid modal sempre presente */}
+                  <div 
+                    className={`absolute top-2 left-2 text-white text-xs font-bold px-2 py-1 rounded transition-opacity duration-200 ${
+                      image.Destaque === "Sim" 
+                        ? "bg-gray-900 opacity-100" 
+                        : "bg-transparent opacity-0 pointer-events-none"
+                    }`}
+                    aria-hidden={image.Destaque !== "Sim"}
+                  >
+                    ⭐ DESTAQUE
+                  </div>
                 </div>
               ))}
             </div>
