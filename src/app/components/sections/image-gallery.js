@@ -1,4 +1,4 @@
-// src/app/components/sections/image-gallery.js - OTIMIZADA COM FOTOS MAIORES
+// src/app/components/sections/image-gallery.js - SOLUÇÃO SIMPLES CLS
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -195,11 +195,45 @@ export function ImageGallery({
 
   return (
     <>
+      {/* 🔧 CSS para evitar CLS - espaço reservado para badges */}
+      <style jsx>{`
+        .badge-space::before {
+          content: '';
+          position: absolute;
+          top: 16px;
+          left: 16px;
+          width: 72px;
+          height: 24px;
+          pointer-events: none;
+          z-index: 0;
+        }
+        .badge-space-mobile::before {
+          content: '';
+          position: absolute;
+          top: 12px;
+          left: 12px;
+          width: 72px;
+          height: 24px;
+          pointer-events: none;
+          z-index: 0;
+        }
+        .badge-space-small::before {
+          content: '';
+          position: absolute;
+          top: 8px;
+          left: 8px;
+          width: 20px;
+          height: 20px;
+          pointer-events: none;
+          z-index: 0;
+        }
+      `}</style>
+
       {/* 🎨 LAYOUT OTIMIZADO COM FOTOS MAIORES */}
       {layout === "single" ? (
         // LAYOUT SINGLE
         <div 
-          className="w-full h-full cursor-pointer relative overflow-hidden rounded-lg"
+          className="w-full h-full cursor-pointer relative overflow-hidden rounded-lg badge-space"
           onClick={() => openModal()}
           role="button"
           tabIndex={0}
@@ -225,19 +259,14 @@ export function ImageGallery({
             className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-105"
           />
 
-          {/* 🔧 CLS FIX: Badge sempre presente, visualmente oculto quando não há destaque */}
-          <div 
-            className={`absolute top-4 left-4 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg transition-opacity duration-200 ${
-              images[0].Destaque === "Sim" 
-                ? "bg-gray-900 opacity-100" 
-                : "bg-transparent opacity-0 pointer-events-none"
-            }`}
-            aria-hidden={images[0].Destaque !== "Sim"}
-          >
-            ⭐ DESTAQUE
-          </div>
+          {/* 🔧 Badge simples - só renderiza se existe */}
+          {images[0].Destaque === "Sim" && (
+            <div className="absolute top-4 left-4 bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg z-10">
+              ⭐ DESTAQUE
+            </div>
+          )}
 
-          <div className="absolute top-4 right-4 bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg">
+          <div className="absolute top-4 right-4 bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg z-10">
             {images.length} foto{images.length > 1 ? 's' : ''}
           </div>
         </div>
@@ -248,7 +277,7 @@ export function ImageGallery({
           {/* 📱 MOBILE: Foto principal MAIOR */}
           {isMobile ? (
             <div 
-              className="w-full h-[65vh] sm:h-[60vh] min-h-[320px] max-h-[380px] cursor-pointer relative overflow-hidden rounded-lg"
+              className="w-full h-[65vh] sm:h-[60vh] min-h-[320px] max-h-[380px] cursor-pointer relative overflow-hidden rounded-lg badge-space-mobile"
               onClick={() => openModal()}
               role="button"
               tabIndex={0}
@@ -276,24 +305,19 @@ export function ImageGallery({
                 className="object-cover transition-transform duration-300 ease-in-out hover:scale-105"
               />
 
-              {/* 🔧 CLS FIX: Badge móvel sempre presente */}
-              <div 
-                className={`absolute top-3 left-3 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg transition-opacity duration-200 ${
-                  images[0].Destaque === "Sim" 
-                    ? "bg-gray-900 opacity-100" 
-                    : "bg-transparent opacity-0 pointer-events-none"
-                }`}
-                aria-hidden={images[0].Destaque !== "Sim"}
-              >
-                ⭐ DESTAQUE
-              </div>
+              {/* Badge mobile */}
+              {images[0].Destaque === "Sim" && (
+                <div className="absolute top-3 left-3 bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg z-10">
+                  ⭐ DESTAQUE
+                </div>
+              )}
 
-              <div className="absolute top-3 right-3 bg-black bg-opacity-80 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-sm font-medium shadow-lg">
+              <div className="absolute top-3 right-3 bg-black bg-opacity-80 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-sm font-medium shadow-lg z-10">
                 1 / {images.length}
               </div>
 
               {images.length > 1 && (
-                <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 bg-white bg-opacity-90 backdrop-blur-sm text-black px-4 py-2 rounded-full text-sm font-medium shadow-lg">
+                <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 bg-white bg-opacity-90 backdrop-blur-sm text-black px-4 py-2 rounded-full text-sm font-medium shadow-lg z-10">
                   Toque para ver as {images.length} fotos
                 </div>
               )}
@@ -302,7 +326,7 @@ export function ImageGallery({
             // 💻 DESKTOP: Layout grid MAIOR
             <>
               <div 
-                className="col-span-1 h-[380px] cursor-pointer relative"
+                className="col-span-1 h-[380px] cursor-pointer relative badge-space"
                 onClick={() => openModal()}
                 role="button"
                 tabIndex={0}
@@ -341,19 +365,14 @@ export function ImageGallery({
                   />
                 </div>
 
-                {/* 🔧 CLS FIX: Badge desktop sempre presente */}
-                <div 
-                  className={`absolute top-4 left-4 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg transition-opacity duration-200 ${
-                    images[0].Destaque === "Sim" 
-                      ? "bg-gray-900 opacity-100" 
-                      : "bg-transparent opacity-0 pointer-events-none"
-                  }`}
-                  aria-hidden={images[0].Destaque !== "Sim"}
-                >
-                  ⭐ DESTAQUE
-                </div>
+                {/* Badge desktop */}
+                {images[0].Destaque === "Sim" && (
+                  <div className="absolute top-4 left-4 bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg z-10">
+                    ⭐ DESTAQUE
+                  </div>
+                )}
 
-                <div className="absolute top-4 right-4 bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg">
+                <div className="absolute top-4 right-4 bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg z-10">
                   {images.length} foto{images.length > 1 ? 's' : ''}
                 </div>
               </div>
@@ -365,7 +384,7 @@ export function ImageGallery({
                   return (
                     <div
                       key={image.Codigo || index}
-                      className="relative h-full overflow-hidden cursor-pointer rounded-lg"
+                      className="relative h-full overflow-hidden cursor-pointer rounded-lg badge-space-small"
                       onClick={() => openModal()}
                       role="button"
                       tabIndex={0}
@@ -391,20 +410,15 @@ export function ImageGallery({
                         className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
                       />
                       
-                      {/* 🔧 CLS FIX: Badge thumbnails sempre presente */}
-                      <div 
-                        className={`absolute top-2 left-2 text-white text-xs font-bold px-1.5 py-0.5 rounded transition-opacity duration-200 ${
-                          image.Destaque === "Sim" 
-                            ? "bg-gray-900 opacity-100" 
-                            : "bg-transparent opacity-0 pointer-events-none"
-                        }`}
-                        aria-hidden={image.Destaque !== "Sim"}
-                      >
-                        ⭐
-                      </div>
+                      {/* Badge thumbnails */}
+                      {image.Destaque === "Sim" && (
+                        <div className="absolute top-2 left-2 bg-gray-900 text-white text-xs font-bold px-1.5 py-0.5 rounded z-10">
+                          ⭐
+                        </div>
+                      )}
                       
                       {isLastImage && images.length > 5 && (
-                        <div className="absolute inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center rounded-lg">
+                        <div className="absolute inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center rounded-lg z-10">
                           <button
                             className="border border-white text-white px-4 py-2 rounded hover:bg-white hover:text-black transition-colors"
                             aria-label={`Ver mais ${images.length - 5} fotos`}
@@ -460,16 +474,10 @@ export function ImageGallery({
                 className="max-w-full max-h-screen object-contain"
               />
 
-              {/* Contador - Badge sempre presente no modal */}
+              {/* Contador */}
               <div className="absolute top-24 md:top-20 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm z-20">
                 {selectedIndex + 1} / {images.length}
-                <span 
-                  className={`transition-opacity duration-200 ${
-                    images[selectedIndex].Destaque === "Sim" ? "opacity-100" : "opacity-0"
-                  }`}
-                >
-                  {" ⭐"}
-                </span>
+                {images[selectedIndex].Destaque === "Sim" && " ⭐"}
               </div>
 
               {/* Navegação */}
@@ -519,21 +527,16 @@ export function ImageGallery({
                   />
                   
                   {/* Número da foto */}
-                  <div className="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
+                  <div className="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded z-10">
                     {idx + 1}
                   </div>
                   
-                  {/* 🔧 CLS FIX: Badge grid modal sempre presente */}
-                  <div 
-                    className={`absolute top-2 left-2 text-white text-xs font-bold px-2 py-1 rounded transition-opacity duration-200 ${
-                      image.Destaque === "Sim" 
-                        ? "bg-gray-900 opacity-100" 
-                        : "bg-transparent opacity-0 pointer-events-none"
-                    }`}
-                    aria-hidden={image.Destaque !== "Sim"}
-                  >
-                    ⭐ DESTAQUE
-                  </div>
+                  {/* Badge grid modal */}
+                  {image.Destaque === "Sim" && (
+                    <div className="absolute top-2 left-2 bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded z-10">
+                      ⭐ DESTAQUE
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
