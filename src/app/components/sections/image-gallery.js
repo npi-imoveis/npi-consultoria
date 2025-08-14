@@ -186,67 +186,16 @@ export function ImageGallery({
 
   return (
     <>
-      {/* 🔧 CRITICAL CSS para eliminar CLS + BADGES FIXOS */}
+      {/* 🔧 CRITICAL CSS simples */}
       <style jsx>{`
         .gallery-container {
           contain: layout style paint;
           transform: translateZ(0);
           will-change: auto;
-          position: relative;
         }
         .image-container {
           contain: layout;
           transform: translateZ(0);
-          position: relative;
-        }
-        .badge-placeholder {
-          contain: layout size;
-          position: absolute;
-          transform: translateZ(0);
-        }
-        .count-badge {
-          contain: layout size;
-          position: absolute;
-          transform: translateZ(0);
-        }
-        
-        /* 🔧 POSICIONAMENTO ABSOLUTO DOS BADGES - MOBILE/DESKTOP */
-        .badge-destaque {
-          top: 12px !important;
-          left: 12px !important;
-          width: 80px !important;
-          height: 24px !important;
-        }
-        .badge-contador {
-          top: 12px !important;
-          right: 12px !important;
-          height: 24px !important;
-        }
-        .badge-contador-mobile {
-          width: 50px !important;
-          height: 28px !important;
-        }
-        .badge-contador-desktop {
-          width: 60px !important;
-          height: 24px !important;
-        }
-        .badge-cta {
-          bottom: 12px !important;
-          left: 50% !important;
-          transform: translateX(-50%) translateZ(0) !important;
-          width: 200px !important;
-          height: 32px !important;
-        }
-        
-        @media (min-width: 769px) {
-          .badge-destaque {
-            top: 16px !important;
-            left: 16px !important;
-          }
-          .badge-contador {
-            top: 16px !important;
-            right: 16px !important;
-          }
         }
       `}</style>
 
@@ -293,16 +242,32 @@ export function ImageGallery({
             />
           </div>
 
-          {/* 🔧 BADGES SINGLE LAYOUT FIXOS */}
-          <div className="badge-placeholder badge-destaque">
-            {images[0].Destaque === "Sim" && (
-              <div className="bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg w-full h-full flex items-center justify-center">
-                ⭐ DESTAQUE
-              </div>
-            )}
-          </div>
+          {/* BADGES SINGLE - VOLTA AO INLINE STYLE */}
+          {images[0].Destaque === "Sim" && (
+            <div 
+              className="absolute bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg flex items-center justify-center"
+              style={{ 
+                top: '16px',
+                left: '16px',
+                width: '80px',
+                height: '24px',
+                contain: 'layout'
+              }}
+            >
+              ⭐ DESTAQUE
+            </div>
+          )}
 
-          <div className="badge-contador badge-contador-desktop bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg flex items-center justify-center">
+          <div 
+            className="absolute bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg flex items-center justify-center"
+            style={{ 
+              top: '16px',
+              right: '16px',
+              width: '60px',
+              height: '24px',
+              contain: 'layout'
+            }}
+          >
             {images.length} foto{images.length > 1 ? 's' : ''}
           </div>
         </div>
@@ -355,21 +320,47 @@ export function ImageGallery({
                 />
               </div>
 
-              {/* Badge mobile FIXO */}
-              <div className="badge-placeholder badge-destaque">
-                {images[0].Destaque === "Sim" && (
-                  <div className="bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg w-full h-full flex items-center justify-center">
-                    ⭐ DESTAQUE
-                  </div>
-                )}
-              </div>
+              {/* BADGES MOBILE - VOLTA AO INLINE STYLE */}
+              {images[0].Destaque === "Sim" && (
+                <div 
+                  className="absolute bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg flex items-center justify-center"
+                  style={{ 
+                    top: '12px',
+                    left: '12px',
+                    width: '80px',
+                    height: '24px',
+                    contain: 'layout'
+                  }}
+                >
+                  ⭐ DESTAQUE
+                </div>
+              )}
 
-              <div className="badge-contador badge-contador-mobile bg-black bg-opacity-80 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-sm font-medium shadow-lg flex items-center justify-center">
+              <div 
+                className="absolute bg-black bg-opacity-80 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-sm font-medium shadow-lg flex items-center justify-center"
+                style={{ 
+                  top: '12px',
+                  right: '12px',
+                  width: '50px',
+                  height: '28px',
+                  contain: 'layout'
+                }}
+              >
                 1 / {images.length}
               </div>
 
               {images.length > 1 && (
-                <div className="badge-placeholder badge-cta bg-white bg-opacity-90 backdrop-blur-sm text-black px-4 py-2 rounded-full text-sm font-medium shadow-lg flex items-center justify-center">
+                <div 
+                  className="absolute bg-white bg-opacity-90 backdrop-blur-sm text-black px-4 py-2 rounded-full text-sm font-medium shadow-lg flex items-center justify-center"
+                  style={{ 
+                    bottom: '12px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    width: '200px',
+                    height: '32px',
+                    contain: 'layout'
+                  }}
+                >
                   Toque para ver as {images.length} fotos
                 </div>
               )}
@@ -416,16 +407,32 @@ export function ImageGallery({
                   />
                 </div>
 
-                {/* Badge desktop FIXO */}
-                <div className="badge-placeholder badge-destaque">
-                  {images[0].Destaque === "Sim" && (
-                    <div className="bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg w-full h-full flex items-center justify-center">
-                      ⭐ DESTAQUE
-                    </div>
-                  )}
-                </div>
+                {/* BADGES DESKTOP - VOLTA AO INLINE STYLE */}
+                {images[0].Destaque === "Sim" && (
+                  <div 
+                    className="absolute bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg flex items-center justify-center"
+                    style={{ 
+                      top: '16px',
+                      left: '16px',
+                      width: '80px',
+                      height: '24px',
+                      contain: 'layout'
+                    }}
+                  >
+                    ⭐ DESTAQUE
+                  </div>
+                )}
 
-                <div className="badge-contador badge-contador-desktop bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg flex items-center justify-center">
+                <div 
+                  className="absolute bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg flex items-center justify-center"
+                  style={{ 
+                    top: '16px',
+                    right: '16px',
+                    width: '60px',
+                    height: '24px',
+                    contain: 'layout'
+                  }}
+                >
                   {images.length} foto{images.length > 1 ? 's' : ''}
                 </div>
               </div>
@@ -480,23 +487,21 @@ export function ImageGallery({
                         />
                       </div>
                       
-                      {/* Badge thumbnails FIXO */}
-                      <div 
-                        className="badge-placeholder absolute"
-                        style={{ 
-                          top: '8px',
-                          left: '8px',
-                          width: '20px',
-                          height: '20px',
-                          contain: 'layout size'
-                        }}
-                      >
-                        {image.Destaque === "Sim" && (
-                          <div className="bg-gray-900 text-white text-xs font-bold rounded w-full h-full flex items-center justify-center">
-                            ⭐
-                          </div>
-                        )}
-                      </div>
+                      {/* Badge thumbnails - VOLTA AO SIMPLES */}
+                      {image.Destaque === "Sim" && (
+                        <div 
+                          className="absolute bg-gray-900 text-white text-xs font-bold rounded flex items-center justify-center"
+                          style={{ 
+                            top: '8px',
+                            left: '8px',
+                            width: '20px',
+                            height: '20px',
+                            contain: 'layout'
+                          }}
+                        >
+                          ⭐
+                        </div>
+                      )}
                       
                       {isLastImage && images.length > 5 && (
                         <div 
