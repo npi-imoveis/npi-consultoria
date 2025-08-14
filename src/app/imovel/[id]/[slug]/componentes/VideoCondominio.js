@@ -1,192 +1,193 @@
 "use client";
-import { useState } from "react";
-import { getYoutubeEmbedUrl } from "@/app/utils/youtube-extractor";
+import { useState, useEffect } from "react";
 
 export default function VideoCondominio({ imovel }) {
   const [videoLoaded, setVideoLoaded] = useState(false);
-  const [video, setVideo] = useState(null);
-
-  // 🎥 FUNÇÃO ULTRA-ROBUSTA: Extrair e validar ID do vídeo YouTube
-  const getValidYouTubeVideoId = () => {
-    console.log('🎥 VideoCondominio - Debug completo:');
-    console.log('🎥 imovel:', imovel);
-    console.log('🎥 imovel.Video:', imovel?.Video);
-    console.log('🎥 Tipo de imovel.Video:', typeof imovel?.Video);
+  const [thumbnailUrl, setThumbnailUrl] = useState(null);
+  const [thumbnailLoading, setThumbnailLoading] = useState(true);
+  
+  // 🔍 CONSOLE DESTACADO para garantir visibilidade
+  console.log('🔥🔥🔥 ===== VIDEO IMOVEL DEBUG ===== 🔥🔥🔥');
+  console.log('🔥 imovel completo:', imovel);
+  console.log('🔥 imovel.Video:', imovel?.Video);
+  console.log('🔥🔥🔥 ================================ 🔥🔥🔥');
+  
+  // 🎯 EXTRAÇÃO ULTRA-ROBUSTA do videoId (adaptada para imóvel)
+  const extractVideoId = () => {
+    console.log('🔍 INICIANDO EXTRAÇÃO DE VIDEO ID DO IMOVEL');
     
-    // ✅ VERIFICAÇÃO 1: imovel não existe
-    if (!imovel) {
-      console.log('🎥 RETORNO: null (imovel não existe)');
+    if (!imovel?.Video) {
+      console.log('❌ Sem imovel.Video');
       return null;
     }
     
-    // ✅ VERIFICAÇÃO 2: imovel.Video não existe ou é falsy
-    if (!imovel.Video) {
-      console.log('🎥 RETORNO: null (imovel.Video é falsy)');
+    console.log('✅ imovel.Video existe:', imovel.Video);
+    console.log('✅ Tipo:', typeof imovel.Video);
+    console.log('✅ É array?', Array.isArray(imovel.Video));
+    
+    if (typeof imovel.Video !== 'object' || imovel.Video === null) {
+      console.log('❌ imovel.Video não é objeto válido');
       return null;
     }
     
-    // ✅ VERIFICAÇÃO 3: imovel.Video é explicitamente null
-    if (imovel.Video === null) {
-      console.log('🎥 RETORNO: null (imovel.Video é null)');
-      return null;
-    }
-    
-    // ✅ VERIFICAÇÃO 4: imovel.Video é explicitamente undefined
-    if (imovel.Video === undefined) {
-      console.log('🎥 RETORNO: null (imovel.Video é undefined)');
-      return null;
-    }
-    
-    // ✅ VERIFICAÇÃO 5: imovel.Video é string vazia
-    if (imovel.Video === "") {
-      console.log('🎥 RETORNO: null (imovel.Video é string vazia)');
-      return null;
-    }
-    
-    // ✅ VERIFICAÇÃO 6: imovel.Video é boolean false
-    if (imovel.Video === false) {
-      console.log('🎥 RETORNO: null (imovel.Video é false)');
-      return null;
-    }
-    
-    // ✅ VERIFICAÇÃO 7: imovel.Video não é objeto
-    if (typeof imovel.Video !== 'object') {
-      console.log('🎥 RETORNO: null (imovel.Video não é objeto, é:', typeof imovel.Video);
-      return null;
-    }
-    
-    // ✅ VERIFICAÇÃO 8: imovel.Video é array (não esperado)
     if (Array.isArray(imovel.Video)) {
-      console.log('🎥 RETORNO: null (imovel.Video é array, não esperado)');
+      console.log('❌ imovel.Video é array (não esperado)');
       return null;
     }
     
-    // ✅ VERIFICAÇÃO 9: imovel.Video é objeto vazio
-    const videoKeys = Object.keys(imovel.Video);
-    if (videoKeys.length === 0) {
-      console.log('🎥 RETORNO: null (imovel.Video é objeto vazio)');
-      return null;
-    }
+    console.log('✅ Keys:', Object.keys(imovel.Video));
+    console.log('✅ Values:', Object.values(imovel.Video));
     
-    console.log('🎥 imovel.Video tem keys:', videoKeys);
-    
-    // ✅ EXTRAÇÃO E VALIDAÇÃO: Tentar extrair ID válido do YouTube
+    // MÉTODO 1: Extração padrão (Object.values)
     try {
-      let rawVideoValue = null;
-      
-      // MÉTODO 1: Tentar extrair do primeiro valor do objeto
       const videoValues = Object.values(imovel.Video);
-      console.log('🎥 Valores do objeto Video:', videoValues);
+      console.log('🔍 Valores do objeto Video:', videoValues);
       
       if (videoValues.length > 0) {
         const firstValue = videoValues[0];
-        console.log('🎥 Primeiro valor:', firstValue);
+        console.log('🔍 Primeiro valor:', firstValue);
         
-        if (firstValue && typeof firstValue === 'object') {
-          // Se o primeiro valor é um objeto, tentar extrair propriedades
-          rawVideoValue = firstValue.Video || firstValue.url || firstValue.videoId || firstValue.id;
-          console.log('🎥 Valor bruto extraído do objeto interno:', rawVideoValue);
-        } else if (firstValue && typeof firstValue === 'string') {
-          // Se o primeiro valor é uma string, usar diretamente
-          rawVideoValue = firstValue;
-          console.log('🎥 Valor bruto extraído como string direta:', rawVideoValue);
+        if (firstValue && typeof firstValue === 'object' && firstValue.Video) {
+          const extractedId = firstValue.Video;
+          console.log('✅ MÉTODO 1A - ID extraído do objeto interno:', extractedId);
+          const validId = validateYouTubeId(extractedId);
+          if (validId) return validId;
+        } else if (firstValue && typeof firstValue === 'string' && firstValue.trim() !== '') {
+          const extractedId = firstValue.trim();
+          console.log('✅ MÉTODO 1B - ID extraído como string direta:', extractedId);
+          const validId = validateYouTubeId(extractedId);
+          if (validId) return validId;
         }
       }
-      
-      // MÉTODO 2: Se não encontrou, tentar propriedades diretas
-      if (!rawVideoValue) {
-        rawVideoValue = imovel.Video.Video || imovel.Video.url || imovel.Video.videoId || imovel.Video.id;
-        console.log('🎥 Valor bruto extraído das propriedades diretas:', rawVideoValue);
-      }
-      
-      // ✅ VERIFICAÇÕES BÁSICAS: Validar se o valor bruto é válido
-      if (!rawVideoValue) {
-        console.log('🎥 RETORNO: null (valor bruto não encontrado)');
-        return null;
-      }
-      
-      if (typeof rawVideoValue !== 'string') {
-        console.log('🎥 RETORNO: null (valor bruto não é string, é:', typeof rawVideoValue, ')');
-        return null;
-      }
-      
-      const trimmedValue = rawVideoValue.trim();
-      if (trimmedValue === '') {
-        console.log('🎥 RETORNO: null (valor bruto é string vazia)');
-        return null;
-      }
-      
-      console.log('🎥 Valor bruto válido encontrado:', trimmedValue);
-      
-      // 🎯 VALIDAÇÃO YOUTUBE: Verificar se é um videoId válido do YouTube
-      const validVideoId = extractYouTubeVideoId(trimmedValue);
-      
-      if (!validVideoId) {
-        console.log('🎥 RETORNO: null (não é um vídeo válido do YouTube)');
-        return null;
-      }
-      
-      console.log('🎥 RETORNO: VideoId válido do YouTube:', validVideoId);
-      return validVideoId;
-      
     } catch (error) {
-      console.error("🎥 ERRO ao extrair e validar ID do vídeo:", error);
-      console.log('🎥 RETORNO: null (erro na extração)');
-      return null;
+      console.log('❌ MÉTODO 1 falhou:', error);
     }
+    
+    // MÉTODO 2: Tentar propriedades diretas
+    const directProperties = ['Video', 'video', 'videoId', 'id', 'url', 'embed'];
+    for (const prop of directProperties) {
+      if (imovel.Video[prop]) {
+        console.log(`🔍 Testando propriedade direta: ${prop} =`, imovel.Video[prop]);
+        const validId = validateYouTubeId(imovel.Video[prop]);
+        if (validId) {
+          console.log(`✅ MÉTODO 2 - ID encontrado em propriedade ${prop}:`, validId);
+          return validId;
+        }
+      }
+    }
+    
+    // MÉTODO 3: Busca profunda em toda estrutura
+    const searchDeep = (obj, path = '') => {
+      if (typeof obj !== 'object' || obj === null || Array.isArray(obj)) return null;
+      
+      for (const [key, value] of Object.entries(obj)) {
+        const currentPath = path ? `${path}.${key}` : key;
+        console.log(`🔍 Busca profunda: ${currentPath} =`, value);
+        
+        if (typeof value === 'string' && value.trim() !== '') {
+          const validId = validateYouTubeId(value.trim());
+          if (validId) {
+            console.log(`✅ MÉTODO 3 - ID encontrado em ${currentPath}:`, validId);
+            return validId;
+          }
+        } else if (typeof value === 'object' && value !== null) {
+          const deepResult = searchDeep(value, currentPath);
+          if (deepResult) return deepResult;
+        }
+      }
+      return null;
+    };
+    
+    const deepSearchResult = searchDeep(imovel.Video);
+    if (deepSearchResult) return deepSearchResult;
+    
+    console.log('❌ Nenhum videoId válido encontrado em toda a estrutura do imovel');
+    return null;
   };
 
-  // 🎯 FUNÇÃO AUXILIAR: Extrair videoId válido de URLs ou IDs do YouTube
-  const extractYouTubeVideoId = (input) => {
-    if (!input || typeof input !== 'string') return null;
+  // 🎯 VALIDAÇÃO ULTRA-ROBUSTA do YouTube ID
+  const validateYouTubeId = (input) => {
+    console.log('🔍 Validando input:', input);
+    
+    if (!input || typeof input !== 'string') {
+      console.log('❌ Input inválido para validação:', typeof input);
+      return null;
+    }
     
     const trimmed = input.trim();
-    console.log('🔍 Analisando entrada para YouTube:', trimmed);
+    if (trimmed === '') {
+      console.log('❌ Input vazio após trim');
+      return null;
+    }
     
-    // PADRÃO 1: VideoId direto (11 caracteres, alfanumérico + _ -)
+    // Lista de IDs problemáticos conhecidos
+    const blockedIds = ['4Aq7szgycT4', 'dQw4w9WgXcQ', 'undefined', 'null', ''];
+    
+    // PADRÃO 1: VideoId direto (11 caracteres)
     const directIdPattern = /^[a-zA-Z0-9_-]{11}$/;
     if (directIdPattern.test(trimmed)) {
-      console.log('✅ VideoId direto detectado:', trimmed);
+      if (blockedIds.includes(trimmed)) {
+        console.log('❌ ID direto está bloqueado:', trimmed);
+        return null;
+      }
+      console.log('✅ VideoId direto válido:', trimmed);
       return trimmed;
     }
     
-    // PADRÃO 2: URL padrão do YouTube (watch?v=)
-    const standardUrlPattern = /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
-    const standardMatch = trimmed.match(standardUrlPattern);
-    if (standardMatch) {
-      console.log('✅ URL padrão do YouTube detectada, videoId:', standardMatch[1]);
-      return standardMatch[1];
+    // PADRÃO 2: URL watch
+    const watchPattern = /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+    const watchMatch = trimmed.match(watchPattern);
+    if (watchMatch) {
+      const id = watchMatch[1];
+      if (blockedIds.includes(id)) {
+        console.log('❌ ID da URL watch está bloqueado:', id);
+        return null;
+      }
+      console.log('✅ VideoId extraído de URL watch:', id);
+      return id;
     }
     
-    // PADRÃO 3: URL embed do YouTube
-    const embedUrlPattern = /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/;
-    const embedMatch = trimmed.match(embedUrlPattern);
+    // PADRÃO 3: URL embed
+    const embedPattern = /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/;
+    const embedMatch = trimmed.match(embedPattern);
     if (embedMatch) {
-      console.log('✅ URL embed do YouTube detectada, videoId:', embedMatch[1]);
-      return embedMatch[1];
+      const id = embedMatch[1];
+      if (blockedIds.includes(id)) {
+        console.log('❌ ID da URL embed está bloqueado:', id);
+        return null;
+      }
+      console.log('✅ VideoId extraído de URL embed:', id);
+      return id;
     }
     
-    // PADRÃO 4: URL shorts do YouTube
-    const shortsUrlPattern = /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/;
-    const shortsMatch = trimmed.match(shortsUrlPattern);
+    // PADRÃO 4: URL shorts
+    const shortsPattern = /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/;
+    const shortsMatch = trimmed.match(shortsPattern);
     if (shortsMatch) {
-      console.log('✅ URL shorts do YouTube detectada, videoId:', shortsMatch[1]);
-      return shortsMatch[1];
+      const id = shortsMatch[1];
+      if (blockedIds.includes(id)) {
+        console.log('❌ ID da URL shorts está bloqueado:', id);
+        return null;
+      }
+      console.log('✅ VideoId extraído de URL shorts:', id);
+      return id;
     }
     
-    // ❌ PADRÕES INVÁLIDOS: Detectar URLs que NÃO são vídeos
+    // URLs inválidas
     const invalidPatterns = [
-      /youtube\.com\/@/,        // URL de canal (@usuario)
-      /youtube\.com\/channel/,  // URL de canal (channel/UC...)
-      /youtube\.com\/user/,     // URL de usuário antigo
-      /youtube\.com\/c\//,      // URL de canal personalizado
-      /youtube\.com\/playlist/, // URL de playlist
-      /youtube\.com\/?$/,       // Homepage do YouTube
+      /youtube\.com\/@/,
+      /youtube\.com\/channel/,
+      /youtube\.com\/user/,
+      /youtube\.com\/c\//,
+      /youtube\.com\/playlist/,
+      /youtube\.com\/results/,
+      /youtube\.com\/feed\/trending/,
+      /^https?:\/\/(?:www\.)?youtube\.com\/?$/
     ];
     
     for (const pattern of invalidPatterns) {
       if (pattern.test(trimmed)) {
-        console.log('❌ URL inválida detectada (não é vídeo):', trimmed);
+        console.log('❌ URL inválida detectada:', trimmed);
         return null;
       }
     }
@@ -194,84 +195,179 @@ export default function VideoCondominio({ imovel }) {
     console.log('❌ Formato não reconhecido como vídeo do YouTube:', trimmed);
     return null;
   };
-
-  // ✅ OBTER VIDEOID VÁLIDO
-  const videoId = getValidYouTubeVideoId();
   
-  // ✅ LOG FINAL DE DEBUG
-  console.log('🎥 VideoId final obtido:', videoId);
-  console.log('🎥 Componente vai renderizar?', !!videoId);
-  
-  // ✅ EARLY RETURN: Se não há vídeo válido, não renderizar NADA
-  if (!videoId) {
-    console.log('🎥 VideoCondominio - Componente NÃO será renderizado (sem videoId válido)');
+  // 🎯 TESTAR THUMBNAILS DISPONÍVEIS
+  const testThumbnail = async (videoId) => {
+    console.log('🖼️ Testando thumbnails para videoId:', videoId);
+    
+    const thumbnailOptions = [
+      `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`,
+      `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+      `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`,
+      `https://i.ytimg.com/vi/${videoId}/default.jpg`
+    ];
+    
+    for (const url of thumbnailOptions) {
+      try {
+        console.log('🧪 Testando URL:', url);
+        
+        const response = await fetch(url, { method: 'HEAD' });
+        if (response.ok) {
+          console.log('✅ Thumbnail encontrado:', url);
+          return url;
+        }
+        console.log('❌ Thumbnail não disponível:', url, 'Status:', response.status);
+      } catch (error) {
+        console.log('❌ Erro ao testar thumbnail:', url, error);
+      }
+    }
+    
+    console.log('❌ Nenhum thumbnail disponível');
     return null;
-  }
-
-  // ✅ FUNÇÃO: Carregar vídeo
-  const loadVideo = () => {
-    console.log('🎥 Carregando vídeo com VideoId:', videoId);
-    setVideoLoaded(true);
-    const videoData = getYoutubeEmbedUrl(videoId);
-    setVideo(videoData);
-    console.log('🎥 Dados do vídeo carregados:', videoData);
   };
 
-  // ✅ RENDERIZAÇÃO: Só chega aqui se há videoId válido
-  console.log('🎥 VideoCondominio - Renderizando componente com VideoId válido:', videoId);
+  // Extrair videoId
+  const videoId = extractVideoId();
   
+  console.log('🎯 VIDEO ID FINAL DO IMOVEL:', videoId);
+  
+  // 🔄 EFFECT: Testar thumbnail quando videoId for encontrado
+  useEffect(() => {
+    if (videoId) {
+      console.log('🔄 Testando thumbnails para videoId do imóvel:', videoId);
+      setThumbnailLoading(true);
+      
+      testThumbnail(videoId).then((url) => {
+        console.log('🎯 Thumbnail final escolhido para imóvel:', url);
+        setThumbnailUrl(url);
+        setThumbnailLoading(false);
+      });
+    }
+  }, [videoId]);
+  
+  // ❌ EARLY RETURN: Sem videoId
+  if (!videoId) {
+    console.log('❌ Componente VideoCondominio do IMOVEL não será renderizado - sem videoId');
+    return null;
+  }
+  
+  // URLs do vídeo
+  const embedUrl = `https://www.youtube.com/embed/${videoId}`;
+  const embedUrlWithAutoplay = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`;
+  const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
+  const videoTitle = `Vídeo do empreendimento ${imovel?.Empreendimento || 'Imóvel'}`;
+
+  console.log('🎯 Renderizando componente IMOVEL com videoId:', videoId);
+  console.log('🎯 Thumbnail URL:', thumbnailUrl);
+  console.log('🎯 Thumbnail loading:', thumbnailLoading);
+
   return (
     <div className="bg-white container mx-auto p-4 md:p-10 mt-4 border-t-2">
       <h2 className="text-xl font-bold text-black" id="video">
         Vídeo {imovel?.Empreendimento || 'do Empreendimento'}
       </h2>
+      
       <div className="relative w-full pb-[56.25%] h-0 overflow-hidden rounded-lg mt-8">
         {videoLoaded ? (
           <iframe
             className="absolute top-0 left-0 w-full h-full"
-            src={video?.embed}
-            title={`Vídeo do empreendimento ${imovel?.Empreendimento || ''}`}
+            src={embedUrlWithAutoplay}
+            title={videoTitle}
             frameBorder="0"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowFullScreen
             loading="lazy"
-          ></iframe>
+          />
         ) : (
           <div
-            onClick={loadVideo}
-            className="absolute top-0 left-0 w-full h-full cursor-pointer"
+            onClick={() => {
+              console.log('🎥 Carregando vídeo do IMOVEL:', videoId);
+              setVideoLoaded(true);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                console.log('🎥 Carregando vídeo do IMOVEL via teclado:', videoId);
+                setVideoLoaded(true);
+              }
+            }}
+            tabIndex={0}
+            className="absolute top-0 left-0 w-full h-full cursor-pointer group bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center"
             aria-label="Carregar vídeo"
+            role="button"
           >
-            {/* Botão play centralizado */}
-            <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20 rounded-lg">
-              <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center transition-transform hover:scale-110">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="white"
-                  viewBox="0 0 24 24"
-                  className="w-8 h-8 ml-1"
-                >
-                  <path d="M8 5v14l11-7z" />
+            {/* CONDITIONAL RENDERING baseado no estado do thumbnail */}
+            {thumbnailLoading ? (
+              // Estado de carregamento
+              <div className="text-white text-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+                <div>Carregando preview...</div>
+              </div>
+            ) : thumbnailUrl ? (
+              // Thumbnail encontrado
+              <>
+                <img
+                  src={thumbnailUrl}
+                  alt={`Thumbnail do vídeo ${imovel?.Empreendimento || ''}`}
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  onLoad={() => console.log('✅ Thumbnail do IMOVEL renderizado com sucesso!')}
+                  onError={() => console.log('❌ Erro ao renderizar thumbnail do IMOVEL')}
+                />
+                <div className="absolute inset-0 bg-black bg-opacity-30 group-hover:bg-opacity-20 transition-all duration-300" />
+              </>
+            ) : (
+              // Fallback final - sem thumbnail
+              <div className="text-white text-center">
+                <div className="text-6xl mb-4">📺</div>
+                <div className="text-lg font-semibold">Vídeo Disponível</div>
+                <div className="text-sm opacity-75">Clique para assistir</div>
+              </div>
+            )}
+            
+            {/* Play button - sempre visível */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="bg-red-600 hover:bg-red-700 rounded-full p-4 lg:p-6 transition-all duration-300 transform group-hover:scale-110 shadow-lg z-10">
+                <svg className="w-8 h-8 lg:w-12 lg:h-12 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z"/>
                 </svg>
               </div>
             </div>
             
-            {/* Thumbnail do YouTube - só carrega se temos videoId válido */}
-            <img
-              src={`https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`}
-              alt={`Thumbnail do vídeo ${imovel?.Empreendimento || ''}`}
-              className="absolute top-0 left-0 w-full h-full object-cover rounded-lg"
-              loading="lazy"
-              onError={(e) => {
-                console.log('🎥 Erro ao carregar thumbnail maxres, tentando hqdefault para videoId:', videoId);
-                e.target.src = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
-              }}
-              onLoad={() => {
-                console.log('🎥 Thumbnail carregada com sucesso para videoId:', videoId);
-              }}
-            />
+            {/* YouTube badge */}
+            <div className="absolute top-3 right-3 bg-red-600 text-white px-2 py-1 rounded text-xs font-bold flex items-center gap-1 z-10">
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+              </svg>
+              YouTube
+            </div>
+            
+            {/* Title overlay */}
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/50 to-transparent p-4 z-10">
+              <h3 className="text-white font-semibold text-sm lg:text-base line-clamp-2">
+                {videoTitle}
+              </h3>
+            </div>
           </div>
         )}
+      </div>
+      
+      {/* Link para YouTube */}
+      <div className="mt-6 text-center">
+        <p className="text-sm text-gray-600 mb-2">
+          Prefere assistir no YouTube?
+        </p>
+        <a 
+          href={watchUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors"
+          aria-label={`Assistir ${videoTitle} no YouTube`}
+        >
+          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+          </svg>
+          <span className="font-medium">Ver no YouTube</span>
+        </a>
       </div>
     </div>
   );
