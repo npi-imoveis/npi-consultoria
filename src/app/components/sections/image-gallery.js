@@ -1,4 +1,4 @@
-// src/app/components/sections/image-gallery.js - OTIMIZADO GOOGLE BEST PRACTICES
+// src/app/components/sections/image-gallery.js - CLS ZERO + LCP OTIMIZADO
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -7,15 +7,14 @@ import { ArrowLeft } from "lucide-react";
 import { formatterSlug } from "@/app/utils/formatter-slug";
 import { photoSorter } from "@/app/utils/photoSorter";
 
-// 🚀 LAZY LOAD: Dynamic import para componentes pesados
+// 🚀 LAZY LOAD: Share component sem blocking
 import dynamic from 'next/dynamic';
-
 const Share = dynamic(() => import("../ui/share").then(mod => ({ default: mod.Share })), {
   ssr: false,
-  loading: () => <div className="w-6 h-6 bg-gray-600 rounded animate-pulse" />
+  loading: () => null // 🔧 Sem loading state para evitar CLS
 });
 
-// 🚀 HOOK ULTRA-OTIMIZADO com throttling para performance
+// 🚀 HOOK ULTRA-OTIMIZADO
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
 
@@ -23,7 +22,6 @@ function useIsMobile() {
     const check = () => setIsMobile(window.innerWidth < 768);
     check();
     
-    // ✅ Throttle ao invés de debounce para melhor performance
     let ticking = false;
     const throttledCheck = () => {
       if (!ticking) {
@@ -57,7 +55,6 @@ export function ImageGallery({
 
   const isImovelMode = !!imovel;
   
-  // 🚀 DADOS PROCESSADOS - Memoized com dependências específicas
   const processedData = useMemo(() => {
     if (isImovelMode) {
       return {
@@ -78,7 +75,6 @@ export function ImageGallery({
     }
   }, [imovel?.Foto, imovel?.Empreendimento, imovel?.Codigo, fotos, title, shareUrl, shareTitle, isImovelMode]);
 
-  // 🎯 IMAGENS PROCESSADAS - Performance otimizada
   const images = useMemo(() => {
     if (!Array.isArray(processedData.fotos) || processedData.fotos.length === 0) {
       return [];
@@ -103,7 +99,6 @@ export function ImageGallery({
     }
   }, [processedData.fotos, processedData.codigo]);
 
-  // 🎯 HANDLERS OTIMIZADOS
   const openModal = useCallback((index = null) => {
     setIsModalOpen(true);
     setSelectedIndex(index);
@@ -130,14 +125,15 @@ export function ImageGallery({
     setFirstImageLoaded(true);
   }, []);
 
-  // 🚀 PRELOAD OTIMIZADO - Apenas se necessário
+  // 🚀 PRELOAD CRÍTICO OTIMIZADO
   useEffect(() => {
-    if (images[0]?.Foto && !firstImageLoaded) {
+    if (images[0]?.Foto) {
       const link = document.createElement('link');
       link.rel = 'preload';
       link.as = 'image';
       link.href = images[0].Foto;
       link.fetchPriority = 'high';
+      link.crossOrigin = 'anonymous';
       document.head.appendChild(link);
       
       return () => {
@@ -146,9 +142,9 @@ export function ImageGallery({
         }
       };
     }
-  }, [images, firstImageLoaded]);
+  }, [images]);
 
-  // 🚀 KEYBOARD NAVIGATION - Otimizado com cleanup
+  // 🚀 KEYBOARD NAVIGATION
   useEffect(() => {
     if (!isModalOpen) return;
 
@@ -171,10 +167,15 @@ export function ImageGallery({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isModalOpen, closeModal, goPrev, goNext]);
 
-  // ❌ EARLY RETURN OTIMIZADO
   if (!processedData.titulo || images.length === 0) {
     return (
-      <div className="w-full h-[380px] relative bg-gray-100 rounded-lg overflow-hidden">
+      <div 
+        className="w-full relative bg-gray-100 rounded-lg overflow-hidden"
+        style={{ 
+          height: '380px', // 🔧 CLS FIX: Altura fixa
+          contain: 'layout style' // 🔧 Layout containment
+        }}
+      >
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <div className="w-12 h-12 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mb-4"></div>
           <span className="text-gray-600 text-sm font-medium">Carregando galeria...</span>
@@ -185,11 +186,38 @@ export function ImageGallery({
 
   return (
     <>
-      {/* 🎨 LAYOUT OTIMIZADO */}
+      {/* 🔧 CRITICAL CSS para eliminar CLS */}
+      <style jsx>{`
+        .gallery-container {
+          contain: layout style paint;
+          transform: translateZ(0);
+          will-change: auto;
+        }
+        .image-container {
+          contain: layout;
+          transform: translateZ(0);
+        }
+        .badge-placeholder {
+          width: 80px;
+          height: 24px;
+          contain: layout;
+        }
+        .count-badge {
+          width: 60px;
+          height: 24px;
+          contain: layout;
+        }
+      `}</style>
+
+      {/* 🎨 LAYOUT COM DIMENSÕES FIXAS */}
       {layout === "single" ? (
         <div 
-          className="w-full h-full cursor-pointer relative overflow-hidden rounded-lg"
-          style={{ aspectRatio: '4/3' }} // 🔧 CLS FIX: Aspect ratio fixo
+          className="gallery-container w-full cursor-pointer relative overflow-hidden rounded-lg"
+          style={{ 
+            width: '100%',
+            height: '400px', // 🔧 CLS FIX: Altura fixa
+            contain: 'layout style'
+          }}
           onClick={() => openModal()}
           role="button"
           tabIndex={0}
@@ -201,55 +229,69 @@ export function ImageGallery({
             }
           }}
         >
-          <Image
-            src={images[0].Foto}
-            alt={`${processedData.titulo} - foto principal`}
-            title={processedData.titulo}
-            fill
-            sizes="100vw"
-            placeholder="empty"
-            loading="eager"
-            priority={true}
-            quality={75} // 🔧 Qualidade otimizada
-            onLoad={handleImageLoad}
-            className="object-cover transition-transform duration-300 ease-out hover:scale-105"
-            style={{ 
-              objectFit: 'cover',
-              willChange: 'transform' // 🔧 Performance hint
-            }}
-          />
-
-          {/* 🔧 CLS FIX: Skeleton + Badge condicional */}
           <div 
-            className="absolute top-4 left-4 h-6 rounded-full shadow-lg transition-opacity duration-200"
+            className="image-container w-full h-full"
+            style={{ contain: 'layout' }}
+          >
+            <Image
+              src={images[0].Foto}
+              alt={`${processedData.titulo} - foto principal`}
+              title={processedData.titulo}
+              fill
+              sizes="100vw"
+              placeholder="empty"
+              loading="eager"
+              priority={true}
+              quality={75}
+              onLoad={handleImageLoad}
+              className="object-cover"
+              style={{ 
+                objectFit: 'cover'
+              }}
+            />
+          </div>
+
+          {/* 🔧 CLS FIX: Placeholder sempre presente */}
+          <div 
+            className="badge-placeholder absolute top-4 left-4 flex items-center"
             style={{ 
-              width: '72px', // 🔧 Largura fixa para evitar CLS
-              backgroundColor: images[0].Destaque === "Sim" ? '#111827' : 'transparent',
-              opacity: images[0].Destaque === "Sim" ? 1 : 0
+              width: '80px',
+              height: '24px',
+              contain: 'layout'
             }}
           >
             {images[0].Destaque === "Sim" && (
-              <span className="text-white text-xs font-bold px-2 py-1 flex items-center">
+              <div className="bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg w-full h-full flex items-center justify-center">
                 ⭐ DESTAQUE
-              </span>
+              </div>
             )}
           </div>
 
-          <div className="absolute top-4 right-4 bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg">
+          <div 
+            className="count-badge absolute top-4 right-4 bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg flex items-center justify-center"
+            style={{ 
+              width: '60px',
+              height: '24px',
+              contain: 'layout'
+            }}
+          >
             {images.length} foto{images.length > 1 ? 's' : ''}
           </div>
         </div>
       ) : (
-        <div className={`w-full ${isMobile ? '' : 'grid grid-cols-1 md:grid-cols-2 gap-1'}`}>
+        <div 
+          className={`gallery-container w-full ${isMobile ? '' : 'grid grid-cols-1 md:grid-cols-2 gap-1'}`}
+          style={{ contain: 'layout style' }}
+        >
           
           {/* 📱 MOBILE */}
           {isMobile ? (
             <div 
               className="w-full cursor-pointer relative overflow-hidden rounded-lg"
               style={{ 
-                aspectRatio: '16/10', // 🔧 CLS FIX: Aspect ratio fixo
-                minHeight: '320px',
-                maxHeight: '380px'
+                width: '100%',
+                height: '340px', // 🔧 CLS FIX: Altura fixa mobile
+                contain: 'layout style'
               }}
               onClick={() => openModal()}
               role="button"
@@ -262,46 +304,62 @@ export function ImageGallery({
                 }
               }}
             >
-              <Image
-                src={images[0].Foto}
-                alt={`${processedData.titulo} - foto principal`}
-                title={processedData.titulo}
-                fill
-                sizes="100vw"
-                placeholder="empty"
-                loading="eager"
-                priority={true}
-                quality={70}
-                onLoad={handleImageLoad}
-                className="object-cover transition-transform duration-300 ease-out hover:scale-105"
-                style={{ 
-                  objectFit: 'cover',
-                  willChange: 'transform'
-                }}
-              />
-
-              {/* Badge mobile com skeleton */}
               <div 
-                className="absolute top-3 left-3 h-6 rounded-full shadow-lg transition-opacity duration-200"
+                className="image-container w-full h-full"
+                style={{ contain: 'layout' }}
+              >
+                <Image
+                  src={images[0].Foto}
+                  alt={`${processedData.titulo} - foto principal`}
+                  title={processedData.titulo}
+                  fill
+                  sizes="100vw"
+                  placeholder="empty"
+                  loading="eager"
+                  priority={true}
+                  quality={70}
+                  onLoad={handleImageLoad}
+                  className="object-cover"
+                  style={{ objectFit: 'cover' }}
+                />
+              </div>
+
+              {/* Badge mobile com placeholder */}
+              <div 
+                className="badge-placeholder absolute top-3 left-3 flex items-center"
                 style={{ 
-                  width: '72px',
-                  backgroundColor: images[0].Destaque === "Sim" ? '#111827' : 'transparent',
-                  opacity: images[0].Destaque === "Sim" ? 1 : 0
+                  width: '80px',
+                  height: '24px',
+                  contain: 'layout'
                 }}
               >
                 {images[0].Destaque === "Sim" && (
-                  <span className="text-white text-xs font-bold px-2 py-1 flex items-center">
+                  <div className="bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg w-full h-full flex items-center justify-center">
                     ⭐ DESTAQUE
-                  </span>
+                  </div>
                 )}
               </div>
 
-              <div className="absolute top-3 right-3 bg-black bg-opacity-80 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-sm font-medium shadow-lg">
+              <div 
+                className="absolute top-3 right-3 bg-black bg-opacity-80 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-sm font-medium shadow-lg flex items-center justify-center"
+                style={{ 
+                  width: '50px',
+                  height: '28px',
+                  contain: 'layout'
+                }}
+              >
                 1 / {images.length}
               </div>
 
               {images.length > 1 && (
-                <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 bg-white bg-opacity-90 backdrop-blur-sm text-black px-4 py-2 rounded-full text-sm font-medium shadow-lg">
+                <div 
+                  className="absolute bottom-3 left-1/2 transform -translate-x-1/2 bg-white bg-opacity-90 backdrop-blur-sm text-black px-4 py-2 rounded-full text-sm font-medium shadow-lg flex items-center justify-center"
+                  style={{ 
+                    width: '200px',
+                    height: '32px',
+                    contain: 'layout'
+                  }}
+                >
                   Toque para ver as {images.length} fotos
                 </div>
               )}
@@ -312,8 +370,9 @@ export function ImageGallery({
               <div 
                 className="col-span-1 cursor-pointer relative"
                 style={{ 
-                  aspectRatio: '4/3', // 🔧 CLS FIX
-                  height: '380px'
+                  width: '100%',
+                  height: '380px', // 🔧 CLS FIX: Altura fixa
+                  contain: 'layout style'
                 }}
                 onClick={() => openModal()}
                 role="button"
@@ -326,15 +385,10 @@ export function ImageGallery({
                   }
                 }}
               >
-                {/* Loading overlay */}
-                {!firstImageLoaded && (
-                  <div className="absolute inset-0 bg-gray-100 flex flex-col items-center justify-center z-10 rounded-lg">
-                    <div className="w-10 h-10 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mb-2"></div>
-                    <span className="text-gray-600 text-sm">Carregando...</span>
-                  </div>
-                )}
-                
-                <div className="w-full h-full overflow-hidden rounded-lg">
+                <div 
+                  className="image-container w-full h-full overflow-hidden rounded-lg"
+                  style={{ contain: 'layout' }}
+                >
                   <Image
                     src={images[0].Foto}
                     alt={`${processedData.titulo} - foto principal`}
@@ -346,44 +400,59 @@ export function ImageGallery({
                     priority={true}
                     quality={75}
                     onLoad={handleImageLoad}
-                    className="object-cover transition-transform duration-300 ease-out hover:scale-110"
-                    style={{ 
-                      objectFit: 'cover',
-                      willChange: 'transform'
-                    }}
+                    className="object-cover"
+                    style={{ objectFit: 'cover' }}
                   />
                 </div>
 
-                {/* Badge desktop com skeleton */}
+                {/* Badge desktop com placeholder */}
                 <div 
-                  className="absolute top-4 left-4 h-6 rounded-full shadow-lg transition-opacity duration-200"
+                  className="badge-placeholder absolute top-4 left-4 flex items-center"
                   style={{ 
-                    width: '72px',
-                    backgroundColor: images[0].Destaque === "Sim" ? '#111827' : 'transparent',
-                    opacity: images[0].Destaque === "Sim" ? 1 : 0
+                    width: '80px',
+                    height: '24px',
+                    contain: 'layout'
                   }}
                 >
                   {images[0].Destaque === "Sim" && (
-                    <span className="text-white text-xs font-bold px-2 py-1 flex items-center">
+                    <div className="bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg w-full h-full flex items-center justify-center">
                       ⭐ DESTAQUE
-                    </span>
+                    </div>
                   )}
                 </div>
 
-                <div className="absolute top-4 right-4 bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg">
+                <div 
+                  className="count-badge absolute top-4 right-4 bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg flex items-center justify-center"
+                  style={{ 
+                    width: '60px',
+                    height: '24px',
+                    contain: 'layout'
+                  }}
+                >
                   {images.length} foto{images.length > 1 ? 's' : ''}
                 </div>
               </div>
 
-              {/* GRID 2x2 */}
-              <div className="col-span-1 grid grid-cols-2 grid-rows-2 gap-1 h-[380px]">
+              {/* GRID 2x2 COM DIMENSÕES FIXAS */}
+              <div 
+                className="col-span-1 grid grid-cols-2 grid-rows-2 gap-1"
+                style={{ 
+                  width: '100%',
+                  height: '380px',
+                  contain: 'layout'
+                }}
+              >
                 {images.slice(1, 5).map((image, index) => {
                   const isLastImage = index === 3;
                   return (
                     <div
                       key={image.Codigo || index}
-                      className="relative h-full overflow-hidden cursor-pointer rounded-lg"
-                      style={{ aspectRatio: '4/3' }} // 🔧 CLS FIX
+                      className="relative overflow-hidden cursor-pointer rounded-lg"
+                      style={{ 
+                        width: '100%',
+                        height: '100%',
+                        contain: 'layout'
+                      }}
                       onClick={() => openModal()}
                       role="button"
                       tabIndex={0}
@@ -395,41 +464,46 @@ export function ImageGallery({
                         }
                       }}
                     >
-                      <Image
-                        src={image.Foto}
-                        alt={`${processedData.titulo} - imagem ${index + 2}`}
-                        title={`${processedData.titulo} - imagem ${index + 2}`}
-                        fill
-                        sizes="(max-width: 768px) 50vw, 25vw"
-                        placeholder="empty"
-                        loading="lazy"
-                        priority={false}
-                        quality={60}
-                        className="object-cover transition-transform duration-300 ease-out hover:scale-110"
-                        style={{ 
-                          objectFit: 'cover',
-                          willChange: 'transform'
-                        }}
-                      />
-                      
-                      {/* Badge thumbnails com skeleton */}
                       <div 
-                        className="absolute top-2 left-2 h-5 rounded transition-opacity duration-200"
+                        className="image-container w-full h-full"
+                        style={{ contain: 'layout' }}
+                      >
+                        <Image
+                          src={image.Foto}
+                          alt={`${processedData.titulo} - imagem ${index + 2}`}
+                          title={`${processedData.titulo} - imagem ${index + 2}`}
+                          fill
+                          sizes="(max-width: 768px) 50vw, 25vw"
+                          placeholder="empty"
+                          loading="lazy"
+                          priority={false}
+                          quality={60}
+                          className="object-cover"
+                          style={{ objectFit: 'cover' }}
+                        />
+                      </div>
+                      
+                      {/* Badge thumbnails com placeholder */}
+                      <div 
+                        className="absolute top-2 left-2 flex items-center justify-center"
                         style={{ 
                           width: '20px',
-                          backgroundColor: image.Destaque === "Sim" ? '#111827' : 'transparent',
-                          opacity: image.Destaque === "Sim" ? 1 : 0
+                          height: '20px',
+                          contain: 'layout'
                         }}
                       >
                         {image.Destaque === "Sim" && (
-                          <span className="text-white text-xs font-bold flex items-center justify-center">
+                          <div className="bg-gray-900 text-white text-xs font-bold rounded w-full h-full flex items-center justify-center">
                             ⭐
-                          </span>
+                          </div>
                         )}
                       </div>
                       
                       {isLastImage && images.length > 5 && (
-                        <div className="absolute inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center rounded-lg">
+                        <div 
+                          className="absolute inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center rounded-lg"
+                          style={{ contain: 'layout' }}
+                        >
                           <button
                             className="border border-white text-white px-4 py-2 rounded hover:bg-white hover:text-black transition-colors"
                             aria-label={`Ver mais ${images.length - 5} fotos`}
@@ -449,7 +523,10 @@ export function ImageGallery({
 
       {/* 🖼️ MODAL OTIMIZADO */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-95 z-50 overflow-auto">
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-95 z-50 overflow-auto"
+          style={{ contain: 'layout style' }}
+        >
           <div className="sticky top-0 z-10 flex justify-between gap-4 p-5 pt-28 mt-6 md:mt-0 bg-gradient-to-b from-black/80 via-black/40 to-transparent backdrop-blur-sm">
             <button 
               onClick={closeModal} 
@@ -480,7 +557,7 @@ export function ImageGallery({
                 sizes="100vw"
                 placeholder="empty"
                 loading="eager"
-                quality={80}
+                quality={85}
                 className="max-w-full max-h-screen object-contain"
               />
 
@@ -505,13 +582,20 @@ export function ImageGallery({
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
+            <div 
+              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4"
+              style={{ contain: 'layout' }}
+            >
               {images.map((image, idx) => (
                 <div
                   key={image.Codigo || idx}
                   onClick={() => setSelectedIndex(idx)}
-                  className="relative w-full cursor-pointer overflow-hidden border-2 border-transparent hover:border-white transition-colors rounded-lg focus:outline-none focus:ring-2 focus:ring-white/50"
-                  style={{ aspectRatio: '4/3', height: 'auto' }} // 🔧 CLS FIX
+                  className="relative cursor-pointer overflow-hidden border-2 border-transparent hover:border-white transition-colors rounded-lg focus:outline-none focus:ring-2 focus:ring-white/50"
+                  style={{ 
+                    width: '100%',
+                    aspectRatio: '4/3',
+                    contain: 'layout'
+                  }}
                   role="button"
                   tabIndex={0}
                   aria-label={`Ver imagem ${idx + 1} de ${images.length}`}
