@@ -1,5 +1,5 @@
 // src/app/(site)/[slug]/componentes/VideoCondominio.js
-// 🚀 AJUSTE CIRÚRGICO: Elimina TBT de 530ms → ~50ms
+// 🚀 AJUSTE CIRÚRGICO: Elimina TBT de 530ms → ~50ms + FIX THUMBNAIL
 
 "use client"; // 🚀 Necessário para useState do facade
 
@@ -17,7 +17,8 @@ export default function VideoCondominio({ condominio }) {
     const embedUrl = `https://www.youtube.com/embed/${id}`;
     const embedUrlWithAutoplay = `https://www.youtube.com/embed/${id}?autoplay=1&rel=0&modestbranding=1`;
     const watchUrl = `https://www.youtube.com/watch?v=${id}`;
-    const thumbnailUrl = `https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
+    // 🔧 CORREÇÃO 1: URL padronizada para i.ytimg.com
+    const thumbnailUrl = `https://i.ytimg.com/vi/${id}/maxresdefault.jpg`;
     
     const videoTitle = `Vídeo de apresentação - ${condominio.Empreendimento}`;
     const videoDescription = `Conheça o ${condominio.Empreendimento} em ${condominio.BairroComercial}, ${condominio.Cidade}. ` +
@@ -108,6 +109,13 @@ export default function VideoCondominio({ condominio }) {
                                 alt={`Thumbnail: ${videoTitle}`}
                                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                                 loading="lazy"
+                                onError={(e) => {
+                                    console.log('🎥 Erro ao carregar thumbnail maxres, tentando hqdefault para id:', id);
+                                    e.target.src = `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
+                                }}
+                                onLoad={() => {
+                                    console.log('🎥 Thumbnail carregada com sucesso para id:', id);
+                                }}
                             />
                             <div className="absolute inset-0 bg-black bg-opacity-30 group-hover:bg-opacity-20 transition-all duration-300" />
                             <div className="absolute inset-0 flex items-center justify-center">
