@@ -1,31 +1,238 @@
 // src/app/(site)/[slug]/componentes/VideoCondominio.js
-// 🚀 AJUSTE CIRÚRGICO: Elimina TBT de 530ms → ~50ms + FIX THUMBNAIL
+// 🚀 VERSÃO ULTRA-ROBUSTA COM DEBUG COMPLETO
 
-"use client"; // 🚀 Necessário para useState do facade
+"use client";
 
 import { useState } from 'react';
 
 export default function VideoCondominio({ condominio }) {
-    // 🚀 Estado para controlar carregamento do iframe - APENAS UMA LINHA ADICIONADA
     const [videoLoaded, setVideoLoaded] = useState(false);
     
-    // ✅ TODA LÓGICA ORIGINAL MANTIDA
-    const id = condominio?.Video ? Object.values(condominio.Video)[0]?.Video : null;
+    // 🔍 DEBUG ULTRA-COMPLETO: Log de toda a estrutura
+    console.log('🏠 VideoCondominio DEBUG COMPLETO:');
+    console.log('🏠 condominio objeto completo:', JSON.stringify(condominio, null, 2));
+    console.log('🏠 condominio.Video:', condominio?.Video);
+    console.log('🏠 Tipo de condominio.Video:', typeof condominio?.Video);
+    console.log('🏠 É array?', Array.isArray(condominio?.Video));
+    console.log('🏠 Keys do Video:', condominio?.Video ? Object.keys(condominio.Video) : 'N/A');
+    console.log('🏠 Values do Video:', condominio?.Video ? Object.values(condominio.Video) : 'N/A');
     
-    if (!id) return null;
+    // 🎯 EXTRAÇÃO ULTRA-ROBUSTA do videoId
+    const extractVideoId = () => {
+        // Verificações básicas
+        if (!condominio) {
+            console.log('❌ Condominio não existe');
+            return null;
+        }
+        
+        if (!condominio.Video) {
+            console.log('❌ condominio.Video não existe');
+            return null;
+        }
+        
+        if (typeof condominio.Video !== 'object') {
+            console.log('❌ condominio.Video não é objeto');
+            return null;
+        }
+        
+        if (Array.isArray(condominio.Video)) {
+            console.log('❌ condominio.Video é array (não esperado)');
+            return null;
+        }
+        
+        const videoKeys = Object.keys(condominio.Video);
+        if (videoKeys.length === 0) {
+            console.log('❌ condominio.Video é objeto vazio');
+            return null;
+        }
+        
+        console.log('✅ condominio.Video é válido, processando...');
+        
+        // MÉTODO 1: Extração original (Object.values)
+        try {
+            const firstValue = Object.values(condominio.Video)[0];
+            console.log('🔍 Primeiro valor:', firstValue);
+            
+            if (firstValue && typeof firstValue === 'object' && firstValue.Video) {
+                const extractedId = firstValue.Video;
+                console.log('✅ MÉTODO 1 - ID extraído:', extractedId);
+                return validateYouTubeId(extractedId);
+            }
+        } catch (error) {
+            console.log('❌ MÉTODO 1 falhou:', error);
+        }
+        
+        // MÉTODO 2: Tentar todas as keys possíveis
+        const possibleKeys = ['Video', 'video', 'videoId', 'id', 'url', 'embed'];
+        for (const key of videoKeys) {
+            console.log(`🔍 Testando key: ${key}`);
+            const value = condominio.Video[key];
+            console.log(`🔍 Valor da key ${key}:`, value);
+            
+            if (value && typeof value === 'object') {
+                // Se é objeto, tentar extrair propriedades
+                for (const subKey of possibleKeys) {
+                    if (value[subKey]) {
+                        console.log(`✅ MÉTODO 2A - ID encontrado em ${key}.${subKey}:`, value[subKey]);
+                        const validId = validateYouTubeId(value[subKey]);
+                        if (validId) return validId;
+                    }
+                }
+            } else if (value && typeof value === 'string') {
+                // Se é string direta
+                console.log(`✅ MÉTODO 2B - String direta em ${key}:`, value);
+                const validId = validateYouTubeId(value);
+                if (validId) return validId;
+            }
+        }
+        
+        // MÉTODO 3: Busca profunda em toda estrutura
+        const searchDeep = (obj, path = '') => {
+            if (typeof obj !== 'object' || obj === null) return null;
+            
+            for (const [key, value] of Object.entries(obj)) {
+                const currentPath = path ? `${path}.${key}` : key;
+                console.log(`🔍 Busca profunda: ${currentPath} =`, value);
+                
+                if (typeof value === 'string' && value.trim() !== '') {
+                    const validId = validateYouTubeId(value);
+                    if (validId) {
+                        console.log(`✅ MÉTODO 3 - ID encontrado em ${currentPath}:`, validId);
+                        return validId;
+                    }
+                } else if (typeof value === 'object' && value !== null) {
+                    const deepResult = searchDeep(value, currentPath);
+                    if (deepResult) return deepResult;
+                }
+            }
+            return null;
+        };
+        
+        const deepSearchResult = searchDeep(condominio.Video);
+        if (deepSearchResult) return deepSearchResult;
+        
+        console.log('❌ Nenhum videoId válido encontrado em toda a estrutura');
+        return null;
+    };
     
-    const embedUrl = `https://www.youtube.com/embed/${id}`;
-    const embedUrlWithAutoplay = `https://www.youtube.com/embed/${id}?autoplay=1&rel=0&modestbranding=1`;
-    const watchUrl = `https://www.youtube.com/watch?v=${id}`;
-    // 🔧 CORREÇÃO 1: URL padronizada para i.ytimg.com
-    const thumbnailUrl = `https://i.ytimg.com/vi/${id}/maxresdefault.jpg`;
+    // 🎯 VALIDAÇÃO ULTRA-ROBUSTA do YouTube ID
+    const validateYouTubeId = (input) => {
+        if (!input || typeof input !== 'string') {
+            console.log('❌ Input inválido para validação:', input);
+            return null;
+        }
+        
+        const trimmed = input.trim();
+        if (trimmed === '') {
+            console.log('❌ Input vazio após trim');
+            return null;
+        }
+        
+        console.log('🔍 Validando input:', trimmed);
+        
+        // Lista de IDs problemáticos conhecidos
+        const blockedIds = ['4Aq7szgycT4', 'dQw4w9WgXcQ', 'undefined', 'null', ''];
+        
+        // PADRÃO 1: VideoId direto (11 caracteres)
+        const directIdPattern = /^[a-zA-Z0-9_-]{11}$/;
+        if (directIdPattern.test(trimmed)) {
+            if (blockedIds.includes(trimmed)) {
+                console.log('❌ ID direto está bloqueado:', trimmed);
+                return null;
+            }
+            console.log('✅ ID direto válido:', trimmed);
+            return trimmed;
+        }
+        
+        // PADRÃO 2: URL watch
+        const watchPattern = /(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+        const watchMatch = trimmed.match(watchPattern);
+        if (watchMatch) {
+            const id = watchMatch[1];
+            if (blockedIds.includes(id)) {
+                console.log('❌ ID da URL watch está bloqueado:', id);
+                return null;
+            }
+            console.log('✅ ID extraído de URL watch:', id);
+            return id;
+        }
+        
+        // PADRÃO 3: URL embed
+        const embedPattern = /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/;
+        const embedMatch = trimmed.match(embedPattern);
+        if (embedMatch) {
+            const id = embedMatch[1];
+            if (blockedIds.includes(id)) {
+                console.log('❌ ID da URL embed está bloqueado:', id);
+                return null;
+            }
+            console.log('✅ ID extraído de URL embed:', id);
+            return id;
+        }
+        
+        // PADRÃO 4: URL shorts
+        const shortsPattern = /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/;
+        const shortsMatch = trimmed.match(shortsPattern);
+        if (shortsMatch) {
+            const id = shortsMatch[1];
+            if (blockedIds.includes(id)) {
+                console.log('❌ ID da URL shorts está bloqueado:', id);
+                return null;
+            }
+            console.log('✅ ID extraído de URL shorts:', id);
+            return id;
+        }
+        
+        // URLs inválidas
+        const invalidPatterns = [
+            /youtube\.com\/@/,
+            /youtube\.com\/channel/,
+            /youtube\.com\/user/,
+            /youtube\.com\/c\//,
+            /youtube\.com\/playlist/,
+            /^https?:\/\/(?:www\.)?youtube\.com\/?$/
+        ];
+        
+        for (const pattern of invalidPatterns) {
+            if (pattern.test(trimmed)) {
+                console.log('❌ URL inválida detectada:', trimmed);
+                return null;
+            }
+        }
+        
+        console.log('❌ Formato não reconhecido:', trimmed);
+        return null;
+    };
+    
+    // Extrair o videoId
+    const videoId = extractVideoId();
+    
+    console.log('🎯 RESULTADO FINAL - VideoId:', videoId);
+    console.log('🎯 Componente vai renderizar?', !!videoId);
+    
+    // Se não há videoId válido, não renderizar
+    if (!videoId) {
+        console.log('❌ VideoCondominio não será renderizado - sem videoId válido');
+        return null;
+    }
+    
+    // URLs do vídeo
+    const embedUrl = `https://www.youtube.com/embed/${videoId}`;
+    const embedUrlWithAutoplay = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`;
+    const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
+    const thumbnailUrl = `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`;
+    
+    console.log('🎯 URLs geradas:');
+    console.log('🎯 Embed:', embedUrl);
+    console.log('🎯 Thumbnail:', thumbnailUrl);
+    console.log('🎯 Watch:', watchUrl);
     
     const videoTitle = `Vídeo de apresentação - ${condominio.Empreendimento}`;
     const videoDescription = `Conheça o ${condominio.Empreendimento} em ${condominio.BairroComercial}, ${condominio.Cidade}. ` +
                            `${condominio.Categoria} com ${condominio.DormitoriosAntigo} quartos, ` +
                            `${condominio.SuiteAntigo} suítes, ${condominio.MetragemAnt}, ${condominio.VagasAntigo} vagas.`;
     
-    // ✅ STRUCTURED DATA ORIGINAL MANTIDO
+    // Structured data
     const videoStructuredData = {
         "@context": "https://schema.org",
         "@type": "VideoObject",
@@ -42,26 +249,11 @@ export default function VideoCondominio({ condominio }) {
                 "@type": "ImageObject",
                 "url": `${process.env.NEXT_PUBLIC_SITE_URL}/logo.png`
             }
-        },
-        "about": {
-            "@type": "RealEstateListing",
-            "name": condominio.Empreendimento,
-            "address": {
-                "@type": "PostalAddress",
-                "streetAddress": `${condominio.TipoEndereco} ${condominio.Endereco}, ${condominio.Numero}`,
-                "addressLocality": condominio.BairroComercial,
-                "addressRegion": condominio.Cidade
-            }
-        },
-        "potentialAction": {
-            "@type": "WatchAction",
-            "target": watchUrl
         }
     };
 
     return (
         <>
-            {/* ✅ STRUCTURED DATA ORIGINAL MANTIDO */}
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{
@@ -69,16 +261,13 @@ export default function VideoCondominio({ condominio }) {
                 }}
             />
             
-            {/* ✅ CONTAINER ORIGINAL MANTIDO */}
             <div className="bg-white container mx-auto p-10 mt-4 rounded-lg">
                 <h2 className="text-xl font-bold text-black">
                     Vídeo {condominio.Empreendimento}
                 </h2>
                 
-                {/* 🚀 ÚNICA MUDANÇA: FACADE OU IFRAME REAL */}
                 <div className="relative w-full pb-[56.25%] h-0 overflow-hidden rounded-lg mt-8">
                     {videoLoaded ? (
-                        // ✅ IFRAME ORIGINAL - SÓ CARREGA QUANDO CLICA
                         <iframe
                             className="absolute top-0 left-0 w-full h-full"
                             src={embedUrlWithAutoplay}
@@ -90,13 +279,16 @@ export default function VideoCondominio({ condominio }) {
                             aria-label={videoTitle}
                         />
                     ) : (
-                        // 🚀 FACADE ULTRA LEVE - ELIMINA TBT
                         <div 
                             className="absolute top-0 left-0 w-full h-full cursor-pointer group bg-black rounded-lg overflow-hidden"
-                            onClick={() => setVideoLoaded(true)}
+                            onClick={() => {
+                                console.log('🎥 Carregando vídeo - VideoId:', videoId);
+                                setVideoLoaded(true);
+                            }}
                             onKeyDown={(e) => {
                                 if (e.key === 'Enter' || e.key === ' ') {
                                     e.preventDefault();
+                                    console.log('🎥 Carregando vídeo via teclado - VideoId:', videoId);
                                     setVideoLoaded(true);
                                 }
                             }}
@@ -109,12 +301,36 @@ export default function VideoCondominio({ condominio }) {
                                 alt={`Thumbnail: ${videoTitle}`}
                                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                                 loading="lazy"
-                                onError={(e) => {
-                                    console.log('🎥 Erro ao carregar thumbnail maxres, tentando hqdefault para id:', id);
-                                    e.target.src = `https://i.ytimg.com/vi/${id}/hqdefault.jpg`;
+                                onLoad={(e) => {
+                                    console.log('✅ Thumbnail carregada com sucesso!');
+                                    console.log('✅ URL:', e.target.src);
+                                    console.log('✅ Dimensões:', e.target.naturalWidth + 'x' + e.target.naturalHeight);
                                 }}
-                                onLoad={() => {
-                                    console.log('🎥 Thumbnail carregada com sucesso para id:', id);
+                                onError={(e) => {
+                                    console.log('❌ ERRO ao carregar thumbnail maxres:', e.target.src);
+                                    
+                                    if (e.target.src.includes('maxresdefault')) {
+                                        console.log('🔄 Tentando hqdefault...');
+                                        e.target.src = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+                                    } else if (e.target.src.includes('hqdefault')) {
+                                        console.log('🔄 Tentando mqdefault...');
+                                        e.target.src = `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`;
+                                    } else if (e.target.src.includes('mqdefault')) {
+                                        console.log('🔄 Tentando default...');
+                                        e.target.src = `https://i.ytimg.com/vi/${videoId}/default.jpg`;
+                                    } else {
+                                        console.log('❌ Todos os thumbnails falharam, escondendo imagem');
+                                        e.target.style.display = 'none';
+                                        // Mostrar um placeholder
+                                        e.target.parentElement.innerHTML += `
+                                            <div class="absolute inset-0 bg-gray-800 flex items-center justify-center">
+                                                <div class="text-white text-center">
+                                                    <div class="text-4xl mb-2">📺</div>
+                                                    <div>Vídeo disponível</div>
+                                                </div>
+                                            </div>
+                                        `;
+                                    }
                                 }}
                             />
                             <div className="absolute inset-0 bg-black bg-opacity-30 group-hover:bg-opacity-20 transition-all duration-300" />
@@ -140,7 +356,6 @@ export default function VideoCondominio({ condominio }) {
                     )}
                 </div>
                 
-                {/* ✅ LINK YOUTUBE ORIGINAL MANTIDO */}
                 <div className="mt-6 text-center">
                     <p className="text-sm text-gray-600 mb-2">
                         Prefere assistir no YouTube?
@@ -159,7 +374,6 @@ export default function VideoCondominio({ condominio }) {
                     </a>
                 </div>
                 
-                {/* ✅ PRELOAD ORIGINAL MANTIDO */}
                 <link rel="preload" as="image" href={thumbnailUrl} />
             </div>
         </>
