@@ -186,26 +186,67 @@ export function ImageGallery({
 
   return (
     <>
-      {/* 🔧 CRITICAL CSS para eliminar CLS (ORIGINAL) */}
+      {/* 🔧 CRITICAL CSS para eliminar CLS + BADGES FIXOS */}
       <style jsx>{`
         .gallery-container {
           contain: layout style paint;
           transform: translateZ(0);
           will-change: auto;
+          position: relative;
         }
         .image-container {
           contain: layout;
           transform: translateZ(0);
+          position: relative;
         }
         .badge-placeholder {
-          width: 80px;
-          height: 24px;
-          contain: layout;
+          contain: layout size;
+          position: absolute;
+          transform: translateZ(0);
         }
         .count-badge {
-          width: 60px;
-          height: 24px;
-          contain: layout;
+          contain: layout size;
+          position: absolute;
+          transform: translateZ(0);
+        }
+        
+        /* 🔧 POSICIONAMENTO ABSOLUTO DOS BADGES - MOBILE/DESKTOP */
+        .badge-destaque {
+          top: 12px !important;
+          left: 12px !important;
+          width: 80px !important;
+          height: 24px !important;
+        }
+        .badge-contador {
+          top: 12px !important;
+          right: 12px !important;
+          height: 24px !important;
+        }
+        .badge-contador-mobile {
+          width: 50px !important;
+          height: 28px !important;
+        }
+        .badge-contador-desktop {
+          width: 60px !important;
+          height: 24px !important;
+        }
+        .badge-cta {
+          bottom: 12px !important;
+          left: 50% !important;
+          transform: translateX(-50%) translateZ(0) !important;
+          width: 200px !important;
+          height: 32px !important;
+        }
+        
+        @media (min-width: 769px) {
+          .badge-destaque {
+            top: 16px !important;
+            left: 16px !important;
+          }
+          .badge-contador {
+            top: 16px !important;
+            right: 16px !important;
+          }
         }
       `}</style>
 
@@ -252,15 +293,8 @@ export function ImageGallery({
             />
           </div>
 
-          {/* 🔧 CLS FIX: Placeholder sempre presente (ORIGINAL) */}
-          <div 
-            className="badge-placeholder absolute top-4 left-4 flex items-center"
-            style={{ 
-              width: '80px',
-              height: '24px',
-              contain: 'layout'
-            }}
-          >
+          {/* 🔧 BADGES SINGLE LAYOUT FIXOS */}
+          <div className="badge-placeholder badge-destaque">
             {images[0].Destaque === "Sim" && (
               <div className="bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg w-full h-full flex items-center justify-center">
                 ⭐ DESTAQUE
@@ -268,14 +302,7 @@ export function ImageGallery({
             )}
           </div>
 
-          <div 
-            className="count-badge absolute top-4 right-4 bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg flex items-center justify-center"
-            style={{ 
-              width: '60px',
-              height: '24px',
-              contain: 'layout'
-            }}
-          >
+          <div className="badge-contador badge-contador-desktop bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg flex items-center justify-center">
             {images.length} foto{images.length > 1 ? 's' : ''}
           </div>
         </div>
@@ -328,15 +355,8 @@ export function ImageGallery({
                 />
               </div>
 
-              {/* Badge mobile com placeholder (ORIGINAL) */}
-              <div 
-                className="badge-placeholder absolute top-3 left-3 flex items-center"
-                style={{ 
-                  width: '80px',
-                  height: '24px',
-                  contain: 'layout'
-                }}
-              >
+              {/* Badge mobile FIXO */}
+              <div className="badge-placeholder badge-destaque">
                 {images[0].Destaque === "Sim" && (
                   <div className="bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg w-full h-full flex items-center justify-center">
                     ⭐ DESTAQUE
@@ -344,26 +364,12 @@ export function ImageGallery({
                 )}
               </div>
 
-              <div 
-                className="absolute top-3 right-3 bg-black bg-opacity-80 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-sm font-medium shadow-lg flex items-center justify-center"
-                style={{ 
-                  width: '50px',
-                  height: '28px',
-                  contain: 'layout'
-                }}
-              >
+              <div className="badge-contador badge-contador-mobile bg-black bg-opacity-80 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-sm font-medium shadow-lg flex items-center justify-center">
                 1 / {images.length}
               </div>
 
               {images.length > 1 && (
-                <div 
-                  className="absolute bottom-3 left-1/2 transform -translate-x-1/2 bg-white bg-opacity-90 backdrop-blur-sm text-black px-4 py-2 rounded-full text-sm font-medium shadow-lg flex items-center justify-center"
-                  style={{ 
-                    width: '200px',
-                    height: '32px',
-                    contain: 'layout'
-                  }}
-                >
+                <div className="badge-placeholder badge-cta bg-white bg-opacity-90 backdrop-blur-sm text-black px-4 py-2 rounded-full text-sm font-medium shadow-lg flex items-center justify-center">
                   Toque para ver as {images.length} fotos
                 </div>
               )}
@@ -410,15 +416,8 @@ export function ImageGallery({
                   />
                 </div>
 
-                {/* Badge desktop com placeholder (ORIGINAL) */}
-                <div 
-                  className="badge-placeholder absolute top-4 left-4 flex items-center"
-                  style={{ 
-                    width: '80px',
-                    height: '24px',
-                    contain: 'layout'
-                  }}
-                >
+                {/* Badge desktop FIXO */}
+                <div className="badge-placeholder badge-destaque">
                   {images[0].Destaque === "Sim" && (
                     <div className="bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg w-full h-full flex items-center justify-center">
                       ⭐ DESTAQUE
@@ -426,14 +425,7 @@ export function ImageGallery({
                   )}
                 </div>
 
-                <div 
-                  className="count-badge absolute top-4 right-4 bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg flex items-center justify-center"
-                  style={{ 
-                    width: '60px',
-                    height: '24px',
-                    contain: 'layout'
-                  }}
-                >
+                <div className="badge-contador badge-contador-desktop bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg flex items-center justify-center">
                   {images.length} foto{images.length > 1 ? 's' : ''}
                 </div>
               </div>
@@ -488,13 +480,15 @@ export function ImageGallery({
                         />
                       </div>
                       
-                      {/* Badge thumbnails com placeholder (ORIGINAL) */}
+                      {/* Badge thumbnails FIXO */}
                       <div 
-                        className="absolute top-2 left-2 flex items-center justify-center"
+                        className="badge-placeholder absolute"
                         style={{ 
+                          top: '8px',
+                          left: '8px',
                           width: '20px',
                           height: '20px',
-                          contain: 'layout'
+                          contain: 'layout size'
                         }}
                       >
                         {image.Destaque === "Sim" && (
