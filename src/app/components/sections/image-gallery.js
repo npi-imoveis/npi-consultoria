@@ -1,4 +1,4 @@
-// src/app/components/sections/image-gallery.js - CLS ZERO + LCP OPTIMIZED
+// src/app/components/sections/image-gallery.js - LAYOUT DESKTOP FIXADO + LCP OTIMIZADO
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -7,7 +7,7 @@ import { ArrowLeft } from "lucide-react";
 import { formatterSlug } from "@/app/utils/formatter-slug";
 import { photoSorter } from "@/app/utils/photoSorter";
 
-// 🚀 SHARE: CLS-safe com skeleton mínimo
+// 🚀 SHARE: CLS-safe com skeleton
 import dynamic from 'next/dynamic';
 const Share = dynamic(() => import("../ui/share").then(mod => ({ default: mod.Share })), {
   ssr: false,
@@ -22,18 +22,18 @@ const Share = dynamic(() => import("../ui/share").then(mod => ({ default: mod.Sh
   )
 });
 
-// 🚀 MOBILE: Simple detection
+// 🚀 MOBILE: Detection optimizada
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768);
-    check();
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
     
     let timeoutId;
     const handleResize = () => {
       clearTimeout(timeoutId);
-      timeoutId = setTimeout(check, 100);
+      timeoutId = setTimeout(checkMobile, 100);
     };
     
     window.addEventListener("resize", handleResize, { passive: true });
@@ -129,10 +129,9 @@ export function ImageGallery({
     setFirstImageLoaded(true);
   }, []);
 
-  // 🚀 ULTRA-AGGRESSIVE LCP PRELOAD (immediate, no delays)
+  // 🚀 LCP PRELOAD: Immediate, no delays
   useEffect(() => {
     if (images[0]?.Foto) {
-      // Immediate preload - no waiting for component ready
       const link = document.createElement('link');
       link.rel = 'preload';
       link.as = 'image';
@@ -147,7 +146,7 @@ export function ImageGallery({
         }
       };
     }
-  }, [images]); // Only depends on images, no delays
+  }, [images]);
 
   // 🚀 KEYBOARD navigation
   useEffect(() => {
@@ -166,7 +165,7 @@ export function ImageGallery({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isModalOpen, closeModal, goPrev, goNext]);
 
-  // 🔧 SIMPLE loading state - no complex ready states
+  // 🔧 LOADING STATE: Simple
   if (!processedData.titulo || images.length === 0) {
     const height = layout === "single" ? 
       (isMobile ? '340px' : '400px') : 
@@ -178,7 +177,7 @@ export function ImageGallery({
         style={{ 
           height,
           width: '100%',
-          contain: 'layout size'
+          contain: 'layout size style'
         }}
         role="img"
         aria-label="Carregando galeria"
@@ -190,56 +189,63 @@ export function ImageGallery({
 
   return (
     <>
-      {/* 🔧 MINIMAL critical CSS */}
+      {/* 🔧 CRITICAL CSS: Layout stability */}
       <style jsx>{`
-        .gallery-root {
-          contain: layout size style;
+        .gallery-container {
+          contain: layout style paint;
+          transform: translate3d(0, 0, 0);
+          will-change: auto;
+        }
+        .image-container {
+          contain: layout;
           transform: translate3d(0, 0, 0);
         }
-        .image-wrapper {
-          contain: layout size;
-          transform: translate3d(0, 0, 0);
-          overflow: hidden;
-        }
-        .badge-fixed {
-          contain: layout size;
+        .badge-placeholder {
+          contain: layout;
           position: absolute;
           transform: translate3d(0, 0, 0);
         }
         
-        /* Fixed positions */
-        .badge-tl { top: 12px; left: 12px; width: 80px; height: 24px; }
-        .badge-tr { top: 12px; right: 12px; }
-        .badge-tr-mobile { width: 50px; height: 28px; }
-        .badge-tr-desktop { width: 60px; height: 24px; }
-        .badge-cta { bottom: 12px; left: 50%; transform: translateX(-50%); width: 200px; height: 32px; }
-        .badge-thumb { top: 8px; left: 8px; width: 20px; height: 20px; }
+        /* 🔧 MOBILE BADGES */
+        @media (max-width: 768px) {
+          .badge-top-left { top: 12px; left: 12px; width: 80px; height: 24px; }
+          .badge-top-right { top: 12px; right: 12px; width: 50px; height: 28px; }
+          .badge-bottom-center { bottom: 12px; left: 50%; transform: translateX(-50%); width: 200px; height: 32px; }
+        }
         
+        /* 🔧 DESKTOP BADGES */
         @media (min-width: 769px) {
-          .badge-tl { top: 16px; left: 16px; }
-          .badge-tr { top: 16px; right: 16px; }
+          .badge-top-left { top: 16px; left: 16px; width: 80px; height: 24px; }
+          .badge-top-right { top: 16px; right: 16px; width: 60px; height: 24px; }
+          .badge-thumb { top: 8px; left: 8px; width: 20px; height: 20px; }
         }
       `}</style>
 
       {/* 🎨 MAIN LAYOUT */}
       {layout === "single" ? (
         <div 
-          className={`gallery-root w-full cursor-pointer relative rounded-lg`}
+          className="gallery-container w-full cursor-pointer relative overflow-hidden rounded-lg"
           style={{ 
+            width: '100%',
             height: isMobile ? '340px' : '400px',
-            contain: 'layout size style',
+            contain: 'layout style paint',
             aspectRatio: isMobile ? '1/1' : '5/4'
           }}
           onClick={() => openModal()}
           role="button"
           tabIndex={0}
           aria-label={`Ver galeria completa de ${processedData.titulo}`}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              openModal();
+            }
+          }}
         >
           <div 
-            className="image-wrapper w-full h-full rounded-lg"
-            style={{ contain: 'layout size' }}
+            className="image-container w-full h-full"
+            style={{ contain: 'layout' }}
           >
-            {/* 🚀 LCP IMAGE: Maximum priority, minimal barriers */}
             <Image
               src={images[0].Foto}
               alt={`${processedData.titulo} - foto principal`}
@@ -257,8 +263,8 @@ export function ImageGallery({
             />
           </div>
 
-          {/* Fixed badges */}
-          <div className="badge-fixed badge-tl">
+          {/* Single layout badges */}
+          <div className="badge-placeholder badge-top-left">
             {images[0].Destaque === "Sim" && (
               <div className="bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg w-full h-full flex items-center justify-center">
                 ⭐ DESTAQUE
@@ -266,35 +272,44 @@ export function ImageGallery({
             )}
           </div>
 
-          <div className={`badge-fixed badge-tr bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg flex items-center justify-center ${isMobile ? 'badge-tr-mobile' : 'badge-tr-desktop'}`}>
+          <div className="badge-placeholder badge-top-right bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg flex items-center justify-center">
             {images.length} foto{images.length > 1 ? 's' : ''}
           </div>
         </div>
       ) : (
         <div 
-          className={`gallery-root w-full ${!isMobile ? 'grid grid-cols-1 md:grid-cols-2 gap-1' : ''}`}
+          className={`gallery-container w-full ${isMobile ? '' : 'grid grid-cols-1 md:grid-cols-2 gap-1'}`}
           style={{ 
-            height: isMobile ? '340px' : '380px',
-            contain: 'layout size style'
+            contain: 'layout style paint',
+            height: isMobile ? '340px' : '380px'
           }}
         >
           
-          {/* 📱 MOBILE */}
+          {/* 📱 MOBILE LAYOUT */}
           {isMobile ? (
             <div 
               className="w-full cursor-pointer relative overflow-hidden rounded-lg"
               style={{ 
+                width: '100%',
                 height: '340px',
-                contain: 'layout size style',
+                contain: 'layout style paint',
                 aspectRatio: '1/1'
               }}
               onClick={() => openModal()}
               role="button"
               tabIndex={0}
               aria-label={`Ver galeria de ${images.length} fotos de ${processedData.titulo}`}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  openModal();
+                }
+              }}
             >
-              <div className="image-wrapper w-full h-full">
-                {/* 🚀 LCP IMAGE: Mobile optimized, maximum priority */}
+              <div 
+                className="image-container w-full h-full"
+                style={{ contain: 'layout' }}
+              >
                 <Image
                   src={images[0].Foto}
                   alt={`${processedData.titulo} - foto principal`}
@@ -313,7 +328,7 @@ export function ImageGallery({
               </div>
 
               {/* Mobile badges */}
-              <div className="badge-fixed badge-tl">
+              <div className="badge-placeholder badge-top-left">
                 {images[0].Destaque === "Sim" && (
                   <div className="bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg w-full h-full flex items-center justify-center">
                     ⭐ DESTAQUE
@@ -321,38 +336,48 @@ export function ImageGallery({
                 )}
               </div>
 
-              <div className="badge-fixed badge-tr badge-tr-mobile bg-black bg-opacity-80 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-sm font-medium shadow-lg flex items-center justify-center">
-                1/{images.length}
+              <div className="badge-placeholder badge-top-right bg-black bg-opacity-80 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-sm font-medium shadow-lg flex items-center justify-center">
+                1 / {images.length}
               </div>
 
               {images.length > 1 && (
-                <div className="badge-fixed badge-cta bg-white bg-opacity-90 backdrop-blur-sm text-black px-4 py-2 rounded-full text-sm font-medium shadow-lg flex items-center justify-center">
+                <div className="badge-placeholder badge-bottom-center bg-white bg-opacity-90 backdrop-blur-sm text-black px-4 py-2 rounded-full text-sm font-medium shadow-lg flex items-center justify-center">
                   Toque para ver as {images.length} fotos
                 </div>
               )}
             </div>
           ) : (
             <>
-              {/* 💻 DESKTOP MAIN */}
+              {/* 💻 DESKTOP: MAIN IMAGE */}
               <div 
                 className="col-span-1 cursor-pointer relative"
                 style={{ 
-                  contain: 'layout size',
+                  width: '100%',
+                  height: '380px',
+                  contain: 'layout style paint',
                   aspectRatio: '4/3'
                 }}
                 onClick={() => openModal()}
                 role="button"
                 tabIndex={0}
                 aria-label={`Ver galeria de ${images.length} fotos de ${processedData.titulo}`}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    openModal();
+                  }
+                }}
               >
-                <div className="image-wrapper w-full h-full overflow-hidden rounded-lg">
-                  {/* 🚀 LCP IMAGE: Desktop main image */}
+                <div 
+                  className="image-container w-full h-full overflow-hidden rounded-lg"
+                  style={{ contain: 'layout' }}
+                >
                   <Image
                     src={images[0].Foto}
                     alt={`${processedData.titulo} - foto principal`}
                     title={processedData.titulo}
                     fill
-                    sizes="50vw"
+                    sizes="(max-width: 768px) 100vw, 50vw"
                     placeholder="empty"
                     loading="eager"
                     priority={true}
@@ -364,8 +389,8 @@ export function ImageGallery({
                   />
                 </div>
 
-                {/* Desktop badges */}
-                <div className="badge-fixed badge-tl">
+                {/* Desktop main badges */}
+                <div className="badge-placeholder badge-top-left">
                   {images[0].Destaque === "Sim" && (
                     <div className="bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg w-full h-full flex items-center justify-center">
                       ⭐ DESTAQUE
@@ -373,39 +398,54 @@ export function ImageGallery({
                   )}
                 </div>
 
-                <div className="badge-fixed badge-tr badge-tr-desktop bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg flex items-center justify-center">
+                <div className="badge-placeholder badge-top-right bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg flex items-center justify-center">
                   {images.length} foto{images.length > 1 ? 's' : ''}
                 </div>
               </div>
 
-              {/* 💻 DESKTOP GRID */}
+              {/* 💻 DESKTOP: THUMBNAIL GRID 2x2 */}
               <div 
                 className="col-span-1 grid grid-cols-2 grid-rows-2 gap-1"
-                style={{ contain: 'layout size' }}
+                style={{ 
+                  width: '100%',
+                  height: '380px',
+                  contain: 'layout'
+                }}
               >
                 {images.slice(1, 5).map((image, index) => {
-                  const globalIndex = index + 1;
                   const isLastImage = index === 3;
+                  const globalIndex = index + 1;
                   return (
                     <div
                       key={image.Codigo || globalIndex}
                       className="relative overflow-hidden cursor-pointer rounded-lg"
                       style={{ 
-                        contain: 'layout size',
+                        width: '100%',
+                        height: '100%',
+                        contain: 'layout',
                         aspectRatio: '1/1'
                       }}
                       onClick={() => openModal()}
                       role="button"
                       tabIndex={0}
                       aria-label={`Ver galeria completa - imagem ${globalIndex + 1}`}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          openModal();
+                        }
+                      }}
                     >
-                      <div className="image-wrapper w-full h-full">
+                      <div 
+                        className="image-container w-full h-full"
+                        style={{ contain: 'layout' }}
+                      >
                         <Image
                           src={image.Foto}
                           alt={`${processedData.titulo} - imagem ${globalIndex + 1}`}
                           title={`${processedData.titulo} - imagem ${globalIndex + 1}`}
                           fill
-                          sizes="25vw"
+                          sizes="(max-width: 768px) 50vw, 25vw"
                           placeholder="empty"
                           loading="lazy"
                           priority={false}
@@ -416,7 +456,7 @@ export function ImageGallery({
                       </div>
                       
                       {/* Thumbnail badges */}
-                      <div className="badge-fixed badge-thumb">
+                      <div className="badge-placeholder badge-thumb">
                         {image.Destaque === "Sim" && (
                           <div className="bg-gray-900 text-white text-xs font-bold rounded w-full h-full flex items-center justify-center">
                             ⭐
@@ -424,17 +464,22 @@ export function ImageGallery({
                         )}
                       </div>
                       
+                      {/* More photos overlay */}
                       {isLastImage && images.length > 5 && (
                         <div 
                           className="absolute inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center rounded-lg"
-                          style={{ contain: 'layout size' }}
+                          style={{ contain: 'layout' }}
                         >
                           <button
                             className="border border-white text-white px-4 py-2 rounded hover:bg-white hover:text-black transition-colors"
-                            style={{ width: '90px', height: '32px' }}
+                            style={{ 
+                              width: '90px', 
+                              height: '32px',
+                              contain: 'layout'
+                            }}
                             aria-label={`Ver mais ${images.length - 5} fotos`}
                           >
-                            +{images.length - 5}
+                            +{images.length - 5} fotos
                           </button>
                         </div>
                       )}
@@ -453,10 +498,12 @@ export function ImageGallery({
           className="fixed inset-0 bg-black bg-opacity-95 z-50 overflow-auto"
           style={{ contain: 'layout style' }}
         >
-          {/* Modal header */}
           <div 
             className="sticky top-0 z-10 flex justify-between gap-4 p-5 pt-28 mt-6 md:mt-0 bg-gradient-to-b from-black/80 via-black/40 to-transparent backdrop-blur-sm"
-            style={{ height: '80px' }}
+            style={{ 
+              height: '80px',
+              contain: 'layout'
+            }}
           >
             <button 
               onClick={closeModal} 
@@ -478,7 +525,6 @@ export function ImageGallery({
           </div>
 
           {selectedIndex !== null ? (
-            // Single image view
             <div className="flex items-center justify-center min-h-screen p-4 relative">
               <Image
                 src={images[selectedIndex].Foto}
@@ -493,31 +539,25 @@ export function ImageGallery({
                 className="max-w-full max-h-screen object-contain"
               />
 
-              {/* Counter */}
               <div 
-                className="absolute bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm z-20 flex items-center justify-center"
+                className="absolute top-24 md:top-20 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm z-20"
                 style={{ 
-                  top: '96px',
-                  left: '50%',
-                  transform: 'translateX(-50%)',
                   width: '100px',
-                  height: '28px'
+                  height: '28px',
+                  contain: 'layout'
                 }}
               >
                 {selectedIndex + 1} / {images.length}
                 {images[selectedIndex].Destaque === "Sim" && " ⭐"}
               </div>
 
-              {/* Navigation */}
               <button
                 onClick={goPrev}
-                className="absolute text-white text-4xl hover:bg-black hover:bg-opacity-50 rounded-full transition-colors z-20 focus:outline-none focus:ring-2 focus:ring-white/50 flex items-center justify-center"
+                className="absolute left-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2 hover:bg-black hover:bg-opacity-50 rounded-full transition-colors z-20 focus:outline-none focus:ring-2 focus:ring-white/50"
                 style={{ 
-                  left: '20px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  width: '60px',
-                  height: '60px'
+                  width: '60px', 
+                  height: '60px',
+                  contain: 'layout'
                 }}
                 aria-label="Imagem anterior"
               >
@@ -525,13 +565,11 @@ export function ImageGallery({
               </button>
               <button
                 onClick={goNext}
-                className="absolute text-white text-4xl hover:bg-black hover:bg-opacity-50 rounded-full transition-colors z-20 focus:outline-none focus:ring-2 focus:ring-white/50 flex items-center justify-center"
+                className="absolute right-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2 hover:bg-black hover:bg-opacity-50 rounded-full transition-colors z-20 focus:outline-none focus:ring-2 focus:ring-white/50"
                 style={{ 
-                  right: '20px',
-                  top: '50%',
-                  transform: 'translateY(-50%)',
-                  width: '60px',
-                  height: '60px'
+                  width: '60px', 
+                  height: '60px',
+                  contain: 'layout'
                 }}
                 aria-label="Próxima imagem"
               >
@@ -539,24 +577,36 @@ export function ImageGallery({
               </button>
             </div>
           ) : (
-            // Grid view
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
+            <div 
+              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4"
+              style={{ contain: 'layout' }}
+            >
               {images.map((image, idx) => (
                 <div
                   key={image.Codigo || idx}
                   onClick={() => setSelectedIndex(idx)}
                   className="relative cursor-pointer overflow-hidden border-2 border-transparent hover:border-white transition-colors rounded-lg focus:outline-none focus:ring-2 focus:ring-white/50"
-                  style={{ aspectRatio: '4/3' }}
+                  style={{ 
+                    width: '100%',
+                    aspectRatio: '4/3',
+                    contain: 'layout'
+                  }}
                   role="button"
                   tabIndex={0}
                   aria-label={`Ver imagem ${idx + 1} de ${images.length}`}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setSelectedIndex(idx);
+                    }
+                  }}
                 >
                   <Image
                     src={image.Foto}
                     alt={`${processedData.titulo} - miniatura ${idx + 1}`}
                     title={`${processedData.titulo} - imagem ${idx + 1}`}
                     fill
-                    sizes="25vw"
+                    sizes="(max-width: 768px) 50vw, 25vw"
                     placeholder="empty"
                     loading="lazy"
                     quality={65}
@@ -564,14 +614,12 @@ export function ImageGallery({
                     style={{ objectFit: 'cover' }}
                   />
                   
-                  {/* Modal grid badges */}
                   <div 
-                    className="absolute bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded flex items-center justify-center"
+                    className="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded"
                     style={{ 
-                      bottom: '8px',
-                      right: '8px',
                       width: '30px',
-                      height: '20px'
+                      height: '20px',
+                      contain: 'layout'
                     }}
                   >
                     {idx + 1}
@@ -579,12 +627,11 @@ export function ImageGallery({
                   
                   {image.Destaque === "Sim" && (
                     <div 
-                      className="absolute bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded flex items-center justify-center"
+                      className="absolute top-2 left-2 bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded"
                       style={{ 
-                        top: '8px',
-                        left: '8px',
                         width: '80px',
-                        height: '24px'
+                        height: '24px',
+                        contain: 'layout'
                       }}
                     >
                       ⭐ DESTAQUE
