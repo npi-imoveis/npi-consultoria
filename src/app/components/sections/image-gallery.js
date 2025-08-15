@@ -324,7 +324,7 @@ export function ImageGallery({
                 />
               </div>
 
-              {/* BADGES MOBILE - CSS ISOLADO TOTAL */}
+              {/* BADGES MOBILE - SEM NENHUMA CLASSE TAILWIND */}
               {images[0].Destaque === "Sim" && (
                 <div 
                   style={{ 
@@ -333,7 +333,7 @@ export function ImageGallery({
                     left: '12px',
                     width: '80px',
                     height: '24px',
-                    backgroundColor: 'rgb(17, 24, 39)', // gray-900
+                    backgroundColor: 'rgb(17, 24, 39)',
                     color: 'white',
                     fontSize: '12px',
                     fontWeight: 'bold',
@@ -344,8 +344,9 @@ export function ImageGallery({
                     alignItems: 'center',
                     justifyContent: 'center',
                     contain: 'layout',
-                    zIndex: 50, // MUITO MAIOR que z-10 do video
-                    pointerEvents: 'none'
+                    zIndex: 99999, // MÁXIMO POSSÍVEL
+                    pointerEvents: 'none',
+                    fontFamily: 'system-ui, -apple-system, sans-serif'
                   }}
                 >
                   ⭐ DESTAQUE
@@ -371,8 +372,9 @@ export function ImageGallery({
                   alignItems: 'center',
                   justifyContent: 'center',
                   contain: 'layout',
-                  zIndex: 50,
-                  pointerEvents: 'none'
+                  zIndex: 99999,
+                  pointerEvents: 'none',
+                  fontFamily: 'system-ui, -apple-system, sans-serif'
                 }}
               >
                 1 / {images.length}
@@ -399,8 +401,9 @@ export function ImageGallery({
                     alignItems: 'center',
                     justifyContent: 'center',
                     contain: 'layout',
-                    zIndex: 50,
-                    pointerEvents: 'none'
+                    zIndex: 99999,
+                    pointerEvents: 'none',
+                    fontFamily: 'system-ui, -apple-system, sans-serif'
                   }}
                 >
                   Toque para ver as {images.length} fotos
@@ -453,7 +456,7 @@ export function ImageGallery({
                   />
                 </div>
 
-                {/* BADGES DESKTOP - CSS ISOLADO TOTAL */}
+                {/* BADGES DESKTOP - Z-INDEX MÁXIMO */}
                 {images[0].Destaque === "Sim" && (
                   <div 
                     style={{ 
@@ -462,7 +465,7 @@ export function ImageGallery({
                       left: '16px',
                       width: '80px',
                       height: '24px',
-                      backgroundColor: 'rgb(17, 24, 39)', // gray-900
+                      backgroundColor: 'rgb(17, 24, 39)',
                       color: 'white',
                       fontSize: '12px',
                       fontWeight: 'bold',
@@ -473,8 +476,9 @@ export function ImageGallery({
                       alignItems: 'center',
                       justifyContent: 'center',
                       contain: 'layout',
-                      zIndex: 50,
-                      pointerEvents: 'none'
+                      zIndex: 99999,
+                      pointerEvents: 'none',
+                      fontFamily: 'system-ui, -apple-system, sans-serif'
                     }}
                   >
                     ⭐ DESTAQUE
@@ -500,8 +504,9 @@ export function ImageGallery({
                     alignItems: 'center',
                     justifyContent: 'center',
                     contain: 'layout',
-                    zIndex: 50,
-                    pointerEvents: 'none'
+                    zIndex: 99999,
+                    pointerEvents: 'none',
+                    fontFamily: 'system-ui, -apple-system, sans-serif'
                   }}
                 >
                   {images.length} foto{images.length > 1 ? 's' : ''}
