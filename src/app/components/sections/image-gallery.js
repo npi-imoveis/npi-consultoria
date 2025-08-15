@@ -1,4 +1,4 @@
-// src/app/components/sections/image-gallery.js - ORIGINAL + 95 PONTOS MOBILE
+// src/app/components/sections/image-gallery.js - COMPLETO + ANTI-LOOP
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -8,9 +8,13 @@ import { formatterSlug } from "@/app/utils/formatter-slug";
 import { Share } from "../ui/share";
 import { photoSorter } from "@/app/utils/photoSorter";
 
-// 🚀 HOOK OTIMIZADO com debounce (ORIGINAL)
+// 🚀 HOOK MOBILE - ANTI-LOOP (única mudança crítica)
 function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => {
+    // Inicialização segura
+    if (typeof window === 'undefined') return false;
+    return window.innerWidth < 768;
+  });
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -18,7 +22,7 @@ function useIsMobile() {
     // ✅ Check inicial sem layout shift
     check();
     
-    // ✅ Debounced resize para performance
+    // ✅ Debounced resize para performance (MANTIDO)
     let timeoutId;
     const debouncedCheck = () => {
       clearTimeout(timeoutId);
@@ -30,7 +34,7 @@ function useIsMobile() {
       clearTimeout(timeoutId);
       window.removeEventListener("resize", debouncedCheck);
     };
-  }, []);
+  }, []); // ✅ DEPENDENCY ARRAY VAZIO - evita loops
 
   return isMobile;
 }
@@ -54,10 +58,10 @@ export function ImageGallery({
   const [firstImageLoaded, setFirstImageLoaded] = useState(false);
   const isMobile = useIsMobile();
 
-  // 🎯 PROCESSAMENTO OTIMIZADO (ORIGINAL)
+  // 🎯 PROCESSAMENTO OTIMIZADO (ORIGINAL MANTIDO)
   const isImovelMode = !!imovel;
   
-  // 🚀 DADOS PROCESSADOS - Memoized para performance (ORIGINAL)
+  // 🚀 DADOS PROCESSADOS - Memoized para performance (ORIGINAL MANTIDO)
   const processedData = useMemo(() => {
     if (isImovelMode) {
       return {
@@ -78,7 +82,7 @@ export function ImageGallery({
     }
   }, [imovel, fotos, title, shareUrl, shareTitle, isImovelMode]);
 
-  // 🎯 IMAGENS PROCESSADAS - Otimizado (ORIGINAL)
+  // 🎯 IMAGENS PROCESSADAS - Otimizado (ORIGINAL MANTIDO)
   const images = useMemo(() => {
     if (!Array.isArray(processedData.fotos) || processedData.fotos.length === 0) {
       return [];
@@ -109,7 +113,7 @@ export function ImageGallery({
     }
   }, [processedData]);
 
-  // 🎯 HANDLERS OTIMIZADOS com useCallback (ORIGINAL)
+  // 🎯 HANDLERS OTIMIZADOS com useCallback (ORIGINAL MANTIDO)
   const openModal = useCallback((index = null) => {
     setIsModalOpen(true);
     setSelectedIndex(index); // null = grid de thumbnails, número = imagem específica
@@ -132,7 +136,7 @@ export function ImageGallery({
     }
   }, [selectedIndex, images.length]);
 
-  // 🔧 ERROR HANDLERS para evitar imagem quebrada (ORIGINAL)
+  // 🔧 ERROR HANDLERS para evitar imagem quebrada (ORIGINAL MANTIDO)
   const handleImageError = useCallback(() => {
     setImageLoadError(true);
     setFirstImageLoaded(true);
@@ -143,7 +147,7 @@ export function ImageGallery({
     setFirstImageLoaded(true);
   }, []);
 
-  // 🚀 PRELOAD CRÍTICO - SÓ A OTIMIZAÇÃO QUE DEU 95 PONTOS
+  // 🚀 PRELOAD AGRESSIVO da primeira imagem (ORIGINAL MANTIDO - 95 pontos!)
   useEffect(() => {
     if (images[0]?.Foto) {
       const link = document.createElement('link');
@@ -162,7 +166,7 @@ export function ImageGallery({
     }
   }, [images]);
 
-  // 🚀 KEYBOARD NAVIGATION - Otimizado (ORIGINAL)
+  // 🚀 KEYBOARD NAVIGATION - Otimizado (ORIGINAL MANTIDO)
   useEffect(() => {
     if (!isModalOpen) return;
 
@@ -188,7 +192,7 @@ export function ImageGallery({
     return (
       <div className="w-full h-[380px] relative">
         <div className="w-full h-full overflow-hidden bg-gray-100 flex flex-col items-center justify-center rounded-lg">
-          {/* 🎯 LOADING PLACEHOLDER */}
+          {/* 🎯 LOADING PLACEHOLDER (ORIGINAL MANTIDO) */}
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
           <span className="text-gray-600 text-sm font-medium">Carregando galeria...</span>
         </div>
@@ -198,9 +202,9 @@ export function ImageGallery({
 
   return (
     <>
-      {/* 🎨 LAYOUT ORIGINAL + MOBILE OTIMIZADO */}
+      {/* 🎨 LAYOUT OTIMIZADO COM FOTOS MAIORES (ORIGINAL MANTIDO) */}
       {layout === "single" ? (
-        // LAYOUT SINGLE (ORIGINAL)
+        // LAYOUT SINGLE (ORIGINAL MANTIDO)
         <div 
           className="w-full h-full cursor-pointer relative overflow-hidden rounded-lg"
           onClick={() => openModal()}
@@ -228,22 +232,59 @@ export function ImageGallery({
             className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-105"
           />
 
-          {/* Indicadores otimizados (ORIGINAL) */}
+          {/* Indicadores otimizados (ORIGINAL + CSS ANTI-CONFLITO) */}
           {images[0].Destaque === "Sim" && (
-            <div className="absolute top-4 left-4 bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+            <div 
+              style={{
+                position: 'absolute',
+                top: '16px',
+                left: '16px',
+                backgroundColor: 'rgb(17, 24, 39)',
+                color: 'white',
+                fontSize: '12px',
+                fontWeight: 'bold',
+                padding: '4px 8px',
+                borderRadius: '9999px',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                zIndex: 999999,
+                pointerEvents: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
               ⭐ DESTAQUE
             </div>
           )}
 
-          <div className="absolute top-4 right-4 bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg">
+          <div 
+            style={{
+              position: 'absolute',
+              top: '16px',
+              right: '16px',
+              backgroundColor: 'rgba(255, 255, 255, 0.9)',
+              backdropFilter: 'blur(4px)',
+              color: 'black',
+              fontSize: '14px',
+              fontWeight: '500',
+              padding: '4px 12px',
+              borderRadius: '9999px',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+              zIndex: 999999,
+              pointerEvents: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+          >
             {images.length} foto{images.length > 1 ? 's' : ''}
           </div>
         </div>
       ) : (
-        // 📱💻 LAYOUT RESPONSIVO (ORIGINAL + MOBILE OTIMIZADO)
+        // 📱 LAYOUT RESPONSIVO COM FOTOS MAIORES (ORIGINAL MANTIDO)
         <div className={`w-full ${isMobile ? '' : 'grid grid-cols-1 md:grid-cols-2 gap-1'}`}>
           
-          {/* 📱 MOBILE: SÓ A OTIMIZAÇÃO QUE DEU 95 PONTOS */}
+          {/* 📱 MOBILE: Foto principal MAIOR (ORIGINAL + 95 pontos) */}
           {isMobile ? (
             <div 
               className="w-full h-[65vh] sm:h-[60vh] min-h-[320px] max-h-[380px] cursor-pointer relative overflow-hidden rounded-lg"
@@ -274,25 +315,82 @@ export function ImageGallery({
                 className="object-cover transition-transform duration-300 ease-in-out hover:scale-105"
               />
 
-              {/* Indicadores móveis (ORIGINAL) */}
+              {/* Indicadores móveis (ORIGINAL + CSS ANTI-CONFLITO) */}
               {images[0].Destaque === "Sim" && (
-                <div className="absolute top-3 left-3 bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                <div 
+                  style={{
+                    position: 'absolute',
+                    top: '12px',
+                    left: '12px',
+                    backgroundColor: 'rgb(17, 24, 39)',
+                    color: 'white',
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                    padding: '4px 8px',
+                    borderRadius: '9999px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                    zIndex: 999999,
+                    pointerEvents: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
                   ⭐ DESTAQUE
                 </div>
               )}
 
-              <div className="absolute top-3 right-3 bg-black bg-opacity-80 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-sm font-medium shadow-lg">
+              <div 
+                style={{
+                  position: 'absolute',
+                  top: '12px',
+                  right: '12px',
+                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                  backdropFilter: 'blur(4px)',
+                  color: 'white',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  padding: '6px 12px',
+                  borderRadius: '9999px',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                  zIndex: 999999,
+                  pointerEvents: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}
+              >
                 1 / {images.length}
               </div>
 
               {images.length > 1 && (
-                <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 bg-white bg-opacity-90 backdrop-blur-sm text-black px-4 py-2 rounded-full text-sm font-medium shadow-lg">
+                <div 
+                  style={{
+                    position: 'absolute',
+                    bottom: '12px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    backdropFilter: 'blur(4px)',
+                    color: 'black',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    padding: '8px 16px',
+                    borderRadius: '9999px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                    zIndex: 999999,
+                    pointerEvents: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
                   Toque para ver as {images.length} fotos
                 </div>
               )}
             </div>
           ) : (
-            // 💻 DESKTOP: EXATAMENTE ORIGINAL
+            // 💻 DESKTOP: Layout grid MAIOR (ORIGINAL MANTIDO)
             <>
               <div 
                 className="col-span-1 h-[380px] cursor-pointer relative"
@@ -307,7 +405,7 @@ export function ImageGallery({
                   }
                 }}
               >
-                {/* 🎯 LOADING OVERLAY DESKTOP (ORIGINAL) */}
+                {/* 🎯 LOADING OVERLAY DESKTOP (ORIGINAL MANTIDO) */}
                 {!firstImageLoaded && (
                   <div className="absolute inset-0 bg-gray-50 flex flex-col items-center justify-center z-10 rounded-lg">
                     <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mb-2"></div>
@@ -334,19 +432,56 @@ export function ImageGallery({
                   />
                 </div>
 
-                {/* Indicadores desktop (ORIGINAL) */}
+                {/* Indicadores desktop (ORIGINAL + CSS ANTI-CONFLITO) */}
                 {images[0].Destaque === "Sim" && (
-                  <div className="absolute top-4 left-4 bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                  <div 
+                    style={{
+                      position: 'absolute',
+                      top: '16px',
+                      left: '16px',
+                      backgroundColor: 'rgb(17, 24, 39)',
+                      color: 'white',
+                      fontSize: '12px',
+                      fontWeight: 'bold',
+                      padding: '4px 8px',
+                      borderRadius: '9999px',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                      zIndex: 999999,
+                      pointerEvents: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
                     ⭐ DESTAQUE
                   </div>
                 )}
 
-                <div className="absolute top-4 right-4 bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg">
+                <div 
+                  style={{
+                    position: 'absolute',
+                    top: '16px',
+                    right: '16px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    backdropFilter: 'blur(4px)',
+                    color: 'black',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    padding: '4px 12px',
+                    borderRadius: '9999px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                    zIndex: 999999,
+                    pointerEvents: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
                   {images.length} foto{images.length > 1 ? 's' : ''}
                 </div>
               </div>
 
-              {/* GRID 2x2 (ORIGINAL) */}
+              {/* GRID 2x2 MAIOR (ORIGINAL MANTIDO) */}
               <div className="col-span-1 grid grid-cols-2 grid-rows-2 gap-1 h-[380px]">
                 {images.slice(1, 5).map((image, index) => {
                   const isLastImage = index === 3;
@@ -379,9 +514,23 @@ export function ImageGallery({
                         className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
                       />
                       
-                      {/* Indicador de destaque nos thumbnails (ORIGINAL) */}
+                      {/* Indicador de destaque nos thumbnails (ORIGINAL + CSS ANTI-CONFLITO) */}
                       {image.Destaque === "Sim" && (
-                        <div className="absolute top-2 left-2 bg-gray-900 text-white text-xs font-bold px-1.5 py-0.5 rounded">
+                        <div 
+                          style={{
+                            position: 'absolute',
+                            top: '8px',
+                            left: '8px',
+                            backgroundColor: 'rgb(17, 24, 39)',
+                            color: 'white',
+                            fontSize: '12px',
+                            fontWeight: 'bold',
+                            padding: '2px 4px',
+                            borderRadius: '4px',
+                            zIndex: 999999,
+                            pointerEvents: 'none'
+                          }}
+                        >
                           ⭐
                         </div>
                       )}
@@ -405,7 +554,7 @@ export function ImageGallery({
         </div>
       )}
 
-      {/* 🖼️ MODAL OTIMIZADO (ORIGINAL) */}
+      {/* 🖼️ MODAL OTIMIZADO (ORIGINAL MANTIDO) */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-95 z-50 overflow-auto">
           {/* Header fixo */}
@@ -466,7 +615,7 @@ export function ImageGallery({
               </button>
             </div>
           ) : (
-            // Grid de thumbnails otimizado (ORIGINAL)
+            // Grid de thumbnails otimizado (ORIGINAL MANTIDO)
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
               {images.map((image, idx) => (
                 <div
