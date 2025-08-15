@@ -324,18 +324,28 @@ export function ImageGallery({
                 />
               </div>
 
-              {/* BADGES MOBILE INLINE */}
+              {/* BADGES MOBILE - CSS ISOLADO TOTAL */}
               {images[0].Destaque === "Sim" && (
                 <div 
-                  className="bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg flex items-center justify-center"
                   style={{ 
                     position: 'absolute',
                     top: '12px',
                     left: '12px',
                     width: '80px',
                     height: '24px',
+                    backgroundColor: 'rgb(17, 24, 39)', // gray-900
+                    color: 'white',
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                    padding: '4px 8px',
+                    borderRadius: '9999px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     contain: 'layout',
-                    zIndex: 10
+                    zIndex: 50, // MUITO MAIOR que z-10 do video
+                    pointerEvents: 'none'
                   }}
                 >
                   ⭐ DESTAQUE
@@ -343,15 +353,26 @@ export function ImageGallery({
               )}
 
               <div 
-                className="bg-black bg-opacity-80 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-sm font-medium shadow-lg flex items-center justify-center"
                 style={{ 
                   position: 'absolute',
                   top: '12px',
                   right: '12px',
                   width: '50px',
                   height: '28px',
+                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                  backdropFilter: 'blur(4px)',
+                  color: 'white',
+                  padding: '6px 12px',
+                  borderRadius: '9999px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                   contain: 'layout',
-                  zIndex: 10
+                  zIndex: 50,
+                  pointerEvents: 'none'
                 }}
               >
                 1 / {images.length}
@@ -359,7 +380,6 @@ export function ImageGallery({
 
               {images.length > 1 && (
                 <div 
-                  className="bg-white bg-opacity-90 backdrop-blur-sm text-black px-4 py-2 rounded-full text-sm font-medium shadow-lg flex items-center justify-center"
                   style={{ 
                     position: 'absolute',
                     bottom: '12px',
@@ -367,8 +387,20 @@ export function ImageGallery({
                     transform: 'translateX(-50%)',
                     width: '200px',
                     height: '32px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    backdropFilter: 'blur(4px)',
+                    color: 'black',
+                    padding: '8px 16px',
+                    borderRadius: '9999px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     contain: 'layout',
-                    zIndex: 10
+                    zIndex: 50,
+                    pointerEvents: 'none'
                   }}
                 >
                   Toque para ver as {images.length} fotos
@@ -421,18 +453,28 @@ export function ImageGallery({
                   />
                 </div>
 
-                {/* BADGES DESKTOP INLINE */}
+                {/* BADGES DESKTOP - CSS ISOLADO TOTAL */}
                 {images[0].Destaque === "Sim" && (
                   <div 
-                    className="bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg flex items-center justify-center"
                     style={{ 
                       position: 'absolute',
                       top: '16px',
                       left: '16px',
                       width: '80px',
                       height: '24px',
+                      backgroundColor: 'rgb(17, 24, 39)', // gray-900
+                      color: 'white',
+                      fontSize: '12px',
+                      fontWeight: 'bold',
+                      padding: '4px 8px',
+                      borderRadius: '9999px',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
                       contain: 'layout',
-                      zIndex: 10
+                      zIndex: 50,
+                      pointerEvents: 'none'
                     }}
                   >
                     ⭐ DESTAQUE
@@ -440,15 +482,26 @@ export function ImageGallery({
                 )}
 
                 <div 
-                  className="bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg flex items-center justify-center"
                   style={{ 
                     position: 'absolute',
                     top: '16px',
                     right: '16px',
                     width: '60px',
                     height: '24px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    backdropFilter: 'blur(4px)',
+                    color: 'black',
+                    padding: '4px 12px',
+                    borderRadius: '9999px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     contain: 'layout',
-                    zIndex: 10
+                    zIndex: 50,
+                    pointerEvents: 'none'
                   }}
                 >
                   {images.length} foto{images.length > 1 ? 's' : ''}
@@ -509,18 +562,26 @@ export function ImageGallery({
                         />
                       </div>
                       
-                      {/* BADGE THUMBNAIL INLINE */}
+                      {/* BADGE THUMBNAIL - CSS ISOLADO TOTAL */}
                       {image.Destaque === "Sim" && (
                         <div 
-                          className="bg-gray-900 text-white text-xs font-bold rounded flex items-center justify-center"
                           style={{ 
                             position: 'absolute',
                             top: '8px',
                             left: '8px',
                             width: '20px',
                             height: '20px',
+                            backgroundColor: 'rgb(17, 24, 39)', // gray-900
+                            color: 'white',
+                            fontSize: '12px',
+                            fontWeight: 'bold',
+                            borderRadius: '4px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
                             contain: 'layout',
-                            zIndex: 10
+                            zIndex: 50,
+                            pointerEvents: 'none'
                           }}
                         >
                           ⭐
@@ -647,12 +708,50 @@ export function ImageGallery({
                     style={{ objectFit: 'cover' }}
                   />
                   
-                  <div className="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
+                  {/* BADGES MODAL - CSS ISOLADO TOTAL */}
+                  <div 
+                    style={{
+                      position: 'absolute',
+                      bottom: '8px',
+                      right: '8px',
+                      width: '30px',
+                      height: '20px',
+                      backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                      color: 'white',
+                      fontSize: '12px',
+                      padding: '4px 8px',
+                      borderRadius: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      zIndex: 50,
+                      pointerEvents: 'none'
+                    }}
+                  >
                     {idx + 1}
                   </div>
                   
                   {image.Destaque === "Sim" && (
-                    <div className="absolute top-2 left-2 bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded">
+                    <div 
+                      style={{
+                        position: 'absolute',
+                        top: '8px',
+                        left: '8px',
+                        width: '80px',
+                        height: '24px',
+                        backgroundColor: 'rgb(17, 24, 39)', // gray-900
+                        color: 'white',
+                        fontSize: '12px',
+                        fontWeight: 'bold',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 50,
+                        pointerEvents: 'none'
+                      }}
+                    >
                       ⭐ DESTAQUE
                     </div>
                   )}
