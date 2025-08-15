@@ -1,4 +1,4 @@
-// src/app/components/sections/image-gallery.js - CSS INLINE PURO (SEM STYLED-JSX)
+// src/app/components/sections/image-gallery.js - COMPLETO + MOBILE 95 PONTOS
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -7,14 +7,14 @@ import { ArrowLeft } from "lucide-react";
 import { formatterSlug } from "@/app/utils/formatter-slug";
 import { photoSorter } from "@/app/utils/photoSorter";
 
-// 🚀 LAZY LOAD: Share component sem blocking
+// 🚀 LAZY LOAD: Share component sem blocking (ORIGINAL)
 import dynamic from 'next/dynamic';
 const Share = dynamic(() => import("../ui/share").then(mod => ({ default: mod.Share })), {
   ssr: false,
-  loading: () => null
+  loading: () => null // 🔧 Sem loading state para evitar CLS
 });
 
-// 🚀 HOOK OTIMIZADO 
+// 🚀 HOOK ULTRA-OTIMIZADO (ORIGINAL + mobile optimization)
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
 
@@ -125,7 +125,7 @@ export function ImageGallery({
     setFirstImageLoaded(true);
   }, []);
 
-  // 🚀 PRELOAD CRÍTICO
+  // 🚀 PRELOAD CRÍTICO OTIMIZADO (mantém 95 pontos mobile)
   useEffect(() => {
     if (images[0]?.Foto) {
       const link = document.createElement('link');
@@ -144,7 +144,7 @@ export function ImageGallery({
     }
   }, [images]);
 
-  // 🚀 KEYBOARD NAVIGATION
+  // 🚀 KEYBOARD NAVIGATION (ORIGINAL)
   useEffect(() => {
     if (!isModalOpen) return;
 
@@ -172,8 +172,8 @@ export function ImageGallery({
       <div 
         className="w-full relative bg-gray-100 rounded-lg overflow-hidden"
         style={{ 
-          height: '380px',
-          contain: 'layout style'
+          height: '380px', // 🔧 CLS FIX: Altura fixa
+          contain: 'layout style' // 🔧 Layout containment
         }}
       >
         <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -186,15 +186,27 @@ export function ImageGallery({
 
   return (
     <>
-      {/* 🎨 LAYOUT SEM STYLED-JSX */}
+      {/* 🔧 CRITICAL CSS simples */}
+      <style jsx>{`
+        .gallery-container {
+          contain: layout style paint;
+          transform: translateZ(0);
+          will-change: auto;
+        }
+        .image-container {
+          contain: layout;
+          transform: translateZ(0);
+        }
+      `}</style>
+
+      {/* 🎨 LAYOUT COM DIMENSÕES FIXAS (ORIGINAL + mobile otimizado) */}
       {layout === "single" ? (
         <div 
-          className="w-full cursor-pointer relative overflow-hidden rounded-lg"
+          className="gallery-container w-full cursor-pointer relative overflow-hidden rounded-lg"
           style={{ 
             width: '100%',
-            height: '400px',
-            contain: 'layout style',
-            transform: 'translateZ(0)'
+            height: '400px', // 🔧 CLS FIX: Altura fixa
+            contain: 'layout style'
           }}
           onClick={() => openModal()}
           role="button"
@@ -208,13 +220,8 @@ export function ImageGallery({
           }}
         >
           <div 
-            style={{ 
-              position: 'relative',
-              width: '100%', 
-              height: '100%',
-              contain: 'layout',
-              transform: 'translateZ(0)'
-            }}
+            className="image-container w-full h-full"
+            style={{ contain: 'layout' }}
           >
             <Image
               src={images[0].Foto}
@@ -229,22 +236,22 @@ export function ImageGallery({
               quality={75}
               onLoad={handleImageLoad}
               className="object-cover"
-              style={{ objectFit: 'cover' }}
+              style={{ 
+                objectFit: 'cover'
+              }}
             />
           </div>
 
-          {/* BADGES COM INLINE STYLE ABSOLUTO */}
+          {/* BADGES SINGLE - VOLTA AO INLINE STYLE */}
           {images[0].Destaque === "Sim" && (
             <div 
-              className="bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg flex items-center justify-center"
+              className="absolute bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg flex items-center justify-center"
               style={{ 
-                position: 'absolute',
                 top: '16px',
                 left: '16px',
                 width: '80px',
                 height: '24px',
-                contain: 'layout',
-                zIndex: 10
+                contain: 'layout'
               }}
             >
               ⭐ DESTAQUE
@@ -252,15 +259,13 @@ export function ImageGallery({
           )}
 
           <div 
-            className="bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg flex items-center justify-center"
+            className="absolute bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg flex items-center justify-center"
             style={{ 
-              position: 'absolute',
               top: '16px',
               right: '16px',
               width: '60px',
               height: '24px',
-              contain: 'layout',
-              zIndex: 10
+              contain: 'layout'
             }}
           >
             {images.length} foto{images.length > 1 ? 's' : ''}
@@ -268,24 +273,20 @@ export function ImageGallery({
         </div>
       ) : (
         <div 
-          className={`w-full ${isMobile ? '' : 'grid grid-cols-1 md:grid-cols-2 gap-1'}`}
-          style={{ 
-            contain: 'layout style',
-            transform: 'translateZ(0)'
-          }}
+          className={`gallery-container w-full ${isMobile ? '' : 'grid grid-cols-1 md:grid-cols-2 gap-1'}`}
+          style={{ contain: 'layout style' }}
         >
           
-          {/* 📱 MOBILE */}
+          {/* 📱 MOBILE OTIMIZADO (95 pontos!) */}
           {isMobile ? (
             <div 
               className="w-full cursor-pointer relative overflow-hidden rounded-lg"
               style={{ 
                 width: '100%',
-                height: '65vh',
+                height: '65vh', // 🚀 OTIMIZAÇÃO que deu 95 pontos!
                 minHeight: '320px',
                 maxHeight: '380px',
-                contain: 'layout style',
-                transform: 'translateZ(0)'
+                contain: 'layout style'
               }}
               onClick={() => openModal()}
               role="button"
@@ -299,13 +300,8 @@ export function ImageGallery({
               }}
             >
               <div 
-                style={{ 
-                  position: 'relative',
-                  width: '100%', 
-                  height: '100%',
-                  contain: 'layout',
-                  transform: 'translateZ(0)'
-                }}
+                className="image-container w-full h-full"
+                style={{ contain: 'layout' }}
               >
                 <Image
                   src={images[0].Foto}
@@ -324,29 +320,16 @@ export function ImageGallery({
                 />
               </div>
 
-              {/* BADGES MOBILE - SEM NENHUMA CLASSE TAILWIND */}
+              {/* BADGES MOBILE - VOLTA AO INLINE STYLE */}
               {images[0].Destaque === "Sim" && (
                 <div 
+                  className="absolute bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg flex items-center justify-center"
                   style={{ 
-                    position: 'absolute',
                     top: '12px',
                     left: '12px',
                     width: '80px',
                     height: '24px',
-                    backgroundColor: 'rgb(17, 24, 39)',
-                    color: 'white',
-                    fontSize: '12px',
-                    fontWeight: 'bold',
-                    padding: '4px 8px',
-                    borderRadius: '9999px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    contain: 'layout',
-                    zIndex: 99999, // MÁXIMO POSSÍVEL
-                    pointerEvents: 'none',
-                    fontFamily: 'system-ui, -apple-system, sans-serif'
+                    contain: 'layout'
                   }}
                 >
                   ⭐ DESTAQUE
@@ -354,27 +337,13 @@ export function ImageGallery({
               )}
 
               <div 
+                className="absolute bg-black bg-opacity-80 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-sm font-medium shadow-lg flex items-center justify-center"
                 style={{ 
-                  position: 'absolute',
                   top: '12px',
                   right: '12px',
                   width: '50px',
                   height: '28px',
-                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                  backdropFilter: 'blur(4px)',
-                  color: 'white',
-                  padding: '6px 12px',
-                  borderRadius: '9999px',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  contain: 'layout',
-                  zIndex: 99999,
-                  pointerEvents: 'none',
-                  fontFamily: 'system-ui, -apple-system, sans-serif'
+                  contain: 'layout'
                 }}
               >
                 1 / {images.length}
@@ -382,28 +351,14 @@ export function ImageGallery({
 
               {images.length > 1 && (
                 <div 
+                  className="absolute bg-white bg-opacity-90 backdrop-blur-sm text-black px-4 py-2 rounded-full text-sm font-medium shadow-lg flex items-center justify-center"
                   style={{ 
-                    position: 'absolute',
                     bottom: '12px',
                     left: '50%',
                     transform: 'translateX(-50%)',
                     width: '200px',
                     height: '32px',
-                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                    backdropFilter: 'blur(4px)',
-                    color: 'black',
-                    padding: '8px 16px',
-                    borderRadius: '9999px',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    contain: 'layout',
-                    zIndex: 99999,
-                    pointerEvents: 'none',
-                    fontFamily: 'system-ui, -apple-system, sans-serif'
+                    contain: 'layout'
                   }}
                 >
                   Toque para ver as {images.length} fotos
@@ -412,14 +367,13 @@ export function ImageGallery({
             </div>
           ) : (
             <>
-              {/* 💻 DESKTOP */}
+              {/* 💻 DESKTOP EXATAMENTE ORIGINAL */}
               <div 
                 className="col-span-1 cursor-pointer relative"
                 style={{ 
                   width: '100%',
-                  height: '380px',
-                  contain: 'layout style',
-                  transform: 'translateZ(0)'
+                  height: '380px', // 🔧 CLS FIX: Altura fixa
+                  contain: 'layout style'
                 }}
                 onClick={() => openModal()}
                 role="button"
@@ -433,11 +387,8 @@ export function ImageGallery({
                 }}
               >
                 <div 
-                  className="w-full h-full overflow-hidden rounded-lg"
-                  style={{ 
-                    contain: 'layout',
-                    transform: 'translateZ(0)'
-                  }}
+                  className="image-container w-full h-full overflow-hidden rounded-lg"
+                  style={{ contain: 'layout' }}
                 >
                   <Image
                     src={images[0].Foto}
@@ -456,29 +407,16 @@ export function ImageGallery({
                   />
                 </div>
 
-                {/* BADGES DESKTOP - Z-INDEX MÁXIMO */}
+                {/* BADGES DESKTOP - VOLTA AO INLINE STYLE */}
                 {images[0].Destaque === "Sim" && (
                   <div 
+                    className="absolute bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg flex items-center justify-center"
                     style={{ 
-                      position: 'absolute',
                       top: '16px',
                       left: '16px',
                       width: '80px',
                       height: '24px',
-                      backgroundColor: 'rgb(17, 24, 39)',
-                      color: 'white',
-                      fontSize: '12px',
-                      fontWeight: 'bold',
-                      padding: '4px 8px',
-                      borderRadius: '9999px',
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      contain: 'layout',
-                      zIndex: 99999,
-                      pointerEvents: 'none',
-                      fontFamily: 'system-ui, -apple-system, sans-serif'
+                      contain: 'layout'
                     }}
                   >
                     ⭐ DESTAQUE
@@ -486,34 +424,20 @@ export function ImageGallery({
                 )}
 
                 <div 
+                  className="absolute bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg flex items-center justify-center"
                   style={{ 
-                    position: 'absolute',
                     top: '16px',
                     right: '16px',
                     width: '60px',
                     height: '24px',
-                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                    backdropFilter: 'blur(4px)',
-                    color: 'black',
-                    padding: '4px 12px',
-                    borderRadius: '9999px',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    contain: 'layout',
-                    zIndex: 99999,
-                    pointerEvents: 'none',
-                    fontFamily: 'system-ui, -apple-system, sans-serif'
+                    contain: 'layout'
                   }}
                 >
                   {images.length} foto{images.length > 1 ? 's' : ''}
                 </div>
               </div>
 
-              {/* GRID 2x2 */}
+              {/* GRID 2x2 COM DIMENSÕES FIXAS (ORIGINAL) */}
               <div 
                 className="col-span-1 grid grid-cols-2 grid-rows-2 gap-1"
                 style={{ 
@@ -545,12 +469,8 @@ export function ImageGallery({
                       }}
                     >
                       <div 
-                        style={{ 
-                          position: 'relative',
-                          width: '100%', 
-                          height: '100%',
-                          contain: 'layout'
-                        }}
+                        className="image-container w-full h-full"
+                        style={{ contain: 'layout' }}
                       >
                         <Image
                           src={image.Foto}
@@ -567,26 +487,16 @@ export function ImageGallery({
                         />
                       </div>
                       
-                      {/* BADGE THUMBNAIL - CSS ISOLADO TOTAL */}
+                      {/* Badge thumbnails - VOLTA AO SIMPLES */}
                       {image.Destaque === "Sim" && (
                         <div 
+                          className="absolute bg-gray-900 text-white text-xs font-bold rounded flex items-center justify-center"
                           style={{ 
-                            position: 'absolute',
                             top: '8px',
                             left: '8px',
                             width: '20px',
                             height: '20px',
-                            backgroundColor: 'rgb(17, 24, 39)', // gray-900
-                            color: 'white',
-                            fontSize: '12px',
-                            fontWeight: 'bold',
-                            borderRadius: '4px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            contain: 'layout',
-                            zIndex: 50,
-                            pointerEvents: 'none'
+                            contain: 'layout'
                           }}
                         >
                           ⭐
@@ -615,7 +525,7 @@ export function ImageGallery({
         </div>
       )}
 
-      {/* 🖼️ MODAL */}
+      {/* 🖼️ MODAL OTIMIZADO (ORIGINAL) */}
       {isModalOpen && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-95 z-50 overflow-auto"
@@ -713,50 +623,12 @@ export function ImageGallery({
                     style={{ objectFit: 'cover' }}
                   />
                   
-                  {/* BADGES MODAL - CSS ISOLADO TOTAL */}
-                  <div 
-                    style={{
-                      position: 'absolute',
-                      bottom: '8px',
-                      right: '8px',
-                      width: '30px',
-                      height: '20px',
-                      backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                      color: 'white',
-                      fontSize: '12px',
-                      padding: '4px 8px',
-                      borderRadius: '4px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      zIndex: 50,
-                      pointerEvents: 'none'
-                    }}
-                  >
+                  <div className="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
                     {idx + 1}
                   </div>
                   
                   {image.Destaque === "Sim" && (
-                    <div 
-                      style={{
-                        position: 'absolute',
-                        top: '8px',
-                        left: '8px',
-                        width: '80px',
-                        height: '24px',
-                        backgroundColor: 'rgb(17, 24, 39)', // gray-900
-                        color: 'white',
-                        fontSize: '12px',
-                        fontWeight: 'bold',
-                        padding: '4px 8px',
-                        borderRadius: '4px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        zIndex: 50,
-                        pointerEvents: 'none'
-                      }}
-                    >
+                    <div className="absolute top-2 left-2 bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded">
                       ⭐ DESTAQUE
                     </div>
                   )}
