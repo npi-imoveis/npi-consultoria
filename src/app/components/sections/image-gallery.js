@@ -1,4 +1,4 @@
-// src/app/components/sections/image-gallery.js - OTIMIZADA COM FOTOS MAIORES
+// src/app/components/sections/image-gallery.js - ORIGINAL + 95 PONTOS MOBILE
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -8,7 +8,7 @@ import { formatterSlug } from "@/app/utils/formatter-slug";
 import { Share } from "../ui/share";
 import { photoSorter } from "@/app/utils/photoSorter";
 
-// 🚀 HOOK OTIMIZADO com debounce
+// 🚀 HOOK OTIMIZADO com debounce (ORIGINAL)
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
 
@@ -54,10 +54,10 @@ export function ImageGallery({
   const [firstImageLoaded, setFirstImageLoaded] = useState(false);
   const isMobile = useIsMobile();
 
-  // 🎯 PROCESSAMENTO OTIMIZADO
+  // 🎯 PROCESSAMENTO OTIMIZADO (ORIGINAL)
   const isImovelMode = !!imovel;
   
-  // 🚀 DADOS PROCESSADOS - Memoized para performance
+  // 🚀 DADOS PROCESSADOS - Memoized para performance (ORIGINAL)
   const processedData = useMemo(() => {
     if (isImovelMode) {
       return {
@@ -78,7 +78,7 @@ export function ImageGallery({
     }
   }, [imovel, fotos, title, shareUrl, shareTitle, isImovelMode]);
 
-  // 🎯 IMAGENS PROCESSADAS - Otimizado
+  // 🎯 IMAGENS PROCESSADAS - Otimizado (ORIGINAL)
   const images = useMemo(() => {
     if (!Array.isArray(processedData.fotos) || processedData.fotos.length === 0) {
       return [];
@@ -109,7 +109,7 @@ export function ImageGallery({
     }
   }, [processedData]);
 
-  // 🎯 HANDLERS OTIMIZADOS com useCallback
+  // 🎯 HANDLERS OTIMIZADOS com useCallback (ORIGINAL)
   const openModal = useCallback((index = null) => {
     setIsModalOpen(true);
     setSelectedIndex(index); // null = grid de thumbnails, número = imagem específica
@@ -132,7 +132,7 @@ export function ImageGallery({
     }
   }, [selectedIndex, images.length]);
 
-  // 🔧 ERROR HANDLERS para evitar imagem quebrada
+  // 🔧 ERROR HANDLERS para evitar imagem quebrada (ORIGINAL)
   const handleImageError = useCallback(() => {
     setImageLoadError(true);
     setFirstImageLoaded(true);
@@ -143,7 +143,7 @@ export function ImageGallery({
     setFirstImageLoaded(true);
   }, []);
 
-  // 🚀 PRELOAD AGRESSIVO da primeira imagem
+  // 🚀 PRELOAD CRÍTICO - SÓ A OTIMIZAÇÃO QUE DEU 95 PONTOS
   useEffect(() => {
     if (images[0]?.Foto) {
       const link = document.createElement('link');
@@ -151,15 +151,18 @@ export function ImageGallery({
       link.as = 'image';
       link.href = images[0].Foto;
       link.fetchPriority = 'high';
+      link.crossOrigin = 'anonymous';
       document.head.appendChild(link);
       
       return () => {
-        document.head.removeChild(link);
+        if (document.head.contains(link)) {
+          document.head.removeChild(link);
+        }
       };
     }
   }, [images]);
 
-  // 🚀 KEYBOARD NAVIGATION - Otimizado
+  // 🚀 KEYBOARD NAVIGATION - Otimizado (ORIGINAL)
   useEffect(() => {
     if (!isModalOpen) return;
 
@@ -185,7 +188,7 @@ export function ImageGallery({
     return (
       <div className="w-full h-[380px] relative">
         <div className="w-full h-full overflow-hidden bg-gray-100 flex flex-col items-center justify-center rounded-lg">
-          {/* 🎯 LOADING PLACEHOLDER - Substitua pelo logo HUB correto */}
+          {/* 🎯 LOADING PLACEHOLDER */}
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
           <span className="text-gray-600 text-sm font-medium">Carregando galeria...</span>
         </div>
@@ -195,9 +198,9 @@ export function ImageGallery({
 
   return (
     <>
-      {/* 🎨 LAYOUT OTIMIZADO COM FOTOS MAIORES */}
+      {/* 🎨 LAYOUT ORIGINAL + MOBILE OTIMIZADO */}
       {layout === "single" ? (
-        // LAYOUT SINGLE
+        // LAYOUT SINGLE (ORIGINAL)
         <div 
           className="w-full h-full cursor-pointer relative overflow-hidden rounded-lg"
           onClick={() => openModal()}
@@ -225,7 +228,7 @@ export function ImageGallery({
             className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-105"
           />
 
-          {/* Indicadores otimizados */}
+          {/* Indicadores otimizados (ORIGINAL) */}
           {images[0].Destaque === "Sim" && (
             <div className="absolute top-4 left-4 bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
               ⭐ DESTAQUE
@@ -237,10 +240,10 @@ export function ImageGallery({
           </div>
         </div>
       ) : (
-        // 📱 LAYOUT RESPONSIVO COM FOTOS MAIORES
+        // 📱💻 LAYOUT RESPONSIVO (ORIGINAL + MOBILE OTIMIZADO)
         <div className={`w-full ${isMobile ? '' : 'grid grid-cols-1 md:grid-cols-2 gap-1'}`}>
           
-          {/* 📱 MOBILE: Foto principal MAIOR */}
+          {/* 📱 MOBILE: SÓ A OTIMIZAÇÃO QUE DEU 95 PONTOS */}
           {isMobile ? (
             <div 
               className="w-full h-[65vh] sm:h-[60vh] min-h-[320px] max-h-[380px] cursor-pointer relative overflow-hidden rounded-lg"
@@ -271,7 +274,7 @@ export function ImageGallery({
                 className="object-cover transition-transform duration-300 ease-in-out hover:scale-105"
               />
 
-              {/* Indicadores móveis */}
+              {/* Indicadores móveis (ORIGINAL) */}
               {images[0].Destaque === "Sim" && (
                 <div className="absolute top-3 left-3 bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
                   ⭐ DESTAQUE
@@ -289,7 +292,7 @@ export function ImageGallery({
               )}
             </div>
           ) : (
-            // 💻 DESKTOP: Layout grid MAIOR
+            // 💻 DESKTOP: EXATAMENTE ORIGINAL
             <>
               <div 
                 className="col-span-1 h-[380px] cursor-pointer relative"
@@ -304,7 +307,7 @@ export function ImageGallery({
                   }
                 }}
               >
-                {/* 🎯 LOADING OVERLAY DESKTOP */}
+                {/* 🎯 LOADING OVERLAY DESKTOP (ORIGINAL) */}
                 {!firstImageLoaded && (
                   <div className="absolute inset-0 bg-gray-50 flex flex-col items-center justify-center z-10 rounded-lg">
                     <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mb-2"></div>
@@ -331,7 +334,7 @@ export function ImageGallery({
                   />
                 </div>
 
-                {/* Indicadores desktop */}
+                {/* Indicadores desktop (ORIGINAL) */}
                 {images[0].Destaque === "Sim" && (
                   <div className="absolute top-4 left-4 bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
                     ⭐ DESTAQUE
@@ -343,7 +346,7 @@ export function ImageGallery({
                 </div>
               </div>
 
-              {/* GRID 2x2 MAIOR */}
+              {/* GRID 2x2 (ORIGINAL) */}
               <div className="col-span-1 grid grid-cols-2 grid-rows-2 gap-1 h-[380px]">
                 {images.slice(1, 5).map((image, index) => {
                   const isLastImage = index === 3;
@@ -376,7 +379,7 @@ export function ImageGallery({
                         className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
                       />
                       
-                      {/* Indicador de destaque nos thumbnails */}
+                      {/* Indicador de destaque nos thumbnails (ORIGINAL) */}
                       {image.Destaque === "Sim" && (
                         <div className="absolute top-2 left-2 bg-gray-900 text-white text-xs font-bold px-1.5 py-0.5 rounded">
                           ⭐
@@ -402,7 +405,7 @@ export function ImageGallery({
         </div>
       )}
 
-      {/* 🖼️ MODAL OTIMIZADO */}
+      {/* 🖼️ MODAL OTIMIZADO (ORIGINAL) */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-95 z-50 overflow-auto">
           {/* Header fixo */}
@@ -463,7 +466,7 @@ export function ImageGallery({
               </button>
             </div>
           ) : (
-            // Grid de thumbnails otimizado
+            // Grid de thumbnails otimizado (ORIGINAL)
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
               {images.map((image, idx) => (
                 <div
