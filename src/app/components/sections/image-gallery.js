@@ -1,4 +1,4 @@
-// src/app/components/sections/image-gallery.js - COMPLETO + MOBILE 95 PONTOS
+// src/app/components/sections/image-gallery.js - CLS ZERO + LCP OTIMIZADO
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -7,14 +7,14 @@ import { ArrowLeft } from "lucide-react";
 import { formatterSlug } from "@/app/utils/formatter-slug";
 import { photoSorter } from "@/app/utils/photoSorter";
 
-// 🚀 LAZY LOAD: Share component sem blocking (ORIGINAL)
+// 🚀 LAZY LOAD: Share component sem blocking
 import dynamic from 'next/dynamic';
 const Share = dynamic(() => import("../ui/share").then(mod => ({ default: mod.Share })), {
   ssr: false,
   loading: () => null // 🔧 Sem loading state para evitar CLS
 });
 
-// 🚀 HOOK ULTRA-OTIMIZADO (ORIGINAL + mobile optimization)
+// 🚀 HOOK ULTRA-OTIMIZADO
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
 
@@ -125,7 +125,7 @@ export function ImageGallery({
     setFirstImageLoaded(true);
   }, []);
 
-  // 🚀 PRELOAD CRÍTICO OTIMIZADO (mantém 95 pontos mobile)
+  // 🚀 PRELOAD CRÍTICO OTIMIZADO
   useEffect(() => {
     if (images[0]?.Foto) {
       const link = document.createElement('link');
@@ -144,7 +144,7 @@ export function ImageGallery({
     }
   }, [images]);
 
-  // 🚀 KEYBOARD NAVIGATION (ORIGINAL)
+  // 🚀 KEYBOARD NAVIGATION
   useEffect(() => {
     if (!isModalOpen) return;
 
@@ -186,7 +186,7 @@ export function ImageGallery({
 
   return (
     <>
-      {/* 🔧 CRITICAL CSS simples */}
+      {/* 🔧 CRITICAL CSS para eliminar CLS */}
       <style jsx>{`
         .gallery-container {
           contain: layout style paint;
@@ -197,9 +197,19 @@ export function ImageGallery({
           contain: layout;
           transform: translateZ(0);
         }
+        .badge-placeholder {
+          width: 80px;
+          height: 24px;
+          contain: layout;
+        }
+        .count-badge {
+          width: 60px;
+          height: 24px;
+          contain: layout;
+        }
       `}</style>
 
-      {/* 🎨 LAYOUT COM DIMENSÕES FIXAS (ORIGINAL + mobile otimizado) */}
+      {/* 🎨 LAYOUT COM DIMENSÕES FIXAS */}
       {layout === "single" ? (
         <div 
           className="gallery-container w-full cursor-pointer relative overflow-hidden rounded-lg"
@@ -232,7 +242,6 @@ export function ImageGallery({
               placeholder="empty"
               loading="eager"
               priority={true}
-              fetchPriority="high"
               quality={75}
               onLoad={handleImageLoad}
               className="object-cover"
@@ -242,27 +251,25 @@ export function ImageGallery({
             />
           </div>
 
-          {/* BADGES SINGLE - VOLTA AO INLINE STYLE */}
-          {images[0].Destaque === "Sim" && (
-            <div 
-              className="absolute bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg flex items-center justify-center"
-              style={{ 
-                top: '16px',
-                left: '16px',
-                width: '80px',
-                height: '24px',
-                contain: 'layout'
-              }}
-            >
-              ⭐ DESTAQUE
-            </div>
-          )}
+          {/* 🔧 CLS FIX: Placeholder sempre presente */}
+          <div 
+            className="badge-placeholder absolute top-4 left-4 flex items-center"
+            style={{ 
+              width: '80px',
+              height: '24px',
+              contain: 'layout'
+            }}
+          >
+            {images[0].Destaque === "Sim" && (
+              <div className="bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg w-full h-full flex items-center justify-center">
+                ⭐ DESTAQUE
+              </div>
+            )}
+          </div>
 
           <div 
-            className="absolute bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg flex items-center justify-center"
+            className="count-badge absolute top-4 right-4 bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg flex items-center justify-center"
             style={{ 
-              top: '16px',
-              right: '16px',
               width: '60px',
               height: '24px',
               contain: 'layout'
@@ -277,15 +284,13 @@ export function ImageGallery({
           style={{ contain: 'layout style' }}
         >
           
-          {/* 📱 MOBILE OTIMIZADO (95 pontos!) */}
+          {/* 📱 MOBILE */}
           {isMobile ? (
             <div 
               className="w-full cursor-pointer relative overflow-hidden rounded-lg"
               style={{ 
                 width: '100%',
-                height: '65vh', // 🚀 OTIMIZAÇÃO que deu 95 pontos!
-                minHeight: '320px',
-                maxHeight: '380px',
+                height: '340px', // 🔧 CLS FIX: Altura fixa mobile
                 contain: 'layout style'
               }}
               onClick={() => openModal()}
@@ -312,7 +317,6 @@ export function ImageGallery({
                   placeholder="empty"
                   loading="eager"
                   priority={true}
-                  fetchPriority="high"
                   quality={70}
                   onLoad={handleImageLoad}
                   className="object-cover"
@@ -320,27 +324,25 @@ export function ImageGallery({
                 />
               </div>
 
-              {/* BADGES MOBILE - VOLTA AO INLINE STYLE */}
-              {images[0].Destaque === "Sim" && (
-                <div 
-                  className="absolute bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg flex items-center justify-center"
-                  style={{ 
-                    top: '12px',
-                    left: '12px',
-                    width: '80px',
-                    height: '24px',
-                    contain: 'layout'
-                  }}
-                >
-                  ⭐ DESTAQUE
-                </div>
-              )}
+              {/* Badge mobile com placeholder */}
+              <div 
+                className="badge-placeholder absolute top-3 left-3 flex items-center"
+                style={{ 
+                  width: '80px',
+                  height: '24px',
+                  contain: 'layout'
+                }}
+              >
+                {images[0].Destaque === "Sim" && (
+                  <div className="bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg w-full h-full flex items-center justify-center">
+                    ⭐ DESTAQUE
+                  </div>
+                )}
+              </div>
 
               <div 
-                className="absolute bg-black bg-opacity-80 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-sm font-medium shadow-lg flex items-center justify-center"
+                className="absolute top-3 right-3 bg-black bg-opacity-80 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-sm font-medium shadow-lg flex items-center justify-center"
                 style={{ 
-                  top: '12px',
-                  right: '12px',
                   width: '50px',
                   height: '28px',
                   contain: 'layout'
@@ -351,11 +353,8 @@ export function ImageGallery({
 
               {images.length > 1 && (
                 <div 
-                  className="absolute bg-white bg-opacity-90 backdrop-blur-sm text-black px-4 py-2 rounded-full text-sm font-medium shadow-lg flex items-center justify-center"
+                  className="absolute bottom-3 left-1/2 transform -translate-x-1/2 bg-white bg-opacity-90 backdrop-blur-sm text-black px-4 py-2 rounded-full text-sm font-medium shadow-lg flex items-center justify-center"
                   style={{ 
-                    bottom: '12px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
                     width: '200px',
                     height: '32px',
                     contain: 'layout'
@@ -367,7 +366,7 @@ export function ImageGallery({
             </div>
           ) : (
             <>
-              {/* 💻 DESKTOP EXATAMENTE ORIGINAL */}
+              {/* 💻 DESKTOP */}
               <div 
                 className="col-span-1 cursor-pointer relative"
                 style={{ 
@@ -399,7 +398,6 @@ export function ImageGallery({
                     placeholder="empty"
                     loading="eager"
                     priority={true}
-                    fetchPriority="high"
                     quality={75}
                     onLoad={handleImageLoad}
                     className="object-cover"
@@ -407,27 +405,25 @@ export function ImageGallery({
                   />
                 </div>
 
-                {/* BADGES DESKTOP - VOLTA AO INLINE STYLE */}
-                {images[0].Destaque === "Sim" && (
-                  <div 
-                    className="absolute bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg flex items-center justify-center"
-                    style={{ 
-                      top: '16px',
-                      left: '16px',
-                      width: '80px',
-                      height: '24px',
-                      contain: 'layout'
-                    }}
-                  >
-                    ⭐ DESTAQUE
-                  </div>
-                )}
+                {/* Badge desktop com placeholder */}
+                <div 
+                  className="badge-placeholder absolute top-4 left-4 flex items-center"
+                  style={{ 
+                    width: '80px',
+                    height: '24px',
+                    contain: 'layout'
+                  }}
+                >
+                  {images[0].Destaque === "Sim" && (
+                    <div className="bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg w-full h-full flex items-center justify-center">
+                      ⭐ DESTAQUE
+                    </div>
+                  )}
+                </div>
 
                 <div 
-                  className="absolute bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg flex items-center justify-center"
+                  className="count-badge absolute top-4 right-4 bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg flex items-center justify-center"
                   style={{ 
-                    top: '16px',
-                    right: '16px',
                     width: '60px',
                     height: '24px',
                     contain: 'layout'
@@ -437,7 +433,7 @@ export function ImageGallery({
                 </div>
               </div>
 
-              {/* GRID 2x2 COM DIMENSÕES FIXAS (ORIGINAL) */}
+              {/* GRID 2x2 COM DIMENSÕES FIXAS */}
               <div 
                 className="col-span-1 grid grid-cols-2 grid-rows-2 gap-1"
                 style={{ 
@@ -487,21 +483,21 @@ export function ImageGallery({
                         />
                       </div>
                       
-                      {/* Badge thumbnails - VOLTA AO SIMPLES */}
-                      {image.Destaque === "Sim" && (
-                        <div 
-                          className="absolute bg-gray-900 text-white text-xs font-bold rounded flex items-center justify-center"
-                          style={{ 
-                            top: '8px',
-                            left: '8px',
-                            width: '20px',
-                            height: '20px',
-                            contain: 'layout'
-                          }}
-                        >
-                          ⭐
-                        </div>
-                      )}
+                      {/* Badge thumbnails com placeholder */}
+                      <div 
+                        className="absolute top-2 left-2 flex items-center justify-center"
+                        style={{ 
+                          width: '20px',
+                          height: '20px',
+                          contain: 'layout'
+                        }}
+                      >
+                        {image.Destaque === "Sim" && (
+                          <div className="bg-gray-900 text-white text-xs font-bold rounded w-full h-full flex items-center justify-center">
+                            ⭐
+                          </div>
+                        )}
+                      </div>
                       
                       {isLastImage && images.length > 5 && (
                         <div 
@@ -525,7 +521,7 @@ export function ImageGallery({
         </div>
       )}
 
-      {/* 🖼️ MODAL OTIMIZADO (ORIGINAL) */}
+      {/* 🖼️ MODAL OTIMIZADO */}
       {isModalOpen && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-95 z-50 overflow-auto"
