@@ -1,4 +1,4 @@
-// src/app/components/sections/image-gallery.js - CLS ZERO + LCP OTIMIZADO
+// src/app/components/sections/image-gallery.js - CSS INLINE PURO (SEM STYLED-JSX)
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -11,10 +11,10 @@ import { photoSorter } from "@/app/utils/photoSorter";
 import dynamic from 'next/dynamic';
 const Share = dynamic(() => import("../ui/share").then(mod => ({ default: mod.Share })), {
   ssr: false,
-  loading: () => null // 🔧 Sem loading state para evitar CLS
+  loading: () => null
 });
 
-// 🚀 HOOK ULTRA-OTIMIZADO
+// 🚀 HOOK OTIMIZADO 
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
 
@@ -125,7 +125,7 @@ export function ImageGallery({
     setFirstImageLoaded(true);
   }, []);
 
-  // 🚀 PRELOAD CRÍTICO OTIMIZADO
+  // 🚀 PRELOAD CRÍTICO
   useEffect(() => {
     if (images[0]?.Foto) {
       const link = document.createElement('link');
@@ -172,8 +172,8 @@ export function ImageGallery({
       <div 
         className="w-full relative bg-gray-100 rounded-lg overflow-hidden"
         style={{ 
-          height: '380px', // 🔧 CLS FIX: Altura fixa
-          contain: 'layout style' // 🔧 Layout containment
+          height: '380px',
+          contain: 'layout style'
         }}
       >
         <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -186,37 +186,15 @@ export function ImageGallery({
 
   return (
     <>
-      {/* 🔧 CRITICAL CSS para eliminar CLS */}
-      <style jsx>{`
-        .gallery-container {
-          contain: layout style paint;
-          transform: translateZ(0);
-          will-change: auto;
-        }
-        .image-container {
-          contain: layout;
-          transform: translateZ(0);
-        }
-        .badge-placeholder {
-          width: 80px;
-          height: 24px;
-          contain: layout;
-        }
-        .count-badge {
-          width: 60px;
-          height: 24px;
-          contain: layout;
-        }
-      `}</style>
-
-      {/* 🎨 LAYOUT COM DIMENSÕES FIXAS */}
+      {/* 🎨 LAYOUT SEM STYLED-JSX */}
       {layout === "single" ? (
         <div 
-          className="gallery-container w-full cursor-pointer relative overflow-hidden rounded-lg"
+          className="w-full cursor-pointer relative overflow-hidden rounded-lg"
           style={{ 
             width: '100%',
-            height: '400px', // 🔧 CLS FIX: Altura fixa
-            contain: 'layout style'
+            height: '400px',
+            contain: 'layout style',
+            transform: 'translateZ(0)'
           }}
           onClick={() => openModal()}
           role="button"
@@ -230,8 +208,13 @@ export function ImageGallery({
           }}
         >
           <div 
-            className="image-container w-full h-full"
-            style={{ contain: 'layout' }}
+            style={{ 
+              position: 'relative',
+              width: '100%', 
+              height: '100%',
+              contain: 'layout',
+              transform: 'translateZ(0)'
+            }}
           >
             <Image
               src={images[0].Foto}
@@ -242,37 +225,42 @@ export function ImageGallery({
               placeholder="empty"
               loading="eager"
               priority={true}
+              fetchPriority="high"
               quality={75}
               onLoad={handleImageLoad}
               className="object-cover"
-              style={{ 
-                objectFit: 'cover'
-              }}
+              style={{ objectFit: 'cover' }}
             />
           </div>
 
-          {/* 🔧 CLS FIX: Placeholder sempre presente */}
-          <div 
-            className="badge-placeholder absolute top-4 left-4 flex items-center"
-            style={{ 
-              width: '80px',
-              height: '24px',
-              contain: 'layout'
-            }}
-          >
-            {images[0].Destaque === "Sim" && (
-              <div className="bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg w-full h-full flex items-center justify-center">
-                ⭐ DESTAQUE
-              </div>
-            )}
-          </div>
+          {/* BADGES COM INLINE STYLE ABSOLUTO */}
+          {images[0].Destaque === "Sim" && (
+            <div 
+              className="bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg flex items-center justify-center"
+              style={{ 
+                position: 'absolute',
+                top: '16px',
+                left: '16px',
+                width: '80px',
+                height: '24px',
+                contain: 'layout',
+                zIndex: 10
+              }}
+            >
+              ⭐ DESTAQUE
+            </div>
+          )}
 
           <div 
-            className="count-badge absolute top-4 right-4 bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg flex items-center justify-center"
+            className="bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg flex items-center justify-center"
             style={{ 
+              position: 'absolute',
+              top: '16px',
+              right: '16px',
               width: '60px',
               height: '24px',
-              contain: 'layout'
+              contain: 'layout',
+              zIndex: 10
             }}
           >
             {images.length} foto{images.length > 1 ? 's' : ''}
@@ -280,8 +268,11 @@ export function ImageGallery({
         </div>
       ) : (
         <div 
-          className={`gallery-container w-full ${isMobile ? '' : 'grid grid-cols-1 md:grid-cols-2 gap-1'}`}
-          style={{ contain: 'layout style' }}
+          className={`w-full ${isMobile ? '' : 'grid grid-cols-1 md:grid-cols-2 gap-1'}`}
+          style={{ 
+            contain: 'layout style',
+            transform: 'translateZ(0)'
+          }}
         >
           
           {/* 📱 MOBILE */}
@@ -290,8 +281,11 @@ export function ImageGallery({
               className="w-full cursor-pointer relative overflow-hidden rounded-lg"
               style={{ 
                 width: '100%',
-                height: '340px', // 🔧 CLS FIX: Altura fixa mobile
-                contain: 'layout style'
+                height: '65vh',
+                minHeight: '320px',
+                maxHeight: '380px',
+                contain: 'layout style',
+                transform: 'translateZ(0)'
               }}
               onClick={() => openModal()}
               role="button"
@@ -305,8 +299,13 @@ export function ImageGallery({
               }}
             >
               <div 
-                className="image-container w-full h-full"
-                style={{ contain: 'layout' }}
+                style={{ 
+                  position: 'relative',
+                  width: '100%', 
+                  height: '100%',
+                  contain: 'layout',
+                  transform: 'translateZ(0)'
+                }}
               >
                 <Image
                   src={images[0].Foto}
@@ -317,6 +316,7 @@ export function ImageGallery({
                   placeholder="empty"
                   loading="eager"
                   priority={true}
+                  fetchPriority="high"
                   quality={70}
                   onLoad={handleImageLoad}
                   className="object-cover"
@@ -324,28 +324,34 @@ export function ImageGallery({
                 />
               </div>
 
-              {/* Badge mobile com placeholder */}
-              <div 
-                className="badge-placeholder absolute top-3 left-3 flex items-center"
-                style={{ 
-                  width: '80px',
-                  height: '24px',
-                  contain: 'layout'
-                }}
-              >
-                {images[0].Destaque === "Sim" && (
-                  <div className="bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg w-full h-full flex items-center justify-center">
-                    ⭐ DESTAQUE
-                  </div>
-                )}
-              </div>
+              {/* BADGES MOBILE INLINE */}
+              {images[0].Destaque === "Sim" && (
+                <div 
+                  className="bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg flex items-center justify-center"
+                  style={{ 
+                    position: 'absolute',
+                    top: '12px',
+                    left: '12px',
+                    width: '80px',
+                    height: '24px',
+                    contain: 'layout',
+                    zIndex: 10
+                  }}
+                >
+                  ⭐ DESTAQUE
+                </div>
+              )}
 
               <div 
-                className="absolute top-3 right-3 bg-black bg-opacity-80 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-sm font-medium shadow-lg flex items-center justify-center"
+                className="bg-black bg-opacity-80 backdrop-blur-sm text-white px-3 py-1.5 rounded-full text-sm font-medium shadow-lg flex items-center justify-center"
                 style={{ 
+                  position: 'absolute',
+                  top: '12px',
+                  right: '12px',
                   width: '50px',
                   height: '28px',
-                  contain: 'layout'
+                  contain: 'layout',
+                  zIndex: 10
                 }}
               >
                 1 / {images.length}
@@ -353,11 +359,16 @@ export function ImageGallery({
 
               {images.length > 1 && (
                 <div 
-                  className="absolute bottom-3 left-1/2 transform -translate-x-1/2 bg-white bg-opacity-90 backdrop-blur-sm text-black px-4 py-2 rounded-full text-sm font-medium shadow-lg flex items-center justify-center"
+                  className="bg-white bg-opacity-90 backdrop-blur-sm text-black px-4 py-2 rounded-full text-sm font-medium shadow-lg flex items-center justify-center"
                   style={{ 
+                    position: 'absolute',
+                    bottom: '12px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
                     width: '200px',
                     height: '32px',
-                    contain: 'layout'
+                    contain: 'layout',
+                    zIndex: 10
                   }}
                 >
                   Toque para ver as {images.length} fotos
@@ -371,8 +382,9 @@ export function ImageGallery({
                 className="col-span-1 cursor-pointer relative"
                 style={{ 
                   width: '100%',
-                  height: '380px', // 🔧 CLS FIX: Altura fixa
-                  contain: 'layout style'
+                  height: '380px',
+                  contain: 'layout style',
+                  transform: 'translateZ(0)'
                 }}
                 onClick={() => openModal()}
                 role="button"
@@ -386,8 +398,11 @@ export function ImageGallery({
                 }}
               >
                 <div 
-                  className="image-container w-full h-full overflow-hidden rounded-lg"
-                  style={{ contain: 'layout' }}
+                  className="w-full h-full overflow-hidden rounded-lg"
+                  style={{ 
+                    contain: 'layout',
+                    transform: 'translateZ(0)'
+                  }}
                 >
                   <Image
                     src={images[0].Foto}
@@ -398,6 +413,7 @@ export function ImageGallery({
                     placeholder="empty"
                     loading="eager"
                     priority={true}
+                    fetchPriority="high"
                     quality={75}
                     onLoad={handleImageLoad}
                     className="object-cover"
@@ -405,35 +421,41 @@ export function ImageGallery({
                   />
                 </div>
 
-                {/* Badge desktop com placeholder */}
-                <div 
-                  className="badge-placeholder absolute top-4 left-4 flex items-center"
-                  style={{ 
-                    width: '80px',
-                    height: '24px',
-                    contain: 'layout'
-                  }}
-                >
-                  {images[0].Destaque === "Sim" && (
-                    <div className="bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg w-full h-full flex items-center justify-center">
-                      ⭐ DESTAQUE
-                    </div>
-                  )}
-                </div>
+                {/* BADGES DESKTOP INLINE */}
+                {images[0].Destaque === "Sim" && (
+                  <div 
+                    className="bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg flex items-center justify-center"
+                    style={{ 
+                      position: 'absolute',
+                      top: '16px',
+                      left: '16px',
+                      width: '80px',
+                      height: '24px',
+                      contain: 'layout',
+                      zIndex: 10
+                    }}
+                  >
+                    ⭐ DESTAQUE
+                  </div>
+                )}
 
                 <div 
-                  className="count-badge absolute top-4 right-4 bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg flex items-center justify-center"
+                  className="bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg flex items-center justify-center"
                   style={{ 
+                    position: 'absolute',
+                    top: '16px',
+                    right: '16px',
                     width: '60px',
                     height: '24px',
-                    contain: 'layout'
+                    contain: 'layout',
+                    zIndex: 10
                   }}
                 >
                   {images.length} foto{images.length > 1 ? 's' : ''}
                 </div>
               </div>
 
-              {/* GRID 2x2 COM DIMENSÕES FIXAS */}
+              {/* GRID 2x2 */}
               <div 
                 className="col-span-1 grid grid-cols-2 grid-rows-2 gap-1"
                 style={{ 
@@ -465,8 +487,12 @@ export function ImageGallery({
                       }}
                     >
                       <div 
-                        className="image-container w-full h-full"
-                        style={{ contain: 'layout' }}
+                        style={{ 
+                          position: 'relative',
+                          width: '100%', 
+                          height: '100%',
+                          contain: 'layout'
+                        }}
                       >
                         <Image
                           src={image.Foto}
@@ -483,21 +509,23 @@ export function ImageGallery({
                         />
                       </div>
                       
-                      {/* Badge thumbnails com placeholder */}
-                      <div 
-                        className="absolute top-2 left-2 flex items-center justify-center"
-                        style={{ 
-                          width: '20px',
-                          height: '20px',
-                          contain: 'layout'
-                        }}
-                      >
-                        {image.Destaque === "Sim" && (
-                          <div className="bg-gray-900 text-white text-xs font-bold rounded w-full h-full flex items-center justify-center">
-                            ⭐
-                          </div>
-                        )}
-                      </div>
+                      {/* BADGE THUMBNAIL INLINE */}
+                      {image.Destaque === "Sim" && (
+                        <div 
+                          className="bg-gray-900 text-white text-xs font-bold rounded flex items-center justify-center"
+                          style={{ 
+                            position: 'absolute',
+                            top: '8px',
+                            left: '8px',
+                            width: '20px',
+                            height: '20px',
+                            contain: 'layout',
+                            zIndex: 10
+                          }}
+                        >
+                          ⭐
+                        </div>
+                      )}
                       
                       {isLastImage && images.length > 5 && (
                         <div 
@@ -521,7 +549,7 @@ export function ImageGallery({
         </div>
       )}
 
-      {/* 🖼️ MODAL OTIMIZADO */}
+      {/* 🖼️ MODAL */}
       {isModalOpen && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-95 z-50 overflow-auto"
