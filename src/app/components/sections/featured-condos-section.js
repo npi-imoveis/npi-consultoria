@@ -171,24 +171,24 @@ export function FeaturedCondosSection() {
               </div>
             </div>
 
-            {/* Botões de navegação lateral */}
+            {/* Botões de navegação lateral - PRETOS com seta BRANCA */}
             {condominios.length > 1 && (
               <>
                 <button
                   onClick={goPrev}
-                  className="absolute left-6 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 backdrop-blur rounded-full shadow-lg flex items-center justify-center"
+                  className="absolute left-2 top-[40%] -translate-y-1/2 w-10 h-10 bg-black/90 backdrop-blur rounded-full shadow-lg flex items-center justify-center hover:bg-black transition-all"
                   aria-label="Anterior"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                   </svg>
                 </button>
                 <button
                   onClick={goNext}
-                  className="absolute right-6 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 backdrop-blur rounded-full shadow-lg flex items-center justify-center"
+                  className="absolute right-2 top-[40%] -translate-y-1/2 w-10 h-10 bg-black/90 backdrop-blur rounded-full shadow-lg flex items-center justify-center hover:bg-black transition-all"
                   aria-label="Próximo"
                 >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
                 </button>
@@ -207,16 +207,6 @@ export function FeaturedCondosSection() {
                   aria-label={`Ir para condomínio ${i + 1}`}
                 />
               ))}
-            </div>
-
-            {/* Botão Ver Todos */}
-            <div className="mt-8">
-              <a
-                href="/condominios"
-                className="block w-full text-center py-3 border-2 border-amber-600 text-amber-600 rounded-lg font-semibold hover:bg-amber-600 hover:text-white transition-all duration-300"
-              >
-                Ver Todos os Condomínios
-              </a>
             </div>
           </div>
         ) : (
