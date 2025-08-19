@@ -5,14 +5,16 @@ export default function VideoCondominio({ imovel }) {
   const [videoLoaded, setVideoLoaded] = useState(false);
   const [thumbnailUrl, setThumbnailUrl] = useState(null);
   const [thumbnailLoading, setThumbnailLoading] = useState(true);
+  // 🚨 ADIÇÃO 1: Novo estado para metadados
+  const [videoMetadata, setVideoMetadata] = useState(null);
   
-  // 🔍 CONSOLE DESTACADO para garantir visibilidade
+  // 🔍 CONSOLE DESTACADO para garantir visibilidade (MANTIDO)
   console.log('🔥🔥🔥 ===== VIDEO IMOVEL DEBUG ===== 🔥🔥🔥');
   console.log('🔥 imovel completo:', imovel);
   console.log('🔥 imovel.Video:', imovel?.Video);
   console.log('🔥🔥🔥 ================================ 🔥🔥🔥');
   
-  // 🎯 EXTRAÇÃO ULTRA-ROBUSTA do videoId (adaptada para imóvel)
+  // 🎯 EXTRAÇÃO ULTRA-ROBUSTA do videoId (MANTIDO 100%)
   const extractVideoId = () => {
     console.log('🔍 INICIANDO EXTRAÇÃO DE VIDEO ID DO IMOVEL');
     
@@ -105,7 +107,7 @@ export default function VideoCondominio({ imovel }) {
     return null;
   };
 
-  // 🎯 VALIDAÇÃO ULTRA-ROBUSTA do YouTube ID
+  // 🎯 VALIDAÇÃO ULTRA-ROBUSTA do YouTube ID (MANTIDO 100%)
   const validateYouTubeId = (input) => {
     console.log('🔍 Validando input:', input);
     
@@ -196,7 +198,7 @@ export default function VideoCondominio({ imovel }) {
     return null;
   };
   
-  // 🎯 TESTAR THUMBNAILS DISPONÍVEIS
+  // 🎯 TESTAR THUMBNAILS DISPONÍVEIS (MANTIDO 100%)
   const testThumbnail = async (videoId) => {
     console.log('🖼️ Testando thumbnails para videoId:', videoId);
     
@@ -226,149 +228,194 @@ export default function VideoCondominio({ imovel }) {
     return null;
   };
 
-  // Extrair videoId
+  // 🚨 ADIÇÃO 2: Função para buscar metadados (12 linhas)
+  const fetchVideoMetadata = async (videoId) => {
+    try {
+      const response = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
+      if (response.ok) {
+        const data = await response.json();
+        return { title: data.title, author: data.author_name };
+      }
+    } catch (error) {
+      console.log('❌ Erro ao buscar metadados:', error);
+    }
+    return { title: `Vídeo do empreendimento ${imovel?.Empreendimento || 'Imóvel'}`, author: 'NPI Consultoria' };
+  };
+
+  // Extrair videoId (MANTIDO)
   const videoId = extractVideoId();
   
   console.log('🎯 VIDEO ID FINAL DO IMOVEL:', videoId);
   
-  // 🔄 EFFECT: Testar thumbnail quando videoId for encontrado
+  // 🚨 MODIFICAÇÃO: useEffect agora busca metadados também
   useEffect(() => {
     if (videoId) {
       console.log('🔄 Testando thumbnails para videoId do imóvel:', videoId);
       setThumbnailLoading(true);
       
-      testThumbnail(videoId).then((url) => {
-        console.log('🎯 Thumbnail final escolhido para imóvel:', url);
-        setThumbnailUrl(url);
+      // 🚨 MUDANÇA: Promise.all para incluir metadados
+      Promise.all([
+        testThumbnail(videoId),
+        fetchVideoMetadata(videoId)
+      ]).then(([thumbnail, metadata]) => {
+        console.log('🎯 Thumbnail final escolhido para imóvel:', thumbnail);
+        setThumbnailUrl(thumbnail);
+        setVideoMetadata(metadata);
         setThumbnailLoading(false);
       });
     }
   }, [videoId]);
   
-  // ❌ EARLY RETURN: Sem videoId
+  // ❌ EARLY RETURN: Sem videoId (MANTIDO)
   if (!videoId) {
     console.log('❌ Componente VideoCondominio do IMOVEL não será renderizado - sem videoId');
     return null;
   }
   
-  // URLs do vídeo
+  // URLs do vídeo (MANTIDO)
   const embedUrl = `https://www.youtube.com/embed/${videoId}`;
   const embedUrlWithAutoplay = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`;
   const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
-  const videoTitle = `Vídeo do empreendimento ${imovel?.Empreendimento || 'Imóvel'}`;
+  // 🚨 MODIFICAÇÃO: Usar metadados se disponível
+  const videoTitle = videoMetadata?.title || `Vídeo do empreendimento ${imovel?.Empreendimento || 'Imóvel'}`;
+
+  // 🚨 ADIÇÃO 3: Structured data para GSC (10 linhas)
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "VideoObject",
+    "name": videoTitle,
+    "contentUrl": watchUrl,
+    "embedUrl": embedUrl,
+    "thumbnailUrl": thumbnailUrl || `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+    "author": { "@type": "Organization", "name": videoMetadata?.author || "NPI Consultoria" },
+    "mainEntityOfPage": { "@type": "WebPage", "@id": typeof window !== 'undefined' ? window.location.href : '' }
+  };
 
   console.log('🎯 Renderizando componente IMOVEL com videoId:', videoId);
   console.log('🎯 Thumbnail URL:', thumbnailUrl);
   console.log('🎯 Thumbnail loading:', thumbnailLoading);
 
   return (
-    <div className="bg-white container mx-auto p-4 md:p-10 mt-4 border-t-2">
-      <h2 className="text-xl font-bold text-black" id="video">
-        Vídeo {imovel?.Empreendimento || 'do Empreendimento'}
-      </h2>
+    <>
+      {/* 🚨 ADIÇÃO 4: JSON-LD script (1 linha) */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       
-      <div className="relative w-full pb-[56.25%] h-0 overflow-hidden rounded-lg mt-8">
-        {videoLoaded ? (
-          <iframe
-            className="absolute top-0 left-0 w-full h-full"
-            src={embedUrlWithAutoplay}
-            title={videoTitle}
-            frameBorder="0"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-            allowFullScreen
-            loading="lazy"
-          />
-        ) : (
-          <div
-            onClick={() => {
-              console.log('🎥 Carregando vídeo do IMOVEL:', videoId);
-              setVideoLoaded(true);
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                console.log('🎥 Carregando vídeo do IMOVEL via teclado:', videoId);
+      {/* 🚨 MODIFICAÇÃO: Adicionou itemScope e itemType */}
+      <div className="bg-white container mx-auto p-4 md:p-10 mt-4 border-t-2" itemScope itemType="https://schema.org/VideoObject">
+        <h2 className="text-xl font-bold text-black" id="video">
+          Vídeo {imovel?.Empreendimento || 'do Empreendimento'}
+        </h2>
+        
+        {/* 🚨 ADIÇÃO 5: Meta tags backup (4 linhas) */}
+        <meta itemProp="name" content={videoTitle} />
+        <meta itemProp="contentUrl" content={watchUrl} />
+        <meta itemProp="embedUrl" content={embedUrl} />
+        <meta itemProp="thumbnailUrl" content={structuredData.thumbnailUrl} />
+        
+        {/* TODO O RESTO É 100% IDÊNTICO AO ORIGINAL */}
+        <div className="relative w-full pb-[56.25%] h-0 overflow-hidden rounded-lg mt-8">
+          {videoLoaded ? (
+            <iframe
+              className="absolute top-0 left-0 w-full h-full"
+              src={embedUrlWithAutoplay}
+              title={videoTitle}
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              loading="lazy"
+            />
+          ) : (
+            <div
+              onClick={() => {
+                console.log('🎥 Carregando vídeo do IMOVEL:', videoId);
                 setVideoLoaded(true);
-              }
-            }}
-            tabIndex={0}
-            className="absolute top-0 left-0 w-full h-full cursor-pointer group bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center"
-            aria-label="Carregar vídeo"
-            role="button"
-          >
-            {/* CONDITIONAL RENDERING baseado no estado do thumbnail */}
-            {thumbnailLoading ? (
-              // Estado de carregamento
-              <div className="text-white text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-                <div>Carregando preview...</div>
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  console.log('🎥 Carregando vídeo do IMOVEL via teclado:', videoId);
+                  setVideoLoaded(true);
+                }
+              }}
+              tabIndex={0}
+              className="absolute top-0 left-0 w-full h-full cursor-pointer group bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center"
+              aria-label="Carregar vídeo"
+              role="button"
+            >
+              {/* CONDITIONAL RENDERING baseado no estado do thumbnail */}
+              {thumbnailLoading ? (
+                // Estado de carregamento
+                <div className="text-white text-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
+                  <div>Carregando preview...</div>
+                </div>
+              ) : thumbnailUrl ? (
+                // Thumbnail encontrado
+                <>
+                  <img
+                    src={thumbnailUrl}
+                    alt={`Thumbnail do vídeo ${imovel?.Empreendimento || ''}`}
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    onLoad={() => console.log('✅ Thumbnail do IMOVEL renderizado com sucesso!')}
+                    onError={() => console.log('❌ Erro ao renderizar thumbnail do IMOVEL')}
+                  />
+                  <div className="absolute inset-0 bg-black bg-opacity-30 group-hover:bg-opacity-20 transition-all duration-300" />
+                </>
+              ) : (
+                // Fallback final - sem thumbnail
+                <div className="text-white text-center">
+                  <div className="text-6xl mb-4">📺</div>
+                  <div className="text-lg font-semibold">Vídeo Disponível</div>
+                  <div className="text-sm opacity-75">Clique para assistir</div>
+                </div>
+              )}
+              
+              {/* Play button - sempre visível */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="bg-red-600 hover:bg-red-700 rounded-full p-4 lg:p-6 transition-all duration-300 transform group-hover:scale-110 shadow-lg z-10">
+                  <svg className="w-8 h-8 lg:w-12 lg:h-12 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z"/>
+                  </svg>
+                </div>
               </div>
-            ) : thumbnailUrl ? (
-              // Thumbnail encontrado
-              <>
-                <img
-                  src={thumbnailUrl}
-                  alt={`Thumbnail do vídeo ${imovel?.Empreendimento || ''}`}
-                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                  onLoad={() => console.log('✅ Thumbnail do IMOVEL renderizado com sucesso!')}
-                  onError={() => console.log('❌ Erro ao renderizar thumbnail do IMOVEL')}
-                />
-                <div className="absolute inset-0 bg-black bg-opacity-30 group-hover:bg-opacity-20 transition-all duration-300" />
-              </>
-            ) : (
-              // Fallback final - sem thumbnail
-              <div className="text-white text-center">
-                <div className="text-6xl mb-4">📺</div>
-                <div className="text-lg font-semibold">Vídeo Disponível</div>
-                <div className="text-sm opacity-75">Clique para assistir</div>
-              </div>
-            )}
-            
-            {/* Play button - sempre visível */}
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="bg-red-600 hover:bg-red-700 rounded-full p-4 lg:p-6 transition-all duration-300 transform group-hover:scale-110 shadow-lg z-10">
-                <svg className="w-8 h-8 lg:w-12 lg:h-12 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M8 5v14l11-7z"/>
+              
+              {/* YouTube badge */}
+              <div className="absolute top-3 right-3 bg-red-600 text-white px-2 py-1 rounded text-xs font-bold flex items-center gap-1 z-10">
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
                 </svg>
+                YouTube
+              </div>
+              
+              {/* Title overlay */}
+              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/50 to-transparent p-4 z-10">
+                <h3 className="text-white font-semibold text-sm lg:text-base line-clamp-2">
+                  {videoTitle}
+                </h3>
               </div>
             </div>
-            
-            {/* YouTube badge */}
-            <div className="absolute top-3 right-3 bg-red-600 text-white px-2 py-1 rounded text-xs font-bold flex items-center gap-1 z-10">
-              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-              </svg>
-              YouTube
-            </div>
-            
-            {/* Title overlay */}
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/50 to-transparent p-4 z-10">
-              <h3 className="text-white font-semibold text-sm lg:text-base line-clamp-2">
-                {videoTitle}
-              </h3>
-            </div>
-          </div>
-        )}
+          )}
+        </div>
+        
+        {/* Link para YouTube */}
+        <div className="mt-6 text-center">
+          <p className="text-sm text-gray-600 mb-2">
+            Prefere assistir no YouTube?
+          </p>
+          <a 
+            href={watchUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors"
+            aria-label={`Assistir ${videoTitle} no YouTube`}
+          >
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+            </svg>
+            <span className="font-medium">Ver no YouTube</span>
+          </a>
+        </div>
       </div>
-      
-      {/* Link para YouTube */}
-      <div className="mt-6 text-center">
-        <p className="text-sm text-gray-600 mb-2">
-          Prefere assistir no YouTube?
-        </p>
-        <a 
-          href={watchUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors"
-          aria-label={`Assistir ${videoTitle} no YouTube`}
-        >
-          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-          </svg>
-          <span className="font-medium">Ver no YouTube</span>
-        </a>
-      </div>
-    </div>
+    </>
   );
 }
