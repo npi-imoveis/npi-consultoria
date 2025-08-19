@@ -1,118 +1,4 @@
-// *components/sections/featured-condos-section.js*
-"use client";
-import { useEffect, useRef, useState } from "react";
-import CustomCard from "../ui/custom-card";
-import { TitleSection } from "../ui/title-section";
-import { getCondominioDestacado, getCondominios } from "@/app/services";
-
-export function FeaturedCondosSection() {
-  const [condominios, setCondominios] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const carouselRef = useRef(null);
-
-  useEffect(() => {
-    async function fetchCondominios() {
-      try {
-        const response = await getCondominioDestacado();
-        if (response && response.data && Array.isArray(response.data.data)) {
-          setCondominios(response.data.data);
-        } else if (response && response.data && Array.isArray(response.data)) {
-          setCondominios(response.data);
-        } else if (response && Array.isArray(response)) {
-          setCondominios(response);
-        } else {
-          setCondominios([]);
-          setError("Formato de dados inválido recebido do servidor");
-        }
-      } catch (err) {
-        setError(err.response?.data?.message || "Erro ao buscar condominios.");
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchCondominios();
-  }, []);
-
-  // ✅ FUNÇÃO para gerar title otimizado da imagem
-  const generateImageTitle = (condominio) => {
-    const nome = condominio.Empreendimento || "Condomínio";
-    const bairro = condominio.BairroComercial || condominio.Bairro || "";
-    const cidade = condominio.Cidade || "São Paulo";
-    
-    if (bairro) {
-      return `${nome} - ${bairro}, ${cidade} - Condomínio de Alto Padrão NPi`;
-    }
-    return `${nome} - ${cidade} - Condomínio de Alto Padrão NPi`;
-  };
-
-  // ✅ FUNÇÃO para gerar alt otimizado da imagem  
-  const generateImageAlt = (condominio) => {
-    const nome = condominio.Empreendimento || "Condomínio";
-    const bairro = condominio.BairroComercial || condominio.Bairro || "";
-    
-    if (bairro) {
-      return `${nome} - Condomínio de alto padrão em ${bairro} - NPi Imóveis`;
-    }
-    return `${nome} - Condomínio de alto padrão - NPi Imóveis`;
-  };
-
-  return (
-    <section className="w-full bg-zinc-100">
-      <div className="container mx-auto py-16">
-        <TitleSection
-          center
-          section="Destaque"
-          title="Condomínios em Destaque"
-          description="Os melhores condomínios de alto padrão."
-        />
-        <div
-          ref={carouselRef}
-          className="container mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
-        >
-          {loading ? (
-            // Renderiza skeletons durante o carregamento
-            Array.from({ length: 4 }).map((_, index) => (
-              <div key={`skeleton-${index}`} className="animate-pulse">
-                <div className="bg-gray-200 h-48 rounded-lg mb-2"></div>
-                <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-              </div>
-            ))
-          ) : condominios && condominios.length > 0 ? (
-            // Renderiza os condomínios quando disponíveis
-            condominios.map((condominio, index) => {
-              // Verificar se o condomínio tem fotos
-              const temFoto =
-                condominio.Foto &&
-                Array.isArray(condominio.Foto) &&
-                condominio.Foto.length > 0 &&
-                condominio.Foto[0] &&
-                condominio.Foto[0].Foto;
-
-              return (
-                <CustomCard
-                  key={condominio.Codigo || condominio._id || `condominio-${Math.random()}`}
-                  id={condominio.Codigo || condominio._id}
-                  image={temFoto ? condominio.Foto[0].Foto : null}
-                  title={condominio.Empreendimento || "Condomínio"}
-                  description={condominio.Endereco || "Endereço não disponível"}
-                  sign="Condomínio"
-                  slug={condominio.Slug}
-                  // ✅ NOVAS PROPS para otimização das imagens
-                  imageTitle={generateImageTitle(condominio)}
-                  imageAlt={generateImageAlt(condominio)}
-                  loading={index < 4 ? "eager" : "lazy"} // Primeiras 4 imagens carregam imediatamente
-                />
-              );
-            })
-          ) : (
-            // Mensagem quando não há condomínios
-            <p className="text-center w-full py-8 col-span-full">
-              {error ? `Erro: ${error}` : "Nenhum condomínio em destaque encontrado."}
-            </p>
-          )}
-        </div>// components/sections/featured-condos-section.js
+// components/sections/featured-condos-section.js
 "use client";
 import { useEffect, useRef, useState } from "react";
 import CustomCard from "../ui/custom-card";
@@ -125,10 +11,22 @@ export function FeaturedCondosSection() {
   const [error, setError] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [touchStart, setTouchStart] = useState(0);
+  const [isMobile, setIsMobile] = useState(false); // AGORA COM ESTADO
   const carouselRef = useRef(null);
 
-  // Detectar mobile
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  // ✅ DETECTAR MOBILE CORRETAMENTE
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    // Checar imediatamente
+    checkMobile();
+    
+    // Checar ao redimensionar
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     async function fetchCondominios() {
@@ -153,7 +51,7 @@ export function FeaturedCondosSection() {
     fetchCondominios();
   }, []);
 
-  // Auto-play simples
+  // Auto-play para mobile
   useEffect(() => {
     if (!isMobile || loading || !condominios.length) return;
     
@@ -162,7 +60,7 @@ export function FeaturedCondosSection() {
     }, 5000);
     
     return () => clearInterval(timer);
-  }, [isMobile, loading, condominios.length]);
+  }, [isMobile, loading, condominios.length, currentIndex]);
 
   const generateImageTitle = (condominio) => {
     const nome = condominio.Empreendimento || "Condomínio";
@@ -177,23 +75,31 @@ export function FeaturedCondosSection() {
     return bairro ? `${nome} - Condomínio de alto padrão em ${bairro} - NPi Imóveis` : `${nome} - Condomínio de alto padrão - NPi Imóveis`;
   };
 
-  // Touch handlers simplificados
-  const handleTouchStart = (e) => setTouchStart(e.touches[0].clientX);
+  // Touch handlers para swipe
+  const handleTouchStart = (e) => {
+    setTouchStart(e.touches[0].clientX);
+  };
   
   const handleTouchEnd = (e) => {
     const touchEnd = e.changedTouches[0].clientX;
     const diff = touchStart - touchEnd;
     
-    if (Math.abs(diff) > 50) {
+    if (Math.abs(diff) > 50 && condominios.length > 0) {
       if (diff > 0) {
+        // Swipe left - próximo
         setCurrentIndex((prev) => (prev + 1) % condominios.length);
       } else {
+        // Swipe right - anterior
         setCurrentIndex((prev) => (prev - 1 + condominios.length) % condominios.length);
       }
     }
   };
 
-  // Renderização
+  // Navegação por botões
+  const goNext = () => setCurrentIndex((prev) => (prev + 1) % condominios.length);
+  const goPrev = () => setCurrentIndex((prev) => (prev - 1 + condominios.length) % condominios.length);
+
+  // Loading state
   if (loading) {
     return (
       <section className="w-full bg-zinc-100">
@@ -213,6 +119,7 @@ export function FeaturedCondosSection() {
     );
   }
 
+  // Empty state
   if (!condominios?.length) {
     return (
       <section className="w-full bg-zinc-100">
@@ -229,57 +136,111 @@ export function FeaturedCondosSection() {
       <div className="container mx-auto py-16">
         <TitleSection center section="Destaque" title="Condomínios em Destaque" description="Os melhores condomínios de alto padrão." />
         
-        {/* Mobile: Carrossel / Desktop: Grid */}
-        <div className="relative">
-          <div
-            ref={carouselRef}
-            className={`${isMobile ? 'overflow-hidden' : 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4'}`}
-            onTouchStart={isMobile ? handleTouchStart : undefined}
-            onTouchEnd={isMobile ? handleTouchEnd : undefined}
-          >
-            <div className={isMobile ? 'flex transition-transform duration-500' : 'contents'}
-                 style={isMobile ? { transform: `translateX(-${currentIndex * 100}%)` } : {}}>
-              {condominios.map((cond, idx) => {
-                const foto = cond.Foto?.[0]?.Foto;
-                return (
-                  <div key={cond.Codigo || cond._id || idx} className={isMobile ? 'w-full flex-shrink-0 px-2' : ''}>
-                    <CustomCard
-                      id={cond.Codigo || cond._id}
-                      image={foto || null}
-                      title={cond.Empreendimento || "Condomínio"}
-                      description={cond.Endereco || "Endereço não disponível"}
-                      sign="Condomínio"
-                      slug={cond.Slug}
-                      imageTitle={generateImageTitle(cond)}
-                      imageAlt={generateImageAlt(cond)}
-                      loading={idx < 4 ? "eager" : "lazy"}
-                    />
-                  </div>
-                );
-              })}
+        {/* MOBILE: Carrossel */}
+        {isMobile ? (
+          <div className="relative px-4">
+            {/* Container do carrossel */}
+            <div 
+              ref={carouselRef}
+              className="overflow-hidden rounded-lg"
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+            >
+              <div 
+                className="flex transition-transform duration-500 ease-out"
+                style={{ transform: `translateX(-${currentIndex * 100}%)` }}
+              >
+                {condominios.map((cond, idx) => {
+                  const foto = cond.Foto?.[0]?.Foto;
+                  return (
+                    <div key={cond.Codigo || cond._id || idx} className="w-full flex-shrink-0 px-2">
+                      <CustomCard
+                        id={cond.Codigo || cond._id}
+                        image={foto || null}
+                        title={cond.Empreendimento || "Condomínio"}
+                        description={cond.Endereco || "Endereço não disponível"}
+                        sign="Condomínio"
+                        slug={cond.Slug}
+                        imageTitle={generateImageTitle(cond)}
+                        imageAlt={generateImageAlt(cond)}
+                        loading={idx < 2 ? "eager" : "lazy"}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
 
-          {/* Dots - apenas mobile */}
-          {isMobile && condominios.length > 1 && (
-            <div className="flex justify-center gap-2 mt-4">
+            {/* Botões de navegação lateral */}
+            {condominios.length > 1 && (
+              <>
+                <button
+                  onClick={goPrev}
+                  className="absolute left-6 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 backdrop-blur rounded-full shadow-lg flex items-center justify-center"
+                  aria-label="Anterior"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <button
+                  onClick={goNext}
+                  className="absolute right-6 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 backdrop-blur rounded-full shadow-lg flex items-center justify-center"
+                  aria-label="Próximo"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </>
+            )}
+
+            {/* Indicadores (dots) */}
+            <div className="flex justify-center gap-2 mt-6">
               {condominios.map((_, i) => (
                 <button
                   key={i}
                   onClick={() => setCurrentIndex(i)}
-                  className={`transition-all h-2 rounded-full ${
-                    i === currentIndex ? 'w-8 bg-amber-600' : 'w-2 bg-gray-300'
+                  className={`transition-all duration-300 h-2 rounded-full ${
+                    i === currentIndex ? 'w-8 bg-amber-600' : 'w-2 bg-gray-300 hover:bg-gray-400'
                   }`}
-                  aria-label={`Condomínio ${i + 1}`}
+                  aria-label={`Ir para condomínio ${i + 1}`}
                 />
               ))}
             </div>
-          )}
-        </div>
-      </div>
-    </section>
-  );
-}
+
+            {/* Botão Ver Todos */}
+            <div className="mt-8">
+              <a
+                href="/condominios"
+                className="block w-full text-center py-3 border-2 border-amber-600 text-amber-600 rounded-lg font-semibold hover:bg-amber-600 hover:text-white transition-all duration-300"
+              >
+                Ver Todos os Condomínios
+              </a>
+            </div>
+          </div>
+        ) : (
+          /* DESKTOP: Grid original */
+          <div className="container mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {condominios.map((cond, idx) => {
+              const foto = cond.Foto?.[0]?.Foto;
+              return (
+                <CustomCard
+                  key={cond.Codigo || cond._id || idx}
+                  id={cond.Codigo || cond._id}
+                  image={foto || null}
+                  title={cond.Empreendimento || "Condomínio"}
+                  description={cond.Endereco || "Endereço não disponível"}
+                  sign="Condomínio"
+                  slug={cond.Slug}
+                  imageTitle={generateImageTitle(cond)}
+                  imageAlt={generateImageAlt(cond)}
+                  loading={idx < 4 ? "eager" : "lazy"}
+                />
+              );
+            })}
+          </div>
+        )}
       </div>
     </section>
   );
