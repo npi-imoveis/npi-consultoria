@@ -138,11 +138,11 @@ export function FeaturedCondosSection() {
         
         {/* MOBILE: Carrossel */}
         {isMobile ? (
-          <div className="relative px-4">
-            {/* Container do carrossel */}
+          <div className="relative">
+            {/* Container do carrossel - SEM MARGENS, FULLWIDTH */}
             <div 
               ref={carouselRef}
-              className="overflow-hidden rounded-lg"
+              className="overflow-hidden"
               onTouchStart={handleTouchStart}
               onTouchEnd={handleTouchEnd}
             >
@@ -153,7 +153,7 @@ export function FeaturedCondosSection() {
                 {condominios.map((cond, idx) => {
                   const foto = cond.Foto?.[0]?.Foto;
                   return (
-                    <div key={cond.Codigo || cond._id || idx} className="w-full flex-shrink-0 px-2">
+                    <div key={cond.Codigo || cond._id || idx} className="w-full flex-shrink-0">
                       <CustomCard
                         id={cond.Codigo || cond._id}
                         image={foto || null}
@@ -176,7 +176,7 @@ export function FeaturedCondosSection() {
               <>
                 <button
                   onClick={goPrev}
-                  className="absolute left-2 top-[40%] -translate-y-1/2 w-10 h-10 bg-black/90 backdrop-blur rounded-full shadow-lg flex items-center justify-center hover:bg-black transition-all"
+                  className="absolute left-4 top-[40%] -translate-y-1/2 w-10 h-10 bg-black/90 backdrop-blur rounded-full shadow-lg flex items-center justify-center hover:bg-black transition-all z-10"
                   aria-label="Anterior"
                 >
                   <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -185,7 +185,7 @@ export function FeaturedCondosSection() {
                 </button>
                 <button
                   onClick={goNext}
-                  className="absolute right-2 top-[40%] -translate-y-1/2 w-10 h-10 bg-black/90 backdrop-blur rounded-full shadow-lg flex items-center justify-center hover:bg-black transition-all"
+                  className="absolute right-4 top-[40%] -translate-y-1/2 w-10 h-10 bg-black/90 backdrop-blur rounded-full shadow-lg flex items-center justify-center hover:bg-black transition-all z-10"
                   aria-label="Próximo"
                 >
                   <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
