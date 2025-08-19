@@ -8,6 +8,7 @@ export function SimilarProperties({ id }) {
   const [imoveis, setImoveis] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showButtons, setShowButtons] = useState(false);
   const carouselRef = useRef(null);
 
   useEffect(() => {
@@ -82,6 +83,21 @@ export function SimilarProperties({ id }) {
     fetchImoveis();
   }, [id]); // 🔥 DEPENDÊNCIA CORRIGIDA
 
+  // 🔥 VERIFICAR SE PRECISA DE SCROLL
+  useEffect(() => {
+    const checkOverflow = () => {
+      if (carouselRef.current && !loading) {
+        const hasOverflow = carouselRef.current.scrollWidth > carouselRef.current.clientWidth;
+        setShowButtons(hasOverflow || imoveis.length >= 3); // Mostra botões se há overflow OU 3+ imóveis
+      }
+    };
+
+    checkOverflow();
+    window.addEventListener('resize', checkOverflow);
+    
+    return () => window.removeEventListener('resize', checkOverflow);
+  }, [imoveis, loading]);
+
   const scroll = (direction) => {
     if (carouselRef.current) {
       const scrollAmount = 300;
@@ -111,9 +127,9 @@ export function SimilarProperties({ id }) {
     <section className="relative bg-white container mx-auto border-t-2 p-10 mt-4">
       <h2 className="text-xl font-bold text-black mb-6">Imóveis Similares</h2>
       
-      <div className="container mx-auto">
-        {/* Botão Esquerda - só mostra se há mais de 3 imóveis */}
-        {imoveis.length > 3 && (
+      <div className="container mx-auto relative">
+        {/* 🔥 BOTÕES APARECEM QUANDO HÁ 3+ IMÓVEIS OU OVERFLOW */}
+        {showButtons && (
           <button
             onClick={() => scroll("left")}
             className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black text-white p-2 rounded-full shadow-md z-10 hover:bg-gray-800 transition-colors"
@@ -148,8 +164,8 @@ export function SimilarProperties({ id }) {
           )}
         </div>
         
-        {/* Botão Direita - só mostra se há mais de 3 imóveis */}
-        {imoveis.length > 3 && (
+        {/* 🔥 BOTÕES APARECEM QUANDO HÁ 3+ IMÓVEIS OU OVERFLOW */}
+        {showButtons && (
           <button
             onClick={() => scroll("right")}
             className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white p-2 rounded-full shadow-md z-10 hover:bg-black transition-colors"
