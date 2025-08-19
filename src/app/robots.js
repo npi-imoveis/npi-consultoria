@@ -1,3 +1,5 @@
+// src/app/robots.js - CORRIGIDO PARA GSC
+
 /**
  * @returns {import('next').MetadataRoute.Robots}
  */
@@ -14,10 +16,75 @@ export default function robots() {
           '/imovel-*/instagram.com/',
           '/imovel-*/linkedin.com/',
           '/imovel-*/twitter.com/',
-          '/imovel-*/youtube.com/'
+          '/imovel-*/youtube.com/',
+          // 🚨 CORREÇÕES GSC: Bloquear _rsc parameters (CRÍTICO)
+          '/*?_rsc=*',
+          '/*&_rsc=*',
+          // 🚨 CORREÇÕES GSC: Bloquear arquivos Next.js problemáticos
+          '/_next/static/chunks/',
+          '/_next/static/css/',
+          '/_next/static/js/',
+          '/_next/static/media/',
+          '/_next/image*',
+          '/_next/data/',
+          // 🚨 CORREÇÕES GSC: Bloquear páginas de busca sem resultado (evita soft 404)
+          '/busca?*',
+          '/pesquisa?*',
+          '/search?*',
+          // 🚨 CORREÇÕES GSC: Bloquear parâmetros problemáticos
+          '/*?utm_*',
+          '/*?fbclid=*',
+          '/*?gclid=*',
+          '/*?ref=*',
+          '/*?v=*',
+          '/*?cache=*',
+          '/*?t=*',
+          // 🚨 CORREÇÕES GSC: Bloquear duplicatas temporárias
+          '/admin/',
+          '/dashboard/'
         ],
+        // 🚨 CORREÇÃO GSC: Crawl-delay para evitar soft 404s no Googlebot
+        crawlDelay: 1,
       },
-      // ✅ OpenAI (ChatGPT, GPTs)
+      
+      // 🚨 CORREÇÃO GSC: Configuração específica para Googlebot
+      {
+        userAgent: 'Googlebot',
+        allow: '/',
+        disallow: [
+          '/api/',
+          '/*?_rsc=*',
+          '/*&_rsc=*',
+          '/_next/static/chunks/',
+          '/_next/static/css/',
+          '/_next/static/js/',
+          '/_next/data/',
+          '/busca?*',
+          '/*?utm_*',
+          '/*?fbclid=*',
+          '/*?gclid=*',
+          '/admin/',
+          '/dashboard/'
+        ],
+        crawlDelay: 1,
+      },
+      
+      // 🚨 CORREÇÃO GSC: Configuração específica para Bingbot
+      {
+        userAgent: 'Bingbot',
+        allow: '/',
+        disallow: [
+          '/api/',
+          '/*?_rsc=*',
+          '/_next/static/chunks/',
+          '/_next/data/',
+          '/admin/',
+          '/dashboard/'
+        ],
+        crawlDelay: 2,
+      },
+      
+      // ✅ OpenAI (ChatGPT, GPTs) - MANTIDO
       {
         userAgent: 'GPTBot',
         allow: '/',
@@ -34,7 +101,7 @@ export default function robots() {
         userAgent: 'ChatGPT-User/2.0',
         allow: '/',
       },
-      // ✅ Anthropic (Claude)
+      // ✅ Anthropic (Claude) - MANTIDO
       {
         userAgent: 'ClaudeBot',
         allow: '/',
@@ -55,12 +122,12 @@ export default function robots() {
         userAgent: 'anthropic-ai',
         allow: '/',
       },
-      // ✅ Common Crawl (usado para treinar diversas IAs)
+      // ✅ Common Crawl (usado para treinar diversas IAs) - MANTIDO
       {
         userAgent: 'CCBot',
         allow: '/',
       },
-      // ✅ Google Bard/Gemini
+      // ✅ Google Bard/Gemini - MANTIDO
       {
         userAgent: 'Google-Extended',
         allow: '/',
@@ -69,7 +136,7 @@ export default function robots() {
         userAgent: 'GoogleOther',
         allow: '/',
       },
-      // ✅ Perplexity AI
+      // ✅ Perplexity AI - MANTIDO
       {
         userAgent: 'PerplexityBot',
         allow: '/',
@@ -78,12 +145,7 @@ export default function robots() {
         userAgent: 'Perplexity-User',
         allow: '/',
       },
-      // ✅ Microsoft Copilot (via Bing)
-      {
-        userAgent: 'BingBot',
-        allow: '/',
-      },
-      // ✅ Meta AI (Llama)
+      // ✅ Meta AI (Llama) - MANTIDO
       {
         userAgent: 'Meta-ExternalAgent',
         allow: '/',
@@ -92,7 +154,7 @@ export default function robots() {
         userAgent: 'FacebookBot',
         allow: '/',
       },
-      // ✅ xAI (Grok)
+      // ✅ xAI (Grok) - MANTIDO
       {
         userAgent: 'GrokBot',
         allow: '/',
@@ -105,7 +167,7 @@ export default function robots() {
         userAgent: 'xAI-Crawler',
         allow: '/',
       },
-      // ✅ DeepSeek AI
+      // ✅ DeepSeek AI - MANTIDO
       {
         userAgent: 'DeepSeek-Bot',
         allow: '/',
@@ -118,7 +180,7 @@ export default function robots() {
         userAgent: 'DeepSeekBot',
         allow: '/',
       },
-      // ✅ You.com (One/Search)
+      // ✅ You.com (One/Search) - MANTIDO
       {
         userAgent: 'You.com',
         allow: '/',
@@ -131,12 +193,12 @@ export default function robots() {
         userAgent: 'You-Bot',
         allow: '/',
       },
-      // ✅ Amazon AI/Alexa
+      // ✅ Amazon AI/Alexa - MANTIDO
       {
         userAgent: 'Amazonbot',
         allow: '/',
       },
-      // ✅ Apple Intelligence/Siri
+      // ✅ Apple Intelligence/Siri - MANTIDO
       {
         userAgent: 'Applebot',
         allow: '/',
@@ -145,17 +207,17 @@ export default function robots() {
         userAgent: 'Applebot-Extended',
         allow: '/',
       },
-      // ✅ ByteDance/TikTok AI
+      // ✅ ByteDance/TikTok AI - MANTIDO
       {
         userAgent: 'Bytespider',
         allow: '/',
       },
-      // ✅ DuckDuckGo AI
+      // ✅ DuckDuckGo AI - MANTIDO
       {
         userAgent: 'DuckAssistBot',
         allow: '/',
       },
-      // ✅ Cohere AI
+      // ✅ Cohere AI - MANTIDO
       {
         userAgent: 'cohere-ai',
         allow: '/',
@@ -164,12 +226,12 @@ export default function robots() {
         userAgent: 'cohere-training-data-crawler',
         allow: '/',
       },
-      // ✅ LinkedIn AI
+      // ✅ LinkedIn AI - MANTIDO
       {
         userAgent: 'LinkedInBot',
         allow: '/',
       },
-      // ✅ Outros emergentes
+      // ✅ Outros emergentes - MANTIDO
       {
         userAgent: 'AndiBot',
         allow: '/',
