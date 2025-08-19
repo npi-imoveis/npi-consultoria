@@ -1,16 +1,64 @@
-// middleware.js - VERSÃO CORRIGIDA: Imóveis Vendidos OK | Condomínios OK | Deletados → HOME
+// middleware.js - VERSÃO CORRIGIDA: Imóveis Vendidos OK | Condomínios OK | Deletados → HOME + CORREÇÕES GSC
 import { NextResponse } from "next/server";
 import { getCityValidSlugsSync, converterSlugCidadeSync } from "@/app/utils/url-slugs";
 
 export async function middleware(request) {
   const url = request.nextUrl.clone();
-  const { pathname, origin } = url;
+  const { pathname, origin, searchParams } = url;
+  const userAgent = request.headers.get('user-agent') || '';
 
   console.log(`🔍 [MIDDLEWARE] =================== INÍCIO ===================`);
   console.log(`🔍 [MIDDLEWARE] Processando: ${pathname}`);
 
+  // 🚨 CORREÇÃO GSC #1: DETECTAR GOOGLEBOT
+  const isGoogleBot = /googlebot|bingbot|slurp|duckduckbot/i.test(userAgent);
+
+  // 🚨 CORREÇÃO GSC #2: BLOQUEAR _RSC PARAMETERS (CRÍTICO)
+  if (searchParams.has('_rsc')) {
+    console.log('🚫 [GSC] Bloqueando _rsc parameter:', pathname);
+    
+    // Remove parâmetro _rsc e redireciona
+    searchParams.delete('_rsc');
+    url.search = searchParams.toString();
+    
+    return NextResponse.redirect(url, 301);
+  }
+
+  // 🚨 CORREÇÃO GSC #3: BLOQUEAR PARÂMETROS PROBLEMÁTICOS PARA BOTS
+  if (isGoogleBot) {
+    const problematicParams = ['utm_source', 'utm_medium', 'utm_campaign', 'fbclid', 'gclid', 'ref', 'v', 'cache', 't'];
+    let hasProblematicParams = false;
+    
+    problematicParams.forEach(param => {
+      if (searchParams.has(param)) {
+        searchParams.delete(param);
+        hasProblematicParams = true;
+      }
+    });
+    
+    if (hasProblematicParams) {
+      url.search = searchParams.toString();
+      console.log('🚫 [GSC] Removendo parâmetros problemáticos para bot:', pathname);
+      return NextResponse.redirect(url, 301);
+    }
+  }
+
+  // 🚨 CORREÇÃO GSC #4: BLOQUEAR PATHS PROBLEMÁTICOS PARA BOTS
+  const blockedPathsForBots = [
+    '/_next/static/chunks/',
+    '/_next/static/css/',
+    '/_next/static/js/',
+    '/_next/data/',
+    '/api/'
+  ];
+  
+  if (isGoogleBot && blockedPathsForBots.some(path => pathname.startsWith(path))) {
+    console.log('🚫 [GSC] Bloqueando path para bot:', pathname);
+    return new NextResponse(null, { status: 404 });
+  }
+
   /* 
-  🎯 ESTRATÉGIA SEO OTIMIZADA:
+  🎯 ESTRATÉGIA SEO OTIMIZADA (MANTIDA):
   
   1. IMÓVEIS VENDIDOS → Páginas funcionam NORMALMENTE (não redirecionar!)
   2. CONDOMÍNIOS → Páginas funcionam NORMALMENTE (/slug-condominio)
@@ -309,8 +357,28 @@ export async function middleware(request) {
     return NextResponse.redirect(new URL('/', origin), 301);
   }
 
+  // 🚨 CORREÇÃO GSC #5: ADICIONAR HEADERS SEO APROPRIADOS
+  const response = NextResponse.next();
+  
+  // Cache para recursos estáticos
+  if (pathname.includes('.')) {
+    response.headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+  }
+  // Cache para páginas HTML
+  else {
+    response.headers.set('Cache-Control', 'public, max-age=0, must-revalidate');
+  }
+  
+  // Headers para SEO
+  response.headers.set('X-Robots-Tag', 'index, follow');
+  
+  // 🚨 CORREÇÃO GSC #6: LOGGING ESPECÍFICO PARA BOTS
+  if (isGoogleBot && process.env.NODE_ENV === 'production') {
+    console.log(`🤖 [GSC] BOT REQUEST - ${request.method} ${pathname} - UA: ${userAgent.slice(0, 50)}`);
+  }
+
   console.log(`🔍 [MIDDLEWARE] ➡️ Seguindo normalmente: ${pathname}`);
-  return NextResponse.next();
+  return response;
 }
 
 export const config = {
