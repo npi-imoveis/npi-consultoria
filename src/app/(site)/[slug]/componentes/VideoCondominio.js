@@ -1,10 +1,9 @@
 // src/app/(site)/[slug]/componentes/VideoCondominio.js
-// 🚀 VERSÃO CORRIGIDA PARA INDEXAÇÃO GSC
+// 🚀 VERSÃO CORRIGIDA: PERFORMANCE + SEO (JSON-LD APENAS)
 
 "use client";
 
 import { useState, useEffect } from 'react';
-import Head from 'next/head';
 
 export default function VideoCondominio({ condominio }) {
     const [videoLoaded, setVideoLoaded] = useState(false);
@@ -205,7 +204,7 @@ export default function VideoCondominio({ condominio }) {
     const watchUrl = `https://www.youtube.com/watch?v=${videoId}`;
     const videoTitle = videoMetadata?.title || `Vídeo de apresentação - ${condominio.Empreendimento}`;
 
-    // 🚨 NOVO: STRUCTURED DATA PARA GSC (CRÍTICO)
+    // 🚨 STRUCTURED DATA PARA GSC (CRÍTICO) - ZERO IMPACTO NA PERFORMANCE
     const structuredData = {
         "@context": "https://schema.org",
         "@type": "VideoObject",
@@ -244,7 +243,7 @@ export default function VideoCondominio({ condominio }) {
 
     return (
         <>
-            {/* 🚨 STRUCTURED DATA JSON-LD (CRÍTICO PARA GSC) */}
+            {/* 🚨 STRUCTURED DATA JSON-LD (CRÍTICO PARA GSC) - ZERO IMPACTO PERFORMANCE */}
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{
@@ -254,7 +253,7 @@ export default function VideoCondominio({ condominio }) {
             
             <div 
                 className="bg-white container mx-auto p-10 mt-4 rounded-lg"
-                // 🚨 MICRODATA COMO BACKUP
+                // 🚨 MICRODATA COMO BACKUP - ZERO IMPACTO PERFORMANCE
                 itemScope
                 itemType="https://schema.org/VideoObject"
             >
@@ -262,7 +261,7 @@ export default function VideoCondominio({ condominio }) {
                     Vídeo {condominio.Empreendimento}
                 </h2>
                 
-                {/* 🚨 META TAGS PARA GSC (SEMPRE PRESENTES) */}
+                {/* 🚨 META TAGS PARA GSC - ZERO IMPACTO PERFORMANCE */}
                 <meta itemProp="name" content={videoTitle} />
                 <meta itemProp="description" content={structuredData.description} />
                 <meta itemProp="thumbnailUrl" content={structuredData.thumbnailUrl} />
@@ -272,24 +271,20 @@ export default function VideoCondominio({ condominio }) {
                 <meta itemProp="duration" content={structuredData.duration} />
                 
                 <div className="relative w-full pb-[56.25%] h-0 overflow-hidden rounded-lg mt-8">
-                    {/* 🚨 IFRAME SEMPRE PRESENTE NO DOM (CRÍTICO) */}
-                    <iframe
-                        className={`absolute top-0 left-0 w-full h-full transition-opacity duration-300 ${
-                            videoLoaded ? 'opacity-100 z-20' : 'opacity-0 z-10'
-                        }`}
-                        src={videoLoaded ? embedUrlWithAutoplay : embedUrl}
-                        title={videoTitle}
-                        frameBorder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                        allowFullScreen
-                        loading="lazy"
-                        itemProp="embedUrl"
-                    />
-                    
-                    {/* OVERLAY DE PREVIEW (só esconde o iframe, não o remove) */}
-                    {!videoLoaded && (
+                    {/* 🚀 IFRAME CONDICIONAL - MANTÉM PERFORMANCE ORIGINAL! */}
+                    {videoLoaded ? (
+                        <iframe
+                            className="absolute top-0 left-0 w-full h-full"
+                            src={embedUrlWithAutoplay}
+                            title={videoTitle}
+                            frameBorder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowFullScreen
+                            loading="lazy"
+                        />
+                    ) : (
                         <div 
-                            className="absolute top-0 left-0 w-full h-full cursor-pointer group bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center z-30"
+                            className="absolute top-0 left-0 w-full h-full cursor-pointer group bg-gray-900 rounded-lg overflow-hidden flex items-center justify-center"
                             onClick={() => {
                                 console.log('🎥 Carregando vídeo:', videoId);
                                 setVideoLoaded(true);
@@ -318,7 +313,6 @@ export default function VideoCondominio({ condominio }) {
                                         src={thumbnailUrl}
                                         alt={`Thumbnail: ${videoTitle}`}
                                         className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                                        itemProp="thumbnailUrl"
                                         onLoad={() => console.log('✅ Thumbnail renderizado com sucesso!')}
                                         onError={() => console.log('❌ Erro ao renderizar thumbnail')}
                                     />
@@ -352,7 +346,7 @@ export default function VideoCondominio({ condominio }) {
                             
                             {/* Title overlay */}
                             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black via-black/50 to-transparent p-4 z-10">
-                                <h3 className="text-white font-semibold text-sm lg:text-base line-clamp-2" itemProp="name">
+                                <h3 className="text-white font-semibold text-sm lg:text-base line-clamp-2">
                                     {videoTitle}
                                 </h3>
                             </div>
@@ -369,7 +363,6 @@ export default function VideoCondominio({ condominio }) {
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-2 text-blue-600 hover:text-blue-800 transition-colors"
-                        itemProp="contentUrl"
                     >
                         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
