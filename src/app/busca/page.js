@@ -1015,7 +1015,7 @@ export default function BuscaImoveis() {
           imovel.Codigo || `imovel-${imovel._id || Math.random().toString(36).substr(2, 9)}`;
         return (
           <div key={key} className="flex-1 min-w-[260px]">
-            <CardImovel {...imovel} />
+            <CardImovel {...imovel} target="_blank" />
           </div>
         );
       });
