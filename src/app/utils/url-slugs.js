@@ -110,8 +110,8 @@ export const gerarSlugCidade = (cidade) => {
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '') // Remove acentos
-    .replace(/[^a-z0-9\s-]/g, '') // Remove caracteres especiais
-    .replace(/\s+/g, '-') // Substitui espaços por hífens
+    .replace(/[\/\s]+/g, '-') // Substitui espaços E barras por hífens
+    .replace(/[^a-z0-9-]/g, '') // Remove outros caracteres especiais
     .replace(/-+/g, '-') // Remove hífens duplos
     .trim();
 };
@@ -119,12 +119,24 @@ export const gerarSlugCidade = (cidade) => {
 export const gerarSlugCategoria = (categoria) => {
   if (!categoria) return '';
   
-  // Busca o valor invertido no mapeamento
+  // Função para normalizar texto (remove acentos e converte para lowercase)
+  const normalizar = (texto) => {
+    return texto
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, ''); // Remove acentos
+  };
+  
+  // Busca o valor invertido no mapeamento, normalizando ambos para comparação
   const slugEncontrado = Object.keys(MAPEAMENTO_CATEGORIAS).find(
-    key => MAPEAMENTO_CATEGORIAS[key] === categoria
+    key => normalizar(MAPEAMENTO_CATEGORIAS[key]) === normalizar(categoria)
   );
   
-  return slugEncontrado || categoria.toLowerCase().replace(/\s+/g, '-');
+  // Se encontrou no mapeamento, retorna o slug
+  if (slugEncontrado) return slugEncontrado;
+  
+  // Fallback: normaliza acentos e converte para slug
+  return normalizar(categoria).replace(/\s+/g, '-');
 };
 
 export const gerarSlugFinalidade = (finalidade) => {
