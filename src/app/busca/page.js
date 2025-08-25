@@ -980,7 +980,7 @@ export default function BuscaImoveis() {
       return Array(12)
         .fill(null)
         .map((_, index) => (
-          <div key={`skeleton-${index}`} className="min-w-[250px]">
+          <div key={`skeleton-${index}`} className="w-full sm:w-1/2 xl:w-[32%] min-w-0 flex-shrink-0">
             <CardImovelSkeleton />
           </div>
         ));
@@ -1007,7 +1007,7 @@ export default function BuscaImoveis() {
         const key =
           imovel.Codigo || `imovel-${imovel._id || Math.random().toString(36).substr(2, 9)}`;
         return (
-          <div key={key} className="flex-1 min-w-[260px]">
+          <div key={key} className="w-full sm:w-1/2 xl:w-[32%] min-w-0 flex-shrink-0">
             <CardImovel {...imovel} target="_blank" />
           </div>
         );
