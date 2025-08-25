@@ -372,7 +372,7 @@ const InputArea = ({ placeholder, value, onChange }) => {
   );
 };
 
-export default function PropertyFilters({ onFilter, isVisible, setIsVisible }) {
+export default function PropertyFilters({ onFilter, isVisible, setIsVisible, horizontal = false }) {
   // Estado para controlar se estamos no navegador (client-side)
   const [isClient, setIsClient] = useState(false);
 
@@ -783,6 +783,192 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible }) {
     // Limpar outros estados na página principal
     if (onFilter) onFilter();
   };
+
+  // Layout horizontal estilo QuintoAndar
+  if (horizontal) {
+    return (
+      <div className="bg-white border-b border-gray-100 py-4">
+        <div className="flex flex-wrap gap-2 items-center overflow-x-auto scrollbar-hide">
+          {/* Finalidade */}
+          <select
+            className="px-4 py-2 rounded-full text-sm bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[110px]"
+            value={finalidade}
+            onChange={(e) => {
+              setFinalidade(e.target.value);
+            }}
+          >
+            <option value="">Finalidade</option>
+            <option value="Comprar">Comprar</option>
+            <option value="Alugar">Alugar</option>
+          </select>
+
+          {/* Categoria */}
+          <select
+            className="px-4 py-2 rounded-full text-sm bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[110px]"
+            value={categoriaSelecionada}
+            onChange={(e) => {
+              setCategoriaSelecionada(e.target.value);
+            }}
+          >
+            <option value="">Tipo</option>
+            {categorias.map((categoria) => (
+              <option key={categoria} value={categoria}>
+                {categoria}
+              </option>
+            ))}
+          </select>
+
+          {/* Cidade */}
+          <select
+            className="px-4 py-2 rounded-full text-sm bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[110px]"
+            value={cidadeSelecionada}
+            onChange={(e) => {
+              setCidadeSelecionada(e.target.value);
+            }}
+          >
+            <option value="">Cidade</option>
+            {cidades.map((cidade) => (
+              <option key={cidade} value={cidade}>
+                {cidade}
+              </option>
+            ))}
+          </select>
+
+          {/* Bairros */}
+          <select
+            className="px-4 py-2 rounded-full text-sm bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[120px]"
+            value={bairrosSelecionados.length > 0 ? bairrosSelecionados[0] : ""}
+            onChange={(e) => {
+              if (e.target.value) {
+                setBairrosSelecionados([e.target.value]);
+              } else {
+                setBairrosSelecionados([]);
+              }
+            }}
+            disabled={!cidadeSelecionada}
+          >
+            <option value="">Bairro</option>
+            {bairros.map((bairro) => (
+              <option key={bairro} value={bairro}>
+                {bairro}
+              </option>
+            ))}
+          </select>
+
+          {/* Quartos */}
+          <select
+            className="px-4 py-2 rounded-full text-sm bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[100px]"
+            value={quartosSelecionados || ""}
+            onChange={(e) => {
+              setQuartosSelecionados(e.target.value === "" ? null : e.target.value);
+            }}
+          >
+            <option value="">Quartos</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4+">4+</option>
+          </select>
+
+          {/* Banheiros */}
+          <select
+            className="px-4 py-2 rounded-full text-sm bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[110px]"
+            value={banheirosSelecionados || ""}
+            onChange={(e) => {
+              setBanheirosSelecionados(e.target.value === "" ? null : e.target.value);
+            }}
+          >
+            <option value="">Banheiros</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4+">4+</option>
+          </select>
+
+          {/* Vagas */}
+          <select
+            className="px-4 py-2 rounded-full text-sm bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[100px]"
+            value={vagasSelecionadas || ""}
+            onChange={(e) => {
+              setVagasSelecionadas(e.target.value === "" ? null : e.target.value);
+            }}
+          >
+            <option value="">Vagas</option>
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+            <option value="4+">4+</option>
+          </select>
+
+          {/* Preço Mínimo */}
+          <input
+            type="text"
+            placeholder="Preço mín"
+            value={precoMin ? `R$ ${precoMin.toLocaleString('pt-BR')}` : ""}
+            onChange={(e) => {
+              const valor = e.target.value.replace(/[^\d]/g, '');
+              setPrecoMin(valor ? parseInt(valor) : null);
+            }}
+            className="px-4 py-2 rounded-full text-sm bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[120px]"
+          />
+
+          {/* Preço Máximo */}
+          <input
+            type="text"
+            placeholder="Preço máx"
+            value={precoMax ? `R$ ${precoMax.toLocaleString('pt-BR')}` : ""}
+            onChange={(e) => {
+              const valor = e.target.value.replace(/[^\d]/g, '');
+              setPrecoMax(valor ? parseInt(valor) : null);
+            }}
+            className="px-4 py-2 rounded-full text-sm bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[120px]"
+          />
+
+          {/* Área Mínima */}
+          <input
+            type="number"
+            placeholder="Área mín (m²)"
+            value={areaMin || ""}
+            onChange={(e) => {
+              const valor = parseInt(e.target.value) || 0;
+              setAreaMin(valor > 999 ? 999 : valor);
+            }}
+            max="999"
+            className="px-4 py-2 rounded-full text-sm bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[130px]"
+          />
+
+          {/* Área Máxima */}
+          <input
+            type="number"
+            placeholder="Área máx (m²)"
+            value={areaMax || ""}
+            onChange={(e) => {
+              const valor = parseInt(e.target.value) || 0;
+              setAreaMax(valor > 999 ? 999 : valor);
+            }}
+            max="999"
+            className="px-4 py-2 rounded-full text-sm bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[130px]"
+          />
+
+          {/* Aplicar filtros */}
+          <button
+            onClick={handleAplicarFiltros}
+            className="px-4 py-2 rounded-full text-sm bg-black text-white hover:bg-gray-800 focus:outline-none whitespace-nowrap"
+          >
+            Aplicar filtros
+          </button>
+
+          {/* Limpar filtros */}
+          <button
+            onClick={handleLimparFiltros}
+            className="px-4 py-2 rounded-full text-sm bg-zinc-300/80 text-black hover:bg-zinc-400/80 focus:outline-none whitespace-nowrap"
+          >
+            Limpar
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>

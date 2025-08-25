@@ -1198,26 +1198,22 @@ export default function BuscaImoveis() {
           </div>
         </div>
 
-        <div className="pt-80 sm:pt-72 md:pt-44 flex flex-col md:flex-row gap-4 md:gap-6 pb-10 relative">
-          <div
-            className={`${
-              !fullyInitialized
-                ? "hidden"
-                : isMobile
-                ? filtroVisivel
-                  ? "block"
-                  : "hidden"
-                : "block"
-            } w-full md:w-[300px] sticky top-40 self-start overflow-y-auto scrollbar-hide h-fit max-h-[calc(100vh-200px)] z-[50] transition-all duration-300`}
-          >
+        {/* Filtros horizontais */}
+        <div className="pt-24 bg-white sticky top-16 z-40 shadow-sm border-b">
+          <div className="max-w-7xl mx-auto px-4 md:px-10">
             <PropertyFilters
+              horizontal={true}
               onFilter={resetarEstadoBusca}
               isVisible={filtroVisivel}
               setIsVisible={setFiltroVisivel}
             />
           </div>
+        </div>
 
-          <div className="flex-1 flex flex-col min-h-[60vh] z-0">
+        <div className="flex flex-col md:flex-row gap-4 md:gap-6 pb-10 relative">
+          {/* Filtro vertical - oculto em desktop, visível apenas quando "+ Mais filtros" é clicado */}
+
+          <div className="w-full flex flex-col min-h-[60vh] z-0">
             {mostrandoMapa ? (
               <div className="relative w-full mt-2" style={{ height: "calc(100vh - 160px)" }}>
                 <Map filtros={filtrosAtuais} />
