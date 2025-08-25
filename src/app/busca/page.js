@@ -1084,7 +1084,7 @@ export default function BuscaImoveis() {
 
   return (
     <>
-      {/* Fixed search bar that stays below the header */}
+      {/* COMENTADO: Fixed search bar that stays below the header
       <div
         className={`fixed top-20 left-0 right-0 ${
           filtroVisivel ? "z-[999997]" : "z-40"
@@ -1157,9 +1157,10 @@ export default function BuscaImoveis() {
           </div>
         </div>
       </div>
+      */}
 
       {/* Filtros horizontais */}
-      <div className="fixed top-44 left-0 w-full bg-white z-40 shadow-sm border-b px-4 md:px-10">
+      <div className="fixed top-20 left-0 w-full bg-white z-40 shadow-sm border-b px-4 md:px-10">
         <PropertyFilters
           horizontal={true}
           onFilter={resetarEstadoBusca}
@@ -1168,16 +1169,10 @@ export default function BuscaImoveis() {
         />
       </div>
 
-      <section
-        className={`bg-zinc-100 pb-32 px-4 sm:px-8 md:px-10 relative ${
-          !uiVisible ? "opacity-0" : "opacity-100 transition-opacity duration-300"
-        }`}
-      >
-
-        {/* Layout 60/40 estilo QuintoAndar - Cards + Mapa fixos */}
-        <div className="flex h-[calc(100vh-160px)] overflow-hidden pt-48">
-          {/* Área dos Cards - 60% */}
-          <div className="w-3/5 flex flex-col overflow-hidden">
+      {/* Layout 50/50 simétrico - Cards + Mapa ocupando toda viewport */}
+      <div className="fixed top-28 left-0 w-full h-[calc(100vh-7rem)] flex overflow-hidden bg-zinc-100">
+        {/* Área dos Cards - 50% */}
+        <div className="w-1/2 flex flex-col overflow-hidden">
             {/* Header dos cards */}
             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 sm:gap-0 p-4 border-b border-gray-200 bg-white">
               <h2 className="text-xs font-bold text-zinc-500">{construirTextoFiltros()}</h2>
@@ -1203,12 +1198,13 @@ export default function BuscaImoveis() {
             </div>
           </div>
 
-          {/* Área do Mapa - 40% */}
-          <div className="w-2/5 relative">
+        {/* Área do Mapa - 50% */}
+        <div className="w-1/2 relative h-full">
+          <div className="absolute inset-0 right-0 h-full overflow-hidden">
             <Map filtros={filtrosAtuais} />
           </div>
         </div>
-      </section>
+      </div>
     </>
   );
 }
