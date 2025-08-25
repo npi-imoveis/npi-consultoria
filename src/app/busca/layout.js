@@ -5,10 +5,6 @@ export default function Layout({ children }) {
     <div className="h-screen overflow-hidden">
       <Header effect={false} />
       {children}
-      {/* Footer oculto para layout full-screen */}
-      <div className="hidden">
-        <Footer />
-      </div>
     </div>
   );
 }

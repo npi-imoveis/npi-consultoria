@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import CardImovel, { CardImovelSkeleton } from "../components/ui/card-imovel";
 import Pagination from "../components/ui/pagination";
 import Map from "./components/map";
+import { Footer } from "../components/ui/footer";
 
 import {
   AdjustmentsHorizontalIcon,
@@ -1194,6 +1195,11 @@ export default function BuscaImoveis() {
               {/* Paginação */}
               <div className="mt-6 mb-6">
                 <Pagination pagination={pagination} onPageChange={handlePageChange} />
+              </div>
+
+              {/* Footer no final da rolagem dos cards - como no QuintoAndar */}
+              <div className="mt-12">
+                <Footer />
               </div>
             </div>
           </div>
