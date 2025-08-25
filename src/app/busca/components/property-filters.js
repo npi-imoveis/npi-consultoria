@@ -784,14 +784,14 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible, hor
     if (onFilter) onFilter();
   };
 
-  // Layout horizontal estilo QuintoAndar
+  // Layout horizontal estilo QuintoAndar - compacto
   if (horizontal) {
     return (
-      <div className="bg-white border-b border-gray-100 py-4">
-        <div className="flex flex-wrap gap-2 items-center overflow-x-auto scrollbar-hide">
+      <div className="bg-white border-b border-gray-100 py-3">
+        <div className="flex flex-wrap gap-1.5 items-center overflow-x-auto scrollbar-hide">
           {/* Finalidade */}
           <select
-            className="px-4 py-2 rounded-full text-sm bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[110px]"
+            className="px-3 py-1.5 rounded-full text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[90px]"
             value={finalidade}
             onChange={(e) => {
               setFinalidade(e.target.value);
@@ -804,7 +804,7 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible, hor
 
           {/* Categoria */}
           <select
-            className="px-4 py-2 rounded-full text-sm bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[110px]"
+            className="px-3 py-1.5 rounded-full text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[80px]"
             value={categoriaSelecionada}
             onChange={(e) => {
               setCategoriaSelecionada(e.target.value);
@@ -820,7 +820,7 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible, hor
 
           {/* Cidade */}
           <select
-            className="px-4 py-2 rounded-full text-sm bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[110px]"
+            className="px-3 py-1.5 rounded-full text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[90px]"
             value={cidadeSelecionada}
             onChange={(e) => {
               setCidadeSelecionada(e.target.value);
@@ -836,7 +836,7 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible, hor
 
           {/* Bairros */}
           <select
-            className="px-4 py-2 rounded-full text-sm bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[120px]"
+            className="px-3 py-1.5 rounded-full text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[85px]"
             value={bairrosSelecionados.length > 0 ? bairrosSelecionados[0] : ""}
             onChange={(e) => {
               if (e.target.value) {
@@ -857,7 +857,7 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible, hor
 
           {/* Quartos */}
           <select
-            className="px-4 py-2 rounded-full text-sm bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[100px]"
+            className="px-3 py-1.5 rounded-full text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[75px]"
             value={quartosSelecionados || ""}
             onChange={(e) => {
               setQuartosSelecionados(e.target.value === "" ? null : e.target.value);
@@ -872,7 +872,7 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible, hor
 
           {/* Banheiros */}
           <select
-            className="px-4 py-2 rounded-full text-sm bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[110px]"
+            className="px-3 py-1.5 rounded-full text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[85px]"
             value={banheirosSelecionados || ""}
             onChange={(e) => {
               setBanheirosSelecionados(e.target.value === "" ? null : e.target.value);
@@ -887,7 +887,7 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible, hor
 
           {/* Vagas */}
           <select
-            className="px-4 py-2 rounded-full text-sm bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[100px]"
+            className="px-3 py-1.5 rounded-full text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[70px]"
             value={vagasSelecionadas || ""}
             onChange={(e) => {
               setVagasSelecionadas(e.target.value === "" ? null : e.target.value);
@@ -909,7 +909,7 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible, hor
               const valor = e.target.value.replace(/[^\d]/g, '');
               setPrecoMin(valor ? parseInt(valor) : null);
             }}
-            className="px-4 py-2 rounded-full text-sm bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[120px]"
+            className="px-3 py-1.5 rounded-full text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[90px]"
           />
 
           {/* Preço Máximo */}
@@ -921,47 +921,47 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible, hor
               const valor = e.target.value.replace(/[^\d]/g, '');
               setPrecoMax(valor ? parseInt(valor) : null);
             }}
-            className="px-4 py-2 rounded-full text-sm bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[120px]"
+            className="px-3 py-1.5 rounded-full text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[90px]"
           />
 
           {/* Área Mínima */}
           <input
             type="number"
-            placeholder="Área mín (m²)"
+            placeholder="Área mín"
             value={areaMin || ""}
             onChange={(e) => {
               const valor = parseInt(e.target.value) || 0;
               setAreaMin(valor > 999 ? 999 : valor);
             }}
             max="999"
-            className="px-4 py-2 rounded-full text-sm bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[130px]"
+            className="px-3 py-1.5 rounded-full text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[85px]"
           />
 
           {/* Área Máxima */}
           <input
             type="number"
-            placeholder="Área máx (m²)"
+            placeholder="Área máx"
             value={areaMax || ""}
             onChange={(e) => {
               const valor = parseInt(e.target.value) || 0;
               setAreaMax(valor > 999 ? 999 : valor);
             }}
             max="999"
-            className="px-4 py-2 rounded-full text-sm bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[130px]"
+            className="px-3 py-1.5 rounded-full text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[85px]"
           />
 
           {/* Aplicar filtros */}
           <button
             onClick={handleAplicarFiltros}
-            className="px-4 py-2 rounded-full text-sm bg-black text-white hover:bg-gray-800 focus:outline-none whitespace-nowrap"
+            className="px-4 py-1.5 rounded-full text-xs bg-black text-white hover:bg-gray-800 focus:outline-none whitespace-nowrap font-medium"
           >
-            Aplicar filtros
+            Aplicar
           </button>
 
           {/* Limpar filtros */}
           <button
             onClick={handleLimparFiltros}
-            className="px-4 py-2 rounded-full text-sm bg-zinc-300/80 text-black hover:bg-zinc-400/80 focus:outline-none whitespace-nowrap"
+            className="px-4 py-1.5 rounded-full text-xs bg-zinc-300/80 text-black hover:bg-zinc-400/80 focus:outline-none whitespace-nowrap"
           >
             Limpar
           </button>
