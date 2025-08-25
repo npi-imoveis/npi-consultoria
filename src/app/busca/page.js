@@ -1084,99 +1084,98 @@ export default function BuscaImoveis() {
 
   return (
     <>
+      {/* Fixed search bar that stays below the header */}
+      <div
+        className={`fixed top-20 left-0 right-0 ${
+          filtroVisivel ? "z-[999997]" : "z-40"
+        } bg-white px-4 sm:px-6 md:px-10 py-4 md:py-6 shadow-sm`}
+      >
+        <div className="flex flex-col md:flex-row justify-between items-center gap-3 w-full mx-auto">
+          <div className="grid grid-cols-2 items-center gap-2 w-full md:w-[300px]">
+            {isMobile && (
+              <button
+                onClick={toggleFiltro}
+                className={`flex items-center justify-center gap-1 sm:gap-2 ${
+                  filtroVisivel ? "bg-black text-white" : "bg-zinc-200 text-black"
+                } font-bold px-2 sm:px-4 py-2 rounded-lg hover:bg-zinc-200/40 transition-colors`}
+              >
+                <AdjustmentsHorizontalIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="text-xs">{filtroVisivel ? "Fechar Filtros" : "Filtros"}</span>
+              </button>
+            )}
+          </div>
+          <div className="relative w-full mt-2 md:mt-0 md:w-[600px]">
+            <div className="absolute inset-y-0 left-2 sm:left-3 flex items-center pointer-events-none">
+              <svg
+                className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+                  clipRule="evenodd"
+                ></path>
+              </svg>
+            </div>
+            <input
+              type="text"
+              placeholder="Digite código, endereço, cidade ou condomínio..."
+              className="w-full rounded-md border-2 border-gray-100 text-xs bg-white pl-8 sm:pl-10 pr-24 sm:pr-36 py-2.5 focus:outline-none focus:ring-1 focus:ring-black"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleSearch(searchTerm);
+                }
+              }}
+            />
+            <button
+              onClick={() => handleSearch(searchTerm)}
+              className="absolute inset-y-0 right-0 px-3 sm:px-4 py-2 bg-black text-white rounded-r-md hover:bg-gray-800 text-xs transition-colors flex items-center justify-center"
+            >
+              Buscar
+            </button>
+          </div>
+
+          <div className="mt-2 md:mt-0">
+            <button
+              onClick={toggleFavoritos}
+              className={`flex items-center gap-1 sm:gap-2 ${
+                mostrandoFavoritos ? "bg-red-500 text-white" : "bg-zinc-200 text-black"
+              } font-bold px-3 sm:px-4 py-2 rounded-lg hover:bg-red-400 transition-colors relative`}
+            >
+              <HeartIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="text-xs">Favoritos</span>
+              {isBrowser && quantidadeFavoritos > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center">
+                  {quantidadeFavoritos}
+                </span>
+                )}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Filtros horizontais */}
+      <div className="fixed top-44 left-0 w-full bg-white z-40 shadow-sm border-b px-4 md:px-10">
+        <PropertyFilters
+          horizontal={true}
+          onFilter={resetarEstadoBusca}
+          isVisible={filtroVisivel}
+          setIsVisible={setFiltroVisivel}
+        />
+      </div>
+
       <section
         className={`bg-zinc-100 pb-32 px-4 sm:px-8 md:px-10 relative ${
           !uiVisible ? "opacity-0" : "opacity-100 transition-opacity duration-300"
         }`}
       >
-        {/* Fixed search bar that stays below the header */}
-        <div
-          className={`fixed top-20 left-0 right-0 ${
-            filtroVisivel ? "z-[999997]" : "z-40"
-          } bg-white px-4 sm:px-6 md:px-10 py-4 md:py-6 shadow-sm`}
-        >
-          <div className="flex flex-col md:flex-row justify-between items-center gap-3 w-full mx-auto">
-            <div className="grid grid-cols-2 items-center gap-2 w-full md:w-[300px]">
-              {isMobile && (
-                <button
-                  onClick={toggleFiltro}
-                  className={`flex items-center justify-center gap-1 sm:gap-2 ${
-                    filtroVisivel ? "bg-black text-white" : "bg-zinc-200 text-black"
-                  } font-bold px-2 sm:px-4 py-2 rounded-lg hover:bg-zinc-200/40 transition-colors`}
-                >
-                  <AdjustmentsHorizontalIcon className="h-4 w-4 sm:h-5 sm:w-5" />
-                  <span className="text-xs">{filtroVisivel ? "Fechar Filtros" : "Filtros"}</span>
-                </button>
-              )}
-            </div>
-            <div className="relative w-full mt-2 md:mt-0 md:w-[600px]">
-              <div className="absolute inset-y-0 left-2 sm:left-3 flex items-center pointer-events-none">
-                <svg
-                  className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                    clipRule="evenodd"
-                  ></path>
-                </svg>
-              </div>
-              <input
-                type="text"
-                placeholder="Digite código, endereço, cidade ou condomínio..."
-                className="w-full rounded-md border-2 border-gray-100 text-xs bg-white pl-8 sm:pl-10 pr-24 sm:pr-36 py-2.5 focus:outline-none focus:ring-1 focus:ring-black"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    handleSearch(searchTerm);
-                  }
-                }}
-              />
-              <button
-                onClick={() => handleSearch(searchTerm)}
-                className="absolute inset-y-0 right-0 px-3 sm:px-4 py-2 bg-black text-white rounded-r-md hover:bg-gray-800 text-xs transition-colors flex items-center justify-center"
-              >
-                Buscar
-              </button>
-            </div>
-
-            <div className="mt-2 md:mt-0">
-              <button
-                onClick={toggleFavoritos}
-                className={`flex items-center gap-1 sm:gap-2 ${
-                  mostrandoFavoritos ? "bg-red-500 text-white" : "bg-zinc-200 text-black"
-                } font-bold px-3 sm:px-4 py-2 rounded-lg hover:bg-red-400 transition-colors relative`}
-              >
-                <HeartIcon className="h-4 w-4 sm:h-5 sm:w-5" />
-                <span className="text-xs">Favoritos</span>
-                {isBrowser && quantidadeFavoritos > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center">
-                    {quantidadeFavoritos}
-                  </span>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Filtros horizontais */}
-        <div className="pt-24 bg-white sticky top-16 z-40 shadow-sm border-b">
-          <div className="max-w-7xl mx-auto px-4 md:px-10">
-            <PropertyFilters
-              horizontal={true}
-              onFilter={resetarEstadoBusca}
-              isVisible={filtroVisivel}
-              setIsVisible={setFiltroVisivel}
-            />
-          </div>
-        </div>
 
         {/* Layout 60/40 estilo QuintoAndar - Cards + Mapa fixos */}
-        <div className="flex h-[calc(100vh-140px)] overflow-hidden">
+        <div className="flex h-[calc(100vh-160px)] overflow-hidden pt-48">
           {/* Área dos Cards - 60% */}
           <div className="w-3/5 flex flex-col overflow-hidden">
             {/* Header dos cards */}

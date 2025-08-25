@@ -787,8 +787,8 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible, hor
   // Layout horizontal estilo QuintoAndar - compacto
   if (horizontal) {
     return (
-      <div className="bg-white border-b border-gray-100 py-3">
-        <div className="flex flex-wrap gap-1.5 items-center overflow-x-auto scrollbar-hide">
+      <div className="bg-white py-3 w-full">
+        <div className="flex flex-wrap gap-1.5 items-center overflow-x-auto scrollbar-hide w-full">
           {/* Finalidade */}
           <select
             className="px-3 py-1.5 rounded-full text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[90px]"
