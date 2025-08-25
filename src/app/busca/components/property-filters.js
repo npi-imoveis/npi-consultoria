@@ -875,28 +875,88 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible, hor
                 </select>
               </div>
 
-              {/* Bairro */}
-              <div className="flex flex-col">
+              {/* Bairro - Com modal para múltipla seleção */}
+              <div className="flex flex-col relative" ref={bairrosRef}>
                 <label className="text-[10px] font-medium text-gray-600 mb-1">Bairro</label>
-                <select
-                  className="px-3 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[110px] flex-shrink-0"
-                  value={bairrosSelecionados.length > 0 ? bairrosSelecionados[0] : ""}
-                  onChange={(e) => {
-                    if (e.target.value) {
-                      setBairrosSelecionados([e.target.value]);
-                    } else {
-                      setBairrosSelecionados([]);
-                    }
-                  }}
-                  disabled={!cidadeSelecionada}
-                >
-                  <option value="">Todos</option>
-                  {bairros.map((bairro) => (
-                    <option key={bairro} value={bairro}>
-                      {bairro}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder={bairrosSelecionados.length > 0 ? `${bairrosSelecionados.length} selecionado(s)` : "Todos"}
+                    value={bairroFilter}
+                    onChange={(e) => setBairroFilter(e.target.value)}
+                    onClick={() => setBairrosExpanded(true)}
+                    disabled={!cidadeSelecionada}
+                    className="px-3 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[110px] flex-shrink-0"
+                    readOnly={!bairrosExpanded}
+                  />
+                  
+                  {/* Contador de bairros selecionados */}
+                  {bairrosSelecionados.length > 0 && (
+                    <div className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center">
+                      {bairrosSelecionados.length}
+                    </div>
+                  )}
+
+                  {/* Modal de seleção múltipla - FORA DO OVERFLOW */}
+                  <div
+                    className={`fixed z-[9999] mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-48 overflow-y-auto w-80 ${
+                      !cidadeSelecionada || !bairrosExpanded ? "hidden" : ""
+                    }`}
+                    style={{
+                      top: bairrosRef.current ? bairrosRef.current.getBoundingClientRect().bottom + 4 : 'auto',
+                      left: bairrosRef.current ? bairrosRef.current.getBoundingClientRect().left : 'auto'
+                    }}
+                  >
+                    {/* Controles superiores */}
+                    <div className="flex justify-between items-center p-2 border-b border-gray-100 bg-gray-50">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setBairrosSelecionados(bairrosFiltrados)}
+                          className="text-[10px] text-black hover:text-gray-600"
+                        >
+                          Selecionar todos
+                        </button>
+                        <button
+                          onClick={() => setBairrosSelecionados([])}
+                          className="text-[10px] text-black hover:text-gray-600"
+                        >
+                          Limpar todos
+                        </button>
+                      </div>
+                      <button
+                        onClick={() => setBairrosExpanded(false)}
+                        className="text-[10px] text-gray-600 hover:text-black px-2 py-1 border border-gray-300 rounded"
+                      >
+                        Fechar
+                      </button>
+                    </div>
+
+                    {/* Lista de bairros */}
+                    {bairrosFiltrados.length > 0 ? (
+                      bairrosFiltrados.map((bairro) => (
+                        <div key={bairro} className="flex items-center px-2 py-1 hover:bg-gray-50">
+                          <input
+                            type="checkbox"
+                            id={`bairro-horizontal-${bairro}`}
+                            checked={bairrosSelecionados.includes(bairro)}
+                            onChange={() => handleBairroChange(bairro)}
+                            className="mr-2 h-3 w-3 text-black border-gray-300 rounded"
+                          />
+                          <label
+                            htmlFor={`bairro-horizontal-${bairro}`}
+                            className="text-[11px] cursor-pointer flex-1"
+                          >
+                            {bairro}
+                          </label>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="px-2 py-3 text-[11px] text-gray-500 text-center">
+                        {bairroFilter ? "Nenhum bairro encontrado" : "Selecione uma cidade primeiro"}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
 
               {/* Quartos */}
