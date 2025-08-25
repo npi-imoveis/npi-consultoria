@@ -784,187 +784,265 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible, hor
     if (onFilter) onFilter();
   };
 
-  // Layout horizontal estilo QuintoAndar - compacto
+  // Layout horizontal estilo QuintoAndar - com scroll e setas
   if (horizontal) {
+    // Ref para o container de scroll
+    const scrollRef = useRef(null);
+
+    const scrollLeft = () => {
+      if (scrollRef.current) {
+        scrollRef.current.scrollBy({ left: -200, behavior: 'smooth' });
+      }
+    };
+
+    const scrollRight = () => {
+      if (scrollRef.current) {
+        scrollRef.current.scrollBy({ left: 200, behavior: 'smooth' });
+      }
+    };
+
     return (
-      <div className="bg-white py-3 w-full">
-        <div className="flex flex-wrap gap-1.5 items-center overflow-x-auto scrollbar-hide w-full">
-          {/* Finalidade */}
-          <select
-            className="px-3 py-1.5 rounded-full text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[90px]"
-            value={finalidade}
-            onChange={(e) => {
-              setFinalidade(e.target.value);
-            }}
-          >
-            <option value="">Finalidade</option>
-            <option value="Comprar">Comprar</option>
-            <option value="Alugar">Alugar</option>
-          </select>
+      <div className="bg-white py-4 w-full border-b">
+        <div className="max-w-full mx-auto px-6">
+          <div className="relative flex items-center">
+            {/* Seta para rolar à esquerda */}
+            <button
+              onClick={scrollLeft}
+              className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 bg-white shadow-md border border-gray-300 rounded-full p-2 hover:bg-gray-50 focus:outline-none"
+            >
+              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
 
-          {/* Categoria */}
-          <select
-            className="px-3 py-1.5 rounded-full text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[80px]"
-            value={categoriaSelecionada}
-            onChange={(e) => {
-              setCategoriaSelecionada(e.target.value);
-            }}
-          >
-            <option value="">Tipo</option>
-            {categorias.map((categoria) => (
-              <option key={categoria} value={categoria}>
-                {categoria}
-              </option>
-            ))}
-          </select>
+            {/* Container de filtros com scroll */}
+            <div 
+              ref={scrollRef}
+              className="flex items-end gap-4 overflow-x-auto scrollbar-hide mx-10 flex-1"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              {/* Finalidade */}
+              <div className="flex flex-col">
+                <label className="text-[10px] font-medium text-gray-600 mb-1">Finalidade</label>
+                <select
+                  className="px-3 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[95px] flex-shrink-0"
+                  value={finalidade}
+                  onChange={(e) => {
+                    setFinalidade(e.target.value);
+                  }}
+                >
+                  <option value="">Selecionar</option>
+                  <option value="Comprar">Comprar</option>
+                  <option value="Alugar">Alugar</option>
+                </select>
+              </div>
 
-          {/* Cidade */}
-          <select
-            className="px-3 py-1.5 rounded-full text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[90px]"
-            value={cidadeSelecionada}
-            onChange={(e) => {
-              setCidadeSelecionada(e.target.value);
-            }}
-          >
-            <option value="">Cidade</option>
-            {cidades.map((cidade) => (
-              <option key={cidade} value={cidade}>
-                {cidade}
-              </option>
-            ))}
-          </select>
+              {/* Tipo */}
+              <div className="flex flex-col">
+                <label className="text-[10px] font-medium text-gray-600 mb-1">Tipo</label>
+                <select
+                  className="px-3 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[110px] flex-shrink-0"
+                  value={categoriaSelecionada}
+                  onChange={(e) => {
+                    setCategoriaSelecionada(e.target.value);
+                  }}
+                >
+                  <option value="">Todos</option>
+                  {categorias.map((categoria) => (
+                    <option key={categoria} value={categoria}>
+                      {categoria}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-          {/* Bairros */}
-          <select
-            className="px-3 py-1.5 rounded-full text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[85px]"
-            value={bairrosSelecionados.length > 0 ? bairrosSelecionados[0] : ""}
-            onChange={(e) => {
-              if (e.target.value) {
-                setBairrosSelecionados([e.target.value]);
-              } else {
-                setBairrosSelecionados([]);
-              }
-            }}
-            disabled={!cidadeSelecionada}
-          >
-            <option value="">Bairro</option>
-            {bairros.map((bairro) => (
-              <option key={bairro} value={bairro}>
-                {bairro}
-              </option>
-            ))}
-          </select>
+              {/* Cidade */}
+              <div className="flex flex-col">
+                <label className="text-[10px] font-medium text-gray-600 mb-1">Cidade</label>
+                <select
+                  className="px-3 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[120px] flex-shrink-0"
+                  value={cidadeSelecionada}
+                  onChange={(e) => {
+                    setCidadeSelecionada(e.target.value);
+                  }}
+                >
+                  <option value="">Todas</option>
+                  {cidades.map((cidade) => (
+                    <option key={cidade} value={cidade}>
+                      {cidade}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-          {/* Quartos */}
-          <select
-            className="px-3 py-1.5 rounded-full text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[75px]"
-            value={quartosSelecionados || ""}
-            onChange={(e) => {
-              setQuartosSelecionados(e.target.value === "" ? null : e.target.value);
-            }}
-          >
-            <option value="">Quartos</option>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4+">4+</option>
-          </select>
+              {/* Bairro */}
+              <div className="flex flex-col">
+                <label className="text-[10px] font-medium text-gray-600 mb-1">Bairro</label>
+                <select
+                  className="px-3 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[110px] flex-shrink-0"
+                  value={bairrosSelecionados.length > 0 ? bairrosSelecionados[0] : ""}
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      setBairrosSelecionados([e.target.value]);
+                    } else {
+                      setBairrosSelecionados([]);
+                    }
+                  }}
+                  disabled={!cidadeSelecionada}
+                >
+                  <option value="">Todos</option>
+                  {bairros.map((bairro) => (
+                    <option key={bairro} value={bairro}>
+                      {bairro}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-          {/* Banheiros */}
-          <select
-            className="px-3 py-1.5 rounded-full text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[85px]"
-            value={banheirosSelecionados || ""}
-            onChange={(e) => {
-              setBanheirosSelecionados(e.target.value === "" ? null : e.target.value);
-            }}
-          >
-            <option value="">Banheiros</option>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4+">4+</option>
-          </select>
+              {/* Quartos */}
+              <div className="flex flex-col">
+                <label className="text-[10px] font-medium text-gray-600 mb-1">Quartos</label>
+                <select
+                  className="px-3 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[85px] flex-shrink-0"
+                  value={quartosSelecionados || ""}
+                  onChange={(e) => {
+                    setQuartosSelecionados(e.target.value === "" ? null : e.target.value);
+                  }}
+                >
+                  <option value="">Todos</option>
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4+">4+</option>
+                </select>
+              </div>
 
-          {/* Vagas */}
-          <select
-            className="px-3 py-1.5 rounded-full text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[70px]"
-            value={vagasSelecionadas || ""}
-            onChange={(e) => {
-              setVagasSelecionadas(e.target.value === "" ? null : e.target.value);
-            }}
-          >
-            <option value="">Vagas</option>
-            <option value="1">1</option>
-            <option value="2">2</option>
-            <option value="3">3</option>
-            <option value="4+">4+</option>
-          </select>
+              {/* Banheiros */}
+              <div className="flex flex-col">
+                <label className="text-[10px] font-medium text-gray-600 mb-1">Banheiros</label>
+                <select
+                  className="px-3 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[95px] flex-shrink-0"
+                  value={banheirosSelecionados || ""}
+                  onChange={(e) => {
+                    setBanheirosSelecionados(e.target.value === "" ? null : e.target.value);
+                  }}
+                >
+                  <option value="">Todos</option>
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4+">4+</option>
+                </select>
+              </div>
 
-          {/* Preço Mínimo */}
-          <input
-            type="text"
-            placeholder="Preço mín"
-            value={precoMin ? `R$ ${precoMin.toLocaleString('pt-BR')}` : ""}
-            onChange={(e) => {
-              const valor = e.target.value.replace(/[^\d]/g, '');
-              setPrecoMin(valor ? parseInt(valor) : null);
-            }}
-            className="px-3 py-1.5 rounded-full text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[90px]"
-          />
+              {/* Vagas */}
+              <div className="flex flex-col">
+                <label className="text-[10px] font-medium text-gray-600 mb-1">Vagas</label>
+                <select
+                  className="px-3 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[85px] flex-shrink-0"
+                  value={vagasSelecionadas || ""}
+                  onChange={(e) => {
+                    setVagasSelecionadas(e.target.value === "" ? null : e.target.value);
+                  }}
+                >
+                  <option value="">Todas</option>
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4+">4+</option>
+                </select>
+              </div>
 
-          {/* Preço Máximo */}
-          <input
-            type="text"
-            placeholder="Preço máx"
-            value={precoMax ? `R$ ${precoMax.toLocaleString('pt-BR')}` : ""}
-            onChange={(e) => {
-              const valor = e.target.value.replace(/[^\d]/g, '');
-              setPrecoMax(valor ? parseInt(valor) : null);
-            }}
-            className="px-3 py-1.5 rounded-full text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[90px]"
-          />
+              {/* Preço Mínimo */}
+              <div className="flex flex-col">
+                <label className="text-[10px] font-medium text-gray-600 mb-1">Preço mín</label>
+                <input
+                  type="text"
+                  placeholder="R$ 65.000"
+                  value={precoMin ? `R$ ${precoMin.toLocaleString('pt-BR')}` : ""}
+                  onChange={(e) => {
+                    const valor = e.target.value.replace(/[^\d]/g, '');
+                    setPrecoMin(valor ? parseInt(valor) : null);
+                  }}
+                  className="px-3 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[100px] flex-shrink-0"
+                />
+              </div>
 
-          {/* Área Mínima */}
-          <input
-            type="number"
-            placeholder="Área mín"
-            value={areaMin || ""}
-            onChange={(e) => {
-              const valor = parseInt(e.target.value) || 0;
-              setAreaMin(valor > 999 ? 999 : valor);
-            }}
-            max="999"
-            className="px-3 py-1.5 rounded-full text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[85px]"
-          />
+              {/* Preço Máximo */}
+              <div className="flex flex-col">
+                <label className="text-[10px] font-medium text-gray-600 mb-1">Preço máx</label>
+                <input
+                  type="text"
+                  placeholder="R$ 65.000.000"
+                  value={precoMax ? `R$ ${precoMax.toLocaleString('pt-BR')}` : ""}
+                  onChange={(e) => {
+                    const valor = e.target.value.replace(/[^\d]/g, '');
+                    setPrecoMax(valor ? parseInt(valor) : null);
+                  }}
+                  className="px-3 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[120px] flex-shrink-0"
+                />
+              </div>
 
-          {/* Área Máxima */}
-          <input
-            type="number"
-            placeholder="Área máx"
-            value={areaMax || ""}
-            onChange={(e) => {
-              const valor = parseInt(e.target.value) || 0;
-              setAreaMax(valor > 999 ? 999 : valor);
-            }}
-            max="999"
-            className="px-3 py-1.5 rounded-full text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none min-w-[85px]"
-          />
+              {/* Área Mínima */}
+              <div className="flex flex-col">
+                <label className="text-[10px] font-medium text-gray-600 mb-1">Área mín</label>
+                <input
+                  type="number"
+                  placeholder="0 m²"
+                  value={areaMin || ""}
+                  onChange={(e) => {
+                    const valor = parseInt(e.target.value) || 0;
+                    setAreaMin(valor > 999 ? 999 : valor);
+                  }}
+                  max="999"
+                  className="px-3 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[80px] flex-shrink-0"
+                />
+              </div>
 
-          {/* Aplicar filtros */}
-          <button
-            onClick={handleAplicarFiltros}
-            className="px-4 py-1.5 rounded-full text-xs bg-black text-white hover:bg-gray-800 focus:outline-none whitespace-nowrap font-medium"
-          >
-            Aplicar
-          </button>
+              {/* Área Máxima */}
+              <div className="flex flex-col">
+                <label className="text-[10px] font-medium text-gray-600 mb-1">Área máx</label>
+                <input
+                  type="number"
+                  placeholder="999 m²"
+                  value={areaMax || ""}
+                  onChange={(e) => {
+                    const valor = parseInt(e.target.value) || 0;
+                    setAreaMax(valor > 999 ? 999 : valor);
+                  }}
+                  max="999"
+                  className="px-3 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[80px] flex-shrink-0"
+                />
+              </div>
 
-          {/* Limpar filtros */}
-          <button
-            onClick={handleLimparFiltros}
-            className="px-4 py-1.5 rounded-full text-xs bg-zinc-300/80 text-black hover:bg-zinc-400/80 focus:outline-none whitespace-nowrap"
-          >
-            Limpar
-          </button>
+              {/* Botões */}
+              <div className="flex gap-3 items-end ml-4">
+                <button
+                  onClick={handleAplicarFiltros}
+                  className="px-6 py-2 text-sm bg-black text-white hover:bg-gray-800 focus:outline-none whitespace-nowrap font-medium flex-shrink-0 border border-black"
+                >
+                  Aplicar
+                </button>
+
+                <button
+                  onClick={handleLimparFiltros}
+                  className="px-6 py-2 text-sm bg-gray-100 text-black hover:bg-gray-200 focus:outline-none whitespace-nowrap flex-shrink-0 border border-gray-300"
+                >
+                  Limpar
+                </button>
+              </div>
+            </div>
+
+            {/* Seta para rolar à direita */}
+            <button
+              onClick={scrollRight}
+              className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 bg-white shadow-md border border-gray-300 rounded-full p-2 hover:bg-gray-50 focus:outline-none"
+            >
+              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
     );
