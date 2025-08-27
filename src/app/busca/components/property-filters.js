@@ -429,23 +429,52 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible, hor
   // Referência para o componente de bairros
   const bairrosRef = useRef(null);
 
-  // Efeito para lidar com cliques fora do dropdown de bairros
+  // Estados para controlar os modais dos outros campos
+  const [finalidadeExpanded, setFinalidadeExpanded] = useState(false);
+  const [tipoExpanded, setTipoExpanded] = useState(false);
+  const [cidadeExpanded, setCidadeExpanded] = useState(false);
+  const [quartosExpanded, setQuartosExpanded] = useState(false);
+  const [vagasExpanded, setVagasExpanded] = useState(false);
+  
+  // Referências para os componentes dos modais
+  const finalidadeRef = useRef(null);
+  const tipoRef = useRef(null);
+  const cidadeRef = useRef(null);
+  const quartosRef = useRef(null);
+  const vagasRef = useRef(null);
+
+  // Efeito para lidar com cliques fora dos dropdowns/modais
   useEffect(() => {
     function handleClickOutside(event) {
       if (bairrosRef.current && !bairrosRef.current.contains(event.target)) {
         setBairrosExpanded(false);
       }
+      if (finalidadeRef.current && !finalidadeRef.current.contains(event.target)) {
+        setFinalidadeExpanded(false);
+      }
+      if (tipoRef.current && !tipoRef.current.contains(event.target)) {
+        setTipoExpanded(false);
+      }
+      if (cidadeRef.current && !cidadeRef.current.contains(event.target)) {
+        setCidadeExpanded(false);
+      }
+      if (quartosRef.current && !quartosRef.current.contains(event.target)) {
+        setQuartosExpanded(false);
+      }
+      if (vagasRef.current && !vagasRef.current.contains(event.target)) {
+        setVagasExpanded(false);
+      }
     }
 
-    // Adiciona listener apenas quando o dropdown estiver aberto
-    if (bairrosExpanded) {
+    // Adiciona listener quando qualquer dropdown estiver aberto
+    if (bairrosExpanded || finalidadeExpanded || tipoExpanded || cidadeExpanded || quartosExpanded || vagasExpanded) {
       document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [bairrosExpanded]);
+  }, [bairrosExpanded, finalidadeExpanded, tipoExpanded, cidadeExpanded, quartosExpanded, vagasExpanded]);
 
   useEffect(() => {
     async function fetchImoveis() {
@@ -800,57 +829,129 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible, hor
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
               {/* Finalidade */}
-              <div className="flex flex-col">
+              <div className="flex flex-col relative" ref={finalidadeRef}>
                 <label className="text-[10px] font-medium text-gray-600 mb-1">Finalidade</label>
-                <select
-                  className="px-2 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[92px] flex-shrink-0"
-                  value={finalidade}
-                  onChange={(e) => {
-                    setFinalidade(e.target.value);
-                  }}
-                >
-                  <option value="">Selecionar</option>
-                  <option value="Comprar">Comprar</option>
-                  <option value="Alugar">Alugar</option>
-                </select>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Selecionar"
+                    value={finalidade || ""}
+                    onClick={() => setFinalidadeExpanded(true)}
+                    readOnly
+                    className="px-2 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[92px] flex-shrink-0"
+                  />
+                  
+                  {/* Modal de seleção */}
+                  <div
+                    className={`fixed z-[9999] mt-1 bg-white border border-gray-300 rounded shadow-lg w-32 ${
+                      !finalidadeExpanded ? "hidden" : ""
+                    }`}
+                    style={{
+                      top: finalidadeRef.current ? finalidadeRef.current.getBoundingClientRect().bottom + 4 : 'auto',
+                      left: finalidadeRef.current ? finalidadeRef.current.getBoundingClientRect().left : 'auto'
+                    }}
+                  >
+                    {/* Lista de opções */}
+                    {["", "Comprar", "Alugar"].map((opcao) => (
+                      <div key={opcao} 
+                        className="px-2 py-2 hover:bg-gray-50 cursor-pointer"
+                        onClick={() => {
+                          setFinalidade(opcao);
+                          setFinalidadeExpanded(false);
+                        }}
+                      >
+                        <label className="text-[11px] cursor-pointer flex-1">
+                          {opcao || "Selecionar"}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               {/* Tipo */}
-              <div className="flex flex-col">
+              <div className="flex flex-col relative" ref={tipoRef}>
                 <label className="text-[10px] font-medium text-gray-600 mb-1">Tipo</label>
-                <select
-                  className="px-2 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[114px] flex-shrink-0"
-                  value={categoriaSelecionada}
-                  onChange={(e) => {
-                    setCategoriaSelecionada(e.target.value);
-                  }}
-                >
-                  <option value="">Todos</option>
-                  {categorias.map((categoria) => (
-                    <option key={categoria} value={categoria}>
-                      {categoria}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Todos"
+                    value={categoriaSelecionada || ""}
+                    onClick={() => setTipoExpanded(true)}
+                    readOnly
+                    className="px-2 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[114px] flex-shrink-0"
+                  />
+                  
+                  {/* Modal de seleção */}
+                  <div
+                    className={`fixed z-[9999] mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-48 overflow-y-auto w-40 ${
+                      !tipoExpanded ? "hidden" : ""
+                    }`}
+                    style={{
+                      top: tipoRef.current ? tipoRef.current.getBoundingClientRect().bottom + 4 : 'auto',
+                      left: tipoRef.current ? tipoRef.current.getBoundingClientRect().left : 'auto'
+                    }}
+                  >
+                    {/* Lista de opções */}
+                    {["", ...categorias].map((categoria) => (
+                      <div key={categoria || 'todos'} 
+                        className="px-2 py-2 hover:bg-gray-50 cursor-pointer"
+                        onClick={() => {
+                          setCategoriaSelecionada(categoria);
+                          setTipoExpanded(false);
+                        }}
+                      >
+                        <label className="text-[11px] cursor-pointer flex-1">
+                          {categoria || "Todos"}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               {/* Cidade */}
-              <div className="flex flex-col">
+              <div className="flex flex-col relative" ref={cidadeRef}>
                 <label className="text-[10px] font-medium text-gray-600 mb-1">Cidade</label>
-                <select
-                  className="px-2 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[114px] flex-shrink-0"
-                  value={cidadeSelecionada}
-                  onChange={(e) => {
-                    setCidadeSelecionada(e.target.value);
-                  }}
-                >
-                  <option value="">Todas</option>
-                  {cidades.map((cidade) => (
-                    <option key={cidade} value={cidade}>
-                      {cidade}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Todas"
+                    value={cidadeSelecionada || ""}
+                    onClick={() => setCidadeExpanded(true)}
+                    readOnly
+                    className="px-2 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[114px] flex-shrink-0"
+                  />
+                  
+                  {/* Modal de seleção */}
+                  <div
+                    className={`fixed z-[9999] mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-48 overflow-y-auto w-40 ${
+                      !cidadeExpanded ? "hidden" : ""
+                    }`}
+                    style={{
+                      top: cidadeRef.current ? cidadeRef.current.getBoundingClientRect().bottom + 4 : 'auto',
+                      left: cidadeRef.current ? cidadeRef.current.getBoundingClientRect().left : 'auto'
+                    }}
+                  >
+                    {/* Lista de opções */}
+                    {["", ...cidades].map((cidade) => (
+                      <div key={cidade || 'todas'} 
+                        className="px-2 py-2 hover:bg-gray-50 cursor-pointer"
+                        onClick={() => {
+                          setCidadeSelecionada(cidade);
+                          setCidadeExpanded(false);
+                          // Reseta o bairro selecionado quando a cidade muda
+                          setBairrosSelecionados([]);
+                          setBairroFilter("");
+                        }}
+                      >
+                        <label className="text-[11px] cursor-pointer flex-1">
+                          {cidade || "Todas"}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               {/* Bairro - Com modal para múltipla seleção */}
@@ -938,21 +1039,44 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible, hor
               </div>
 
               {/* Quartos */}
-              <div className="flex flex-col">
+              <div className="flex flex-col relative" ref={quartosRef}>
                 <label className="text-[10px] font-medium text-gray-600 mb-1">Quartos</label>
-                <select
-                  className="px-2 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[70px] flex-shrink-0"
-                  value={quartosSelecionados || ""}
-                  onChange={(e) => {
-                    setQuartosSelecionados(e.target.value === "" ? null : e.target.value);
-                  }}
-                >
-                  <option value="">Todos</option>
-                  <option value="1">1</option>
-                  <option value="2">2</option>
-                  <option value="3">3</option>
-                  <option value="4+">4+</option>
-                </select>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Todos"
+                    value={quartosSelecionados || ""}
+                    onClick={() => setQuartosExpanded(true)}
+                    readOnly
+                    className="px-2 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[70px] flex-shrink-0"
+                  />
+                  
+                  {/* Modal de seleção */}
+                  <div
+                    className={`fixed z-[9999] mt-1 bg-white border border-gray-300 rounded shadow-lg w-28 ${
+                      !quartosExpanded ? "hidden" : ""
+                    }`}
+                    style={{
+                      top: quartosRef.current ? quartosRef.current.getBoundingClientRect().bottom + 4 : 'auto',
+                      left: quartosRef.current ? quartosRef.current.getBoundingClientRect().left : 'auto'
+                    }}
+                  >
+                    {/* Lista de opções */}
+                    {["", "1", "2", "3", "4+"].map((opcao) => (
+                      <div key={opcao || 'todos'} 
+                        className="px-2 py-2 hover:bg-gray-50 cursor-pointer"
+                        onClick={() => {
+                          setQuartosSelecionados(opcao === "" ? null : opcao);
+                          setQuartosExpanded(false);
+                        }}
+                      >
+                        <label className="text-[11px] cursor-pointer flex-1">
+                          {opcao || "Todos"}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               {/* Banheiros - COMENTADO TEMPORARIAMENTE */}
@@ -974,21 +1098,44 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible, hor
               </div> */}
 
               {/* Vagas */}
-              <div className="flex flex-col">
+              <div className="flex flex-col relative" ref={vagasRef}>
                 <label className="text-[10px] font-medium text-gray-600 mb-1">Vagas</label>
-                <select
-                  className="px-2 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[70px] flex-shrink-0"
-                  value={vagasSelecionadas || ""}
-                  onChange={(e) => {
-                    setVagasSelecionadas(e.target.value === "" ? null : e.target.value);
-                  }}
-                >
-                  <option value="">Todas</option>
-                  <option value="1">1</option>
-                  <option value="2">2</option>
-                  <option value="3">3</option>
-                  <option value="4+">4+</option>
-                </select>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Todas"
+                    value={vagasSelecionadas || ""}
+                    onClick={() => setVagasExpanded(true)}
+                    readOnly
+                    className="px-2 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[70px] flex-shrink-0"
+                  />
+                  
+                  {/* Modal de seleção */}
+                  <div
+                    className={`fixed z-[9999] mt-1 bg-white border border-gray-300 rounded shadow-lg w-28 ${
+                      !vagasExpanded ? "hidden" : ""
+                    }`}
+                    style={{
+                      top: vagasRef.current ? vagasRef.current.getBoundingClientRect().bottom + 4 : 'auto',
+                      left: vagasRef.current ? vagasRef.current.getBoundingClientRect().left : 'auto'
+                    }}
+                  >
+                    {/* Lista de opções */}
+                    {["", "1", "2", "3", "4+"].map((opcao) => (
+                      <div key={opcao || 'todas'} 
+                        className="px-2 py-2 hover:bg-gray-50 cursor-pointer"
+                        onClick={() => {
+                          setVagasSelecionadas(opcao === "" ? null : opcao);
+                          setVagasExpanded(false);
+                        }}
+                      >
+                        <label className="text-[11px] cursor-pointer flex-1">
+                          {opcao || "Todas"}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
 
               {/* Preço Mínimo */}
