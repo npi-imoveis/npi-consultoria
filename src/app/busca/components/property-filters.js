@@ -784,48 +784,26 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible, hor
     if (onFilter) onFilter();
   };
 
-  // Layout horizontal estilo QuintoAndar - com scroll e setas
+  // Layout horizontal estilo QuintoAndar - usando todo o espaço
   if (horizontal) {
     // Ref para o container de scroll
     const scrollRef = useRef(null);
 
-    const scrollLeft = () => {
-      if (scrollRef.current) {
-        scrollRef.current.scrollBy({ left: -200, behavior: 'smooth' });
-      }
-    };
-
-    const scrollRight = () => {
-      if (scrollRef.current) {
-        scrollRef.current.scrollBy({ left: 200, behavior: 'smooth' });
-      }
-    };
-
     return (
       <div className="bg-white py-4 w-full border-b">
-        <div className="max-w-full mx-auto px-6">
-          <div className="relative flex items-center">
-            {/* Seta para rolar à esquerda */}
-            <button
-              onClick={scrollLeft}
-              className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 bg-white shadow-md border border-gray-300 rounded-full p-2 hover:bg-gray-50 focus:outline-none"
-            >
-              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-
-            {/* Container de filtros com scroll */}
+        <div className="max-w-full mx-auto px-2">
+          <div className="flex items-center">
+            {/* Container de filtros usando todo o espaço */}
             <div 
               ref={scrollRef}
-              className="flex items-end gap-4 overflow-x-auto scrollbar-hide mx-10 flex-1"
+              className="flex items-end gap-2 overflow-x-auto scrollbar-hide flex-1"
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
               {/* Finalidade */}
               <div className="flex flex-col">
                 <label className="text-[10px] font-medium text-gray-600 mb-1">Finalidade</label>
                 <select
-                  className="px-3 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[95px] flex-shrink-0"
+                  className="px-2 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[92px] flex-shrink-0"
                   value={finalidade}
                   onChange={(e) => {
                     setFinalidade(e.target.value);
@@ -841,7 +819,7 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible, hor
               <div className="flex flex-col">
                 <label className="text-[10px] font-medium text-gray-600 mb-1">Tipo</label>
                 <select
-                  className="px-3 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[110px] flex-shrink-0"
+                  className="px-2 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[114px] flex-shrink-0"
                   value={categoriaSelecionada}
                   onChange={(e) => {
                     setCategoriaSelecionada(e.target.value);
@@ -860,7 +838,7 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible, hor
               <div className="flex flex-col">
                 <label className="text-[10px] font-medium text-gray-600 mb-1">Cidade</label>
                 <select
-                  className="px-3 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[120px] flex-shrink-0"
+                  className="px-2 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[114px] flex-shrink-0"
                   value={cidadeSelecionada}
                   onChange={(e) => {
                     setCidadeSelecionada(e.target.value);
@@ -886,7 +864,7 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible, hor
                     onChange={(e) => setBairroFilter(e.target.value)}
                     onClick={() => setBairrosExpanded(true)}
                     disabled={!cidadeSelecionada}
-                    className="px-3 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[110px] flex-shrink-0"
+                    className="px-2 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[85px] flex-shrink-0"
                     readOnly={!bairrosExpanded}
                   />
                   
@@ -963,7 +941,7 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible, hor
               <div className="flex flex-col">
                 <label className="text-[10px] font-medium text-gray-600 mb-1">Quartos</label>
                 <select
-                  className="px-3 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[85px] flex-shrink-0"
+                  className="px-2 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[70px] flex-shrink-0"
                   value={quartosSelecionados || ""}
                   onChange={(e) => {
                     setQuartosSelecionados(e.target.value === "" ? null : e.target.value);
@@ -977,8 +955,8 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible, hor
                 </select>
               </div>
 
-              {/* Banheiros */}
-              <div className="flex flex-col">
+              {/* Banheiros - COMENTADO TEMPORARIAMENTE */}
+              {/* <div className="flex flex-col">
                 <label className="text-[10px] font-medium text-gray-600 mb-1">Banheiros</label>
                 <select
                   className="px-3 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[95px] flex-shrink-0"
@@ -993,13 +971,13 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible, hor
                   <option value="3">3</option>
                   <option value="4+">4+</option>
                 </select>
-              </div>
+              </div> */}
 
               {/* Vagas */}
               <div className="flex flex-col">
                 <label className="text-[10px] font-medium text-gray-600 mb-1">Vagas</label>
                 <select
-                  className="px-3 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[85px] flex-shrink-0"
+                  className="px-2 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[70px] flex-shrink-0"
                   value={vagasSelecionadas || ""}
                   onChange={(e) => {
                     setVagasSelecionadas(e.target.value === "" ? null : e.target.value);
@@ -1024,7 +1002,7 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible, hor
                     const valor = e.target.value.replace(/[^\d]/g, '');
                     setPrecoMin(valor ? parseInt(valor) : null);
                   }}
-                  className="px-3 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[100px] flex-shrink-0"
+                  className="px-2 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[115px] flex-shrink-0"
                 />
               </div>
 
@@ -1039,7 +1017,7 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible, hor
                     const valor = e.target.value.replace(/[^\d]/g, '');
                     setPrecoMax(valor ? parseInt(valor) : null);
                   }}
-                  className="px-3 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[120px] flex-shrink-0"
+                  className="px-2 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[115px] flex-shrink-0"
                 />
               </div>
 
@@ -1055,7 +1033,7 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible, hor
                     setAreaMin(valor > 999 ? 999 : valor);
                   }}
                   max="999"
-                  className="px-3 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[80px] flex-shrink-0"
+                  className="px-2 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[75px] flex-shrink-0"
                 />
               </div>
 
@@ -1071,37 +1049,27 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible, hor
                     setAreaMax(valor > 999 ? 999 : valor);
                   }}
                   max="999"
-                  className="px-3 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[80px] flex-shrink-0"
+                  className="px-2 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[75px] flex-shrink-0"
                 />
               </div>
 
               {/* Botões */}
-              <div className="flex gap-3 items-end ml-4">
+              <div className="flex gap-2 items-end ml-2">
                 <button
                   onClick={handleAplicarFiltros}
-                  className="px-6 py-2 text-sm bg-black text-white hover:bg-gray-800 focus:outline-none whitespace-nowrap font-medium flex-shrink-0 border border-black"
+                  className="px-4 py-2 text-sm bg-black text-white hover:bg-gray-800 focus:outline-none whitespace-nowrap font-medium flex-shrink-0 border border-black"
                 >
                   Aplicar
                 </button>
 
                 <button
                   onClick={handleLimparFiltros}
-                  className="px-6 py-2 text-sm bg-gray-100 text-black hover:bg-gray-200 focus:outline-none whitespace-nowrap flex-shrink-0 border border-gray-300"
+                  className="px-4 py-2 text-sm bg-gray-100 text-black hover:bg-gray-200 focus:outline-none whitespace-nowrap flex-shrink-0 border border-gray-300"
                 >
                   Limpar
                 </button>
               </div>
             </div>
-
-            {/* Seta para rolar à direita */}
-            <button
-              onClick={scrollRight}
-              className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 bg-white shadow-md border border-gray-300 rounded-full p-2 hover:bg-gray-50 focus:outline-none"
-            >
-              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
           </div>
         </div>
       </div>
@@ -1302,12 +1270,13 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible, hor
             selectedValue={quartosSelecionados}
             onChange={handleQuartosChange}
           />
-          <OptionGroup
+          {/* Banheiros - COMENTADO TEMPORARIAMENTE */}
+          {/* <OptionGroup
             label="Banheiros"
             options={opcoes}
             selectedValue={banheirosSelecionados}
             onChange={handleBanheirosChange}
-          />
+          /> */}
           <OptionGroup
             label="Vagas"
             options={opcoes}
