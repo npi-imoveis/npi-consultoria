@@ -593,11 +593,13 @@ export function ImageGallery({
                 className="max-w-full max-h-screen object-contain"
               />
 
-              {/* Contador */}
-              <div className="absolute top-24 md:top-20 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm z-20">
-                {selectedIndex + 1} / {images.length}
-                {images[selectedIndex].Destaque === "Sim" && " ⭐"}
-              </div>
+              {/* Contador - apenas no desktop */}
+              {!isMobile && (
+                <div className="absolute top-20 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm z-20">
+                  {selectedIndex + 1} / {images.length}
+                  {images[selectedIndex].Destaque === "Sim" && " ⭐"}
+                </div>
+              )}
 
               {/* Navegação */}
               <button
