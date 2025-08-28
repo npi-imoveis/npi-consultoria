@@ -10,56 +10,33 @@ const BrokerSection = ({ formData, displayValues, onChange }) => {
   const [corretores, setCorretores] = useState([]);
   
   useEffect(() => {
-    // Log imediato para garantir que está executando
-    console.log("🚀 BrokerSection montado!");
-    
     const fetchCorretores = async () => {
       try {
-        console.log("📡 Chamando getCorretores()...");
         const response = await getCorretores();
         
-        console.log("✅ Resposta completa:", response);
-        
-        // Se não tem success ou data, tentar acessar direto
-        if (response) {
-          // Tentar vários caminhos possíveis
-          const possiblePaths = [
-            response.data,
-            response.data?.data,
-            response.data?.corretores,
-            response.corretores,
-            response
-          ];
+        if (response.success && response.data) {
+          let corretoresArray = Array.isArray(response.data) 
+            ? response.data 
+            : response.data.data || [];
           
-          let corretoresArray = null;
-          
-          for (const path of possiblePaths) {
-            if (Array.isArray(path) && path.length > 0) {
-              corretoresArray = path;
-              console.log("📍 Encontrado array em:", path);
-              break;
-            }
-          }
-          
-          if (!corretoresArray) {
-            console.error("❌ Nenhum array de corretores encontrado");
-            console.log("🔍 Estrutura recebida:", JSON.stringify(response, null, 2));
-            return;
-          }
-          
-          console.log("📋 Primeiro corretor:", corretoresArray[0]);
+          // LOG para verificar quantos corretores vieram
+          console.log(`Total de corretores recebidos: ${corretoresArray.length}`);
           
           const corretoresList = corretoresArray.map((item) => ({
-            value: item.nome || item.Nome || item.name || "",
-            label: item.nome || item.Nome || item.name || "Sem nome",
+            value: item.nome || item.Nome || "",
+            label: item.nome || item.Nome || "Sem nome",
           })).filter(c => c.value);
           
-          console.log(`✅ ${corretoresList.length} corretores processados`);
+          // Ordenar alfabeticamente
+          corretoresList.sort((a, b) => a.label.localeCompare(b.label));
+          
+          console.log(`Corretores processados: ${corretoresList.length}`);
           setCorretores(corretoresList);
         }
         
       } catch (error) {
-        console.error("💥 Erro completo:", error);
+        console.error("Erro ao buscar corretores:", error);
+        setCorretores([]);
       }
     };
     
