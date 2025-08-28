@@ -13,24 +13,60 @@ const BrokerSection = ({ formData, displayValues, onChange }) => {
     const fetchCorretores = async () => {
       try {
         const response = await getCorretores();
-        const corretoresData = response?.data?.data || response?.data || response || [];
         
-        const corretoresList = corretoresData.map((item) => {
+        // DEBUG COMPLETO - Ver toda a estrutura
+        console.log("=== DEBUG CORRETORES ===");
+        console.log("1. Response completo:", response);
+        console.log("2. response.data:", response?.data);
+        console.log("3. response.data.data:", response?.data?.data);
+        
+        // Tentar diferentes caminhos possíveis
+        let corretoresData = null;
+        
+        if (response?.data?.data) {
+          corretoresData = response.data.data;
+          console.log("Usando: response.data.data");
+        } else if (response?.data) {
+          corretoresData = response.data;
+          console.log("Usando: response.data");
+        } else if (Array.isArray(response)) {
+          corretoresData = response;
+          console.log("Usando: response direto (é array)");
+        } else if (response?.corretores) {
+          corretoresData = response.corretores;
+          console.log("Usando: response.corretores");
+        }
+        
+        console.log("4. Dados dos corretores:", corretoresData);
+        
+        // Se encontrou dados, verificar o primeiro item para ver a estrutura
+        if (corretoresData && corretoresData.length > 0) {
+          console.log("5. Primeiro corretor (estrutura):", corretoresData[0]);
+          console.log("6. Chaves do objeto:", Object.keys(corretoresData[0]));
+        }
+        
+        // Mapear corretores - tentar diferentes campos possíveis
+        const corretoresList = corretoresData?.map((item, index) => {
+          const nome = item.nome || item.Nome || item.name || item.Name || 
+                       item.nomeCorretor || item.corretor || `Corretor ${index + 1}`;
+          
+          console.log(`Corretor ${index}:`, nome);
+          
           return {
-            value: item.nome,
-            label: item.nome,
+            value: nome,
+            label: nome,
           };
-        });
+        }) || [];
+        
+        console.log("7. Lista final de corretores:", corretoresList);
+        console.log("=== FIM DEBUG ===");
         
         setCorretores(corretoresList);
+        
       } catch (error) {
-        console.error("Erro ao buscar corretores:", error);
-        // Dados de fallback caso a API falhe
-        setCorretores([
-          { value: "Eduardo Lima", label: "Eduardo Lima" },
-          { value: "Maria Silva", label: "Maria Silva" },
-          { value: "João Santos", label: "João Santos" },
-        ]);
+        console.error("❌ ERRO ao buscar corretores:", error);
+        console.error("Detalhes do erro:", error.response || error.message);
+        setCorretores([]); // Lista vazia em caso de erro
       }
     };
     
@@ -38,19 +74,18 @@ const BrokerSection = ({ formData, displayValues, onChange }) => {
   }, []);
   
   const corretorField = () => {
-    // Se está vazio ou é string vazia, mostrar select
     if (!formData.Corretor || formData.Corretor.trim() === "") {
       return {
         name: "Corretor",
         label: "Nome",
         type: "select",
-        // NÃO adicionar opção vazia aqui - o FieldGroup já deve estar adicionando
-        options: corretores,
+        options: corretores.length > 0 
+          ? corretores 
+          : [{ value: "", label: "Nenhum corretor encontrado" }],
         value: formData.Corretor || "",
       };
     }
     
-    // Se tem valor, mostrar como texto
     return {
       name: "Corretor",
       label: "Nome",
