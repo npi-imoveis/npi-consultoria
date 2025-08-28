@@ -10,40 +10,56 @@ const BrokerSection = ({ formData, displayValues, onChange }) => {
   const [corretores, setCorretores] = useState([]);
   
   useEffect(() => {
+    // Log imediato para garantir que está executando
+    console.log("🚀 BrokerSection montado!");
+    
     const fetchCorretores = async () => {
       try {
+        console.log("📡 Chamando getCorretores()...");
         const response = await getCorretores();
         
-        console.log("Resposta getCorretores:", response);
+        console.log("✅ Resposta completa:", response);
         
-        // Verificar se a resposta foi bem-sucedida
-        if (response.success && response.data) {
-          // response.data deve ser um array de corretores
-          let corretoresArray = Array.isArray(response.data) 
-            ? response.data 
-            : response.data.data || [];
+        // Se não tem success ou data, tentar acessar direto
+        if (response) {
+          // Tentar vários caminhos possíveis
+          const possiblePaths = [
+            response.data,
+            response.data?.data,
+            response.data?.corretores,
+            response.corretores,
+            response
+          ];
           
-          console.log("Corretores recebidos:", corretoresArray);
+          let corretoresArray = null;
           
-          // Mapear para o formato esperado
-          const corretoresList = corretoresArray.map((item) => {
-            return {
-              value: item.nome || item.Nome || "",
-              label: item.nome || item.Nome || "Sem nome",
-            };
-          }).filter(c => c.value); // Filtrar corretores sem nome
+          for (const path of possiblePaths) {
+            if (Array.isArray(path) && path.length > 0) {
+              corretoresArray = path;
+              console.log("📍 Encontrado array em:", path);
+              break;
+            }
+          }
           
-          console.log("Lista processada:", corretoresList);
+          if (!corretoresArray) {
+            console.error("❌ Nenhum array de corretores encontrado");
+            console.log("🔍 Estrutura recebida:", JSON.stringify(response, null, 2));
+            return;
+          }
+          
+          console.log("📋 Primeiro corretor:", corretoresArray[0]);
+          
+          const corretoresList = corretoresArray.map((item) => ({
+            value: item.nome || item.Nome || item.name || "",
+            label: item.nome || item.Nome || item.name || "Sem nome",
+          })).filter(c => c.value);
+          
+          console.log(`✅ ${corretoresList.length} corretores processados`);
           setCorretores(corretoresList);
-        } else {
-          // Se falhou ou não tem dados
-          console.error("Erro ao buscar corretores:", response.message);
-          setCorretores([]);
         }
         
       } catch (error) {
-        console.error("Erro na requisição:", error);
-        setCorretores([]);
+        console.error("💥 Erro completo:", error);
       }
     };
     
