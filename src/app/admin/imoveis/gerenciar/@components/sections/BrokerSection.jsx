@@ -1,5 +1,6 @@
-"use client";
+// src/app/admin/imoveis/gerenciar/@components/sections/BrokerSection.jsx
 
+"use client";
 import { memo, useEffect, useState } from "react";
 import FormSection from "../FormSection";
 import FieldGroup from "../FieldGroup";
@@ -7,34 +8,25 @@ import { getCorretores } from "@/app/admin/services/corretores";
 
 const BrokerSection = ({ formData, displayValues, onChange }) => {
   const [corretores, setCorretores] = useState([]);
-
+  
   useEffect(() => {
     const fetchCorretores = async () => {
-      if (!formData.Corretor) {
-        const response = await getCorretores();
-        const corretor = response.data?.data?.map((item, index) => {
-          return {
-            value: item.nome,
-            label: item.nome,
-          };
-        });
-
-        setCorretores(corretor);
-      }
+      // CORREÇÃO: Buscar sempre os corretores, não apenas quando não tem corretor
+      const response = await getCorretores();
+      const corretor = response.data?.data?.map((item, index) => {
+        return {
+          value: item.nome,
+          label: item.nome,
+        };
+      });
+      setCorretores(corretor);
     };
     fetchCorretores();
   }, []);
-
+  
   const corretorField = () => {
-    if (formData.Corretor) {
-      return {
-        name: "Corretor",
-        label: "Nome",
-        type: "text",
-        value: formData.Corretor,
-      };
-    }
-    if (!formData.Corretor) {
+    // CORREÇÃO PRINCIPAL: Verificar se está vazio OU é string vazia
+    if (!formData.Corretor || formData.Corretor.trim() === "") {
       return {
         name: "Corretor",
         label: "Nome",
@@ -42,8 +34,16 @@ const BrokerSection = ({ formData, displayValues, onChange }) => {
         options: corretores,
       };
     }
-    return;
+    
+    // Se tem valor, mostrar como texto
+    return {
+      name: "Corretor",
+      label: "Nome",
+      type: "text",
+      value: formData.Corretor,
+    };
   };
+  
   const brokerFields = [
     corretorField(),
     { name: "EmailCorretor", label: "E-mail", type: "text" },
@@ -59,7 +59,7 @@ const BrokerSection = ({ formData, displayValues, onChange }) => {
       type: "textarea",
     },
   ];
-
+  
   return (
     <FormSection title="Corretores Vinculados (Imobiliária)">
       <FieldGroup
