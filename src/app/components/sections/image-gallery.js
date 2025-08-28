@@ -599,13 +599,11 @@ export function ImageGallery({
                 className="max-w-full max-h-screen object-contain"
               />
 
-              {/* Contador - apenas no desktop */}
-              {!isMobile && (
-                <div className="absolute top-20 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm z-20">
-                  {selectedIndex + 1} / {images.length}
-                  {images[selectedIndex].Destaque === "Sim" && " ⭐"}
-                </div>
-              )}
+              {/* Contador */}
+              <div className="absolute top-24 md:top-20 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm z-20">
+                {selectedIndex + 1} / {images.length}
+                {images[selectedIndex].Destaque === "Sim" && " ⭐"}
+              </div>
 
               {/* Navegação */}
               <button
@@ -660,8 +658,8 @@ export function ImageGallery({
                     </div>
                   )}
                   
-                  {/* Indicador de destaque - apenas no desktop */}
-                  {!isMobile && image.Destaque === "Sim" && (
+                  {/* Indicador de destaque */}
+                  {image.Destaque === "Sim" && (
                     <div className="absolute top-2 left-2 bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded">
                       ⭐ DESTAQUE
                     </div>
