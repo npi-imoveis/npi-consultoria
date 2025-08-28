@@ -12,50 +12,37 @@ const BrokerSection = ({ formData, displayValues, onChange }) => {
   useEffect(() => {
     const fetchCorretores = async () => {
       try {
-        console.log("🔄 Buscando corretores...");
         const response = await getCorretores();
         
-        console.log("📥 Resposta da API getCorretores():", response);
+        console.log("Resposta getCorretores:", response);
         
-        // TEMPORÁRIO: Usar dados mockados se a API retornar vazio
-        if (!response || !response.data || response.data.length === 0) {
-          console.warn("⚠️ API retornou vazio, usando dados mockados");
+        // Verificar se a resposta foi bem-sucedida
+        if (response.success && response.data) {
+          // response.data deve ser um array de corretores
+          let corretoresArray = Array.isArray(response.data) 
+            ? response.data 
+            : response.data.data || [];
           
-          // DADOS MOCKADOS - substituir quando API funcionar
-          const mockCorretores = [
-            { nome: "Eduardo Lima" },
-            { nome: "Maria Silva" },
-            { nome: "João Santos" },
-            { nome: "Ana Costa" },
-            { nome: "Pedro Oliveira" },
-            { nome: "Juliana Ferreira" },
-            { nome: "Carlos Mendes" },
-            { nome: "Beatriz Souza" }
-          ];
+          console.log("Corretores recebidos:", corretoresArray);
           
-          const corretoresList = mockCorretores.map((item) => ({
-            value: item.nome,
-            label: item.nome,
-          }));
+          // Mapear para o formato esperado
+          const corretoresList = corretoresArray.map((item) => {
+            return {
+              value: item.nome || item.Nome || "",
+              label: item.nome || item.Nome || "Sem nome",
+            };
+          }).filter(c => c.value); // Filtrar corretores sem nome
           
+          console.log("Lista processada:", corretoresList);
           setCorretores(corretoresList);
-          return;
+        } else {
+          // Se falhou ou não tem dados
+          console.error("Erro ao buscar corretores:", response.message);
+          setCorretores([]);
         }
         
-        // Processar resposta real da API quando funcionar
-        const corretoresData = response?.data?.data || response?.data || [];
-        const corretoresList = corretoresData.map((item) => ({
-          value: item.nome,
-          label: item.nome,
-        }));
-        
-        setCorretores(corretoresList);
-        
       } catch (error) {
-        console.error("❌ Erro ao buscar corretores:", error);
-        console.error("Detalhes:", error.message);
-        
-        // Em caso de erro, usar lista vazia
+        console.error("Erro na requisição:", error);
         setCorretores([]);
       }
     };
