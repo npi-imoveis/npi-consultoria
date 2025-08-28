@@ -362,6 +362,33 @@ export function ImageGallery({
               >
                 1 / {images.length}
               </div>
+
+              {/* Texto "Toque para ver" - só aparece quando a galeria NÃO está aberta */}
+              {images.length > 1 && !isModalOpen && (
+                <div 
+                  style={{
+                    position: 'absolute',
+                    bottom: '12px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    backdropFilter: 'blur(4px)',
+                    color: 'black',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    padding: '8px 16px',
+                    borderRadius: '9999px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                    zIndex: 999999,
+                    pointerEvents: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  Toque para ver as {images.length} fotos
+                </div>
+              )}
             </div>
           ) : (
             // 💻 DESKTOP: Layout grid MAIOR (ORIGINAL MANTIDO)
