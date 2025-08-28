@@ -1,4 +1,4 @@
-// src/app/components/sections/image-gallery.js - COMPLETO + ANTI-LOOP
+// src/app/components/sections/image-gallery.js - COMPLETO + ANTI-LOOP + CORRIGIDO
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -232,8 +232,8 @@ export function ImageGallery({
             className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-105"
           />
 
-          {/* Indicadores otimizados (ORIGINAL + CSS ANTI-CONFLITO) */}
-          {images[0].Destaque === "Sim" && (
+          {/* Indicadores otimizados - só aparecem quando galeria está FECHADA */}
+          {!isModalOpen && images[0].Destaque === "Sim" && (
             <div 
               style={{
                 position: 'absolute',
@@ -257,28 +257,30 @@ export function ImageGallery({
             </div>
           )}
 
-          <div 
-            style={{
-              position: 'absolute',
-              top: '16px',
-              right: '16px',
-              backgroundColor: 'rgba(255, 255, 255, 0.9)',
-              backdropFilter: 'blur(4px)',
-              color: 'black',
-              fontSize: '14px',
-              fontWeight: '500',
-              padding: '4px 12px',
-              borderRadius: '9999px',
-              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-              zIndex: 999999,
-              pointerEvents: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            {images.length} foto{images.length > 1 ? 's' : ''}
-          </div>
+          {!isModalOpen && (
+            <div 
+              style={{
+                position: 'absolute',
+                top: '16px',
+                right: '16px',
+                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                backdropFilter: 'blur(4px)',
+                color: 'black',
+                fontSize: '14px',
+                fontWeight: '500',
+                padding: '4px 12px',
+                borderRadius: '9999px',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                zIndex: 999999,
+                pointerEvents: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              {images.length} foto{images.length > 1 ? 's' : ''}
+            </div>
+          )}
         </div>
       ) : (
         // 📱 LAYOUT RESPONSIVO COM FOTOS MAIORES (ORIGINAL MANTIDO)
@@ -315,8 +317,8 @@ export function ImageGallery({
                 className="object-cover transition-transform duration-300 ease-in-out hover:scale-105"
               />
 
-              {/* Indicadores móveis (ORIGINAL + CSS ANTI-CONFLITO) */}
-              {images[0].Destaque === "Sim" && (
+              {/* Indicadores móveis - só aparecem quando galeria está FECHADA */}
+              {!isModalOpen && images[0].Destaque === "Sim" && (
                 <div 
                   style={{
                     position: 'absolute',
@@ -340,28 +342,30 @@ export function ImageGallery({
                 </div>
               )}
 
-              <div 
-                style={{
-                  position: 'absolute',
-                  top: '12px',
-                  right: '12px',
-                  backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                  backdropFilter: 'blur(4px)',
-                  color: 'white',
-                  fontSize: '14px',
-                  fontWeight: '500',
-                  padding: '6px 12px',
-                  borderRadius: '9999px',
-                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                  zIndex: 999999,
-                  pointerEvents: 'none',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}
-              >
-                1 / {images.length}
-              </div>
+              {!isModalOpen && (
+                <div 
+                  style={{
+                    position: 'absolute',
+                    top: '12px',
+                    right: '12px',
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    backdropFilter: 'blur(4px)',
+                    color: 'white',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    padding: '6px 12px',
+                    borderRadius: '9999px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                    zIndex: 999999,
+                    pointerEvents: 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                  }}
+                >
+                  1 / {images.length}
+                </div>
+              )}
 
               {/* Texto "Toque para ver" - só aparece quando a galeria NÃO está aberta */}
               {images.length > 1 && !isModalOpen && (
@@ -433,8 +437,8 @@ export function ImageGallery({
                   />
                 </div>
 
-                {/* Indicadores desktop (ORIGINAL + CSS ANTI-CONFLITO) */}
-                {images[0].Destaque === "Sim" && (
+                {/* Indicadores desktop - só aparecem quando galeria está FECHADA */}
+                {!isModalOpen && images[0].Destaque === "Sim" && (
                   <div 
                     style={{
                       position: 'absolute',
@@ -458,28 +462,30 @@ export function ImageGallery({
                   </div>
                 )}
 
-                <div 
-                  style={{
-                    position: 'absolute',
-                    top: '16px',
-                    right: '16px',
-                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                    backdropFilter: 'blur(4px)',
-                    color: 'black',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    padding: '4px 12px',
-                    borderRadius: '9999px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                    zIndex: 999999,
-                    pointerEvents: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  {images.length} foto{images.length > 1 ? 's' : ''}
-                </div>
+                {!isModalOpen && (
+                  <div 
+                    style={{
+                      position: 'absolute',
+                      top: '16px',
+                      right: '16px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                      backdropFilter: 'blur(4px)',
+                      color: 'black',
+                      fontSize: '14px',
+                      fontWeight: '500',
+                      padding: '4px 12px',
+                      borderRadius: '9999px',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+                      zIndex: 999999,
+                      pointerEvents: 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    {images.length} foto{images.length > 1 ? 's' : ''}
+                  </div>
+                )}
               </div>
 
               {/* GRID 2x2 MAIOR (ORIGINAL MANTIDO) */}
@@ -515,8 +521,8 @@ export function ImageGallery({
                         className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
                       />
                       
-                      {/* Indicador de destaque nos thumbnails (ORIGINAL + CSS ANTI-CONFLITO) */}
-                      {image.Destaque === "Sim" && (
+                      {/* Indicador de destaque nos thumbnails - só aparece quando galeria está FECHADA */}
+                      {!isModalOpen && image.Destaque === "Sim" && (
                         <div 
                           style={{
                             position: 'absolute',
@@ -647,13 +653,15 @@ export function ImageGallery({
                     className="object-cover"
                   />
                   
-                  {/* Número da foto */}
-                  <div className="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
-                    {idx + 1}
-                  </div>
+                  {/* Número da foto - apenas no desktop */}
+                  {!isMobile && (
+                    <div className="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
+                      {idx + 1}
+                    </div>
+                  )}
                   
-                  {/* Indicador de destaque */}
-                  {image.Destaque === "Sim" && (
+                  {/* Indicador de destaque - apenas no desktop */}
+                  {!isMobile && image.Destaque === "Sim" && (
                     <div className="absolute top-2 left-2 bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded">
                       ⭐ DESTAQUE
                     </div>
