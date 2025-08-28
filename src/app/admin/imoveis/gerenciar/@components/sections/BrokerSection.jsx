@@ -8,39 +8,29 @@ import { getCorretores } from "@/app/admin/services/corretores";
 
 const BrokerSection = ({ formData, displayValues, onChange }) => {
   const [corretores, setCorretores] = useState([]);
-  const [loading, setLoading] = useState(true);
   
   useEffect(() => {
     const fetchCorretores = async () => {
       try {
-        setLoading(true);
         const response = await getCorretores();
-        
-        // Debug - verificar o que está vindo
-        console.log("Resposta da API:", response);
-        
-        // Correção: verificar estrutura correta da resposta
         const corretoresData = response?.data?.data || response?.data || response || [];
         
         const corretoresList = corretoresData.map((item) => {
           return {
-            value: item.nome || item.name || item.Nome,  // Tentar diferentes campos
-            label: item.nome || item.name || item.Nome,
+            value: item.nome,
+            label: item.nome,
           };
         });
         
-        console.log("Corretores processados:", corretoresList);
         setCorretores(corretoresList);
       } catch (error) {
         console.error("Erro ao buscar corretores:", error);
-        // Fallback com dados de exemplo se API falhar
+        // Dados de fallback caso a API falhe
         setCorretores([
           { value: "Eduardo Lima", label: "Eduardo Lima" },
           { value: "Maria Silva", label: "Maria Silva" },
           { value: "João Santos", label: "João Santos" },
         ]);
-      } finally {
-        setLoading(false);
       }
     };
     
@@ -54,10 +44,8 @@ const BrokerSection = ({ formData, displayValues, onChange }) => {
         name: "Corretor",
         label: "Nome",
         type: "select",
-        options: [
-          { value: "", label: loading ? "Carregando..." : "Selecione um corretor" },
-          ...corretores
-        ],
+        // NÃO adicionar opção vazia aqui - o FieldGroup já deve estar adicionando
+        options: corretores,
         value: formData.Corretor || "",
       };
     }
@@ -66,7 +54,7 @@ const BrokerSection = ({ formData, displayValues, onChange }) => {
     return {
       name: "Corretor",
       label: "Nome",
-      type: "text", 
+      type: "text",
       value: formData.Corretor,
     };
   };
