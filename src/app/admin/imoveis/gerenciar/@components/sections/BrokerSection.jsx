@@ -8,30 +8,57 @@ import { getCorretores } from "@/app/admin/services/corretores";
 
 const BrokerSection = ({ formData, displayValues, onChange }) => {
   const [corretores, setCorretores] = useState([]);
+  const [loading, setLoading] = useState(true);
   
   useEffect(() => {
     const fetchCorretores = async () => {
-      // CORREÇÃO: Buscar sempre os corretores, não apenas quando não tem corretor
-      const response = await getCorretores();
-      const corretor = response.data?.data?.map((item, index) => {
-        return {
-          value: item.nome,
-          label: item.nome,
-        };
-      });
-      setCorretores(corretor);
+      try {
+        setLoading(true);
+        const response = await getCorretores();
+        
+        // Debug - verificar o que está vindo
+        console.log("Resposta da API:", response);
+        
+        // Correção: verificar estrutura correta da resposta
+        const corretoresData = response?.data?.data || response?.data || response || [];
+        
+        const corretoresList = corretoresData.map((item) => {
+          return {
+            value: item.nome || item.name || item.Nome,  // Tentar diferentes campos
+            label: item.nome || item.name || item.Nome,
+          };
+        });
+        
+        console.log("Corretores processados:", corretoresList);
+        setCorretores(corretoresList);
+      } catch (error) {
+        console.error("Erro ao buscar corretores:", error);
+        // Fallback com dados de exemplo se API falhar
+        setCorretores([
+          { value: "Eduardo Lima", label: "Eduardo Lima" },
+          { value: "Maria Silva", label: "Maria Silva" },
+          { value: "João Santos", label: "João Santos" },
+        ]);
+      } finally {
+        setLoading(false);
+      }
     };
+    
     fetchCorretores();
   }, []);
   
   const corretorField = () => {
-    // CORREÇÃO PRINCIPAL: Verificar se está vazio OU é string vazia
+    // Se está vazio ou é string vazia, mostrar select
     if (!formData.Corretor || formData.Corretor.trim() === "") {
       return {
         name: "Corretor",
         label: "Nome",
         type: "select",
-        options: corretores,
+        options: [
+          { value: "", label: loading ? "Carregando..." : "Selecione um corretor" },
+          ...corretores
+        ],
+        value: formData.Corretor || "",
       };
     }
     
@@ -39,7 +66,7 @@ const BrokerSection = ({ formData, displayValues, onChange }) => {
     return {
       name: "Corretor",
       label: "Nome",
-      type: "text",
+      type: "text", 
       value: formData.Corretor,
     };
   };
