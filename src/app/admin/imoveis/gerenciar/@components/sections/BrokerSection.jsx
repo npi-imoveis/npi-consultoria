@@ -1,55 +1,83 @@
 // src/app/admin/imoveis/gerenciar/@components/sections/BrokerSection.jsx
 
 "use client";
-import { memo, useEffect, useState } from "react";
+import { memo, useEffect, useState, useRef } from "react";
 import FormSection from "../FormSection";
 import FieldGroup from "../FieldGroup";
 import { getCorretores } from "@/app/admin/services/corretores";
 
+// Cache global para não perder os corretores
+let corretoresCache = [];
+
 const BrokerSection = ({ formData, displayValues, onChange }) => {
-  const [corretores, setCorretores] = useState([]);
+  const [corretores, setCorretores] = useState(corretoresCache);
+  const [isLoading, setIsLoading] = useState(false);
+  const hasFetched = useRef(false);
   
   useEffect(() => {
+    // Se já tem cache, usar o cache
+    if (corretoresCache.length > 0) {
+      setCorretores(corretoresCache);
+      return;
+    }
+    
+    // Evitar múltiplas chamadas
+    if (hasFetched.current || isLoading) return;
+    
     const fetchCorretores = async () => {
+      hasFetched.current = true;
+      setIsLoading(true);
+      
       try {
         const response = await getCorretores();
         
-        if (response.success && response.data) {
+        if (response?.success && response?.data) {
           let corretoresArray = Array.isArray(response.data) 
             ? response.data 
-            : response.data.data || [];
+            : response.data?.data || [];
           
-          // LOG para verificar quantos corretores vieram
-          console.log(`Total de corretores recebidos: ${corretoresArray.length}`);
+          const corretoresList = corretoresArray
+            .map((item) => ({
+              value: item.nome || item.Nome || "",
+              label: item.nome || item.Nome || "Sem nome",
+            }))
+            .filter(c => c.value)
+            .sort((a, b) => a.label.localeCompare(b.label));
           
-          const corretoresList = corretoresArray.map((item) => ({
-            value: item.nome || item.Nome || "",
-            label: item.nome || item.Nome || "Sem nome",
-          })).filter(c => c.value);
-          
-          // Ordenar alfabeticamente
-          corretoresList.sort((a, b) => a.label.localeCompare(b.label));
-          
-          console.log(`Corretores processados: ${corretoresList.length}`);
+          // Salvar no cache e no state
+          corretoresCache = corretoresList;
           setCorretores(corretoresList);
+          
+          console.log(`✅ ${corretoresList.length} corretores carregados e salvos em cache`);
         }
-        
       } catch (error) {
         console.error("Erro ao buscar corretores:", error);
-        setCorretores([]);
+        // Tentar novamente em 2 segundos
+        setTimeout(() => {
+          hasFetched.current = false;
+          fetchCorretores();
+        }, 2000);
+      } finally {
+        setIsLoading(false);
       }
     };
     
     fetchCorretores();
-  }, []);
+  }, []); // Array vazio para executar apenas uma vez
   
   const corretorField = () => {
-    if (!formData.Corretor || formData.Corretor.trim() === "") {
+    const isEmptyCorretor = !formData.Corretor || formData.Corretor.trim() === "";
+    
+    if (isEmptyCorretor) {
       return {
         name: "Corretor",
         label: "Nome",
         type: "select",
-        options: corretores,
+        options: corretores.length > 0 
+          ? corretores 
+          : isLoading 
+            ? [{ value: "", label: "Carregando corretores..." }]
+            : [{ value: "", label: "Nenhum corretor disponível" }],
         value: formData.Corretor || "",
       };
     }
@@ -90,4 +118,10 @@ const BrokerSection = ({ formData, displayValues, onChange }) => {
   );
 };
 
-export default memo(BrokerSection);
+// IMPORTANTE: memo evita re-renders desnecessários
+export default memo(BrokerSection, (prevProps, nextProps) => {
+  // Só re-renderizar se o corretor mudar
+  return prevProps.formData.Corretor === nextProps.formData.Corretor &&
+         prevProps.formData.EmailCorretor === nextProps.formData.EmailCorretor &&
+         prevProps.formData.CelularCorretor === nextProps.formData.CelularCorretor;
+});
