@@ -1,51 +1,57 @@
 // src/app/admin/imoveis/gerenciar/@components/sections/BrokerSection.jsx
+
 "use client";
 import { memo, useEffect, useState } from "react";
 import FormSection from "../FormSection";
 import FieldGroup from "../FieldGroup";
-import { getCorretores } from "@/app/admin/services/corretores";
+import axiosClient from "@/app/lib/axios-client";
+
 const BrokerSection = ({ formData, displayValues, onChange }) => {
   const [corretores, setCorretores] = useState([]);
-
+  
   useEffect(() => {
-    const fetchCorretores = async () => {
+    const fetchAllCorretores = async () => {
       try {
-        const response = await getCorretores();
-
-        // A resposta real da API tem a estrutura: response.corretores
-        let corretoresArray = [];
-
-        if (response.corretores) {
-          // Acesso direto ao array de corretores
-          corretoresArray = response.corretores;
-        } else if (response.data?.corretores) {
-          // Se vier wrapped em data
-          corretoresArray = response.data.corretores;
-        } else if (response.data && Array.isArray(response.data)) {
-          // Se data for diretamente um array
-          corretoresArray = response.data;
+        let todosCorretores = [];
+        
+        // Buscar primeira página
+        const firstResponse = await axiosClient.get("admin/corretores");
+        
+        if (firstResponse.data?.corretores) {
+          todosCorretores = [...firstResponse.data.corretores];
+          
+          // Buscar páginas adicionais
+          const totalPages = firstResponse.data.pagination?.totalPages || 1;
+          
+          for (let page = 2; page <= totalPages; page++) {
+            const response = await axiosClient.get(`admin/corretores?page=${page}`);
+            if (response.data?.corretores) {
+              todosCorretores = [...todosCorretores, ...response.data.corretores];
+            }
+          }
         }
-
-        // Mapear os corretores para o formato esperado
-        const corretoresList = corretoresArray
+        
+        // Mapear todos os corretores
+        const corretoresList = todosCorretores
           .map((item) => ({
             value: item.nome,
             label: item.nome,
           }))
           .filter(c => c.value)
           .sort((a, b) => a.label.localeCompare(b.label));
-
+        
+        console.log(`Total de corretores: ${corretoresList.length}`);
         setCorretores(corretoresList);
-
+        
       } catch (error) {
         console.error("Erro ao buscar corretores:", error);
         setCorretores([]);
       }
     };
-
-    fetchCorretores();
+    
+    fetchAllCorretores();
   }, []);
-
+  
   const corretorField = () => {
     if (!formData.Corretor || formData.Corretor.trim() === "") {
       return {
@@ -56,7 +62,7 @@ const BrokerSection = ({ formData, displayValues, onChange }) => {
         value: formData.Corretor || "",
       };
     }
-
+    
     return {
       name: "Corretor",
       label: "Nome",
@@ -64,7 +70,7 @@ const BrokerSection = ({ formData, displayValues, onChange }) => {
       value: formData.Corretor,
     };
   };
-
+  
   const brokerFields = [
     corretorField(),
     { name: "EmailCorretor", label: "E-mail", type: "text" },
@@ -80,7 +86,7 @@ const BrokerSection = ({ formData, displayValues, onChange }) => {
       type: "textarea",
     },
   ];
-
+  
   return (
     <FormSection title="Corretores Vinculados (Imobiliária)">
       <FieldGroup
@@ -92,4 +98,5 @@ const BrokerSection = ({ formData, displayValues, onChange }) => {
     </FormSection>
   );
 };
+
 export default memo(BrokerSection);
