@@ -13,22 +13,35 @@ const BrokerSection = ({ formData, displayValues, onChange }) => {
     const fetchCorretores = async () => {
       try {
         const response = await getCorretores();
-        console.log("Resposta getCorretores:", response);
         
-        // A API retorna em response.corretores
-        if (response?.corretores && Array.isArray(response.corretores)) {
-          const corretoresList = response.corretores
-            .map((item) => ({
-              value: item.nome,
-              label: item.nome,
-            }))
-            .filter(c => c.value)
-            .sort((a, b) => a.label.localeCompare(b.label));
-          
-          setCorretores(corretoresList);
+        // A resposta real da API tem a estrutura: response.corretores
+        let corretoresArray = [];
+        
+        if (response.corretores) {
+          // Acesso direto ao array de corretores
+          corretoresArray = response.corretores;
+        } else if (response.data?.corretores) {
+          // Se vier wrapped em data
+          corretoresArray = response.data.corretores;
+        } else if (response.data && Array.isArray(response.data)) {
+          // Se data for diretamente um array
+          corretoresArray = response.data;
         }
+        
+        // Mapear os corretores para o formato esperado
+        const corretoresList = corretoresArray
+          .map((item) => ({
+            value: item.nome,
+            label: item.nome,
+          }))
+          .filter(c => c.value)
+          .sort((a, b) => a.label.localeCompare(b.label));
+        
+        setCorretores(corretoresList);
+        
       } catch (error) {
         console.error("Erro ao buscar corretores:", error);
+        setCorretores([]);
       }
     };
     
