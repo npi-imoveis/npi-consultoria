@@ -59,13 +59,12 @@ export default function GerenciarImovelClient() {
     handleImagesUploaded,
   } = useImovelForm();
 
-      const { handleSubmit, isSaving, error, success, setError, setSuccess } = useImovelSubmit(
+  const { handleSubmit, isSaving, error, success, setError, setSuccess } = useImovelSubmit(
     formData,
     setIsModalOpen,
     mode,
-    imovelSelecionado?._id // <--- ADICIONE ESTA LINHA
+    imovelSelecionado?._id
   );
-
 
   const { handleFileUpload } = useImageUpload(updateImage, setSuccess, setError);
 
@@ -136,54 +135,52 @@ export default function GerenciarImovelClient() {
         }
         return [];
       };
-const processVideos = () => {
-  console.log('🐛 DEBUG processVideos - DADOS RECEBIDOS:', {
-    'imovelSelecionado completo': imovelSelecionado,
-    'imovelSelecionado.Video RAW': imovelSelecionado.Video,
-    'tipo': typeof imovelSelecionado.Video,
-    'isArray': Array.isArray(imovelSelecionado.Video),
-    'isObject': typeof imovelSelecionado.Video === 'object',
-    'keys': imovelSelecionado.Video ? Object.keys(imovelSelecionado.Video) : 'sem keys',
-    'JSON.stringify': JSON.stringify(imovelSelecionado.Video)
-  });
-  
-  if (!imovelSelecionado.Video) {
-    console.log('❌ Video é falsy, retornando {}');
-    return {};
-  }
-  
-  // 🎯 CORRIGIDO: Lidar com a estrutura real Video.1.Video
-  if (typeof imovelSelecionado.Video === 'object' && !Array.isArray(imovelSelecionado.Video)) {
-    console.log('✅ Usando estrutura objeto:', imovelSelecionado.Video);
-    return imovelSelecionado.Video;
-  }
-  
-  // 🔄 FALLBACK: Se for array (estrutura antiga), converter
-  if (Array.isArray(imovelSelecionado.Video)) {
-    const videosObj = {};
-    imovelSelecionado.Video.forEach((video, index) => {
-      if (video.Video) {
-        videosObj[index + 1] = { Video: video.Video };
-      }
-    });
-    console.log('🔄 Convertido de array:', videosObj);
-    return videosObj;
-  }
-  
-  // 🛡️ FALLBACK: Se for string direta, assumir como primeiro vídeo
-  if (typeof imovelSelecionado.Video === 'string') {
-    const videoObj = {
-      "1": {
-        Video: imovelSelecionado.Video
-      }
-    };
-    console.log('🛡️ Convertido de string:', videoObj);
-    return videoObj;
-  }
-  
-  console.log('❓ Tipo desconhecido, retornando {}');
-  return {};
-};
+
+      const processVideos = () => {
+        console.log('🐛 DEBUG processVideos - DADOS RECEBIDOS:', {
+          'imovelSelecionado completo': imovelSelecionado,
+          'imovelSelecionado.Video RAW': imovelSelecionado.Video,
+          'tipo': typeof imovelSelecionado.Video,
+          'isArray': Array.isArray(imovelSelecionado.Video),
+          'isObject': typeof imovelSelecionado.Video === 'object',
+          'keys': imovelSelecionado.Video ? Object.keys(imovelSelecionado.Video) : 'sem keys',
+          'JSON.stringify': JSON.stringify(imovelSelecionado.Video)
+        });
+        
+        if (!imovelSelecionado.Video) {
+          console.log('❌ Video é falsy, retornando {}');
+          return {};
+        }
+        
+        if (typeof imovelSelecionado.Video === 'object' && !Array.isArray(imovelSelecionado.Video)) {
+          console.log('✅ Usando estrutura objeto:', imovelSelecionado.Video);
+          return imovelSelecionado.Video;
+        }
+        
+        if (Array.isArray(imovelSelecionado.Video)) {
+          const videosObj = {};
+          imovelSelecionado.Video.forEach((video, index) => {
+            if (video.Video) {
+              videosObj[index + 1] = { Video: video.Video };
+            }
+          });
+          console.log('🔄 Convertido de array:', videosObj);
+          return videosObj;
+        }
+        
+        if (typeof imovelSelecionado.Video === 'string') {
+          const videoObj = {
+            "1": {
+              Video: imovelSelecionado.Video
+            }
+          };
+          console.log('🛡️ Convertido de string:', videoObj);
+          return videoObj;
+        }
+        
+        console.log('❓ Tipo desconhecido, retornando {}');
+        return {};
+      };
 
       setFormData({
         ...imovelSelecionado,
@@ -199,6 +196,30 @@ const processVideos = () => {
   useEffect(() => {
     return () => {
       // Não limpamos ao desmontar para manter o estado
+    };
+  }, []);
+
+  // CSS para esconder elementos de vídeo indesejados em campos de formulário
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.innerHTML = `
+      input[type="text"] video,
+      input[type="number"] video,
+      input:not([type="file"]) video,
+      input:not([type="file"]) audio,
+      .form-field video:not(.media-preview),
+      [data-field] video:not([data-video-preview]),
+      input + video,
+      input ~ video {
+        display: none !important;
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      if (document.head.contains(style)) {
+        document.head.removeChild(style);
+      }
     };
   }, []);
 
