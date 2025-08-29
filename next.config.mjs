@@ -2,8 +2,8 @@
 const nextConfig = {
   trailingSlash: false,
   
-  // 🚨 ADIÇÃO CIRÚRGICA: Permitir que middleware controle trailing slash
-  skipTrailingSlashRedirect: true,
+  // ❌ REMOVIDO: skipTrailingSlashRedirect não existe no Next.js
+  // skipTrailingSlashRedirect: true, // LINHA DELETADA
   
   // 🚀 EXPERIMENTAL SEGURO (sem optimizeCss)
   experimental: {
@@ -146,9 +146,61 @@ const nextConfig = {
     ];
   },
   
-  // ✅ MANTIDO: Redirects essenciais (URLs antigas ainda indexadas no Google!)
+  // ✅ REDIRECTS EXPANDIDOS - Limpar trailing slashes + URLs antigas
   async redirects() {
     return [
+      // 🔧 NOVOS: Limpar trailing slashes de URLs principais
+      {
+        source: '/imoveis/',
+        destination: '/imoveis',
+        permanent: true,
+      },
+      {
+        source: '/imoveis/:path*/',
+        destination: '/imoveis/:path*',
+        permanent: true,
+      },
+      {
+        source: '/imovel-:id/',
+        destination: '/imovel-:id',
+        permanent: true,
+      },
+      {
+        source: '/imovel-:id/:slug/',
+        destination: '/imovel-:id/:slug',
+        permanent: true,
+      },
+      {
+        source: '/venda/',
+        destination: '/venda',
+        permanent: true,
+      },
+      {
+        source: '/venda/:path*/',
+        destination: '/venda/:path*',
+        permanent: true,
+      },
+      {
+        source: '/aluguel/',
+        destination: '/aluguel',
+        permanent: true,
+      },
+      {
+        source: '/aluguel/:path*/',
+        destination: '/aluguel/:path*',
+        permanent: true,
+      },
+      {
+        source: '/lancamentos/',
+        destination: '/lancamentos',
+        permanent: true,
+      },
+      {
+        source: '/lancamentos/:path*/',
+        destination: '/lancamentos/:path*',
+        permanent: true,
+      },
+      // ✅ MANTIDO: Redirects originais (URLs antigas indexadas)
       {
         source: '/iConatusIframe/:path*',
         destination: '/',
@@ -165,4 +217,5 @@ const nextConfig = {
   // ✅ MANTIDO: Output
   output: "standalone",
 };
+
 export default nextConfig;
