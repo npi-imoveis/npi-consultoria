@@ -351,10 +351,9 @@ export async function middleware(request) {
                       padroesPemitidos.some(pattern => pattern.test(pathname));
 
   if (!urlPermitida) {
-    // 🎯 SOLUÇÃO UNIVERSAL: URLs não reconhecidas → HOME
-    // (Usado apenas para URLs que não têm contexto imobiliário)
-    console.log(`🔍 [MIDDLEWARE] 🏠 URL não reconhecida → HOME: ${pathname}`);
-    return NextResponse.redirect(new URL('/', origin), 301);
+    // ✅ CORREÇÃO CRÍTICA: Deixar Next.js resolver (404 natural) ao invés de redirecionar
+    console.log(`🔍 [MIDDLEWARE] 📄 URL não reconhecida, deixando Next.js resolver: ${pathname}`);
+    return NextResponse.next(); // 🔴 MUDANÇA CRÍTICA AQUI - era: redirect(new URL('/', origin), 301)
   }
 
   // 🚨 CORREÇÃO GSC #5: ADICIONAR HEADERS SEO APROPRIADOS
