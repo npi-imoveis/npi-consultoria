@@ -17,71 +17,63 @@ export default function robots() {
           '/imovel-*/linkedin.com/',
           '/imovel-*/twitter.com/',
           '/imovel-*/youtube.com/',
-          // 🚨 CORREÇÕES GSC: Bloquear _rsc parameters (CRÍTICO)
-          '/*?_rsc=*',
-          '/*&_rsc=*',
-          // 🚨 CORREÇÕES GSC: Bloquear arquivos Next.js problemáticos
+          // REMOVIDO: '/*?_rsc=*', - bloqueava páginas normais
+          // REMOVIDO: '/*&_rsc=*', - bloqueava páginas normais
           '/_next/static/chunks/',
           '/_next/static/css/',
           '/_next/static/js/',
           '/_next/static/media/',
           '/_next/image*',
           '/_next/data/',
-          // 🚨 CORREÇÕES GSC: Bloquear páginas de busca sem resultado (evita soft 404)
-          '/busca?*',
-          '/pesquisa?*',
-          '/search?*',
-          // 🚨 CORREÇÕES GSC: Bloquear parâmetros problemáticos
-          '/*?utm_*',
-          '/*?fbclid=*',
-          '/*?gclid=*',
-          '/*?ref=*',
-          '/*?v=*',
-          '/*?cache=*',
-          '/*?t=*',
-          // 🚨 CORREÇÕES GSC: Bloquear duplicatas temporárias
+          '/busca?',  // ALTERADO: removido o * no final
+          '/pesquisa?',  // ALTERADO: removido o * no final
+          '/search?',  // ALTERADO: removido o * no final
+          // REMOVIDO: '/*?utm_*', - bloqueava campanhas
+          // REMOVIDO: '/*?fbclid=*', - bloqueava Facebook
+          // REMOVIDO: '/*?gclid=*', - bloqueava Google Ads
+          // REMOVIDO: '/*?ref=*', - bloqueava referrals
+          // REMOVIDO: '/*?v=*', - genérico demais
+          // REMOVIDO: '/*?cache=*', - genérico demais
+          // REMOVIDO: '/*?t=*', - genérico demais
           '/admin/',
           '/dashboard/'
         ],
-        // 🚨 CORREÇÃO GSC: Crawl-delay para evitar soft 404s no Googlebot
-        crawlDelay: 1,
+        // REMOVIDO: crawlDelay: 1, - Googlebot ignora
       },
       
-      // 🚨 CORREÇÃO GSC: Configuração específica para Googlebot
       {
         userAgent: 'Googlebot',
         allow: '/',
         disallow: [
           '/api/',
-          '/*?_rsc=*',
-          '/*&_rsc=*',
+          // REMOVIDO: '/*?_rsc=*',
+          // REMOVIDO: '/*&_rsc=*',
           '/_next/static/chunks/',
           '/_next/static/css/',
           '/_next/static/js/',
           '/_next/data/',
-          '/busca?*',
-          '/*?utm_*',
-          '/*?fbclid=*',
-          '/*?gclid=*',
+          '/busca?',  // ALTERADO: removido o *
+          // REMOVIDO: '/*?utm_*',
+          // REMOVIDO: '/*?fbclid=*',
+          // REMOVIDO: '/*?gclid=*',
           '/admin/',
           '/dashboard/'
         ],
-        crawlDelay: 1,
+        // REMOVIDO: crawlDelay: 1,
       },
       
-      // 🚨 CORREÇÃO GSC: Configuração específica para Bingbot
       {
         userAgent: 'Bingbot',
         allow: '/',
         disallow: [
           '/api/',
-          '/*?_rsc=*',
+          // REMOVIDO: '/*?_rsc=*',
           '/_next/static/chunks/',
           '/_next/data/',
           '/admin/',
           '/dashboard/'
         ],
-        crawlDelay: 2,
+        // REMOVIDO: crawlDelay: 2,
       },
       
       // ✅ OpenAI (ChatGPT, GPTs) - MANTIDO
