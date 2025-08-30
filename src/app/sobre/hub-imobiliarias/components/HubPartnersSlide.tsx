@@ -10,14 +10,14 @@ import Image from "next/image";
 
 // ADICIONE SEUS LOGOS AQUI - Coloque as imagens em /public/assets/images/hub-partners/
 const hubLogos = [
-  "/assets/images/hub-partners/logo1.png",
-  "/assets/images/hub-partners/logo2.png", 
-  "/assets/images/hub-partners/logo3.png",
-  "/assets/images/hub-partners/logo4.png",
-  "/assets/images/hub-partners/logo5.png",
-  "/assets/images/hub-partners/logo6.png",
-  "/assets/images/hub-partners/logo7.png",
-  "/assets/images/hub-partners/logo8.png",
+  "/assets/images/hub-partners/NPi_logo_light_fundo_preto.webp",
+  "/assets/images/hub-partners/NPi_logo_light_fundo_preto.webp", 
+  "/assets/images/hub-partners/NPi_logo_light_fundo_preto.webp",
+  "/assets/images/hub-partners/NPi_logo_light_fundo_preto.webp",
+  "/assets/images/hub-partners/NPi_logo_light_fundo_preto.webp",
+  "/assets/images/hub-partners/NPi_logo_light_fundo_preto.webp",
+  "/assets/images/hub-partners/NPi_logo_light_fundo_preto.webp",
+  "/assets/images/hub-partners/NPi_logo_light_fundo_preto.webp",
   // Adicione quantos logos precisar
 ];
 
