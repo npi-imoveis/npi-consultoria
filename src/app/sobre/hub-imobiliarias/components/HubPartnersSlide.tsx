@@ -10,14 +10,14 @@ import Image from "next/image";
 
 // ADICIONE SEUS LOGOS AQUI - Coloque as imagens em /public/assets/images/hub-partners/
 const hubLogos = [
-  "/assets/images/hub-partners/NPi_logo_light_fundo_preto.webp",
-  "/assets/images/hub-partners/NPi_logo_light_fundo_preto.webp", 
-  "/assets/images/hub-partners/NPi_logo_light_fundo_preto.webp",
-  "/assets/images/hub-partners/NPi_logo_light_fundo_preto.webp",
-  "/assets/images/hub-partners/NPi_logo_light_fundo_preto.webp",
-  "/assets/images/hub-partners/NPi_logo_light_fundo_preto.webp",
-  "/assets/images/hub-partners/NPi_logo_light_fundo_preto.webp",
-  "/assets/images/hub-partners/NPi_logo_light_fundo_preto.webp",
+  "/assets/images/hub-partners/logo-npi-degrade-transparente-oficial.png",
+  "/assets/images/hub-partners/logo-npi-degrade-transparente-oficial.png", 
+  "/assets/images/hub-partners/logo-npi-degrade-transparente-oficial.png",
+  "/assets/images/hub-partners/logo-npi-degrade-transparente-oficial.png",
+  "/assets/images/hub-partners/logo-npi-degrade-transparente-oficial.png",
+  "/assets/images/hub-partners/logo-npi-degrade-transparente-oficial.png",
+  "/assets/images/hub-partners/logo-npi-degrade-transparente-oficial.png",
+  "/assets/images/hub-partners/logo-npi-degrade-transparente-oficial.png",
   // Adicione quantos logos precisar
 ];
 
