@@ -2,6 +2,7 @@ import { HeaderPage } from "@/app/components/ui/header-page";
 import { SobreHub } from "./components/SobreHub";
 import { ComoFuncionaHub } from "./components/ComoFuncionaHub";
 import { ReviewSection } from "@/app/components/sections/review-section";
+import { HubPartnersSlide } from "./components/HubPartnersSlide";
 import { FaqHub } from "./components/FaqHub";
 import { ContactSection } from "@/app/components/sections/contact-section";
 import { getContentSite } from "@/app/services";
@@ -165,6 +166,7 @@ export default async function SobrePage() {
         <SobreHub sobre={content?.sobre_hub} />
         <ReviewSection stats={content?.stats} />
         <ComoFuncionaHub howto={content?.sobre_hub?.howto} />
+        <HubPartnersSlide />
         <FaqHub faqs={content?.faq} />
         <ContactSection />
       </section>
