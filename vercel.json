@@ -1,5 +1,111 @@
 {
   "redirects": [
+
+    {
+      "source": "/rua-bela-cintra-2060",
+      "destination": "/edificio-uirapuru-bela-cintra-2060",
+      "permanent": true
+    },
+    {
+      "source": "/rua-cacapava-83",
+      "destination": "/taormina-jardim-america",
+      "permanent": true
+    },
+    {
+      "source": "//rua-lopes-neto-56",
+      "destination": "/royal-palace-itaim-bibi",
+      "permanent": true
+    },
+    {
+      "source": "/sierra-branca-moema-ibijau-229",
+      "destination": "/sierra-blanca-moema",
+      "permanent": true
+    },
+    {
+      "source": "/rua-gabriele-dannunzio-183",
+      "destination": "/condominio-authentique-campo-belo",
+      "permanent": true
+    },
+    {
+      "source": "/rua-clodomiro-amazonas-1256",
+      "destination": "/condominio-san-juan",
+      "permanent": true
+    },
+    {
+      "source": "/condominio-metropolitan",
+      "destination": "/metropolitan-ibirapuera  ",
+      "permanent": true
+    },
+    {
+      "source": "/avenida-antonio-joaquim-de-moura-andrade-597",
+      "destination": "/edificio-maison-adriana",
+      "permanent": true
+    },
+    {
+      "source": "/rua-luiz-galhanone-528",
+      "destination": "/residencial-reserva-do-visconde",
+      "permanent": true
+    },
+    {
+      "source": "/rua-luiz-galhanone-528",
+      "destination": "/residencial-reserva-do-visconde",
+      "permanent": true
+    },
+    {
+      "source": "/gran-ville-guaruja",
+      "destination": "/condominio-granville-enseada",
+      "permanent": true
+    },
+    {
+      "source": "/avenida-marjory-da-silva-prado-2605",
+      "destination": "/jardim-pernambuco-ii",
+      "permanent": true
+    },
+    {
+      "source": "/casas-a-venda-no-condominio-granville-guaruja",
+      "destination": "/condominio-granville-enseada",
+      "permanent": true
+    },
+    {
+      "source": "/condominio-granville",
+      "destination": "/condominio-granville-enseada",
+      "permanent": true
+    },
+    {
+      "source": "/casas-a-venda-na-peninsula-guaruja",
+      "destination": "/condominio-peninsula-guaruja-enseada",
+      "permanent": true
+    },
+    {
+      "source": "/avenida-amarilis-50",
+      "destination": "/amarilis-50-cidade-jardim",
+      "permanent": true
+    },
+    {
+      "source": "/rua-pedroso-alvarenga-121",
+      "destination": "/residencial-piata",
+      "permanent": true
+    },
+    {
+      "source": "/alameda-ministro-rocha-azevedo-1368",
+      "destination": "/edificio-guararapes-jardim-america",
+      "permanent": true
+    },
+    {
+      "source": "/edificio-michelangelo",
+      "destination": "/edificio-michelangelo-moema",
+      "permanent": true
+    },
+    {
+      "source": "/edificio-isaura",
+      "destination": "/edificio-isaura-pinheiros-sao-paulo",
+      "permanent": true
+    },
+    {
+      "source": "/rua-cristiano-viana-1211",
+      "destination": "/4x4-pinheiros",
+      "permanent": true
+    },
     {
       "source": "/condominio-edificio-villa-adriana/",
       "destination": "/edificio-villa-adriana",
