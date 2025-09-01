@@ -2,6 +2,16 @@
   "redirects": [
 
     {
+      "source": "/ritz-vila-nova",
+      "destination": "/condominio-ritz-vila-nova",
+      "permanent": true
+    },
+     {
+      "source": "/maison-jolie-jardins",
+      "destination": "/condominio-edificio-maison-jolie",
+      "permanent": true
+    },
+    {
       "source": "/rua-bela-cintra-2060",
       "destination": "/edificio-uirapuru-bela-cintra-2060",
       "permanent": true
