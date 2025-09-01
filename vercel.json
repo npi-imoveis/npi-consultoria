@@ -2,6 +2,11 @@
   "redirects": [
 
     {
+      "source": "/rua-bela-cintra-2060",
+      "destination": "/edificio-uirapuru-bela-cintra-2060",
+      "permanent": true
+    },
+    {
       "source": "/rua-luiz-galhanone-528",
       "destination": "/residencial-reserva-do-visconde",
       "permanent": true
