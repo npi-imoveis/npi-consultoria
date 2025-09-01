@@ -10,14 +10,17 @@ import Image from "next/image";
 
 // ADICIONE SEUS LOGOS AQUI - Coloque as imagens em /public/assets/images/hub-partners/
 const hubLogos = [
-  "/assets/images/hub-partners/logo-npi-degrade-transparente-oficial.png",
-  "/assets/images/hub-partners/logo-npi-degrade-transparente-oficial.png", 
-  "/assets/images/hub-partners/logo-npi-degrade-transparente-oficial.png",
-  "/assets/images/hub-partners/logo-npi-degrade-transparente-oficial.png",
-  "/assets/images/hub-partners/logo-npi-degrade-transparente-oficial.png",
-  "/assets/images/hub-partners/logo-npi-degrade-transparente-oficial.png",
-  "/assets/images/hub-partners/logo-npi-degrade-transparente-oficial.png",
-  "/assets/images/hub-partners/logo-npi-degrade-transparente-oficial.png",
+  "/assets/images/hub-partners/polo-residencial.jpg",
+  "/assets/images/hub-partners/Logo-First.png", 
+  "/assets/images/hub-partners/Ganzaroli.jpeg",
+  "/assets/images/hub-partners/Homesphere.jpg",
+  "/assets/images/hub-partners/casa-brick.png",
+  "/assets/images/hub-partners/imoveis-da-vila.jpeg",
+  "/assets/images/hub-partners/ritt.jpeg",
+  "/assets/images/hub-partners/siga.jpeg",
+  "/assets/images/hub-partners/remax-verti.jpg",
+   "/assets/images/hub-partners/ava-homes.jpg",
+   "/assets/images/hub-partners/logo-npi-degrade-transparente-oficial.png",
   // Adicione quantos logos precisar
 ];
 
