@@ -28,6 +28,7 @@ const hubLogos = [
   "/assets/images/hub-partners/nokkel.jpg",
   "/assets/images/hub-partners/cg-imoveis-especiais.jpg",
   "/assets/images/hub-partners/andrea-gomes.jpg",
+  "/assets/images/hub-partners/prime-one.webp",
   "/assets/images/hub-partners/logo-npi-degrade-transparente-oficial.png",
   // Adicione quantos logos precisar
 ];
