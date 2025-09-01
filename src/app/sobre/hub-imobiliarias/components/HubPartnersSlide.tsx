@@ -103,12 +103,12 @@ export function HubPartnersSlide() {
             <p className="text-sm text-gray-600 mt-1">Boutique Premium</p>
           </div>
           <div className="text-center">
-            <p className="text-3xl font-bold text-gray-900">5★</p>
+            <p className="text-3xl font-bold text-gray-900">★★★★★</p>
             <p className="text-sm text-gray-600 mt-1">Avaliação Média</p>
           </div>
           <div className="text-center">
-            <p className="text-3xl font-bold text-gray-900">24/7</p>
-            <p className="text-sm text-gray-600 mt-1">Suporte Dedicado</p>
+            <p className="text-3xl font-bold text-gray-900">I.A.</p>
+            <p className="text-sm text-gray-600 mt-1">Clientes Qualificados</p>
           </div>
         </div>
       </div>
