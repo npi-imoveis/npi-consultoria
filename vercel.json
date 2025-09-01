@@ -2,6 +2,16 @@
   "redirects": [
 
     {
+      "source": "/rua-luiz-galhanone-528",
+      "destination": "/residencial-reserva-do-visconde",
+      "permanent": true
+    },
+    {
+      "source": "/edificio-ritz-vila-nova-conceicao-cobertura",
+      "destination": "/condominio-ritz-vila-nova",
+      "permanent": true
+    },
+    {
       "source": "/ritz-vila-nova",
       "destination": "/condominio-ritz-vila-nova",
       "permanent": true
