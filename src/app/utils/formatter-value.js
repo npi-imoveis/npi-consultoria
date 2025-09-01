@@ -50,12 +50,18 @@ export function formatterValue(valor) {
   valorNumerico = Math.abs(valorNumerico);
 
   // Formata o valor para moeda brasileira
-  return valorNumerico.toLocaleString("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
+  // toLocaleString utiliza um espa\xC3\xA7o n\xC3\xA3o separ\xC3\xA1vel ap\xC3\xB3s o s\xC3\xADmbolo de
+  // moeda. Esse espa\xC3\xA7o causa problemas em compara\xC3\xA7\xC3\xB5es de string e em alguns
+  // ambientes onde o caractere n\xC3\xA3o \xC3\xA9 reconhecido. Substitu\xC3\xADmos por um espa\xC3\xA7o
+  // normal para evitar essas inconsist\xC3\xAAncias.
+  return valorNumerico
+    .toLocaleString("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
+    .replace(/\u00A0/g, " ");
 }
 
 // Função auxiliar para processar strings numéricas
