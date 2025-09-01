@@ -31,8 +31,8 @@ const hubLogos = [
   "/assets/images/hub-partners/prime-one.webp",
   "/assets/images/hub-partners/logo-npi-degrade-transparente-oficial.png",
   "/assets/images/hub-partners/verano.jpg",
-  "/assets/images/hub-partners/immobile-unique.jpg",
-  "/assets/images/hub-partners/robles.png",
+  "/assets/images/hub-partners/imomobile-unique.jpg",
+  "/assets/images/hub-partners/robles.jpg",
   "/assets/images/hub-partners/Eurico.png",
   "/assets/images/hub-partners/remax-trio.jpeg",
   // Adicione quantos logos precisar
