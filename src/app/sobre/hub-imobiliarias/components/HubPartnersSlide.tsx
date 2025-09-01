@@ -30,6 +30,9 @@ const hubLogos = [
   "/assets/images/hub-partners/andrea-gomes.jpg",
   "/assets/images/hub-partners/prime-one.webp",
   "/assets/images/hub-partners/logo-npi-degrade-transparente-oficial.png",
+  "/assets/images/hub-partners/verano.png",
+  "/assets/images/hub-partners/immobile-unique.png",
+  "/assets/images/hub-partners/robles.png",
   // Adicione quantos logos precisar
 ];
 
