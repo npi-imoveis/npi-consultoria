@@ -35,6 +35,8 @@ const hubLogos = [
   "/assets/images/hub-partners/robles.jpg",
   "/assets/images/hub-partners/Eurico.png",
   "/assets/images/hub-partners/remax-trio.jpeg",
+  "/assets/images/hub-partners/revenda-imovel.jpg",
+  "/assets/images/hub-partners/premiumcorp.jpg",
   // Adicione quantos logos precisar
 ];
 
