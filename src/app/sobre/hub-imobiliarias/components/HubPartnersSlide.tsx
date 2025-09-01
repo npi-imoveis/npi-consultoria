@@ -22,6 +22,12 @@ const hubLogos = [
   "/assets/images/hub-partners/ava-homes.jpg",
   "/assets/images/hub-partners/om2.png",
   "/assets/images/hub-partners/3quadras.jpg",
+  "/assets/images/hub-partners/arco.jpg",
+  "/assets/images/hub-partners/avere.png",
+  "/assets/images/hub-partners/factual.jpg",
+  "/assets/images/hub-partners/nokkel.jpg",
+  "/assets/images/hub-partners/cg-imoveis-especiais.jpg",
+  "/assets/images/hub-partners/andrea-gomes.jpg",
   "/assets/images/hub-partners/logo-npi-degrade-transparente-oficial.png",
   // Adicione quantos logos precisar
 ];
