@@ -1,4 +1,4 @@
-// src/app/components/sections/image-gallery.js - COMPLETO + ANTI-LOOP + CORRIGIDO
+// src/app/components/sections/image-gallery.js - COMPLETO + ORDEM CORRIGIDA
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -8,7 +8,7 @@ import { formatterSlug } from "@/app/utils/formatter-slug";
 import { Share } from "../ui/share";
 import { photoSorter } from "@/app/utils/photoSorter";
 
-// 🚀 HOOK MOBILE - ANTI-LOOP (única mudança crítica)
+// 🚀 HOOK MOBILE - ANTI-LOOP
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(() => {
     // Inicialização segura
@@ -22,7 +22,7 @@ function useIsMobile() {
     // ✅ Check inicial sem layout shift
     check();
     
-    // ✅ Debounced resize para performance (MANTIDO)
+    // ✅ Debounced resize para performance
     let timeoutId;
     const debouncedCheck = () => {
       clearTimeout(timeoutId);
@@ -58,10 +58,10 @@ export function ImageGallery({
   const [firstImageLoaded, setFirstImageLoaded] = useState(false);
   const isMobile = useIsMobile();
 
-  // 🎯 PROCESSAMENTO OTIMIZADO (ORIGINAL MANTIDO)
+  // 🎯 PROCESSAMENTO OTIMIZADO
   const isImovelMode = !!imovel;
   
-  // 🚀 DADOS PROCESSADOS - Memoized para performance (ORIGINAL MANTIDO)
+  // 🚀 DADOS PROCESSADOS - Memoized para performance
   const processedData = useMemo(() => {
     if (isImovelMode) {
       return {
@@ -82,38 +82,75 @@ export function ImageGallery({
     }
   }, [imovel, fotos, title, shareUrl, shareTitle, isImovelMode]);
 
-  // 🎯 IMAGENS PROCESSADAS - Otimizado (ORIGINAL MANTIDO)
+  // 🎯 IMAGENS PROCESSADAS - CORRIGIDO para preservar ordem original
   const images = useMemo(() => {
     if (!Array.isArray(processedData.fotos) || processedData.fotos.length === 0) {
       return [];
     }
 
     try {
-      // ✅ LIMPEZA E ORDENAÇÃO OTIMIZADA
-      const fotosLimpas = processedData.fotos.map(foto => {
-        const { Ordem, ordem, ORDEM, ...fotoSemOrdem } = foto;
-        return fotoSemOrdem;
-      });
-
-      const fotosOrdenadas = photoSorter.ordenarFotos(fotosLimpas, processedData.codigo);
+      // ✅ CORREÇÃO: Preservar campos de ordem para o photoSorter
+      // Criar cópia profunda das fotos mantendo TODOS os campos
+      const fotosComOrdem = processedData.fotos.map(foto => ({...foto}));
       
+      // ✅ ORDENAÇÃO INTELIGENTE - Respeitando ordem da migração
+      // Primeiro: verificar se existe campo de ordem explícito
+      const temOrdemExplicita = fotosComOrdem.some(foto => 
+        foto.Ordem !== undefined || 
+        foto.ordem !== undefined || 
+        foto.ORDEM !== undefined
+      );
+      
+      let fotosOrdenadas;
+      
+      if (temOrdemExplicita) {
+        // Se tem ordem explícita, usar ela prioritariamente
+        fotosOrdenadas = [...fotosComOrdem].sort((a, b) => {
+          // Pegar o valor de ordem de qualquer variação do campo
+          const ordemA = a.Ordem || a.ordem || a.ORDEM || 9999;
+          const ordemB = b.Ordem || b.ordem || b.ORDEM || 9999;
+          
+          // Converter para número se for string
+          const numA = typeof ordemA === 'string' ? parseInt(ordemA, 10) : ordemA;
+          const numB = typeof ordemB === 'string' ? parseInt(ordemB, 10) : ordemB;
+          
+          // Se ambos têm ordem válida, usar ela
+          if (!isNaN(numA) && !isNaN(numB)) {
+            return numA - numB;
+          }
+          
+          // Fallback: manter ordem original do array
+          return 0;
+        });
+        
+        console.log('📸 GALERIA: Usando ordem explícita da migração');
+      } else {
+        // Se não tem ordem explícita, usar o photoSorter
+        // mas passar as fotos COM todos os campos preservados
+        fotosOrdenadas = photoSorter.ordenarFotos(fotosComOrdem, processedData.codigo);
+        console.log('📸 GALERIA: Usando photoSorter para ordenação');
+      }
+      
+      // ✅ Adicionar código único mantendo a ordem estabelecida
       return fotosOrdenadas.map((foto, index) => ({
         ...foto,
-        Codigo: `${processedData.codigo}-foto-${index}`,
+        Codigo: foto.Codigo || `${processedData.codigo}-foto-${index}`,
+        _indexOrdenado: index // Guardar índice para debug se necessário
       }));
 
     } catch (error) {
       console.error('❌ GALERIA: Erro ao processar imagens:', error);
       
-      // Fallback seguro
+      // Fallback: manter ordem original do array
       return [...processedData.fotos].map((foto, index) => ({
         ...foto,
-        Codigo: `${processedData.codigo}-foto-${index}`,
+        Codigo: foto.Codigo || `${processedData.codigo}-foto-${index}`,
+        _indexOrdenado: index
       }));
     }
   }, [processedData]);
 
-  // 🎯 HANDLERS OTIMIZADOS com useCallback (ORIGINAL MANTIDO)
+  // 🎯 HANDLERS OTIMIZADOS com useCallback
   const openModal = useCallback((index = null) => {
     setIsModalOpen(true);
     setSelectedIndex(index); // null = grid de thumbnails, número = imagem específica
@@ -136,7 +173,7 @@ export function ImageGallery({
     }
   }, [selectedIndex, images.length]);
 
-  // 🔧 ERROR HANDLERS para evitar imagem quebrada (ORIGINAL MANTIDO)
+  // 🔧 ERROR HANDLERS para evitar imagem quebrada
   const handleImageError = useCallback(() => {
     setImageLoadError(true);
     setFirstImageLoaded(true);
@@ -147,7 +184,7 @@ export function ImageGallery({
     setFirstImageLoaded(true);
   }, []);
 
-  // 🚀 PRELOAD AGRESSIVO da primeira imagem (ORIGINAL MANTIDO - 95 pontos!)
+  // 🚀 PRELOAD AGRESSIVO da primeira imagem
   useEffect(() => {
     if (images[0]?.Foto) {
       const link = document.createElement('link');
@@ -166,7 +203,7 @@ export function ImageGallery({
     }
   }, [images]);
 
-  // 🚀 KEYBOARD NAVIGATION - Otimizado (ORIGINAL MANTIDO)
+  // 🚀 KEYBOARD NAVIGATION - Otimizado
   useEffect(() => {
     if (!isModalOpen) return;
 
@@ -192,7 +229,7 @@ export function ImageGallery({
     return (
       <div className="w-full h-[380px] relative">
         <div className="w-full h-full overflow-hidden bg-gray-100 flex flex-col items-center justify-center rounded-lg">
-          {/* 🎯 LOADING PLACEHOLDER (ORIGINAL MANTIDO) */}
+          {/* 🎯 LOADING PLACEHOLDER */}
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
           <span className="text-gray-600 text-sm font-medium">Carregando galeria...</span>
         </div>
@@ -202,9 +239,9 @@ export function ImageGallery({
 
   return (
     <>
-      {/* 🎨 LAYOUT OTIMIZADO COM FOTOS MAIORES (ORIGINAL MANTIDO) */}
+      {/* 🎨 LAYOUT OTIMIZADO COM FOTOS MAIORES */}
       {layout === "single" ? (
-        // LAYOUT SINGLE (ORIGINAL MANTIDO)
+        // LAYOUT SINGLE
         <div 
           className="w-full h-full cursor-pointer relative overflow-hidden rounded-lg"
           onClick={() => openModal()}
@@ -283,10 +320,10 @@ export function ImageGallery({
           )}
         </div>
       ) : (
-        // 📱 LAYOUT RESPONSIVO COM FOTOS MAIORES (ORIGINAL MANTIDO)
+        // 📱 LAYOUT RESPONSIVO COM FOTOS MAIORES
         <div className={`w-full ${isMobile ? '' : 'grid grid-cols-1 md:grid-cols-2 gap-1'}`}>
           
-          {/* 📱 MOBILE: Foto principal MAIOR (ORIGINAL + 95 pontos) */}
+          {/* 📱 MOBILE: Foto principal MAIOR */}
           {isMobile ? (
             <div 
               className="w-full h-[65vh] sm:h-[60vh] min-h-[320px] max-h-[380px] cursor-pointer relative overflow-hidden rounded-lg"
@@ -395,7 +432,7 @@ export function ImageGallery({
               )}
             </div>
           ) : (
-            // 💻 DESKTOP: Layout grid MAIOR (ORIGINAL MANTIDO)
+            // 💻 DESKTOP: Layout grid MAIOR
             <>
               <div 
                 className="col-span-1 h-[380px] cursor-pointer relative"
@@ -410,7 +447,7 @@ export function ImageGallery({
                   }
                 }}
               >
-                {/* 🎯 LOADING OVERLAY DESKTOP (ORIGINAL MANTIDO) */}
+                {/* 🎯 LOADING OVERLAY DESKTOP */}
                 {!firstImageLoaded && (
                   <div className="absolute inset-0 bg-gray-50 flex flex-col items-center justify-center z-10 rounded-lg">
                     <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mb-2"></div>
@@ -488,7 +525,7 @@ export function ImageGallery({
                 )}
               </div>
 
-              {/* GRID 2x2 MAIOR (ORIGINAL MANTIDO) */}
+              {/* GRID 2x2 MAIOR */}
               <div className="col-span-1 grid grid-cols-2 grid-rows-2 gap-1 h-[380px]">
                 {images.slice(1, 5).map((image, index) => {
                   const isLastImage = index === 3;
@@ -561,7 +598,7 @@ export function ImageGallery({
         </div>
       )}
 
-      {/* 🖼️ MODAL OTIMIZADO (ORIGINAL MANTIDO) */}
+      {/* 🖼️ MODAL OTIMIZADO */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-95 z-50 overflow-auto">
           {/* Header fixo */}
@@ -622,7 +659,7 @@ export function ImageGallery({
               </button>
             </div>
           ) : (
-            // Grid de thumbnails otimizado (ORIGINAL MANTIDO)
+            // Grid de thumbnails otimizado
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
               {images.map((image, idx) => (
                 <div
