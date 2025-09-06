@@ -82,7 +82,7 @@ export function ImageGallery({
     }
   }, [imovel, fotos, title, shareUrl, shareTitle, isImovelMode]);
 
-  // 🎯 IMAGENS PROCESSADAS - CORRIGIDO para preservar ordem original
+  // 🎯 IMAGENS PROCESSADAS - CORRIGIDO para preservar ordem original E foto destaque
   const images = useMemo(() => {
     if (!Array.isArray(processedData.fotos) || processedData.fotos.length === 0) {
       return [];
@@ -93,9 +93,13 @@ export function ImageGallery({
       // Criar cópia profunda das fotos mantendo TODOS os campos
       const fotosComOrdem = processedData.fotos.map(foto => ({...foto}));
       
+      // ✅ SEPARAR FOTO DESTAQUE
+      const fotoDestaque = fotosComOrdem.find(foto => foto.Destaque === "Sim");
+      const fotosSemDestaque = fotosComOrdem.filter(foto => foto.Destaque !== "Sim");
+      
       // ✅ ORDENAÇÃO INTELIGENTE - Respeitando ordem da migração
       // Primeiro: verificar se existe campo de ordem explícito
-      const temOrdemExplicita = fotosComOrdem.some(foto => 
+      const temOrdemExplicita = fotosSemDestaque.some(foto => 
         foto.Ordem !== undefined || 
         foto.ordem !== undefined || 
         foto.ORDEM !== undefined
@@ -105,7 +109,7 @@ export function ImageGallery({
       
       if (temOrdemExplicita) {
         // Se tem ordem explícita, usar ela prioritariamente
-        fotosOrdenadas = [...fotosComOrdem].sort((a, b) => {
+        fotosOrdenadas = [...fotosSemDestaque].sort((a, b) => {
           // Pegar o valor de ordem de qualquer variação do campo
           const ordemA = a.Ordem || a.ordem || a.ORDEM || 9999;
           const ordemB = b.Ordem || b.ordem || b.ORDEM || 9999;
@@ -127,12 +131,17 @@ export function ImageGallery({
       } else {
         // Se não tem ordem explícita, usar o photoSorter
         // mas passar as fotos COM todos os campos preservados
-        fotosOrdenadas = photoSorter.ordenarFotos(fotosComOrdem, processedData.codigo);
+        fotosOrdenadas = photoSorter.ordenarFotos(fotosSemDestaque, processedData.codigo);
         console.log('📸 GALERIA: Usando photoSorter para ordenação');
       }
       
+      // ✅ COLOCAR FOTO DESTAQUE NO INÍCIO (se existir)
+      const fotosFinais = fotoDestaque 
+        ? [fotoDestaque, ...fotosOrdenadas]
+        : fotosOrdenadas;
+      
       // ✅ Adicionar código único mantendo a ordem estabelecida
-      return fotosOrdenadas.map((foto, index) => ({
+      return fotosFinais.map((foto, index) => ({
         ...foto,
         Codigo: foto.Codigo || `${processedData.codigo}-foto-${index}`,
         _indexOrdenado: index // Guardar índice para debug se necessário
