@@ -24,7 +24,7 @@ export async function SobreHub({ sobre }) {
             </h2>
             <p className="text-lg mt-4 leading-relaxed whitespace-pre-line">
               {sobre?.descricao ||
-                `Alcançamos a primeira página do Google com seus imóveis de alto padrão, conectando-os a clientes de alto nível e real intenção de compra, qualificamos esses clientes, e assim, alavancamos resultados concretos para sua imobiliária.
+                `Alcançamos a primeira página do Google com seus imóveis de alto padrão, conectando-os a clientes de alto nível e real intenção de compra, qualificamos esses clientes, enviamos para seu atendimento, e assim, alavancamos resultados concretos para sua imobiliária.
                 Nosso serviço é dar visibilidade aos imóveis das imobiliárias pertencentes a esse ecossistema, captar e qualificar os clientes, alavancando negócios para essas empresas, através do posicionamento orgânico(SEO) na maior vitrine do mundo: o Google. 
                
                 Idealizado por Eduardo Lima, fundador da NPi Imóveis, com mais de 20 anos de experiência no mercado imobiliário. 
