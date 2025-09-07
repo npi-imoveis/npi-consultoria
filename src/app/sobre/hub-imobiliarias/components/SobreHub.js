@@ -20,7 +20,7 @@ export async function SobreHub({ sobre }) {
 
           <div className="md:w-[50%] w-full dark:bg-gray-900 dark:text-gray-400 md:p-6 p-4 rounded-md">
             <h2 className="text-2xl uppercase font-semibold text-gray-900 dark:text-white">
-              {sobre?.titulo || "O que somos"}
+              {sobre?.titulo || "CONHEÇA O HUB"}
             </h2>
             <p className="text-lg mt-4 leading-relaxed whitespace-pre-line">
               {sobre?.descricao ||
