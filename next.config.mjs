@@ -146,61 +146,10 @@ const nextConfig = {
     ];
   },
   
-  // ✅ REDIRECTS EXPANDIDOS - Limpar trailing slashes + URLs antigas
+  // ✅ REDIRECTS OTIMIZADOS - Apenas URLs antigas críticas (sem conflitos com middleware)
   async redirects() {
     return [
-      // 🔧 NOVOS: Limpar trailing slashes de URLs principais
-      {
-        source: '/imoveis/',
-        destination: '/imoveis',
-        permanent: true,
-      },
-      {
-        source: '/imoveis/:path*/',
-        destination: '/imoveis/:path*',
-        permanent: true,
-      },
-      {
-        source: '/imovel-:id/',
-        destination: '/imovel-:id',
-        permanent: true,
-      },
-      {
-        source: '/imovel-:id/:slug/',
-        destination: '/imovel-:id/:slug',
-        permanent: true,
-      },
-      {
-        source: '/venda/',
-        destination: '/venda',
-        permanent: true,
-      },
-      {
-        source: '/venda/:path*/',
-        destination: '/venda/:path*',
-        permanent: true,
-      },
-      {
-        source: '/aluguel/',
-        destination: '/aluguel',
-        permanent: true,
-      },
-      {
-        source: '/aluguel/:path*/',
-        destination: '/aluguel/:path*',
-        permanent: true,
-      },
-      {
-        source: '/lancamentos/',
-        destination: '/lancamentos',
-        permanent: true,
-      },
-      {
-        source: '/lancamentos/:path*/',
-        destination: '/lancamentos/:path*',
-        permanent: true,
-      },
-      // ✅ MANTIDO: Redirects originais (URLs antigas indexadas)
+      // ✅ MANTIDO: Apenas redirects de URLs antigas indexadas (não conflitam com middleware)
       {
         source: '/iConatusIframe/:path*',
         destination: '/',
@@ -208,6 +157,17 @@ const nextConfig = {
       },
       {
         source: '/iframe.php',
+        destination: '/',
+        permanent: true
+      },
+      // 🔧 ADICIONADO: Redirects específicos para URLs antigas conhecidas
+      {
+        source: '/busca.php',
+        destination: '/busca',
+        permanent: true
+      },
+      {
+        source: '/index.php',
         destination: '/',
         permanent: true
       },

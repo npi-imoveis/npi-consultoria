@@ -81,20 +81,9 @@ export async function middleware(request) {
     return NextResponse.redirect(new URL('/', origin), 301);
   }
 
-  // 🚨 CORREÇÃO: TRAILING SLASH (resolverá 367 URLs)
-  if (pathname.endsWith('/') && pathname.length > 1) {
-    const withoutTrailingSlash = pathname.slice(0, -1);
-    console.log(`🔍 [MIDDLEWARE] 🚨 TRAILING SLASH: ${pathname} → ${withoutTrailingSlash}`);
-    
-    const redirectUrl = new URL(withoutTrailingSlash, origin);
-    url.searchParams.forEach((value, key) => {
-      redirectUrl.searchParams.set(key, value);
-    });
-    
-    return NextResponse.redirect(redirectUrl, 301);
-  }
-
-  // ✅ FORMATO INCORRETO: /imovel/ID/slug → /imovel-ID/slug
+  // 🚨 CORREÇÃO GSC: TRATAMENTO UNIFICADO DE IMÓVEIS (elimina cascata de redirects)
+  
+  // ✅ PATTERN 1: /imovel/ID/slug → /imovel-ID/slug (formato incorreto)
   const formatoErradoMatch = pathname.match(/^\/imovel\/(\d+)\/(.+)$/);
   if (formatoErradoMatch) {
     const [, id, slug] = formatoErradoMatch;
@@ -102,11 +91,38 @@ export async function middleware(request) {
     console.log(`🔍 [MIDDLEWARE] ❌ Formato incorreto: ${pathname} → ${formatoCorreto}`);
     return NextResponse.redirect(new URL(formatoCorreto, origin), 301);
   }
+  
+  // ✅ PATTERN 2: /imovel/ID (sem slug, formato incorreto) → /imovel-ID/slug
+  const formatoErradoSemSlugMatch = pathname.match(/^\/imovel\/(\d+)$/);
+  if (formatoErradoSemSlugMatch) {
+    const id = formatoErradoSemSlugMatch[1];
+    console.log(`🔍 [MIDDLEWARE] ❌ Formato incorreto sem slug: ${pathname}`);
+    // Redirect para versão correta sem slug (será tratado abaixo)
+    return NextResponse.redirect(new URL(`/imovel-${id}`, origin), 301);
+  }
 
-  // ✅ IMÓVEIS SEM SLUG: /imovel-ID → /imovel-ID/slug
-  const imovelMatch = pathname.match(/^\/imovel-(\d+)$/);
-  if (imovelMatch) {
-    const id = imovelMatch[1];
+  // ✅ PATTERN 3: /imovel-ID/slug/ → /imovel-ID/slug (trailing slash)
+  const imovelComSlugTrailingMatch = pathname.match(/^\/imovel-(\d+)\/(.+)\/$/);
+  if (imovelComSlugTrailingMatch) {
+    const [, id, slug] = imovelComSlugTrailingMatch;
+    const semTrailingSlash = `/imovel-${id}/${slug}`;
+    console.log(`🔍 [MIDDLEWARE] 🚨 TRAILING SLASH: ${pathname} → ${semTrailingSlash}`);
+    return NextResponse.redirect(new URL(semTrailingSlash, origin), 301);
+  }
+
+  // ✅ PATTERN 4: /imovel-ID/ → /imovel-ID (trailing slash sem slug)
+  const imovelSemSlugTrailingMatch = pathname.match(/^\/imovel-(\d+)\/$/);
+  if (imovelSemSlugTrailingMatch) {
+    const id = imovelSemSlugTrailingMatch[1];
+    const semTrailingSlash = `/imovel-${id}`;
+    console.log(`🔍 [MIDDLEWARE] 🚨 TRAILING SLASH: ${pathname} → ${semTrailingSlash}`);
+    return NextResponse.redirect(new URL(semTrailingSlash, origin), 301);
+  }
+
+  // ✅ PATTERN 5: /imovel-ID (sem slug) → buscar slug na API
+  const imovelSemSlugMatch = pathname.match(/^\/imovel-(\d+)$/);
+  if (imovelSemSlugMatch) {
+    const id = imovelSemSlugMatch[1];
     console.log(`🔍 [MIDDLEWARE] 🔧 Imóvel sem slug: ${pathname}`);
     
     try {
@@ -150,6 +166,19 @@ export async function middleware(request) {
     // 🎯 SOLUÇÃO UNIVERSAL: Se imóvel não existe → BUSCA RELEVANTE
     console.log(`🔍 [MIDDLEWARE] 🔍 Imóvel não encontrado → BUSCA RELEVANTE: ${pathname}`);
     return NextResponse.redirect(new URL('/busca', origin), 301);
+  }
+
+  // ✅ OUTRAS URLs COM TRAILING SLASH (não imóveis) 
+  if (pathname.endsWith('/') && pathname.length > 1 && !pathname.startsWith('/imovel')) {
+    const withoutTrailingSlash = pathname.slice(0, -1);
+    console.log(`🔍 [MIDDLEWARE] 🚨 TRAILING SLASH (geral): ${pathname} → ${withoutTrailingSlash}`);
+    
+    const redirectUrl = new URL(withoutTrailingSlash, origin);
+    url.searchParams.forEach((value, key) => {
+      redirectUrl.searchParams.set(key, value);
+    });
+    
+    return NextResponse.redirect(redirectUrl, 301);
   }
 
   // ✅ URLs SEO-FRIENDLY: /buscar/finalidade/categoria/cidade
@@ -371,9 +400,14 @@ export async function middleware(request) {
   // Headers para SEO
   response.headers.set('X-Robots-Tag', 'index, follow');
   
-  // 🚨 CORREÇÃO GSC #6: LOGGING ESPECÍFICO PARA BOTS
-  if (isGoogleBot && process.env.NODE_ENV === 'production') {
+  // 🚨 CORREÇÃO GSC #6: LOGGING ESPECÍFICO PARA BOTS E REDIRECTS
+  if (isGoogleBot) {
     console.log(`🤖 [GSC] BOT REQUEST - ${request.method} ${pathname} - UA: ${userAgent.slice(0, 50)}`);
+  }
+  
+  // 🚨 CORREÇÃO GSC #7: LOG ESPECÍFICO PARA URLs PROBLEMÁTICAS IDENTIFICADAS
+  if (pathname.includes('/imovel-') || pathname.includes('/imovel/')) {
+    console.log(`🔍 [GSC-TRACKING] URL de imóvel processada: ${pathname} | Bot: ${isGoogleBot ? 'SIM' : 'NÃO'}`);
   }
 
   console.log(`🔍 [MIDDLEWARE] ➡️ Seguindo normalmente: ${pathname}`);
