@@ -48,8 +48,9 @@ export async function SobreHub({ sobre }) {
 
 	•	Cadastro qualificado dos imóveis
 	•	Relatório de posicionamento e visibilidade
-	•	Exclusividade de imóvel por setor
-	•	Geração de cliente qualificado (E Gifts)
+	•	Exclusividade do imóvel cadastrado
+	•	Geração de cliente qualificado (E Gifts) 
+    •	Gifts: clientes para imóveis das construtoras
 	•	Pré-atendimento por IA e SDR humano
 	•	Encaminhamento ao corretor especialista
 	•	CRM integrado
