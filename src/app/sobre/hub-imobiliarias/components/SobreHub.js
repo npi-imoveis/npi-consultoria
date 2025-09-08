@@ -44,10 +44,28 @@ export async function SobreHub({ sobre }) {
             </h2>
             <p className="text-lg mt-4 leading-relaxed whitespace-pre-line">
               {sobre?.descricao1 ||
-                `O Hub da NPi conecta imobiliárias boutique de alto padrão a clientes de high ticket qualificados com intenção real de compra, através de um ecossistema digital escalável. 
+                `POSICIONAMENTO + SUPORTE COMPLETO
 
+	•	Cadastro qualificado dos imóveis
+	•	Relatório de posicionamento e visibilidade
+	•	Exclusividade de imóvel por setor
+	•	Geração de cliente qualificado (E Gifts)
+	•	Pré-atendimento por IA e SDR humano
+	•	Encaminhamento ao corretor especialista
+	•	CRM integrado
+	•	App com aviso sonoro de novos clientes
+	•	Acompanhamento de performance por gerente dedicado
 Além disso as imobiliárias do HUB também se beneficiam com uma alta redução de custos de marketing com portais e redes sociais.
-Cada imobiliária dentro do nosso HUB é cuidadosamente selecionada para atuar em regiões específicas, onde já possui um profundo conhecimento de mercado. Isso permite que cada parceiro ofereça um serviço mais personalizado, assertivo e eficiente, resultando em maior conversão dos nossos clientes qualificados.`}
+
+
+CURADORIA DOS PARCEIROS:
+
+Cada imobiliária dentro do nosso HUB é cuidadosamente selecionada para atuar em regiões específicas, onde já possui um profundo conhecimento de mercado. Isso permite que cada parceiro ofereça um serviço mais personalizado, assertivo e eficiente, resultando em maior conversão dos nossos clientes qualificados.
+
+
+ECONOMIA COM MARKETING
+
+As imobiliárias quando ingressam no HUB NPi, quando recebem clientes qualificados, também se beneficiam com uma alta redução de custos de marketing com portais e redes sociais.`}
             </p>
           </div>
 
