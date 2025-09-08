@@ -393,7 +393,20 @@ export async function generateMetadata({ params }) {
       `${imovel.Empreendimento}, ${imovel.Categoria} à venda no bairro ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.DormitoriosAntigo} dormitórios, ${imovel.SuiteAntigo} suítes, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt} m2. Preço: ${imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}.`
     );
     
-    const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
+    // 🚨 CORREÇÃO GSC: Validar slug antes de usar em URLs canônicas
+    const slugsInvalidos = [
+      'facebook.com/npiimoveis',
+      'instagram.com/npi_imoveis', 
+      'indexdata/index.swf'
+    ];
+    
+    // Use apenas slug válido, senão usa URL sem slug
+    const slugValido = imovel.Slug && !slugsInvalidos.includes(imovel.Slug) ? imovel.Slug : null;
+    const currentUrl = slugValido 
+      ? `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${slugValido}`
+      : `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}`;
+    
+    console.log(`📋 [META-URL] Slug original: "${imovel.Slug}", válido: ${!!slugValido}, URL: ${currentUrl}`);
     const imageUrl = getWhatsAppOptimizedImageUrl(imovel.Foto);
     
     console.log('📱 [WHATSAPP-META] URL final da imagem para WhatsApp:', imageUrl);
@@ -482,6 +495,21 @@ export default async function ImovelPage({ params }) {
   console.log(`🏠 [IMOVEL-PAGE] =================== INÍCIO ===================`);
   console.log(`🏠 [IMOVEL-PAGE] Processando ID: ${id}, SLUG: ${slug}`);
   
+  // 🚨 RASTREAMENTO DETALHADO: URLs problemáticas específicas do CSV
+  const slugsInvalidos = [
+    'facebook.com/npiimoveis',
+    'instagram.com/npi_imoveis', 
+    'indexdata/index.swf'
+  ];
+  
+  if (slugsInvalidos.includes(slug)) {
+    console.log(`🚨🚨🚨 [IMOVEL-PAGE] ★★★ SLUG INVÁLIDO DETECTADO ★★★`);
+    console.log(`🚨🚨🚨 [IMOVEL-PAGE] ID: ${id}, SLUG PROBLEMÁTICO: ${slug}`);
+    console.log(`🚨🚨🚨 [IMOVEL-PAGE] URL COMPLETA: /imovel-${id}/${slug}`);
+    console.log(`🚨🚨🚨 [IMOVEL-PAGE] Redirecionando para: /imovel-${id}`);
+    redirect(`/imovel-${id}`);
+  }
+  
   try {
     console.log(`🏠 [IMOVEL-PAGE] 📞 Chamando getImovelById(${id})`);
     const response = await getImovelById(id);
@@ -510,7 +538,18 @@ export default async function ImovelPage({ params }) {
       console.log(`🏠 [IMOVEL-PAGE] ⚠️ Slug inconsistente (middleware deveria ter redirecionado): ${slug} vs ${slugCorreto}`);
     }
 
-    const currentUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
+    // 🚨 CORREÇÃO GSC: Usar mesma validação de slug (reutilizar função)
+    const slugsInvalidos = [
+      'facebook.com/npiimoveis',
+      'instagram.com/npi_imoveis', 
+      'indexdata/index.swf'
+    ];
+    
+    const slugValido = imovel.Slug && !slugsInvalidos.includes(imovel.Slug) ? imovel.Slug : null;
+    const currentUrl = slugValido 
+      ? `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${slugValido}`
+      : `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}`;
+    
     const modifiedDate = convertBrazilianDateToISO(imovel.DataHoraAtualizacao, imovel);
     
     // 🔥 PRELOAD DA IMAGEM LCP - CRÍTICO PARA PERFORMANCE

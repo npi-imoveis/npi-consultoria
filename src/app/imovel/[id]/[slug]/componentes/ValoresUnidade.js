@@ -19,7 +19,17 @@ const formatarValorMonetario = (valor) => {
 };
 
 export default function ValoresUnidade({ imovel }) {
-  const url = `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${imovel.Slug}`;
+  // 🚨 CORREÇÃO GSC: Validar slug antes de usar em URLs
+  const slugsInvalidos = [
+    'facebook.com/npiimoveis',
+    'instagram.com/npi_imoveis', 
+    'indexdata/index.swf'
+  ];
+  
+  const slugValido = imovel.Slug && !slugsInvalidos.includes(imovel.Slug) ? imovel.Slug : null;
+  const url = slugValido 
+    ? `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${slugValido}`
+    : `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}`;
   function sendWhatsapp() {
     const isMobile = () => {
       return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(

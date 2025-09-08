@@ -9,6 +9,23 @@ export async function middleware(request) {
 
   console.log(`🔍 [MIDDLEWARE] =================== INÍCIO ===================`);
   console.log(`🔍 [MIDDLEWARE] Processando: ${pathname}`);
+  
+  // 🚨 RASTREAMENTO DETALHADO: URLs problemáticas específicas do CSV
+  const urlsProblematicas = [
+    'imovel-106524/facebook.com/npiimoveis',
+    'imovel-1685/facebook.com/npiimoveis', 
+    'imovel-4879/facebook.com/npiimoveis',
+    'imovel-106337/instagram.com/npi_imoveis',
+    'imovel-106939/indexdata/index.swf'
+  ];
+  
+  const isUrlProblematica = urlsProblematicas.some(url => pathname.includes(url));
+  if (isUrlProblematica) {
+    console.log(`🚨🚨🚨 [MIDDLEWARE] URL PROBLEMÁTICA DETECTADA: ${pathname}`);
+    console.log(`🚨🚨🚨 [MIDDLEWARE] User-Agent: ${userAgent.substring(0, 100)}`);
+    console.log(`🚨🚨🚨 [MIDDLEWARE] Is GoogleBot: ${isGoogleBot}`);
+    console.log(`🚨🚨🚨 [MIDDLEWARE] Referer: ${request.headers.get('referer') || 'N/A'}`);
+  }
 
   // 🚨 CORREÇÃO GSC #1: DETECTAR GOOGLEBOT
   const isGoogleBot = /googlebot|bingbot|slurp|duckduckbot/i.test(userAgent);
@@ -119,7 +136,17 @@ export async function middleware(request) {
     return NextResponse.redirect(new URL(semTrailingSlash, origin), 301);
   }
 
-  // ✅ PATTERN 5: /imovel-ID (sem slug) → buscar slug na API
+  // ✅ PATTERN 5: URLs 404 de redes sociais (problema histórico GSC) → redirect para imóvel
+  const urlRedeSocialMatch = pathname.match(/^\/imovel-(\d+)\/(facebook\.com\/npiimoveis|instagram\.com\/npi_imoveis|indexdata\/index\.swf)$/);
+  if (urlRedeSocialMatch) {
+    const id = urlRedeSocialMatch[1];
+    console.log(`🔍 [MIDDLEWARE] 🚨 URL rede social 404 (GSC): ${pathname} → /imovel-${id}`);
+    
+    // Redirect para página do imóvel (sem slug) - será tratado pelo pattern seguinte
+    return NextResponse.redirect(new URL(`/imovel-${id}`, origin), 301);
+  }
+
+  // ✅ PATTERN 6: /imovel-ID (sem slug) → buscar slug na API
   const imovelSemSlugMatch = pathname.match(/^\/imovel-(\d+)$/);
   if (imovelSemSlugMatch) {
     const id = imovelSemSlugMatch[1];
@@ -136,10 +163,20 @@ export async function middleware(request) {
         const data = await response.json();
         const imovel = data.data;
         
-        if (imovel?.Slug) {
+        // 🚨 CORREÇÃO GSC: Validar slug antes de redirecionar
+        const slugsInvalidos = [
+          'facebook.com/npiimoveis',
+          'instagram.com/npi_imoveis', 
+          'indexdata/index.swf'
+        ];
+        
+        if (imovel?.Slug && !slugsInvalidos.includes(imovel.Slug)) {
           const finalUrl = `/imovel-${id}/${imovel.Slug}`;
-          console.log(`🔍 [MIDDLEWARE] ✅ Redirect para slug: ${pathname} → ${finalUrl}`);
+          console.log(`🔍 [MIDDLEWARE] ✅ Redirect para slug válido: ${pathname} → ${finalUrl}`);
           return NextResponse.redirect(new URL(finalUrl, origin), 301);
+        } else if (imovel?.Slug && slugsInvalidos.includes(imovel.Slug)) {
+          console.log(`🚨 [MIDDLEWARE] ❌ Slug inválido detectado: ${imovel.Slug} → NÃO redirecionando`);
+          // Deixa a URL sem slug (/imovel-1234) e continua processamento
         } else if (imovel?.Empreendimento) {
           const slugGerado = imovel.Empreendimento
             .toLowerCase()
@@ -311,11 +348,23 @@ export async function middleware(request) {
         
         // ✅ IMÓVEL EXISTE (mesmo que vendido) → Continuar normal
         
-        // Se slug está desatualizado → slug correto
+        // 🚨 CORREÇÃO GSC: Se slug está desatualizado → validar antes de redirecionar
+        const slugsInvalidos = [
+          'facebook.com/npiimoveis',
+          'instagram.com/npi_imoveis', 
+          'indexdata/index.swf'
+        ];
+        
         if (imovel.Slug && imovel.Slug !== currentSlug) {
-          const correctUrl = `/imovel-${id}/${imovel.Slug}`;
-          console.log(`🔍 [MIDDLEWARE] ✅ Slug antigo → correto: ${currentSlug} → ${imovel.Slug}`);
-          return NextResponse.redirect(new URL(correctUrl, origin), 301);
+          if (!slugsInvalidos.includes(imovel.Slug)) {
+            const correctUrl = `/imovel-${id}/${imovel.Slug}`;
+            console.log(`🔍 [MIDDLEWARE] ✅ Slug antigo → válido: ${currentSlug} → ${imovel.Slug}`);
+            return NextResponse.redirect(new URL(correctUrl, origin), 301);
+          } else {
+            console.log(`🚨 [MIDDLEWARE] ❌ Slug inválido no banco: ${imovel.Slug} → redirecionando para sem slug`);
+            const urlSemSlug = `/imovel-${id}`;
+            return NextResponse.redirect(new URL(urlSemSlug, origin), 301);
+          }
         }
       } else {
         // 🎯 SOLUÇÃO OTIMIZADA: API retornou erro → BUSCA RELEVANTE
