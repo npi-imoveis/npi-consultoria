@@ -60,7 +60,6 @@ CURADORIA DOS PARCEIROS:
 
 Cada imobiliária dentro do nosso HUB é cuidadosamente selecionada para atuar em regiões específicas, onde já possui um profundo conhecimento de mercado. Isso permite que cada parceiro ofereça um serviço mais personalizado, assertivo e eficiente, resultando em maior conversão dos nossos clientes qualificados.
 
-
 ECONOMIA COM MARKETING
 
 As imobiliárias quando ingressam no HUB NPi, quando recebem clientes qualificados, também se beneficiam com uma alta redução de custos de marketing com portais e redes sociais.`}
