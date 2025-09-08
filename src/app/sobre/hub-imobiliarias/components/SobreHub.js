@@ -24,11 +24,12 @@ export async function SobreHub({ sobre }) {
             </h2>
             <p className="text-lg mt-4 leading-relaxed whitespace-pre-line">
               {sobre?.descricao ||
-                `Alcançamos a primeira página do Google com seus imóveis de alto padrão, conectando-os a clientes de alto nível e real intenção de compra, qualificamos esses clientes, enviamos para seu atendimento, e assim, alavancamos resultados concretos para sua imobiliária.
-                Nosso serviço é dar visibilidade aos imóveis das imobiliárias pertencentes a esse ecossistema, captar e qualificar os clientes, alavancando negócios para essas empresas, através do posicionamento orgânico(SEO) na maior vitrine do mundo: o Google. 
+                `Seus imóveis de alto padrão merecem estar onde os clientes realmente procuram: NA PRIMEIRA PÁGINA DO GOOGLE.
+                 Alcançamos a primeira página do Google com seus imóveis de alto padrão, conectando-os a clientes de alto nível e real intenção de compra, qualificamos esses clientes, enviamos para seu atendimento, e assim, alavancamos resultados concretos para sua imobiliária.
+                 Nosso serviço é dar visibilidade aos imóveis da sua imobiliária, captar, qualificar os clientes e alavancar negócios através do posicionamento orgânico(SEO) na maior vitrine do mundo: o Google.
                
-                Idealizado por Eduardo Lima, fundador da NPi Imóveis, com mais de 20 anos de experiência no mercado imobiliário. 
-                No inicio da empresa, como todas imobiliárias, a NPi também dependia de portais para gerar clientes para sua empresa; Isatisfeito com a qualidade desses clientes, Eduardo Lima uniu sua bagagem de tecnologia à sua vivência no setor imobiliário para construir uma nova lógica: não estar dentro dos portais, mas sim onde os portais estão, ou seja, na Primeira Página do Google.
+                O HUB de Imobiliárias Boutique de Alto Padrão foi dealizado por Eduardo Lima, fundador da NPi Imóveis, com mais de 20 anos de experiência no mercado imobiliário, e hoje é maior presença orgânica no Google do setor de alto padrão em São Paulo. 
+                No inicio da NPi, como acontece com a maioria imobiliárias, ele dependia de portais para gerar clientes para sua empresa; Isatisfeito com a qualidade desses clientes, Eduardo Lima uniu sua bagagem de tecnologia à sua vivência no setor imobiliário para construir uma nova lógica: não estar dentro dos portais, mas sim onde os portais estão, ou seja, na Primeira Página do Google.
                 Buscando especialização em SEO desde 2010, a NPi se tornou conhecida no digital e referência em SEO no mercado imobiliário de alto padrão em São Paulo, com mais de 5.000 posições orgânicas e resultados consistentes sem depender de mídias tradicionais pagas. 
                 Hoje a NPi tem como propósito transbordar esse Know-how, e alavancar negócios para as imobiliárias pertencentes a esse ecossistema.`}
             </p>
