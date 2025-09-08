@@ -55,8 +55,6 @@ export async function SobreHub({ sobre }) {
 	•	CRM integrado
 	•	App com aviso sonoro de novos clientes
 	•	Acompanhamento de performance por gerente dedicado
-Além disso as imobiliárias do HUB também se beneficiam com uma alta redução de custos de marketing com portais e redes sociais.
-
 
 CURADORIA DOS PARCEIROS:
 
