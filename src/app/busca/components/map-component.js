@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { MapContainer, TileLayer, ZoomControl, useMap, Marker, Popup } from "react-leaflet";
 
-import "leaflet-geosearch/dist/geosearch.css";
+// import "leaflet-geosearch/dist/geosearch.css"; // Movido para dentro do useEffect para evitar SSR
 
 import { getImoveisParaMapa } from "@/app/services";
 import { Button } from "@/app/components/ui/button";
