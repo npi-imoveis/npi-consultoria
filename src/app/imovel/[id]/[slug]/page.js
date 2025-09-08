@@ -495,6 +495,18 @@ export default async function ImovelPage({ params }) {
   console.log(`🏠 [IMOVEL-PAGE] =================== INÍCIO ===================`);
   console.log(`🏠 [IMOVEL-PAGE] Processando ID: ${id}, SLUG: ${slug}`);
   
+  // 🚨 DEBUG CANONICAL CRÍTICO: Detectar ID undefined
+  if (!id || id === 'undefined' || id === 'null') {
+    console.log(`🚨🚨🚨 [CANONICAL-DEBUG] ★★★ ID UNDEFINED DETECTADO ★★★`);
+    console.log(`🚨🚨🚨 [CANONICAL-DEBUG] ID: "${id}", SLUG: "${slug}"`);
+    console.log(`🚨🚨🚨 [CANONICAL-DEBUG] params:`, JSON.stringify(params));
+    console.log(`🚨🚨🚨 [CANONICAL-DEBUG] typeof ID: ${typeof id}`);
+    console.log(`🚨🚨🚨 [CANONICAL-DEBUG] URL problemática que causa canonical conflito!`);
+    
+    // Redirecionar para busca para evitar canonical conflitante
+    redirect('/busca');
+  }
+  
   // 🚨 RASTREAMENTO DETALHADO: URLs problemáticas específicas do CSV
   const slugsInvalidos = [
     'facebook.com/npiimoveis',

@@ -10,6 +10,11 @@ export async function middleware(request) {
   console.log(`🔍 [MIDDLEWARE] =================== INÍCIO ===================`);
   console.log(`🔍 [MIDDLEWARE] Processando: ${pathname}`);
   
+  // 🚨 DEBUG: Log específico para iConatusIframe
+  if (pathname.includes('iConatusIframe')) {
+    console.log(`🚨 [DEBUG-IFRAME] Detectado iConatusIframe: ${pathname}`);
+  }
+  
   // 🚨 RASTREAMENTO DETALHADO: URLs problemáticas específicas do CSV
   const urlsProblematicas = [
     'imovel-106524/facebook.com/npiimoveis',
@@ -185,6 +190,55 @@ export async function middleware(request) {
   if (isGoogleBot && blockedPathsForBots.some(path => pathname.startsWith(path))) {
     console.log('🚫 [GSC] Bloqueando path para bot:', pathname);
     return new NextResponse(null, { status: 404 });
+  }
+
+  // 🚨 CORREÇÃO CANONICAL #4: URLs de busca malformadas
+  if (pathname === '/busca' || pathname === '/busca/') {
+    let hasCanonicalIssues = false;
+    const cleanParams = new URLSearchParams();
+    
+    // Limpar parâmetros duplicados e vazios
+    for (const [key, value] of searchParams) {
+      // Skip parâmetros vazios ou duplicados problemáticos
+      if (key === 'ordenar' && cleanParams.has('ordenar')) {
+        hasCanonicalIssues = true;
+        continue; // Skip ordenar duplicado
+      }
+      if (key === 'emp_cod_end' && !value) {
+        hasCanonicalIssues = true;  
+        continue; // Skip parâmetros vazios
+      }
+      if (key === 'finalidade' && !value) {
+        hasCanonicalIssues = true;
+        continue; // Skip finalidade vazia
+      }
+      if ((key === 'valor[0]' || key === 'valor[1]') && !value) {
+        hasCanonicalIssues = true;
+        continue; // Skip valores vazios
+      }
+      if ((key === 'area[0]' || key === 'area[1]') && !value) {
+        hasCanonicalIssues = true;
+        continue; // Skip áreas vazias
+      }
+      
+      // Manter parâmetros válidos
+      if (value || ['pagina', 'listagem'].includes(key)) {
+        cleanParams.set(key, value);
+      } else if (!value) {
+        hasCanonicalIssues = true;
+      }
+    }
+    
+    // Se há problemas canônicos, redirecionar para versão limpa
+    if (hasCanonicalIssues || pathname === '/busca/') {
+      const cleanUrl = new URL('/busca', origin);
+      cleanParams.forEach((value, key) => {
+        cleanUrl.searchParams.set(key, value);
+      });
+      
+      console.log(`🚨 [CANONICAL-FIX] Busca malformada: ${pathname}${url.search} → ${cleanUrl.pathname}${cleanUrl.search}`);
+      return NextResponse.redirect(cleanUrl, 301);
+    }
   }
 
   /* 
@@ -498,6 +552,42 @@ export async function middleware(request) {
     return NextResponse.rewrite(rewriteUrl);
   }
 
+  // 🚨 CORREÇÃO CANONICAL #1: URLs de iframe legacy (PRIORIDADE ALTA)
+  const iframeLegacyMatch = pathname.match(/^\/(testeIframe|iConatusIframe)\/iframe\.php/);
+  if (iframeLegacyMatch) {
+    console.log(`🚨 [CANONICAL-FIX] Iframe legacy: ${pathname} → /busca`);
+    return NextResponse.redirect(new URL('/busca', origin), 301);
+  }
+  
+  // 🚨 CORREÇÃO CANONICAL #2: /imovel-/slug (ID ausente após hífen)
+  const imovelIDausenteMatch = pathname.match(/^\/imovel-\/(.+)$/);
+  if (imovelIDausenteMatch) {
+    console.log(`🚨 [CANONICAL-FIX] ID ausente após hífen: ${pathname} → /busca`);
+    return NextResponse.redirect(new URL('/busca', origin), 301);
+  }
+  
+  // 🚨 CORREÇÃO CANONICAL #3: URL malformada do Instagram 
+  if (pathname === '/instagram.com/npi_imoveis') {
+    console.log(`🚨 [CANONICAL-FIX] URL Instagram malformada: ${pathname} → https://instagram.com/npi_imoveis`);
+    return NextResponse.redirect('https://instagram.com/npi_imoveis', 301);
+  }
+  
+  // 🚨 DEBUG CANONICAL: Capturar URLs problemáticas /imovel/undefined/ 
+  const isProblematicoImovel = pathname.match(/^\/imovel\/(.*)$/);
+  if (isProblematicoImovel) {
+    const [, paramPath] = isProblematicoImovel;
+    console.log(`🚨🚨🚨 [DEBUG-CANONICAL] URL problemática detectada: ${pathname}`);
+    console.log(`🚨🚨🚨 [DEBUG-CANONICAL] Parâmetro: "${paramPath}"`);
+    console.log(`🚨🚨🚨 [DEBUG-CANONICAL] User-Agent: ${userAgent.slice(0, 50)}`);
+    console.log(`🚨🚨🚨 [DEBUG-CANONICAL] Referer: ${request.headers.get('referer') || 'N/A'}`);
+    
+    // Se não tem ID numérico, redirecionar para busca
+    if (!paramPath.match(/^\d+/) && paramPath !== 'undefined') {
+      console.log(`🚨 [DEBUG-CANONICAL] URL sem ID numérico válido → BUSCA`);
+      return NextResponse.redirect(new URL('/busca', origin), 301);
+    }
+  }
+
   // ✅ PÁGINAS DE CONDOMÍNIO: /slug-condominio (sem ID)
   // Padrão simples: apenas letras, números e hífens (sem barras)
   const isCondominioPattern = pathname.match(/^\/[a-z0-9-]+$/);
@@ -581,13 +671,13 @@ export const config = {
     /*
      * Match all request paths except for the ones starting with:
      * - api (API routes)
-     * - _next/static (static files)
+     * - _next/static (static files)  
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - robots.txt
      * - sitemap.xml
-     * Also excludes files with extensions (assets)
+     * Allows .php files (for iframe redirects)
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap|.*\\..*).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap).*)',
   ],
 };
