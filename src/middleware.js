@@ -27,6 +27,119 @@ export async function middleware(request) {
     console.log(`🚨🚨🚨 [MIDDLEWARE] Referer: ${request.headers.get('referer') || 'N/A'}`);
   }
 
+  // 🚨 REDIRECTS VERCEL.JSON → MIDDLEWARE (resolver conflito com noindex)
+  const REDIRECTS_MAP = {
+    '/maison-dor-cobertura-em-moema': '/maison-dor-moema',
+    '/rua-bela-cintra-2060': '/edificio-uirapuru-bela-cintra-2060',
+    '/rua-luiz-galhanone-528': '/residencial-reserva-do-visconde',
+    '/edificio-ritz-vila-nova-conceicao-cobertura': '/condominio-ritz-vila-nova',
+    '/ritz-vila-nova': '/condominio-ritz-vila-nova',
+    '/maison-jolie-jardins': '/condominio-edificio-maison-jolie',
+    '/rua-cacapava-83': '/taormina-jardim-america',
+    '//rua-lopes-neto-56': '/royal-palace-itaim-bibi',
+    '/sierra-branca-moema-ibijau-229': '/sierra-blanca-moema',
+    '/rua-gabriele-dannunzio-183': '/condominio-authentique-campo-belo',
+    '/rua-clodomiro-amazonas-1256': '/condominio-san-juan',
+    '/condominio-metropolitan': '/metropolitan-ibirapuera',
+    '/avenida-antonio-joaquim-de-moura-andrade-597': '/edificio-maison-adriana',
+    '/gran-ville-guaruja': '/condominio-granville-enseada',
+    '/avenida-marjory-da-silva-prado-2605': '/jardim-pernambuco-ii',
+    '/casas-a-venda-no-condominio-granville-guaruja': '/condominio-granville-enseada',
+    '/condominio-granville': '/condominio-granville-enseada',
+    '/casas-a-venda-na-peninsula-guaruja': '/condominio-peninsula-guaruja-enseada',
+    '/avenida-amarilis-50': '/amarilis-50-cidade-jardim',
+    '/rua-pedroso-alvarenga-121': '/residencial-piata',
+    '/alameda-ministro-rocha-azevedo-1368': '/edificio-guararapes-jardim-america',
+    '/edificio-michelangelo': '/edificio-michelangelo-moema',
+    '/edificio-isaura': '/edificio-isaura-pinheiros-sao-paulo',
+    '/rua-cristiano-viana-1211': '/4x4-pinheiros',
+    '/condominio-edificio-villa-adriana': '/edificio-villa-adriana',
+    '/avenida-jamaris-603': '/edificio-michelangelo',
+    '/east-blue': '/east-blue-residences-tatuape',
+    '/casas-em-condominio-gramado': '/casa-punta-gramado-rs',
+    '/e-side-vila-madalena-rua-girassol1280': '/e-side-vila-madalena',
+    '/edificio-itanhanga-santana': '/condominio-itanhanga',
+    '/residencial-azul': '/azul-idea-zarvos',
+    '/the-frame-vila-nova': '/the-frame-vila-nova-conceicao',
+    '/ibi-ara': '/condominio-ibi-aram',
+    '/residencial-jequitibas': '/condominio-portal-do-jequitiba-valinhos',
+    '/condominio-campo-de-toscana-vinhedo-enderecobarao-de-iguatemi': '/residencial-campo-de-toscana-vinhedo',
+    '/barao-de-iguatemi': '/edificio-barao-de-iguatemi',
+    '/residencial-platinum': '/platinum-morumbi',
+    '/residencial-malaga': '/malaga-analia-franco',
+    '/edificio-tiffany': '/tiffany-analia-franco',
+    '/medplex': '/thera-ibirapuera-by-yoo',
+    '/residencial-montblanc': '/montblanc-tatuape',
+    '/empreendimento-praca-henrique-monteiro': '/praca-henrique-monteiro',
+    '/j-h-s-f-fasano-residences-cidade-jardim': '/fasano-cidade-jardim',
+    '/rua-sebastiao-cardoso-168': '/condominio-santorini-residencial-club',
+    '/condominio-residencial-santorini': '/condominio-santorini-residencial-club',
+    '/rua-verbo-divino-1061': '/reserva-granja-julieta',
+    '/grand-habitarte-brooklin': '/grand-habitarte',
+    '/habitarte-2-brooklin': '/habitarte-2',
+    '/one-sixty-vila-olimpia': '/one-sixty',
+    '/one-sixty-cyrela-by-yoo': '/one-sixty',
+    '/acapulco-guaruja-condominio': '/condominio-jardim-acapulco',
+    '/casa-a-venda-condominio-acapulco': '/condominio-jardim-acapulco',
+    '/casa-a-venda-jardim-acapulco-guaruja': '/condominio-jardim-acapulco',
+    '/residencial-acapulco-guaruja': '/condominio-jardim-acapulco',
+    // Adicionar versões com trailing slash
+    '/maison-dor-cobertura-em-moema/': '/maison-dor-moema',
+    '/condominio-edificio-villa-adriana/': '/edificio-villa-adriana',
+    '/avenida-jamaris-603/': '/edificio-michelangelo',
+    '/east-blue/': '/east-blue-residences-tatuape',
+    '/casas-em-condominio-gramado/': '/casa-punta-gramado-rs',
+    '/e-side-vila-madalena-rua-girassol1280/': '/e-side-vila-madalena',
+    '/edificio-itanhanga-santana/': '/condominio-itanhanga',
+    '/residencial-azul/': '/azul-idea-zarvos',
+    '/the-frame-vila-nova/': '/the-frame-vila-nova-conceicao',
+    '/ibi-ara/': '/condominio-ibi-aram',
+    '/residencial-jequitibas/': '/condominio-portal-do-jequitiba-valinhos',
+    '/condominio-campo-de-toscana-vinhedo-enderecobarao-de-iguatemi/': '/residencial-campo-de-toscana-vinhedo',
+    '/barao-de-iguatemi/': '/edificio-barao-de-iguatemi',
+    '/residencial-platinum/': '/platinum-morumbi',
+    '/residencial-malaga/': '/malaga-analia-franco',
+    '/edificio-tiffany/': '/tiffany-analia-franco',
+    '/medplex/': '/thera-ibirapuera-by-yoo',
+    '/residencial-montblanc/': '/montblanc-tatuape',
+    '/empreendimento-praca-henrique-monteiro/': '/praca-henrique-monteiro',
+    '/j-h-s-f-fasano-residences-cidade-jardim/': '/fasano-cidade-jardim',
+    '/rua-sebastiao-cardoso-168/': '/condominio-santorini-residencial-club',
+    '/condominio-residencial-santorini/': '/condominio-santorini-residencial-club',
+    '/rua-verbo-divino-1061/': '/reserva-granja-julieta',
+    '/grand-habitarte-brooklin/': '/grand-habitarte',
+    '/habitarte-2-brooklin/': '/habitarte-2',
+    '/one-sixty-vila-olimpia/': '/one-sixty',
+    '/one-sixty-cyrela-by-yoo/': '/one-sixty',
+    '/acapulco-guaruja-condominio/': '/condominio-jardim-acapulco',
+    '/casa-a-venda-condominio-acapulco/': '/condominio-jardim-acapulco',
+    '/casa-a-venda-jardim-acapulco-guaruja/': '/condominio-jardim-acapulco',
+    '/residencial-acapulco-guaruja/': '/condominio-jardim-acapulco',
+  };
+
+  // Verificar se pathname está no mapa de redirects
+  if (REDIRECTS_MAP[pathname]) {
+    const destination = REDIRECTS_MAP[pathname];
+    console.log(`🔍 [MIDDLEWARE] 🔄 REDIRECT VERCEL: ${pathname} → ${destination}`);
+    return NextResponse.redirect(new URL(destination, origin), 301);
+  }
+
+  // 🚨 REDIRECTS PÁGINAS INSTITUCIONAIS (resolver noindex)
+  const INSTITUTIONAL_REDIRECTS = {
+    '/nossos-servicos': '/sobre/nossos-servicos',
+    '/nossos-servicos/': '/sobre/nossos-servicos',
+    '/trabalhe-conosco': '/sobre',
+    '/trabalhe-conosco/': '/sobre',
+    '/nossas-vantagens': '/sobre',
+    '/nossas-vantagens/': '/sobre',
+  };
+
+  if (INSTITUTIONAL_REDIRECTS[pathname]) {
+    const destination = INSTITUTIONAL_REDIRECTS[pathname];
+    console.log(`🔍 [MIDDLEWARE] 🔄 REDIRECT INSTITUCIONAL: ${pathname} → ${destination}`);
+    return NextResponse.redirect(new URL(destination, origin), 301);
+  }
+
   // 🚨 CORREÇÃO GSC #1: DETECTAR GOOGLEBOT
   const isGoogleBot = /googlebot|bingbot|slurp|duckduckbot/i.test(userAgent);
 
