@@ -5,7 +5,20 @@
 import { useEffect, useState } from "react";
 import CardImovel, { CardImovelSkeleton } from "../components/ui/card-imovel";
 import Pagination from "../components/ui/pagination";
-import Map from "./components/map";
+import dynamic from "next/dynamic";
+
+// Import map component dynamically to avoid SSR issues
+const MapComplete = dynamic(() => import("./components/map-complete"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
+      <div className="text-center">
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-black"></div>
+        <p className="mt-2 text-gray-700">Carregando mapa...</p>
+      </div>
+    </div>
+  ),
+});
 import { Footer } from "../components/ui/footer";
 
 import {
@@ -80,7 +93,7 @@ export default function BuscaImoveis() {
           {
             "@type": "SearchResultsPage",
             "@id": `${baseUrl}/busca#webpage`,
-            url: window.location.href,
+            url: window?.location?.href || `${baseUrl}/busca`,
             name: document.title,
             description: document.querySelector('meta[name="description"]')?.content || '',
             datePublished: currentDate,
@@ -163,6 +176,7 @@ export default function BuscaImoveis() {
 
   // 🔥 FUNÇÃO PARA ATUALIZAR META TAGS DINAMICAMENTE BASEADO NOS FILTROS ATUAIS
   const updateClientMetaTags = (quantidadeResultados = null) => {
+    if (typeof window === 'undefined') return;
     try {
       const currentDate = new Date().toISOString();
       const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://npiconsultoria.com.br';
@@ -252,11 +266,11 @@ export default function BuscaImoveis() {
         description = `Especialistas em ${descriptionParts.join(' ')}. NPi`;
         
         // 🎯 CONSTRUIR URL CANÔNICA
-        const urlAtual = window.location.pathname;
+        const urlAtual = window?.location?.pathname || '';
         
         // 🔥 SE JÁ ESTAMOS NUMA URL SEO-FRIENDLY (/buscar/...), USAR ELA COMO CANONICAL
         if (urlAtual.startsWith('/buscar/') && urlAtual.split('/').length >= 5) {
-          canonicalUrl = window.location.origin + urlAtual;
+          canonicalUrl = (window?.location?.origin || baseUrl) + urlAtual;
           console.log('🎯 [URL-CANONICAL] URL SEO detectada, usando atual como canonical:', canonicalUrl);
         } else if (filtrosAtuais.cidadeSelecionada && filtrosAtuais.categoriaSelecionada && filtrosAtuais.finalidade) {
           // Gerar URL SEO-friendly
@@ -284,7 +298,7 @@ export default function BuscaImoveis() {
           canonicalUrl = `${baseUrl}/buscar/${finalidadeSlug}/${categoriaSlug}/${cidadeSlug}`;
           console.log('🎯 [URL-CANONICAL] URL SEO gerada:', canonicalUrl);
         } else {
-          canonicalUrl = window.location.origin + window.location.pathname + (window.location.search || '');
+          canonicalUrl = (window?.location?.origin || baseUrl) + (window?.location?.pathname || '') + (window?.location?.search || '');
           console.log('🎯 [URL-CANONICAL] Usando URL atual como fallback:', canonicalUrl);
         }
         
@@ -428,6 +442,7 @@ export default function BuscaImoveis() {
 
   // 🔥 FUNÇÃO CORRIGIDA PARA EXTRAIR PARÂMETROS DE URL SEO-FRIENDLY
   const extractFromSeoUrl = () => {
+    if (typeof window === 'undefined') return null;
     const path = window.location.pathname;
     
     console.log('🔍 [EXTRACT-SEO] Analisando path:', path);
@@ -681,7 +696,7 @@ export default function BuscaImoveis() {
     const seoParams = extractFromSeoUrl();
     
     // 2. Extrair parâmetros de query string como fallback
-    const searchParams = new URLSearchParams(window.location.search);
+    const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
     const cidade = searchParams.get('cidade');
     const finalidade = searchParams.get('finalidade');
     const categoria = searchParams.get('categoria');
@@ -758,7 +773,9 @@ export default function BuscaImoveis() {
           const event = new CustomEvent('filtrosUpdated', { 
             detail: storeDepois 
           });
-          window.dispatchEvent(event);
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(event);
+          }
           console.log('📡 [EVENT] Evento filtrosUpdated disparado para atualizar componentes');
           
         }, 50);
@@ -892,18 +909,24 @@ export default function BuscaImoveis() {
     if (!isClient) return;
 
     const checkScreenSize = () => {
-      setIsMobile(window.innerWidth < 768);
+      if (typeof window !== 'undefined') {
+        setIsMobile(window.innerWidth < 768);
+      }
       setFullyInitialized(true);
     };
 
     checkScreenSize();
-    window.addEventListener("resize", checkScreenSize);
-    return () => window.removeEventListener("resize", checkScreenSize);
+    if (typeof window !== 'undefined') {
+      window.addEventListener("resize", checkScreenSize);
+      return () => window.removeEventListener("resize", checkScreenSize);
+    }
   }, [isClient]);
 
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   };
 
   const toggleFavoritos = () => {
@@ -1207,7 +1230,7 @@ export default function BuscaImoveis() {
         {/* Área do Mapa - 50% */}
         <div className="w-1/2 relative h-full">
           <div className="absolute inset-0 right-0 h-full overflow-hidden">
-            <Map filtros={filtrosAtuais} />
+            <MapComplete filtros={filtrosAtuais} />
           </div>
         </div>
       </div>
