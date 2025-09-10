@@ -650,7 +650,7 @@ export default async function CondominioPage({ params }) {
         {condominio.DestaquesDiferenciais && <DetalhesCondominio imovel={condominio} />}
         {condominio.DestaquesLazer && <Lazer condominio={condominio} />}
         {condominio.Video && Object.keys(condominio.Video).length > 0 && (
-          <VideoCondominio condominio={condominio} />
+        <VideoCondominio imovel={condominio} />
         )}
         {condominio.Tour360 && (
           <TourVirtual link={condominio.Tour360} titulo={rawTitle} />
