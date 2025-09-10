@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { getImoveisSimilares } from "@/app/services";
 import CardImovel from "@/app/components/ui/card-imovel";
 
-export function SimilarProperties({ id }) {
+export function SimilarProperties({ id, empreendimento }) {
   const [imoveis, setImoveis] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -54,13 +54,19 @@ export function SimilarProperties({ id }) {
           imoveisData = [];
         }
         
-        // 🔥 FILTRAR O PRÓPRIO IMÓVEL DA LISTA (se estiver incluído)
+        // 🔥 FILTRO ATUALIZADO: Remove próprio imóvel + mesmo empreendimento
         const imoveisFiltrados = imoveisData.filter(imovel => {
           const imovelId = imovel?.Codigo || imovel?._id || imovel?.id;
-          return imovelId && String(imovelId) !== String(id);
+          const imovelEmpreendimento = imovel?.Empreendimento;
+          
+          return (
+            imovelId && 
+            String(imovelId) !== String(id) && // Remove o próprio imóvel
+            imovelEmpreendimento !== empreendimento // Remove do mesmo empreendimento
+          );
         });
         
-        console.log(`🎯 [SIMILAR-PROPERTIES] ${imoveisFiltrados.length} imóveis após filtro`);
+        console.log(`🎯 [SIMILAR-PROPERTIES] ${imoveisFiltrados.length} imóveis após filtro (excluindo empreendimento: ${empreendimento})`);
         
         setImoveis(imoveisFiltrados);
         
@@ -81,7 +87,7 @@ export function SimilarProperties({ id }) {
     }
 
     fetchImoveis();
-  }, [id]); // 🔥 DEPENDÊNCIA CORRIGIDA
+  }, [id, empreendimento]); // 🔥 DEPENDÊNCIA ATUALIZADA: inclui empreendimento
 
   // 🔥 VERIFICAR SE PRECISA DE SCROLL
   useEffect(() => {
@@ -119,7 +125,7 @@ export function SimilarProperties({ id }) {
 
   // 🔥 NÃO MOSTRAR SEÇÃO SE NÃO HÁ IMÓVEIS E JÁ CARREGOU
   if (!loading && imoveis.length === 0) {
-    console.log("ℹ️ [SIMILAR-PROPERTIES] Nenhum imóvel similar encontrado");
+    console.log("ℹ️ [SIMILAR-PROPERTIES] Nenhum imóvel similar encontrado (após filtrar mesmo empreendimento)");
     return null;
   }
 
