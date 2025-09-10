@@ -26,7 +26,7 @@ export function SimilarProperties({ id, empreendimento, bairro, categoria, cidad
 
   useEffect(() => {
     if (!id || !bairro) {
-      console.log("[SIMILAR-SIMPLE] Sem ID ou bairro, abortando");
+      console.log("[SIMILAR] Sem ID ou bairro, abortando");
       setLoading(false);
       return;
     }
@@ -40,12 +40,14 @@ export function SimilarProperties({ id, empreendimento, bairro, categoria, cidad
         const metragemMin = metragemBase * 0.8; // -20%
         const metragemMax = metragemBase * 1.2; // +20%
         
-        console.log(`[SIMILAR-SIMPLE] ========== FILTROS SIMPLES ==========`);
-        console.log(`[SIMILAR-SIMPLE] ID atual: ${id}`);
-        console.log(`[SIMILAR-SIMPLE] Excluir empreendimento: ${empreendimento}`);
-        console.log(`[SIMILAR-SIMPLE] Bairro: ${bairro}`);
-        console.log(`[SIMILAR-SIMPLE] Categoria: ${categoria}`);
-        console.log(`[SIMILAR-SIMPLE] Metragem: ${metragemBase}m² (${metragemMin.toFixed(0)}-${metragemMax.toFixed(0)}m²)`);
+        console.log(`[SIMILAR] ========== BUSCANDO SIMILARES ==========`);
+        console.log(`[SIMILAR] ID atual: ${id}`);
+        console.log(`[SIMILAR] Excluir empreendimento: ${empreendimento}`);
+        console.log(`[SIMILAR] Bairro: ${bairro}`);
+        console.log(`[SIMILAR] Categoria: ${categoria}`);
+        if (metragemBase > 0) {
+          console.log(`[SIMILAR] Metragem: ${metragemBase}m² (${metragemMin.toFixed(0)}-${metragemMax.toFixed(0)}m²)`);
+        }
         
         // Buscar imóveis no MESMO BAIRRO e MESMA CATEGORIA
         const params = {
@@ -56,9 +58,9 @@ export function SimilarProperties({ id, empreendimento, bairro, categoria, cidad
         const response = await getImoveis(params, 1, 100);
         const imoveisData = response.imoveis || [];
         
-        console.log(`[SIMILAR-SIMPLE] Encontrados: ${imoveisData.length} imóveis no bairro ${bairro}`);
+        console.log(`[SIMILAR] Encontrados: ${imoveisData.length} imóveis no bairro ${bairro}`);
         
-        // APLICAR 3 FILTROS SIMPLES
+        // APLICAR FILTROS SIMPLES
         const imoveisFiltrados = imoveisData.filter(imovel => {
           // 1. Remover o próprio imóvel
           const imovelId = String(imovel?.Codigo || '');
@@ -94,13 +96,13 @@ export function SimilarProperties({ id, empreendimento, bairro, categoria, cidad
           return true;
         });
         
-        console.log(`[SIMILAR-SIMPLE] Após filtros: ${imoveisFiltrados.length} imóveis`);
+        console.log(`[SIMILAR] Após filtros: ${imoveisFiltrados.length} imóveis`);
         
         // Limitar a 12 imóveis
         const imoveisFinais = imoveisFiltrados.slice(0, 12);
         
         if (imoveisFinais.length > 0) {
-          console.log(`[SIMILAR-SIMPLE] Mostrando ${imoveisFinais.length} imóveis similares`);
+          console.log(`[SIMILAR] Mostrando ${imoveisFinais.length} imóveis similares`);
           imoveisFinais.slice(0, 3).forEach((im, idx) => {
             const met = extrairMetragem(im.MetragemAnt || im.Metragem || 0);
             console.log(`  ${idx + 1}. ${im.Empreendimento} - ${met}m²`);
@@ -110,7 +112,7 @@ export function SimilarProperties({ id, empreendimento, bairro, categoria, cidad
         setImoveis(imoveisFinais);
         
       } catch (err) {
-        console.error("[SIMILAR-SIMPLE] Erro:", err);
+        console.error("[SIMILAR] Erro:", err);
         setImoveis([]);
       } finally {
         setLoading(false);
@@ -141,17 +143,19 @@ export function SimilarProperties({ id, empreendimento, bairro, categoria, cidad
     }
   };
 
-  // Não renderizar se não há imóveis
-  if (!id || (!loading && imoveis.length === 0)) {
+  // Não renderizar APENAS se não tiver ID
+  if (!id) {
     return null;
   }
 
+  // SEMPRE renderizar a seção, mesmo vazia
   return (
     <section className="relative bg-white container mx-auto border-t-2 p-10 mt-4">
-      <h2 className="text-xl font-bold text-black mb-6">Imóveis Similares em {bairro}</h2>
+      <h2 className="text-xl font-bold text-black mb-6">Imóveis Similares{bairro ? ` em ${bairro}` : ''}</h2>
       
       <div className="container mx-auto relative">
-        {showButtons && (
+        {/* Só mostra botões se tiver imóveis */}
+        {showButtons && !loading && imoveis.length > 0 && (
           <button
             onClick={() => scroll("left")}
             className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black text-white p-2 rounded-full shadow-md z-10 hover:bg-gray-800 transition-colors"
@@ -167,12 +171,14 @@ export function SimilarProperties({ id, empreendimento, bairro, categoria, cidad
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {loading ? (
+            // Skeletons durante carregamento
             Array.from({ length: 4 }).map((_, index) => (
               <div key={`skeleton-${index}`} className="flex-shrink-0 w-[280px]">
                 <CardImovel isLoading={true} />
               </div>
             ))
-          ) : (
+          ) : imoveis.length > 0 ? (
+            // Renderiza os imóveis se houver
             imoveis.map((imovel, index) => {
               const key = imovel?.Codigo || `similar-${index}`;
               return (
@@ -181,10 +187,16 @@ export function SimilarProperties({ id, empreendimento, bairro, categoria, cidad
                 </div>
               );
             })
+          ) : (
+            // Mensagem quando não há imóveis
+            <div className="w-full text-center py-8 text-gray-500">
+              <p>Nenhum imóvel similar encontrado no momento.</p>
+            </div>
           )}
         </div>
         
-        {showButtons && (
+        {/* Só mostra botões se tiver imóveis */}
+        {showButtons && !loading && imoveis.length > 0 && (
           <button
             onClick={() => scroll("right")}
             className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white p-2 rounded-full shadow-md z-10 hover:bg-black transition-colors"
