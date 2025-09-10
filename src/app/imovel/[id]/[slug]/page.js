@@ -641,21 +641,26 @@ export default async function ImovelPage({ params }) {
             <DetalhesCondominio imovel={imovel} />
             <Lazer imovel={imovel} />
             
-            {/* COMPONENTE DE VÍDEO RESTAURADO */}
-            {imovel?.Video && (
-              <VideoCondominio 
-                imovel={{
-                  ...imovel,
-                  Video: imovel.Video
-                }} 
-              />
-            )}
+            {/* COMPONENTE DE VÍDEO CORRIGIDO */}
+            {(() => {
+              if (!imovel?.Video) return null;
+              
+              try {
+                // Manter estrutura original - apenas validação mais simples
+                if (typeof imovel.Video === 'object' && !Array.isArray(imovel.Video) && Object.keys(imovel.Video).length > 0) {
+                  return <VideoCondominio imovel={imovel} />;
+                }
+                
+                return null;
+                
+              } catch (error) {
+                console.error('🎥 [VIDEO] Erro ao processar vídeo:', error);
+                return null;
+              }
+            })()}
             
             {imovel.Tour360 && <TourVirtual link={imovel.Tour360} titulo={imovel.Empreendimento} />}
-            
-            {/* COMPONENTE DE IMÓVEIS SIMILARES ATUALIZADO */}
-            {/* Temporariamente desabilitado - Correção em andamento */}
-            
+            <SimilarProperties id={imovel.Codigo} empreendimento={imovel.Empreendimento} />
             <LocalizacaoCondominio imovel={imovel} />
           </div>
 
