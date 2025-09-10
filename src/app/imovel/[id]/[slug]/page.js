@@ -412,7 +412,7 @@ export async function generateMetadata({ params }) {
 
     // Título com endereço completo
     const partesTitle = [
-      imovel.Tipo || 'Apartamento',
+      imovel.Categoria,
       imovel.TipoEndereco,
       imovel.Endereco,
       imovel.Numero
@@ -424,7 +424,7 @@ export async function generateMetadata({ params }) {
     const valorFormatado = valorFinal === 'Consulte' ? 'Consulte' : 
       (typeof valorFinal === 'string' && valorFinal.includes('R$') ? valorFinal : `R$ ${valorFinal}`);
     
-    const descricaoLimpa = cleanDuplicateWords(`${imovel.Tipo || 'Apartamento'} ${textoFinalidade} no ${imovel.Empreendimento}, ${imovel.BairroComercial}. ${imovel.DormitoriosAntigo || 0} quartos (${imovel.SuiteAntigo || 0} suítes), ${imovel.VagasAntigo || 0} vagas, ${imovel.MetragemAnt || 0} m². Cód ${imovel.Codigo}. PREÇO: ${valorFormatado}.`);
+    const descricaoLimpa = cleanDuplicateWords(`${imovel.Categoria} ${textoFinalidade} no ${imovel.Empreendimento}, ${imovel.BairroComercial}. ${imovel.DormitoriosAntigo || 0} quartos (${imovel.SuiteAntigo || 0} suítes), ${imovel.VagasAntigo || 0} vagas, ${imovel.MetragemAnt || 0} m². Cód ${imovel.Codigo}. PREÇO: ${valorFormatado}.`);
     
     // CORREÇÃO GSC: Validar slug antes de usar em URLs canônicas
     const slugsInvalidos = [
