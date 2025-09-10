@@ -1,32 +1,20 @@
 "use client";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { useEffect, useRef, useState } from "react";
-import { getImoveis } from "@/app/services";
+import { getImoveisSimilares } from "@/app/services";
 import CardImovel from "@/app/components/ui/card-imovel";
 
-export function SimilarProperties({ id, empreendimento, bairro, categoria, cidade, valor, metragem }) {
+export function SimilarProperties({ id }) {
   const [imoveis, setImoveis] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [showButtons, setShowButtons] = useState(false);
   const carouselRef = useRef(null);
 
-  // Função para extrair metragem numérica
-  const extrairMetragem = (metragemStr) => {
-    if (typeof metragemStr === 'number') return metragemStr;
-    if (!metragemStr) return 0;
-    
-    const metragemLimpa = String(metragemStr)
-      .replace(/m[²2]?\s*/gi, '')
-      .replace(/\./g, '')
-      .replace(/,/g, '.')
-      .replace(/[^\d.-]/g, '');
-    
-    return parseFloat(metragemLimpa) || 0;
-  };
-
   useEffect(() => {
-    if (!id || !bairro) {
-      console.log("[SIMILAR] Sem ID ou bairro, abortando");
+    // 🔥 VALIDAÇÃO DO ID
+    if (!id) {
+      console.log("❌ [SIMILAR-PROPERTIES] ID não fornecido");
       setLoading(false);
       return;
     }
@@ -34,85 +22,58 @@ export function SimilarProperties({ id, empreendimento, bairro, categoria, cidad
     async function fetchImoveis() {
       try {
         setLoading(true);
+        setError(null);
         
-        // Converter metragem
-        const metragemBase = extrairMetragem(metragem);
-        const metragemMin = metragemBase * 0.8; // -20%
-        const metragemMax = metragemBase * 1.2; // +20%
+        console.log(`🔍 [SIMILAR-PROPERTIES] Buscando imóveis similares para ID: ${id}`);
         
-        console.log(`[SIMILAR] ========== BUSCANDO SIMILARES ==========`);
-        console.log(`[SIMILAR] ID atual: ${id}`);
-        console.log(`[SIMILAR] Excluir empreendimento: ${empreendimento}`);
-        console.log(`[SIMILAR] Bairro: ${bairro}`);
-        console.log(`[SIMILAR] Categoria: ${categoria}`);
-        if (metragemBase > 0) {
-          console.log(`[SIMILAR] Metragem: ${metragemBase}m² (${metragemMin.toFixed(0)}-${metragemMax.toFixed(0)}m²)`);
+        const response = await getImoveisSimilares(id);
+        
+        console.log("📦 [SIMILAR-PROPERTIES] Resposta da API:", response);
+        
+        // 🔥 TRATAMENTO ROBUSTO DA RESPOSTA
+        let imoveisData = [];
+        
+        // Caso 1: response.data.data existe e é array
+        if (response?.data?.data && Array.isArray(response.data.data)) {
+          imoveisData = response.data.data;
+          console.log(`✅ [SIMILAR-PROPERTIES] Formato 1: ${imoveisData.length} imóveis encontrados`);
+        }
+        // Caso 2: response.data é diretamente um array
+        else if (response?.data && Array.isArray(response.data)) {
+          imoveisData = response.data;
+          console.log(`✅ [SIMILAR-PROPERTIES] Formato 2: ${imoveisData.length} imóveis encontrados`);
+        }
+        // Caso 3: response é diretamente um array (menos comum)
+        else if (Array.isArray(response)) {
+          imoveisData = response;
+          console.log(`✅ [SIMILAR-PROPERTIES] Formato 3: ${imoveisData.length} imóveis encontrados`);
+        }
+        // Caso 4: response.data existe mas não é array
+        else if (response?.data) {
+          console.warn("⚠️ [SIMILAR-PROPERTIES] Resposta não é array:", response.data);
+          imoveisData = [];
         }
         
-        // Buscar imóveis no MESMO BAIRRO e MESMA CATEGORIA
-        const params = {
-          bairros: bairro,
-          categoria: categoria || undefined
-        };
-        
-        const response = await getImoveis(params, 1, 100);
-        const imoveisData = response.imoveis || [];
-        
-        console.log(`[SIMILAR] Encontrados: ${imoveisData.length} imóveis no bairro ${bairro}`);
-        
-        // APLICAR FILTROS SIMPLES
+        // 🔥 FILTRAR O PRÓPRIO IMÓVEL DA LISTA (se estiver incluído)
         const imoveisFiltrados = imoveisData.filter(imovel => {
-          // 1. Remover o próprio imóvel
-          const imovelId = String(imovel?.Codigo || '');
-          if (imovelId === String(id)) {
-            return false;
-          }
-          
-          // 2. Remover mesmo empreendimento
-          const imovelEmp = (imovel?.Empreendimento || '').toLowerCase().trim();
-          const empAtual = (empreendimento || '').toLowerCase().trim();
-          if (empAtual && imovelEmp === empAtual) {
-            return false;
-          }
-          
-          // 3. Filtrar por metragem ±20% (se disponível)
-          if (metragemBase > 0) {
-            const metragemImovel = extrairMetragem(
-              imovel.MetragemAnt || 
-              imovel.Metragem || 
-              imovel.AreaTotal || 
-              imovel.AreaPrivativa || 
-              0
-            );
-            
-            if (metragemImovel > 0) {
-              if (metragemImovel < metragemMin || metragemImovel > metragemMax) {
-                return false; // Fora do range de metragem
-              }
-            }
-          }
-          
-          // Passou em todos os filtros
-          return true;
+          const imovelId = imovel?.Codigo || imovel?._id || imovel?.id;
+          return imovelId && String(imovelId) !== String(id);
         });
         
-        console.log(`[SIMILAR] Após filtros: ${imoveisFiltrados.length} imóveis`);
+        console.log(`🎯 [SIMILAR-PROPERTIES] ${imoveisFiltrados.length} imóveis após filtro`);
         
-        // Limitar a 12 imóveis
-        const imoveisFinais = imoveisFiltrados.slice(0, 12);
-        
-        if (imoveisFinais.length > 0) {
-          console.log(`[SIMILAR] Mostrando ${imoveisFinais.length} imóveis similares`);
-          imoveisFinais.slice(0, 3).forEach((im, idx) => {
-            const met = extrairMetragem(im.MetragemAnt || im.Metragem || 0);
-            console.log(`  ${idx + 1}. ${im.Empreendimento} - ${met}m²`);
-          });
-        }
-        
-        setImoveis(imoveisFinais);
+        setImoveis(imoveisFiltrados);
         
       } catch (err) {
-        console.error("[SIMILAR] Erro:", err);
+        console.error("❌ [SIMILAR-PROPERTIES] Erro ao buscar imóveis:", err);
+        
+        // Tratamento de erro mais específico
+        const errorMessage = 
+          err?.response?.data?.message || 
+          err?.message || 
+          "Erro ao buscar imóveis similares";
+          
+        setError(errorMessage);
         setImoveis([]);
       } finally {
         setLoading(false);
@@ -120,19 +81,20 @@ export function SimilarProperties({ id, empreendimento, bairro, categoria, cidad
     }
 
     fetchImoveis();
-  }, [id, empreendimento, bairro, categoria, metragem]);
+  }, [id]); // 🔥 DEPENDÊNCIA CORRIGIDA
 
-  // Verificar overflow para botões
+  // 🔥 VERIFICAR SE PRECISA DE SCROLL
   useEffect(() => {
     const checkOverflow = () => {
       if (carouselRef.current && !loading) {
         const hasOverflow = carouselRef.current.scrollWidth > carouselRef.current.clientWidth;
-        setShowButtons(hasOverflow || imoveis.length >= 3);
+        setShowButtons(hasOverflow || imoveis.length >= 3); // Mostra botões se há overflow OU 3+ imóveis
       }
     };
 
     checkOverflow();
     window.addEventListener('resize', checkOverflow);
+    
     return () => window.removeEventListener('resize', checkOverflow);
   }, [imoveis, loading]);
 
@@ -143,19 +105,31 @@ export function SimilarProperties({ id, empreendimento, bairro, categoria, cidad
     }
   };
 
-  // Não renderizar APENAS se não tiver ID
+  // 🔥 NÃO MOSTRAR SEÇÃO SE NÃO HÁ ID
   if (!id) {
     return null;
   }
 
-  // SEMPRE renderizar a seção, mesmo vazia
+  // Mostrar erro apenas se for crítico
+  if (error && !loading) {
+    console.error(`❌ [SIMILAR-PROPERTIES] Erro exibido: ${error}`);
+    // Retornar null para não mostrar a seção em caso de erro
+    return null;
+  }
+
+  // 🔥 NÃO MOSTRAR SEÇÃO SE NÃO HÁ IMÓVEIS E JÁ CARREGOU
+  if (!loading && imoveis.length === 0) {
+    console.log("ℹ️ [SIMILAR-PROPERTIES] Nenhum imóvel similar encontrado");
+    return null;
+  }
+
   return (
     <section className="relative bg-white container mx-auto border-t-2 p-10 mt-4">
-      <h2 className="text-xl font-bold text-black mb-6">Imóveis Similares{bairro ? ` em ${bairro}` : ''}</h2>
+      <h2 className="text-xl font-bold text-black mb-6">Imóveis Similares</h2>
       
       <div className="container mx-auto relative">
-        {/* Só mostra botões se tiver imóveis */}
-        {showButtons && !loading && imoveis.length > 0 && (
+        {/* 🔥 BOTÕES APARECEM QUANDO HÁ 3+ IMÓVEIS OU OVERFLOW */}
+        {showButtons && (
           <button
             onClick={() => scroll("left")}
             className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black text-white p-2 rounded-full shadow-md z-10 hover:bg-gray-800 transition-colors"
@@ -177,26 +151,21 @@ export function SimilarProperties({ id, empreendimento, bairro, categoria, cidad
                 <CardImovel isLoading={true} />
               </div>
             ))
-          ) : imoveis.length > 0 ? (
-            // Renderiza os imóveis se houver
+          ) : (
+            // Renderiza os imóveis
             imoveis.map((imovel, index) => {
-              const key = imovel?.Codigo || `similar-${index}`;
+              const key = imovel?.Codigo || imovel?._id || `similar-${index}`;
               return (
                 <div key={key} className="flex-shrink-0 w-[280px]">
                   <CardImovel {...imovel} isLoading={false} />
                 </div>
               );
             })
-          ) : (
-            // Mensagem quando não há imóveis
-            <div className="w-full text-center py-8 text-gray-500">
-              <p>Nenhum imóvel similar encontrado no momento.</p>
-            </div>
           )}
         </div>
         
-        {/* Só mostra botões se tiver imóveis */}
-        {showButtons && !loading && imoveis.length > 0 && (
+        {/* 🔥 BOTÕES APARECEM QUANDO HÁ 3+ IMÓVEIS OU OVERFLOW */}
+        {showButtons && (
           <button
             onClick={() => scroll("right")}
             className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white p-2 rounded-full shadow-md z-10 hover:bg-black transition-colors"
