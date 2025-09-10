@@ -657,89 +657,79 @@ export default async function ImovelPage({ params }) {
             <DetalhesCondominio imovel={imovel} />
             <Lazer imovel={imovel} />
             
-            {/* ✅ VALIDAÇÃO ROBUSTA DE VÍDEO (mantida) */}
+            {/* ✅ COMPONENTE DE VÍDEO SIMPLIFICADO E CORRIGIDO */}
             {(() => {
+              // Validação simplificada e mais robusta
+              if (!imovel?.Video) return null;
+              
+              let videoData = null;
+              
               try {
-                if (!imovel?.Video || typeof imovel.Video !== 'object' || Array.isArray(imovel.Video)) {
-                  console.log('🎥 [VALIDATION] ❌ Video inválido: não é objeto válido');
-                  return null;
-                }
-                
-                if (Object.keys(imovel.Video).length === 0) {
-                  console.log('🎥 [VALIDATION] ❌ Video inválido: objeto vazio');
-                  return null;
-                }
-                
-                let videoValue = null;
-                const values = Object.values(imovel.Video);
-                
-                if (values.length > 0) {
-                  const firstValue = values[0];
-                  if (firstValue && typeof firstValue === 'object') {
-                    videoValue = (firstValue.Video || firstValue.url || firstValue.videoId || firstValue.id || '').trim();
-                    console.log('🎥 [VALIDATION] VideoId extraído:', videoValue);
+                // Caso 1: imovel.Video é um objeto com propriedades aninhadas
+                if (typeof imovel.Video === 'object' && !Array.isArray(imovel.Video)) {
+                  const videoValues = Object.values(imovel.Video);
+                  if (videoValues.length > 0) {
+                    const firstVideo = videoValues[0];
+                    if (typeof firstVideo === 'object' && firstVideo.Video) {
+                      videoData = firstVideo.Video;
+                    } else if (typeof firstVideo === 'string') {
+                      videoData = firstVideo;
+                    }
                   }
                 }
                 
-                if (!videoValue) {
-                  console.log('🎥 [VALIDATION] ❌ Video inválido: valor vazio');
-                  return null;
+                // Caso 2: imovel.Video é string direta
+                if (!videoData && typeof imovel.Video === 'string') {
+                  videoData = imovel.Video;
                 }
                 
-                const blockedVideoIds = ['4Aq7szgycT4'];
-                
-                let cleanVideoId = videoValue;
-                const urlMatch = videoValue.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/);
-                if (urlMatch) {
-                  cleanVideoId = urlMatch[1];
-                }
-                
-                if (blockedVideoIds.includes(cleanVideoId)) {
-                  console.log('🎥 [VALIDATION] ❌ VideoId na lista de deletados:', cleanVideoId);
-                  return null;
-                }
-                
-                const isValidYoutubeFormat = 
-                  /^[a-zA-Z0-9_-]{11}$/.test(cleanVideoId) ||
-                  /youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})/.test(videoValue) ||
-                  /youtu\.be\/([a-zA-Z0-9_-]{11})/.test(videoValue) ||
-                  /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/.test(videoValue) ||
-                  /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/.test(videoValue);
-                
-                if (!isValidYoutubeFormat) {
-                  console.log('🎥 [VALIDATION] ❌ Formato inválido:', videoValue);
-                  return null;
-                }
-                
-                const invalidUrlPatterns = [
-                  /youtube\.com\/@/,
-                  /youtube\.com\/channel/,
-                  /youtube\.com\/user/,
-                  /youtube\.com\/c\//,
-                  /youtube\.com\/playlist/,
-                  /youtube\.com\/results/,
-                  /youtube\.com\/feed\/trending/,
-                  /^https?:\/\/(?:www\.)?youtube\.com\/?$/
-                ];
-                
-                for (const pattern of invalidUrlPatterns) {
-                  if (pattern.test(videoValue)) {
-                    console.log('🎥 [VALIDATION] ❌ URL inválida detectada:', videoValue);
-                    return null;
+                // Validação do ID do YouTube
+                if (videoData) {
+                  // Extrair ID do YouTube de qualquer formato
+                  let youtubeId = null;
+                  
+                  const patterns = [
+                    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
+                    /^([a-zA-Z0-9_-]{11})$/
+                  ];
+                  
+                  for (const pattern of patterns) {
+                    const match = videoData.match(pattern);
+                    if (match) {
+                      youtubeId = pattern.source.includes('([a-zA-Z0-9_-]{11})') ? match[1] : match[0];
+                      break;
+                    }
+                  }
+                  
+                  // Verificar se é um ID válido do YouTube
+                  if (youtubeId && /^[a-zA-Z0-9_-]{11}$/.test(youtubeId)) {
+                    // Lista de vídeos bloqueados
+                    const blockedIds = ['4Aq7szgycT4'];
+                    
+                    if (!blockedIds.includes(youtubeId)) {
+                      // Passar dados limpos para o componente
+                      const cleanVideoData = {
+                        Video: youtubeId,
+                        url: `https://www.youtube.com/watch?v=${youtubeId}`,
+                        embed: `https://www.youtube.com/embed/${youtubeId}`,
+                        thumbnail: `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`
+                      };
+                      
+                      return <VideoCondominio imovel={{...imovel, Video: { video: cleanVideoData }}} />;
+                    }
                   }
                 }
                 
-                console.log('🎥 [VALIDATION] ✅ Vídeo válido aprovado:', cleanVideoId);
-                return <VideoCondominio imovel={imovel} />;
+                return null;
                 
-              } catch (e) {
-                console.error('🎥 [VALIDATION] ❌ Erro na validação:', e);
+              } catch (error) {
+                console.error('🎥 [VIDEO] Erro ao processar vídeo:', error);
                 return null;
               }
             })()}
             
             {imovel.Tour360 && <TourVirtual link={imovel.Tour360} titulo={imovel.Empreendimento} />}
-            <SimilarProperties id={imovel.Codigo} />
+            <SimilarProperties id={imovel.Codigo} empreendimento={imovel.Empreendimento} />
             <LocalizacaoCondominio imovel={imovel} />
           </div>
 
