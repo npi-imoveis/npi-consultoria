@@ -1,3 +1,5 @@
+// src/app/imovel/[id]/[slug]/componentes/similar-properties.js
+
 "use client";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 import { useEffect, useRef, useState } from "react";
@@ -25,6 +27,7 @@ export function SimilarProperties({ id, empreendimento }) {
         setError(null);
         
         console.log(`🔍 [SIMILAR-PROPERTIES] Buscando imóveis similares para ID: ${id}`);
+        console.log(`🏢 [SIMILAR-PROPERTIES] Empreendimento a filtrar: "${empreendimento}"`);
         
         const response = await getImoveisSimilares(id);
         
@@ -54,19 +57,48 @@ export function SimilarProperties({ id, empreendimento }) {
           imoveisData = [];
         }
         
-        // 🔥 FILTRO ATUALIZADO: Remove próprio imóvel + mesmo empreendimento
+        // 🔥🔥 FILTRO ULTRA-ROBUSTO COM NORMALIZAÇÃO
+        const empreendimentoNormalizado = empreendimento ? 
+          empreendimento.toLowerCase().trim().replace(/\s+/g, ' ') : '';
+        
+        console.log(`🎯 [SIMILAR-PROPERTIES] Empreendimento normalizado para filtro: "${empreendimentoNormalizado}"`);
+        
         const imoveisFiltrados = imoveisData.filter(imovel => {
           const imovelId = imovel?.Codigo || imovel?._id || imovel?.id;
-          const imovelEmpreendimento = imovel?.Empreendimento;
+          const imovelEmpreendimento = imovel?.Empreendimento || '';
           
-          return (
-            imovelId && 
-            String(imovelId) !== String(id) && // Remove o próprio imóvel
-            imovelEmpreendimento !== empreendimento // Remove do mesmo empreendimento
-          );
+          // Normalizar o empreendimento do imóvel para comparação
+          const imovelEmpreendimentoNormalizado = imovelEmpreendimento
+            .toLowerCase()
+            .trim()
+            .replace(/\s+/g, ' ');
+          
+          // Log detalhado para debug
+          const mesmoId = String(imovelId) === String(id);
+          const mesmoEmpreendimento = imovelEmpreendimentoNormalizado === empreendimentoNormalizado;
+          
+          if (mesmoId) {
+            console.log(`🚫 [SIMILAR-PROPERTIES] Removendo próprio imóvel: ID ${imovelId}`);
+          }
+          
+          if (mesmoEmpreendimento && !mesmoId) {
+            console.log(`🚫 [SIMILAR-PROPERTIES] Removendo mesmo empreendimento: "${imovelEmpreendimento}" (${imovelId})`);
+          }
+          
+          // Retornar true apenas se não for o mesmo ID E não for o mesmo empreendimento
+          return !mesmoId && !mesmoEmpreendimento;
         });
         
-        console.log(`🎯 [SIMILAR-PROPERTIES] ${imoveisFiltrados.length} imóveis após filtro (excluindo empreendimento: ${empreendimento})`);
+        console.log(`✅ [SIMILAR-PROPERTIES] Total após filtro: ${imoveisFiltrados.length} imóveis`);
+        console.log(`✅ [SIMILAR-PROPERTIES] Removidos: ${imoveisData.length - imoveisFiltrados.length} imóveis`);
+        
+        // Log dos primeiros 3 imóveis filtrados para debug
+        if (imoveisFiltrados.length > 0) {
+          console.log("📋 [SIMILAR-PROPERTIES] Primeiros imóveis após filtro:");
+          imoveisFiltrados.slice(0, 3).forEach((imovel, index) => {
+            console.log(`  ${index + 1}. ${imovel.Empreendimento} (ID: ${imovel.Codigo})`);
+          });
+        }
         
         setImoveis(imoveisFiltrados);
         
