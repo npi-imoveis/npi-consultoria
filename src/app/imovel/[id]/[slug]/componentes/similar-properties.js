@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { getImoveisSimilares } from "@/app/services";
 import CardImovel from "@/app/components/ui/card-imovel";
 
-export function SimilarProperties({ id, endereco }) {
+export function SimilarProperties({ id, endereco, bairro, categoria, metragem }) {
   const [imoveis, setImoveis] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -12,7 +12,6 @@ export function SimilarProperties({ id, endereco }) {
   const carouselRef = useRef(null);
 
   useEffect(() => {
-    // 🔥 VALIDAÇÃO DO ID
     if (!id) {
       console.log("❌ [SIMILAR-PROPERTIES] ID não fornecido");
       setLoading(false);
@@ -24,131 +23,138 @@ export function SimilarProperties({ id, endereco }) {
         setLoading(true);
         setError(null);
         
-        console.log(`🔍 [SIMILAR-PROPERTIES] Buscando imóveis similares para ID: ${id}`);
-        console.log(`📍 [SIMILAR-PROPERTIES] Endereço a excluir: ${endereco}`);
+        console.log("🔍 [SIMILAR-PROPERTIES] Buscando imóveis similares");
+        console.log("📊 Critérios:", { id, endereco, bairro, categoria, metragem });
         
         const response = await getImoveisSimilares(id);
         
-        console.log("📦 [SIMILAR-PROPERTIES] Resposta da API:", response);
-        
-        // 🔥 TRATAMENTO ROBUSTO DA RESPOSTA
+        // Extrair dados da resposta
         let imoveisData = [];
-        
-        // Caso 1: response.data.data existe e é array
         if (response?.data?.data && Array.isArray(response.data.data)) {
           imoveisData = response.data.data;
-          console.log(`✅ [SIMILAR-PROPERTIES] Formato 1: ${imoveisData.length} imóveis encontrados`);
-        }
-        // Caso 2: response.data é diretamente um array
-        else if (response?.data && Array.isArray(response.data)) {
+        } else if (response?.data && Array.isArray(response.data)) {
           imoveisData = response.data;
-          console.log(`✅ [SIMILAR-PROPERTIES] Formato 2: ${imoveisData.length} imóveis encontrados`);
-        }
-        // Caso 3: response é diretamente um array (menos comum)
-        else if (Array.isArray(response)) {
+        } else if (Array.isArray(response)) {
           imoveisData = response;
-          console.log(`✅ [SIMILAR-PROPERTIES] Formato 3: ${imoveisData.length} imóveis encontrados`);
-        }
-        // Caso 4: response.data existe mas não é array
-        else if (response?.data) {
-          console.warn("⚠️ [SIMILAR-PROPERTIES] Resposta não é array:", response.data);
-          imoveisData = [];
         }
         
-        // 🔥 FUNÇÃO PARA NORMALIZAR ENDEREÇOS
-        const normalizarEndereco = (end) => {
-          if (!end) return '';
+        console.log(`📦 Total de imóveis recebidos: ${imoveisData.length}`);
+        
+        // 🔥 FUNÇÃO SIMPLES PARA COMPARAR ENDEREÇOS
+        const enderecosSaoIguais = (end1, end2) => {
+          if (!end1 || !end2) return false;
           
-          return end
-            .toLowerCase()
-            .replace(/\s+/g, ' ') // Normaliza espaços múltiplos
-            .replace(/,\s*/g, ',') // Remove espaços após vírgulas
-            .replace(/rua|r\.|av\.|avenida|alameda|al\.|travessa|tv\.|praça|pç\./gi, '') // Remove prefixos
-            .replace(/\s*-\s*/g, '-') // Normaliza hífens
-            .replace(/º|°|ª/g, '') // Remove símbolos de número ordinal
-            .replace(/apartamento|apto|ap\.|andar|and\.|bloco|bl\.|torre/gi, '') // Remove indicadores de unidade
-            .replace(/[^\w\s,\-]/g, '') // Remove caracteres especiais exceto vírgula e hífen
-            .trim();
+          // Extrai apenas o nome da rua e número de cada endereço
+          const extrairRuaNumero = (endereco) => {
+            // Remove tudo após a primeira vírgula ou hífen
+            let base = endereco.split(',')[0].split(' - ')[0];
+            
+            // Remove prefixos comuns e normaliza
+            base = base
+              .toLowerCase()
+              .replace(/rua|r\.|av\.|avenida|alameda|al\./gi, '')
+              .replace(/\s+/g, ' ')
+              .trim();
+            
+            return base;
+          };
+          
+          const base1 = extrairRuaNumero(end1);
+          const base2 = extrairRuaNumero(end2);
+          
+          console.log(`   Comparando: "${base1}" com "${base2}"`);
+          
+          return base1 === base2;
         };
         
-        // 🔥 EXTRAIR APENAS O LOGRADOURO E NÚMERO DO ENDEREÇO
-        const extrairLogradouroNumero = (end) => {
-          if (!end) return '';
-          
-          const normalizado = normalizarEndereco(end);
-          // Tenta capturar padrão: nome da rua + número
-          const match = normalizado.match(/^([^,\d]+[\d]+)/);
-          
-          if (match) {
-            return match[1].trim();
-          }
-          
-          // Se não encontrar padrão, pega até a primeira vírgula
-          const partes = normalizado.split(',');
-          return partes[0].trim();
-        };
-        
-        // 🔥 FILTRAR O PRÓPRIO IMÓVEL E IMÓVEIS DO MESMO ENDEREÇO
-        const enderecoBase = extrairLogradouroNumero(endereco);
-        console.log(`📍 [SIMILAR-PROPERTIES] Endereço base normalizado: "${enderecoBase}"`);
-        
+        // 🔥 APLICAR FILTROS
         const imoveisFiltrados = imoveisData.filter(imovel => {
-          // Pegar o ID do imóvel
           const imovelId = imovel?.Codigo || imovel?._id || imovel?.id;
           
-          // Filtrar o próprio imóvel
+          // 1️⃣ EXCLUIR O PRÓPRIO IMÓVEL
           if (imovelId && String(imovelId) === String(id)) {
-            console.log(`🚫 [SIMILAR-PROPERTIES] Excluindo próprio imóvel: ${imovelId}`);
+            console.log(`❌ Excluindo próprio imóvel: ${imovelId}`);
             return false;
           }
           
-          // 🔥 FILTRAR IMÓVEIS DO MESMO ENDEREÇO
+          // 2️⃣ EXCLUIR IMÓVEIS DO MESMO ENDEREÇO
           if (endereco && imovel?.Endereco) {
-            const enderecoImovel = extrairLogradouroNumero(imovel.Endereco);
-            
-            // Debug para ver as comparações
-            if (enderecoBase && enderecoImovel) {
-              const saoIguais = enderecoBase === enderecoImovel;
-              
-              if (saoIguais) {
-                console.log(`🚫 [SIMILAR-PROPERTIES] Excluindo imóvel do mesmo endereço:`);
-                console.log(`   Original: ${endereco}`);
-                console.log(`   Imóvel:   ${imovel.Endereco}`);
-                console.log(`   Base normalizada: "${enderecoBase}"`);
-                console.log(`   Imóvel normalizado: "${enderecoImovel}"`);
-                return false;
-              }
-            }
-          }
-          
-          // 🔥 TAMBÉM VERIFICAR CAMPO "Logradouro" SE EXISTIR
-          if (endereco && imovel?.Logradouro) {
-            const logradouroImovel = extrairLogradouroNumero(imovel.Logradouro);
-            
-            if (enderecoBase && logradouroImovel && enderecoBase === logradouroImovel) {
-              console.log(`🚫 [SIMILAR-PROPERTIES] Excluindo imóvel do mesmo logradouro: ${imovel.Logradouro}`);
+            if (enderecosSaoIguais(endereco, imovel.Endereco)) {
+              console.log(`❌ Excluindo mesmo endereço: ${imovel.Endereco}`);
               return false;
             }
           }
           
-          return true; // Mantém o imóvel na lista
+          // 3️⃣ FILTRAR POR BAIRRO (deve ser o mesmo)
+          if (bairro && imovel?.Bairro) {
+            const bairroNormalizado = bairro.toLowerCase().trim();
+            const bairroImovel = imovel.Bairro.toLowerCase().trim();
+            
+            if (bairroNormalizado !== bairroImovel) {
+              console.log(`❌ Bairro diferente: ${imovel.Bairro} ≠ ${bairro}`);
+              return false;
+            }
+          }
+          
+          // 4️⃣ FILTRAR POR CATEGORIA (deve ser a mesma)
+          if (categoria && imovel?.Categoria) {
+            const categoriaNormalizada = categoria.toLowerCase().trim();
+            const categoriaImovel = imovel.Categoria.toLowerCase().trim();
+            
+            if (categoriaNormalizada !== categoriaImovel) {
+              console.log(`❌ Categoria diferente: ${imovel.Categoria} ≠ ${categoria}`);
+              return false;
+            }
+          }
+          // Também verificar campo "Tipo" se não tiver "Categoria"
+          else if (categoria && imovel?.Tipo) {
+            const categoriaNormalizada = categoria.toLowerCase().trim();
+            const tipoImovel = imovel.Tipo.toLowerCase().trim();
+            
+            if (categoriaNormalizada !== tipoImovel) {
+              console.log(`❌ Tipo diferente: ${imovel.Tipo} ≠ ${categoria}`);
+              return false;
+            }
+          }
+          
+          // 5️⃣ FILTRAR POR METRAGEM (±20%)
+          if (metragem && imovel?.AreaUtil) {
+            const metragemNum = parseFloat(metragem);
+            const metragemImovel = parseFloat(imovel.AreaUtil);
+            
+            const limiteInferior = metragemNum * 0.8;  // -20%
+            const limiteSuperior = metragemNum * 1.2;  // +20%
+            
+            if (metragemImovel < limiteInferior || metragemImovel > limiteSuperior) {
+              console.log(`❌ Metragem fora do range: ${imovel.AreaUtil}m² (range: ${limiteInferior.toFixed(0)}-${limiteSuperior.toFixed(0)}m²)`);
+              return false;
+            }
+          }
+          // Também verificar campo "Metragem" se não tiver "AreaUtil"
+          else if (metragem && imovel?.Metragem) {
+            const metragemNum = parseFloat(metragem);
+            const metragemImovel = parseFloat(imovel.Metragem);
+            
+            const limiteInferior = metragemNum * 0.8;
+            const limiteSuperior = metragemNum * 1.2;
+            
+            if (metragemImovel < limiteInferior || metragemImovel > limiteSuperior) {
+              console.log(`❌ Metragem fora do range: ${imovel.Metragem}m²`);
+              return false;
+            }
+          }
+          
+          // ✅ IMÓVEL PASSOU EM TODOS OS FILTROS
+          console.log(`✅ Imóvel aprovado: ${imovel.Endereco || 'Sem endereço'}`);
+          return true;
         });
         
-        console.log(`🎯 [SIMILAR-PROPERTIES] ${imoveisFiltrados.length} imóveis após filtros`);
-        console.log(`📊 [SIMILAR-PROPERTIES] Total removido: ${imoveisData.length - imoveisFiltrados.length} imóveis`);
-        
+        console.log(`📊 RESULTADO: ${imoveisFiltrados.length} imóveis após filtros`);
         setImoveis(imoveisFiltrados);
         
       } catch (err) {
-        console.error("❌ [SIMILAR-PROPERTIES] Erro ao buscar imóveis:", err);
-        
-        // Tratamento de erro mais específico
-        const errorMessage = 
-          err?.response?.data?.message || 
-          err?.message || 
-          "Erro ao buscar imóveis similares";
-          
-        setError(errorMessage);
+        console.error("❌ Erro ao buscar imóveis:", err);
+        setError(err?.message || "Erro ao buscar imóveis similares");
         setImoveis([]);
       } finally {
         setLoading(false);
@@ -156,9 +162,9 @@ export function SimilarProperties({ id, endereco }) {
     }
 
     fetchImoveis();
-  }, [id, endereco]); // 🔥 DEPENDÊNCIA ATUALIZADA
+  }, [id, endereco, bairro, categoria, metragem]);
 
-  // 🔥 VERIFICAR SE PRECISA DE SCROLL
+  // Verificar se precisa mostrar botões de scroll
   useEffect(() => {
     const checkOverflow = () => {
       if (carouselRef.current && !loading) {
@@ -180,20 +186,19 @@ export function SimilarProperties({ id, endereco }) {
     }
   };
 
-  // 🔥 NÃO MOSTRAR SEÇÃO SE NÃO HÁ ID
+  // Não mostrar seção se não há ID
   if (!id) {
     return null;
   }
 
-  // Mostrar erro apenas se for crítico
+  // Não mostrar seção se houve erro
   if (error && !loading) {
-    console.error(`❌ [SIMILAR-PROPERTIES] Erro exibido: ${error}`);
     return null;
   }
 
-  // 🔥 NÃO MOSTRAR SEÇÃO SE NÃO HÁ IMÓVEIS E JÁ CARREGOU
+  // Não mostrar seção se não há imóveis similares
   if (!loading && imoveis.length === 0) {
-    console.log("ℹ️ [SIMILAR-PROPERTIES] Nenhum imóvel similar encontrado (após excluir mesmo endereço)");
+    console.log("ℹ️ Nenhum imóvel similar encontrado com os critérios definidos");
     return null;
   }
 
@@ -202,7 +207,6 @@ export function SimilarProperties({ id, endereco }) {
       <h2 className="text-xl font-bold text-black mb-6">Imóveis Similares</h2>
       
       <div className="container mx-auto relative">
-        {/* 🔥 BOTÕES APARECEM QUANDO HÁ 3+ IMÓVEIS OU OVERFLOW */}
         {showButtons && (
           <button
             onClick={() => scroll("left")}
@@ -238,7 +242,6 @@ export function SimilarProperties({ id, endereco }) {
           )}
         </div>
         
-        {/* 🔥 BOTÕES APARECEM QUANDO HÁ 3+ IMÓVEIS OU OVERFLOW */}
         {showButtons && (
           <button
             onClick={() => scroll("right")}
