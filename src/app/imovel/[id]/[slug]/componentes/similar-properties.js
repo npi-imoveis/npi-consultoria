@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { getImoveisSimilares } from "@/app/services";
 import CardImovel from "@/app/components/ui/card-imovel";
 
-export function SimilarProperties({ id }) {
+export function SimilarProperties({ id, endereco }) {
   const [imoveis, setImoveis] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -25,6 +25,7 @@ export function SimilarProperties({ id }) {
         setError(null);
         
         console.log(`🔍 [SIMILAR-PROPERTIES] Buscando imóveis similares para ID: ${id}`);
+        console.log(`📍 [SIMILAR-PROPERTIES] Endereço a excluir: ${endereco}`);
         
         const response = await getImoveisSimilares(id);
         
@@ -54,13 +55,87 @@ export function SimilarProperties({ id }) {
           imoveisData = [];
         }
         
-        // 🔥 FILTRAR O PRÓPRIO IMÓVEL DA LISTA (se estiver incluído)
+        // 🔥 FUNÇÃO PARA NORMALIZAR ENDEREÇOS
+        const normalizarEndereco = (end) => {
+          if (!end) return '';
+          
+          return end
+            .toLowerCase()
+            .replace(/\s+/g, ' ') // Normaliza espaços múltiplos
+            .replace(/,\s*/g, ',') // Remove espaços após vírgulas
+            .replace(/rua|r\.|av\.|avenida|alameda|al\.|travessa|tv\.|praça|pç\./gi, '') // Remove prefixos
+            .replace(/\s*-\s*/g, '-') // Normaliza hífens
+            .replace(/º|°|ª/g, '') // Remove símbolos de número ordinal
+            .replace(/apartamento|apto|ap\.|andar|and\.|bloco|bl\.|torre/gi, '') // Remove indicadores de unidade
+            .replace(/[^\w\s,\-]/g, '') // Remove caracteres especiais exceto vírgula e hífen
+            .trim();
+        };
+        
+        // 🔥 EXTRAIR APENAS O LOGRADOURO E NÚMERO DO ENDEREÇO
+        const extrairLogradouroNumero = (end) => {
+          if (!end) return '';
+          
+          const normalizado = normalizarEndereco(end);
+          // Tenta capturar padrão: nome da rua + número
+          const match = normalizado.match(/^([^,\d]+[\d]+)/);
+          
+          if (match) {
+            return match[1].trim();
+          }
+          
+          // Se não encontrar padrão, pega até a primeira vírgula
+          const partes = normalizado.split(',');
+          return partes[0].trim();
+        };
+        
+        // 🔥 FILTRAR O PRÓPRIO IMÓVEL E IMÓVEIS DO MESMO ENDEREÇO
+        const enderecoBase = extrairLogradouroNumero(endereco);
+        console.log(`📍 [SIMILAR-PROPERTIES] Endereço base normalizado: "${enderecoBase}"`);
+        
         const imoveisFiltrados = imoveisData.filter(imovel => {
+          // Pegar o ID do imóvel
           const imovelId = imovel?.Codigo || imovel?._id || imovel?.id;
-          return imovelId && String(imovelId) !== String(id);
+          
+          // Filtrar o próprio imóvel
+          if (imovelId && String(imovelId) === String(id)) {
+            console.log(`🚫 [SIMILAR-PROPERTIES] Excluindo próprio imóvel: ${imovelId}`);
+            return false;
+          }
+          
+          // 🔥 FILTRAR IMÓVEIS DO MESMO ENDEREÇO
+          if (endereco && imovel?.Endereco) {
+            const enderecoImovel = extrairLogradouroNumero(imovel.Endereco);
+            
+            // Debug para ver as comparações
+            if (enderecoBase && enderecoImovel) {
+              const saoIguais = enderecoBase === enderecoImovel;
+              
+              if (saoIguais) {
+                console.log(`🚫 [SIMILAR-PROPERTIES] Excluindo imóvel do mesmo endereço:`);
+                console.log(`   Original: ${endereco}`);
+                console.log(`   Imóvel:   ${imovel.Endereco}`);
+                console.log(`   Base normalizada: "${enderecoBase}"`);
+                console.log(`   Imóvel normalizado: "${enderecoImovel}"`);
+                return false;
+              }
+            }
+          }
+          
+          // 🔥 TAMBÉM VERIFICAR CAMPO "Logradouro" SE EXISTIR
+          if (endereco && imovel?.Logradouro) {
+            const logradouroImovel = extrairLogradouroNumero(imovel.Logradouro);
+            
+            if (enderecoBase && logradouroImovel && enderecoBase === logradouroImovel) {
+              console.log(`🚫 [SIMILAR-PROPERTIES] Excluindo imóvel do mesmo logradouro: ${imovel.Logradouro}`);
+              return false;
+            }
+          }
+          
+          return true; // Mantém o imóvel na lista
         });
         
-        console.log(`🎯 [SIMILAR-PROPERTIES] ${imoveisFiltrados.length} imóveis após filtro`);
+        console.log(`🎯 [SIMILAR-PROPERTIES] ${imoveisFiltrados.length} imóveis após filtros`);
+        console.log(`📊 [SIMILAR-PROPERTIES] Total removido: ${imoveisData.length - imoveisFiltrados.length} imóveis`);
         
         setImoveis(imoveisFiltrados);
         
@@ -81,14 +156,14 @@ export function SimilarProperties({ id }) {
     }
 
     fetchImoveis();
-  }, [id]); // 🔥 DEPENDÊNCIA CORRIGIDA
+  }, [id, endereco]); // 🔥 DEPENDÊNCIA ATUALIZADA
 
   // 🔥 VERIFICAR SE PRECISA DE SCROLL
   useEffect(() => {
     const checkOverflow = () => {
       if (carouselRef.current && !loading) {
         const hasOverflow = carouselRef.current.scrollWidth > carouselRef.current.clientWidth;
-        setShowButtons(hasOverflow || imoveis.length >= 3); // Mostra botões se há overflow OU 3+ imóveis
+        setShowButtons(hasOverflow || imoveis.length >= 3);
       }
     };
 
@@ -113,13 +188,12 @@ export function SimilarProperties({ id }) {
   // Mostrar erro apenas se for crítico
   if (error && !loading) {
     console.error(`❌ [SIMILAR-PROPERTIES] Erro exibido: ${error}`);
-    // Retornar null para não mostrar a seção em caso de erro
     return null;
   }
 
   // 🔥 NÃO MOSTRAR SEÇÃO SE NÃO HÁ IMÓVEIS E JÁ CARREGOU
   if (!loading && imoveis.length === 0) {
-    console.log("ℹ️ [SIMILAR-PROPERTIES] Nenhum imóvel similar encontrado");
+    console.log("ℹ️ [SIMILAR-PROPERTIES] Nenhum imóvel similar encontrado (após excluir mesmo endereço)");
     return null;
   }
 
