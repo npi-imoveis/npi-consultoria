@@ -642,21 +642,26 @@ export default async function ImovelPage({ params }) {
             <Lazer imovel={imovel} />
             
             {/* COMPONENTE DE VÍDEO RESTAURADO */}
-{imovel?.Video && (
-  <VideoCondominio 
-    imovel={{
-      ...imovel,
-      Video: imovel.Video
-    }} 
-  />
-)}
+            {imovel?.Video && (
+              <VideoCondominio 
+                imovel={{
+                  ...imovel,
+                  Video: imovel.Video
+                }} 
+              />
+            )}
             
             {imovel.Tour360 && <TourVirtual link={imovel.Tour360} titulo={imovel.Empreendimento} />}
+            
+            {/* COMPONENTE DE IMÓVEIS SIMILARES ATUALIZADO */}
             <SimilarProperties 
-            id={imovel.Codigo} 
-            empreendimento={imovel.Empreendimento}
-            endereco={imovel.Endereco}
-            bairro={imovel.BairroComercial} />
+              id={imovel.Codigo} 
+              empreendimento={imovel.Empreendimento}
+              bairro={imovel.BairroComercial}
+              categoria={imovel.Categoria}
+              cidade={imovel.Cidade}
+            />
+            
             <LocalizacaoCondominio imovel={imovel} />
           </div>
 
