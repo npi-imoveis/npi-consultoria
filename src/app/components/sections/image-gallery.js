@@ -1,4 +1,4 @@
-// src/app/components/sections/image-gallery.js - COMPLETO + ORDEM CORRIGIDA
+// src/app/components/sections/image-gallery.js - VERSÃO FINAL CORRIGIDA
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -233,6 +233,56 @@ export function ImageGallery({
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isModalOpen, closeModal, goPrev, goNext]);
+
+  // 🔒 BLOQUEIA SCROLL E ESCONDE ELEMENTOS QUANDO MODAL ABRE
+  useEffect(() => {
+    if (isModalOpen) {
+      // Bloqueia scroll
+      document.body.style.overflow = 'hidden';
+      // Adiciona classe para esconder outros elementos
+      document.body.classList.add('npi-gallery-modal-open');
+      
+      // Adiciona estilos inline de emergência para esconder elementos vazando
+      const style = document.createElement('style');
+      style.id = 'npi-gallery-modal-styles';
+      style.innerHTML = `
+        .npi-gallery-modal-open {
+          overflow: hidden !important;
+        }
+        .npi-gallery-modal-open .swiper,
+        .npi-gallery-modal-open .swiper-wrapper,
+        .npi-gallery-modal-open .carousel,
+        .npi-gallery-modal-open .thumbnails,
+        .npi-gallery-modal-open [class*="carousel"],
+        .npi-gallery-modal-open [class*="thumb"],
+        .npi-gallery-modal-open [class*="slider"] {
+          visibility: hidden !important;
+          z-index: -1 !important;
+        }
+      `;
+      document.head.appendChild(style);
+    } else {
+      // Restaura scroll
+      document.body.style.overflow = '';
+      // Remove classe
+      document.body.classList.remove('npi-gallery-modal-open');
+      // Remove estilos
+      const style = document.getElementById('npi-gallery-modal-styles');
+      if (style) {
+        style.remove();
+      }
+    }
+
+    // Cleanup
+    return () => {
+      document.body.style.overflow = '';
+      document.body.classList.remove('npi-gallery-modal-open');
+      const style = document.getElementById('npi-gallery-modal-styles');
+      if (style) {
+        style.remove();
+      }
+    };
+  }, [isModalOpen]);
 
   if (!processedData.titulo || images.length === 0) {
     return (
@@ -607,9 +657,21 @@ export function ImageGallery({
         </div>
       )}
 
-      {/* 🖼️ MODAL OTIMIZADO */}
+      {/* 🖼️ MODAL OTIMIZADO - CORREÇÃO DO Z-INDEX E ISOLAMENTO */}
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-95 z-50 overflow-auto">
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-95 overflow-auto"
+          style={{
+            zIndex: 2147483647, // Máximo z-index possível
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0, 
+            bottom: 0,
+            width: '100vw',
+            height: '100vh'
+          }}
+        >
           {/* Header fixo */}
           <div className="sticky top-0 z-10 flex justify-between gap-4 p-5 pt-28 mt-6 md:mt-0 bg-gradient-to-b from-black/80 via-black/40 to-transparent backdrop-blur-sm">
             <button 
@@ -631,6 +693,7 @@ export function ImageGallery({
           </div>
 
           {selectedIndex !== null ? (
+            // VISUALIZAÇÃO DE FOTO INDIVIDUAL
             <div className="flex items-center justify-center min-h-screen p-4 relative">
               <Image
                 src={images[selectedIndex].Foto}
@@ -668,7 +731,7 @@ export function ImageGallery({
               </button>
             </div>
           ) : (
-            // Grid de thumbnails otimizado
+            // GRID DE THUMBNAILS
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
               {images.map((image, idx) => (
                 <div
@@ -697,12 +760,10 @@ export function ImageGallery({
                     className="object-cover"
                   />
                   
-                  {/* Número da foto - apenas no desktop */}
-                  {!isMobile && (
-                    <div className="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
-                      {idx + 1}
-                    </div>
-                  )}
+                  {/* Número da foto */}
+                  <div className="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
+                    {idx + 1}
+                  </div>
                   
                   {/* Indicador de destaque */}
                   {image.Destaque === "Sim" && (
