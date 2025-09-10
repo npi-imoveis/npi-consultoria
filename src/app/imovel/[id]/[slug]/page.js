@@ -354,25 +354,19 @@ function cleanDuplicateWords(text) {
     .trim();
 }
 
-// 🎯 NOVA FUNÇÃO: DETECTAR FINALIDADE (VENDA/LOCAÇÃO)
+// FUNÇÃO PARA DETECTAR FINALIDADE (VENDA/LOCAÇÃO)
 function detectarFinalidade(imovel) {
-  // Verifica se tem valores de locação preenchidos
   const temAluguel = imovel.ValorAluguel || imovel.ValorAluguelSite || imovel.ValorLocacao;
-  
-  // Verifica se tem valores de venda preenchidos  
   const temVenda = imovel.ValorVenda || imovel.ValorAntigo || imovel.ValorVendaFormatado;
   
-  // Se tem campo finalidade específico, usar ele
   if (imovel.Finalidade) {
     return imovel.Finalidade.toLowerCase().includes('loca') ? 'locacao' : 'venda';
   }
   
-  // Se tem valor de aluguel e não tem venda, é locação
   if (temAluguel && !temVenda) {
     return 'locacao';
   }
   
-  // Se tem valor de venda ou ambos, é venda
   return 'venda';
 }
 
@@ -409,14 +403,14 @@ export async function generateMetadata({ params }) {
     
     console.error(`[IMOVEL-META] ✅ Data final válida: ${modifiedDate}`);
     
-    // 🎯 NOVA LÓGICA: TÍTULO E DESCRIPTION OTIMIZADOS (VERSÃO SEGURA)
+    // NOVA LÓGICA: TÍTULO E DESCRIPTION OTIMIZADOS
     const finalidade = detectarFinalidade(imovel);
     const textoFinalidade = finalidade === 'locacao' ? 'para locação' : 'à venda';
     const valorFinal = finalidade === 'locacao' 
       ? (imovel.ValorAluguel || imovel.ValorAluguelSite || 'Consulte')
       : (imovel.ValorAntigo || 'Consulte');
 
-    // Título com endereço completo - VERSÃO SEGURA
+    // Título com endereço completo
     const partesTitle = [
       imovel.Tipo || 'Apartamento',
       imovel.TipoEndereco,
@@ -424,20 +418,21 @@ export async function generateMetadata({ params }) {
       imovel.Numero
     ].filter(parte => parte && parte.trim() !== '').join(' ');
     
-    const title = `${partesTitle}, ${imovel.Empreendimento || 'Imóvel'}`;
+    const title = `${partesTitle}, ${imovel.Empreendimento}`;
 
-    // Description otimizada - VERSÃO SEGURA
+    // Description otimizada
     const valorFormatado = valorFinal === 'Consulte' ? 'Consulte' : 
-      (typeof valorFinal === 'string' && valorFinal.includes('R
+      (typeof valorFinal === 'string' && valorFinal.includes('R$') ? valorFinal : `R$ ${valorFinal}`);
     
-    // 🚨 CORREÇÃO GSC: Validar slug antes de usar em URLs canônicas
+    const descricaoLimpa = cleanDuplicateWords(`${imovel.Tipo || 'Apartamento'} ${textoFinalidade} no ${imovel.Empreendimento}, ${imovel.BairroComercial}. ${imovel.DormitoriosAntigo || 0} quartos (${imovel.SuiteAntigo || 0} suítes), ${imovel.VagasAntigo || 0} vagas, ${imovel.MetragemAnt || 0} m². Cód ${imovel.Codigo}. PREÇO: ${valorFormatado}.`);
+    
+    // CORREÇÃO GSC: Validar slug antes de usar em URLs canônicas
     const slugsInvalidos = [
       'facebook.com/npiimoveis',
       'instagram.com/npi_imoveis', 
       'indexdata/index.swf'
     ];
     
-    // Use apenas slug válido, senão usa URL sem slug
     const slugValido = imovel.Slug && !slugsInvalidos.includes(imovel.Slug) ? imovel.Slug : null;
     const currentUrl = slugValido 
       ? `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${slugValido}`
@@ -532,7 +527,7 @@ export default async function ImovelPage({ params }) {
   console.log(`🏠 [IMOVEL-PAGE] =================== INÍCIO ===================`);
   console.log(`🏠 [IMOVEL-PAGE] Processando ID: ${id}, SLUG: ${slug}`);
   
-  // 🚨 DEBUG CANONICAL CRÍTICO: Detectar ID undefined
+  // DEBUG CANONICAL CRÍTICO: Detectar ID undefined
   if (!id || id === 'undefined' || id === 'null') {
     console.log(`🚨🚨🚨 [CANONICAL-DEBUG] ★★★ ID UNDEFINED DETECTADO ★★★`);
     console.log(`🚨🚨🚨 [CANONICAL-DEBUG] ID: "${id}", SLUG: "${slug}"`);
@@ -540,11 +535,10 @@ export default async function ImovelPage({ params }) {
     console.log(`🚨🚨🚨 [CANONICAL-DEBUG] typeof ID: ${typeof id}`);
     console.log(`🚨🚨🚨 [CANONICAL-DEBUG] URL problemática que causa canonical conflito!`);
     
-    // Redirecionar para busca para evitar canonical conflitante
     redirect('/busca');
   }
   
-  // 🚨 RASTREAMENTO DETALHADO: URLs problemáticas específicas do CSV
+  // RASTREAMENTO DETALHADO: URLs problemáticas específicas do CSV
   const slugsInvalidos = [
     'facebook.com/npiimoveis',
     'instagram.com/npi_imoveis', 
@@ -587,21 +581,12 @@ export default async function ImovelPage({ params }) {
       console.log(`🏠 [IMOVEL-PAGE] ⚠️ Slug inconsistente (middleware deveria ter redirecionado): ${slug} vs ${slugCorreto}`);
     }
 
-    // 🚨 CORREÇÃO GSC: Usar mesma validação de slug (reutilizar função)
-    const slugsInvalidos = [
-      'facebook.com/npiimoveis',
-      'instagram.com/npi_imoveis', 
-      'indexdata/index.swf'
-    ];
-    
     const slugValido = imovel.Slug && !slugsInvalidos.includes(imovel.Slug) ? imovel.Slug : null;
     const currentUrl = slugValido 
       ? `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${slugValido}`
       : `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}`;
     
     const modifiedDate = convertBrazilianDateToISO(imovel.DataHoraAtualizacao, imovel);
-    
-    // 🔥 PRELOAD DA IMAGEM LCP - CRÍTICO PARA PERFORMANCE
     const lcpImageUrl = getLCPOptimizedImageUrl(imovel.Foto);
     
     console.log('🔍 Data convertida no componente:', modifiedDate);
@@ -643,7 +628,6 @@ export default async function ImovelPage({ params }) {
 
         <ExitIntentModal condominio={imovel.Empreendimento} link={currentUrl} />
 
-        {/* 🔥 IMAGEM LCP - ELEMENTO CRÍTICO */}
         <div className="w-full mx-auto">
           <ImageGallery imovel={imovel} />
         </div>
@@ -657,15 +641,13 @@ export default async function ImovelPage({ params }) {
             <DetalhesCondominio imovel={imovel} />
             <Lazer imovel={imovel} />
             
-            {/* ✅ COMPONENTE DE VÍDEO SIMPLIFICADO E CORRIGIDO */}
+            {/* COMPONENTE DE VÍDEO SIMPLIFICADO E CORRIGIDO */}
             {(() => {
-              // Validação simplificada e mais robusta
               if (!imovel?.Video) return null;
               
               let videoData = null;
               
               try {
-                // Caso 1: imovel.Video é um objeto com propriedades aninhadas
                 if (typeof imovel.Video === 'object' && !Array.isArray(imovel.Video)) {
                   const videoValues = Object.values(imovel.Video);
                   if (videoValues.length > 0) {
@@ -678,14 +660,11 @@ export default async function ImovelPage({ params }) {
                   }
                 }
                 
-                // Caso 2: imovel.Video é string direta
                 if (!videoData && typeof imovel.Video === 'string') {
                   videoData = imovel.Video;
                 }
                 
-                // Validação do ID do YouTube
                 if (videoData) {
-                  // Extrair ID do YouTube de qualquer formato
                   let youtubeId = null;
                   
                   const patterns = [
@@ -701,13 +680,10 @@ export default async function ImovelPage({ params }) {
                     }
                   }
                   
-                  // Verificar se é um ID válido do YouTube
                   if (youtubeId && /^[a-zA-Z0-9_-]{11}$/.test(youtubeId)) {
-                    // Lista de vídeos bloqueados
                     const blockedIds = ['4Aq7szgycT4'];
                     
                     if (!blockedIds.includes(youtubeId)) {
-                      // Passar dados limpos para o componente
                       const cleanVideoData = {
                         Video: youtubeId,
                         url: `https://www.youtube.com/watch?v=${youtubeId}`,
@@ -730,341 +706,6 @@ export default async function ImovelPage({ params }) {
             
             {imovel.Tour360 && <TourVirtual link={imovel.Tour360} titulo={imovel.Empreendimento} />}
             <SimilarProperties id={imovel.Codigo} empreendimento={imovel.Empreendimento} />
-            <LocalizacaoCondominio imovel={imovel} />
-          </div>
-
-          <div className="w-full lg:w-[35%] h-fit lg:sticky lg:top-24 order-first lg:order-last mb-6 lg:mb-0">
-            <Contato imovel={imovel} currentUrl={currentUrl} />
-          </div>
-        </div>
-
-        <div className="container mx-auto px-4 md:px-0">
-          <FAQImovel imovel={imovel} />
-        </div>
-
-        <WhatsappFloat
-          message={`Quero saber mais sobre o ${imovel.Empreendimento}, no bairro ${imovel.BairroComercial}, disponível na página do Imóvel: ${currentUrl}`}
-        />
-      </section>
-    );
-  } catch (error) {
-    console.error('Erro na página do imóvel:', error);
-    notFound();
-  }
-}) ? valorFinal : `R$ ${valorFinal}`);
-    
-    const descricaoLimpa = `${imovel.Tipo || 'Apartamento'} ${textoFinalidade} no ${imovel.Empreendimento || 'empreendimento'}, ${imovel.BairroComercial || 'região'}. ${imovel.DormitoriosAntigo || 0} quartos (${imovel.SuiteAntigo || 0} suítes), ${imovel.VagasAntigo || 0} vagas, ${imovel.MetragemAnt || 0} m². Cód ${imovel.Codigo}. PREÇO: ${valorFormatado}.`;
-    
-    // 🚨 CORREÇÃO GSC: Validar slug antes de usar em URLs canônicas
-    const slugsInvalidos = [
-      'facebook.com/npiimoveis',
-      'instagram.com/npi_imoveis', 
-      'indexdata/index.swf'
-    ];
-    
-    // Use apenas slug válido, senão usa URL sem slug
-    const slugValido = imovel.Slug && !slugsInvalidos.includes(imovel.Slug) ? imovel.Slug : null;
-    const currentUrl = slugValido 
-      ? `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${slugValido}`
-      : `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}`;
-    
-    console.log(`📋 [META-URL] Slug original: "${imovel.Slug}", válido: ${!!slugValido}, URL: ${currentUrl}`);
-    const imageUrl = getWhatsAppOptimizedImageUrl(imovel.Foto);
-    
-    console.log('📱 [WHATSAPP-META] URL final da imagem para WhatsApp:', imageUrl);
-
-    return {
-      title,
-      description: descricaoLimpa,
-      alternates: {
-        canonical: currentUrl,
-        languages: {
-          "pt-BR": currentUrl,
-        },
-      },
-      robots: {
-        index: true,
-        follow: true,
-        'max-video-preview': -1,
-        'max-image-preview': 'large',
-        'max-snippet': -1,
-      },
-      openGraph: {
-        title,
-        description: descricaoLimpa,
-        url: currentUrl,
-        type: "website",
-        siteName: "NPI",
-        locale: "pt_BR",
-        images: [
-          {
-            url: imageUrl,
-            secureUrl: imageUrl,
-            width: 1200,
-            height: 630,
-            alt: title,
-            type: "image/jpeg",
-          },
-          {
-            url: `${process.env.NEXT_PUBLIC_SITE_URL}/og-image.png`,
-            secureUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/og-image.png`,
-            width: 1200,
-            height: 630,
-            alt: "NPI Consultoria - Imóveis",
-            type: "image/png",
-          }
-        ],
-      },
-      twitter: {
-        card: "summary_large_image",
-        title,
-        description: descricaoLimpa,
-        site: "@NPIImoveis",
-        creator: "@NPIImoveis",
-        images: [
-          {
-            url: imageUrl,
-            alt: title,
-          }
-        ],
-      },
-      other: {
-        'og:title': title,
-        'og:description': descricaoLimpa,
-        'og:image': imageUrl,
-        'og:url': currentUrl,
-        'og:type': 'website',
-        'og:site_name': 'NPI',
-        'og:locale': 'pt_BR',
-        'article:published_time': modifiedDate,
-        'article:modified_time': modifiedDate,
-        'cache-control': 'no-cache, must-revalidate',
-        'last-modified': modifiedDate,
-      },
-    };
-  } catch (error) {
-    console.error('Erro ao gerar metadata:', error);
-    return {
-      title: 'Erro - NPI Consultoria',
-      description: 'Ocorreu um erro ao carregar as informações do imóvel.',
-    };
-  }
-}
-
-export default async function ImovelPage({ params }) {
-  const { id, slug } = params;
-  
-  console.log(`🏠 [IMOVEL-PAGE] =================== INÍCIO ===================`);
-  console.log(`🏠 [IMOVEL-PAGE] Processando ID: ${id}, SLUG: ${slug}`);
-  
-  // 🚨 DEBUG CANONICAL CRÍTICO: Detectar ID undefined
-  if (!id || id === 'undefined' || id === 'null') {
-    console.log(`🚨🚨🚨 [CANONICAL-DEBUG] ★★★ ID UNDEFINED DETECTADO ★★★`);
-    console.log(`🚨🚨🚨 [CANONICAL-DEBUG] ID: "${id}", SLUG: "${slug}"`);
-    console.log(`🚨🚨🚨 [CANONICAL-DEBUG] params:`, JSON.stringify(params));
-    console.log(`🚨🚨🚨 [CANONICAL-DEBUG] typeof ID: ${typeof id}`);
-    console.log(`🚨🚨🚨 [CANONICAL-DEBUG] URL problemática que causa canonical conflito!`);
-    
-    // Redirecionar para busca para evitar canonical conflitante
-    redirect('/busca');
-  }
-  
-  // 🚨 RASTREAMENTO DETALHADO: URLs problemáticas específicas do CSV
-  const slugsInvalidos = [
-    'facebook.com/npiimoveis',
-    'instagram.com/npi_imoveis', 
-    'indexdata/index.swf'
-  ];
-  
-  if (slugsInvalidos.includes(slug)) {
-    console.log(`🚨🚨🚨 [IMOVEL-PAGE] ★★★ SLUG INVÁLIDO DETECTADO ★★★`);
-    console.log(`🚨🚨🚨 [IMOVEL-PAGE] ID: ${id}, SLUG PROBLEMÁTICO: ${slug}`);
-    console.log(`🚨🚨🚨 [IMOVEL-PAGE] URL COMPLETA: /imovel-${id}/${slug}`);
-    console.log(`🚨🚨🚨 [IMOVEL-PAGE] Redirecionando para: /imovel-${id}`);
-    redirect(`/imovel-${id}`);
-  }
-  
-  try {
-    console.log(`🏠 [IMOVEL-PAGE] 📞 Chamando getImovelById(${id})`);
-    const response = await getImovelById(id);
-    
-    console.log(`🏠 [IMOVEL-PAGE] 📞 Response:`, { 
-      success: !!response?.data, 
-      codigo: response?.data?.Codigo,
-      empreendimento: response?.data?.Empreendimento?.substring(0, 30)
-    });
-    
-    if (!response?.data) {
-      notFound();
-    }
-
-    const imovel = {
-      ...response.data,
-      SuiteAntigo: response.data.SuiteAntigo ?? response.data.Suites ?? 0,
-      DormitoriosAntigo: response.data.DormitoriosAntigo ?? 0,
-      VagasAntigo: response.data.VagasAntigo ?? 0,
-      BanheiroSocialQtd: response.data.BanheiroSocialQtd ?? 0,
-    };
-
-    const slugCorreto = imovel.Slug;
-
-    if (slug !== slugCorreto) {
-      console.log(`🏠 [IMOVEL-PAGE] ⚠️ Slug inconsistente (middleware deveria ter redirecionado): ${slug} vs ${slugCorreto}`);
-    }
-
-    // 🚨 CORREÇÃO GSC: Usar mesma validação de slug (reutilizar função)
-    const slugsInvalidos = [
-      'facebook.com/npiimoveis',
-      'instagram.com/npi_imoveis', 
-      'indexdata/index.swf'
-    ];
-    
-    const slugValido = imovel.Slug && !slugsInvalidos.includes(imovel.Slug) ? imovel.Slug : null;
-    const currentUrl = slugValido 
-      ? `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${slugValido}`
-      : `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}`;
-    
-    const modifiedDate = convertBrazilianDateToISO(imovel.DataHoraAtualizacao, imovel);
-    
-    // 🔥 PRELOAD DA IMAGEM LCP - CRÍTICO PARA PERFORMANCE
-    const lcpImageUrl = getLCPOptimizedImageUrl(imovel.Foto);
-    
-    console.log('🔍 Data convertida no componente:', modifiedDate);
-    console.log('🚀 [LCP-CRITICAL] URL da imagem LCP para preload:', lcpImageUrl);
-    
-    const structuredDataDates = {
-      "@context": "https://schema.org",
-      "@type": "WebPage",
-      url: currentUrl,
-      datePublished: modifiedDate,
-      dateModified: modifiedDate,
-      author: {
-        "@type": "Organization",
-        name: "NPI Consultoria"
-      },
-      publisher: {
-        "@type": "Organization",
-        name: "NPI Consultoria"
-      }
-    };
-
-    return (
-      <section className="w-full bg-white pb-32 pt-20">
-        <StructuredDataApartment
-          title={imovel.Empreendimento}
-          price={imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}
-          description={cleanDuplicateWords(`${imovel.Categoria} à venda em ${imovel.BairroComercial}, ${imovel.Cidade}. ${imovel.Empreendimento}: ${imovel.DormitoriosAntigo} quartos, ${imovel.SuiteAntigo} suítes, ${imovel.BanheiroSocialQtd} banheiros, ${imovel.VagasAntigo} vagas, ${imovel.MetragemAnt} m2. ${imovel.Situacao}. Valor: ${imovel.ValorAntigo ? `R$ ${imovel.ValorAntigo}` : "Consulte"}. ${imovel.TipoEndereco} ${imovel.Endereco}.`)}
-          address={cleanDuplicateWords(`${imovel.TipoEndereco} ${imovel.Endereco}, ${imovel.Numero}, ${imovel.BairroComercial}, ${imovel.Cidade}`)}
-          url={currentUrl}
-          image={imovel.Foto}
-        />
-
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify(structuredDataDates),
-          }}
-        />
-
-        <ExitIntentModal condominio={imovel.Empreendimento} link={currentUrl} />
-
-        {/* 🔥 IMAGEM LCP - ELEMENTO CRÍTICO */}
-        <div className="w-full mx-auto">
-          <ImageGallery imovel={imovel} />
-        </div>
-
-        <div className="container mx-auto gap-4 mt-3 px-4 md:px-0 flex flex-col lg:flex-row">
-          <div className="w-full lg:w-[65%]">
-            <TituloImovel imovel={imovel} currentUrl={currentUrl} />
-            <DetalhesImovel imovel={imovel} />
-            <DescricaoImovel imovel={imovel} />
-            <FichaTecnica imovel={imovel} />
-            <DetalhesCondominio imovel={imovel} />
-            <Lazer imovel={imovel} />
-            
-            {/* ✅ VALIDAÇÃO ROBUSTA DE VÍDEO (mantida) */}
-            {(() => {
-              try {
-                if (!imovel?.Video || typeof imovel.Video !== 'object' || Array.isArray(imovel.Video)) {
-                  console.log('🎥 [VALIDATION] ❌ Video inválido: não é objeto válido');
-                  return null;
-                }
-                
-                if (Object.keys(imovel.Video).length === 0) {
-                  console.log('🎥 [VALIDATION] ❌ Video inválido: objeto vazio');
-                  return null;
-                }
-                
-                let videoValue = null;
-                const values = Object.values(imovel.Video);
-                
-                if (values.length > 0) {
-                  const firstValue = values[0];
-                  if (firstValue && typeof firstValue === 'object') {
-                    videoValue = (firstValue.Video || firstValue.url || firstValue.videoId || firstValue.id || '').trim();
-                    console.log('🎥 [VALIDATION] VideoId extraído:', videoValue);
-                  }
-                }
-                
-                if (!videoValue) {
-                  console.log('🎥 [VALIDATION] ❌ Video inválido: valor vazio');
-                  return null;
-                }
-                
-                const blockedVideoIds = ['4Aq7szgycT4'];
-                
-                let cleanVideoId = videoValue;
-                const urlMatch = videoValue.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/);
-                if (urlMatch) {
-                  cleanVideoId = urlMatch[1];
-                }
-                
-                if (blockedVideoIds.includes(cleanVideoId)) {
-                  console.log('🎥 [VALIDATION] ❌ VideoId na lista de deletados:', cleanVideoId);
-                  return null;
-                }
-                
-                const isValidYoutubeFormat = 
-                  /^[a-zA-Z0-9_-]{11}$/.test(cleanVideoId) ||
-                  /youtube\.com\/watch\?v=([a-zA-Z0-9_-]{11})/.test(videoValue) ||
-                  /youtu\.be\/([a-zA-Z0-9_-]{11})/.test(videoValue) ||
-                  /youtube\.com\/embed\/([a-zA-Z0-9_-]{11})/.test(videoValue) ||
-                  /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/.test(videoValue);
-                
-                if (!isValidYoutubeFormat) {
-                  console.log('🎥 [VALIDATION] ❌ Formato inválido:', videoValue);
-                  return null;
-                }
-                
-                const invalidUrlPatterns = [
-                  /youtube\.com\/@/,
-                  /youtube\.com\/channel/,
-                  /youtube\.com\/user/,
-                  /youtube\.com\/c\//,
-                  /youtube\.com\/playlist/,
-                  /youtube\.com\/results/,
-                  /youtube\.com\/feed\/trending/,
-                  /^https?:\/\/(?:www\.)?youtube\.com\/?$/
-                ];
-                
-                for (const pattern of invalidUrlPatterns) {
-                  if (pattern.test(videoValue)) {
-                    console.log('🎥 [VALIDATION] ❌ URL inválida detectada:', videoValue);
-                    return null;
-                  }
-                }
-                
-                console.log('🎥 [VALIDATION] ✅ Vídeo válido aprovado:', cleanVideoId);
-                return <VideoCondominio imovel={imovel} />;
-                
-              } catch (e) {
-                console.error('🎥 [VALIDATION] ❌ Erro na validação:', e);
-                return null;
-              }
-            })()}
-            
-            {imovel.Tour360 && <TourVirtual link={imovel.Tour360} titulo={imovel.Empreendimento} />}
-            <SimilarProperties id={imovel.Codigo} />
             <LocalizacaoCondominio imovel={imovel} />
           </div>
 
