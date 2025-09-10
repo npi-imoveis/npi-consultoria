@@ -660,7 +660,9 @@ export default async function ImovelPage({ params }) {
             })()}
             
             {imovel.Tour360 && <TourVirtual link={imovel.Tour360} titulo={imovel.Empreendimento} />}
-            <SimilarProperties             
+            <SimilarProperties  
+            id={imovel.Codigo}
+            endereco={imovel.Endereco}
             bairro={imovel.Bairro}
             categoria={imovel.Categoria || imovel.Tipo}
             metragem={imovel.AreaUtil || imovel.Metragem || imovel.AreaPrivativa} />
