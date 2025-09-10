@@ -641,59 +641,14 @@ export default async function ImovelPage({ params }) {
             <DetalhesCondominio imovel={imovel} />
             <Lazer imovel={imovel} />
             
-            {/* COMPONENTE DE VÍDEO SIMPLIFICADO E CORRIGIDO */}
+            {/* COMPONENTE DE VÍDEO CORRIGIDO */}
             {(() => {
               if (!imovel?.Video) return null;
               
-              let videoData = null;
-              
               try {
-                if (typeof imovel.Video === 'object' && !Array.isArray(imovel.Video)) {
-                  const videoValues = Object.values(imovel.Video);
-                  if (videoValues.length > 0) {
-                    const firstVideo = videoValues[0];
-                    if (typeof firstVideo === 'object' && firstVideo.Video) {
-                      videoData = firstVideo.Video;
-                    } else if (typeof firstVideo === 'string') {
-                      videoData = firstVideo;
-                    }
-                  }
-                }
-                
-                if (!videoData && typeof imovel.Video === 'string') {
-                  videoData = imovel.Video;
-                }
-                
-                if (videoData) {
-                  let youtubeId = null;
-                  
-                  const patterns = [
-                    /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
-                    /^([a-zA-Z0-9_-]{11})$/
-                  ];
-                  
-                  for (const pattern of patterns) {
-                    const match = videoData.match(pattern);
-                    if (match) {
-                      youtubeId = pattern.source.includes('([a-zA-Z0-9_-]{11})') ? match[1] : match[0];
-                      break;
-                    }
-                  }
-                  
-                  if (youtubeId && /^[a-zA-Z0-9_-]{11}$/.test(youtubeId)) {
-                    const blockedIds = ['4Aq7szgycT4'];
-                    
-                    if (!blockedIds.includes(youtubeId)) {
-                      const cleanVideoData = {
-                        Video: youtubeId,
-                        url: `https://www.youtube.com/watch?v=${youtubeId}`,
-                        embed: `https://www.youtube.com/embed/${youtubeId}`,
-                        thumbnail: `https://img.youtube.com/vi/${youtubeId}/maxresdefault.jpg`
-                      };
-                      
-                      return <VideoCondominio imovel={{...imovel, Video: { video: cleanVideoData }}} />;
-                    }
-                  }
+                // Manter estrutura original - apenas validação mais simples
+                if (typeof imovel.Video === 'object' && !Array.isArray(imovel.Video) && Object.keys(imovel.Video).length > 0) {
+                  return <VideoCondominio imovel={imovel} />;
                 }
                 
                 return null;
