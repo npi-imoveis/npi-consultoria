@@ -412,7 +412,7 @@ export async function generateMetadata({ params }) {
 
     // Título com endereço completo
     const partesTitle = [
-      imovel.Tipo,
+      imovel.Tipo || 'Apartamento',
       imovel.TipoEndereco,
       imovel.Endereco,
       imovel.Numero
@@ -424,7 +424,7 @@ export async function generateMetadata({ params }) {
     const valorFormatado = valorFinal === 'Consulte' ? 'Consulte' : 
       (typeof valorFinal === 'string' && valorFinal.includes('R$') ? valorFinal : `R$ ${valorFinal}`);
     
-    const descricaoLimpa = cleanDuplicateWords(`${imovel.Tipo} ${textoFinalidade} no ${imovel.Empreendimento}, ${imovel.BairroComercial}. ${imovel.DormitoriosAntigo || 0} quartos (${imovel.SuiteAntigo || 0} suítes), ${imovel.VagasAntigo || 0} vagas, ${imovel.MetragemAnt || 0} m². Cód ${imovel.Codigo}. PREÇO: ${valorFormatado}.`);
+    const descricaoLimpa = cleanDuplicateWords(`${imovel.Tipo || 'Apartamento'} ${textoFinalidade} no ${imovel.Empreendimento}, ${imovel.BairroComercial}. ${imovel.DormitoriosAntigo || 0} quartos (${imovel.SuiteAntigo || 0} suítes), ${imovel.VagasAntigo || 0} vagas, ${imovel.MetragemAnt || 0} m². Cód ${imovel.Codigo}. PREÇO: ${valorFormatado}.`);
     
     // CORREÇÃO GSC: Validar slug antes de usar em URLs canônicas
     const slugsInvalidos = [
@@ -660,14 +660,7 @@ export default async function ImovelPage({ params }) {
             })()}
             
             {imovel.Tour360 && <TourVirtual link={imovel.Tour360} titulo={imovel.Empreendimento} />}
-            <SimilarProperties 
-            id={imovel.Codigo} 
-            empreendimento={imovel.Empreendimento}
-            bairro={imovel.BairroComercial}
-            categoria={imovel.Categoria}
-            cidade={imovel.Cidade}
-            valor={imovel.ValorVenda || imovel.ValorAntigo || imovel.Valor}
-            metragem={imovel.MetragemAnt || imovel.Metragem || imovel.AreaTotal} />
+            <SimilarProperties id={imovel.Codigo} empreendimento={imovel.Empreendimento} />
             <LocalizacaoCondominio imovel={imovel} />
           </div>
 
