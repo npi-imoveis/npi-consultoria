@@ -665,7 +665,9 @@ export default async function ImovelPage({ params }) {
             empreendimento={imovel.Empreendimento}
             bairro={imovel.BairroComercial}
             categoria={imovel.Categoria}
-            cidade={imovel.Cidade} />
+            cidade={imovel.Cidade}
+            valor={imovel.ValorVenda || imovel.ValorAntigo || imovel.Valor}
+            metragem={imovel.MetragemAnt || imovel.Metragem || imovel.AreaTotal} />
             <LocalizacaoCondominio imovel={imovel} />
           </div>
 
