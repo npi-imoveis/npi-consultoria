@@ -248,7 +248,7 @@ export function ImageGallery({
 
             {/* Indicador de destaque */}
             {images[0].Destaque === "Sim" && (
-              <div className="absolute top-4 left-4 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+              <div className="absolute top-4 left-4 bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
                 ⭐ DESTAQUE
               </div>
             )}
