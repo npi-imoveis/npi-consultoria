@@ -241,17 +241,54 @@ export function ImageGallery({
       document.body.style.overflow = 'hidden';
       // Adiciona classe para esconder outros elementos
       document.body.classList.add('npi-gallery-modal-open');
+      
+      // Adiciona estilos AGRESSIVOS para esconder TUDO que pode vazar
+      const style = document.createElement('style');
+      style.id = 'npi-gallery-modal-styles';
+      style.innerHTML = `
+        .npi-gallery-modal-open {
+          overflow: hidden !important;
+        }
+        /* Esconde TODOS os carrosséis e sliders */
+        .npi-gallery-modal-open .swiper,
+        .npi-gallery-modal-open .swiper-container,
+        .npi-gallery-modal-open .swiper-wrapper,
+        .npi-gallery-modal-open .carousel,
+        .npi-gallery-modal-open .thumbnails,
+        .npi-gallery-modal-open [class*="carousel"],
+        .npi-gallery-modal-open [class*="thumb"],
+        .npi-gallery-modal-open [class*="slider"],
+        .npi-gallery-modal-open [class*="Carousel"],
+        .npi-gallery-modal-open [class*="Slider"],
+        .npi-gallery-modal-open [class*="Swiper"] {
+          display: none !important;
+          visibility: hidden !important;
+          opacity: 0 !important;
+          pointer-events: none !important;
+          z-index: -9999 !important;
+        }
+      `;
+      document.head.appendChild(style);
     } else {
       // Restaura scroll
       document.body.style.overflow = '';
       // Remove classe
       document.body.classList.remove('npi-gallery-modal-open');
+      // Remove estilos
+      const style = document.getElementById('npi-gallery-modal-styles');
+      if (style) {
+        style.remove();
+      }
     }
 
     // Cleanup
     return () => {
       document.body.style.overflow = '';
       document.body.classList.remove('npi-gallery-modal-open');
+      const style = document.getElementById('npi-gallery-modal-styles');
+      if (style) {
+        style.remove();
+      }
     };
   }, [isModalOpen]);
 
