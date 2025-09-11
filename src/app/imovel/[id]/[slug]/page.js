@@ -641,36 +641,57 @@ export default async function ImovelPage({ params }) {
             <DetalhesCondominio imovel={imovel} />
             <Lazer imovel={imovel} />
             
-            {/* COMPONENTE DE VÍDEO - COM VALIDAÇÃO MELHORADA */}
+           {/* COMPONENTE DE VÍDEO - VALIDAÇÃO COMPLETA */}
 {(() => {
+  // Não renderizar se não existe Video
   if (!imovel?.Video) return null;
   
-  // Se for objeto vazio, não renderizar
-  if (typeof imovel.Video === 'object' && !Array.isArray(imovel.Video)) {
-    // Verificar se tem algum valor válido
-    const valores = Object.values(imovel.Video);
-    if (valores.length === 0) return null;
-    
-    // Verificar se todos os valores são vazios ou inválidos
-    const temValorValido = valores.some(v => 
-      v && 
-      v !== '' && 
-      v !== 'null' && 
-      v !== 'undefined' &&
-      v !== '4Aq7szgycT4' // ID problemático específico
-    );
-    
-    if (!temValorValido) return null;
+  // Se Video é string vazia
+  if (typeof imovel.Video === 'string' && imovel.Video.trim() === '') {
+    return null;
   }
   
-  // Se for string, verificar se não é vazia ou o ID problemático
-  if (typeof imovel.Video === 'string') {
-    if (imovel.Video === '' || 
-        imovel.Video === '4Aq7szgycT4' ||
-        imovel.Video.includes('4Aq7szgycT4')) {
+  // Se Video é objeto
+  if (typeof imovel.Video === 'object' && !Array.isArray(imovel.Video)) {
+    // Verificar se é objeto vazio {}
+    const keys = Object.keys(imovel.Video);
+    if (keys.length === 0) {
+      console.log('❌ Video é objeto vazio {}');
       return null;
     }
+    
+    // Verificar se o primeiro valor tem conteúdo válido
+    const firstKey = keys[0];
+    const firstValue = imovel.Video[firstKey];
+    
+    // Se o valor é objeto, verificar se tem a propriedade Video dentro
+    if (typeof firstValue === 'object' && firstValue !== null) {
+      if (!firstValue.Video || firstValue.Video.trim() === '') {
+        console.log('❌ Video.*.Video está vazio');
+        return null;
+      }
+      
+      // Verificar se não é o ID problemático
+      if (firstValue.Video === '4Aq7szgycT4' || 
+          firstValue.Video.includes('4Aq7szgycT4')) {
+        console.log('❌ Video com ID problemático');
+        return null;
+      }
+    }
+    
+    // Se o valor é string direta
+    if (typeof firstValue === 'string') {
+      if (firstValue.trim() === '' || 
+          firstValue === '4Aq7szgycT4' ||
+          firstValue.includes('4Aq7szgycT4')) {
+        console.log('❌ Video string inválida');
+        return null;
+      }
+    }
   }
+  
+  // Renderizar apenas no cliente para evitar hydration errors
+  if (typeof window === 'undefined') return null;
   
   return <VideoCondominio imovel={imovel} />;
 })()}
