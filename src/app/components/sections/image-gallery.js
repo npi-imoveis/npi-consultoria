@@ -684,7 +684,7 @@ export function ImageGallery({
             }}
           >
             {/* Header fixo */}
-            <div className="sticky top-0 z-10 flex justify-between gap-4 p-5 pt-12 md:pt-8 bg-gradient-to-b from-black/40 to-transparent backdrop-blur-sm">
+            <div className="sticky top-0 z-10 flex justify-between gap-4 p-5 pt-16 md:pt-12 bg-gradient-to-b from-black/40 to-transparent backdrop-blur-sm">
               <button 
                 onClick={closeModal} 
                 aria-label="Fechar galeria" 
@@ -704,6 +704,7 @@ export function ImageGallery({
             </div>
 
             {selectedIndex !== null ? (
+              // FOTO INDIVIDUAL - APENAS A FOTO, SEM THUMBNAILS!
               <div className="flex items-center justify-center min-h-screen p-4 relative">
                 <Image
                   src={images[selectedIndex].Foto}
@@ -740,7 +741,8 @@ export function ImageGallery({
                   &#10095;
                 </button>
               </div>
-            ) : (
+            ) : selectedIndex === null ? (
+              // GRID DE THUMBNAILS - SÓ QUANDO selectedIndex É EXATAMENTE NULL
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
                 {images.map((image, idx) => (
                   <div
@@ -783,7 +785,7 @@ export function ImageGallery({
                   </div>
                 ))}
               </div>
-            )}
+            ) : null}
           </div>
         </>
       )}
