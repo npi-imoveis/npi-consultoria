@@ -234,7 +234,7 @@ export function ImageGallery({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isModalOpen, closeModal, goPrev, goNext]);
 
-  // 🔒 BLOQUEIA SCROLL E ESCONDE ELEMENTOS EXTERNOS QUANDO MODAL ABRE
+  // 🔒 BLOQUEIA SCROLL E ESCONDE ELEMENTOS EXTERNOS QUANDO MODAL ABRE - CORRIGIDO
   useEffect(() => {
     if (isModalOpen) {
       // Bloqueia scroll
@@ -242,29 +242,65 @@ export function ImageGallery({
       // Adiciona classe para esconder outros elementos
       document.body.classList.add('npi-gallery-modal-open');
       
-      // Adiciona estilos para esconder carrosséis externos APENAS quando modal está aberto
+      // 🛡️ ESTILOS DEFENSIVOS AGRESSIVOS - Remove o estilo anterior e adiciona um mais forte
+      const existingStyle = document.getElementById('npi-gallery-modal-styles');
+      if (existingStyle) {
+        existingStyle.remove();
+      }
+      
       const style = document.createElement('style');
       style.id = 'npi-gallery-modal-styles';
       style.innerHTML = `
-        .npi-gallery-modal-open .swiper-container:not(.fixed),
-        .npi-gallery-modal-open .swiper-wrapper:not(.fixed),
-        .npi-gallery-modal-open .swiper:not(.fixed),
-        .npi-gallery-modal-open [class*="carousel"]:not(.fixed),
-        .npi-gallery-modal-open [class*="Carousel"]:not(.fixed),
-        .npi-gallery-modal-open [class*="slider"]:not(.fixed),
-        .npi-gallery-modal-open [class*="Slider"]:not(.fixed),
-        .npi-gallery-modal-open .overflow-x-auto:not(.fixed),
-        .npi-gallery-modal-open .scroll-smooth:not(.fixed),
-        .npi-gallery-modal-open [class*="scrollbar"]:not(.fixed) {
+        /* 🛡️ ESCONDER TODOS OS CARROSSÉIS E SLIDERS EXTERNOS */
+        body.npi-gallery-modal-open .swiper-container:not(.npi-gallery-modal-container *),
+        body.npi-gallery-modal-open .swiper-wrapper:not(.npi-gallery-modal-container *),
+        body.npi-gallery-modal-open .swiper:not(.npi-gallery-modal-container *),
+        body.npi-gallery-modal-open [class*="carousel"]:not(.npi-gallery-modal-container *),
+        body.npi-gallery-modal-open [class*="Carousel"]:not(.npi-gallery-modal-container *),
+        body.npi-gallery-modal-open [class*="slider"]:not(.npi-gallery-modal-container *),
+        body.npi-gallery-modal-open [class*="Slider"]:not(.npi-gallery-modal-container *),
+        body.npi-gallery-modal-open .overflow-x-auto:not(.npi-gallery-modal-container *),
+        body.npi-gallery-modal-open .scroll-smooth:not(.npi-gallery-modal-container *),
+        body.npi-gallery-modal-open [class*="scrollbar"]:not(.npi-gallery-modal-container *),
+        body.npi-gallery-modal-open [data-carousel]:not(.npi-gallery-modal-container *),
+        body.npi-gallery-modal-open [data-slider]:not(.npi-gallery-modal-container *),
+        body.npi-gallery-modal-open [data-swiper]:not(.npi-gallery-modal-container *) {
           display: none !important;
           visibility: hidden !important;
           opacity: 0 !important;
+          pointer-events: none !important;
+          position: absolute !important;
+          left: -9999px !important;
+          top: -9999px !important;
+        }
+        
+        /* 🎯 GARANTIR QUE O MODAL FIQUE POR CIMA DE TUDO */
+        .npi-gallery-modal-container {
+          z-index: 2147483647 !important;
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+          right: 0 !important;
+          bottom: 0 !important;
+          width: 100vw !important;
+          height: 100vh !important;
+        }
+        
+        /* 🚫 BLOQUEAR QUALQUER SCROLL EXTERNO */
+        body.npi-gallery-modal-open {
+          overflow: hidden !important;
+          position: fixed !important;
+          width: 100% !important;
+          height: 100% !important;
         }
       `;
       document.head.appendChild(style);
     } else {
       // Restaura scroll
       document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.height = '';
       // Remove classe
       document.body.classList.remove('npi-gallery-modal-open');
       // Remove estilos
@@ -277,6 +313,9 @@ export function ImageGallery({
     // Cleanup
     return () => {
       document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.height = '';
       document.body.classList.remove('npi-gallery-modal-open');
       const style = document.getElementById('npi-gallery-modal-styles');
       if (style) {
@@ -658,148 +697,118 @@ export function ImageGallery({
         </div>
       )}
 
-      {/* 🖼️ MODAL OTIMIZADO - Z-INDEX MÁXIMO */}
+      {/* 🖼️ MODAL OTIMIZADO - Z-INDEX MÁXIMO CORRIGIDO */}
       {isModalOpen && (
-        <>
-          {/* OVERLAY OPACO - Bloqueia TUDO que está por trás */}
-          <div 
-            style={{
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              width: '100vw',
-              height: '100vh',
-              backgroundColor: 'black',
-              zIndex: 2147483646
-            }}
-          />
-          
-          {/* MODAL - Fica em cima do overlay */}
-          <div 
-            className="fixed inset-0 bg-black bg-opacity-95 z-50 overflow-auto"
-            style={{
-              zIndex: 2147483647
-            }}
-          >
-            {/* Header fixo */}
-            <div className="sticky top-0 z-10 flex justify-between gap-4 p-5 pt-12 md:pt-8 bg-gradient-to-b from-black/40 to-transparent backdrop-blur-sm">
-              <button 
-                onClick={closeModal} 
-                aria-label="Fechar galeria" 
-                className="text-white hover:text-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-white/50 rounded-lg p-1"
-              >
-                <ArrowLeft size={24} />
-              </button>
-              <Share
-                primary
-                url={processedData.urlShare}
-                title={processedData.tituloShare}
-                imovel={isImovelMode ? {
-                  Codigo: imovel.Codigo,
-                  Empreendimento: imovel.Empreendimento,
-                } : undefined}
-              />
-            </div>
-
-            {/* DEBUG: Verificar estado */}
-            {console.log('🔍 Modal aberto - selectedIndex:', selectedIndex)}
-            
-            {selectedIndex !== null && selectedIndex !== undefined ? (
-              // FOTO INDIVIDUAL - ABSOLUTAMENTE SEM THUMBNAILS!
-              <>
-                {console.log('📸 Mostrando foto individual:', selectedIndex)}
-                <div className="flex items-center justify-center min-h-screen p-4 relative">
-                  <Image
-                    src={images[selectedIndex].Foto}
-                    alt={`${processedData.titulo} - imagem ${selectedIndex + 1} de ${images.length}`}
-                    title={`${processedData.titulo} - imagem ${selectedIndex + 1} de ${images.length}`}
-                    width={900}
-                    height={600}
-                    sizes="100vw"
-                    placeholder="empty"
-                    loading="eager"
-                    quality={70}
-                    className="max-w-full max-h-screen object-contain"
-                  />
-
-                  {/* Contador */}
-                  <div className="absolute top-20 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm z-20">
-                    {selectedIndex + 1} / {images.length}
-                    {images[selectedIndex].Destaque === "Sim" && " ⭐"}
-                  </div>
-
-                  {/* Navegação */}
-                  <button
-                    onClick={goPrev}
-                    className="absolute left-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2 hover:bg-black hover:bg-opacity-50 rounded-full transition-colors z-20 focus:outline-none focus:ring-2 focus:ring-white/50"
-                    aria-label="Imagem anterior"
-                  >
-                    &#10094;
-                  </button>
-                  <button
-                    onClick={goNext}
-                    className="absolute right-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2 hover:bg-black hover:bg-opacity-50 rounded-full transition-colors z-20 focus:outline-none focus:ring-2 focus:ring-white/50"
-                    aria-label="Próxima imagem"
-                  >
-                    &#10095;
-                  </button>
-                </div>
-              </>
-            ) : (
-              // GRID DE THUMBNAILS - SÓ QUANDO NÃO HÁ FOTO SELECIONADA
-              <>
-                {console.log('📋 Mostrando grid de thumbnails')}
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
-                  {images.map((image, idx) => (
-                    <div
-                      key={image.Codigo || idx}
-                      onClick={() => {
-                        console.log('👆 Thumbnail clicada, setando index:', idx);
-                        setSelectedIndex(idx);
-                      }}
-                      className="relative w-full h-48 sm:h-56 md:h-64 lg:h-72 xl:h-80 cursor-pointer overflow-hidden border-2 border-transparent hover:border-white transition-colors rounded-lg focus:outline-none focus:ring-2 focus:ring-white/50"
-                      role="button"
-                      tabIndex={0}
-                      aria-label={`Ver imagem ${idx + 1} de ${images.length}`}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          setSelectedIndex(idx);
-                        }
-                      }}
-                    >
-                      <Image
-                        src={image.Foto}
-                        alt={`${processedData.titulo} - miniatura ${idx + 1}`}
-                        title={`${processedData.titulo} - imagem ${idx + 1}`}
-                        fill
-                        sizes="(max-width: 768px) 50vw, 25vw"
-                        placeholder="empty"
-                        loading="lazy"
-                        quality={65}
-                        className="object-cover"
-                      />
-                      
-                      {/* Número da foto */}
-                      <div className="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
-                        {idx + 1}
-                      </div>
-                      
-                      {/* Indicador de destaque */}
-                      {image.Destaque === "Sim" && (
-                        <div className="absolute top-2 left-2 bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded">
-                          ⭐ DESTAQUE
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </>
-            )}
+        <div 
+          className="npi-gallery-modal-container fixed inset-0 bg-black bg-opacity-95 overflow-auto"
+          style={{
+            zIndex: 2147483647
+          }}
+        >
+          {/* Header fixo */}
+          <div className="sticky top-0 z-10 flex justify-between gap-4 p-5 pt-12 md:pt-8 bg-gradient-to-b from-black/40 to-transparent backdrop-blur-sm">
+            <button 
+              onClick={closeModal} 
+              aria-label="Fechar galeria" 
+              className="text-white hover:text-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-white/50 rounded-lg p-1"
+            >
+              <ArrowLeft size={24} />
+            </button>
+            <Share
+              primary
+              url={processedData.urlShare}
+              title={processedData.tituloShare}
+              imovel={isImovelMode ? {
+                Codigo: imovel.Codigo,
+                Empreendimento: imovel.Empreendimento,
+              } : undefined}
+            />
           </div>
-        </>
+
+          {selectedIndex !== null && selectedIndex !== undefined ? (
+            // FOTO INDIVIDUAL - ABSOLUTAMENTE SEM THUMBNAILS!
+            <div className="flex items-center justify-center min-h-screen p-4 relative">
+              <Image
+                src={images[selectedIndex].Foto}
+                alt={`${processedData.titulo} - imagem ${selectedIndex + 1} de ${images.length}`}
+                title={`${processedData.titulo} - imagem ${selectedIndex + 1} de ${images.length}`}
+                width={900}
+                height={600}
+                sizes="100vw"
+                placeholder="empty"
+                loading="eager"
+                quality={70}
+                className="max-w-full max-h-screen object-contain"
+              />
+
+              {/* Contador */}
+              <div className="absolute top-20 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm z-20">
+                {selectedIndex + 1} / {images.length}
+                {images[selectedIndex].Destaque === "Sim" && " ⭐"}
+              </div>
+
+              {/* Navegação */}
+              <button
+                onClick={goPrev}
+                className="absolute left-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2 hover:bg-black hover:bg-opacity-50 rounded-full transition-colors z-20 focus:outline-none focus:ring-2 focus:ring-white/50"
+                aria-label="Imagem anterior"
+              >
+                &#10094;
+              </button>
+              <button
+                onClick={goNext}
+                className="absolute right-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2 hover:bg-black hover:bg-opacity-50 rounded-full transition-colors z-20 focus:outline-none focus:ring-2 focus:ring-white/50"
+                aria-label="Próxima imagem"
+              >
+                &#10095;
+              </button>
+            </div>
+          ) : (
+            // GRID DE THUMBNAILS - SÓ QUANDO NÃO HÁ FOTO SELECIONADA
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
+              {images.map((image, idx) => (
+                <div
+                  key={image.Codigo || idx}
+                  onClick={() => setSelectedIndex(idx)}
+                  className="relative w-full h-48 sm:h-56 md:h-64 lg:h-72 xl:h-80 cursor-pointer overflow-hidden border-2 border-transparent hover:border-white transition-colors rounded-lg focus:outline-none focus:ring-2 focus:ring-white/50"
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Ver imagem ${idx + 1} de ${images.length}`}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setSelectedIndex(idx);
+                    }
+                  }}
+                >
+                  <Image
+                    src={image.Foto}
+                    alt={`${processedData.titulo} - miniatura ${idx + 1}`}
+                    title={`${processedData.titulo} - imagem ${idx + 1}`}
+                    fill
+                    sizes="(max-width: 768px) 50vw, 25vw"
+                    placeholder="empty"
+                    loading="lazy"
+                    quality={65}
+                    className="object-cover"
+                  />
+                  
+                  {/* Número da foto */}
+                  <div className="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
+                    {idx + 1}
+                  </div>
+                  
+                  {/* Indicador de destaque */}
+                  {image.Destaque === "Sim" && (
+                    <div className="absolute top-2 left-2 bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded">
+                      ⭐ DESTAQUE
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       )}
     </>
   );
