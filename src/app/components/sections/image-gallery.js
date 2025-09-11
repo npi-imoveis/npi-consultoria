@@ -684,7 +684,7 @@ export function ImageGallery({
             }}
           >
             {/* Header fixo */}
-            <div className="sticky top-0 z-10 flex justify-between gap-4 p-5 pt-16 md:pt-12 bg-gradient-to-b from-black/40 to-transparent backdrop-blur-sm">
+            <div className="sticky top-0 z-10 flex justify-between gap-4 p-5 pt-12 md:pt-8 bg-gradient-to-b from-black/40 to-transparent backdrop-blur-sm">
               <button 
                 onClick={closeModal} 
                 aria-label="Fechar galeria" 
