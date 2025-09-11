@@ -242,30 +242,55 @@ export function ImageGallery({
       // Adiciona classe para esconder outros elementos
       document.body.classList.add('npi-gallery-modal-open');
       
-      // Adiciona estilos AGRESSIVOS para esconder TUDO que pode vazar
+      // Adiciona estilos EXTREMAMENTE AGRESSIVOS para esconder TUDO
       const style = document.createElement('style');
       style.id = 'npi-gallery-modal-styles';
       style.innerHTML = `
         .npi-gallery-modal-open {
           overflow: hidden !important;
         }
-        /* Esconde TODOS os carrosséis e sliders */
+        
+        /* Esconde TUDO exceto o modal */
+        .npi-gallery-modal-open > *:not(.fixed) {
+          display: none !important;
+        }
+        
+        /* Esconde TODOS os carrosséis, sliders e thumbnails */
         .npi-gallery-modal-open .swiper,
         .npi-gallery-modal-open .swiper-container,
         .npi-gallery-modal-open .swiper-wrapper,
+        .npi-gallery-modal-open .swiper-slide,
         .npi-gallery-modal-open .carousel,
         .npi-gallery-modal-open .thumbnails,
+        .npi-gallery-modal-open .thumbnail,
         .npi-gallery-modal-open [class*="carousel"],
         .npi-gallery-modal-open [class*="thumb"],
         .npi-gallery-modal-open [class*="slider"],
         .npi-gallery-modal-open [class*="Carousel"],
         .npi-gallery-modal-open [class*="Slider"],
-        .npi-gallery-modal-open [class*="Swiper"] {
+        .npi-gallery-modal-open [class*="Swiper"],
+        .npi-gallery-modal-open [class*="gallery"]:not(.fixed),
+        .npi-gallery-modal-open [class*="Gallery"]:not(.fixed),
+        body.npi-gallery-modal-open > div:not(.fixed),
+        body.npi-gallery-modal-open main,
+        body.npi-gallery-modal-open header,
+        body.npi-gallery-modal-open footer,
+        body.npi-gallery-modal-open nav,
+        body.npi-gallery-modal-open aside {
           display: none !important;
           visibility: hidden !important;
           opacity: 0 !important;
           pointer-events: none !important;
           z-index: -9999 !important;
+          position: absolute !important;
+          left: -9999px !important;
+        }
+        
+        /* Garante que apenas o modal apareça */
+        .npi-gallery-modal-open .fixed[style*="2147483647"] {
+          display: block !important;
+          visibility: visible !important;
+          opacity: 1 !important;
         }
       `;
       document.head.appendChild(style);
