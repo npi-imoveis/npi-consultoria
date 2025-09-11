@@ -641,24 +641,39 @@ export default async function ImovelPage({ params }) {
             <DetalhesCondominio imovel={imovel} />
             <Lazer imovel={imovel} />
             
-          {/* COMPONENTE DE VÍDEO - SOLUÇÃO FINAL */}
-{typeof window !== 'undefined' && imovel?.Video && (
-  (() => {
-    // Validação rápida no cliente
-    if (typeof imovel.Video === 'string' && imovel.Video.trim() === '') {
+          {/* COMPONENTE DE VÍDEO - COM VALIDAÇÃO MELHORADA */}
+{(() => {
+  if (!imovel?.Video) return null;
+  
+  // Se for objeto vazio, não renderizar
+  if (typeof imovel.Video === 'object' && !Array.isArray(imovel.Video)) {
+    // Verificar se tem algum valor válido
+    const valores = Object.values(imovel.Video);
+    if (valores.length === 0) return null;
+    
+    // Verificar se todos os valores são vazios ou inválidos
+    const temValorValido = valores.some(v => 
+      v && 
+      v !== '' && 
+      v !== 'null' && 
+      v !== 'undefined' &&
+      v !== '4Aq7szgycT4' // ID problemático específico
+    );
+    
+    if (!temValorValido) return null;
+  }
+  
+  // Se for string, verificar se não é vazia ou o ID problemático
+  if (typeof imovel.Video === 'string') {
+    if (imovel.Video === '' || 
+        imovel.Video === '4Aq7szgycT4' ||
+        imovel.Video.includes('4Aq7szgycT4')) {
       return null;
     }
-    
-    if (typeof imovel.Video === 'object') {
-      const values = Object.values(imovel.Video);
-      if (values.length === 0 || values.every(v => !v || v === '')) {
-        return null;
-      }
-    }
-    
-    return <VideoCondominio imovel={imovel} />;
-  })()
-)}
+  }
+  
+  return <VideoCondominio imovel={imovel} />;
+})()}
             
             {imovel.Tour360 && <TourVirtual link={imovel.Tour360} titulo={imovel.Empreendimento} />}
             
