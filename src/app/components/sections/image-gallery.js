@@ -234,19 +234,46 @@ export function ImageGallery({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isModalOpen, closeModal, goPrev, goNext]);
 
-  // 🔒 BLOQUEIA SCROLL QUANDO MODAL ABRE - SEM ESTILOS DEFENSIVOS
+  // 🔒 BLOQUEIA SCROLL E OVERLAY COMPLETO QUANDO MODAL ABRE
   useEffect(() => {
     if (isModalOpen) {
-      // Apenas bloqueia scroll
+      // Bloqueia scroll
       document.body.style.overflow = 'hidden';
+      
+      // Cria overlay bloqueador TOTAL
+      const blockerOverlay = document.createElement('div');
+      blockerOverlay.id = 'gallery-total-blocker';
+      blockerOverlay.style.cssText = `
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background-color: black !important;
+        z-index: 2147483646 !important;
+        pointer-events: none !important;
+      `;
+      document.body.appendChild(blockerOverlay);
     } else {
       // Restaura scroll
       document.body.style.overflow = '';
+      
+      // Remove overlay bloqueador
+      const blockerOverlay = document.getElementById('gallery-total-blocker');
+      if (blockerOverlay) {
+        blockerOverlay.remove();
+      }
     }
 
     // Cleanup
     return () => {
       document.body.style.overflow = '';
+      const blockerOverlay = document.getElementById('gallery-total-blocker');
+      if (blockerOverlay) {
+        blockerOverlay.remove();
+      }
     };
   }, [isModalOpen]);
 
