@@ -642,11 +642,23 @@ export default async function ImovelPage({ params }) {
             <Lazer imovel={imovel} />
             
             {/* COMPONENTE DE VÍDEO */}
-            {(() => {if (!imovel?.Video) return null;
-            // Verificar se Video não é um objeto vazio
-            if (typeof imovel.Video === 'object' && Object.keys(imovel.Video).length === 0) {return null;}
-            // Se passou nas verificações, renderizar o componente return <VideoCondominio imovel={imovel} />;
-            })()}
+{(() => {
+  if (!imovel?.Video) return null;
+  
+  // Se for string vazia, não renderizar
+  if (imovel.Video === '') return null;
+  
+  // Se for objeto, verificar se tem algum valor não vazio
+  if (typeof imovel.Video === 'object' && !Array.isArray(imovel.Video)) {
+    const temConteudo = Object.values(imovel.Video).some(
+      valor => valor && valor !== '' && valor !== null && valor !== 'null'
+    );
+    if (!temConteudo) return null;
+  }
+  
+  // Passou nas validações básicas, deixar VideoCondominio decidir o resto
+  return <VideoCondominio imovel={imovel} />;
+})()}
             
             {imovel.Tour360 && <TourVirtual link={imovel.Tour360} titulo={imovel.Empreendimento} />}
             
