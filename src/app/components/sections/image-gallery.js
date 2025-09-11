@@ -469,7 +469,16 @@ export function ImageGallery({
                 <div
                   key={idx}
                   onClick={() => setSelectedIndex(idx)}
-                  className="relative w-full h-48 sm:h-56 md:h-64 lg:h-72 xl:h-80 cursor-pointer overflow-hidden border-2 border-transparent hover:border-white transition-colors"
+                  className="relative w-full h-48 sm:h-56 md:h-64 lg:h-72 xl:h-80 cursor-pointer overflow-hidden border-2 border-transparent hover:border-white transition-colors rounded-lg focus:outline-none focus:ring-2 focus:ring-white/50"
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Ver imagem ${idx + 1} de ${images.length}`}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setSelectedIndex(idx);
+                    }
+                  }}
                 >
                   <Image
                     src={image.Foto}
