@@ -234,24 +234,51 @@ export function ImageGallery({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isModalOpen, closeModal, goPrev, goNext]);
 
-  // 🔒 BLOQUEIA SCROLL E ESCONDE ELEMENTOS QUANDO MODAL ABRE
+  // 🔒 BLOQUEIA SCROLL E ESCONDE ELEMENTOS EXTERNOS QUANDO MODAL ABRE
   useEffect(() => {
     if (isModalOpen) {
       // Bloqueia scroll
       document.body.style.overflow = 'hidden';
       // Adiciona classe para esconder outros elementos
       document.body.classList.add('npi-gallery-modal-open');
+      
+      // Adiciona estilos para esconder carrosséis externos APENAS quando modal está aberto
+      const style = document.createElement('style');
+      style.id = 'npi-gallery-modal-styles';
+      style.innerHTML = `
+        .npi-gallery-modal-open .swiper-container:not(.fixed),
+        .npi-gallery-modal-open .swiper-wrapper:not(.fixed),
+        .npi-gallery-modal-open .swiper:not(.fixed),
+        .npi-gallery-modal-open [class*="carousel"]:not(.fixed),
+        .npi-gallery-modal-open [class*="Carousel"]:not(.fixed),
+        .npi-gallery-modal-open [class*="slider"]:not(.fixed),
+        .npi-gallery-modal-open [class*="Slider"]:not(.fixed) {
+          display: none !important;
+          visibility: hidden !important;
+          opacity: 0 !important;
+        }
+      `;
+      document.head.appendChild(style);
     } else {
       // Restaura scroll
       document.body.style.overflow = '';
       // Remove classe
       document.body.classList.remove('npi-gallery-modal-open');
+      // Remove estilos
+      const style = document.getElementById('npi-gallery-modal-styles');
+      if (style) {
+        style.remove();
+      }
     }
 
     // Cleanup
     return () => {
       document.body.style.overflow = '';
       document.body.classList.remove('npi-gallery-modal-open');
+      const style = document.getElementById('npi-gallery-modal-styles');
+      if (style) {
+        style.remove();
+      }
     };
   }, [isModalOpen]);
 
@@ -637,7 +664,7 @@ export function ImageGallery({
           }}
         >
           {/* Header fixo */}
-          <div className="sticky top-0 z-10 flex justify-between gap-4 p-5 pt-28 mt-6 md:mt-0 bg-gradient-to-b from-black/80 via-black/40 to-transparent backdrop-blur-sm">
+          <div className="sticky top-0 z-10 flex justify-between gap-4 p-5 pt-28 mt-6 md:mt-0 bg-gradient-to-b from-black/40 to-transparent backdrop-blur-sm">
             <button 
               onClick={closeModal} 
               aria-label="Fechar galeria" 
@@ -672,7 +699,7 @@ export function ImageGallery({
               />
 
               {/* Contador */}
-              <div className="absolute top-24 md:top-20 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm z-20">
+              <div className="absolute top-20 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm z-20">
                 {selectedIndex + 1} / {images.length}
                 {images[selectedIndex].Destaque === "Sim" && " ⭐"}
               </div>
