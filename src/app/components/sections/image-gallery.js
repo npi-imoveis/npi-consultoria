@@ -241,46 +241,17 @@ export function ImageGallery({
       document.body.style.overflow = 'hidden';
       // Adiciona classe para esconder outros elementos
       document.body.classList.add('npi-gallery-modal-open');
-      
-      // Adiciona estilos inline de emergência para esconder elementos vazando
-      const style = document.createElement('style');
-      style.id = 'npi-gallery-modal-styles';
-      style.innerHTML = `
-        .npi-gallery-modal-open {
-          overflow: hidden !important;
-        }
-        .npi-gallery-modal-open .swiper,
-        .npi-gallery-modal-open .swiper-wrapper,
-        .npi-gallery-modal-open .carousel,
-        .npi-gallery-modal-open .thumbnails,
-        .npi-gallery-modal-open [class*="carousel"],
-        .npi-gallery-modal-open [class*="thumb"],
-        .npi-gallery-modal-open [class*="slider"] {
-          visibility: hidden !important;
-          z-index: -1 !important;
-        }
-      `;
-      document.head.appendChild(style);
     } else {
       // Restaura scroll
       document.body.style.overflow = '';
       // Remove classe
       document.body.classList.remove('npi-gallery-modal-open');
-      // Remove estilos
-      const style = document.getElementById('npi-gallery-modal-styles');
-      if (style) {
-        style.remove();
-      }
     }
 
     // Cleanup
     return () => {
       document.body.style.overflow = '';
       document.body.classList.remove('npi-gallery-modal-open');
-      const style = document.getElementById('npi-gallery-modal-styles');
-      if (style) {
-        style.remove();
-      }
     };
   }, [isModalOpen]);
 
@@ -657,23 +628,16 @@ export function ImageGallery({
         </div>
       )}
 
-      {/* 🖼️ MODAL OTIMIZADO - CORREÇÃO DO Z-INDEX E ISOLAMENTO */}
+      {/* 🖼️ MODAL OTIMIZADO - Z-INDEX MÁXIMO */}
       {isModalOpen && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-95 overflow-auto"
+          className="fixed inset-0 bg-black bg-opacity-95 z-50 overflow-auto"
           style={{
-            zIndex: 2147483647, // Máximo z-index possível
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0, 
-            bottom: 0,
-            width: '100vw',
-            height: '100vh'
+            zIndex: 2147483647
           }}
         >
           {/* Header fixo */}
-          <div className="sticky top-0 z-10 flex justify-between gap-4 p-5 pt-28 mt-6 md:mt-0 bg-gradient-to-b from-black/80 via-black/40 to-transparent backdrop-blur-sm">
+          <div className="sticky top-0 z-10 flex justify-between gap-4 p-5 pt-28 mt-6 md:mt-0 bg-gradient-to-b from-black/40 to-transparent backdrop-blur-sm">
             <button 
               onClick={closeModal} 
               aria-label="Fechar galeria" 
@@ -693,47 +657,43 @@ export function ImageGallery({
           </div>
 
           {selectedIndex !== null ? (
-            // VISUALIZAÇÃO DE FOTO INDIVIDUAL - TELA CHEIA SEM THUMBNAILS
-            <>
-              <div className="flex items-center justify-center min-h-screen p-4 relative">
-                <Image
-                  src={images[selectedIndex].Foto}
-                  alt={`${processedData.titulo} - imagem ${selectedIndex + 1} de ${images.length}`}
-                  title={`${processedData.titulo} - imagem ${selectedIndex + 1} de ${images.length}`}
-                  width={900}
-                  height={600}
-                  sizes="100vw"
-                  placeholder="empty"
-                  loading="eager"
-                  quality={70}
-                  className="max-w-full max-h-screen object-contain"
-                />
+            <div className="flex items-center justify-center min-h-screen p-4 relative">
+              <Image
+                src={images[selectedIndex].Foto}
+                alt={`${processedData.titulo} - imagem ${selectedIndex + 1} de ${images.length}`}
+                title={`${processedData.titulo} - imagem ${selectedIndex + 1} de ${images.length}`}
+                width={900}
+                height={600}
+                sizes="100vw"
+                placeholder="empty"
+                loading="eager"
+                quality={70}
+                className="max-w-full max-h-screen object-contain"
+              />
 
-                {/* Contador */}
-                <div className="absolute top-24 md:top-20 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm z-20">
-                  {selectedIndex + 1} / {images.length}
-                  {images[selectedIndex].Destaque === "Sim" && " ⭐"}
-                </div>
-
-                {/* Navegação */}
-                <button
-                  onClick={goPrev}
-                  className="absolute left-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2 hover:bg-black hover:bg-opacity-50 rounded-full transition-colors z-20 focus:outline-none focus:ring-2 focus:ring-white/50"
-                  aria-label="Imagem anterior"
-                >
-                  &#10094;
-                </button>
-                <button
-                  onClick={goNext}
-                  className="absolute right-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2 hover:bg-black hover:bg-opacity-50 rounded-full transition-colors z-20 focus:outline-none focus:ring-2 focus:ring-white/50"
-                  aria-label="Próxima imagem"
-                >
-                  &#10095;
-                </button>
+              {/* Contador */}
+              <div className="absolute top-24 md:top-20 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm z-20">
+                {selectedIndex + 1} / {images.length}
+                {images[selectedIndex].Destaque === "Sim" && " ⭐"}
               </div>
-            </>
+
+              {/* Navegação */}
+              <button
+                onClick={goPrev}
+                className="absolute left-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2 hover:bg-black hover:bg-opacity-50 rounded-full transition-colors z-20 focus:outline-none focus:ring-2 focus:ring-white/50"
+                aria-label="Imagem anterior"
+              >
+                &#10094;
+              </button>
+              <button
+                onClick={goNext}
+                className="absolute right-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2 hover:bg-black hover:bg-opacity-50 rounded-full transition-colors z-20 focus:outline-none focus:ring-2 focus:ring-white/50"
+                aria-label="Próxima imagem"
+              >
+                &#10095;
+              </button>
+            </div>
           ) : (
-            // GRID DE THUMBNAILS - SÓ APARECE QUANDO selectedIndex é NULL
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
               {images.map((image, idx) => (
                 <div
