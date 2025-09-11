@@ -693,45 +693,47 @@ export function ImageGallery({
           </div>
 
           {selectedIndex !== null ? (
-            // VISUALIZAÇÃO DE FOTO INDIVIDUAL
-            <div className="flex items-center justify-center min-h-screen p-4 relative">
-              <Image
-                src={images[selectedIndex].Foto}
-                alt={`${processedData.titulo} - imagem ${selectedIndex + 1} de ${images.length}`}
-                title={`${processedData.titulo} - imagem ${selectedIndex + 1} de ${images.length}`}
-                width={900}
-                height={600}
-                sizes="100vw"
-                placeholder="empty"
-                loading="eager"
-                quality={70}
-                className="max-w-full max-h-screen object-contain"
-              />
+            // VISUALIZAÇÃO DE FOTO INDIVIDUAL - TELA CHEIA SEM THUMBNAILS
+            <>
+              <div className="flex items-center justify-center min-h-screen p-4 relative">
+                <Image
+                  src={images[selectedIndex].Foto}
+                  alt={`${processedData.titulo} - imagem ${selectedIndex + 1} de ${images.length}`}
+                  title={`${processedData.titulo} - imagem ${selectedIndex + 1} de ${images.length}`}
+                  width={900}
+                  height={600}
+                  sizes="100vw"
+                  placeholder="empty"
+                  loading="eager"
+                  quality={70}
+                  className="max-w-full max-h-screen object-contain"
+                />
 
-              {/* Contador */}
-              <div className="absolute top-24 md:top-20 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm z-20">
-                {selectedIndex + 1} / {images.length}
-                {images[selectedIndex].Destaque === "Sim" && " ⭐"}
+                {/* Contador */}
+                <div className="absolute top-24 md:top-20 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm z-20">
+                  {selectedIndex + 1} / {images.length}
+                  {images[selectedIndex].Destaque === "Sim" && " ⭐"}
+                </div>
+
+                {/* Navegação */}
+                <button
+                  onClick={goPrev}
+                  className="absolute left-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2 hover:bg-black hover:bg-opacity-50 rounded-full transition-colors z-20 focus:outline-none focus:ring-2 focus:ring-white/50"
+                  aria-label="Imagem anterior"
+                >
+                  &#10094;
+                </button>
+                <button
+                  onClick={goNext}
+                  className="absolute right-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2 hover:bg-black hover:bg-opacity-50 rounded-full transition-colors z-20 focus:outline-none focus:ring-2 focus:ring-white/50"
+                  aria-label="Próxima imagem"
+                >
+                  &#10095;
+                </button>
               </div>
-
-              {/* Navegação */}
-              <button
-                onClick={goPrev}
-                className="absolute left-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2 hover:bg-black hover:bg-opacity-50 rounded-full transition-colors z-20 focus:outline-none focus:ring-2 focus:ring-white/50"
-                aria-label="Imagem anterior"
-              >
-                &#10094;
-              </button>
-              <button
-                onClick={goNext}
-                className="absolute right-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2 hover:bg-black hover:bg-opacity-50 rounded-full transition-colors z-20 focus:outline-none focus:ring-2 focus:ring-white/50"
-                aria-label="Próxima imagem"
-              >
-                &#10095;
-              </button>
-            </div>
+            </>
           ) : (
-            // GRID DE THUMBNAILS
+            // GRID DE THUMBNAILS - SÓ APARECE QUANDO selectedIndex é NULL
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
               {images.map((image, idx) => (
                 <div
