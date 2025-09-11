@@ -252,7 +252,10 @@ export function ImageGallery({
         .npi-gallery-modal-open [class*="carousel"]:not(.fixed),
         .npi-gallery-modal-open [class*="Carousel"]:not(.fixed),
         .npi-gallery-modal-open [class*="slider"]:not(.fixed),
-        .npi-gallery-modal-open [class*="Slider"]:not(.fixed) {
+        .npi-gallery-modal-open [class*="Slider"]:not(.fixed),
+        .npi-gallery-modal-open .overflow-x-auto:not(.fixed),
+        .npi-gallery-modal-open .scroll-smooth:not(.fixed),
+        .npi-gallery-modal-open [class*="scrollbar"]:not(.fixed) {
           display: none !important;
           visibility: hidden !important;
           opacity: 0 !important;
@@ -664,7 +667,7 @@ export function ImageGallery({
           }}
         >
           {/* Header fixo */}
-          <div className="sticky top-0 z-10 flex justify-between gap-4 p-5 pt-12 md:pt-8 bg-gradient-to-b from-black/40 to-transparent backdrop-blur-sm">
+          <div className="sticky top-0 z-10 flex justify-between gap-4 p-5 pt-16 md:pt-12 bg-gradient-to-b from-black/40 to-transparent backdrop-blur-sm">
             <button 
               onClick={closeModal} 
               aria-label="Fechar galeria" 
