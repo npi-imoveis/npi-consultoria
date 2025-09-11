@@ -660,114 +660,132 @@ export function ImageGallery({
 
       {/* 🖼️ MODAL OTIMIZADO - Z-INDEX MÁXIMO */}
       {isModalOpen && (
-        <div 
-          className="fixed inset-0 bg-black bg-opacity-95 z-50 overflow-auto"
-          style={{
-            zIndex: 2147483647
-          }}
-        >
-          {/* Header fixo */}
-          <div className="sticky top-0 z-10 flex justify-between gap-4 p-5 pt-16 md:pt-12 bg-gradient-to-b from-black/40 to-transparent backdrop-blur-sm">
-            <button 
-              onClick={closeModal} 
-              aria-label="Fechar galeria" 
-              className="text-white hover:text-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-white/50 rounded-lg p-1"
-            >
-              <ArrowLeft size={24} />
-            </button>
-            <Share
-              primary
-              url={processedData.urlShare}
-              title={processedData.tituloShare}
-              imovel={isImovelMode ? {
-                Codigo: imovel.Codigo,
-                Empreendimento: imovel.Empreendimento,
-              } : undefined}
-            />
-          </div>
-
-          {selectedIndex !== null ? (
-            <div className="flex items-center justify-center min-h-screen p-4 relative">
-              <Image
-                src={images[selectedIndex].Foto}
-                alt={`${processedData.titulo} - imagem ${selectedIndex + 1} de ${images.length}`}
-                title={`${processedData.titulo} - imagem ${selectedIndex + 1} de ${images.length}`}
-                width={900}
-                height={600}
-                sizes="100vw"
-                placeholder="empty"
-                loading="eager"
-                quality={70}
-                className="max-w-full max-h-screen object-contain"
+        <>
+          {/* OVERLAY OPACO - Bloqueia TUDO que está por trás */}
+          <div 
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              width: '100vw',
+              height: '100vh',
+              backgroundColor: 'black',
+              zIndex: 2147483646
+            }}
+          />
+          
+          {/* MODAL - Fica em cima do overlay */}
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-95 z-50 overflow-auto"
+            style={{
+              zIndex: 2147483647
+            }}
+          >
+            {/* Header fixo */}
+            <div className="sticky top-0 z-10 flex justify-between gap-4 p-5 pt-12 md:pt-8 bg-gradient-to-b from-black/40 to-transparent backdrop-blur-sm">
+              <button 
+                onClick={closeModal} 
+                aria-label="Fechar galeria" 
+                className="text-white hover:text-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-white/50 rounded-lg p-1"
+              >
+                <ArrowLeft size={24} />
+              </button>
+              <Share
+                primary
+                url={processedData.urlShare}
+                title={processedData.tituloShare}
+                imovel={isImovelMode ? {
+                  Codigo: imovel.Codigo,
+                  Empreendimento: imovel.Empreendimento,
+                } : undefined}
               />
-
-              {/* Contador */}
-              <div className="absolute top-20 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm z-20">
-                {selectedIndex + 1} / {images.length}
-                {images[selectedIndex].Destaque === "Sim" && " ⭐"}
-              </div>
-
-              {/* Navegação */}
-              <button
-                onClick={goPrev}
-                className="absolute left-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2 hover:bg-black hover:bg-opacity-50 rounded-full transition-colors z-20 focus:outline-none focus:ring-2 focus:ring-white/50"
-                aria-label="Imagem anterior"
-              >
-                &#10094;
-              </button>
-              <button
-                onClick={goNext}
-                className="absolute right-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2 hover:bg-black hover:bg-opacity-50 rounded-full transition-colors z-20 focus:outline-none focus:ring-2 focus:ring-white/50"
-                aria-label="Próxima imagem"
-              >
-                &#10095;
-              </button>
             </div>
-          ) : (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
-              {images.map((image, idx) => (
-                <div
-                  key={image.Codigo || idx}
-                  onClick={() => setSelectedIndex(idx)}
-                  className="relative w-full h-48 sm:h-56 md:h-64 lg:h-72 xl:h-80 cursor-pointer overflow-hidden border-2 border-transparent hover:border-white transition-colors rounded-lg focus:outline-none focus:ring-2 focus:ring-white/50"
-                  role="button"
-                  tabIndex={0}
-                  aria-label={`Ver imagem ${idx + 1} de ${images.length}`}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      setSelectedIndex(idx);
-                    }
-                  }}
-                >
-                  <Image
-                    src={image.Foto}
-                    alt={`${processedData.titulo} - miniatura ${idx + 1}`}
-                    title={`${processedData.titulo} - imagem ${idx + 1}`}
-                    fill
-                    sizes="(max-width: 768px) 50vw, 25vw"
-                    placeholder="empty"
-                    loading="lazy"
-                    quality={65}
-                    className="object-cover"
-                  />
-                  
-                  {/* Número da foto */}
-                  <div className="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
-                    {idx + 1}
-                  </div>
-                  
-                  {/* Indicador de destaque */}
-                  {image.Destaque === "Sim" && (
-                    <div className="absolute top-2 left-2 bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded">
-                      ⭐ DESTAQUE
-                    </div>
-                  )}
+
+            {selectedIndex !== null ? (
+              <div className="flex items-center justify-center min-h-screen p-4 relative">
+                <Image
+                  src={images[selectedIndex].Foto}
+                  alt={`${processedData.titulo} - imagem ${selectedIndex + 1} de ${images.length}`}
+                  title={`${processedData.titulo} - imagem ${selectedIndex + 1} de ${images.length}`}
+                  width={900}
+                  height={600}
+                  sizes="100vw"
+                  placeholder="empty"
+                  loading="eager"
+                  quality={70}
+                  className="max-w-full max-h-screen object-contain"
+                />
+
+                {/* Contador */}
+                <div className="absolute top-20 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm z-20">
+                  {selectedIndex + 1} / {images.length}
+                  {images[selectedIndex].Destaque === "Sim" && " ⭐"}
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+
+                {/* Navegação */}
+                <button
+                  onClick={goPrev}
+                  className="absolute left-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2 hover:bg-black hover:bg-opacity-50 rounded-full transition-colors z-20 focus:outline-none focus:ring-2 focus:ring-white/50"
+                  aria-label="Imagem anterior"
+                >
+                  &#10094;
+                </button>
+                <button
+                  onClick={goNext}
+                  className="absolute right-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2 hover:bg-black hover:bg-opacity-50 rounded-full transition-colors z-20 focus:outline-none focus:ring-2 focus:ring-white/50"
+                  aria-label="Próxima imagem"
+                >
+                  &#10095;
+                </button>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
+                {images.map((image, idx) => (
+                  <div
+                    key={image.Codigo || idx}
+                    onClick={() => setSelectedIndex(idx)}
+                    className="relative w-full h-48 sm:h-56 md:h-64 lg:h-72 xl:h-80 cursor-pointer overflow-hidden border-2 border-transparent hover:border-white transition-colors rounded-lg focus:outline-none focus:ring-2 focus:ring-white/50"
+                    role="button"
+                    tabIndex={0}
+                    aria-label={`Ver imagem ${idx + 1} de ${images.length}`}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setSelectedIndex(idx);
+                      }
+                    }}
+                  >
+                    <Image
+                      src={image.Foto}
+                      alt={`${processedData.titulo} - miniatura ${idx + 1}`}
+                      title={`${processedData.titulo} - imagem ${idx + 1}`}
+                      fill
+                      sizes="(max-width: 768px) 50vw, 25vw"
+                      placeholder="empty"
+                      loading="lazy"
+                      quality={65}
+                      className="object-cover"
+                    />
+                    
+                    {/* Número da foto */}
+                    <div className="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
+                      {idx + 1}
+                    </div>
+                    
+                    {/* Indicador de destaque */}
+                    {image.Destaque === "Sim" && (
+                      <div className="absolute top-2 left-2 bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded">
+                        ⭐ DESTAQUE
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
       )}
     </>
   );
