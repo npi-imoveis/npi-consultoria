@@ -46,7 +46,7 @@ export default async function TituloImovel({ imovel, currentUrl }) {
                     className="text-sm font-semibold flex justify-center items-center gap-2 mt-4 bg-zinc-100 p-2 rounded-lg hover:bg-zinc-200 transition-colors"
                     aria-label={`Ver informações completas do condomínio ${imovel.Empreendimento}`}
                 >
-                    Ver condomínio {imovel.Empreendimento}
+                    Mais Opções no Condomínio {imovel.Empreendimento}
                     <svg
                         className="size-5 rtl:rotate-180"
                         xmlns="http://www.w3.org/2000/svg"
