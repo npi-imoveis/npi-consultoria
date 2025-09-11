@@ -641,41 +641,13 @@ export default async function ImovelPage({ params }) {
             <DetalhesCondominio imovel={imovel} />
             <Lazer imovel={imovel} />
             
-            {/* COMPONENTE DE VÍDEO - VALIDAÇÃO CORRIGIDA */}
-            {(() => {
-              if (!imovel?.Video) return null;
-              
-              try {
-                // Verificar se é objeto e tem conteúdo válido
-                if (typeof imovel.Video === 'object' && !Array.isArray(imovel.Video)) {
-                  // Verificar campos possíveis de URL
-                  const videoUrl = imovel.Video.url || 
-                                  imovel.Video.URL || 
-                                  imovel.Video.link || 
-                                  imovel.Video.src || 
-                                  imovel.Video.videoId || 
-                                  imovel.Video.youtube;
-                  
-                  // Validar se URL existe e não é vazia
-                  if (videoUrl && 
-                      typeof videoUrl === 'string' && 
-                      videoUrl.trim() !== '' &&
-                      videoUrl !== 'null' &&
-                      videoUrl !== 'undefined') {
-                    return <VideoCondominio imovel={imovel} />;
-                  }
-                }
-                
-                return null;
-                
-              } catch (error) {
-                console.error('🎥 [VIDEO] Erro ao processar vídeo:', error);
-                return null;
-              }
-            })()}
+            {/* COMPONENTE DE VÍDEO */}
+            {imovel?.Video && <VideoCondominio imovel={imovel} />}
             
             {imovel.Tour360 && <TourVirtual link={imovel.Tour360} titulo={imovel.Empreendimento} />}
+            
             <SimilarProperties id={imovel.Codigo} empreendimento={imovel.Empreendimento} />
+            
             <LocalizacaoCondominio imovel={imovel} />
           </div>
 
