@@ -642,7 +642,11 @@ export default async function ImovelPage({ params }) {
             <Lazer imovel={imovel} />
             
             {/* COMPONENTE DE VÍDEO */}
-            {imovel?.Video && <VideoCondominio imovel={imovel} />}
+            {(() => {if (!imovel?.Video) return null;
+            // Verificar se Video não é um objeto vazio
+            if (typeof imovel.Video === 'object' && Object.keys(imovel.Video).length === 0) {return null;}
+            // Se passou nas verificações, renderizar o componente return <VideoCondominio imovel={imovel} />;
+            })()}
             
             {imovel.Tour360 && <TourVirtual link={imovel.Tour360} titulo={imovel.Empreendimento} />}
             
