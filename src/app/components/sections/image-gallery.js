@@ -1,69 +1,51 @@
-// src/app/components/sections/image-gallery.js - VERSÃO FINAL CORRIGIDA
+// src/app/components/sections/image-gallery.js - VERSÃO CORRIGIDA
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { ArrowLeft } from "lucide-react";
 import { formatterSlug } from "@/app/utils/formatter-slug";
 import { Share } from "../ui/share";
 import { photoSorter } from "@/app/utils/photoSorter";
 
-// 🚀 HOOK MOBILE - ANTI-LOOP
 function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(() => {
-    // Inicialização segura
-    if (typeof window === 'undefined') return false;
-    return window.innerWidth < 768;
-  });
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
-    
-    // ✅ Check inicial sem layout shift
     check();
-    
-    // ✅ Debounced resize para performance
-    let timeoutId;
-    const debouncedCheck = () => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(check, 150);
-    };
-    
-    window.addEventListener("resize", debouncedCheck, { passive: true });
-    return () => {
-      clearTimeout(timeoutId);
-      window.removeEventListener("resize", debouncedCheck);
-    };
-  }, []); // ✅ DEPENDENCY ARRAY VAZIO - evita loops
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
 
   return isMobile;
 }
 
 export function ImageGallery({ 
-  // Props para página de IMÓVEL
+  // Props para página de IMÓVEL (modo original)
   imovel,
   
-  // Props para página de CONDOMÍNIO 
+  // Props para página de CONDOMÍNIO (modo novo) 
   fotos, 
   title,
   shareUrl,
   shareTitle,
 
-  // Layout da galeria
-  layout = "grid" // "grid" ou "single"
+  // 🎨 NOVA PROP: Layout da galeria
+  layout = "grid" // "grid" (padrão) ou "single" (só foto principal)
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(null);
-  const [imageLoadError, setImageLoadError] = useState(false);
-  const [firstImageLoaded, setFirstImageLoaded] = useState(false);
+  const [debugMode, setDebugMode] = useState(false);
   const isMobile = useIsMobile();
 
-  // 🎯 PROCESSAMENTO OTIMIZADO
+  // 🎯 MODO INTELIGENTE: Detectar se é imóvel ou condomínio
   const isImovelMode = !!imovel;
   
-  // 🚀 DADOS PROCESSADOS - Memoized para performance
+  // Processar dados baseado no modo
   const processedData = useMemo(() => {
     if (isImovelMode) {
+      // MODO IMÓVEL (original)
       return {
         fotos: imovel?.Foto || [],
         titulo: imovel?.Empreendimento || '',
@@ -72,6 +54,7 @@ export function ImageGallery({
         tituloShare: `Confira este imóvel: ${imovel?.Empreendimento}`
       };
     } else {
+      // MODO CONDOMÍNIO (novo)
       return {
         fotos: fotos || [],
         titulo: title || '',
@@ -82,172 +65,93 @@ export function ImageGallery({
     }
   }, [imovel, fotos, title, shareUrl, shareTitle, isImovelMode]);
 
-  // 🎯 IMAGENS PROCESSADAS - CORRIGIDO para preservar ordem original E foto destaque
+  // 🎯 PROCESSAR FOTOS COM CORREÇÃO
   const images = useMemo(() => {
     if (!Array.isArray(processedData.fotos) || processedData.fotos.length === 0) {
       return [];
     }
 
     try {
-      // ✅ CORREÇÃO: Preservar campos de ordem para o photoSorter
-      // Criar cópia profunda das fotos mantendo TODOS os campos
-      const fotosComOrdem = processedData.fotos.map(foto => ({...foto}));
+      console.log('📸 GALERIA: Processando fotos...', {
+        modo: isImovelMode ? 'IMÓVEL' : 'CONDOMÍNIO',
+        totalFotos: processedData.fotos.length,
+        codigo: processedData.codigo
+      });
+
+      // 🔥 SEMPRE LIMPAR CAMPOS ORDEM ANTES DO PHOTOSORTER
+      const fotosLimpas = processedData.fotos.map(foto => {
+        const { Ordem, ordem, ORDEM, ...fotoSemOrdem } = foto;
+        return fotoSemOrdem;
+      });
+
+      console.log('🧹 GALERIA: Campos ORDEM removidos para forçar análise inteligente');
+
+      // 🎯 USAR PHOTOSORTER SEMPRE (para ambos os modos)
+      const fotosOrdenadas = photoSorter.ordenarFotos(fotosLimpas, processedData.codigo);
       
-      // ✅ SEPARAR FOTO DESTAQUE
-      const fotoDestaque = fotosComOrdem.find(foto => foto.Destaque === "Sim");
-      const fotosSemDestaque = fotosComOrdem.filter(foto => foto.Destaque !== "Sim");
-      
-      // ✅ ORDENAÇÃO INTELIGENTE - Respeitando ordem da migração
-      // Primeiro: verificar se existe campo de ordem explícito
-      const temOrdemExplicita = fotosSemDestaque.some(foto => 
-        foto.Ordem !== undefined || 
-        foto.ordem !== undefined || 
-        foto.ORDEM !== undefined
-      );
-      
-      let fotosOrdenadas;
-      
-      if (temOrdemExplicita) {
-        // Se tem ordem explícita, usar ela prioritariamente
-        fotosOrdenadas = [...fotosSemDestaque].sort((a, b) => {
-          // Pegar o valor de ordem de qualquer variação do campo
-          const ordemA = a.Ordem || a.ordem || a.ORDEM || 9999;
-          const ordemB = b.Ordem || b.ordem || b.ORDEM || 9999;
-          
-          // Converter para número se for string
-          const numA = typeof ordemA === 'string' ? parseInt(ordemA, 10) : ordemA;
-          const numB = typeof ordemB === 'string' ? parseInt(ordemB, 10) : ordemB;
-          
-          // Se ambos têm ordem válida, usar ela
-          if (!isNaN(numA) && !isNaN(numB)) {
-            return numA - numB;
-          }
-          
-          // Fallback: manter ordem original do array
-          return 0;
-        });
-        
-        console.log('📸 GALERIA: Usando ordem explícita da migração');
-      } else {
-        // Se não tem ordem explícita, usar o photoSorter
-        // mas passar as fotos COM todos os campos preservados
-        fotosOrdenadas = photoSorter.ordenarFotos(fotosSemDestaque, processedData.codigo);
-        console.log('📸 GALERIA: Usando photoSorter para ordenação');
-      }
-      
-      // ✅ COLOCAR FOTO DESTAQUE NO INÍCIO (se existir)
-      const fotosFinais = fotoDestaque 
-        ? [fotoDestaque, ...fotosOrdenadas]
-        : fotosOrdenadas;
-      
-      // ✅ Adicionar código único mantendo a ordem estabelecida
-      return fotosFinais.map((foto, index) => ({
+      const resultado = fotosOrdenadas.map((foto, index) => ({
         ...foto,
-        Codigo: foto.Codigo || `${processedData.codigo}-foto-${index}`,
-        _indexOrdenado: index // Guardar índice para debug se necessário
+        Codigo: `${processedData.codigo}-foto-${index}`,
       }));
+
+      console.log('✅ GALERIA: Fotos processadas com photoSorter:', {
+        total: resultado.length,
+        primeira: resultado[0]?.Foto?.split('/').pop()?.substring(0, 30) + '...',
+        destaque: resultado.find(f => f.Destaque === "Sim") ? 'SIM' : 'NÃO'
+      });
+
+      return resultado;
 
     } catch (error) {
       console.error('❌ GALERIA: Erro ao processar imagens:', error);
       
-      // Fallback: manter ordem original do array
+      // Fallback seguro
       return [...processedData.fotos].map((foto, index) => ({
         ...foto,
-        Codigo: foto.Codigo || `${processedData.codigo}-foto-${index}`,
-        _indexOrdenado: index
+        Codigo: `${processedData.codigo}-foto-${index}`,
       }));
     }
-  }, [processedData]);
+  }, [processedData, isImovelMode]);
 
-  // 🎯 HANDLERS OTIMIZADOS com useCallback
-  const openModal = useCallback((index = null) => {
-    setIsModalOpen(true);
-    setSelectedIndex(index); // null = grid de thumbnails, número = imagem específica
-  }, []);
+  // 🔍 DEBUG
+  const debugInfo = useMemo(() => {
+    if (!debugMode || !processedData.fotos) return null;
+    
+    // Limpar campos ORDEM para debug também
+    const fotosLimpas = processedData.fotos.map(foto => {
+      const { Ordem, ordem, ORDEM, ...fotoSemOrdem } = foto;
+      return fotoSemOrdem;
+    });
+    
+    return photoSorter.gerarRelatorio(fotosLimpas, processedData.codigo);
+  }, [debugMode, processedData.fotos, processedData.codigo]);
 
-  const closeModal = useCallback(() => {
-    setIsModalOpen(false);
-    setSelectedIndex(null);
-  }, []);
-
-  const goNext = useCallback(() => {
-    if (selectedIndex !== null) {
-      setSelectedIndex((prev) => (prev + 1) % images.length);
-    }
-  }, [selectedIndex, images.length]);
-
-  const goPrev = useCallback(() => {
-    if (selectedIndex !== null) {
-      setSelectedIndex((prev) => (prev - 1 + images.length) % images.length);
-    }
-  }, [selectedIndex, images.length]);
-
-  // 🔧 ERROR HANDLERS para evitar imagem quebrada
-  const handleImageError = useCallback(() => {
-    setImageLoadError(true);
-    setFirstImageLoaded(true);
-  }, []);
-
-  const handleImageLoad = useCallback(() => {
-    setImageLoadError(false);
-    setFirstImageLoaded(true);
-  }, []);
-
-  // 🚀 PRELOAD AGRESSIVO da primeira imagem
+  // 🔧 Toggle debug
   useEffect(() => {
-    if (images[0]?.Foto) {
-      const link = document.createElement('link');
-      link.rel = 'preload';
-      link.as = 'image';
-      link.href = images[0].Foto;
-      link.fetchPriority = 'high';
-      link.crossOrigin = 'anonymous';
-      document.head.appendChild(link);
-      
-      return () => {
-        if (document.head.contains(link)) {
-          document.head.removeChild(link);
-        }
-      };
-    }
-  }, [images]);
-
-  // 🚀 KEYBOARD NAVIGATION - Otimizado
-  useEffect(() => {
-    if (!isModalOpen) return;
-
-    const handleKeyDown = (e) => {
-      switch (e.key) {
-        case 'Escape':
-          closeModal();
-          break;
-        case 'ArrowLeft':
-          goPrev();
-          break;
-        case 'ArrowRight':
-          goNext();
-          break;
+    const handleKeyPress = (e) => {
+      if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+        setDebugMode(prev => !prev);
+        console.log(debugMode ? '🔍 Debug desativado' : '🔍 Debug ativado');
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [isModalOpen, closeModal, goPrev, goNext]);
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [debugMode]);
 
-  // 🔒 BLOQUEIA SCROLL E ESCONDE ELEMENTOS EXTERNOS QUANDO MODAL ABRE - CORRIGIDO
+  // 🛡️ CORREÇÃO: BLOQUEAR THUMBNAILS VAZANDO - ADICIONADO
   useEffect(() => {
     if (isModalOpen) {
       // Bloqueia scroll
       document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      document.body.style.height = '100%';
+      
       // Adiciona classe para esconder outros elementos
       document.body.classList.add('npi-gallery-modal-open');
       
-      // 🛡️ ESTILOS DEFENSIVOS AGRESSIVOS - Remove o estilo anterior e adiciona um mais forte
-      const existingStyle = document.getElementById('npi-gallery-modal-styles');
-      if (existingStyle) {
-        existingStyle.remove();
-      }
-      
+      // 🛡️ ESTILOS DEFENSIVOS AGRESSIVOS
       const style = document.createElement('style');
       style.id = 'npi-gallery-modal-styles';
       style.innerHTML = `
@@ -324,394 +228,192 @@ export function ImageGallery({
     };
   }, [isModalOpen]);
 
-  if (!processedData.titulo || images.length === 0) {
+  if (!processedData.titulo) {
+    return null;
+  }
+
+  if (images.length === 0) {
     return (
-      <div className="w-full h-[380px] relative">
-        <div className="w-full h-full overflow-hidden bg-gray-100 flex flex-col items-center justify-center rounded-lg">
-          {/* 🎯 LOADING PLACEHOLDER */}
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
-          <span className="text-gray-600 text-sm font-medium">Carregando galeria...</span>
+      <div className="w-full h-[410px] relative">
+        <div className="w-full h-full overflow-hidden bg-gray-200 flex items-center justify-center rounded-lg">
+          <span className="text-gray-500">Imagem não disponível</span>
         </div>
       </div>
     );
   }
 
+  const openModal = (index) => {
+    setIsModalOpen(true);
+    setSelectedIndex(index ?? null);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedIndex(null);
+  };
+
+  const goNext = () => {
+    if (selectedIndex !== null) {
+      setSelectedIndex((prev) => (prev + 1) % images.length);
+    }
+  };
+
+  const goPrev = () => {
+    if (selectedIndex !== null) {
+      setSelectedIndex((prev) => (prev - 1 + images.length) % images.length);
+    }
+  };
+
   return (
     <>
-      {/* 🎨 LAYOUT OTIMIZADO COM FOTOS MAIORES */}
+      {/* 🔍 DEBUG INFO */}
+      {debugMode && debugInfo && (
+        <div className="mb-4 p-3 bg-black text-green-400 font-mono text-xs rounded-md">
+          <div className="font-bold mb-2">🔍 DEBUG - ORDENAÇÃO INTELIGENTE ({isImovelMode ? 'IMÓVEL' : 'CONDOMÍNIO'})</div>
+          <div>📸 Total: {debugInfo.total} fotos</div>
+          <div>📊 Grupos: {JSON.stringify(debugInfo.grupos)}</div>
+          <div>📈 Cobertura: {(debugInfo.cobertura * 100).toFixed(1)}%</div>
+          <div>🎯 Padrões: {debugInfo.padroes.slice(0, 3).join(', ')}...</div>
+          <div>🔧 Método: ANÁLISE INTELIGENTE (campos ORDEM removidos)</div>
+        </div>
+      )}
+
+      {/* 🎨 LAYOUT CONDICIONAL: Single ou Grid */}
       {layout === "single" ? (
-        // LAYOUT SINGLE
-        <div 
-          className="w-full h-full cursor-pointer relative overflow-hidden rounded-lg"
-          onClick={() => openModal()}
-          role="button"
-          tabIndex={0}
-          aria-label={`Ver galeria completa de ${processedData.titulo}`}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault();
-              openModal();
-            }
-          }}
-        >
+        // LAYOUT SINGLE: Uma foto ocupando todo o espaço vertical disponível
+        <div className="w-full h-full cursor-pointer relative overflow-hidden rounded-lg" onClick={() => openModal()}>
           <Image
             src={images[0].Foto}
-            alt={`${processedData.titulo} - foto principal`}
+            alt={processedData.titulo}
             title={processedData.titulo}
             width={800}
             height={600}
             sizes="100vw"
-            placeholder="empty"
+            placeholder="blur"
+            blurDataURL={images[0].blurDataURL || "/placeholder.png"}
             loading="eager"
             priority={true}
-            fetchPriority="high"
             className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-105"
           />
 
-          {/* Indicadores otimizados - só aparecem quando galeria está FECHADA */}
-          {!isModalOpen && images[0].Destaque === "Sim" && (
-            <div 
-              style={{
-                position: 'absolute',
-                top: '16px',
-                left: '16px',
-                backgroundColor: 'rgb(17, 24, 39)',
-                color: 'white',
-                fontSize: '12px',
-                fontWeight: 'bold',
-                padding: '4px 8px',
-                borderRadius: '9999px',
-                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                zIndex: 999999,
-                pointerEvents: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
+          {/* 🏷️ Indicador de destaque */}
+          {images[0].Destaque === "Sim" && (
+            <div className="absolute top-4 left-4 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
               ⭐ DESTAQUE
             </div>
           )}
 
-          {!isModalOpen && (
-            <div 
-              style={{
-                position: 'absolute',
-                top: '16px',
-                right: '16px',
-                backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                backdropFilter: 'blur(4px)',
-                color: 'black',
-                fontSize: '14px',
-                fontWeight: '500',
-                padding: '4px 12px',
-                borderRadius: '9999px',
-                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                zIndex: 999999,
-                pointerEvents: 'none',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              {images.length} foto{images.length > 1 ? 's' : ''}
+          {/* 📸 Contador de fotos */}
+          <div className="absolute top-4 right-4 bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg">
+            {images.length} foto{images.length > 1 ? 's' : ''}
+          </div>
+
+          {/* Overlay sutil para indicar clique */}
+          <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-10 transition-all duration-300 flex items-center justify-center">
+            <div className="opacity-0 hover:opacity-100 transition-opacity bg-white/90 text-black px-4 py-2 rounded-lg">
+              Ver galeria completa
             </div>
-          )}
+          </div>
         </div>
       ) : (
-        // 📱 LAYOUT RESPONSIVO COM FOTOS MAIORES
-        <div className={`w-full ${isMobile ? '' : 'grid grid-cols-1 md:grid-cols-2 gap-1'}`}>
-          
-          {/* 📱 MOBILE: Foto principal MAIOR */}
-          {isMobile ? (
-            <div 
-              className="w-full h-[65vh] sm:h-[60vh] min-h-[320px] max-h-[380px] cursor-pointer relative overflow-hidden rounded-lg"
-              onClick={() => openModal()}
-              role="button"
-              tabIndex={0}
-              aria-label={`Ver galeria de ${images.length} fotos de ${processedData.titulo}`}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  openModal();
-                }
-              }}
-            >
+        // LAYOUT GRID: Grid tradicional com foto principal + thumbnails
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-1 w-full">
+          <div className="col-span-1 h-[410px] cursor-pointer relative" onClick={() => openModal()}>
+            <div className="w-full h-full overflow-hidden">
               <Image
                 src={images[0].Foto}
-                alt={`${processedData.titulo} - foto principal`}
+                alt={processedData.titulo}
                 title={processedData.titulo}
-                fill
-                sizes="(max-width: 640px) 100vw, (max-width: 768px) 100vw, 50vw"
-                placeholder="empty"
+                width={800}
+                height={600}
+                sizes="(max-width: 350px) 100vw, (max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                placeholder="blur"
+                blurDataURL={images[0].blurDataURL || "/placeholder.png"}
                 loading="eager"
                 priority={true}
-                fetchPriority="high"
-                quality={70}
-                onLoad={handleImageLoad}
-                onError={handleImageError}
-                className="object-cover transition-transform duration-300 ease-in-out hover:scale-105"
+                className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
               />
-
-              {/* Indicadores móveis - só aparecem quando galeria está FECHADA */}
-              {!isModalOpen && images[0].Destaque === "Sim" && (
-                <div 
-                  style={{
-                    position: 'absolute',
-                    top: '12px',
-                    left: '12px',
-                    backgroundColor: 'rgb(17, 24, 39)',
-                    color: 'white',
-                    fontSize: '12px',
-                    fontWeight: 'bold',
-                    padding: '4px 8px',
-                    borderRadius: '9999px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                    zIndex: 999999,
-                    pointerEvents: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  ⭐ DESTAQUE
-                </div>
-              )}
-
-              {!isModalOpen && (
-                <div 
-                  style={{
-                    position: 'absolute',
-                    top: '12px',
-                    right: '12px',
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                    backdropFilter: 'blur(4px)',
-                    color: 'white',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    padding: '6px 12px',
-                    borderRadius: '9999px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                    zIndex: 999999,
-                    pointerEvents: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  1 / {images.length}
-                </div>
-              )}
-
-              {/* Texto "Toque para ver" - só aparece quando a galeria NÃO está aberta */}
-              {images.length > 1 && !isModalOpen && (
-                <div 
-                  style={{
-                    position: 'absolute',
-                    bottom: '12px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                    backdropFilter: 'blur(4px)',
-                    color: 'black',
-                    fontSize: '14px',
-                    fontWeight: '500',
-                    padding: '8px 16px',
-                    borderRadius: '9999px',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                    zIndex: 999999,
-                    pointerEvents: 'none',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                  }}
-                >
-                  Toque para ver as {images.length} fotos
-                </div>
-              )}
             </div>
-          ) : (
-            // 💻 DESKTOP: Layout grid MAIOR
-            <>
-              <div 
-                className="col-span-1 h-[380px] cursor-pointer relative"
-                onClick={() => openModal()}
-                role="button"
-                tabIndex={0}
-                aria-label={`Ver galeria de ${images.length} fotos de ${processedData.titulo}`}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    openModal();
-                  }
-                }}
-              >
-                {/* 🎯 LOADING OVERLAY DESKTOP */}
-                {!firstImageLoaded && (
-                  <div className="absolute inset-0 bg-gray-50 flex flex-col items-center justify-center z-10 rounded-lg">
-                    <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mb-2"></div>
-                    <span className="text-gray-600 text-sm">Carregando...</span>
-                  </div>
-                )}
-                
-                <div className="w-full h-full overflow-hidden rounded-lg">
-                  <Image
-                    src={images[0].Foto}
-                    alt={`${processedData.titulo} - foto principal`}
-                    title={processedData.titulo}
-                    width={760}
-                    height={570}
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                    placeholder="empty"
-                    loading="eager"
-                    priority={true}
-                    fetchPriority="high"
-                    quality={70}
-                    onLoad={handleImageLoad}
-                    onError={handleImageError}
-                    className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
-                  />
-                </div>
 
-                {/* Indicadores desktop - só aparecem quando galeria está FECHADA */}
-                {!isModalOpen && images[0].Destaque === "Sim" && (
-                  <div 
-                    style={{
-                      position: 'absolute',
-                      top: '16px',
-                      left: '16px',
-                      backgroundColor: 'rgb(17, 24, 39)',
-                      color: 'white',
-                      fontSize: '12px',
-                      fontWeight: 'bold',
-                      padding: '4px 8px',
-                      borderRadius: '9999px',
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                      zIndex: 999999,
-                      pointerEvents: 'none',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}
-                  >
-                    ⭐ DESTAQUE
-                  </div>
-                )}
-
-                {!isModalOpen && (
-                  <div 
-                    style={{
-                      position: 'absolute',
-                      top: '16px',
-                      right: '16px',
-                      backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                      backdropFilter: 'blur(4px)',
-                      color: 'black',
-                      fontSize: '14px',
-                      fontWeight: '500',
-                      padding: '4px 12px',
-                      borderRadius: '9999px',
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
-                      zIndex: 999999,
-                      pointerEvents: 'none',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center'
-                    }}
-                  >
-                    {images.length} foto{images.length > 1 ? 's' : ''}
-                  </div>
-                )}
+            {/* 🏷️ Indicador de destaque */}
+            {images[0].Destaque === "Sim" && (
+              <div className="absolute top-4 left-4 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded-full shadow-lg">
+                ⭐ DESTAQUE
               </div>
+            )}
 
-              {/* GRID 2x2 MAIOR */}
-              <div className="col-span-1 grid grid-cols-2 grid-rows-2 gap-1 h-[380px]">
-                {images.slice(1, 5).map((image, index) => {
-                  const isLastImage = index === 3;
-                  return (
-                    <div
-                      key={image.Codigo || index}
-                      className="relative h-full overflow-hidden cursor-pointer rounded-lg"
-                      onClick={() => openModal()}
-                      role="button"
-                      tabIndex={0}
-                      aria-label={`Ver galeria completa - imagem ${index + 2}`}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          openModal();
-                        }
-                      }}
-                    >
-                      <Image
-                        src={image.Foto}
-                        alt={`${processedData.titulo} - imagem ${index + 2}`}
-                        title={`${processedData.titulo} - imagem ${index + 2}`}
-                        width={420}
-                        height={315}
-                        sizes="(max-width: 768px) 50vw, 25vw"
-                        placeholder="empty"
-                        loading="lazy"
-                        priority={false}
-                        quality={60}
-                        className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
-                      />
-                      
-                      {/* Indicador de destaque nos thumbnails - só aparece quando galeria está FECHADA */}
-                      {!isModalOpen && image.Destaque === "Sim" && (
-                        <div 
-                          style={{
-                            position: 'absolute',
-                            top: '8px',
-                            left: '8px',
-                            backgroundColor: 'rgb(17, 24, 39)',
-                            color: 'white',
-                            fontSize: '12px',
-                            fontWeight: 'bold',
-                            padding: '2px 4px',
-                            borderRadius: '4px',
-                            zIndex: 999999,
-                            pointerEvents: 'none'
-                          }}
+            {/* 📸 Contador de fotos - sempre visível */}
+            <div className="absolute top-4 right-4 bg-white bg-opacity-90 backdrop-blur-sm text-black px-3 py-1 rounded-full text-sm font-medium shadow-lg">
+              {images.length} foto{images.length > 1 ? 's' : ''}
+            </div>
+          </div>
+
+          {/* GRID 2x2 original */}
+          {!isMobile && (
+            <div className="col-span-1 grid grid-cols-2 grid-rows-2 gap-1 h-[410px]">
+              {images.slice(1, 5).map((image, index) => {
+                const isLastImage = index === 3;
+                return (
+                  <div
+                    key={index}
+                    className="relative h-full overflow-hidden cursor-pointer"
+                    onClick={() => openModal()}
+                  >
+                    <Image
+                      src={image.Foto}
+                      alt={`${processedData.titulo} - imagem ${index + 2}`}
+                      title={`${processedData.titulo} - imagem ${index + 2}`}
+                      width={400}
+                      height={300}
+                      sizes="25vw"
+                      placeholder="blur"
+                      blurDataURL={image.blurDataURL || "/placeholder.png"}
+                      loading="lazy"
+                      className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
+                    />
+                    
+                    {/* Indicador de destaque nos thumbnails */}
+                    {image.Destaque === "Sim" && (
+                      <div className="absolute top-2 left-2 bg-yellow-500 text-white text-xs font-bold px-1.5 py-0.5 rounded">
+                        ⭐
+                      </div>
+                    )}
+                    
+                    {isLastImage && images.length > 5 && (
+                      <div className="absolute inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center">
+                        <button
+                          className="border border-white text-white px-4 py-2 rounded hover:bg-white hover:text-black transition-colors"
+                          aria-label="Ver mais fotos"
                         >
-                          ⭐
-                        </div>
-                      )}
-                      
-                      {isLastImage && images.length > 5 && (
-                        <div className="absolute inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center rounded-lg">
-                          <button
-                            className="border border-white text-white px-4 py-2 rounded hover:bg-white hover:text-black transition-colors"
-                            aria-label={`Ver mais ${images.length - 5} fotos`}
-                          >
-                            +{images.length - 5} fotos
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </>
+                          +{images.length - 5} fotos
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
       )}
 
-      {/* 🖼️ MODAL OTIMIZADO - Z-INDEX MÁXIMO CORRIGIDO */}
+      {/* Botão mobile para ver todas as fotos */}
+      {isMobile && images.length > 1 && (
+        <div className="mt-4 px-4">
+          <button
+            onClick={() => openModal()}
+            className="w-full py-3 text-center border border-gray-300 rounded-md bg-white hover:bg-gray-50 transition-colors font-medium"
+          >
+            📸 Ver todas as {images.length} fotos
+          </button>
+        </div>
+      )}
+
+      {/* 🖼️ MODAL DA GALERIA - CORRIGIDO COM CONTAINER IDENTIFICADOR */}
       {isModalOpen && (
-        <div 
-          className="npi-gallery-modal-container fixed inset-0 bg-black bg-opacity-95 overflow-auto"
-          style={{
-            zIndex: 2147483647
-          }}
-        >
-          {/* Header fixo */}
-          <div className="sticky top-0 z-10 flex justify-between gap-4 p-5 pt-12 md:pt-8 bg-gradient-to-b from-black/40 to-transparent backdrop-blur-sm">
-            <button 
-              onClick={closeModal} 
-              aria-label="Fechar galeria" 
-              className="text-white hover:text-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-white/50 rounded-lg p-1"
-            >
+        <div className="npi-gallery-modal-container fixed inset-0 bg-black bg-opacity-95 z-50 overflow-auto" style={{ zIndex: 2147483647 }}>
+          <div className="flex justify-between gap-4 p-5 pt-28 mt-6 md:mt-0">
+            <button onClick={closeModal} aria-label="Fechar galeria" className="text-white">
               <ArrowLeft size={24} />
             </button>
             <Share
@@ -725,82 +427,70 @@ export function ImageGallery({
             />
           </div>
 
-          {selectedIndex !== null && selectedIndex !== undefined ? (
-            // FOTO INDIVIDUAL - ABSOLUTAMENTE SEM THUMBNAILS!
+          {selectedIndex !== null ? (
             <div className="flex items-center justify-center min-h-screen p-4 relative">
               <Image
                 src={images[selectedIndex].Foto}
-                alt={`${processedData.titulo} - imagem ${selectedIndex + 1} de ${images.length}`}
-                title={`${processedData.titulo} - imagem ${selectedIndex + 1} de ${images.length}`}
-                width={900}
-                height={600}
+                alt={`${processedData.titulo} - imagem ampliada`}
+                title={`${processedData.titulo} - imagem ampliada`}
+                width={1200}
+                height={800}
                 sizes="100vw"
-                placeholder="empty"
+                placeholder="blur"
+                blurDataURL={images[selectedIndex].blurDataURL || "/placeholder.png"}
                 loading="eager"
-                quality={70}
                 className="max-w-full max-h-screen object-contain"
               />
 
-              {/* Contador */}
-              <div className="absolute top-20 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm z-20">
+              {/* Indicador de foto atual */}
+              <div className="absolute top-20 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm">
                 {selectedIndex + 1} / {images.length}
                 {images[selectedIndex].Destaque === "Sim" && " ⭐"}
               </div>
 
-              {/* Navegação */}
               <button
                 onClick={goPrev}
-                className="absolute left-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2 hover:bg-black hover:bg-opacity-50 rounded-full transition-colors z-20 focus:outline-none focus:ring-2 focus:ring-white/50"
+                className="absolute left-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2 hover:bg-black hover:bg-opacity-50 rounded-full transition-colors"
                 aria-label="Imagem anterior"
               >
                 &#10094;
               </button>
               <button
                 onClick={goNext}
-                className="absolute right-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2 hover:bg-black hover:bg-opacity-50 rounded-full transition-colors z-20 focus:outline-none focus:ring-2 focus:ring-white/50"
+                className="absolute right-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2 hover:bg-black hover:bg-opacity-50 rounded-full transition-colors"
                 aria-label="Próxima imagem"
               >
                 &#10095;
               </button>
             </div>
           ) : (
-            // GRID DE THUMBNAILS - SÓ QUANDO NÃO HÁ FOTO SELECIONADA
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
               {images.map((image, idx) => (
                 <div
-                  key={image.Codigo || idx}
+                  key={idx}
                   onClick={() => setSelectedIndex(idx)}
-                  className="relative w-full h-48 sm:h-56 md:h-64 lg:h-72 xl:h-80 cursor-pointer overflow-hidden border-2 border-transparent hover:border-white transition-colors rounded-lg focus:outline-none focus:ring-2 focus:ring-white/50"
-                  role="button"
-                  tabIndex={0}
-                  aria-label={`Ver imagem ${idx + 1} de ${images.length}`}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      setSelectedIndex(idx);
-                    }
-                  }}
+                  className="relative w-full h-48 sm:h-56 md:h-64 lg:h-72 xl:h-80 cursor-pointer overflow-hidden border-2 border-transparent hover:border-white transition-colors"
                 >
                   <Image
                     src={image.Foto}
-                    alt={`${processedData.titulo} - miniatura ${idx + 1}`}
+                    alt={`${processedData.titulo} - imagem ${idx + 1}`}
                     title={`${processedData.titulo} - imagem ${idx + 1}`}
                     fill
                     sizes="(max-width: 768px) 50vw, 25vw"
-                    placeholder="empty"
+                    placeholder="blur"
+                    blurDataURL={image.blurDataURL || "/placeholder.png"}
                     loading="lazy"
-                    quality={65}
                     className="object-cover"
                   />
                   
-                  {/* Número da foto */}
+                  {/* Overlay com número */}
                   <div className="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
                     {idx + 1}
                   </div>
                   
                   {/* Indicador de destaque */}
                   {image.Destaque === "Sim" && (
-                    <div className="absolute top-2 left-2 bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded">
+                    <div className="absolute top-2 left-2 bg-yellow-500 text-white text-xs font-bold px-2 py-1 rounded">
                       ⭐ DESTAQUE
                     </div>
                   )}
@@ -808,6 +498,13 @@ export function ImageGallery({
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* 🔍 Hint do debug */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="mt-2 text-xs text-gray-400 text-center">
+          Ctrl + Shift + D para debug da ordenação ({isImovelMode ? 'IMÓVEL' : 'CONDOMÍNIO'})
         </div>
       )}
     </>
