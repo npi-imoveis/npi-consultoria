@@ -641,14 +641,29 @@ export default async function ImovelPage({ params }) {
             <DetalhesCondominio imovel={imovel} />
             <Lazer imovel={imovel} />
             
-            {/* COMPONENTE DE VÍDEO CORRIGIDO */}
+            {/* COMPONENTE DE VÍDEO - VALIDAÇÃO CORRIGIDA */}
             {(() => {
               if (!imovel?.Video) return null;
               
               try {
-                // Manter estrutura original - apenas validação mais simples
-                if (typeof imovel.Video === 'object' && !Array.isArray(imovel.Video) && Object.keys(imovel.Video).length > 0) {
-                  return <VideoCondominio imovel={imovel} />;
+                // Verificar se é objeto e tem conteúdo válido
+                if (typeof imovel.Video === 'object' && !Array.isArray(imovel.Video)) {
+                  // Verificar campos possíveis de URL
+                  const videoUrl = imovel.Video.url || 
+                                  imovel.Video.URL || 
+                                  imovel.Video.link || 
+                                  imovel.Video.src || 
+                                  imovel.Video.videoId || 
+                                  imovel.Video.youtube;
+                  
+                  // Validar se URL existe e não é vazia
+                  if (videoUrl && 
+                      typeof videoUrl === 'string' && 
+                      videoUrl.trim() !== '' &&
+                      videoUrl !== 'null' &&
+                      videoUrl !== 'undefined') {
+                    return <VideoCondominio imovel={imovel} />;
+                  }
                 }
                 
                 return null;
@@ -660,12 +675,7 @@ export default async function ImovelPage({ params }) {
             })()}
             
             {imovel.Tour360 && <TourVirtual link={imovel.Tour360} titulo={imovel.Empreendimento} />}
-            <SimilarProperties  
-            id={imovel.Codigo}
-            endereco={imovel.Endereco}
-            bairro={imovel.Bairro}
-            categoria={imovel.Categoria || imovel.Tipo}
-            metragem={imovel.AreaUtil || imovel.Metragem || imovel.AreaPrivativa} />
+            <SimilarProperties id={imovel.Codigo} empreendimento={imovel.Empreendimento} />
             <LocalizacaoCondominio imovel={imovel} />
           </div>
 
