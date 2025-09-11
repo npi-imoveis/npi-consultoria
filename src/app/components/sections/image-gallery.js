@@ -161,6 +161,7 @@ export function ImageGallery({
 
   // 🎯 HANDLERS OTIMIZADOS com useCallback
   const openModal = useCallback((index = null) => {
+    console.log('🔍 ABRINDO MODAL - selectedIndex:', index);
     setIsModalOpen(true);
     setSelectedIndex(index); // null = grid de thumbnails, número = imagem específica
   }, []);
