@@ -1,22 +1,40 @@
-// src/app/components/sections/image-gallery.js - VERSÃO CORRIGIDA
+// src/app/components/sections/image-gallery.js - VERSÃO OTIMIZADA
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import Image from "next/image";
 import { ArrowLeft } from "lucide-react";
 import { formatterSlug } from "@/app/utils/formatter-slug";
 import { Share } from "../ui/share";
 import { photoSorter } from "@/app/utils/photoSorter";
 
+// 🚀 HOOK MOBILE - ANTI-LOOP
 function useIsMobile() {
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => {
+    // Inicialização segura
+    if (typeof window === 'undefined') return false;
+    return window.innerWidth < 768;
+  });
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
+    
+    // ✅ Check inicial sem layout shift
     check();
-    window.addEventListener("resize", check);
-    return () => window.removeEventListener("resize", check);
-  }, []);
+    
+    // ✅ Debounced resize para performance
+    let timeoutId;
+    const debouncedCheck = () => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(check, 150);
+    };
+    
+    window.addEventListener("resize", debouncedCheck, { passive: true });
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener("resize", debouncedCheck);
+    };
+  }, []); // ✅ DEPENDENCY ARRAY VAZIO - evita loops
 
   return isMobile;
 }
@@ -37,12 +55,14 @@ export function ImageGallery({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [debugMode, setDebugMode] = useState(false);
+  const [firstImageLoaded, setFirstImageLoaded] = useState(false);
+  const [imageLoadError, setImageLoadError] = useState(false);
   const isMobile = useIsMobile();
 
   // MODO INTELIGENTE: Detectar se é imóvel ou condomínio
   const isImovelMode = !!imovel;
   
-  // Processar dados baseado no modo
+  // 🚀 DADOS PROCESSADOS - Memoized para performance
   const processedData = useMemo(() => {
     if (isImovelMode) {
       // MODO IMÓVEL (original)
@@ -65,36 +85,78 @@ export function ImageGallery({
     }
   }, [imovel, fotos, title, shareUrl, shareTitle, isImovelMode]);
 
-  // PROCESSAR FOTOS COM CORREÇÃO
+  // 🎯 IMAGENS PROCESSADAS - ORDENAÇÃO INTELIGENTE CORRIGIDA
   const images = useMemo(() => {
     if (!Array.isArray(processedData.fotos) || processedData.fotos.length === 0) {
       return [];
     }
 
     try {
-      console.log('GALERIA: Processando fotos...', {
+      console.log('📸 GALERIA: Processando fotos...', {
         modo: isImovelMode ? 'IMÓVEL' : 'CONDOMÍNIO',
         totalFotos: processedData.fotos.length,
         codigo: processedData.codigo
       });
 
-      // SEMPRE LIMPAR CAMPOS ORDEM ANTES DO PHOTOSORTER
-      const fotosLimpas = processedData.fotos.map(foto => {
-        const { Ordem, ordem, ORDEM, ...fotoSemOrdem } = foto;
-        return fotoSemOrdem;
-      });
-
-      console.log('GALERIA: Campos ORDEM removidos para forçar análise inteligente');
-
-      // USAR PHOTOSORTER SEMPRE (para ambos os modos)
-      const fotosOrdenadas = photoSorter.ordenarFotos(fotosLimpas, processedData.codigo);
+      // ✅ CORREÇÃO: Preservar campos de ordem para o photoSorter
+      // Criar cópia profunda das fotos mantendo TODOS os campos
+      const fotosComOrdem = processedData.fotos.map(foto => ({...foto}));
       
-      const resultado = fotosOrdenadas.map((foto, index) => ({
+      // ✅ SEPARAR FOTO DESTAQUE
+      const fotoDestaque = fotosComOrdem.find(foto => foto.Destaque === "Sim");
+      const fotosSemDestaque = fotosComOrdem.filter(foto => foto.Destaque !== "Sim");
+      
+      // ✅ ORDENAÇÃO INTELIGENTE - Respeitando ordem da migração
+      // Primeiro: verificar se existe campo de ordem explícito
+      const temOrdemExplicita = fotosSemDestaque.some(foto => 
+        foto.Ordem !== undefined || 
+        foto.ordem !== undefined || 
+        foto.ORDEM !== undefined
+      );
+      
+      let fotosOrdenadas;
+      
+      if (temOrdemExplicita) {
+        // Se tem ordem explícita, usar ela prioritariamente
+        fotosOrdenadas = [...fotosSemDestaque].sort((a, b) => {
+          // Pegar o valor de ordem de qualquer variação do campo
+          const ordemA = a.Ordem || a.ordem || a.ORDEM || 9999;
+          const ordemB = b.Ordem || b.ordem || b.ORDEM || 9999;
+          
+          // Converter para número se for string
+          const numA = typeof ordemA === 'string' ? parseInt(ordemA, 10) : ordemA;
+          const numB = typeof ordemB === 'string' ? parseInt(ordemB, 10) : ordemB;
+          
+          // Se ambos têm ordem válida, usar ela
+          if (!isNaN(numA) && !isNaN(numB)) {
+            return numA - numB;
+          }
+          
+          // Fallback: manter ordem original do array
+          return 0;
+        });
+        
+        console.log('📸 GALERIA: Usando ordem explícita da migração');
+      } else {
+        // Se não tem ordem explícita, usar o photoSorter
+        // mas passar as fotos COM todos os campos preservados
+        fotosOrdenadas = photoSorter.ordenarFotos(fotosSemDestaque, processedData.codigo);
+        console.log('📸 GALERIA: Usando photoSorter para ordenação');
+      }
+      
+      // ✅ COLOCAR FOTO DESTAQUE NO INÍCIO (se existir)
+      const fotosFinais = fotoDestaque 
+        ? [fotoDestaque, ...fotosOrdenadas]
+        : fotosOrdenadas;
+      
+      // ✅ Adicionar código único mantendo a ordem estabelecida
+      const resultado = fotosFinais.map((foto, index) => ({
         ...foto,
-        Codigo: `${processedData.codigo}-foto-${index}`,
+        Codigo: foto.Codigo || `${processedData.codigo}-foto-${index}`,
+        _indexOrdenado: index // Guardar índice para debug se necessário
       }));
 
-      console.log('GALERIA: Fotos processadas com photoSorter:', {
+      console.log('📸 GALERIA: Fotos processadas:', {
         total: resultado.length,
         primeira: resultado[0]?.Foto?.split('/').pop()?.substring(0, 30) + '...',
         destaque: resultado.find(f => f.Destaque === "Sim") ? 'SIM' : 'NÃO'
@@ -103,15 +165,50 @@ export function ImageGallery({
       return resultado;
 
     } catch (error) {
-      console.error('GALERIA: Erro ao processar imagens:', error);
+      console.error('❌ GALERIA: Erro ao processar imagens:', error);
       
-      // Fallback seguro
+      // Fallback: manter ordem original do array
       return [...processedData.fotos].map((foto, index) => ({
         ...foto,
-        Codigo: `${processedData.codigo}-foto-${index}`,
+        Codigo: foto.Codigo || `${processedData.codigo}-foto-${index}`,
+        _indexOrdenado: index
       }));
     }
   }, [processedData, isImovelMode]);
+
+  // 🎯 HANDLERS OTIMIZADOS com useCallback
+  const openModal = useCallback((index = null) => {
+    setIsModalOpen(true);
+    setSelectedIndex(index); // null = grid de thumbnails, número = imagem específica
+  }, []);
+
+  const closeModal = useCallback(() => {
+    setIsModalOpen(false);
+    setSelectedIndex(null);
+  }, []);
+
+  const goNext = useCallback(() => {
+    if (selectedIndex !== null) {
+      setSelectedIndex((prev) => (prev + 1) % images.length);
+    }
+  }, [selectedIndex, images.length]);
+
+  const goPrev = useCallback(() => {
+    if (selectedIndex !== null) {
+      setSelectedIndex((prev) => (prev - 1 + images.length) % images.length);
+    }
+  }, [selectedIndex, images.length]);
+
+  // 🔧 ERROR HANDLERS para evitar imagem quebrada
+  const handleImageError = useCallback(() => {
+    setImageLoadError(true);
+    setFirstImageLoaded(true);
+  }, []);
+
+  const handleImageLoad = useCallback(() => {
+    setImageLoadError(false);
+    setFirstImageLoaded(true);
+  }, []);
 
   // DEBUG
   const debugInfo = useMemo(() => {
@@ -139,6 +236,60 @@ export function ImageGallery({
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [debugMode]);
 
+  // 🚀 PRELOAD AGRESSIVO da primeira imagem
+  useEffect(() => {
+    if (images[0]?.Foto) {
+      const link = document.createElement('link');
+      link.rel = 'preload';
+      link.as = 'image';
+      link.href = images[0].Foto;
+      link.fetchPriority = 'high';
+      link.crossOrigin = 'anonymous';
+      document.head.appendChild(link);
+      
+      return () => {
+        if (document.head.contains(link)) {
+          document.head.removeChild(link);
+        }
+      };
+    }
+  }, [images]);
+
+  // 🚀 KEYBOARD NAVIGATION - Otimizado
+  useEffect(() => {
+    if (!isModalOpen) return;
+
+    const handleKeyDown = (e) => {
+      switch (e.key) {
+        case 'Escape':
+          closeModal();
+          break;
+        case 'ArrowLeft':
+          goPrev();
+          break;
+        case 'ArrowRight':
+          goNext();
+          break;
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [isModalOpen, closeModal, goPrev, goNext]);
+
+  // 🔒 BLOQUEIA SCROLL QUANDO MODAL ABRE
+  useEffect(() => {
+    if (isModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isModalOpen]);
+
   if (!processedData.titulo) {
     return null;
   }
@@ -153,28 +304,6 @@ export function ImageGallery({
     );
   }
 
-  const openModal = (index) => {
-    setIsModalOpen(true);
-    setSelectedIndex(index ?? null);
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false);
-    setSelectedIndex(null);
-  };
-
-  const goNext = () => {
-    if (selectedIndex !== null) {
-      setSelectedIndex((prev) => (prev + 1) % images.length);
-    }
-  };
-
-  const goPrev = () => {
-    if (selectedIndex !== null) {
-      setSelectedIndex((prev) => (prev - 1 + images.length) % images.length);
-    }
-  };
-
   return (
     <>
       {/* DEBUG INFO */}
@@ -185,7 +314,7 @@ export function ImageGallery({
           <div>Grupos: {JSON.stringify(debugInfo.grupos)}</div>
           <div>Cobertura: {(debugInfo.cobertura * 100).toFixed(1)}%</div>
           <div>Padrões: {debugInfo.padroes.slice(0, 3).join(', ')}...</div>
-          <div>Método: ANÁLISE INTELIGENTE (campos ORDEM removidos)</div>
+          <div>Método: ANÁLISE INTELIGENTE (ordem preservada)</div>
         </div>
       )}
 
@@ -204,6 +333,8 @@ export function ImageGallery({
             blurDataURL={images[0].blurDataURL || "/placeholder.png"}
             loading="eager"
             priority={true}
+            onLoad={handleImageLoad}
+            onError={handleImageError}
             className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-105"
           />
 
@@ -230,7 +361,15 @@ export function ImageGallery({
         // LAYOUT GRID: Grid tradicional com foto principal + thumbnails
         <div className="grid grid-cols-1 md:grid-cols-2 gap-1 w-full">
           <div className="col-span-1 h-[410px] cursor-pointer relative" onClick={() => openModal()}>
-            <div className="w-full h-full overflow-hidden">
+            {/* 🎯 LOADING OVERLAY */}
+            {!firstImageLoaded && (
+              <div className="absolute inset-0 bg-gray-50 flex flex-col items-center justify-center z-10 rounded-lg">
+                <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mb-2"></div>
+                <span className="text-gray-600 text-sm">Carregando...</span>
+              </div>
+            )}
+            
+            <div className="w-full h-full overflow-hidden rounded-lg">
               <Image
                 src={images[0].Foto}
                 alt={processedData.titulo}
@@ -242,6 +381,8 @@ export function ImageGallery({
                 blurDataURL={images[0].blurDataURL || "/placeholder.png"}
                 loading="eager"
                 priority={true}
+                onLoad={handleImageLoad}
+                onError={handleImageError}
                 className="w-full h-full object-cover transition-transform duration-300 ease-in-out hover:scale-110"
               />
             </div>
@@ -266,8 +407,8 @@ export function ImageGallery({
                 const isLastImage = index === 3;
                 return (
                   <div
-                    key={index}
-                    className="relative h-full overflow-hidden cursor-pointer"
+                    key={image.Codigo || index}
+                    className="relative h-full overflow-hidden cursor-pointer rounded-lg"
                     onClick={() => openModal()}
                   >
                     <Image
@@ -320,11 +461,16 @@ export function ImageGallery({
         </div>
       )}
 
-      {/* MODAL DA GALERIA - ORIGINAL SIMPLES */}
+      {/* 🖼️ MODAL OTIMIZADO - HEADER FIXO COM GRADIENTE */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-95 z-50 overflow-auto">
-          <div className="flex justify-between gap-4 p-5 pt-28 mt-6 md:mt-0">
-            <button onClick={closeModal} aria-label="Fechar galeria" className="text-white">
+          {/* 🎯 HEADER FIXO COM GRADIENTE - COPIADO DA VERSÃO FINAL */}
+          <div className="sticky top-0 z-10 flex justify-between gap-4 p-5 pt-12 md:pt-8 bg-gradient-to-b from-black/40 to-transparent backdrop-blur-sm">
+            <button 
+              onClick={closeModal} 
+              aria-label="Fechar galeria" 
+              className="text-white hover:text-gray-300 transition-colors focus:outline-none focus:ring-2 focus:ring-white/50 rounded-lg p-1"
+            >
               <ArrowLeft size={24} />
             </button>
             <Share
@@ -338,12 +484,13 @@ export function ImageGallery({
             />
           </div>
 
-          {selectedIndex !== null ? (
+          {selectedIndex !== null && selectedIndex !== undefined ? (
+            // FOTO INDIVIDUAL
             <div className="flex items-center justify-center min-h-screen p-4 relative">
               <Image
                 src={images[selectedIndex].Foto}
-                alt={`${processedData.titulo} - imagem ampliada`}
-                title={`${processedData.titulo} - imagem ampliada`}
+                alt={`${processedData.titulo} - imagem ${selectedIndex + 1} de ${images.length}`}
+                title={`${processedData.titulo} - imagem ${selectedIndex + 1} de ${images.length}`}
                 width={1200}
                 height={800}
                 sizes="100vw"
@@ -353,34 +500,45 @@ export function ImageGallery({
                 className="max-w-full max-h-screen object-contain"
               />
 
-              {/* Indicador de foto atual */}
-              <div className="absolute top-20 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm">
+              {/* Contador */}
+              <div className="absolute top-20 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-70 text-white px-3 py-1 rounded-full text-sm z-20">
                 {selectedIndex + 1} / {images.length}
                 {images[selectedIndex].Destaque === "Sim" && " ⭐"}
               </div>
 
+              {/* Navegação */}
               <button
                 onClick={goPrev}
-                className="absolute left-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2 hover:bg-black hover:bg-opacity-50 rounded-full transition-colors"
+                className="absolute left-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2 hover:bg-black hover:bg-opacity-50 rounded-full transition-colors z-20 focus:outline-none focus:ring-2 focus:ring-white/50"
                 aria-label="Imagem anterior"
               >
                 &#10094;
               </button>
               <button
                 onClick={goNext}
-                className="absolute right-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2 hover:bg-black hover:bg-opacity-50 rounded-full transition-colors"
+                className="absolute right-5 top-1/2 -translate-y-1/2 text-white text-4xl px-2 hover:bg-black hover:bg-opacity-50 rounded-full transition-colors z-20 focus:outline-none focus:ring-2 focus:ring-white/50"
                 aria-label="Próxima imagem"
               >
                 &#10095;
               </button>
             </div>
           ) : (
+            // GRID DE THUMBNAILS
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
               {images.map((image, idx) => (
                 <div
-                  key={idx}
+                  key={image.Codigo || idx}
                   onClick={() => setSelectedIndex(idx)}
-                  className="relative w-full h-48 sm:h-56 md:h-64 lg:h-72 xl:h-80 cursor-pointer overflow-hidden border-2 border-transparent hover:border-white transition-colors"
+                  className="relative w-full h-48 sm:h-56 md:h-64 lg:h-72 xl:h-80 cursor-pointer overflow-hidden border-2 border-transparent hover:border-white transition-colors rounded-lg focus:outline-none focus:ring-2 focus:ring-white/50"
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Ver imagem ${idx + 1} de ${images.length}`}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setSelectedIndex(idx);
+                    }
+                  }}
                 >
                   <Image
                     src={image.Foto}
@@ -394,7 +552,7 @@ export function ImageGallery({
                     className="object-cover"
                   />
                   
-                  {/* Overlay com número */}
+                  {/* Número da foto */}
                   <div className="absolute bottom-2 right-2 bg-black bg-opacity-70 text-white text-xs px-2 py-1 rounded">
                     {idx + 1}
                   </div>
