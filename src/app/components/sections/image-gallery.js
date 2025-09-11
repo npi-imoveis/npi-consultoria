@@ -234,36 +234,72 @@ export function ImageGallery({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isModalOpen, closeModal, goPrev, goNext]);
 
-  // 🔒 BLOQUEIA SCROLL E ESCONDE ELEMENTOS QUANDO MODAL ABRE
+  // 🛡️ CORREÇÃO: BLOQUEAR THUMBNAILS VAZANDO - VERSÃO AGRESSIVA
   useEffect(() => {
     if (isModalOpen) {
       // Bloqueia scroll
       document.body.style.overflow = 'hidden';
+      document.body.style.position = 'fixed';
+      document.body.style.width = '100%';
+      document.body.style.height = '100%';
+      
       // Adiciona classe para esconder outros elementos
       document.body.classList.add('npi-gallery-modal-open');
       
-      // Adiciona estilos inline de emergência para esconder elementos vazando
+      // 🛡️ ESTILOS DEFENSIVOS AGRESSIVOS
       const style = document.createElement('style');
       style.id = 'npi-gallery-modal-styles';
       style.innerHTML = `
-        .npi-gallery-modal-open {
-          overflow: hidden !important;
-        }
-        .npi-gallery-modal-open .swiper,
-        .npi-gallery-modal-open .swiper-wrapper,
-        .npi-gallery-modal-open .carousel,
-        .npi-gallery-modal-open .thumbnails,
-        .npi-gallery-modal-open [class*="carousel"],
-        .npi-gallery-modal-open [class*="thumb"],
-        .npi-gallery-modal-open [class*="slider"] {
+        /* 🛡️ ESCONDER TODOS OS CARROSSÉIS E SLIDERS EXTERNOS */
+        body.npi-gallery-modal-open .swiper-container:not(.npi-gallery-modal-container *),
+        body.npi-gallery-modal-open .swiper-wrapper:not(.npi-gallery-modal-container *),
+        body.npi-gallery-modal-open .swiper:not(.npi-gallery-modal-container *),
+        body.npi-gallery-modal-open [class*="carousel"]:not(.npi-gallery-modal-container *),
+        body.npi-gallery-modal-open [class*="Carousel"]:not(.npi-gallery-modal-container *),
+        body.npi-gallery-modal-open [class*="slider"]:not(.npi-gallery-modal-container *),
+        body.npi-gallery-modal-open [class*="Slider"]:not(.npi-gallery-modal-container *),
+        body.npi-gallery-modal-open .overflow-x-auto:not(.npi-gallery-modal-container *),
+        body.npi-gallery-modal-open .scroll-smooth:not(.npi-gallery-modal-container *),
+        body.npi-gallery-modal-open [class*="scrollbar"]:not(.npi-gallery-modal-container *),
+        body.npi-gallery-modal-open [data-carousel]:not(.npi-gallery-modal-container *),
+        body.npi-gallery-modal-open [data-slider]:not(.npi-gallery-modal-container *),
+        body.npi-gallery-modal-open [data-swiper]:not(.npi-gallery-modal-container *) {
+          display: none !important;
           visibility: hidden !important;
-          z-index: -1 !important;
+          opacity: 0 !important;
+          pointer-events: none !important;
+          position: absolute !important;
+          left: -9999px !important;
+          top: -9999px !important;
+        }
+        
+        /* 🎯 GARANTIR QUE O MODAL FIQUE POR CIMA DE TUDO */
+        .npi-gallery-modal-container {
+          z-index: 2147483647 !important;
+          position: fixed !important;
+          top: 0 !important;
+          left: 0 !important;
+          right: 0 !important;
+          bottom: 0 !important;
+          width: 100vw !important;
+          height: 100vh !important;
+        }
+        
+        /* 🚫 BLOQUEAR QUALQUER SCROLL EXTERNO */
+        body.npi-gallery-modal-open {
+          overflow: hidden !important;
+          position: fixed !important;
+          width: 100% !important;
+          height: 100% !important;
         }
       `;
       document.head.appendChild(style);
     } else {
       // Restaura scroll
       document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.height = '';
       // Remove classe
       document.body.classList.remove('npi-gallery-modal-open');
       // Remove estilos
@@ -276,6 +312,9 @@ export function ImageGallery({
     // Cleanup
     return () => {
       document.body.style.overflow = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+      document.body.style.height = '';
       document.body.classList.remove('npi-gallery-modal-open');
       const style = document.getElementById('npi-gallery-modal-styles');
       if (style) {
@@ -657,10 +696,10 @@ export function ImageGallery({
         </div>
       )}
 
-      {/* 🖼️ MODAL OTIMIZADO - CORREÇÃO DO Z-INDEX E ISOLAMENTO */}
+      {/* 🖼️ MODAL OTIMIZADO - CORREÇÃO DO Z-INDEX E ISOLAMENTO COM CLASSE IDENTIFICADORA */}
       {isModalOpen && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-95 overflow-auto"
+          className="npi-gallery-modal-container fixed inset-0 bg-black bg-opacity-95 overflow-auto"
           style={{
             zIndex: 2147483647, // Máximo z-index possível
             position: 'fixed',
