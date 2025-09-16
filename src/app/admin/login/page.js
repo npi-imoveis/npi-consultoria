@@ -87,7 +87,7 @@ export default function AdminLogin() {
       {/* Lado direito - Formulário de login */}
       <div className="w-full md:w-1/2 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
-          <h1 className="text-3xl font-bold text-center mb-8">LOGIN HUB NPI</h1>
+          <h1 className="text-3xl font-bold text-center mb-8">LOGIN ADMIN NPI</h1>
 
           {error && (
             <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
