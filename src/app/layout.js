@@ -92,11 +92,9 @@ export default function RootLayout({ children }) {
     <html lang="pt-BR">
       <head>
         {/* 🔧 ACESSIBILIDADE CORRIGIDA: Meta viewport permite zoom geral */}
-        <meta 
-          name="viewport" 
+        <meta
+          name="viewport"
           content="width=device-width, initial-scale=1, viewport-fit=cover"
-          // ✅ CORREÇÃO: Remove maximum-scale=1.0, user-scalable=no (acessibilidade)
-          // ✅ MANTÉM: viewport-fit=cover (funcionalidade iOS)
         />
         
         {/* ✅ iOS específico: Safari + Chrome iOS (CORRIGIDO) */}
