@@ -33,6 +33,7 @@ export async function GET(request) {
       filtro.BairroComercial = { $in: bairros };
     }
 
+
     // Tratar filtros numéricos (quartos, banheiros, vagas)
     if (quartos) {
       if (quartos === "4+") {

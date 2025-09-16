@@ -372,7 +372,7 @@ const InputArea = ({ placeholder, value, onChange }) => {
   );
 };
 
-export default function PropertyFilters({ onFilter, isVisible, setIsVisible }) {
+export default function PropertyFilters({ onFilter, isVisible, setIsVisible, horizontal = false }) {
   // Estado para controlar se estamos no navegador (client-side)
   const [isClient, setIsClient] = useState(false);
 
@@ -429,23 +429,52 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible }) {
   // Referência para o componente de bairros
   const bairrosRef = useRef(null);
 
-  // Efeito para lidar com cliques fora do dropdown de bairros
+  // Estados para controlar os modais dos outros campos
+  const [finalidadeExpanded, setFinalidadeExpanded] = useState(false);
+  const [tipoExpanded, setTipoExpanded] = useState(false);
+  const [cidadeExpanded, setCidadeExpanded] = useState(false);
+  const [quartosExpanded, setQuartosExpanded] = useState(false);
+  const [vagasExpanded, setVagasExpanded] = useState(false);
+  
+  // Referências para os componentes dos modais
+  const finalidadeRef = useRef(null);
+  const tipoRef = useRef(null);
+  const cidadeRef = useRef(null);
+  const quartosRef = useRef(null);
+  const vagasRef = useRef(null);
+
+  // Efeito para lidar com cliques fora dos dropdowns/modais
   useEffect(() => {
     function handleClickOutside(event) {
       if (bairrosRef.current && !bairrosRef.current.contains(event.target)) {
         setBairrosExpanded(false);
       }
+      if (finalidadeRef.current && !finalidadeRef.current.contains(event.target)) {
+        setFinalidadeExpanded(false);
+      }
+      if (tipoRef.current && !tipoRef.current.contains(event.target)) {
+        setTipoExpanded(false);
+      }
+      if (cidadeRef.current && !cidadeRef.current.contains(event.target)) {
+        setCidadeExpanded(false);
+      }
+      if (quartosRef.current && !quartosRef.current.contains(event.target)) {
+        setQuartosExpanded(false);
+      }
+      if (vagasRef.current && !vagasRef.current.contains(event.target)) {
+        setVagasExpanded(false);
+      }
     }
 
-    // Adiciona listener apenas quando o dropdown estiver aberto
-    if (bairrosExpanded) {
+    // Adiciona listener quando qualquer dropdown estiver aberto
+    if (bairrosExpanded || finalidadeExpanded || tipoExpanded || cidadeExpanded || quartosExpanded || vagasExpanded) {
       document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [bairrosExpanded]);
+  }, [bairrosExpanded, finalidadeExpanded, tipoExpanded, cidadeExpanded, quartosExpanded, vagasExpanded]);
 
   useEffect(() => {
     async function fetchImoveis() {
@@ -784,6 +813,416 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible }) {
     if (onFilter) onFilter();
   };
 
+  // Layout horizontal estilo QuintoAndar - usando todo o espaço
+  if (horizontal) {
+    // Ref para o container de scroll
+    const scrollRef = useRef(null);
+
+    return (
+      <div className="bg-white py-4 w-full border-b">
+        <div className="max-w-full mx-auto px-2">
+          <div className="flex items-center">
+            {/* Container de filtros usando todo o espaço */}
+            <div 
+              ref={scrollRef}
+              className="flex items-end gap-2 overflow-x-auto scrollbar-hide flex-1"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              {/* Finalidade */}
+              <div className="flex flex-col relative" ref={finalidadeRef}>
+                <label className="text-[10px] font-medium text-gray-600 mb-1">Finalidade</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Selecionar"
+                    value={finalidade || ""}
+                    onClick={() => setFinalidadeExpanded(true)}
+                    readOnly
+                    className="px-2 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[92px] flex-shrink-0"
+                  />
+                  
+                  {/* Modal de seleção */}
+                  <div
+                    className={`fixed z-[9999] mt-1 bg-white border border-gray-300 rounded shadow-lg w-32 ${
+                      !finalidadeExpanded ? "hidden" : ""
+                    }`}
+                    style={{
+                      top: finalidadeRef.current ? finalidadeRef.current.getBoundingClientRect().bottom + 4 : 'auto',
+                      left: finalidadeRef.current ? finalidadeRef.current.getBoundingClientRect().left : 'auto'
+                    }}
+                  >
+                    {/* Lista de opções */}
+                    {["", "Comprar", "Alugar"].map((opcao) => (
+                      <div key={opcao} 
+                        className="px-2 py-2 hover:bg-gray-50 cursor-pointer"
+                        onClick={() => {
+                          setFinalidade(opcao);
+                          setFinalidadeExpanded(false);
+                        }}
+                      >
+                        <label className="text-[11px] cursor-pointer flex-1">
+                          {opcao || "Selecionar"}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Tipo */}
+              <div className="flex flex-col relative" ref={tipoRef}>
+                <label className="text-[10px] font-medium text-gray-600 mb-1">Tipo</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Todos"
+                    value={categoriaSelecionada || ""}
+                    onClick={() => setTipoExpanded(true)}
+                    readOnly
+                    className="px-2 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[114px] flex-shrink-0"
+                  />
+                  
+                  {/* Modal de seleção */}
+                  <div
+                    className={`fixed z-[9999] mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-48 overflow-y-auto w-40 ${
+                      !tipoExpanded ? "hidden" : ""
+                    }`}
+                    style={{
+                      top: tipoRef.current ? tipoRef.current.getBoundingClientRect().bottom + 4 : 'auto',
+                      left: tipoRef.current ? tipoRef.current.getBoundingClientRect().left : 'auto'
+                    }}
+                  >
+                    {/* Lista de opções */}
+                    {["", ...categorias].map((categoria) => (
+                      <div key={categoria || 'todos'} 
+                        className="px-2 py-2 hover:bg-gray-50 cursor-pointer"
+                        onClick={() => {
+                          setCategoriaSelecionada(categoria);
+                          setTipoExpanded(false);
+                        }}
+                      >
+                        <label className="text-[11px] cursor-pointer flex-1">
+                          {categoria || "Todos"}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Cidade */}
+              <div className="flex flex-col relative" ref={cidadeRef}>
+                <label className="text-[10px] font-medium text-gray-600 mb-1">Cidade</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Todas"
+                    value={cidadeSelecionada || ""}
+                    onClick={() => setCidadeExpanded(true)}
+                    readOnly
+                    className="px-2 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[114px] flex-shrink-0"
+                  />
+                  
+                  {/* Modal de seleção */}
+                  <div
+                    className={`fixed z-[9999] mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-48 overflow-y-auto w-40 ${
+                      !cidadeExpanded ? "hidden" : ""
+                    }`}
+                    style={{
+                      top: cidadeRef.current ? cidadeRef.current.getBoundingClientRect().bottom + 4 : 'auto',
+                      left: cidadeRef.current ? cidadeRef.current.getBoundingClientRect().left : 'auto'
+                    }}
+                  >
+                    {/* Lista de opções */}
+                    {["", ...cidades].map((cidade) => (
+                      <div key={cidade || 'todas'} 
+                        className="px-2 py-2 hover:bg-gray-50 cursor-pointer"
+                        onClick={() => {
+                          setCidadeSelecionada(cidade);
+                          setCidadeExpanded(false);
+                          // Reseta o bairro selecionado quando a cidade muda
+                          setBairrosSelecionados([]);
+                          setBairroFilter("");
+                        }}
+                      >
+                        <label className="text-[11px] cursor-pointer flex-1">
+                          {cidade || "Todas"}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Bairro - Com modal para múltipla seleção */}
+              <div className="flex flex-col relative" ref={bairrosRef}>
+                <label className="text-[10px] font-medium text-gray-600 mb-1">Bairro</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder={bairrosSelecionados.length > 0 ? `${bairrosSelecionados.length} selecionado(s)` : "Todos"}
+                    value={bairroFilter}
+                    onChange={(e) => setBairroFilter(e.target.value)}
+                    onClick={() => setBairrosExpanded(true)}
+                    disabled={!cidadeSelecionada}
+                    className="px-2 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[85px] flex-shrink-0"
+                    readOnly={!bairrosExpanded}
+                  />
+                  
+                  {/* Contador de bairros selecionados */}
+                  {bairrosSelecionados.length > 0 && (
+                    <div className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black text-white text-[9px] rounded-full w-4 h-4 flex items-center justify-center">
+                      {bairrosSelecionados.length}
+                    </div>
+                  )}
+
+                  {/* Modal de seleção múltipla - FORA DO OVERFLOW */}
+                  <div
+                    className={`fixed z-[9999] mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-48 overflow-y-auto w-80 ${
+                      !cidadeSelecionada || !bairrosExpanded ? "hidden" : ""
+                    }`}
+                    style={{
+                      top: bairrosRef.current ? bairrosRef.current.getBoundingClientRect().bottom + 4 : 'auto',
+                      left: bairrosRef.current ? bairrosRef.current.getBoundingClientRect().left : 'auto'
+                    }}
+                  >
+                    {/* Controles superiores */}
+                    <div className="flex justify-between items-center p-2 border-b border-gray-100 bg-gray-50">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => setBairrosSelecionados(bairrosFiltrados)}
+                          className="text-[10px] text-black hover:text-gray-600"
+                        >
+                          Selecionar todos
+                        </button>
+                        <button
+                          onClick={() => setBairrosSelecionados([])}
+                          className="text-[10px] text-black hover:text-gray-600"
+                        >
+                          Limpar todos
+                        </button>
+                      </div>
+                      <button
+                        onClick={() => setBairrosExpanded(false)}
+                        className="text-[10px] text-gray-600 hover:text-black px-2 py-1 border border-gray-300 rounded"
+                      >
+                        Fechar
+                      </button>
+                    </div>
+
+                    {/* Lista de bairros */}
+                    {bairrosFiltrados.length > 0 ? (
+                      bairrosFiltrados.map((bairro) => (
+                        <div key={bairro} className="flex items-center px-2 py-1 hover:bg-gray-50">
+                          <input
+                            type="checkbox"
+                            id={`bairro-horizontal-${bairro}`}
+                            checked={bairrosSelecionados.includes(bairro)}
+                            onChange={() => handleBairroChange(bairro)}
+                            className="mr-2 h-3 w-3 text-black border-gray-300 rounded"
+                          />
+                          <label
+                            htmlFor={`bairro-horizontal-${bairro}`}
+                            className="text-[11px] cursor-pointer flex-1"
+                          >
+                            {bairro}
+                          </label>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="px-2 py-3 text-[11px] text-gray-500 text-center">
+                        {bairroFilter ? "Nenhum bairro encontrado" : "Selecione uma cidade primeiro"}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Quartos */}
+              <div className="flex flex-col relative" ref={quartosRef}>
+                <label className="text-[10px] font-medium text-gray-600 mb-1">Quartos</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Todos"
+                    value={quartosSelecionados || ""}
+                    onClick={() => setQuartosExpanded(true)}
+                    readOnly
+                    className="px-2 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[70px] flex-shrink-0"
+                  />
+                  
+                  {/* Modal de seleção */}
+                  <div
+                    className={`fixed z-[9999] mt-1 bg-white border border-gray-300 rounded shadow-lg w-28 ${
+                      !quartosExpanded ? "hidden" : ""
+                    }`}
+                    style={{
+                      top: quartosRef.current ? quartosRef.current.getBoundingClientRect().bottom + 4 : 'auto',
+                      left: quartosRef.current ? quartosRef.current.getBoundingClientRect().left : 'auto'
+                    }}
+                  >
+                    {/* Lista de opções */}
+                    {["", "1", "2", "3", "4+"].map((opcao) => (
+                      <div key={opcao || 'todos'} 
+                        className="px-2 py-2 hover:bg-gray-50 cursor-pointer"
+                        onClick={() => {
+                          setQuartosSelecionados(opcao === "" ? null : opcao);
+                          setQuartosExpanded(false);
+                        }}
+                      >
+                        <label className="text-[11px] cursor-pointer flex-1">
+                          {opcao || "Todos"}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Banheiros - COMENTADO TEMPORARIAMENTE */}
+              {/* <div className="flex flex-col">
+                <label className="text-[10px] font-medium text-gray-600 mb-1">Banheiros</label>
+                <select
+                  className="px-3 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[95px] flex-shrink-0"
+                  value={banheirosSelecionados || ""}
+                  onChange={(e) => {
+                    setBanheirosSelecionados(e.target.value === "" ? null : e.target.value);
+                  }}
+                >
+                  <option value="">Todos</option>
+                  <option value="1">1</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4+">4+</option>
+                </select>
+              </div> */}
+
+              {/* Vagas */}
+              <div className="flex flex-col relative" ref={vagasRef}>
+                <label className="text-[10px] font-medium text-gray-600 mb-1">Vagas</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    placeholder="Todas"
+                    value={vagasSelecionadas || ""}
+                    onClick={() => setVagasExpanded(true)}
+                    readOnly
+                    className="px-2 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[70px] flex-shrink-0"
+                  />
+                  
+                  {/* Modal de seleção */}
+                  <div
+                    className={`fixed z-[9999] mt-1 bg-white border border-gray-300 rounded shadow-lg w-28 ${
+                      !vagasExpanded ? "hidden" : ""
+                    }`}
+                    style={{
+                      top: vagasRef.current ? vagasRef.current.getBoundingClientRect().bottom + 4 : 'auto',
+                      left: vagasRef.current ? vagasRef.current.getBoundingClientRect().left : 'auto'
+                    }}
+                  >
+                    {/* Lista de opções */}
+                    {["", "1", "2", "3", "4+"].map((opcao) => (
+                      <div key={opcao || 'todas'} 
+                        className="px-2 py-2 hover:bg-gray-50 cursor-pointer"
+                        onClick={() => {
+                          setVagasSelecionadas(opcao === "" ? null : opcao);
+                          setVagasExpanded(false);
+                        }}
+                      >
+                        <label className="text-[11px] cursor-pointer flex-1">
+                          {opcao || "Todas"}
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Preço Mínimo */}
+              <div className="flex flex-col">
+                <label className="text-[10px] font-medium text-gray-600 mb-1">Preço mín</label>
+                <input
+                  type="text"
+                  placeholder="R$ 65.000"
+                  value={precoMin ? `R$ ${precoMin.toLocaleString('pt-BR')}` : ""}
+                  onChange={(e) => {
+                    const valor = e.target.value.replace(/[^\d]/g, '');
+                    setPrecoMin(valor ? parseInt(valor) : null);
+                  }}
+                  className="px-2 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[115px] flex-shrink-0"
+                />
+              </div>
+
+              {/* Preço Máximo */}
+              <div className="flex flex-col">
+                <label className="text-[10px] font-medium text-gray-600 mb-1">Preço máx</label>
+                <input
+                  type="text"
+                  placeholder="R$ 65.000.000"
+                  value={precoMax ? `R$ ${precoMax.toLocaleString('pt-BR')}` : ""}
+                  onChange={(e) => {
+                    const valor = e.target.value.replace(/[^\d]/g, '');
+                    setPrecoMax(valor ? parseInt(valor) : null);
+                  }}
+                  className="px-2 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[115px] flex-shrink-0"
+                />
+              </div>
+
+              {/* Área Mínima */}
+              <div className="flex flex-col">
+                <label className="text-[10px] font-medium text-gray-600 mb-1">Área mín</label>
+                <input
+                  type="number"
+                  placeholder="0 m²"
+                  value={areaMin || ""}
+                  onChange={(e) => {
+                    const valor = parseInt(e.target.value) || 0;
+                    setAreaMin(valor > 999 ? 999 : valor);
+                  }}
+                  max="999"
+                  className="px-2 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[75px] flex-shrink-0"
+                />
+              </div>
+
+              {/* Área Máxima */}
+              <div className="flex flex-col">
+                <label className="text-[10px] font-medium text-gray-600 mb-1">Área máx</label>
+                <input
+                  type="number"
+                  placeholder="999 m²"
+                  value={areaMax || ""}
+                  onChange={(e) => {
+                    const valor = parseInt(e.target.value) || 0;
+                    setAreaMax(valor > 999 ? 999 : valor);
+                  }}
+                  max="999"
+                  className="px-2 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[75px] flex-shrink-0"
+                />
+              </div>
+
+              {/* Botões */}
+              <div className="flex gap-2 items-end ml-2">
+                <button
+                  onClick={handleAplicarFiltros}
+                  className="px-4 py-2 text-sm bg-black text-white hover:bg-gray-800 focus:outline-none whitespace-nowrap font-medium flex-shrink-0 border border-black"
+                >
+                  Aplicar
+                </button>
+
+                <button
+                  onClick={handleLimparFiltros}
+                  className="px-4 py-2 text-sm bg-gray-100 text-black hover:bg-gray-200 focus:outline-none whitespace-nowrap flex-shrink-0 border border-gray-300"
+                >
+                  Limpar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <>
       {/* Backdrop para garantir que nada fique visível atrás do filtro - cobertura total da tela */}
@@ -978,12 +1417,13 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible }) {
             selectedValue={quartosSelecionados}
             onChange={handleQuartosChange}
           />
-          <OptionGroup
+          {/* Banheiros - COMENTADO TEMPORARIAMENTE */}
+          {/* <OptionGroup
             label="Banheiros"
             options={opcoes}
             selectedValue={banheirosSelecionados}
             onChange={handleBanheirosChange}
-          />
+          /> */}
           <OptionGroup
             label="Vagas"
             options={opcoes}

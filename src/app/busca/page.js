@@ -5,13 +5,25 @@
 import { useEffect, useState } from "react";
 import CardImovel, { CardImovelSkeleton } from "../components/ui/card-imovel";
 import Pagination from "../components/ui/pagination";
-import Map from "./components/map";
+import dynamic from "next/dynamic";
+
+// Import map component dynamically to avoid SSR issues
+const MapComplete = dynamic(() => import("./components/map-complete"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
+      <div className="text-center">
+        <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-black"></div>
+        <p className="mt-2 text-gray-700">Carregando mapa...</p>
+      </div>
+    </div>
+  ),
+});
+import { Footer } from "../components/ui/footer";
 
 import {
   AdjustmentsHorizontalIcon,
-  MapIcon,
   HeartIcon,
-  ListBulletIcon,
 } from "@heroicons/react/24/outline";
 import PropertyFilters from "./components/property-filters";
 import { getImoveis, searchImoveis } from "../services";
@@ -35,7 +47,6 @@ export default function BuscaImoveis() {
 
   const router = useRouter();
 
-  const [mostrandoMapa, setMostrandoMapa] = useState(false);
   const [mostrandoFavoritos, setMostrandoFavoritos] = useState(false);
   const [isBrowser, setIsBrowser] = useState(false);
 
@@ -82,7 +93,7 @@ export default function BuscaImoveis() {
           {
             "@type": "SearchResultsPage",
             "@id": `${baseUrl}/busca#webpage`,
-            url: window.location.href,
+            url: window?.location?.href || `${baseUrl}/busca`,
             name: document.title,
             description: document.querySelector('meta[name="description"]')?.content || '',
             datePublished: currentDate,
@@ -165,6 +176,7 @@ export default function BuscaImoveis() {
 
   // 🔥 FUNÇÃO PARA ATUALIZAR META TAGS DINAMICAMENTE BASEADO NOS FILTROS ATUAIS
   const updateClientMetaTags = (quantidadeResultados = null) => {
+    if (typeof window === 'undefined') return;
     try {
       const currentDate = new Date().toISOString();
       const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://npiconsultoria.com.br';
@@ -254,11 +266,11 @@ export default function BuscaImoveis() {
         description = `Especialistas em ${descriptionParts.join(' ')}. NPi`;
         
         // 🎯 CONSTRUIR URL CANÔNICA
-        const urlAtual = window.location.pathname;
+        const urlAtual = window?.location?.pathname || '';
         
         // 🔥 SE JÁ ESTAMOS NUMA URL SEO-FRIENDLY (/buscar/...), USAR ELA COMO CANONICAL
         if (urlAtual.startsWith('/buscar/') && urlAtual.split('/').length >= 5) {
-          canonicalUrl = window.location.origin + urlAtual;
+          canonicalUrl = (window?.location?.origin || baseUrl) + urlAtual;
           console.log('🎯 [URL-CANONICAL] URL SEO detectada, usando atual como canonical:', canonicalUrl);
         } else if (filtrosAtuais.cidadeSelecionada && filtrosAtuais.categoriaSelecionada && filtrosAtuais.finalidade) {
           // Gerar URL SEO-friendly
@@ -286,7 +298,7 @@ export default function BuscaImoveis() {
           canonicalUrl = `${baseUrl}/buscar/${finalidadeSlug}/${categoriaSlug}/${cidadeSlug}`;
           console.log('🎯 [URL-CANONICAL] URL SEO gerada:', canonicalUrl);
         } else {
-          canonicalUrl = window.location.origin + window.location.pathname + (window.location.search || '');
+          canonicalUrl = (window?.location?.origin || baseUrl) + (window?.location?.pathname || '') + (window?.location?.search || '');
           console.log('🎯 [URL-CANONICAL] Usando URL atual como fallback:', canonicalUrl);
         }
         
@@ -430,6 +442,7 @@ export default function BuscaImoveis() {
 
   // 🔥 FUNÇÃO CORRIGIDA PARA EXTRAIR PARÂMETROS DE URL SEO-FRIENDLY
   const extractFromSeoUrl = () => {
+    if (typeof window === 'undefined') return null;
     const path = window.location.pathname;
     
     console.log('🔍 [EXTRACT-SEO] Analisando path:', path);
@@ -683,7 +696,7 @@ export default function BuscaImoveis() {
     const seoParams = extractFromSeoUrl();
     
     // 2. Extrair parâmetros de query string como fallback
-    const searchParams = new URLSearchParams(window.location.search);
+    const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
     const cidade = searchParams.get('cidade');
     const finalidade = searchParams.get('finalidade');
     const categoria = searchParams.get('categoria');
@@ -760,7 +773,9 @@ export default function BuscaImoveis() {
           const event = new CustomEvent('filtrosUpdated', { 
             detail: storeDepois 
           });
-          window.dispatchEvent(event);
+          if (typeof window !== 'undefined') {
+            window.dispatchEvent(event);
+          }
           console.log('📡 [EVENT] Evento filtrosUpdated disparado para atualizar componentes');
           
         }, 50);
@@ -894,18 +909,24 @@ export default function BuscaImoveis() {
     if (!isClient) return;
 
     const checkScreenSize = () => {
-      setIsMobile(window.innerWidth < 768);
+      if (typeof window !== 'undefined') {
+        setIsMobile(window.innerWidth < 768);
+      }
       setFullyInitialized(true);
     };
 
     checkScreenSize();
-    window.addEventListener("resize", checkScreenSize);
-    return () => window.removeEventListener("resize", checkScreenSize);
+    if (typeof window !== 'undefined') {
+      window.addEventListener("resize", checkScreenSize);
+      return () => window.removeEventListener("resize", checkScreenSize);
+    }
   }, [isClient]);
 
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   };
 
   const toggleFavoritos = () => {
@@ -976,18 +997,13 @@ export default function BuscaImoveis() {
     setFiltroVisivel(!filtroVisivel);
   };
 
-  const toggleMapa = () => {
-    if (filtrosBasicosPreenchidos) {
-      setMostrandoMapa(!mostrandoMapa);
-    }
-  };
 
   const renderCards = () => {
     if (isLoading) {
       return Array(12)
         .fill(null)
         .map((_, index) => (
-          <div key={`skeleton-${index}`} className="min-w-[250px]">
+          <div key={`skeleton-${index}`} className="w-full sm:w-1/2 xl:w-[32%] min-w-0 flex-shrink-0">
             <CardImovelSkeleton />
           </div>
         ));
@@ -1014,7 +1030,7 @@ export default function BuscaImoveis() {
         const key =
           imovel.Codigo || `imovel-${imovel._id || Math.random().toString(36).substr(2, 9)}`;
         return (
-          <div key={key} className="flex-1 min-w-[260px]">
+          <div key={key} className="w-full sm:w-1/2 xl:w-[32%] min-w-0 flex-shrink-0">
             <CardImovel {...imovel} target="_blank" />
           </div>
         );
@@ -1092,163 +1108,132 @@ export default function BuscaImoveis() {
 
   return (
     <>
-      <section
-        className={`bg-zinc-100 pb-32 px-4 sm:px-8 md:px-10 relative ${
-          !uiVisible ? "opacity-0" : "opacity-100 transition-opacity duration-300"
-        }`}
+      {/* COMENTADO: Fixed search bar that stays below the header
+      <div
+        className={`fixed top-20 left-0 right-0 ${
+          filtroVisivel ? "z-[999997]" : "z-40"
+        } bg-white px-4 sm:px-6 md:px-10 py-4 md:py-6 shadow-sm`}
       >
-        {/* Fixed search bar that stays below the header */}
-        <div
-          className={`fixed top-20 left-0 right-0 ${
-            filtroVisivel ? "z-[999997]" : "z-40"
-          } bg-white px-4 sm:px-6 md:px-10 py-4 md:py-6 shadow-sm`}
-        >
-          <div className="flex flex-col md:flex-row justify-between items-center gap-3 w-full mx-auto">
-            <div className="grid grid-cols-2 items-center gap-2 w-full md:w-[300px]">
-              {isMobile && (
-                <button
-                  onClick={toggleFiltro}
-                  className={`flex items-center justify-center gap-1 sm:gap-2 ${
-                    filtroVisivel ? "bg-black text-white" : "bg-zinc-200 text-black"
-                  } font-bold px-2 sm:px-4 py-2 rounded-lg hover:bg-zinc-200/40 transition-colors`}
-                >
-                  <AdjustmentsHorizontalIcon className="h-4 w-4 sm:h-5 sm:w-5" />
-                  <span className="text-xs">{filtroVisivel ? "Fechar Filtros" : "Filtros"}</span>
-                </button>
-              )}
+        <div className="flex flex-col md:flex-row justify-between items-center gap-3 w-full mx-auto">
+          <div className="grid grid-cols-2 items-center gap-2 w-full md:w-[300px]">
+            {isMobile && (
               <button
-                onClick={toggleMapa}
-                disabled={!filtrosBasicosPreenchidos}
+                onClick={toggleFiltro}
                 className={`flex items-center justify-center gap-1 sm:gap-2 ${
-                  mostrandoMapa
-                    ? "bg-black text-white"
-                    : filtrosBasicosPreenchidos
-                    ? "bg-zinc-200 text-black hover:bg-zinc-200/40 transition-colors"
-                    : "bg-zinc-300 text-gray-500 cursor-not-allowed"
-                } font-bold px-2 sm:px-4 py-2 rounded-lg relative`}
+                  filtroVisivel ? "bg-black text-white" : "bg-zinc-200 text-black"
+                } font-bold px-2 sm:px-4 py-2 rounded-lg hover:bg-zinc-200/40 transition-colors`}
               >
-                {mostrandoMapa ? (
-                  <>
-                    <ListBulletIcon className="h-4 w-4 sm:h-5 sm:w-5" />
-                    <span className="text-xs">Lista</span>
-                  </>
-                ) : (
-                  <>
-                    <MapIcon className="h-4 w-4 sm:h-5 sm:w-5" />
-                    <span className="text-xs">Mapa</span>
-                  </>
-                )}
+                <AdjustmentsHorizontalIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="text-xs">{filtroVisivel ? "Fechar Filtros" : "Filtros"}</span>
+              </button>
+            )}
+          </div>
+          <div className="relative w-full mt-2 md:mt-0 md:w-[600px]">
+            <div className="absolute inset-y-0 left-2 sm:left-3 flex items-center pointer-events-none">
+              <svg
+                className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 20 20"
+                fill="currentColor"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
+                  clipRule="evenodd"
+                ></path>
+              </svg>
+            </div>
+            <input
+              type="text"
+              placeholder="Digite código, endereço, cidade ou condomínio..."
+              className="w-full rounded-md border-2 border-gray-100 text-xs bg-white pl-8 sm:pl-10 pr-24 sm:pr-36 py-2.5 focus:outline-none focus:ring-1 focus:ring-black"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleSearch(searchTerm);
+                }
+              }}
+            />
+            <button
+              onClick={() => handleSearch(searchTerm)}
+              className="absolute inset-y-0 right-0 px-3 sm:px-4 py-2 bg-black text-white rounded-r-md hover:bg-gray-800 text-xs transition-colors flex items-center justify-center"
+            >
+              Buscar
+            </button>
+          </div>
 
-                {filtrosBasicosPreenchidos && !mostrandoMapa && (
-                  <span className="absolute -top-1 -right-1 w-2 h-2 sm:w-3 sm:h-3 bg-green-500 rounded-full"></span>
+          <div className="mt-2 md:mt-0">
+            <button
+              onClick={toggleFavoritos}
+              className={`flex items-center gap-1 sm:gap-2 ${
+                mostrandoFavoritos ? "bg-red-500 text-white" : "bg-zinc-200 text-black"
+              } font-bold px-3 sm:px-4 py-2 rounded-lg hover:bg-red-400 transition-colors relative`}
+            >
+              <HeartIcon className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="text-xs">Favoritos</span>
+              {isBrowser && quantidadeFavoritos > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center">
+                  {quantidadeFavoritos}
+                </span>
                 )}
-              </button>
-            </div>
-            <div className="relative w-full mt-2 md:mt-0 md:w-[600px]">
-              <div className="absolute inset-y-0 left-2 sm:left-3 flex items-center pointer-events-none">
-                <svg
-                  className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 20 20"
-                  fill="currentColor"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                    clipRule="evenodd"
-                  ></path>
-                </svg>
-              </div>
-              <input
-                type="text"
-                placeholder="Digite código, endereço, cidade ou condomínio..."
-                className="w-full rounded-md border-2 border-gray-100 text-xs bg-white pl-8 sm:pl-10 pr-24 sm:pr-36 py-2.5 focus:outline-none focus:ring-1 focus:ring-black"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    handleSearch(searchTerm);
-                  }
-                }}
-              />
-              <button
-                onClick={() => handleSearch(searchTerm)}
-                className="absolute inset-y-0 right-0 px-3 sm:px-4 py-2 bg-black text-white rounded-r-md hover:bg-gray-800 text-xs transition-colors flex items-center justify-center"
-              >
-                Buscar
-              </button>
-            </div>
-
-            <div className="mt-2 md:mt-0">
-              <button
-                onClick={toggleFavoritos}
-                className={`flex items-center gap-1 sm:gap-2 ${
-                  mostrandoFavoritos ? "bg-red-500 text-white" : "bg-zinc-200 text-black"
-                } font-bold px-3 sm:px-4 py-2 rounded-lg hover:bg-red-400 transition-colors relative`}
-              >
-                <HeartIcon className="h-4 w-4 sm:h-5 sm:w-5" />
-                <span className="text-xs">Favoritos</span>
-                {isBrowser && quantidadeFavoritos > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center">
-                    {quantidadeFavoritos}
-                  </span>
-                )}
-              </button>
-            </div>
+            </button>
           </div>
         </div>
+      </div>
+      */}
 
-        <div className="pt-80 sm:pt-72 md:pt-44 flex flex-col md:flex-row gap-4 md:gap-6 pb-10 relative">
-          <div
-            className={`${
-              !fullyInitialized
-                ? "hidden"
-                : isMobile
-                ? filtroVisivel
-                  ? "block"
-                  : "hidden"
-                : "block"
-            } w-full md:w-[300px] sticky top-40 self-start overflow-y-auto scrollbar-hide h-fit max-h-[calc(100vh-200px)] z-[50] transition-all duration-300`}
-          >
-            <PropertyFilters
-              onFilter={resetarEstadoBusca}
-              isVisible={filtroVisivel}
-              setIsVisible={setFiltroVisivel}
-            />
-          </div>
+      {/* Filtros horizontais */}
+      <div className="fixed top-20 left-0 w-full bg-white z-40 shadow-sm border-b px-4 md:px-10">
+        <PropertyFilters
+          horizontal={true}
+          onFilter={resetarEstadoBusca}
+          isVisible={filtroVisivel}
+          setIsVisible={setFiltroVisivel}
+        />
+      </div>
 
-          <div className="flex-1 flex flex-col min-h-[60vh] z-0">
-            {mostrandoMapa ? (
-              <div className="relative w-full mt-2" style={{ height: "calc(100vh - 160px)" }}>
-                <Map filtros={filtrosAtuais} />
-              </div>
-            ) : (
-              <div className="w-full z-0">
-                <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 sm:gap-0 mb-4">
-                  <h2 className="text-xs font-bold text-zinc-500">{construirTextoFiltros()}</h2>
-                  <select
-                    className="text-xs font-bold text-zinc-500 bg-zinc-100 p-2 rounded-md w-full sm:w-auto"
-                    value={ordenacao}
-                    onChange={handleOrdenacaoChange}
-                  >
-                    <option value="relevancia">Mais relevantes</option>
-                    <option value="maior_valor">Maior Valor</option>
-                    <option value="menor_valor">Menor Valor</option>
-                  </select>
-                </div>
+      {/* Layout 50/50 simétrico - Cards + Mapa ocupando toda viewport */}
+      <div className="fixed top-28 left-0 w-full h-[calc(100vh-7rem)] flex overflow-hidden bg-zinc-100">
+        {/* Área dos Cards - 50% */}
+        <div className="w-1/2 flex flex-col overflow-hidden">
+            {/* Header dos cards */}
+            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 sm:gap-0 p-4 border-b border-gray-200 bg-white">
+              <h2 className="text-xs font-bold text-zinc-500">{construirTextoFiltros()}</h2>
+              <select
+                className="text-xs font-bold text-zinc-500 bg-zinc-100 p-2 rounded-md w-full sm:w-auto"
+                value={ordenacao}
+                onChange={handleOrdenacaoChange}
+              >
+                <option value="relevancia">Mais relevantes</option>
+                <option value="maior_valor">Maior Valor</option>
+                <option value="menor_valor">Menor Valor</option>
+              </select>
+            </div>
 
-                <div className="flex flex-wrap gap-3 overflow-hidden z-0">{renderCards()}</div>
-              </div>
-            )}
-
-            {!mostrandoMapa && (
+            {/* Área rolável dos cards */}
+            <div className="flex-1 overflow-y-auto p-4">
+              <div className="flex flex-wrap gap-3">{renderCards()}</div>
+              
+              {/* Paginação */}
               <div className="mt-6 mb-6">
                 <Pagination pagination={pagination} onPageChange={handlePageChange} />
               </div>
-            )}
+
+              {/* Footer no final da rolagem dos cards - como no QuintoAndar */}
+              <div className="mt-12">
+                <Footer />
+              </div>
+            </div>
+          </div>
+
+        {/* Área do Mapa - 50% */}
+        <div className="w-1/2 relative h-full">
+          <div className="absolute inset-0 right-0 h-full overflow-hidden">
+            <MapComplete filtros={filtrosAtuais} />
           </div>
         </div>
-      </section>
+      </div>
     </>
   );
 }

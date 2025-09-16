@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { MapContainer, TileLayer, ZoomControl, useMap, Marker, Popup } from "react-leaflet";
 
-import "leaflet-geosearch/dist/geosearch.css";
+// import "leaflet-geosearch/dist/geosearch.css"; // Movido para dentro do useEffect para evitar SSR
 
 import { getImoveisParaMapa } from "@/app/services";
 import { Button } from "@/app/components/ui/button";
@@ -113,15 +113,15 @@ const MapComponent = ({ filtros }) => {
   const buscarImoveisParaMapa = async () => {
     try {
       setLoading(true);
-      const response = await getImoveisParaMapa({
+      const filtrosParaMapa = {
         categoria: filtros.categoriaSelecionada,
         cidade: filtros.cidadeSelecionada,
         bairros: filtros.bairrosSelecionados,
         quartos: filtros.quartos,
         banheiros: filtros.banheiros,
         vagas: filtros.vagas,
-      });
-
+      };
+      const response = await getImoveisParaMapa(filtrosParaMapa);
       setImoveis(response.data || []);
     } catch (err) {
       console.error("Erro ao buscar imóveis para o mapa:", err);
@@ -160,38 +160,45 @@ const MapComponent = ({ filtros }) => {
   // Calcular o centro do mapa e atualizar quando os imóveis mudarem
   useEffect(() => {
     if (imoveis.length === 0) {
-      setMapCenter([-23.5505, -46.6333]); // São Paulo como padrão
-      setMapZoom(getZoomLevel());
+      // Sem imóveis, usar coordenadas padrão de São Paulo
+      setMapCenter([-23.5505, -46.6333]);
+      setMapZoom(11);
       return;
     }
 
-    // Se tiver bairro selecionado, centralizar no primeiro imóvel com coordenadas válidas
-    if (filtros.bairrosSelecionados && filtros.bairrosSelecionados.length > 0) {
-      const primeiroImovelValido = imoveis.find(
-        (imovel) =>
-          imovel.Latitude &&
-          imovel.Longitude &&
-          !isNaN(parseFloat(imovel.Latitude)) &&
-          !isNaN(parseFloat(imovel.Longitude))
-      );
-
-      if (primeiroImovelValido) {
-        setMapCenter([
-          parseFloat(primeiroImovelValido.Latitude),
-          parseFloat(primeiroImovelValido.Longitude),
-        ]);
-        setMapZoom(15); // Zoom maior para um único imóvel
-        return;
-      }
+    // Filtrar apenas imóveis com coordenadas válidas
+    const imoveisValidos = imoveis.filter(
+      (imovel) =>
+        imovel.Latitude &&
+        imovel.Longitude &&
+        !isNaN(parseFloat(imovel.Latitude)) &&
+        !isNaN(parseFloat(imovel.Longitude)) &&
+        parseFloat(imovel.Latitude) !== 0 &&
+        parseFloat(imovel.Longitude) !== 0
+    );
+    
+    if (imoveisValidos.length === 0) {
+      setMapCenter([-23.5505, -46.6333]);
+      setMapZoom(11);
+      return;
     }
 
-    // Caso contrário, calcular média das coordenadas
-    const somaLat = imoveis.reduce((soma, imovel) => soma + parseFloat(imovel.Latitude || 0), 0);
-    const somaLng = imoveis.reduce((soma, imovel) => soma + parseFloat(imovel.Longitude || 0), 0);
-
-    setMapCenter([somaLat / imoveis.length, somaLng / imoveis.length]);
-    setMapZoom(getZoomLevel());
-  }, [imoveis, filtros.bairrosSelecionados]);
+    // Calcular centro baseado na média das coordenadas
+    const somaLat = imoveisValidos.reduce((soma, imovel) => soma + parseFloat(imovel.Latitude), 0);
+    const somaLng = imoveisValidos.reduce((soma, imovel) => soma + parseFloat(imovel.Longitude), 0);
+    const centroCalculado = [somaLat / imoveisValidos.length, somaLng / imoveisValidos.length];
+    
+    setMapCenter(centroCalculado);
+    
+    // Definir zoom baseado na quantidade e dispersão dos imóveis
+    if (imoveisValidos.length === 1) {
+      setMapZoom(16); // Zoom bem próximo para um único imóvel
+    } else if (imoveisValidos.length <= 5) {
+      setMapZoom(14); // Zoom médio para poucos imóveis
+    } else {
+      setMapZoom(12); // Zoom mais distante para muitos imóveis
+    }
+  }, [imoveis]);
 
   // Centro inicial para o MapContainer
   const initialCenter = [-23.5505, -46.6333]; // São Paulo como padrão
