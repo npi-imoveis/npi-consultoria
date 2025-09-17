@@ -30,7 +30,65 @@ export async function GET(request) {
 
     // Adicionar filtro de bairros se tiver um ou mais bairros selecionados
     if (bairros && bairros.length > 0) {
-      filtro.BairroComercial = { $in: bairros };
+      // Função para normalizar nomes de bairros (capitalizar corretamente)
+      const normalizarBairro = (bairro) => {
+        // Palavras que devem ficar em minúscula (preposições, artigos, etc)
+        const preposicoes = ['de', 'da', 'do', 'das', 'dos', 'e', 'em', 'na', 'no', 'nas', 'nos'];
+
+        return bairro
+          .toLowerCase()
+          .split(' ')
+          .map((palavra, index) => {
+            // Primeira palavra sempre maiúscula
+            if (index === 0) {
+              return palavra.charAt(0).toUpperCase() + palavra.slice(1);
+            }
+            // Preposições ficam em minúscula, exceto se for a primeira palavra
+            if (preposicoes.includes(palavra)) {
+              return palavra;
+            }
+            // Outras palavras ficam com primeira letra maiúscula
+            return palavra.charAt(0).toUpperCase() + palavra.slice(1);
+          })
+          .join(' ')
+          .trim();
+      };
+
+      // Processar bairros que podem vir separados por vírgula
+      const bairrosProcessados = [];
+      bairros.forEach(bairro => {
+        if (bairro.includes(',')) {
+          // Se tem vírgula, dividir
+          bairro.split(',').forEach(b => bairrosProcessados.push(b.trim()));
+        } else {
+          bairrosProcessados.push(bairro.trim());
+        }
+      });
+
+      // Criar array com variações para máxima compatibilidade
+      const bairrosParaBusca = [];
+      bairrosProcessados.forEach(bairro => {
+        const original = bairro.trim();
+        const normalizado = normalizarBairro(original);
+
+        bairrosParaBusca.push(original);
+        if (original !== normalizado) {
+          bairrosParaBusca.push(normalizado);
+        }
+
+        // Adicionar também versão lowercase e uppercase para compatibilidade
+        bairrosParaBusca.push(original.toLowerCase());
+        bairrosParaBusca.push(original.toUpperCase());
+      });
+
+      // Remover duplicatas
+      const bairrosUnicos = [...new Set(bairrosParaBusca)];
+
+      // Usar $or para buscar em ambos os campos de bairro (como na API de filtro)
+      filtro.$or = [
+        { BairroComercial: { $in: bairrosUnicos } },
+        { Bairro: { $in: bairrosUnicos } }
+      ];
     }
 
 

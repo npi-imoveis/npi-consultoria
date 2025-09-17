@@ -48,7 +48,57 @@ export async function GET(request) {
     }
 
     if (bairros && bairros.length > 0) {
-      filtro.BairroComercial = { $in: bairros };
+      // Função para normalizar nomes de bairros (capitalizar corretamente)
+      const normalizarBairro = (bairro) => {
+        // Palavras que devem ficar em minúscula (preposições, artigos, etc)
+        const preposicoes = ['de', 'da', 'do', 'das', 'dos', 'e', 'em', 'na', 'no', 'nas', 'nos'];
+
+        return bairro
+          .toLowerCase()
+          .split(' ')
+          .map((palavra, index) => {
+            // Primeira palavra sempre maiúscula
+            if (index === 0) {
+              return palavra.charAt(0).toUpperCase() + palavra.slice(1);
+            }
+            // Preposições ficam em minúscula, exceto se for a primeira palavra
+            if (preposicoes.includes(palavra)) {
+              return palavra;
+            }
+            // Outras palavras ficam com primeira letra maiúscula
+            return palavra.charAt(0).toUpperCase() + palavra.slice(1);
+          })
+          .join(' ')
+          .trim();
+      };
+
+      // Normalizar os bairros para comparação
+      const bairrosNormalizados = bairros.map(b => normalizarBairro(b.trim()));
+
+      // Criar array com variações (original + normalizada) para máxima compatibilidade
+      const bairrosParaBusca = [];
+      bairros.forEach(bairro => {
+        const original = bairro.trim();
+        const normalizado = normalizarBairro(original);
+
+        bairrosParaBusca.push(original);
+        if (original !== normalizado) {
+          bairrosParaBusca.push(normalizado);
+        }
+
+        // Adicionar também versão lowercase e uppercase para compatibilidade
+        bairrosParaBusca.push(original.toLowerCase());
+        bairrosParaBusca.push(original.toUpperCase());
+      });
+
+      // Remover duplicatas
+      const bairrosUnicos = [...new Set(bairrosParaBusca)];
+
+      // Usar $or para buscar em ambos os campos de bairro
+      filtro.$or = [
+        { BairroComercial: { $in: bairrosUnicos } },
+        { Bairro: { $in: bairrosUnicos } }
+      ];
     }
 
     if (quartos) filtro.Dormitorios = quartos;

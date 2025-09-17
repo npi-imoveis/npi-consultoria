@@ -27,9 +27,42 @@ export async function GET(request, { params }) {
     // Buscar bairros distintos com base na condição
     const bairros = await Imovel.distinct("BairroComercial", condition);
 
-    // Filtrar bairros vazios e ordená-los
-    const bairrosFiltrados = bairros
+    // Função para normalizar nomes de bairros (capitalizar corretamente)
+    const normalizarBairro = (bairro: string): string => {
+      // Palavras que devem ficar em minúscula (preposições, artigos, etc)
+      const preposicoes = ['de', 'da', 'do', 'das', 'dos', 'e', 'em', 'na', 'no', 'nas', 'nos'];
+
+      return bairro
+        .toLowerCase()
+        .split(' ')
+        .map((palavra, index) => {
+          // Primeira palavra sempre maiúscula
+          if (index === 0) {
+            return palavra.charAt(0).toUpperCase() + palavra.slice(1);
+          }
+          // Preposições ficam em minúscula, exceto se for a primeira palavra
+          if (preposicoes.includes(palavra)) {
+            return palavra;
+          }
+          // Outras palavras ficam com primeira letra maiúscula
+          return palavra.charAt(0).toUpperCase() + palavra.slice(1);
+        })
+        .join(' ')
+        .trim();
+    };
+
+    // Filtrar, normalizar e remover duplicatas
+    const bairrosNormalizados = new Set<string>();
+
+    bairros
       .filter((bairro) => bairro && bairro.trim() !== "")
+      .forEach((bairro) => {
+        const bairroNormalizado = normalizarBairro(bairro);
+        bairrosNormalizados.add(bairroNormalizado);
+      });
+
+    // Converter Set para Array e ordenar
+    const bairrosFiltrados = Array.from(bairrosNormalizados)
       .sort((a, b) => a.localeCompare(b));
 
 

@@ -960,12 +960,20 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible, hor
                 <div className="relative">
                   <input
                     type="text"
-                    placeholder={bairrosSelecionados.length > 0 ? `${bairrosSelecionados.length} selecionado(s)` : "Todos"}
+                    placeholder={
+                      bairrosSelecionados.length > 0
+                        ? bairrosSelecionados.length === 1
+                          ? bairrosSelecionados[0]
+                          : bairrosSelecionados.length <= 2
+                            ? bairrosSelecionados.join(', ')
+                            : `${bairrosSelecionados[0]} +${bairrosSelecionados.length - 1}`
+                        : "Todos"
+                    }
                     value={bairroFilter}
                     onChange={(e) => setBairroFilter(e.target.value)}
                     onClick={() => setBairrosExpanded(true)}
                     disabled={!cidadeSelecionada}
-                    className="px-2 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[85px] flex-shrink-0"
+                    className="px-2 py-2 text-xs bg-white border border-gray-300 cursor-pointer hover:border-gray-400 focus:border-black focus:outline-none w-[120px] flex-shrink-0"
                     readOnly={!bairrosExpanded}
                   />
                   
@@ -1013,7 +1021,7 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible, hor
                     {/* Lista de bairros */}
                     {bairrosFiltrados.length > 0 ? (
                       bairrosFiltrados.map((bairro) => (
-                        <div key={bairro} className="flex items-center px-2 py-1 hover:bg-gray-50">
+                        <div key={bairro} className={`flex items-center px-2 py-1 hover:bg-gray-50 ${bairrosSelecionados.includes(bairro) ? 'bg-gray-100' : ''}`}>
                           <input
                             type="checkbox"
                             id={`bairro-horizontal-${bairro}`}
@@ -1023,10 +1031,13 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible, hor
                           />
                           <label
                             htmlFor={`bairro-horizontal-${bairro}`}
-                            className="text-[11px] cursor-pointer flex-1"
+                            className={`text-[11px] cursor-pointer flex-1 ${bairrosSelecionados.includes(bairro) ? 'font-semibold' : ''}`}
                           >
                             {bairro}
                           </label>
+                          {bairrosSelecionados.includes(bairro) && (
+                            <span className="text-green-600 text-xs">✓</span>
+                          )}
                         </div>
                       ))
                     ) : (
@@ -1311,7 +1322,15 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible, hor
               <div className="relative">
                 <input
                   type="text"
-                  placeholder="Selecionar bairros"
+                  placeholder={
+                    bairrosSelecionados.length > 0
+                      ? bairrosSelecionados.length === 1
+                        ? bairrosSelecionados[0]
+                        : bairrosSelecionados.length <= 2
+                          ? bairrosSelecionados.join(', ')
+                          : `${bairrosSelecionados[0]}, +${bairrosSelecionados.length - 1}`
+                      : "Selecionar bairros"
+                  }
                   value={bairroFilter}
                   onChange={(e) => setBairroFilter(e.target.value)}
                   className="w-full rounded-md border border-gray-300 bg-white text-xs p-2 focus:outline-none focus:ring-1 focus:ring-black mb-1"
@@ -1352,7 +1371,7 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible, hor
 
                   {bairrosFiltrados.length > 0 ? (
                     bairrosFiltrados.map((bairro) => (
-                      <div key={bairro} className="flex items-center px-2 py-1 hover:bg-gray-50">
+                      <div key={bairro} className={`flex items-center px-2 py-1 hover:bg-gray-50 ${bairrosSelecionados.includes(bairro) ? 'bg-gray-100' : ''}`}>
                         <input
                           type="checkbox"
                           id={`bairro-${bairro}`}
@@ -1362,10 +1381,13 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible, hor
                         />
                         <label
                           htmlFor={`bairro-${bairro}`}
-                          className="text-xs cursor-pointer flex-1"
+                          className={`text-xs cursor-pointer flex-1 ${bairrosSelecionados.includes(bairro) ? 'font-semibold' : ''}`}
                         >
                           {bairro}
                         </label>
+                        {bairrosSelecionados.includes(bairro) && (
+                          <span className="text-green-600 text-sm">✓</span>
+                        )}
                       </div>
                     ))
                   ) : (

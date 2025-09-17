@@ -62,12 +62,13 @@ const MapComplete = ({ filtros }) => {
         }
         
         if (filtros?.bairrosSelecionados?.length > 0) {
-          params.append('bairros', filtros.bairrosSelecionados.join(','));
+          // Adicionar cada bairro como um parâmetro separado (como a API espera)
+          filtros.bairrosSelecionados.forEach(bairro => {
+            params.append('bairros', bairro);
+          });
         }
 
         const url = `/api/imoveis/mapa?${params.toString()}`;
-        console.log('[MapComplete] Fetching from:', url);
-
         const response = await fetch(url);
         const data = await response.json();
 
@@ -198,11 +199,6 @@ const MapComplete = ({ filtros }) => {
           <div className="text-sm">
             <span className="font-bold text-lg">{imoveis.length}</span> imóveis encontrados
           </div>
-          {markersRef.current.length > 0 && (
-            <div className="text-xs text-green-600">
-              <span className="font-bold">{markersRef.current.length}</span> pontos no mapa
-            </div>
-          )}
           {markersRef.current.length < imoveis.length && (
             <div className="text-xs text-orange-600">
               {imoveis.length - markersRef.current.length} sem coordenadas
