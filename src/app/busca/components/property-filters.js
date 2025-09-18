@@ -322,14 +322,14 @@ export default function PropertyFilters({
   // Bloquear scroll body quando off-canvas aberto
   useEffect(() => {
     if (!isClient) return;
-    if (isMobile && isVisible) {
+    if (isMobile && isControlled && visible) {
       const { overflow } = document.body.style;
       document.body.style.overflow = "hidden";
       return () => {
         document.body.style.overflow = overflow;
       };
     }
-  }, [isClient, isMobile, isVisible]);
+  }, [isClient, isMobile, /* deps abaixo calculados depois */]);
 
   /* ====== Helpers ====== */
   const opcoes = [1, 2, 3, "4+"];
@@ -357,10 +357,6 @@ export default function PropertyFilters({
 
   const handleFinalidadeChange = (e) =>
     setFinalidade(e.target.value === "comprar" ? "Comprar" : e.target.value === "alugar" ? "Alugar" : "");
-
-  const fecharMobile = () => {
-    if (isClient && isMobile && setIsVisible) setIsVisible(false);
-  };
 
   const handleAplicarFiltros = () => {
     const filtrosBasicosPreenchidos = !!(categoriaSelecionada && cidadeSelecionada && finalidade);
@@ -401,7 +397,7 @@ export default function PropertyFilters({
 
     aplicarFiltros();
     onFilter?.();
-    fecharMobile();
+    if (isControlled) setIsVisible(false);
   };
 
   const handleLimparFiltros = () => {
@@ -422,6 +418,24 @@ export default function PropertyFilters({
     setBairroFilter("");
     onFilter?.();
   };
+
+  /* =========================
+     Controlled vs Uncontrolled
+  ========================= */
+  const isControlled = typeof isVisible === "boolean" && typeof setIsVisible === "function";
+  const visible = isControlled ? isVisible : true;
+
+  /* ====== Atualiza deps do lock body scroll ====== */
+  useEffect(() => {
+    if (!isClient) return;
+    if (isMobile && isControlled && visible) {
+      const { overflow } = document.body.style;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = overflow;
+      };
+    }
+  }, [isClient, isMobile, isControlled, visible]);
 
   /* =========================
      Desktop (horizontal) — apenas no desktop!
@@ -616,7 +630,7 @@ export default function PropertyFilters({
                 <button
                   type="button"
                   onClick={() => setQuartosExpanded((v) => !v)}
-                  className="px-2 py-2 text-xs bg-white border border-gray-300 hover:border-gray-400 focus:outline-none w-[70px] flex-shrink-0 text-left"
+                  className="px-2 py-2 text-xs bg-white border border-gray-300 hover:border-gray-400 focus:border-black focus:outline-none w-[70px] flex-shrink-0 text-left"
                 >
                   {quartosSelecionados ?? "Todos"}
                 </button>
@@ -647,7 +661,7 @@ export default function PropertyFilters({
                 <button
                   type="button"
                   onClick={() => setVagasExpanded((v) => !v)}
-                  className="px-2 py-2 text-xs bg-white border border-gray-300 hover:border-gray-400 focus:outline-none w-[70px] flex-shrink-0 text-left"
+                  className="px-2 py-2 text-xs bg-white border border-gray-300 hover:border-gray-400 focus:border-black focus:outline-none w-[70px] flex-shrink-0 text-left"
                 >
                   {vagasSelecionadas ?? "Todas"}
                 </button>
@@ -727,11 +741,21 @@ export default function PropertyFilters({
   /* =========================
      Mobile / padrão (off-canvas com fallback inline)
   ========================= */
-  const isControlled = typeof isVisible === "boolean" && typeof setIsVisible === "function";
-  const visible = isControlled ? isVisible : true;
-
   return (
     <>
+      {/* BOTÃO FLUTUANTE para abrir os filtros quando controlado e fechado */}
+      {isClient && isMobile && isControlled && !visible && (
+        <button
+          type="button"
+          onClick={() => setIsVisible(true)}
+          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[9997] bg-black text-white px-5 py-3 rounded-full shadow-lg text-sm font-semibold"
+          style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 12px)" }}
+        >
+          Abrir filtros
+        </button>
+      )}
+
+      {/* Backdrop quando painel aberto */}
       {isClient && isMobile && isControlled && visible && (
         <div
           className="fixed inset-0 bg-black/60 z-[9998]"
@@ -740,6 +764,7 @@ export default function PropertyFilters({
         />
       )}
 
+      {/* Painel */}
       <div
         className={[
           "bg-white text-black rounded-t-2xl sm:rounded-lg shadow-sm w-full overflow-y-auto scrollbar-hide transition-transform duration-300",
@@ -754,8 +779,8 @@ export default function PropertyFilters({
         style={{
           display: !uiVisible ? "none" : "block",
           paddingBottom:
-            isClient && isMobile
-              ? (isControlled ? "calc(env(safe-area-inset-bottom) + 88px)" : undefined)
+            isClient && isMobile && isControlled
+              ? "calc(env(safe-area-inset-bottom) + 88px)"
               : undefined,
         }}
         role={isClient && isMobile && isControlled ? "dialog" : undefined}
