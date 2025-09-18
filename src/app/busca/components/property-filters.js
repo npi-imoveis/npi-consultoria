@@ -192,7 +192,6 @@ export default function PropertyFilters({
 
   // Dados dinâmicos
   const [categorias, setCategorias] = useState([]);
-  the
   const [cidades, setCidades] = useState([]);
   const [bairros, setBairros] = useState([]);
 
