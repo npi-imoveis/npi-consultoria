@@ -176,6 +176,9 @@ export default function PropertyFilters({
   const isClient = useIsClient();
   const isMobile = useIsMobile();
 
+  // Ref que era condicional — agora no topo para não quebrar hooks
+  const scrollRef = useRef(null);
+
   const [uiVisible, setUiVisible] = useState(false);
   useEffect(() => {
     const t = setTimeout(() => setUiVisible(true), 60);
@@ -302,13 +305,17 @@ export default function PropertyFilters({
 
     if (bairrosExpanded || finalidadeExpanded || tipoExpanded || cidadeExpanded || quartosExpanded || vagasExpanded) {
       timer = setTimeout(() => {
-        document.addEventListener("pointerdown", handleOutside, { passive: true });
-        registered = true;
+        if (typeof document !== "undefined") {
+          document.addEventListener("pointerdown", handleOutside, { passive: true });
+          registered = true;
+        }
       }, 0);
     }
     return () => {
       if (timer) clearTimeout(timer);
-      if (registered) document.removeEventListener("pointerdown", handleOutside);
+      if (registered && typeof document !== "undefined") {
+        document.removeEventListener("pointerdown", handleOutside);
+      }
     };
   }, [bairrosExpanded, finalidadeExpanded, tipoExpanded, cidadeExpanded, quartosExpanded, vagasExpanded]);
 
@@ -417,17 +424,16 @@ export default function PropertyFilters({
   };
 
   /* =========================
-     Desktop (horizontal)
+     Desktop (horizontal) — apenas no desktop!
   ========================= */
-  if (horizontal) {
-    const scrollRef = useRef(null);
-
+  if (horizontal && !isMobile) {
+    // Safe SSR
     const computeDropdownStyle = (ref, width = 160) => {
-      if (!ref.current) return {};
+      if (typeof window === "undefined" || !ref?.current) return {};
       const rect = ref.current.getBoundingClientRect();
       const left = Math.min(rect.left, Math.max(8, window.innerWidth - width - 8));
       const top = rect.bottom + 4;
-      return { top, left, width };
+      return { top, left, width, position: "fixed" };
     };
 
     return (
@@ -450,7 +456,7 @@ export default function PropertyFilters({
                   {finalidade || "Selecionar"}
                 </button>
                 <div
-                  className={`fixed z-[60] mt-1 bg-white border border-gray-300 rounded shadow-lg ${!finalidadeExpanded ? "hidden" : ""}`}
+                  className={`z-[60] mt-1 bg-white border border-gray-300 rounded shadow-lg ${!finalidadeExpanded ? "hidden" : ""}`}
                   style={{ ...computeDropdownStyle(finalidadeRef, 140) }}
                 >
                   {["", "Comprar", "Alugar"].map((op) => (
@@ -479,7 +485,7 @@ export default function PropertyFilters({
                   {categoriaSelecionada || "Todos"}
                 </button>
                 <div
-                  className={`fixed z-[60] mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-48 overflow-y-auto ${!tipoExpanded ? "hidden" : ""}`}
+                  className={`z-[60] mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-48 overflow-y-auto ${!tipoExpanded ? "hidden" : ""}`}
                   style={{ ...computeDropdownStyle(tipoRef, 180) }}
                 >
                   {["", ...categorias].map((c) => (
@@ -508,7 +514,7 @@ export default function PropertyFilters({
                   {cidadeSelecionada || "Todas"}
                 </button>
                 <div
-                  className={`fixed z-[60] mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-48 overflow-y-auto ${!cidadeExpanded ? "hidden" : ""}`}
+                  className={`z-[60] mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-48 overflow-y-auto ${!cidadeExpanded ? "hidden" : ""}`}
                   style={{ ...computeDropdownStyle(cidadeRef, 180) }}
                 >
                   {["", ...cidades].map((c) => (
@@ -550,7 +556,7 @@ export default function PropertyFilters({
                   )}
                 </button>
                 <div
-                  className={`fixed z-[60] mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-60 overflow-y-auto w-80 ${
+                  className={`z-[60] mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-60 overflow-y-auto w-80 ${
                     !cidadeSelecionada || !bairrosExpanded ? "hidden" : ""
                   }`}
                   style={{ ...computeDropdownStyle(bairrosRef, 320) }}
@@ -610,12 +616,12 @@ export default function PropertyFilters({
                 <button
                   type="button"
                   onClick={() => setQuartosExpanded((v) => !v)}
-                  className="px-2 py-2 text-xs bg-white border border-gray-300 hover:border-gray-400 focus:border-black focus:outline-none w-[70px] flex-shrink-0 text-left"
+                  className="px-2 py-2 text-xs bg-white border border-gray-300 hover:border-gray-400 focus:outline-none w-[70px] flex-shrink-0 text-left"
                 >
                   {quartosSelecionados ?? "Todos"}
                 </button>
                 <div
-                  className={`fixed z-[60] mt-1 bg-white border border-gray-300 rounded shadow-lg w-28 ${
+                  className={`z-[60] mt-1 bg-white border border-gray-300 rounded shadow-lg w-28 ${
                     !quartosExpanded ? "hidden" : ""
                   }`}
                   style={{ ...computeDropdownStyle(quartosRef, 112) }}
@@ -641,12 +647,12 @@ export default function PropertyFilters({
                 <button
                   type="button"
                   onClick={() => setVagasExpanded((v) => !v)}
-                  className="px-2 py-2 text-xs bg-white border border-gray-300 hover:border-gray-400 focus:border-black focus:outline-none w-[70px] flex-shrink-0 text-left"
+                  className="px-2 py-2 text-xs bg-white border border-gray-300 hover:border-gray-400 focus:outline-none w-[70px] flex-shrink-0 text-left"
                 >
                   {vagasSelecionadas ?? "Todas"}
                 </button>
                 <div
-                  className={`fixed z-[60] mt-1 bg-white border border-gray-300 rounded shadow-lg w-28 ${
+                  className={`z-[60] mt-1 bg-white border border-gray-300 rounded shadow-lg w-28 ${
                     !vagasExpanded ? "hidden" : ""
                   }`}
                   style={{ ...computeDropdownStyle(vagasRef, 112) }}
@@ -719,14 +725,17 @@ export default function PropertyFilters({
   }
 
   /* =========================
-     Mobile / padrão (off-canvas)
+     Mobile / padrão (off-canvas com fallback inline)
   ========================= */
+  const isControlled = typeof isVisible === "boolean" && typeof setIsVisible === "function";
+  const visible = isControlled ? isVisible : true;
+
   return (
     <>
-      {isClient && isMobile && isVisible && (
+      {isClient && isMobile && isControlled && visible && (
         <div
           className="fixed inset-0 bg-black/60 z-[9998]"
-          onClick={() => setIsVisible?.(false)}
+          onClick={() => setIsVisible(false)}
           aria-hidden="true"
         />
       )}
@@ -735,25 +744,30 @@ export default function PropertyFilters({
         className={[
           "bg-white text-black rounded-t-2xl sm:rounded-lg shadow-sm w-full overflow-y-auto scrollbar-hide transition-transform duration-300",
           isClient && isMobile
-            ? (isVisible
-                ? "fixed inset-x-0 bottom-0 z-[9999] max-h-[85vh] translate-y-0"
-                : "fixed inset-x-0 bottom-0 z-[9999] max-h-[85vh] translate-y-full")
+            ? (isControlled
+                ? (visible
+                    ? "fixed inset-x-0 bottom-0 z-[9999] max-h-[85vh] translate-y-0"
+                    : "fixed inset-x-0 bottom-0 z-[9999] max-h-[85vh] translate-y-full")
+                : "relative") // fallback inline
             : "relative"
         ].join(" ")}
         style={{
           display: !uiVisible ? "none" : "block",
-          paddingBottom: isClient && isMobile ? "calc(env(safe-area-inset-bottom) + 88px)" : undefined,
+          paddingBottom:
+            isClient && isMobile
+              ? (isControlled ? "calc(env(safe-area-inset-bottom) + 88px)" : undefined)
+              : undefined,
         }}
-        role={isClient && isMobile ? "dialog" : undefined}
-        aria-modal={isClient && isMobile ? true : undefined}
+        role={isClient && isMobile && isControlled ? "dialog" : undefined}
+        aria-modal={isClient && isMobile && isControlled ? true : undefined}
       >
         <div className="w-full p-4 sm:p-6">
           {/* Header */}
           <div className="flex justify-between items-center sticky top-0 bg-white z-10 py-2">
             <h1 className="font-bold text-sm sm:text-base">Filtros Rápidos</h1>
-            {isClient && isMobile && (
+            {isClient && isMobile && isControlled && (
               <button
-                onClick={() => setIsVisible?.(false)}
+                onClick={() => setIsVisible(false)}
                 className="flex items-center justify-center bg-zinc-200 font-bold text-xs py-2 px-4 rounded-md hover:bg-gray-100"
               >
                 Ver resultados
@@ -938,12 +952,12 @@ export default function PropertyFilters({
 
           <div
             className={
-              isClient && isMobile
+              isClient && isMobile && isControlled
                 ? "fixed bottom-0 left-0 right-0 w-full px-4 py-4 bg-white border-t border-gray-200 shadow-lg z-[9999]"
                 : "sticky bottom-0 bg-white pt-3 pb-1 z-10"
             }
             style={{
-              paddingBottom: isClient && isMobile ? "calc(env(safe-area-inset-bottom) + 16px)" : undefined,
+              paddingBottom: isClient && isMobile && isControlled ? "calc(env(safe-area-inset-bottom) + 16px)" : undefined,
             }}
           >
             <button
