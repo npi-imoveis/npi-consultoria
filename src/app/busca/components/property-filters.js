@@ -16,7 +16,7 @@ const useIsClient = () => {
 /* =========================
    Reusable Inputs
 ========================= */
-const InputPreco = ({ placeholder, value, onChange, min = 65000, max = 65000000 }) => {
+const InputPreco = ({ placeholder, value, onChange }) => {
   const [inputValue, setInputValue] = useState("");
   const [isFocused, setIsFocused] = useState(false);
 
@@ -53,12 +53,11 @@ const InputPreco = ({ placeholder, value, onChange, min = 65000, max = 65000000 
 
   const handleBlur = () => {
     setIsFocused(false);
-    if (value == null) {
-      setInputValue("");
-    } else {
+    if (value == null) setInputValue("");
+    else {
       let v = value;
-      if (min != null && v < min) v = min;
-      if (max != null && v > max) v = max;
+      if (v < 65000) v = 65000;
+      if (v > 65000000) v = 65000000;
       onChange(v);
       setInputValue(formatarParaReal(v));
     }
@@ -158,24 +157,24 @@ export default function PropertyFilters({
   const aplicarFiltros = useFiltersStore((s) => s.aplicarFiltros);
 
   // Dados dinâmicos
-  const [categorias, setCategorias] = useState([]);
-  const [cidades, setCidades] = useState([]);
-  const [bairros, setBairros] = useState([]);
+  const [categorias, setCategorias] = useState<string[]>([]);
+  const [cidades, setCidades] = useState<string[]>([]);
+  const [bairros, setBairros] = useState<string[]>([]);
 
   // Seleções
-  const [finalidade, setFinalidade] = useState("");
-  const [categoriaSelecionada, setCategoriaSelecionada] = useState("");
-  const [cidadeSelecionada, setCidadeSelecionada] = useState("");
-  const [bairrosSelecionados, setBairrosSelecionados] = useState([]);
-  const [quartosSelecionados, setQuartosSelecionados] = useState(null);
-  const [banheirosSelecionados, setBanheirosSelecionados] = useState(null);
-  const [vagasSelecionadas, setVagasSelecionadas] = useState(null);
+  const [finalidade, setFinalidade] = useState<string>("");
+  const [categoriaSelecionada, setCategoriaSelecionada] = useState<string>("");
+  const [cidadeSelecionada, setCidadeSelecionada] = useState<string>("");
+  const [bairrosSelecionados, setBairrosSelecionados] = useState<string[]>([]);
+  const [quartosSelecionados, setQuartosSelecionados] = useState<any>(null);
+  const [banheirosSelecionados, setBanheirosSelecionados] = useState<any>(null);
+  const [vagasSelecionadas, setVagasSelecionadas] = useState<any>(null);
 
   // Numéricos
-  const [precoMin, setPrecoMin] = useState(null);
-  const [precoMax, setPrecoMax] = useState(null);
-  const [areaMin, setAreaMin] = useState(0);
-  const [areaMax, setAreaMax] = useState(0);
+  const [precoMin, setPrecoMin] = useState<number | null>(null);
+  const [precoMax, setPrecoMax] = useState<number | null>(null);
+  const [areaMin, setAreaMin] = useState<number>(0);
+  const [areaMax, setAreaMax] = useState<number>(0);
 
   // Flags
   const [abaixoMercado, setAbaixoMercado] = useState(false);
@@ -184,7 +183,7 @@ export default function PropertyFilters({
   // Bairros UI
   const [bairroFilter, setBairroFilter] = useState("");
   const [bairrosExpanded, setBairrosExpanded] = useState(false);
-  const bairrosRef = useRef(null);
+  const bairrosRef = useRef<HTMLDivElement | null>(null);
 
   // Dropdowns desktop
   const [finalidadeExpanded, setFinalidadeExpanded] = useState(false);
@@ -192,11 +191,11 @@ export default function PropertyFilters({
   const [cidadeExpanded, setCidadeExpanded] = useState(false);
   const [quartosExpanded, setQuartosExpanded] = useState(false);
   const [vagasExpanded, setVagasExpanded] = useState(false);
-  const finalidadeRef = useRef(null);
-  const tipoRef = useRef(null);
-  const cidadeRef = useRef(null);
-  const quartosRef = useRef(null);
-  const vagasRef = useRef(null);
+  const finalidadeRef = useRef<HTMLDivElement | null>(null);
+  const tipoRef = useRef<HTMLDivElement | null>(null);
+  const cidadeRef = useRef<HTMLDivElement | null>(null);
+  const quartosRef = useRef<HTMLDivElement | null>(null);
+  const vagasRef = useRef<HTMLDivElement | null>(null);
 
   // Altura do header fixo da página
   const [headerOffset, setHeaderOffset] = useState(0);
@@ -250,7 +249,7 @@ export default function PropertyFilters({
     if (s.banheiros) setBanheirosSelecionados(s.banheiros);
     if (s.vagas) setVagasSelecionadas(s.vagas);
 
-    const asNum = (v) => (typeof v === "string" && v != null ? parseInt(v, 10) : v);
+    const asNum = (v: any) => (typeof v === "string" && v != null ? parseInt(v, 10) : v);
     if (s.precoMin !== undefined) setPrecoMin(asNum(s.precoMin));
     if (s.precoMax !== undefined) setPrecoMax(asNum(s.precoMax));
     if (s.areaMin) setAreaMin(asNum(s.areaMin) || 0);
@@ -262,8 +261,8 @@ export default function PropertyFilters({
   /* ====== Outside click ====== */
   useEffect(() => {
     let registered = false;
-    let timer = null;
-    const handleOutside = (event) => {
+    let timer: any = null;
+    const handleOutside = (event: any) => {
       const target = event.target;
       if (bairrosRef.current && !bairrosRef.current.contains(target)) setBairrosExpanded(false);
       if (finalidadeRef.current && !finalidadeRef.current.contains(target)) setFinalidadeExpanded(false);
@@ -354,9 +353,9 @@ export default function PropertyFilters({
   useEffect(() => {
     if (!isClient || !isVisible) return;
     const selectors = [".fixed.top-20", "[data-app-header]", "header[role='banner']", ".site-header"];
-    let foundRect = null;
+    let foundRect: DOMRect | null = null;
     for (const sel of selectors) {
-      const el = document.querySelector(sel);
+      const el = document.querySelector(sel) as HTMLElement | null;
       if (el) {
         const r = el.getBoundingClientRect();
         if (r && r.bottom >= 0) {
@@ -373,29 +372,53 @@ export default function PropertyFilters({
     b.toLowerCase().includes(bairroFilter.toLowerCase())
   );
 
-  const handleCategoriaChange = (e) => setCategoriaSelecionada(e.target.value);
+  const handleCategoriaChange = (e: any) => setCategoriaSelecionada(e.target.value);
 
-  const handleCidadeChange = (e) => {
+  const handleCidadeChange = (e: any) => {
     setCidadeSelecionada(e.target.value);
     setBairrosSelecionados([]);
     setBairroFilter("");
   };
 
-  const handleBairroChange = (bairro) => {
+  const handleBairroChange = (bairro: string) => {
     setBairrosSelecionados((prev) =>
       prev.includes(bairro) ? prev.filter((x) => x !== bairro) : [...prev, bairro]
     );
   };
 
-  const handlePrecoChange = (value, setter) => setter(value);
-  const handleAreaChange = (value, setter) => setter(Math.min(value || 0, 999));
+  const handlePrecoChange = (value: number | null, setter: any) => setter(value);
+  const handleAreaChange = (value: number, setter: any) => setter(Math.min(value || 0, 999));
 
-  const handleFinalidadeChange = (e) =>
+  const handleFinalidadeChange = (e: any) =>
     setFinalidade(e.target.value === "comprar" ? "Comprar" : e.target.value === "alugar" ? "Alugar" : "");
 
   const fecharMobile = () => setIsVisible?.(false);
 
   const handleAplicarFiltros = () => {
+    /* ===== REDIRECIONA A ROTA CONFORME A FINALIDADE (garante cards) ===== */
+    if (typeof window !== "undefined" && finalidade) {
+      const path = window.location.pathname;
+      const search = window.location.search || "";
+
+      const trySwap = (from: string, to: string) => {
+        if (path.includes(from)) {
+          const newPath = path.replace(from, to);
+          window.location.assign(newPath + search);
+          return true; // interrompe, a página vai recarregar
+        }
+        return false;
+      };
+
+      if (finalidade === "Alugar") {
+        if (trySwap("/buscar/venda/", "/buscar/alugar/") || trySwap("/busca/venda/", "/busca/alugar/"))
+          return;
+      } else if (finalidade === "Comprar") {
+        if (trySwap("/buscar/alugar/", "/buscar/venda/") || trySwap("/busca/alugar/", "/busca/venda/"))
+          return;
+      }
+    }
+    /* ==================================================================== */
+
     const filtrosBasicosPreenchidos = !!(categoriaSelecionada && cidadeSelecionada && finalidade);
 
     const precoMinFinal = precoMin && precoMin > 0 ? precoMin : null;
@@ -404,10 +427,13 @@ export default function PropertyFilters({
     const areaMinFinal = Math.min(areaMin || 0, 999);
     const areaMaxFinal = Math.min(areaMax || 0, 999);
 
-    const bairrosProcessados = [];
+    const bairrosProcessados: string[] = [];
     bairrosSelecionados.forEach((b) => {
       if (typeof b === "string" && b.includes(",")) {
-        b.split(",").map((p) => p.trim()).filter(Boolean).forEach((p) => bairrosProcessados.push(p));
+        b.split(",")
+          .map((p) => p.trim())
+          .filter(Boolean)
+          .forEach((p) => bairrosProcessados.push(p));
       } else bairrosProcessados.push(b);
     });
 
@@ -419,7 +445,6 @@ export default function PropertyFilters({
       quartos: quartosSelecionados,
       banheiros: banheirosSelecionados,
       vagas: vagasSelecionadas,
-      // Mantidos como strings conforme já utilizado no app
       precoMin: precoMinFinal != null ? String(precoMinFinal) : null,
       precoMax: precoMaxFinal != null ? String(precoMaxFinal) : null,
       precoMinimo: precoMinFinal != null ? String(precoMinFinal) : null,
@@ -460,7 +485,7 @@ export default function PropertyFilters({
   /* =========================
      Desktop (horizontal) – render fixo
   ========================= */
-  const computeDropdownStyle = (ref, width = 160) => {
+  const computeDropdownStyle = (ref: any, width = 160) => {
     if (!ref.current) return {};
     const rect = ref.current.getBoundingClientRect();
     const left =
@@ -514,7 +539,7 @@ export default function PropertyFilters({
               <button
                 type="button"
                 onClick={() => setTipoExpanded((v) => !v)}
-                className="px-2 py-2 text-xs bg-white border border-gray-300 hover:border-gray-400 focus:border-black focus:outline-none w-[114px] flex-shrink-0 text-left"
+                className="px-2 py-2 text-xs bg-white border border-gray-300 hover:border-gray-400 focus:outline-none w-[114px] flex-shrink-0 text-left"
               >
                 {categoriaSelecionada || "Todos"}
               </button>
@@ -543,7 +568,7 @@ export default function PropertyFilters({
               <button
                 type="button"
                 onClick={() => setCidadeExpanded((v) => !v)}
-                className="px-2 py-2 text-xs bg-white border border-gray-300 hover:border-gray-400 focus:border-black focus:outline-none w-[114px] flex-shrink-0 text-left"
+                className="px-2 py-2 text-xs bg-white border border-gray-300 hover:border-gray-400 focus:outline-none w-[114px] flex-shrink-0 text-left"
               >
                 {cidadeSelecionada || "Todas"}
               </button>
@@ -795,20 +820,8 @@ export default function PropertyFilters({
             <div className="mb-2">
               <span className="block text-[10px] font-semibold text-gray-800 mb-2">Preço</span>
               <div className="flex gap-2">
-                <InputPreco
-                  placeholder="R$ 1.000.000"
-                  value={precoMin}
-                  onChange={(v) => handlePrecoChange(v, setPrecoMin)}
-                  min={finalidade === "Alugar" ? 500 : 65000}
-                  max={finalidade === "Alugar" ? 200000 : 65000000}
-                />
-                <InputPreco
-                  placeholder="R$ 70.000.000"
-                  value={precoMax}
-                  onChange={(v) => handlePrecoChange(v, setPrecoMax)}
-                  min={finalidade === "Alugar" ? 500 : 65000}
-                  max={finalidade === "Alugar" ? 200000 : 65000000}
-                />
+                <InputPreco placeholder="R$ 1.000.000" value={precoMin} onChange={(v) => handlePrecoChange(v, setPrecoMin)} />
+                <InputPreco placeholder="R$ 70.000.000" value={precoMax} onChange={(v) => handlePrecoChange(v, setPrecoMax)} />
               </div>
             </div>
 
@@ -862,6 +875,7 @@ export default function PropertyFilters({
             overscroll-behavior-x: none;
             touch-action: pan-y;
           }
+          /* Mantém o pan/zoom do mapa funcionando */
           .leaflet-container {
             touch-action: auto !important;
           }
