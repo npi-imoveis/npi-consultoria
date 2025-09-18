@@ -285,6 +285,42 @@ export default function PropertyFilters({
     };
   }, [bairrosExpanded, finalidadeExpanded, tipoExpanded, cidadeExpanded, quartosExpanded, vagasExpanded]);
 
+  /* ====== BLOQUEIO DE SUBMIT DE FORM ANCESTRAL (evita redirect) ====== */
+  useEffect(() => {
+    const root = document.getElementById("pf-root");
+    if (!root) return;
+
+    // Cancela qualquer submit vindo de dentro do componente
+    const onSubmitCapture = (e) => {
+      if (root.contains(e.target)) {
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation?.();
+      }
+    };
+
+    // Cancela Enter em inputs dentro do componente que acionaria submit do form pai
+    const onKeyDownCapture = (e) => {
+      if (e.key !== "Enter") return;
+      const target = e.target;
+      if (root.contains(target)) {
+        const form = target.closest("form");
+        if (form) {
+          e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation?.();
+        }
+      }
+    };
+
+    document.addEventListener("submit", onSubmitCapture, true);
+    document.addEventListener("keydown", onKeyDownCapture, true);
+    return () => {
+      document.removeEventListener("submit", onSubmitCapture, true);
+      document.removeEventListener("keydown", onKeyDownCapture, true);
+    };
+  }, []);
+
   /* ====== BLOQUEIO DE SCROLL (MOBILE) ====== */
   useEffect(() => {
     if (!isClient) return;
@@ -393,7 +429,6 @@ export default function PropertyFilters({
   const handleFinalidadeChange = (e) => {
     const v = e.target.value === "comprar" ? "Comprar" : e.target.value === "alugar" ? "Locação" : "";
     setFinalidade(v);
-    // zera preços ao trocar finalidade (evita herdar filtros da outra modalidade)
     setPrecoMin(null);
     setPrecoMax(null);
   };
@@ -416,7 +451,6 @@ export default function PropertyFilters({
       } else bairrosProcessados.push(b);
     });
 
-    // Mantemos os mesmos campos de preço; quem decide usar como aluguel/venda é a API pela "finalidade"
     setFilters({
       finalidade,
       categoriaSelecionada,
@@ -506,7 +540,6 @@ export default function PropertyFilters({
                     key={op || "selecionar"}
                     className="px-2 py-2 hover:bg-gray-50 cursor-pointer text-[11px]"
                     onClick={() => {
-                      // salva "Locação" quando usuário clica em "Alugar"
                       const normalized = op === "Alugar" ? "Locação" : op;
                       setFinalidade(normalized);
                       setPrecoMin(null);
@@ -607,7 +640,7 @@ export default function PropertyFilters({
      Mobile / padrão (off-canvas)
   ========================= */
   return (
-    <>
+    <div id="pf-root">
       {/* Desktop bar (oculta em mobile) */}
       <div className="hidden md:block">{DesktopBar}</div>
 
@@ -875,6 +908,6 @@ export default function PropertyFilters({
           }
         }
       `}</style>
-    </>
+    </div>
   );
 }
