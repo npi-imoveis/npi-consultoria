@@ -198,6 +198,9 @@ export default function PropertyFilters({
   const quartosRef = useRef(null);
   const vagasRef = useRef(null);
 
+  // Altura do header fixo da página (para empurrar o header do overlay abaixo dele)
+  const [headerOffset, setHeaderOffset] = useState(0);
+
   /* ====== Data fetch ====== */
   useEffect(() => {
     (async () => {
@@ -282,16 +285,49 @@ export default function PropertyFilters({
     };
   }, [bairrosExpanded, finalidadeExpanded, tipoExpanded, cidadeExpanded, quartosExpanded, vagasExpanded]);
 
-  // Bloquear scroll body quando off-canvas aberto
+  // BLOQUEIO DE SCROLL (com compensação de scrollbar no desktop para evitar "dança" lateral)
   useEffect(() => {
-    if (!isClient) return;
-    if (isVisible) {
-      const { overflow } = document.body.style;
-      document.body.style.overflow = "hidden";
-      return () => {
-        document.body.style.overflow = overflow;
-      };
+    if (!isClient || !isVisible) return;
+
+    const prev = {
+      overflow: document.body.style.overflow,
+      paddingRight: document.body.style.paddingRight,
+    };
+
+    document.body.style.overflow = "hidden";
+
+    // Só compensa no desktop (no mobile normalmente não há scrollbar)
+    const isMobileViewport = typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches;
+    if (!isMobileViewport) {
+      const scrollbar = window.innerWidth - document.documentElement.clientWidth;
+      if (scrollbar > 0) {
+        document.body.style.paddingRight = `${scrollbar}px`;
+      }
     }
+
+    return () => {
+      document.body.style.overflow = prev.overflow;
+      document.body.style.paddingRight = prev.paddingRight;
+    };
+  }, [isClient, isVisible]);
+
+  // MEDIR HEADER FIXO DA PÁGINA para empurrar o header do overlay abaixo dele
+  useEffect(() => {
+    if (!isClient || !isVisible) return;
+    const selectors = [".fixed.top-20", "[data-app-header]", "header[role='banner']", ".site-header"];
+    let foundRect = null;
+    for (const sel of selectors) {
+      const el = document.querySelector(sel);
+      if (el) {
+        const r = el.getBoundingClientRect();
+        if (r && r.bottom >= 0) {
+          foundRect = r;
+          break;
+        }
+      }
+    }
+    // se não achar, usa 0. Se seu header tem outra classe, pode ajustar aqui depois.
+    setHeaderOffset(foundRect ? Math.ceil(foundRect.bottom) : 0);
   }, [isClient, isVisible]);
 
   /* ====== Helpers ====== */
@@ -543,8 +579,11 @@ export default function PropertyFilters({
         role="dialog"
         aria-modal="true"
       >
-        {/* Header sticky */}
-        <div className="sticky top-0 bg-white z-10 py-2 px-4 border-b">
+        {/* Header sticky — agora respeita a altura do header da página */}
+        <div
+          className="sticky bg-white z-10 py-2 px-4 border-b"
+          style={{ top: headerOffset }}
+        >
           <div className="flex items-center justify-between">
             <h1 className="font-bold text-sm">Filtros Rápidos</h1>
             <button
@@ -753,7 +792,7 @@ export default function PropertyFilters({
         </div>
       </div>
 
-      {/* FAB - Abrir filtros (mobile) / mesma posição de antes (centralizado no rodapé) */}
+      {/* FAB - Abrir filtros (mobile) / centralizado no rodapé */}
       {!isVisible && (
         <button
           type="button"
