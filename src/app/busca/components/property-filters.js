@@ -1,6 +1,5 @@
 "use client";
 
-import { InformationCircleIcon } from "@heroicons/react/24/outline";
 import { useEffect, useState, useRef, useCallback } from "react";
 import useFiltersStore from "@/app/store/filtrosStore";
 import { getImoveisByFilters, getBairrosPorCidade } from "@/app/services";
@@ -198,7 +197,7 @@ export default function PropertyFilters({
   const quartosRef = useRef(null);
   const vagasRef = useRef(null);
 
-  // Altura do header fixo da página (para empurrar o header do overlay abaixo dele)
+  // Altura do header fixo da página
   const [headerOffset, setHeaderOffset] = useState(0);
 
   /* ====== Data fetch ====== */
@@ -285,33 +284,37 @@ export default function PropertyFilters({
     };
   }, [bairrosExpanded, finalidadeExpanded, tipoExpanded, cidadeExpanded, quartosExpanded, vagasExpanded]);
 
-  // BLOQUEIO DE SCROLL (com compensação de scrollbar no desktop para evitar "dança" lateral)
+  // BLOQUEIO DE SCROLL (MOBILE) — evita "dança" lateral dos cards
   useEffect(() => {
     if (!isClient || !isVisible) return;
+    const isMobileViewport =
+      typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches;
+    if (!isMobileViewport) return;
+
+    const scrollY = window.scrollY || window.pageYOffset || 0;
 
     const prev = {
+      position: document.body.style.position,
+      top: document.body.style.top,
+      width: document.body.style.width,
       overflow: document.body.style.overflow,
-      paddingRight: document.body.style.paddingRight,
     };
 
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = "100%";
     document.body.style.overflow = "hidden";
 
-    // Só compensa no desktop (no mobile normalmente não há scrollbar)
-    const isMobileViewport = typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches;
-    if (!isMobileViewport) {
-      const scrollbar = window.innerWidth - document.documentElement.clientWidth;
-      if (scrollbar > 0) {
-        document.body.style.paddingRight = `${scrollbar}px`;
-      }
-    }
-
     return () => {
+      document.body.style.position = prev.position;
+      document.body.style.top = prev.top;
+      document.body.style.width = prev.width;
       document.body.style.overflow = prev.overflow;
-      document.body.style.paddingRight = prev.paddingRight;
+      window.scrollTo(0, scrollY);
     };
   }, [isClient, isVisible]);
 
-  // MEDIR HEADER FIXO DA PÁGINA para empurrar o header do overlay abaixo dele
+  // MEDIR HEADER FIXO DA PÁGINA (para não cobrir o header do overlay)
   useEffect(() => {
     if (!isClient || !isVisible) return;
     const selectors = [".fixed.top-20", "[data-app-header]", "header[role='banner']", ".site-header"];
@@ -326,7 +329,6 @@ export default function PropertyFilters({
         }
       }
     }
-    // se não achar, usa 0. Se seu header tem outra classe, pode ajustar aqui depois.
     setHeaderOffset(foundRect ? Math.ceil(foundRect.bottom) : 0);
   }, [isClient, isVisible]);
 
@@ -579,7 +581,7 @@ export default function PropertyFilters({
         role="dialog"
         aria-modal="true"
       >
-        {/* Header sticky — agora respeita a altura do header da página */}
+        {/* Header sticky — respeita a altura do header da página */}
         <div
           className="sticky bg-white z-10 py-2 px-4 border-b"
           style={{ top: headerOffset }}
@@ -758,8 +760,8 @@ export default function PropertyFilters({
             <div className="mb-2">
               <span className="block text-[10px] font-semibold text-gray-800 mb-2">Preço</span>
               <div className="flex gap-2">
-                <InputPreco placeholder="R$ 65.000" value={precoMin} onChange={(v) => handlePrecoChange(v, setPrecoMin)} />
-                <InputPreco placeholder="R$ 65.000.000" value={precoMax} onChange={(v) => handlePrecoChange(v, setPrecoMax)} />
+                <InputPreco placeholder="R$ 1.000.000" value={precoMin} onChange={(v) => handlePrecoChange(v, setPrecoMin)} />
+                <InputPreco placeholder="R$ 70.000.000" value={precoMax} onChange={(v) => handlePrecoChange(v, setPrecoMax)} />
               </div>
             </div>
 
@@ -792,7 +794,7 @@ export default function PropertyFilters({
         </div>
       </div>
 
-      {/* FAB - Abrir filtros (mobile) / centralizado no rodapé */}
+      {/* FAB - Abrir filtros (mobile) */}
       {!isVisible && (
         <button
           type="button"
