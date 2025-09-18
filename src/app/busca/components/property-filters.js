@@ -797,7 +797,7 @@ export default function PropertyFilters({
             <div className="mb-2">
               <span className="block text-[10px] font-semibold text-gray-800 mb-2">Preço</span>
               <div className="flex gap-2">
-                <InputPreco placeholder="R$ 50.000" value={precoMin} onChange={(v) => handlePrecoChange(v, setPrecoMin)} />
+                <InputPreco placeholder="R$ 1.000.000" value={precoMin} onChange={(v) => handlePrecoChange(v, setPrecoMin)} />
                 <InputPreco placeholder="R$ 70.000.000" value={precoMax} onChange={(v) => handlePrecoChange(v, setPrecoMax)} />
               </div>
             </div>
