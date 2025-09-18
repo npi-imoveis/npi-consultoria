@@ -157,24 +157,24 @@ export default function PropertyFilters({
   const aplicarFiltros = useFiltersStore((s) => s.aplicarFiltros);
 
   // Dados dinâmicos
-  const [categorias, setCategorias] = useState<string[]>([]);
-  const [cidades, setCidades] = useState<string[]>([]);
-  const [bairros, setBairros] = useState<string[]>([]);
+  const [categorias, setCategorias] = useState([]);
+  const [cidades, setCidades] = useState([]);
+  const [bairros, setBairros] = useState([]);
 
   // Seleções
-  const [finalidade, setFinalidade] = useState<string>("");
-  const [categoriaSelecionada, setCategoriaSelecionada] = useState<string>("");
-  const [cidadeSelecionada, setCidadeSelecionada] = useState<string>("");
-  const [bairrosSelecionados, setBairrosSelecionados] = useState<string[]>([]);
-  const [quartosSelecionados, setQuartosSelecionados] = useState<any>(null);
-  const [banheirosSelecionados, setBanheirosSelecionados] = useState<any>(null);
-  const [vagasSelecionadas, setVagasSelecionadas] = useState<any>(null);
+  const [finalidade, setFinalidade] = useState("");
+  const [categoriaSelecionada, setCategoriaSelecionada] = useState("");
+  const [cidadeSelecionada, setCidadeSelecionada] = useState("");
+  const [bairrosSelecionados, setBairrosSelecionados] = useState([]);
+  const [quartosSelecionados, setQuartosSelecionados] = useState(null);
+  const [banheirosSelecionados, setBanheirosSelecionados] = useState(null);
+  const [vagasSelecionadas, setVagasSelecionadas] = useState(null);
 
   // Numéricos
-  const [precoMin, setPrecoMin] = useState<number | null>(null);
-  const [precoMax, setPrecoMax] = useState<number | null>(null);
-  const [areaMin, setAreaMin] = useState<number>(0);
-  const [areaMax, setAreaMax] = useState<number>(0);
+  const [precoMin, setPrecoMin] = useState(null);
+  const [precoMax, setPrecoMax] = useState(null);
+  const [areaMin, setAreaMin] = useState(0);
+  const [areaMax, setAreaMax] = useState(0);
 
   // Flags
   const [abaixoMercado, setAbaixoMercado] = useState(false);
@@ -183,7 +183,7 @@ export default function PropertyFilters({
   // Bairros UI
   const [bairroFilter, setBairroFilter] = useState("");
   const [bairrosExpanded, setBairrosExpanded] = useState(false);
-  const bairrosRef = useRef<HTMLDivElement | null>(null);
+  const bairrosRef = useRef(null);
 
   // Dropdowns desktop
   const [finalidadeExpanded, setFinalidadeExpanded] = useState(false);
@@ -191,11 +191,11 @@ export default function PropertyFilters({
   const [cidadeExpanded, setCidadeExpanded] = useState(false);
   const [quartosExpanded, setQuartosExpanded] = useState(false);
   const [vagasExpanded, setVagasExpanded] = useState(false);
-  const finalidadeRef = useRef<HTMLDivElement | null>(null);
-  const tipoRef = useRef<HTMLDivElement | null>(null);
-  const cidadeRef = useRef<HTMLDivElement | null>(null);
-  const quartosRef = useRef<HTMLDivElement | null>(null);
-  const vagasRef = useRef<HTMLDivElement | null>(null);
+  const finalidadeRef = useRef(null);
+  const tipoRef = useRef(null);
+  const cidadeRef = useRef(null);
+  const quartosRef = useRef(null);
+  const vagasRef = useRef(null);
 
   // Altura do header fixo da página
   const [headerOffset, setHeaderOffset] = useState(0);
@@ -249,7 +249,7 @@ export default function PropertyFilters({
     if (s.banheiros) setBanheirosSelecionados(s.banheiros);
     if (s.vagas) setVagasSelecionadas(s.vagas);
 
-    const asNum = (v: any) => (typeof v === "string" && v != null ? parseInt(v, 10) : v);
+    const asNum = (v) => (typeof v === "string" && v != null ? parseInt(v, 10) : v);
     if (s.precoMin !== undefined) setPrecoMin(asNum(s.precoMin));
     if (s.precoMax !== undefined) setPrecoMax(asNum(s.precoMax));
     if (s.areaMin) setAreaMin(asNum(s.areaMin) || 0);
@@ -261,8 +261,8 @@ export default function PropertyFilters({
   /* ====== Outside click ====== */
   useEffect(() => {
     let registered = false;
-    let timer: any = null;
-    const handleOutside = (event: any) => {
+    let timer = null;
+    const handleOutside = (event) => {
       const target = event.target;
       if (bairrosRef.current && !bairrosRef.current.contains(target)) setBairrosExpanded(false);
       if (finalidadeRef.current && !finalidadeRef.current.contains(target)) setFinalidadeExpanded(false);
@@ -353,9 +353,9 @@ export default function PropertyFilters({
   useEffect(() => {
     if (!isClient || !isVisible) return;
     const selectors = [".fixed.top-20", "[data-app-header]", "header[role='banner']", ".site-header"];
-    let foundRect: DOMRect | null = null;
+    let foundRect = null;
     for (const sel of selectors) {
-      const el = document.querySelector(sel) as HTMLElement | null;
+      const el = document.querySelector(sel);
       if (el) {
         const r = el.getBoundingClientRect();
         if (r && r.bottom >= 0) {
@@ -372,24 +372,24 @@ export default function PropertyFilters({
     b.toLowerCase().includes(bairroFilter.toLowerCase())
   );
 
-  const handleCategoriaChange = (e: any) => setCategoriaSelecionada(e.target.value);
+  const handleCategoriaChange = (e) => setCategoriaSelecionada(e.target.value);
 
-  const handleCidadeChange = (e: any) => {
+  const handleCidadeChange = (e) => {
     setCidadeSelecionada(e.target.value);
     setBairrosSelecionados([]);
     setBairroFilter("");
   };
 
-  const handleBairroChange = (bairro: string) => {
+  const handleBairroChange = (bairro) => {
     setBairrosSelecionados((prev) =>
       prev.includes(bairro) ? prev.filter((x) => x !== bairro) : [...prev, bairro]
     );
   };
 
-  const handlePrecoChange = (value: number | null, setter: any) => setter(value);
-  const handleAreaChange = (value: number, setter: any) => setter(Math.min(value || 0, 999));
+  const handlePrecoChange = (value, setter) => setter(value);
+  const handleAreaChange = (value, setter) => setter(Math.min(value || 0, 999));
 
-  const handleFinalidadeChange = (e: any) =>
+  const handleFinalidadeChange = (e) =>
     setFinalidade(e.target.value === "comprar" ? "Comprar" : e.target.value === "alugar" ? "Alugar" : "");
 
   const fecharMobile = () => setIsVisible?.(false);
@@ -400,21 +400,19 @@ export default function PropertyFilters({
       const path = window.location.pathname;
       const search = window.location.search || "";
 
-      const trySwap = (from: string, to: string) => {
+      const trySwap = (from, to) => {
         if (path.includes(from)) {
           const newPath = path.replace(from, to);
           window.location.assign(newPath + search);
-          return true; // interrompe, a página vai recarregar
+          return true; // a página recarrega
         }
         return false;
       };
 
       if (finalidade === "Alugar") {
-        if (trySwap("/buscar/venda/", "/buscar/alugar/") || trySwap("/busca/venda/", "/busca/alugar/"))
-          return;
+        if (trySwap("/buscar/venda/", "/buscar/alugar/") || trySwap("/busca/venda/", "/busca/alugar/")) return;
       } else if (finalidade === "Comprar") {
-        if (trySwap("/buscar/alugar/", "/buscar/venda/") || trySwap("/busca/alugar/", "/busca/venda/"))
-          return;
+        if (trySwap("/buscar/alugar/", "/buscar/venda/") || trySwap("/busca/alugar/", "/busca/venda/")) return;
       }
     }
     /* ==================================================================== */
@@ -427,7 +425,7 @@ export default function PropertyFilters({
     const areaMinFinal = Math.min(areaMin || 0, 999);
     const areaMaxFinal = Math.min(areaMax || 0, 999);
 
-    const bairrosProcessados: string[] = [];
+    const bairrosProcessados = [];
     bairrosSelecionados.forEach((b) => {
       if (typeof b === "string" && b.includes(",")) {
         b.split(",")
@@ -485,7 +483,7 @@ export default function PropertyFilters({
   /* =========================
      Desktop (horizontal) – render fixo
   ========================= */
-  const computeDropdownStyle = (ref: any, width = 160) => {
+  const computeDropdownStyle = (ref, width = 160) => {
     if (!ref.current) return {};
     const rect = ref.current.getBoundingClientRect();
     const left =
@@ -875,7 +873,6 @@ export default function PropertyFilters({
             overscroll-behavior-x: none;
             touch-action: pan-y;
           }
-          /* Mantém o pan/zoom do mapa funcionando */
           .leaflet-container {
             touch-action: auto !important;
           }
