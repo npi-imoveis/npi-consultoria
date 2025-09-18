@@ -32,6 +32,7 @@ export const getCitySlugMapping = async () => {
 // Fallback mapping for when API is not available
 const getFallbackCityMapping = () => {
   return {
+    'sao-paulo': 'São Paulo',
     'arraial-dajuda-porto-seguro': 'Arraial DAjuda (Porto Seguro)',
     'atibaia': 'Atibaia',
     'balneario-camboriu': 'Balneário Camboriú',
