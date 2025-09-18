@@ -56,10 +56,9 @@ const InputPreco = ({ placeholder, value, onChange }) => {
     if (value == null) {
       setInputValue("");
     } else {
-      // >>> Ajuste importante: não forçar piso de 65k (locação quebrava)
       let v = value;
-      if (v < 0) v = 0;
-      if (v > 65000000) v = 65000000;
+      if (v < 0) v = 0;                // sem piso arbitrário
+      if (v > 70000000) v = 70000000;  // teto seguro
       onChange(v);
       setInputValue(formatarParaReal(v));
     }
@@ -394,7 +393,7 @@ export default function PropertyFilters({
   const handleFinalidadeChange = (e) => {
     const v = e.target.value === "comprar" ? "Comprar" : e.target.value === "alugar" ? "Alugar" : "";
     setFinalidade(v);
-    // >>> Evita herdar preço de "Comprar" quando muda para "Alugar" (e vice-versa)
+    // zera preços ao trocar finalidade (evita herdar filtros da outra modalidade)
     setPrecoMin(null);
     setPrecoMax(null);
   };
@@ -417,10 +416,8 @@ export default function PropertyFilters({
       } else bairrosProcessados.push(b);
     });
 
-    const isAluguel = finalidade === "Alugar";
-
-    // Base comum
-    const base = {
+    // 🔧 CHAVE: manter sempre precoMin/precoMax (mesma API para venda e aluguel)
+    setFilters({
       finalidade,
       categoriaSelecionada,
       cidadeSelecionada,
@@ -428,36 +425,21 @@ export default function PropertyFilters({
       quartos: quartosSelecionados,
       banheiros: banheirosSelecionados,
       vagas: vagasSelecionadas,
+
+      precoMin: precoMinFinal != null ? String(precoMinFinal) : null,
+      precoMax: precoMaxFinal != null ? String(precoMaxFinal) : null,
+      precoMinimo: precoMinFinal != null ? String(precoMinFinal) : null,
+      precoMaximo: precoMaxFinal != null ? String(precoMaxFinal) : null,
+
       areaMin: areaMinFinal ? String(areaMinFinal) : "0",
       areaMax: areaMaxFinal ? String(areaMaxFinal) : "0",
       areaMinima: areaMinFinal > 0 ? String(areaMinFinal) : null,
       areaMaxima: areaMaxFinal > 0 ? String(areaMaxFinal) : null,
+
       abaixoMercado,
       proximoMetro,
       filtrosBasicosPreenchidos,
-      isAluguel, // útil para quem consome o store
-    };
-
-    // Venda x Aluguel – setar campos corretos e limpar os não usados
-    const priceFields = isAluguel
-      ? {
-          precoMin: null,
-          precoMax: null,
-          precoMinimo: null,
-          precoMaximo: null,
-          precoAluguelMin: precoMinFinal != null ? String(precoMinFinal) : null,
-          precoAluguelMax: precoMaxFinal != null ? String(precoMaxFinal) : null,
-        }
-      : {
-          precoMin: precoMinFinal != null ? String(precoMinFinal) : null,
-          precoMax: precoMaxFinal != null ? String(precoMaxFinal) : null,
-          precoMinimo: precoMinFinal != null ? String(precoMinFinal) : null,
-          precoMaximo: precoMaxFinal != null ? String(precoMaxFinal) : null,
-          precoAluguelMin: null,
-          precoAluguelMax: null,
-        };
-
-    setFilters({ ...base, ...priceFields });
+    });
 
     aplicarFiltros();
     onFilter?.();
@@ -525,7 +507,6 @@ export default function PropertyFilters({
                     className="px-2 py-2 hover:bg-gray-50 cursor-pointer text-[11px]"
                     onClick={() => {
                       setFinalidade(op);
-                      // limpar preços também aqui, por segurança
                       setPrecoMin(null);
                       setPrecoMax(null);
                       setFinalidadeExpanded(false);
