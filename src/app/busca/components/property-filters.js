@@ -418,8 +418,9 @@ export default function PropertyFilters({
 
   /* =========================
      Desktop (horizontal)
+     << AGORA SOMENTE NO DESKTOP >>
   ========================= */
-  if (horizontal) {
+  if (horizontal && !isMobile) {
     const scrollRef = useRef(null);
 
     const computeDropdownStyle = (ref, width = 160) => {
@@ -720,6 +721,7 @@ export default function PropertyFilters({
 
   /* =========================
      Mobile / padrão (off-canvas)
+     (Mantém o botão "Abrir filtros" que está fora deste componente)
   ========================= */
   return (
     <>
@@ -748,7 +750,7 @@ export default function PropertyFilters({
         role={isClient && isMobile ? "dialog" : undefined}
         aria-modal={isClient && isMobile ? true : undefined}
       >
-        {/* *** LAYOUT EM COLUNA: header (sticky) + conteúdo scrollável + barra de ações sticky *** */}
+        {/* layout coluna: header sticky + conteúdo com scroll + barra de ações sticky */}
         <div className="h-full flex flex-col">
           {/* Header */}
           <div className="sticky top-0 bg-white z-10 py-2 px-4 sm:px-6 border-b">
@@ -943,7 +945,7 @@ export default function PropertyFilters({
             </div>
           </div>
 
-          {/* Barra de ações sticky (sempre visível) */}
+          {/* Barra de ações sticky */}
           <div className="sticky bottom-0 bg-white border-t border-gray-200 z-10 px-4 sm:px-6 py-3 shadow-[0_-4px_12px_rgba(0,0,0,0.06)]">
             <button
               onClick={handleAplicarFiltros}
