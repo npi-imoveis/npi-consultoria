@@ -176,7 +176,7 @@ export default function PropertyFilters({
   const isClient = useIsClient();
   const isMobile = useIsMobile();
 
-  // Ref que era condicional — agora no topo para não quebrar hooks
+  // refs no topo (evita violar regra de hooks)
   const scrollRef = useRef(null);
 
   const [uiVisible, setUiVisible] = useState(false);
@@ -289,7 +289,7 @@ export default function PropertyFilters({
     if (s.proximoMetro) setProximoMetro(s.proximoMetro);
   }, []);
 
-  /* ====== Outside click (mobile/desktop) with 1-tick delay ====== */
+  /* ====== Outside click (mobile/desktop) com delay 1 tick */
   useEffect(() => {
     let registered = false;
     let timer = null;
@@ -319,7 +319,13 @@ export default function PropertyFilters({
     };
   }, [bairrosExpanded, finalidadeExpanded, tipoExpanded, cidadeExpanded, quartosExpanded, vagasExpanded]);
 
-  // Bloquear scroll body quando off-canvas aberto
+  /* =========================
+     Controlled vs Uncontrolled
+  ========================= */
+  const isControlled = typeof isVisible === "boolean" && typeof setIsVisible === "function";
+  const visible = isControlled ? isVisible : true;
+
+  // Lock/unlock scroll do body somente quando painel está aberto (mobile + controlado)
   useEffect(() => {
     if (!isClient) return;
     if (isMobile && isControlled && visible) {
@@ -329,7 +335,7 @@ export default function PropertyFilters({
         document.body.style.overflow = overflow;
       };
     }
-  }, [isClient, isMobile, /* deps abaixo calculados depois */]);
+  }, [isClient, isMobile, isControlled, visible]);
 
   /* ====== Helpers ====== */
   const opcoes = [1, 2, 3, "4+"];
@@ -420,28 +426,9 @@ export default function PropertyFilters({
   };
 
   /* =========================
-     Controlled vs Uncontrolled
-  ========================= */
-  const isControlled = typeof isVisible === "boolean" && typeof setIsVisible === "function";
-  const visible = isControlled ? isVisible : true;
-
-  /* ====== Atualiza deps do lock body scroll ====== */
-  useEffect(() => {
-    if (!isClient) return;
-    if (isMobile && isControlled && visible) {
-      const { overflow } = document.body.style;
-      document.body.style.overflow = "hidden";
-      return () => {
-        document.body.style.overflow = overflow;
-      };
-    }
-  }, [isClient, isMobile, isControlled, visible]);
-
-  /* =========================
-     Desktop (horizontal) — apenas no desktop!
+     Desktop (horizontal) — apenas no desktop
   ========================= */
   if (horizontal && !isMobile) {
-    // Safe SSR
     const computeDropdownStyle = (ref, width = 160) => {
       if (typeof window === "undefined" || !ref?.current) return {};
       const rect = ref.current.getBoundingClientRect();
@@ -743,7 +730,7 @@ export default function PropertyFilters({
   ========================= */
   return (
     <>
-      {/* BOTÃO FLUTUANTE para abrir os filtros quando controlado e fechado */}
+      {/* FAB para abrir os filtros quando controlado e fechado */}
       {isClient && isMobile && isControlled && !visible && (
         <button
           type="button"
@@ -773,7 +760,7 @@ export default function PropertyFilters({
                 ? (visible
                     ? "fixed inset-x-0 bottom-0 z-[9999] max-h-[85vh] translate-y-0"
                     : "fixed inset-x-0 bottom-0 z-[9999] max-h-[85vh] translate-y-full")
-                : "relative") // fallback inline
+                : "relative")
             : "relative"
         ].join(" ")}
         style={{
