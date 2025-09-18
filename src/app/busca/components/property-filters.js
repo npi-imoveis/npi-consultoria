@@ -391,7 +391,7 @@ export default function PropertyFilters({
   const handleAreaChange = (value, setter) => setter(Math.min(value || 0, 999));
 
   const handleFinalidadeChange = (e) => {
-    const v = e.target.value === "comprar" ? "Comprar" : e.target.value === "alugar" ? "Alugar" : "";
+    const v = e.target.value === "comprar" ? "Comprar" : e.target.value === "alugar" ? "Locação" : "";
     setFinalidade(v);
     // zera preços ao trocar finalidade (evita herdar filtros da outra modalidade)
     setPrecoMin(null);
@@ -652,7 +652,7 @@ export default function PropertyFilters({
               </span>
               <select
                 className="w-full rounded-md border border-gray-300 bg-white text-xs p-2 focus:outline-none focus:ring-1 focus:ring-black"
-                value={finalidade === "Comprar" ? "comprar" : finalidade === "Alugar" ? "alugar" : ""}
+                value={finalidade === "Comprar" ? "comprar" : finalidade === "Locação" ? "alugar" : ""}
                 onChange={handleFinalidadeChange}
               >
                 <option value="">Selecione a finalidade</option>
