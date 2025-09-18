@@ -53,11 +53,12 @@ const InputPreco = ({ placeholder, value, onChange }) => {
 
   const handleBlur = () => {
     setIsFocused(false);
-    if (value == null) setInputValue("");
-    else {
-      // 🔧 MÍNIMO BEM BAIXO PARA NÃO ELIMINAR LOCAÇÕES
+    if (value == null) {
+      setInputValue("");
+    } else {
+      // >>> Ajuste importante: não forçar piso de 65k (locação quebrava)
       let v = value;
-      if (v < 500) v = 500;               // <- era 65000
+      if (v < 0) v = 0;
       if (v > 65000000) v = 65000000;
       onChange(v);
       setInputValue(formatarParaReal(v));
@@ -285,7 +286,7 @@ export default function PropertyFilters({
     };
   }, [bairrosExpanded, finalidadeExpanded, tipoExpanded, cidadeExpanded, quartosExpanded, vagasExpanded]);
 
-  /* ====== BLOQUEIO DE SCROLL (MOBILE) — evita “dança” lateral ====== */
+  /* ====== BLOQUEIO DE SCROLL (MOBILE) ====== */
   useEffect(() => {
     if (!isClient) return;
     const isMobileViewport = typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches;
@@ -320,7 +321,7 @@ export default function PropertyFilters({
     };
   }, [isClient]);
 
-  // Lock do body quando overlay aberto (sem “pulo”)
+  // Lock do body quando overlay aberto
   useEffect(() => {
     if (!isClient || !isVisible) return;
     const isMobileViewport =
@@ -350,7 +351,7 @@ export default function PropertyFilters({
     };
   }, [isClient, isVisible]);
 
-  // MEDIR HEADER FIXO DA PÁGINA (para não cobrir o header do overlay)
+  // Medir header fixo externo
   useEffect(() => {
     if (!isClient || !isVisible) return;
     const selectors = [".fixed.top-20", "[data-app-header]", "header[role='banner']", ".site-header"];
@@ -391,9 +392,9 @@ export default function PropertyFilters({
   const handleAreaChange = (value, setter) => setter(Math.min(value || 0, 999));
 
   const handleFinalidadeChange = (e) => {
-    const val = e.target.value === "comprar" ? "Comprar" : e.target.value === "alugar" ? "Alugar" : "";
-    setFinalidade(val);
-    // 🔧 ao mudar finalidade, zera preços (evita herdar filtros de compra para aluguel)
+    const v = e.target.value === "comprar" ? "Comprar" : e.target.value === "alugar" ? "Alugar" : "";
+    setFinalidade(v);
+    // >>> Evita herdar preço de "Comprar" quando muda para "Alugar" (e vice-versa)
     setPrecoMin(null);
     setPrecoMax(null);
   };
@@ -401,11 +402,10 @@ export default function PropertyFilters({
   const fecharMobile = () => setIsVisible?.(false);
 
   const handleAplicarFiltros = () => {
-    // 🔧 Para LOCAÇÃO não aplicamos filtro de preço — backend pode ter outro campo
-    const ignorePreco = finalidade === "Alugar";
+    const filtrosBasicosPreenchidos = !!(categoriaSelecionada && cidadeSelecionada && finalidade);
 
-    const precoMinFinal = ignorePreco ? null : (precoMin && precoMin > 0 ? precoMin : null);
-    const precoMaxFinal = ignorePreco ? null : (precoMax && precoMax > 0 ? precoMax : null);
+    const precoMinFinal = precoMin && precoMin > 0 ? precoMin : null;
+    const precoMaxFinal = precoMax && precoMax > 0 ? precoMax : null;
 
     const areaMinFinal = Math.min(areaMin || 0, 999);
     const areaMaxFinal = Math.min(areaMax || 0, 999);
@@ -417,7 +417,10 @@ export default function PropertyFilters({
       } else bairrosProcessados.push(b);
     });
 
-    setFilters({
+    const isAluguel = finalidade === "Alugar";
+
+    // Base comum
+    const base = {
       finalidade,
       categoriaSelecionada,
       cidadeSelecionada,
@@ -425,18 +428,36 @@ export default function PropertyFilters({
       quartos: quartosSelecionados,
       banheiros: banheirosSelecionados,
       vagas: vagasSelecionadas,
-      // envia null pra não filtrar por preço em "Alugar"
-      precoMin: precoMinFinal != null ? String(precoMinFinal) : null,
-      precoMax: precoMaxFinal != null ? String(precoMaxFinal) : null,
-      precoMinimo: precoMinFinal != null ? String(precoMinFinal) : null,
-      precoMaximo: precoMaxFinal != null ? String(precoMaxFinal) : null,
       areaMin: areaMinFinal ? String(areaMinFinal) : "0",
       areaMax: areaMaxFinal ? String(areaMaxFinal) : "0",
       areaMinima: areaMinFinal > 0 ? String(areaMinFinal) : null,
       areaMaxima: areaMaxFinal > 0 ? String(areaMaxFinal) : null,
       abaixoMercado,
       proximoMetro,
-    });
+      filtrosBasicosPreenchidos,
+      isAluguel, // útil para quem consome o store
+    };
+
+    // Venda x Aluguel – setar campos corretos e limpar os não usados
+    const priceFields = isAluguel
+      ? {
+          precoMin: null,
+          precoMax: null,
+          precoMinimo: null,
+          precoMaximo: null,
+          precoAluguelMin: precoMinFinal != null ? String(precoMinFinal) : null,
+          precoAluguelMax: precoMaxFinal != null ? String(precoMaxFinal) : null,
+        }
+      : {
+          precoMin: precoMinFinal != null ? String(precoMinFinal) : null,
+          precoMax: precoMaxFinal != null ? String(precoMaxFinal) : null,
+          precoMinimo: precoMinFinal != null ? String(precoMinFinal) : null,
+          precoMaximo: precoMaxFinal != null ? String(precoMaxFinal) : null,
+          precoAluguelMin: null,
+          precoAluguelMax: null,
+        };
+
+    setFilters({ ...base, ...priceFields });
 
     aplicarFiltros();
     onFilter?.();
@@ -504,10 +525,10 @@ export default function PropertyFilters({
                     className="px-2 py-2 hover:bg-gray-50 cursor-pointer text-[11px]"
                     onClick={() => {
                       setFinalidade(op);
-                      setFinalidadeExpanded(false);
-                      // sincroniza o reset de preço aqui também
+                      // limpar preços também aqui, por segurança
                       setPrecoMin(null);
                       setPrecoMax(null);
+                      setFinalidadeExpanded(false);
                     }}
                   >
                     {op || "Selecionar"}
