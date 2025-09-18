@@ -1,57 +1,111 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { MapContainer, TileLayer, ZoomControl, useMap, Marker, Popup } from "react-leaflet";
-
-// import "leaflet-geosearch/dist/geosearch.css"; // Movido para dentro do useEffect para evitar SSR
+import Image from "next/image";
 
 import { getImoveisParaMapa } from "@/app/services";
 import { Button } from "@/app/components/ui/button";
 import { formatterSlug } from "@/app/utils/formatter-slug";
-import Image from "next/image";
 
-// Componente auxiliar para acessar a instância do mapa
-const MapController = () => {
+/* =========================
+   Helpers
+========================= */
+type Imovel = {
+  _id?: string;
+  Codigo?: string | number;
+  Empreendimento?: string;
+  Endereco?: string;
+  BairroComercial?: string;
+  Cidade?: string;
+  Numero?: string | number;
+  Latitude?: string | number;
+  Longitude?: string | number;
+  ValorVenda?: number | string;
+  Foto?: { Foto?: string }[];
+};
+
+const isValidCoord = (lat: any, lng: any) => {
+  const la = parseFloat(lat);
+  const ln = parseFloat(lng);
+  return (
+    Number.isFinite(la) &&
+    Number.isFinite(ln) &&
+    la !== 0 &&
+    ln !== 0 &&
+    la >= -90 &&
+    la <= 90 &&
+    ln >= -180 &&
+    ln <= 180
+  );
+};
+
+/* =========================
+   Subcomponentes
+========================= */
+
+// Controller: invalida o tamanho quando o container muda (ResizeObserver) e em resize da janela
+const MapController = ({ observeRef }: { observeRef?: React.RefObject<HTMLDivElement | null> }) => {
   const map = useMap();
 
   useEffect(() => {
-    // Aguardar um momento para garantir que o mapa foi renderizado
-    setTimeout(() => {
-      map.invalidateSize();
-    }, 200);
+    const invalidate = () => map.invalidateSize();
+    // pequena espera para garantir render
+    const t = setTimeout(invalidate, 200);
 
-    // Função para lidar com o redimensionamento
-    const handleResize = () => {
-      map.invalidateSize();
-    };
+    window.addEventListener("resize", invalidate);
 
-    window.addEventListener("resize", handleResize);
+    let ro: ResizeObserver | null = null;
+    if (observeRef?.current && "ResizeObserver" in window) {
+      ro = new ResizeObserver(() => invalidate());
+      ro.observe(observeRef.current);
+    }
 
     return () => {
-      window.removeEventListener("resize", handleResize);
+      clearTimeout(t);
+      window.removeEventListener("resize", invalidate);
+      ro?.disconnect();
     };
-  }, [map]);
+  }, [map, observeRef]);
 
   return null;
 };
 
-// Componente para atualizar o centro e zoom do mapa
-const MapUpdater = ({ center, zoom }) => {
+// Atualiza centro/zoom manualmente
+const MapUpdater = ({ center, zoom }: { center: [number, number]; zoom: number }) => {
   const map = useMap();
-
   useEffect(() => {
-    if (center && zoom) {
+    if (center && Number.isFinite(zoom)) {
       map.setView(center, zoom);
     }
   }, [map, center, zoom]);
-
   return null;
 };
 
-// Componente de popup personalizado para imóveis
-const ImovelPopup = ({ imovel }) => {
+// Ajusta bounds com base nos imóveis válidos
+const FitToMarkers = ({ points }: { points: [number, number][] }) => {
+  const map = useMap();
+  useEffect(() => {
+    if (!points.length) return;
+    if (points.length === 1) {
+      map.setView(points[0], 16);
+      return;
+    }
+    const L = (window as any).L;
+    if (L?.latLngBounds) {
+      const bounds = L.latLngBounds(points);
+      map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
+    }
+  }, [map, points]);
+  return null;
+};
+
+// Popup de imóvel
+const ImovelPopup = ({ imovel }: { imovel: Imovel }) => {
   const slug = formatterSlug(imovel.Empreendimento || "");
-  const fotoUrl = imovel?.Foto?.[0]?.Foto || "/placeholder-imovel.jpg"; // Adiciona fallback para imagem
+  const fotoUrl = imovel?.Foto?.[0]?.Foto || "/placeholder-imovel.jpg";
+  const href = `imovel-${imovel.Codigo}/${slug}`;
+
   return (
     <Popup>
       <div className="p-2">
@@ -64,188 +118,158 @@ const ImovelPopup = ({ imovel }) => {
         />
         <h1 className="font-bold text-sm mt-4">{imovel.Empreendimento}</h1>
         <p className="text-xs">
-          {imovel.Endereco}, {imovel.BairroComercial}, {imovel.Cidade}, {imovel.Numero}
+          {imovel.Endereco}
+          {imovel.Numero ? `, ${imovel.Numero}` : ""} {imovel.BairroComercial ? `- ${imovel.BairroComercial}` : ""}
+          {imovel.Cidade ? `, ${imovel.Cidade}` : ""}
         </p>
-
         <p className="text-sm font-bold mt-1">
           {imovel.ValorVenda
-            ? Number(imovel.ValorVenda).toLocaleString("pt-BR", {
-                style: "currency",
-                currency: "BRL",
-              })
+            ? Number(imovel.ValorVenda).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
             : "Consulte"}
         </p>
         <div className="mt-2">
-          <Button
-            link={`imovel-${imovel.Codigo}/${slug}`}
-            text="Saiba mais"
-            className="text-white"
-          />
+          <Button link={href} text="Saiba mais" className="text-white" />
         </div>
       </div>
     </Popup>
   );
 };
 
-const MapComponent = ({ filtros }) => {
-  const [mapReady, setMapReady] = useState(false);
-  const [imoveis, setImoveis] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [mapCenter, setMapCenter] = useState(null);
-  const [mapZoom, setMapZoom] = useState(null);
+/* =========================
+   Componente principal
+========================= */
+const MapComponent = ({ filtros }: { filtros: any }) => {
+  const wrapRef = useRef<HTMLDivElement | null>(null);
 
-  // Função para determinar o nível de zoom baseado nos filtros
+  const [imoveis, setImoveis] = useState<Imovel[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // centro/zoom iniciais (SP)
+  const initialCenter: [number, number] = [-23.5505, -46.6333];
+
+  // Decide zoom padrão quando não usamos bounds
   const getZoomLevel = () => {
-    // Se tiver bairro selecionado, zoom mais próximo
-    if (filtros.bairrosSelecionados && filtros.bairrosSelecionados.length > 0) {
-      return 15; // Aumentamos o zoom para focar melhor no imóvel
-    }
-    // Se tiver cidade selecionada, zoom intermediário
-    if (filtros.cidadeSelecionada) {
-      return 10;
-    }
-    // Se não tiver nem bairro nem cidade, zoom mais distante
+    if (filtros?.bairrosSelecionados?.length) return 15;
+    if (filtros?.cidadeSelecionada) return 12;
     return 11;
   };
 
-  // Função para buscar imóveis
-  const buscarImoveisParaMapa = async () => {
-    try {
-      setLoading(true);
-      const filtrosParaMapa = {
-        categoria: filtros.categoriaSelecionada,
-        cidade: filtros.cidadeSelecionada,
-        bairros: filtros.bairrosSelecionados,
-        quartos: filtros.quartos,
-        banheiros: filtros.banheiros,
-        vagas: filtros.vagas,
-      };
-      const response = await getImoveisParaMapa(filtrosParaMapa);
-      setImoveis(response.data || []);
-    } catch (err) {
-      console.error("Erro ao buscar imóveis para o mapa:", err);
-      setError("Não foi possível carregar os imóveis para o mapa");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Buscar imóveis quando o componente for montado
+  // Busca dados (sempre que filtros mudam)
   useEffect(() => {
+    const buscarImoveisParaMapa = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const filtrosParaMapa = {
+          categoria: filtros?.categoriaSelecionada,
+          cidade: filtros?.cidadeSelecionada,
+          bairros: filtros?.bairrosSelecionados,
+          quartos: filtros?.quartos,
+          banheiros: filtros?.banheiros,
+          vagas: filtros?.vagas,
+        };
+        const response = await getImoveisParaMapa(filtrosParaMapa);
+        setImoveis(Array.isArray(response?.data) ? response.data : []);
+      } catch (err) {
+        console.error("Erro ao buscar imóveis para o mapa:", err);
+        setError("Não foi possível carregar os imóveis para o mapa");
+      } finally {
+        setLoading(false);
+      }
+    };
     buscarImoveisParaMapa();
   }, [filtros]);
 
-  // Fix para o ícone do Leaflet no Next.js
-  useEffect(() => {
-    // Indica que o componente foi montado
-    setMapReady(true);
+  // Filtra imóveis com coordenadas válidas
+  const validPoints = useMemo<[number, number][]>(() => {
+    return imoveis
+      .filter((i) => isValidCoord(i.Latitude, i.Longitude))
+      .map((i) => [parseFloat(String(i.Latitude)), parseFloat(String(i.Longitude))]);
+  }, [imoveis]);
 
-    try {
-      import("leaflet").then((L) => {
-        if (L && L.Icon) {
+  // Fix de ícones + CSS do Leaflet no Next
+  useEffect(() => {
+    // CSS
+    if (!document.querySelector('link[href*="leaflet.css"]')) {
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+      document.head.appendChild(link);
+    }
+    // Ícones
+    import("leaflet")
+      .then((L) => {
+        if (L && (L as any).Icon) {
+          // @ts-ignore
           delete L.Icon.Default.prototype._getIconUrl;
           L.Icon.Default.mergeOptions({
             iconRetinaUrl: "/leaflet/marker-icon-2x.png",
             iconUrl: "/leaflet/marker-icon.png",
             shadowUrl: "/leaflet/marker-shadow.png",
           });
+          // Exponho L para subcomponentes (fitBounds)
+          (window as any).L = L;
         }
-      });
-    } catch (error) {
-      console.error("Erro ao carregar o Leaflet:", error);
-    }
+      })
+      .catch((e) => console.error("Erro ao carregar Leaflet:", e));
   }, []);
 
-  // Calcular o centro do mapa e atualizar quando os imóveis mudarem
-  useEffect(() => {
-    if (imoveis.length === 0) {
-      // Sem imóveis, usar coordenadas padrão de São Paulo
-      setMapCenter([-23.5505, -46.6333]);
-      setMapZoom(11);
-      return;
-    }
-
-    // Filtrar apenas imóveis com coordenadas válidas
-    const imoveisValidos = imoveis.filter(
-      (imovel) =>
-        imovel.Latitude &&
-        imovel.Longitude &&
-        !isNaN(parseFloat(imovel.Latitude)) &&
-        !isNaN(parseFloat(imovel.Longitude)) &&
-        parseFloat(imovel.Latitude) !== 0 &&
-        parseFloat(imovel.Longitude) !== 0
-    );
-    
-    if (imoveisValidos.length === 0) {
-      setMapCenter([-23.5505, -46.6333]);
-      setMapZoom(11);
-      return;
-    }
-
-    // Calcular centro baseado na média das coordenadas
-    const somaLat = imoveisValidos.reduce((soma, imovel) => soma + parseFloat(imovel.Latitude), 0);
-    const somaLng = imoveisValidos.reduce((soma, imovel) => soma + parseFloat(imovel.Longitude), 0);
-    const centroCalculado = [somaLat / imoveisValidos.length, somaLng / imoveisValidos.length];
-    
-    setMapCenter(centroCalculado);
-    
-    // Definir zoom baseado na quantidade e dispersão dos imóveis
-    if (imoveisValidos.length === 1) {
-      setMapZoom(16); // Zoom bem próximo para um único imóvel
-    } else if (imoveisValidos.length <= 5) {
-      setMapZoom(14); // Zoom médio para poucos imóveis
-    } else {
-      setMapZoom(12); // Zoom mais distante para muitos imóveis
-    }
-  }, [imoveis]);
-
-  // Centro inicial para o MapContainer
-  const initialCenter = [-23.5505, -46.6333]; // São Paulo como padrão
-
   return (
-    <div className="w-full h-full rounded-lg overflow-hidden border border-gray-300 shadow-lg relative">
-      {/* Mostrar indicador de carregamento */}
+    <div ref={wrapRef} className="w-full h-full rounded-lg overflow-hidden border border-gray-300 shadow-lg relative">
+      {/* Loading */}
       {loading && (
-        <div className="absolute top-0 left-0 w-full h-full bg-white bg-opacity-70 z-20 flex items-center justify-center">
+        <div className="absolute inset-0 bg-white/80 z-20 grid place-items-center">
           <div className="text-center">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-black"></div>
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-black" />
             <p className="mt-2 text-gray-700">Carregando imóveis...</p>
           </div>
         </div>
       )}
 
-      {/* Mostrar erro, se houver */}
+      {/* Erro */}
       {error && (
-        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-red-100 text-red-700 px-4 py-2 rounded-md z-20">
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-red-100 text-red-700 px-4 py-2 rounded-md z-20">
           {error}
         </div>
       )}
 
       <MapContainer
         center={initialCenter}
-        zoom={11}
+        zoom={getZoomLevel()}
         style={{ width: "100%", height: "100%" }}
         zoomControl={false}
-        scrollWheelZoom={true}
-        doubleClickZoom={true}
-        dragging={true}
-        attributionControl={true}
-        className="w-full h-full google-maps-style"
+        scrollWheelZoom
+        doubleClickZoom
+        dragging
+        attributionControl
+        className="w-full h-full"
       >
-        <MapController />
-        {mapCenter && mapZoom && <MapUpdater center={mapCenter} zoom={mapZoom} />}
+        {/* Observa tamanho do wrapper (abre/fecha filtros, breakpoints, etc.) */}
+        <MapController observeRef={wrapRef} />
+
+        {/* Fit inteligente: se houver pontos válidos, usamos bounds; caso contrário, cai no zoom default */}
+        {validPoints.length > 0 ? (
+          <FitToMarkers points={validPoints} />
+        ) : (
+          <MapUpdater center={initialCenter} zoom={getZoomLevel()} />
+        )}
+
         <ZoomControl position="bottomright" />
 
-        {/* Marcadores para os imóveis */}
-        {imoveis.map((imovel) => (
-          <Marker
-            key={imovel._id || imovel.Codigo}
-            position={[parseFloat(imovel.Latitude), parseFloat(imovel.Longitude)]}
-          >
-            <ImovelPopup imovel={imovel} />
-          </Marker>
-        ))}
+        {/* Markers somente com coordenadas válidas */}
+        {imoveis.map((imovel) => {
+          const lat = imovel.Latitude;
+          const lng = imovel.Longitude;
+          if (!isValidCoord(lat, lng)) return null;
+          const position: [number, number] = [parseFloat(String(lat)), parseFloat(String(lng))];
+          const key = String(imovel._id ?? imovel.Codigo ?? `${position[0]}-${position[1]}`);
+          return (
+            <Marker key={key} position={position}>
+              <ImovelPopup imovel={imovel} />
+            </Marker>
+          );
+        })}
 
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -254,9 +278,9 @@ const MapComponent = ({ filtros }) => {
         />
       </MapContainer>
 
-      {/* Contador de imóveis */}
+      {/* Contador */}
       {!loading && !error && (
-        <div className="absolute bottom-4 left-4 bg-white px-3 py-1 rounded-full  z-10 text-xs">
+        <div className="absolute bottom-4 left-4 bg-white px-3 py-1 rounded-full z-10 text-xs shadow">
           <span className="font-bold">{imoveis.length}</span> imóveis encontrados
         </div>
       )}
