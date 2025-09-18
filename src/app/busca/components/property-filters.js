@@ -41,19 +41,11 @@ const useIsMobile = () => {
 /* =========================
    Inputs Reutilizáveis
 ========================= */
-const InputNumerico = ({
-  placeholder,
-  value,
-  onChange,
-}: {
-  placeholder: string;
-  value: number | null | undefined;
-  onChange: (n: number | null) => void;
-}) => {
+const InputNumerico = ({ placeholder, value, onChange }) => {
   const [inputValue, setInputValue] = useState("");
   const [isFocused, setIsFocused] = useState(false);
 
-  const formatarParaReal = useCallback((valor: number | null | undefined) => {
+  const formatarParaReal = useCallback((valor) => {
     if (!valor) return "";
     try {
       return valor.toLocaleString("pt-BR", {
@@ -72,7 +64,7 @@ const InputNumerico = ({
     else if (!isFocused) setInputValue(formatarParaReal(value));
   }, [value, isFocused, formatarParaReal]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e) => {
     const novoValor = e.target.value;
     setInputValue(novoValor);
     const limpo = novoValor.replace(/[^\d]/g, "");
@@ -112,19 +104,7 @@ const InputNumerico = ({
   );
 };
 
-const Checkbox = ({
-  id,
-  label,
-  showInfo = false,
-  checked,
-  onChange,
-}: {
-  id: string;
-  label: string;
-  showInfo?: boolean;
-  checked: boolean;
-  onChange: (b: boolean) => void;
-}) => (
+const Checkbox = ({ id, label, showInfo = false, checked, onChange }) => (
   <label htmlFor={id} className="flex items-center mb-4">
     <span className="text-[10px] font-semibold text-gray-800 flex-1">{label}</span>
     {showInfo && <InformationCircleIcon className="w-4 h-4 text-gray-400 mr-2" />}
@@ -138,15 +118,7 @@ const Checkbox = ({
   </label>
 );
 
-const OptionButton = ({
-  value,
-  selected,
-  onClick,
-}: {
-  value: number | "4+";
-  selected: boolean;
-  onClick: (v: number | "4+") => void;
-}) => {
+const OptionButton = ({ value, selected, onClick }) => {
   const pillBase =
     "flex items-center justify-center w-16 rounded-lg border px-2 py-1 text-xs transition-colors";
   const variant = selected ? "bg-zinc-200 text-black" : "bg-white text-gray-700 hover:bg-zinc-100";
@@ -157,17 +129,7 @@ const OptionButton = ({
   );
 };
 
-const OptionGroup = ({
-  label,
-  options,
-  selectedValue,
-  onChange,
-}: {
-  label: string;
-  options: (number | "4+")[];
-  selectedValue: number | "4+" | null;
-  onChange: (v: number | "4+") => void;
-}) => (
+const OptionGroup = ({ label, options, selectedValue, onChange }) => (
   <div className="mb-4">
     <span className="block text-[10px] font-semibold text-gray-800 mb-2">{label}</span>
     <div className="flex gap-2">
@@ -185,15 +147,7 @@ const OptionGroup = ({
 
 const Separator = () => <hr className="my-4 border-gray-200" />;
 
-const Button = ({
-  label,
-  primary = false,
-  onClick,
-}: {
-  label: string;
-  primary?: boolean;
-  onClick?: () => void;
-}) => {
+const Button = ({ label, primary = false, onClick }) => {
   const base = "w-full block font-semibold py-2 px-4 rounded-full transition-colors text-sm";
   const variant = primary ? "bg-black text-white hover:bg-black/80" : "bg-gray-200 text-gray-800 hover:bg-gray-300";
   return (
@@ -205,15 +159,7 @@ const Button = ({
 
 const InputPreco = InputNumerico;
 
-const InputArea = ({
-  placeholder,
-  value,
-  onChange,
-}: {
-  placeholder: string;
-  value: number;
-  onChange: (n: number) => void;
-}) => {
+const InputArea = ({ placeholder, value, onChange }) => {
   const [inputValue, setInputValue] = useState("");
   const [isFocused, setIsFocused] = useState(false);
 
@@ -221,7 +167,7 @@ const InputArea = ({
     if (!isFocused) setInputValue(value ? String(value) : "");
   }, [value, isFocused]);
 
-  const onChangeLocal = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const onChangeLocal = (e) => {
     const novoValor = e.target.value;
     if (/^\d*$/.test(novoValor) || novoValor === "") {
       setInputValue(novoValor);
@@ -254,11 +200,6 @@ export default function PropertyFilters({
   isVisible,
   setIsVisible,
   horizontal = false,
-}: {
-  onFilter?: () => void;
-  isVisible: boolean;
-  setIsVisible?: (b: boolean) => void;
-  horizontal?: boolean;
 }) {
   const isClient = useIsClient();
   const isMobile = useIsMobile();
@@ -276,24 +217,24 @@ export default function PropertyFilters({
   const aplicarFiltros = useFiltersStore((s) => s.aplicarFiltros);
 
   // Dados dinâmicos
-  const [categorias, setCategorias] = useState<string[]>([]);
-  const [cidades, setCidades] = useState<string[]>([]);
-  const [bairros, setBairros] = useState<string[]>([]);
+  const [categorias, setCategorias] = useState([]);
+  const [cidades, setCidades] = useState([]);
+  const [bairros, setBairros] = useState([]);
 
   // Seleções
-  const [finalidade, setFinalidade] = useState<"" | "Comprar" | "Alugar">("");
+  const [finalidade, setFinalidade] = useState("");
   const [categoriaSelecionada, setCategoriaSelecionada] = useState("");
   const [cidadeSelecionada, setCidadeSelecionada] = useState("");
-  const [bairrosSelecionados, setBairrosSelecionados] = useState<string[]>([]);
-  const [quartosSelecionados, setQuartosSelecionados] = useState<number | "4+" | null>(null);
-  const [banheirosSelecionados, setBanheirosSelecionados] = useState<number | "4+" | null>(null);
-  const [vagasSelecionadas, setVagasSelecionadas] = useState<number | "4+" | null>(null);
+  const [bairrosSelecionados, setBairrosSelecionados] = useState([]);
+  const [quartosSelecionados, setQuartosSelecionados] = useState(null);
+  const [banheirosSelecionados, setBanheirosSelecionados] = useState(null);
+  const [vagasSelecionadas, setVagasSelecionadas] = useState(null);
 
   // Numéricos
-  const [precoMin, setPrecoMin] = useState<number | null>(null);
-  const [precoMax, setPrecoMax] = useState<number | null>(null);
-  const [areaMin, setAreaMin] = useState<number>(0);
-  const [areaMax, setAreaMax] = useState<number>(0);
+  const [precoMin, setPrecoMin] = useState(null);
+  const [precoMax, setPrecoMax] = useState(null);
+  const [areaMin, setAreaMin] = useState(0);
+  const [areaMax, setAreaMax] = useState(0);
 
   // Flags
   const [abaixoMercado, setAbaixoMercado] = useState(false);
@@ -302,7 +243,7 @@ export default function PropertyFilters({
   // Bairros UI
   const [bairroFilter, setBairroFilter] = useState("");
   const [bairrosExpanded, setBairrosExpanded] = useState(false);
-  const bairrosRef = useRef<HTMLDivElement | null>(null);
+  const bairrosRef = useRef(null);
 
   // Dropdowns desktop
   const [finalidadeExpanded, setFinalidadeExpanded] = useState(false);
@@ -310,11 +251,11 @@ export default function PropertyFilters({
   const [cidadeExpanded, setCidadeExpanded] = useState(false);
   const [quartosExpanded, setQuartosExpanded] = useState(false);
   const [vagasExpanded, setVagasExpanded] = useState(false);
-  const finalidadeRef = useRef<HTMLDivElement | null>(null);
-  const tipoRef = useRef<HTMLDivElement | null>(null);
-  const cidadeRef = useRef<HTMLDivElement | null>(null);
-  const quartosRef = useRef<HTMLDivElement | null>(null);
-  const vagasRef = useRef<HTMLDivElement | null>(null);
+  const finalidadeRef = useRef(null);
+  const tipoRef = useRef(null);
+  const cidadeRef = useRef(null);
+  const quartosRef = useRef(null);
+  const vagasRef = useRef(null);
 
   /* ====== Dados ====== */
   useEffect(() => {
@@ -357,22 +298,19 @@ export default function PropertyFilters({
   // Hidratar estados do store na primeira montagem
   useEffect(() => {
     const s = useFiltersStore.getState();
-    if (s.finalidade) setFinalidade(s.finalidade as "Comprar" | "Alugar");
+    if (s.finalidade) setFinalidade(s.finalidade);
     if (s.categoriaSelecionada) setCategoriaSelecionada(s.categoriaSelecionada);
     if (s.cidadeSelecionada) setCidadeSelecionada(s.cidadeSelecionada);
     if (s.bairrosSelecionados?.length) setBairrosSelecionados(s.bairrosSelecionados);
-    if (s.quartos) setQuartosSelecionados(s.quartos as any);
-    if (s.banheiros) setBanheirosSelecionados(s.banheiros as any);
-    if (s.vagas) setVagasSelecionadas(s.vagas as any);
+    if (s.quartos) setQuartosSelecionados(s.quartos);
+    if (s.banheiros) setBanheirosSelecionados(s.banheiros);
+    if (s.vagas) setVagasSelecionadas(s.vagas);
 
-    const asNum = (v: any) => (typeof v === "string" && v != null ? parseInt(v, 10) : v);
-
+    const asNum = (v) => (typeof v === "string" && v != null ? parseInt(v, 10) : v);
     if (s.precoMin !== undefined) setPrecoMin(asNum(s.precoMin));
     if (s.precoMax !== undefined) setPrecoMax(asNum(s.precoMax));
-
     if (s.areaMin) setAreaMin(asNum(s.areaMin) || 0);
     if (s.areaMax) setAreaMax(asNum(s.areaMax) || 0);
-
     if (s.abaixoMercado) setAbaixoMercado(s.abaixoMercado);
     if (s.proximoMetro) setProximoMetro(s.proximoMetro);
   }, []);
@@ -380,8 +318,8 @@ export default function PropertyFilters({
   /* ====== Interações ====== */
   // Suporte touch: usar pointerdown em vez de mousedown
   useEffect(() => {
-    const handleOutside = (event: PointerEvent) => {
-      const target = event.target as Node;
+    const handleOutside = (event) => {
+      const target = event.target;
       if (bairrosRef.current && !bairrosRef.current.contains(target)) setBairrosExpanded(false);
       if (finalidadeRef.current && !finalidadeRef.current.contains(target)) setFinalidadeExpanded(false);
       if (tipoRef.current && !tipoRef.current.contains(target)) setTipoExpanded(false);
@@ -409,36 +347,34 @@ export default function PropertyFilters({
   }, [isClient, isMobile, isVisible]);
 
   /* ====== Helpers ====== */
-  const opcoes = [1, 2, 3, "4+"] as const;
+  const opcoes = [1, 2, 3, "4+"];
 
   const bairrosFiltrados = bairros.filter((b) =>
     b.toLowerCase().includes(bairroFilter.toLowerCase())
   );
 
-  const handleCategoriaChange = (e: React.ChangeEvent<HTMLSelectElement>) =>
-    setCategoriaSelecionada(e.target.value);
+  const handleCategoriaChange = (e) => setCategoriaSelecionada(e.target.value);
 
-  const handleCidadeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleCidadeChange = (e) => {
     setCidadeSelecionada(e.target.value);
     setBairrosSelecionados([]);
     setBairroFilter("");
   };
 
-  const handleBairroChange = (bairro: string) => {
+  const handleBairroChange = (bairro) => {
     setBairrosSelecionados((prev) =>
       prev.includes(bairro) ? prev.filter((b) => b !== bairro) : [...prev, bairro]
     );
   };
 
-  const handleQuartosChange = (value: number | "4+") => setQuartosSelecionados(value);
-  const handleBanheirosChange = (value: number | "4+") => setBanheirosSelecionados(value);
-  const handleVagasChange = (value: number | "4+") => setVagasSelecionadas(value);
+  const handleQuartosChange = (value) => setQuartosSelecionados(value);
+  const handleBanheirosChange = (value) => setBanheirosSelecionados(value);
+  const handleVagasChange = (value) => setVagasSelecionadas(value);
 
-  const handlePrecoChange = (value: number | null, setter: (n: number | null) => void) => setter(value);
-  const handleAreaChange = (value: number, setter: (n: number) => void) =>
-    setter(Math.min(value || 0, 999));
+  const handlePrecoChange = (value, setter) => setter(value);
+  const handleAreaChange = (value, setter) => setter(Math.min(value || 0, 999));
 
-  const handleFinalidadeChange = (e: React.ChangeEvent<HTMLSelectElement>) =>
+  const handleFinalidadeChange = (e) =>
     setFinalidade(e.target.value === "comprar" ? "Comprar" : e.target.value === "alugar" ? "Alugar" : "");
 
   const fecharMobile = () => {
@@ -455,7 +391,7 @@ export default function PropertyFilters({
     const areaMaxFinal = Math.min(areaMax || 0, 999);
 
     // Normaliza bairros contendo vírgula
-    const bairrosProcessados: string[] = [];
+    const bairrosProcessados = [];
     bairrosSelecionados.forEach((b) => {
       if (typeof b === "string" && b.includes(",")) {
         b.split(",").map((p) => p.trim()).filter(Boolean).forEach((p) => bairrosProcessados.push(p));
@@ -511,10 +447,10 @@ export default function PropertyFilters({
      Desktop (horizontal)
   ========================= */
   if (horizontal) {
-    const scrollRef = useRef<HTMLDivElement | null>(null);
+    const scrollRef = useRef(null);
 
     // Helper para posicionar dropdowns (viewport-clamped)
-    const computeDropdownStyle = (ref: React.RefObject<HTMLDivElement>, width = 160) => {
+    const computeDropdownStyle = (ref, width = 160) => {
       if (!ref.current) return {};
       const rect = ref.current.getBoundingClientRect();
       const left = Math.min(rect.left, Math.max(8, window.innerWidth - width - 8));
@@ -550,7 +486,7 @@ export default function PropertyFilters({
                       key={opcao || "selecionar"}
                       className="px-2 py-2 hover:bg-gray-50 cursor-pointer text-[11px]"
                       onClick={() => {
-                        setFinalidade(opcao as any);
+                        setFinalidade(opcao);
                         setFinalidadeExpanded(false);
                       }}
                     >
@@ -717,7 +653,7 @@ export default function PropertyFilters({
                       key={op || "todos"}
                       className="px-2 py-2 hover:bg-gray-50 cursor-pointer text-[11px]"
                       onClick={() => {
-                        setQuartosSelecionados(op === "" ? null : (op as any));
+                        setQuartosSelecionados(op === "" ? null : op);
                         setQuartosExpanded(false);
                       }}
                     >
@@ -748,7 +684,7 @@ export default function PropertyFilters({
                       key={op || "todas"}
                       className="px-2 py-2 hover:bg-gray-50 cursor-pointer text-[11px]"
                       onClick={() => {
-                        setVagasSelecionadas(op === "" ? null : (op as any));
+                        setVagasSelecionadas(op === "" ? null : op);
                         setVagasExpanded(false);
                       }}
                     >
@@ -827,7 +763,9 @@ export default function PropertyFilters({
         className={[
           "bg-white text-black rounded-t-2xl sm:rounded-lg shadow-sm w-full overflow-y-auto scrollbar-hide transition-transform duration-300",
           isClient && isMobile
-            ? `fixed inset-x-0 bottom-0 z-[50] max-h-[85vh] translate-y-${isVisible ? "[0]" : "[100%]"}`
+            ? (isVisible
+                ? "fixed inset-x-0 bottom-0 z-[50] max-h-[85vh] translate-y-[0]"
+                : "fixed inset-x-0 bottom-0 z-[50] max-h-[85vh] translate-y-[100%]")
             : "relative"
         ].join(" ")}
         style={{
@@ -998,9 +936,9 @@ export default function PropertyFilters({
 
           <Separator />
 
-          <OptionGroup label="Quartos" options={opcoes as any} selectedValue={quartosSelecionados} onChange={handleQuartosChange} />
-          {/* <OptionGroup label="Banheiros" options={opcoes as any} selectedValue={banheirosSelecionados} onChange={handleBanheirosChange} /> */}
-          <OptionGroup label="Vagas" options={opcoes as any} selectedValue={vagasSelecionadas} onChange={handleVagasChange} />
+          <OptionGroup label="Quartos" options={opcoes} selectedValue={quartosSelecionados} onChange={handleQuartosChange} />
+          {/* <OptionGroup label="Banheiros" options={opcoes} selectedValue={banheirosSelecionados} onChange={handleBanheirosChange} /> */}
+          <OptionGroup label="Vagas" options={opcoes} selectedValue={vagasSelecionadas} onChange={handleVagasChange} />
 
           <Separator />
 
