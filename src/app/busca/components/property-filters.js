@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation"; // <- NOVO
 import useFiltersStore from "@/app/store/filtrosStore";
 import { getImoveisByFilters, getBairrosPorCidade } from "@/app/services";
 
@@ -150,6 +151,7 @@ export default function PropertyFilters({
   horizontal = false,
 }) {
   const isClient = useIsClient();
+  const router = useRouter(); // <- NOVO
 
   // Store
   const setFilters = useFiltersStore((s) => s.setFilters);
@@ -394,29 +396,36 @@ export default function PropertyFilters({
 
   const fecharMobile = () => setIsVisible?.(false);
 
+  const swapFinalidadeInPath = (path, desired) => {
+    // quebra em segmentos e troca apenas o segmento "venda"/"alugar" onde quer que esteja
+    const segs = path.split("/");
+    const idx = segs.findIndex((s) => s === "venda" || s === "alugar");
+    if (idx === -1) return null; // nada para trocar
+    const target = desired === "Alugar" ? "alugar" : "venda";
+    if (segs[idx] === target) return null; // já está correto
+    segs[idx] = target;
+    // normaliza barras duplas
+    return segs.join("/").replace(/\/{2,}/g, "/");
+  };
+
   const handleAplicarFiltros = () => {
-    /* ===== REDIRECIONA A ROTA CONFORME A FINALIDADE (garante cards) ===== */
-    if (typeof window !== "undefined" && finalidade) {
-      const path = window.location.pathname;
-      const search = window.location.search || "";
-
-      const trySwap = (from, to) => {
-        if (path.includes(from)) {
-          const newPath = path.replace(from, to);
-          window.location.assign(newPath + search);
-          return true; // a página recarrega
+    // 1) Ajusta a rota para garantir que a listagem esteja na finalidade certa (evita "sem resultados" nos cards)
+    if (isClient && finalidade) {
+      const currentPath = window.location.pathname;
+      const newPath = swapFinalidadeInPath(currentPath, finalidade);
+      if (newPath && newPath !== currentPath) {
+        const url = newPath + (window.location.search || "");
+        // navegar via Next (SPA); se falhar, usa window.location
+        try {
+          router.replace(url);
+        } catch {
+          window.location.assign(url);
         }
-        return false;
-      };
-
-      if (finalidade === "Alugar") {
-        if (trySwap("/buscar/venda/", "/buscar/alugar/") || trySwap("/busca/venda/", "/busca/alugar/")) return;
-      } else if (finalidade === "Comprar") {
-        if (trySwap("/buscar/alugar/", "/buscar/venda/") || trySwap("/busca/alugar/", "/busca/venda/")) return;
+        return; // deixa a navegação acontecer
       }
     }
-    /* ==================================================================== */
 
+    // 2) Seta filtros normalmente
     const filtrosBasicosPreenchidos = !!(categoriaSelecionada && cidadeSelecionada && finalidade);
 
     const precoMinFinal = precoMin && precoMin > 0 ? precoMin : null;
