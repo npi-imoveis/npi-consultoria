@@ -16,7 +16,7 @@ const useIsClient = () => {
 /* =========================
    Reusable Inputs
 ========================= */
-const InputPreco = ({ placeholder, value, onChange }) => {
+const InputPreco = ({ placeholder, value, onChange, min = 65000, max = 65000000 }) => {
   const [inputValue, setInputValue] = useState("");
   const [isFocused, setIsFocused] = useState(false);
 
@@ -53,11 +53,12 @@ const InputPreco = ({ placeholder, value, onChange }) => {
 
   const handleBlur = () => {
     setIsFocused(false);
-    if (value == null) setInputValue("");
-    else {
+    if (value == null) {
+      setInputValue("");
+    } else {
       let v = value;
-      if (v < 65000) v = 65000;
-      if (v > 65000000) v = 65000000;
+      if (min != null && v < min) v = min;
+      if (max != null && v > max) v = max;
       onChange(v);
       setInputValue(formatarParaReal(v));
     }
@@ -286,10 +287,8 @@ export default function PropertyFilters({
 
   /* ====== BLOQUEIO DE SCROLL (MOBILE) — evita “dança” lateral ====== */
   useEffect(() => {
-    // Desabilita pan horizontal do layout inteiro em telas <768px
     if (!isClient) return;
     const isMobileViewport = typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches;
-
     if (!isMobileViewport) return;
 
     const root = document.documentElement;
@@ -370,8 +369,6 @@ export default function PropertyFilters({
   }, [isClient, isVisible]);
 
   /* ====== Helpers ====== */
-  const opcoes = [1, 2, 3, "4+"];
-
   const bairrosFiltrados = bairros.filter((b) =>
     b.toLowerCase().includes(bairroFilter.toLowerCase())
   );
@@ -422,6 +419,7 @@ export default function PropertyFilters({
       quartos: quartosSelecionados,
       banheiros: banheirosSelecionados,
       vagas: vagasSelecionadas,
+      // Mantidos como strings conforme já utilizado no app
       precoMin: precoMinFinal != null ? String(precoMinFinal) : null,
       precoMax: precoMaxFinal != null ? String(precoMaxFinal) : null,
       precoMinimo: precoMinFinal != null ? String(precoMinFinal) : null,
@@ -797,8 +795,20 @@ export default function PropertyFilters({
             <div className="mb-2">
               <span className="block text-[10px] font-semibold text-gray-800 mb-2">Preço</span>
               <div className="flex gap-2">
-                <InputPreco placeholder="R$ 1.000.000" value={precoMin} onChange={(v) => handlePrecoChange(v, setPrecoMin)} />
-                <InputPreco placeholder="R$ 70.000.000" value={precoMax} onChange={(v) => handlePrecoChange(v, setPrecoMax)} />
+                <InputPreco
+                  placeholder="R$ 1.000.000"
+                  value={precoMin}
+                  onChange={(v) => handlePrecoChange(v, setPrecoMin)}
+                  min={finalidade === "Alugar" ? 500 : 65000}
+                  max={finalidade === "Alugar" ? 200000 : 65000000}
+                />
+                <InputPreco
+                  placeholder="R$ 70.000.000"
+                  value={precoMax}
+                  onChange={(v) => handlePrecoChange(v, setPrecoMax)}
+                  min={finalidade === "Alugar" ? 500 : 65000}
+                  max={finalidade === "Alugar" ? 200000 : 65000000}
+                />
               </div>
             </div>
 
@@ -852,7 +862,6 @@ export default function PropertyFilters({
             overscroll-behavior-x: none;
             touch-action: pan-y;
           }
-          /* Mantém o pan/zoom do mapa funcionando */
           .leaflet-container {
             touch-action: auto !important;
           }
