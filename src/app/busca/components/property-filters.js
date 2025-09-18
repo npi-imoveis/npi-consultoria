@@ -6,7 +6,7 @@ import useFiltersStore from "@/app/store/filtrosStore";
 import { getImoveisByFilters, getBairrosPorCidade } from "@/app/services";
 
 /* =========================
-   Utils
+   Helpers de ambiente
 ========================= */
 const useIsClient = () => {
   const [isClient, setIsClient] = useState(false);
@@ -35,7 +35,7 @@ const useIsMobile = () => {
 };
 
 /* =========================
-   Reusable Inputs
+   Inputs reutilizáveis
 ========================= */
 const InputPreco = ({ placeholder, value, onChange }) => {
   const [inputValue, setInputValue] = useState("");
@@ -163,7 +163,7 @@ const OptionGroup = ({ label, options, selectedValue, onChange }) => (
 const Separator = () => <hr className="my-4 border-gray-200" />;
 
 /* =========================
-   Main Component
+   Componente principal
 ========================= */
 export default function PropertyFilters({
   onFilter,
@@ -174,7 +174,7 @@ export default function PropertyFilters({
   const isClient = useIsClient();
   const isMobile = useIsMobile();
 
-  // Fallback controlado: se o pai não passar visibilidade, usa estado interno
+  // visibilidade (fallback local se não vier de fora)
   const [localVisible, setLocalVisible] = useState(false);
   const visible = typeof isVisible === "boolean" ? isVisible : localVisible;
   const setVisible = setIsVisible || setLocalVisible;
@@ -185,17 +185,17 @@ export default function PropertyFilters({
     return () => clearTimeout(t);
   }, []);
 
-  // Store
+  // store
   const setFilters = useFiltersStore((s) => s.setFilters);
   const limparFiltros = useFiltersStore((s) => s.limparFiltros);
   const aplicarFiltros = useFiltersStore((s) => s.aplicarFiltros);
 
-  // Dados dinâmicos
+  // dados
   const [categorias, setCategorias] = useState([]);
   const [cidades, setCidades] = useState([]);
   const [bairros, setBairros] = useState([]);
 
-  // Seleções
+  // seleções
   const [finalidade, setFinalidade] = useState("");
   const [categoriaSelecionada, setCategoriaSelecionada] = useState("");
   const [cidadeSelecionada, setCidadeSelecionada] = useState("");
@@ -204,34 +204,30 @@ export default function PropertyFilters({
   const [banheirosSelecionados, setBanheirosSelecionados] = useState(null);
   const [vagasSelecionadas, setVagasSelecionadas] = useState(null);
 
-  // Numéricos
+  // numéricos
   const [precoMin, setPrecoMin] = useState(null);
   const [precoMax, setPrecoMax] = useState(null);
   const [areaMin, setAreaMin] = useState(0);
   const [areaMax, setAreaMax] = useState(0);
 
-  // Flags
+  // flags
   const [abaixoMercado, setAbaixoMercado] = useState(false);
   const [proximoMetro, setProximoMetro] = useState(false);
 
-  // Bairros UI
+  // bairros ui
   const [bairroFilter, setBairroFilter] = useState("");
   const [bairrosExpanded, setBairrosExpanded] = useState(false);
-  const bairrosRef = useRef(null);
 
-  // Dropdowns desktop
-  const [finalidadeExpanded, setFinalidadeExpanded] = useState(false);
-  const [tipoExpanded, setTipoExpanded] = useState(false);
-  const [cidadeExpanded, setCidadeExpanded] = useState(false);
-  const [quartosExpanded, setQuartosExpanded] = useState(false);
-  const [vagasExpanded, setVagasExpanded] = useState(false);
+  // refs (TODOS no topo! nada condicional)
+  const scrollRef = useRef(null);
+  const bairrosRef = useRef(null);
   const finalidadeRef = useRef(null);
   const tipoRef = useRef(null);
   const cidadeRef = useRef(null);
   const quartosRef = useRef(null);
   const vagasRef = useRef(null);
 
-  /* ====== Data fetch ====== */
+  /* ====== fetch inicial ====== */
   useEffect(() => {
     (async () => {
       try {
@@ -269,7 +265,7 @@ export default function PropertyFilters({
     })();
   }, [cidadeSelecionada, categoriaSelecionada, setFilters]);
 
-  // Hidratar estados do store
+  // hidratar do store
   useEffect(() => {
     const s = useFiltersStore.getState();
     if (s.finalidade) setFinalidade(s.finalidade);
@@ -289,35 +285,66 @@ export default function PropertyFilters({
     if (s.proximoMetro) setProximoMetro(s.proximoMetro);
   }, []);
 
-  /* ====== Outside click (delay 1 tick) ====== */
+  /* ====== clique fora (com delay) ====== */
   useEffect(() => {
     let registered = false;
     let timer = null;
     const handleOutside = (event) => {
-      const target = event.target;
-      if (bairrosRef.current && !bairrosRef.current.contains(target)) setBairrosExpanded(false);
-      if (finalidadeRef.current && !finalidadeRef.current.contains(target)) setFinalidadeExpanded(false);
-      if (tipoRef.current && !tipoRef.current.contains(target)) setTipoExpanded(false);
-      if (cidadeRef.current && !cidadeRef.current.contains(target)) setCidadeExpanded(false);
-      if (quartosRef.current && !quartosRef.current.contains(target)) setQuartosExpanded(false);
-      if (vagasRef.current && !vagasRef.current.contains(target)) setVagasExpanded(false);
+      const t = event.target;
+      if (bairrosRef.current && !bairrosRef.current.contains(t)) setBairrosExpanded(false);
+      if (finalidadeRef.current && !finalidadeRef.current.contains(t)) setFinalidadeExpanded(false);
+      if (tipoRef.current && !tipoRef.current.contains(t)) setTipoExpanded(false);
+      if (cidadeRef.current && !cidadeRef.current.contains(t)) setCidadeExpanded(false);
+      if (quartosRef.current && !quartosRef.current.contains(t)) setQuartosExpanded(false);
+      if (vagasRef.current && !vagasRef.current.contains(t)) setVagasExpanded(false);
     };
-    if (bairrosExpanded || finalidadeExpanded || tipoExpanded || cidadeExpanded || quartosExpanded || vagasExpanded) {
+
+    // estados de dropdown
+    const [finalidadeExpanded, tipoExpanded, cidadeExpanded, quartosExpanded, vagasExpandedLocal] = [
+      finalidadeExpandedState,
+      tipoExpandedState,
+      cidadeExpandedState,
+      quartosExpandedState,
+      vagasExpandedState,
+    ];
+
+    // registramos listener só quando algum abre
+    const anyOpen =
+      bairrosExpanded ||
+      finalidadeExpandedState ||
+      tipoExpandedState ||
+      cidadeExpandedState ||
+      quartosExpandedState ||
+      vagasExpandedState;
+
+    if (anyOpen) {
       timer = setTimeout(() => {
-        document.addEventListener("pointerdown", handleOutside, { passive: true });
-        registered = true;
+        if (typeof document !== "undefined") {
+          document.addEventListener("pointerdown", handleOutside, { passive: true });
+          registered = true;
+        }
       }, 0);
     }
     return () => {
       if (timer) clearTimeout(timer);
-      if (registered) document.removeEventListener("pointerdown", handleOutside);
+      if (registered && typeof document !== "undefined") {
+        document.removeEventListener("pointerdown", handleOutside);
+      }
     };
-  }, [bairrosExpanded, finalidadeExpanded, tipoExpanded, cidadeExpanded, quartosExpanded, vagasExpanded]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bairrosExpanded, finalidadeExpandedState, tipoExpandedState, cidadeExpandedState, quartosExpandedState, vagasExpandedState]);
 
-  // Bloquear scroll body quando off-canvas aberto
+  // estados individuais de dropdown (definidos depois do effect acima para manter todos hooks no topo)
+  const [finalidadeExpandedState, setFinalidadeExpanded] = useState(false);
+  const [tipoExpandedState, setTipoExpanded] = useState(false);
+  const [cidadeExpandedState, setCidadeExpanded] = useState(false);
+  const [quartosExpandedState, setQuartosExpanded] = useState(false);
+  const [vagasExpandedState, setVagasExpanded] = useState(false);
+
+  // bloquear scroll do body quando o off-canvas mobile está aberto
   useEffect(() => {
     if (!isClient) return;
-    if (isMobile && visible) {
+    if (isMobile && visible && typeof document !== "undefined") {
       const { overflow } = document.body.style;
       document.body.style.overflow = "hidden";
       return () => {
@@ -326,7 +353,7 @@ export default function PropertyFilters({
     }
   }, [isClient, isMobile, visible]);
 
-  /* ====== Helpers ====== */
+  /* ====== helpers ====== */
   const opcoes = [1, 2, 3, "4+"];
 
   const bairrosFiltrados = bairros.filter((b) =>
@@ -349,10 +376,8 @@ export default function PropertyFilters({
 
   const handlePrecoChange = (value, setter) => setter(value);
   const handleAreaChange = (value, setter) => setter(Math.min(value || 0, 999));
-
   const handleFinalidadeChange = (e) =>
     setFinalidade(e.target.value === "comprar" ? "Comprar" : e.target.value === "alugar" ? "Alugar" : "");
-
   const fecharMobile = () => setVisible(false);
 
   const handleAplicarFiltros = () => {
@@ -417,18 +442,17 @@ export default function PropertyFilters({
   };
 
   /* =========================
-     Desktop (horizontal) – só em telas >= md
+     DESKTOP (horizontal) – seguro para SSR
   ========================= */
   if (horizontal && !isMobile) {
-    const scrollRef = useRef(null);
-
+    // style seguro (não usa window no SSR)
     const computeDropdownStyle = (ref, width = 160) => {
-      if (!ref.current) return {};
+      if (typeof window === "undefined" || !ref?.current) return {};
       const rect = ref.current.getBoundingClientRect();
       const left = Math.min(rect.left, Math.max(8, window.innerWidth - width - 8));
       const top = rect.bottom + 4;
       return { top, left, width };
-    };
+      };
 
     return (
       <div className="bg-white py-4 w-full border-b">
@@ -450,7 +474,7 @@ export default function PropertyFilters({
                   {finalidade || "Selecionar"}
                 </button>
                 <div
-                  className={`fixed z-[60] mt-1 bg-white border border-gray-300 rounded shadow-lg ${!finalidadeExpanded ? "hidden" : ""}`}
+                  className={`fixed z-[60] mt-1 bg-white border border-gray-300 rounded shadow-lg ${!finalidadeExpandedState ? "hidden" : ""}`}
                   style={{ ...computeDropdownStyle(finalidadeRef, 140) }}
                 >
                   {["", "Comprar", "Alugar"].map((op) => (
@@ -479,7 +503,7 @@ export default function PropertyFilters({
                   {categoriaSelecionada || "Todos"}
                 </button>
                 <div
-                  className={`fixed z-[60] mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-48 overflow-y-auto ${!tipoExpanded ? "hidden" : ""}`}
+                  className={`fixed z-[60] mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-48 overflow-y-auto ${!tipoExpandedState ? "hidden" : ""}`}
                   style={{ ...computeDropdownStyle(tipoRef, 180) }}
                 >
                   {["", ...categorias].map((c) => (
@@ -508,7 +532,7 @@ export default function PropertyFilters({
                   {cidadeSelecionada || "Todas"}
                 </button>
                 <div
-                  className={`fixed z-[60] mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-48 overflow-y-auto ${!cidadeExpanded ? "hidden" : ""}`}
+                  className={`fixed z-[60] mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-48 overflow-y-auto ${!cidadeExpandedState ? "hidden" : ""}`}
                   style={{ ...computeDropdownStyle(cidadeRef, 180) }}
                 >
                   {["", ...cidades].map((c) => (
@@ -610,13 +634,13 @@ export default function PropertyFilters({
                 <button
                   type="button"
                   onClick={() => setQuartosExpanded((v) => !v)}
-                  className="px-2 py-2 text-xs bg-white border border-gray-300 hover:border-gray-400 focus:border-black focus:outline-none w-[70px] flex-shrink-0 text-left"
+                  className="px-2 py-2 text-xs bg-white border border-gray-300 hover:border-gray-400 focus:outline-none w-[70px] flex-shrink-0 text-left"
                 >
                   {quartosSelecionados ?? "Todos"}
                 </button>
                 <div
                   className={`fixed z-[60] mt-1 bg-white border border-gray-300 rounded shadow-lg w-28 ${
-                    !quartosExpanded ? "hidden" : ""
+                    !quartosExpandedState ? "hidden" : ""
                   }`}
                   style={{ ...computeDropdownStyle(quartosRef, 112) }}
                 >
@@ -641,13 +665,13 @@ export default function PropertyFilters({
                 <button
                   type="button"
                   onClick={() => setVagasExpanded((v) => !v)}
-                  className="px-2 py-2 text-xs bg-white border border-gray-300 hover:border-gray-400 focus:border-black focus:outline-none w-[70px] flex-shrink-0 text-left"
+                  className="px-2 py-2 text-xs bg-white border border-gray-300 hover:border-gray-400 focus:outline-none w-[70px] flex-shrink-0 text-left"
                 >
                   {vagasSelecionadas ?? "Todas"}
                 </button>
                 <div
                   className={`fixed z-[60] mt-1 bg-white border border-gray-300 rounded shadow-lg w-28 ${
-                    !vagasExpanded ? "hidden" : ""
+                    !vagasExpandedState ? "hidden" : ""
                   }`}
                   style={{ ...computeDropdownStyle(vagasRef, 112) }}
                 >
@@ -669,19 +693,19 @@ export default function PropertyFilters({
               {/* Preço/Área */}
               <div className="flex flex-col">
                 <label className="text-[10px] font-medium text-gray-600 mb-1">Preço mín</label>
-                <InputPreco placeholder="R$ 65.000" value={precoMin} onChange={(v) => handlePrecoChange(v, setPrecoMin)} />
+                <InputPreco placeholder="R$ 65.000" value={precoMin} onChange={(v) => setPrecoMin(v)} />
               </div>
               <div className="flex flex-col">
                 <label className="text-[10px] font-medium text-gray-600 mb-1">Preço máx</label>
-                <InputPreco placeholder="R$ 65.000.000" value={precoMax} onChange={(v) => handlePrecoChange(v, setPrecoMax)} />
+                <InputPreco placeholder="R$ 65.000.000" value={precoMax} onChange={(v) => setPrecoMax(v)} />
               </div>
               <div className="flex flex-col">
                 <label className="text-[10px] font-medium text-gray-600 mb-1">Área mín</label>
-                <InputArea placeholder="0 m²" value={areaMin} onChange={(v) => handleAreaChange(v, setAreaMin)} />
+                <InputArea placeholder="0 m²" value={areaMin} onChange={(v) => setAreaMin(v)} />
               </div>
               <div className="flex flex-col">
                 <label className="text-[10px] font-medium text-gray-600 mb-1">Área máx</label>
-                <InputArea placeholder="999 m²" value={areaMax} onChange={(v) => handleAreaChange(v, setAreaMax)} />
+                <InputArea placeholder="999 m²" value={areaMax} onChange={(v) => setAreaMax(v)} />
               </div>
 
               {/* Ações */}
@@ -701,12 +725,16 @@ export default function PropertyFilters({
   }
 
   /* =========================
-     Mobile / padrão (off-canvas)
+     MOBILE / padrão (off-canvas)
   ========================= */
   return (
     <>
       {isClient && isMobile && visible && (
-        <div className="fixed inset-0 bg-black/60 z-[9998]" onClick={() => setVisible(false)} aria-hidden="true" />
+        <div
+          className="fixed inset-0 bg-black/60 z-[9998]"
+          onClick={() => setVisible(false)}
+          aria-hidden="true"
+        />
       )}
 
       <div
@@ -729,7 +757,10 @@ export default function PropertyFilters({
           <div className="flex justify-between items-center sticky top-0 bg-white z-10 py-2">
             <h1 className="font-bold text-sm sm:text-base">Filtros Rápidos</h1>
             {isClient && isMobile && (
-              <button onClick={() => setVisible(false)} className="flex items-center justify-center bg-zinc-200 font-bold text-xs py-2 px-4 rounded-md hover:bg-gray-100">
+              <button
+                onClick={() => setVisible(false)}
+                className="flex items-center justify-center bg-zinc-200 font-bold text-xs py-2 px-4 rounded-md hover:bg-gray-100"
+              >
                 Ver resultados
               </button>
             )}
@@ -869,8 +900,8 @@ export default function PropertyFilters({
           <div className="mb-4">
             <span className="block text-[10px] font-semibold text-gray-800 mb-2">Preço</span>
             <div className="flex gap-2">
-              <InputPreco placeholder="R$ 65.000" value={precoMin} onChange={(v) => handlePrecoChange(v, setPrecoMin)} />
-              <InputPreco placeholder="R$ 65.000.000" value={precoMax} onChange={(v) => handlePrecoChange(v, setPrecoMax)} />
+              <InputPreco placeholder="R$ 65.000" value={precoMin} onChange={(v) => setPrecoMin(v)} />
+              <InputPreco placeholder="R$ 65.000.000" value={precoMax} onChange={(v) => setPrecoMax(v)} />
             </div>
           </div>
 
@@ -879,8 +910,8 @@ export default function PropertyFilters({
           <div className="mb-4">
             <span className="block text-[10px] font-semibold text-gray-800 mb-2">Área do imóvel</span>
             <div className="flex gap-2">
-              <InputArea placeholder="0 m²" value={areaMin} onChange={(v) => handleAreaChange(v, setAreaMin)} />
-              <InputArea placeholder="999 m²" value={areaMax} onChange={(v) => handleAreaChange(v, setAreaMax)} />
+              <InputArea placeholder="0 m²" value={areaMin} onChange={(v) => setAreaMin(v)} />
+              <InputArea placeholder="999 m²" value={areaMax} onChange={(v) => setAreaMax(v)} />
             </div>
           </div>
 
