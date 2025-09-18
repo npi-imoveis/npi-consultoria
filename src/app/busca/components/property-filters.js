@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation"; // <- NOVO
 import useFiltersStore from "@/app/store/filtrosStore";
 import { getImoveisByFilters, getBairrosPorCidade } from "@/app/services";
 
@@ -56,8 +55,9 @@ const InputPreco = ({ placeholder, value, onChange }) => {
     setIsFocused(false);
     if (value == null) setInputValue("");
     else {
+      // 🔧 MÍNIMO BEM BAIXO PARA NÃO ELIMINAR LOCAÇÕES
       let v = value;
-      if (v < 65000) v = 65000;
+      if (v < 500) v = 500;               // <- era 65000
       if (v > 65000000) v = 65000000;
       onChange(v);
       setInputValue(formatarParaReal(v));
@@ -151,7 +151,6 @@ export default function PropertyFilters({
   horizontal = false,
 }) {
   const isClient = useIsClient();
-  const router = useRouter(); // <- NOVO
 
   // Store
   const setFilters = useFiltersStore((s) => s.setFilters);
@@ -391,45 +390,22 @@ export default function PropertyFilters({
   const handlePrecoChange = (value, setter) => setter(value);
   const handleAreaChange = (value, setter) => setter(Math.min(value || 0, 999));
 
-  const handleFinalidadeChange = (e) =>
-    setFinalidade(e.target.value === "comprar" ? "Comprar" : e.target.value === "alugar" ? "Alugar" : "");
+  const handleFinalidadeChange = (e) => {
+    const val = e.target.value === "comprar" ? "Comprar" : e.target.value === "alugar" ? "Alugar" : "";
+    setFinalidade(val);
+    // 🔧 ao mudar finalidade, zera preços (evita herdar filtros de compra para aluguel)
+    setPrecoMin(null);
+    setPrecoMax(null);
+  };
 
   const fecharMobile = () => setIsVisible?.(false);
 
-  const swapFinalidadeInPath = (path, desired) => {
-    // quebra em segmentos e troca apenas o segmento "venda"/"alugar" onde quer que esteja
-    const segs = path.split("/");
-    const idx = segs.findIndex((s) => s === "venda" || s === "alugar");
-    if (idx === -1) return null; // nada para trocar
-    const target = desired === "Alugar" ? "alugar" : "venda";
-    if (segs[idx] === target) return null; // já está correto
-    segs[idx] = target;
-    // normaliza barras duplas
-    return segs.join("/").replace(/\/{2,}/g, "/");
-  };
-
   const handleAplicarFiltros = () => {
-    // 1) Ajusta a rota para garantir que a listagem esteja na finalidade certa (evita "sem resultados" nos cards)
-    if (isClient && finalidade) {
-      const currentPath = window.location.pathname;
-      const newPath = swapFinalidadeInPath(currentPath, finalidade);
-      if (newPath && newPath !== currentPath) {
-        const url = newPath + (window.location.search || "");
-        // navegar via Next (SPA); se falhar, usa window.location
-        try {
-          router.replace(url);
-        } catch {
-          window.location.assign(url);
-        }
-        return; // deixa a navegação acontecer
-      }
-    }
+    // 🔧 Para LOCAÇÃO não aplicamos filtro de preço — backend pode ter outro campo
+    const ignorePreco = finalidade === "Alugar";
 
-    // 2) Seta filtros normalmente
-    const filtrosBasicosPreenchidos = !!(categoriaSelecionada && cidadeSelecionada && finalidade);
-
-    const precoMinFinal = precoMin && precoMin > 0 ? precoMin : null;
-    const precoMaxFinal = precoMax && precoMax > 0 ? precoMax : null;
+    const precoMinFinal = ignorePreco ? null : (precoMin && precoMin > 0 ? precoMin : null);
+    const precoMaxFinal = ignorePreco ? null : (precoMax && precoMax > 0 ? precoMax : null);
 
     const areaMinFinal = Math.min(areaMin || 0, 999);
     const areaMaxFinal = Math.min(areaMax || 0, 999);
@@ -437,10 +413,7 @@ export default function PropertyFilters({
     const bairrosProcessados = [];
     bairrosSelecionados.forEach((b) => {
       if (typeof b === "string" && b.includes(",")) {
-        b.split(",")
-          .map((p) => p.trim())
-          .filter(Boolean)
-          .forEach((p) => bairrosProcessados.push(p));
+        b.split(",").map((p) => p.trim()).filter(Boolean).forEach((p) => bairrosProcessados.push(p));
       } else bairrosProcessados.push(b);
     });
 
@@ -452,6 +425,7 @@ export default function PropertyFilters({
       quartos: quartosSelecionados,
       banheiros: banheirosSelecionados,
       vagas: vagasSelecionadas,
+      // envia null pra não filtrar por preço em "Alugar"
       precoMin: precoMinFinal != null ? String(precoMinFinal) : null,
       precoMax: precoMaxFinal != null ? String(precoMaxFinal) : null,
       precoMinimo: precoMinFinal != null ? String(precoMinFinal) : null,
@@ -462,7 +436,6 @@ export default function PropertyFilters({
       areaMaxima: areaMaxFinal > 0 ? String(areaMaxFinal) : null,
       abaixoMercado,
       proximoMetro,
-      filtrosBasicosPreenchidos,
     });
 
     aplicarFiltros();
@@ -532,6 +505,9 @@ export default function PropertyFilters({
                     onClick={() => {
                       setFinalidade(op);
                       setFinalidadeExpanded(false);
+                      // sincroniza o reset de preço aqui também
+                      setPrecoMin(null);
+                      setPrecoMax(null);
                     }}
                   >
                     {op || "Selecionar"}
@@ -546,7 +522,7 @@ export default function PropertyFilters({
               <button
                 type="button"
                 onClick={() => setTipoExpanded((v) => !v)}
-                className="px-2 py-2 text-xs bg-white border border-gray-300 hover:border-gray-400 focus:outline-none w-[114px] flex-shrink-0 text-left"
+                className="px-2 py-2 text-xs bg-white border border-gray-300 hover:border-gray-400 focus:border-black focus:outline-none w-[114px] flex-shrink-0 text-left"
               >
                 {categoriaSelecionada || "Todos"}
               </button>
@@ -575,7 +551,7 @@ export default function PropertyFilters({
               <button
                 type="button"
                 onClick={() => setCidadeExpanded((v) => !v)}
-                className="px-2 py-2 text-xs bg-white border border-gray-300 hover:border-gray-400 focus:outline-none w-[114px] flex-shrink-0 text-left"
+                className="px-2 py-2 text-xs bg-white border border-gray-300 hover:border-gray-400 focus:border-black focus:outline-none w-[114px] flex-shrink-0 text-left"
               >
                 {cidadeSelecionada || "Todas"}
               </button>
