@@ -242,7 +242,7 @@ export default function PropertyFilters({
   // Hidratar estados do store
   useEffect(() => {
     const s = useFiltersStore.getState();
-    if (s.finalidade) setFinalidade(s.finalidade === "Alugar" ? "Locação" : s.finalidade); // normaliza
+    if (s.finalidade) setFinalidade(s.finalidade); // mantém "Comprar"|"Alugar"
     if (s.categoriaSelecionada) setCategoriaSelecionada(s.categoriaSelecionada);
     if (s.cidadeSelecionada) setCidadeSelecionada(s.cidadeSelecionada);
     if (s.bairrosSelecionados?.length) setBairrosSelecionados(s.bairrosSelecionados);
@@ -290,7 +290,6 @@ export default function PropertyFilters({
     const root = document.getElementById("pf-root");
     if (!root) return;
 
-    // Cancela qualquer submit vindo de dentro do componente
     const onSubmitCapture = (e) => {
       if (root.contains(e.target)) {
         e.preventDefault();
@@ -298,8 +297,6 @@ export default function PropertyFilters({
         e.stopImmediatePropagation?.();
       }
     };
-
-    // Cancela Enter em inputs dentro do componente que acionaria submit do form pai
     const onKeyDownCapture = (e) => {
       if (e.key !== "Enter") return;
       const target = e.target;
@@ -427,8 +424,9 @@ export default function PropertyFilters({
   const handleAreaChange = (value, setter) => setter(Math.min(value || 0, 999));
 
   const handleFinalidadeChange = (e) => {
-    const v = e.target.value === "comprar" ? "Comprar" : e.target.value === "alugar" ? "Locação" : "";
+    const v = e.target.value === "comprar" ? "Comprar" : e.target.value === "alugar" ? "Alugar" : "";
     setFinalidade(v);
+    // zera preços ao trocar finalidade (evita herdar filtros da outra modalidade)
     setPrecoMin(null);
     setPrecoMax(null);
   };
@@ -452,7 +450,7 @@ export default function PropertyFilters({
     });
 
     setFilters({
-      finalidade,
+      finalidade, // "Comprar" | "Alugar"
       categoriaSelecionada,
       cidadeSelecionada,
       bairrosSelecionados: bairrosProcessados,
@@ -460,6 +458,7 @@ export default function PropertyFilters({
       banheiros: banheirosSelecionados,
       vagas: vagasSelecionadas,
 
+      // mesma API para compra/aluguel
       precoMin: precoMinFinal != null ? String(precoMinFinal) : null,
       precoMax: precoMaxFinal != null ? String(precoMaxFinal) : null,
       precoMinimo: precoMinFinal != null ? String(precoMinFinal) : null,
@@ -540,8 +539,7 @@ export default function PropertyFilters({
                     key={op || "selecionar"}
                     className="px-2 py-2 hover:bg-gray-50 cursor-pointer text-[11px]"
                     onClick={() => {
-                      const normalized = op === "Alugar" ? "Locação" : op;
-                      setFinalidade(normalized);
+                      setFinalidade(op);
                       setPrecoMin(null);
                       setPrecoMax(null);
                       setFinalidadeExpanded(false);
@@ -690,7 +688,7 @@ export default function PropertyFilters({
               </span>
               <select
                 className="w-full rounded-md border border-gray-300 bg-white text-xs p-2 focus:outline-none focus:ring-1 focus:ring-black"
-                value={finalidade === "Comprar" ? "comprar" : finalidade === "Locação" ? "alugar" : ""}
+                value={finalidade === "Comprar" ? "comprar" : finalidade === "Alugar" ? "alugar" : ""}
                 onChange={handleFinalidadeChange}
               >
                 <option value="">Selecione a finalidade</option>
