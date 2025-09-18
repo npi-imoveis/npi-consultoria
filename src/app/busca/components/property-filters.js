@@ -242,7 +242,7 @@ export default function PropertyFilters({
   // Hidratar estados do store
   useEffect(() => {
     const s = useFiltersStore.getState();
-    if (s.finalidade) setFinalidade(s.finalidade);
+    if (s.finalidade) setFinalidade(s.finalidade === "Alugar" ? "Locação" : s.finalidade); // normaliza
     if (s.categoriaSelecionada) setCategoriaSelecionada(s.categoriaSelecionada);
     if (s.cidadeSelecionada) setCidadeSelecionada(s.cidadeSelecionada);
     if (s.bairrosSelecionados?.length) setBairrosSelecionados(s.bairrosSelecionados);
@@ -416,7 +416,7 @@ export default function PropertyFilters({
       } else bairrosProcessados.push(b);
     });
 
-    // 🔧 CHAVE: manter sempre precoMin/precoMax (mesma API para venda e aluguel)
+    // Mantemos os mesmos campos de preço; quem decide usar como aluguel/venda é a API pela "finalidade"
     setFilters({
       finalidade,
       categoriaSelecionada,
@@ -506,7 +506,9 @@ export default function PropertyFilters({
                     key={op || "selecionar"}
                     className="px-2 py-2 hover:bg-gray-50 cursor-pointer text-[11px]"
                     onClick={() => {
-                      setFinalidade(op);
+                      // salva "Locação" quando usuário clica em "Alugar"
+                      const normalized = op === "Alugar" ? "Locação" : op;
+                      setFinalidade(normalized);
                       setPrecoMin(null);
                       setPrecoMax(null);
                       setFinalidadeExpanded(false);
@@ -581,12 +583,14 @@ export default function PropertyFilters({
             {/* Ações (desktop) */}
             <div className="hidden md:flex gap-2 items-end ml-2">
               <button
+                type="button"
                 onClick={handleAplicarFiltros}
                 className="px-4 py-2 text-sm bg-black text-white hover:bg-gray-800 focus:outline-none whitespace-nowrap flex-shrink-0 border border-black"
               >
                 Aplicar
               </button>
               <button
+                type="button"
                 onClick={handleLimparFiltros}
                 className="px-4 py-2 text-sm bg-gray-100 text-black hover:bg-gray-200 focus:outline-none whitespace-nowrap flex-shrink-0 border border-gray-300"
               >
@@ -634,6 +638,7 @@ export default function PropertyFilters({
           <div className="flex items-center justify-between">
             <h1 className="font-bold text-sm">Filtros Rápidos</h1>
             <button
+              type="button"
               onClick={() => setIsVisible?.(false)}
               className="flex items-center justify-center bg-zinc-200 font-bold text-xs py-2 px-4 rounded-md hover:bg-gray-100"
             >
@@ -728,12 +733,14 @@ export default function PropertyFilters({
                     {bairrosFiltrados.length > 0 && (
                       <div className="flex justify-between border-b border-gray-100 px-2 py-1 sticky top-0 bg-white">
                         <button
+                          type="button"
                           onClick={() => setBairrosSelecionados(bairrosFiltrados)}
                           className="text-[10px] text-black hover:underline"
                         >
                           Selecionar todos
                         </button>
                         <button
+                          type="button"
                           onClick={() => setBairrosSelecionados([])}
                           className="text-[10px] text-black hover:underline"
                         >
@@ -771,6 +778,7 @@ export default function PropertyFilters({
 
                   {bairrosExpanded && (
                     <button
+                      type="button"
                       onClick={() => setBairrosExpanded(false)}
                       className="text-xs text-black bg-gray-100 w-full py-1 rounded-b-md"
                     >
@@ -784,7 +792,7 @@ export default function PropertyFilters({
                     {bairrosSelecionados.map((b) => (
                       <span key={b} className="bg-gray-100 rounded-full px-2 py-1 text-[10px] flex items-center">
                         {b}
-                        <button onClick={() => handleBairroChange(b)} className="ml-1 text-gray-500 hover:text-black">
+                        <button type="button" onClick={() => handleBairroChange(b)} className="ml-1 text-gray-500 hover:text-black">
                           ×
                         </button>
                       </span>
@@ -824,12 +832,14 @@ export default function PropertyFilters({
           {/* Barra de ações sticky */}
           <div className="sticky bottom-0 bg-white border-t border-gray-200 z-10 px-4 py-3 shadow-[0_-4px_12px_rgba(0,0,0,0.06)]">
             <button
+              type="button"
               onClick={handleAplicarFiltros}
               className="w-full bg-black text-white px-4 py-3 rounded-md mb-2 text-xs"
             >
               Aplicar Filtros
             </button>
             <button
+              type="button"
               onClick={handleLimparFiltros}
               className="w-full bg-zinc-300/80 text-black px-4 py-3 rounded-md text-xs"
             >
