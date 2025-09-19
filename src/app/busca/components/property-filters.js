@@ -486,7 +486,7 @@ export default function PropertyFilters({
     };
 
     console.log("🎯 Aplicando filtros:", filtrosLimpos);
-    console.log("🔍 Finalidade sendo enviada:", finalidadeParaBanco, "(UI mostrava:", finalidade, ")");
+    console.log("🔍 Finalidade para banco:", finalidadeParaBanco);
 
     setFilters(filtrosLimpos);
     aplicarFiltros();
