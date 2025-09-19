@@ -199,6 +199,404 @@ export default function BuscaImoveis() {
         
         // 1. Categoria (plural para título, normal para descrição)
         let categoriaPlural = 'Imóveis';
+        if (filtrosAtuais.categoriaSelecionada) {
+          const categoriaPluralMap = {
+            'Apartamento': 'Apartamentos',
+            'Casa': 'Casas',
+            'Casa Comercial': 'Casas comerciais',
+            'Casa em Condominio': 'Casas em condomínio',
+            'Cobertura': 'Coberturas',
+            'Flat': 'Flats',
+            'Garden': 'Gardens',
+            'Loft': 'Lofts',
+            'Loja': 'Lojas',
+            'Prédio Comercial': 'Prédios comerciais',
+            'Sala Comercial': 'Salas comerciais',
+            'Sobrado': 'Sobrados',
+            'Terreno': 'Terrenos'
+          };
+          categoriaPlural = categoriaPluralMap[filtrosAtuais.categoriaSelecionada] || 'Imóveis';
+          titleParts.push(categoriaPlural);
+          descriptionParts.push(categoriaPlural.toLowerCase());
+        } else {
+          titleParts.push('Imóveis');
+          descriptionParts.push('imóveis');
+        }
+        
+        // 2. Finalidade
+        let finalidadeTexto = '';
+        if (filtrosAtuais.finalidade === 'Comprar') {
+          finalidadeTexto = 'a venda';
+        } else if (filtrosAtuais.finalidade === 'Alugar') {
+          finalidadeTexto = 'para aluguel';
+        }
+        
+        if (finalidadeTexto) {
+          titleParts.push(finalidadeTexto);
+          descriptionParts.push(finalidadeTexto);
+        }
+        
+        // 3. Localização
+        if (filtrosAtuais.cidadeSelecionada) {
+          const cidadeFormatada = filtrosAtuais.cidadeSelecionada
+            .replace(/-/g, ' ')
+            .replace(/\b\w/g, l => l.toUpperCase());
+          titleParts.push(`no ${cidadeFormatada}`);
+          descriptionParts.push(cidadeFormatada);
+        }
+        
+        // 4. Bairros específicos (só na descrição)
+        if (filtrosAtuais.bairrosSelecionados && filtrosAtuais.bairrosSelecionados.length > 0) {
+          if (filtrosAtuais.bairrosSelecionados.length === 1) {
+            descriptionParts.push(`- ${filtrosAtuais.bairrosSelecionados[0]}`);
+          } else if (filtrosAtuais.bairrosSelecionados.length <= 2) {
+            descriptionParts.push(`- ${filtrosAtuais.bairrosSelecionados.join(', ')}`);
+          }
+        }
+        
+        // CONSTRUIR TÍTULO NO NOVO FORMATO: "Apartamentos a venda no Guarujá 54 imóveis"
+        const quantidadeAtual = quantidadeResultados !== null ? quantidadeResultados : (pagination?.totalItems || 0);
+        if (quantidadeAtual > 0) {
+          title = `${titleParts.join(' ')} ${quantidadeAtual} imóveis`;
+        } else {
+          title = `${titleParts.join(' ')}`;
+        }
+        
+        // CONSTRUIR DESCRIÇÃO: "Especialistas em apartamentos a venda Guarujá. NPi"
+        description = `Especialistas em ${descriptionParts.join(' ')}. NPi`;
+        
+        // CONSTRUIR URL CANÔNICA
+        const urlAtual = window?.location?.pathname || '';
+        
+        // SE JÁ ESTAMOS NUMA URL SEO-FRIENDLY (/buscar/...), USAR ELA COMO CANONICAL
+        if (urlAtual.startsWith('/buscar/') && urlAtual.split('/').length >= 5) {
+          canonicalUrl = (window?.location?.origin || baseUrl) + urlAtual;
+          console.log('🎯 [URL-CANONICAL] URL SEO detectada, usando atual como canonical:', canonicalUrl);
+        } else if (filtrosAtuais.cidadeSelecionada && filtrosAtuais.categoriaSelecionada && filtrosAtuais.finalidade) {
+          // Gerar URL SEO-friendly
+          let finalidadeSlug = 'venda';
+          if (filtrosAtuais.finalidade === 'Comprar' || filtrosAtuais.finalidade === 'venda') {
+            finalidadeSlug = 'venda';
+          } else if (filtrosAtuais.finalidade === 'Alugar' || filtrosAtuais.finalidade === 'aluguel') {
+            finalidadeSlug = 'aluguel';
+          }
+          
+          const categoriaSlugMap = {
+            'Apartamento': 'apartamentos',
+            'Casa': 'casas',
+            'Cobertura': 'coberturas',
+            'Terreno': 'terrenos',
+            'Flat': 'flats',
+            'Garden': 'gardens',
+            'Loft': 'lofts',
+            'Loja': 'lojas',
+            'Sobrado': 'sobrados'
+          };
+          const categoriaSlug = categoriaSlugMap[filtrosAtuais.categoriaSelecionada] || filtrosAtuais.categoriaSelecionada.toLowerCase();
+          const cidadeSlug = filtrosAtuais.cidadeSelecionada.toLowerCase().replace(/\s+/g, '-');
+          
+          canonicalUrl = `${baseUrl}/buscar/${finalidadeSlug}/${categoriaSlug}/${cidadeSlug}`;
+          console.log('🎯 [URL-CANONICAL] URL SEO gerada:', canonicalUrl);
+        } else {
+          canonicalUrl = (window?.location?.origin || baseUrl) + (window?.location?.pathname || '') + (window?.location?.search || '');
+          console.log('🎯 [URL-CANONICAL] Usando URL atual como fallback:', canonicalUrl);
+        }
+        
+        console.log('🎯 [TÍTULO DINÂMICO]:', title);
+        console.log('🎯 [FILTROS ATUAIS]:', filtrosAtuais);
+      }
+
+      // FORÇAR ATUALIZAÇÃO DO TÍTULO
+      document.title = title;
+      
+      // Remover qualquer meta title existente e criar novo
+      const existingTitleMeta = document.querySelector('meta[name="title"]');
+      if (existingTitleMeta) {
+        existingTitleMeta.remove();
+      }
+      
+      const titleMeta = document.createElement('meta');
+      titleMeta.setAttribute('name', 'title');
+      titleMeta.setAttribute('content', title);
+      document.head.appendChild(titleMeta);
+      
+      // Atualizar/criar meta tags restantes
+      const metaTags = [
+        { name: 'description', content: description },
+        { name: 'keywords', content: keywords },
+        { name: 'date', content: currentDate },
+        { name: 'last-modified', content: currentDate },
+        { name: 'datePublished', content: currentDate },
+        { name: 'dateModified', content: currentDate },
+        { property: 'article:published_time', content: currentDate },
+        { property: 'article:modified_time', content: currentDate },
+        { property: 'og:updated_time', content: currentDate },
+        { property: 'og:title', content: title },
+        { property: 'og:description', content: description },
+        { property: 'og:url', content: canonicalUrl },
+        { property: 'og:type', content: 'website' },
+        { property: 'og:site_name', content: 'NPi Imóveis' },
+        { property: 'og:locale', content: 'pt_BR' },
+        { property: 'og:image', content: `${baseUrl}/assets/busca-imoveis.jpg` },
+        { property: 'og:image:width', content: '1200' },
+        { property: 'og:image:height', content: '630' },
+        { property: 'og:image:alt', content: title },
+        { name: 'twitter:title', content: title },
+        { name: 'twitter:description', content: description },
+        { name: 'twitter:card', content: 'summary_large_image' },
+        { name: 'twitter:site', content: '@NPIImoveis' },
+        { name: 'twitter:creator', content: '@NPIImoveis' },
+        { name: 'twitter:image', content: `${baseUrl}/assets/busca-imoveis.jpg` },
+        { name: 'twitter:image:alt', content: title },
+        { name: 'DC.date.created', content: currentDate },
+        { name: 'DC.date.modified', content: currentDate },
+        { name: 'x-robots-tag', content: 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1' },
+      ];
+      
+      // Atualizar meta tags
+      metaTags.forEach(tag => {
+        const selector = tag.name ? `meta[name="${tag.name}"]` : `meta[property="${tag.property}"]`;
+        let existingTag = document.querySelector(selector);
+        
+        if (!existingTag) {
+          existingTag = document.createElement('meta');
+          if (tag.name) existingTag.setAttribute('name', tag.name);
+          if (tag.property) existingTag.setAttribute('property', tag.property);
+          document.head.appendChild(existingTag);
+        }
+        
+        existingTag.setAttribute('content', tag.content);
+      });
+      
+      // VERIFICAR E ATUALIZAR CANONICAL LINK
+      let canonicalLink = document.querySelector('link[rel="canonical"]');
+      if (!canonicalLink) {
+        canonicalLink = document.createElement('link');
+        canonicalLink.setAttribute('rel', 'canonical');
+        document.head.appendChild(canonicalLink);
+        console.log('🎯 [CANONICAL] Link canonical criado');
+      } else {
+        console.log('🎯 [CANONICAL] Link canonical já existe, atualizando');
+      }
+      
+      canonicalLink.setAttribute('href', canonicalUrl);
+      console.log('🎯 [CANONICAL] URL canonical definida:', canonicalUrl);
+      
+      // Adicionar hreflang
+      let hreflangPtBr = document.querySelector('link[rel="alternate"][hreflang="pt-BR"]');
+      if (!hreflangPtBr) {
+        hreflangPtBr = document.createElement('link');
+        hreflangPtBr.setAttribute('rel', 'alternate');
+        hreflangPtBr.setAttribute('hreflang', 'pt-BR');
+        document.head.appendChild(hreflangPtBr);
+      }
+      hreflangPtBr.setAttribute('href', canonicalUrl);
+      
+      console.log('✅ Meta tags SEO atualizadas:', { title, canonicalUrl });
+      
+    } catch (error) {
+      console.error('❌ Erro ao atualizar meta tags:', error);
+    }
+  };
+
+  // FUNÇÃO PARA NORMALIZAR NOME DE CIDADE
+  const normalizarCidade = (cidade) => {
+    if (!cidade) return null;
+    
+    // Mapeamento de cidades conhecidas
+    const cidadesMapeadas = {
+      'guaruja': 'Guarujá',
+      'guarujá': 'Guarujá',
+      'Guaruja': 'Guarujá',
+      'GUARUJA': 'Guarujá',
+      'sao-paulo': 'São Paulo',
+      'sao_paulo': 'São Paulo',
+      'santo-andre': 'Santo André',
+      'santos': 'Santos',
+      'praia-grande': 'Praia Grande',
+      'bertioga': 'Bertioga',
+      'mongagua': 'Mongaguá',
+      'mongaguá': 'Mongaguá',
+      'ubatuba': 'Ubatuba',
+      'caraguatatuba': 'Caraguatatuba',
+      'sao-sebastiao': 'São Sebastião',
+      'ilhabela': 'Ilhabela'
+    };
+    
+    // Tentar mapeamento direto primeiro
+    const cidadeNormalizada = cidadesMapeadas[cidade.toLowerCase()];
+    if (cidadeNormalizada) {
+      console.log(`🏙️ [CIDADE] Mapeamento: "${cidade}" → "${cidadeNormalizada}"`);
+      return cidadeNormalizada;
+    }
+    
+    // Se não houver mapeamento, aplicar normalização padrão
+    const resultado = cidade
+      .replace(/-/g, ' ')
+      .replace(/\b\w/g, l => l.toUpperCase())
+      .trim();
+    
+    console.log(`🏙️ [CIDADE] Normalização padrão: "${cidade}" → "${resultado}"`);
+    return resultado;
+  };
+
+  // FUNÇÃO CORRIGIDA PARA EXTRAIR PARÂMETROS DE URL SEO-FRIENDLY
+  const extractFromSeoUrl = () => {
+    if (typeof window === 'undefined') return null;
+    const path = window.location.pathname;
+    
+    console.log('🔍 [EXTRACT-SEO] Analisando path:', path);
+    
+    // Detectar padrão: /buscar/venda/apartamentos/guaruja
+    const seoUrlMatch = path.match(/\/buscar?\/([^\/]+)\/([^\/]+)\/([^\/]+)(?:\/([^\/]+))?/);
+    
+    if (seoUrlMatch) {
+      const [, finalidade, categoria, cidade, bairro] = seoUrlMatch;
+      
+      console.log('🔍 [EXTRACT-SEO] Parâmetros extraídos da URL:', { finalidade, categoria, cidade, bairro });
+      
+      // MAPEAMENTO CORRIGIDO E ROBUSTO: URL → STORE
+      let finalidadeStore = 'Comprar'; // Default para manter compatibilidade com links da home
+      
+      if (finalidade === 'venda' || finalidade === 'comprar' || finalidade === 'compra') {
+        finalidadeStore = 'Comprar';
+      } else if (finalidade === 'aluguel' || finalidade === 'alugar' || finalidade === 'locacao') {
+        finalidadeStore = 'Alugar';
+      }
+      
+      console.log(`🎯 [FINALIDADE] Mapeamento URL → Store: "${finalidade}" → "${finalidadeStore}"`);
+      
+      // MAPEAMENTO CATEGORIA PLURAL → SINGULAR
+      const categoriaSingularMap = {
+        'apartamentos': 'Apartamento',
+        'casas': 'Casa',
+        'coberturas': 'Cobertura',
+        'terrenos': 'Terreno',
+        'flats': 'Flat',
+        'gardens': 'Garden',
+        'lofts': 'Loft',
+        'lojas': 'Loja',
+        'sobrados': 'Sobrado',
+        // Adicionar variações
+        'apartamento': 'Apartamento',
+        'casa': 'Casa',
+        'cobertura': 'Cobertura',
+        'terreno': 'Terreno'
+      };
+      
+      const categoriaStore = categoriaSingularMap[categoria.toLowerCase()] || 
+        categoria.charAt(0).toUpperCase() + categoria.slice(1);
+      
+      console.log(`🏠 [CATEGORIA] Mapeamento URL → Store: "${categoria}" → "${categoriaStore}"`);
+      
+      // CIDADE: USAR FUNÇÃO DE NORMALIZAÇÃO
+      const cidadeStore = normalizarCidade(cidade);
+      
+      console.log('🔍 [EXTRACT-SEO] Mapeamentos finais:', {
+        finalidade: finalidade + ' → ' + finalidadeStore,
+        categoria: categoria + ' → ' + categoriaStore,
+        cidade: cidade + ' → ' + cidadeStore
+      });
+      
+      return {
+        finalidade: finalidadeStore,
+        categoria: categoriaStore,
+        cidade: cidadeStore,
+        bairro: bairro ? normalizarCidade(bairro) : null
+      };
+    }
+    
+    console.log('🔍 [EXTRACT-SEO] Nenhum padrão SEO encontrado');
+    return null;
+  };
+
+  // FUNÇÃO CORRIGIDA PARA ATUALIZAR URL (PRESERVAR HISTÓRICO)
+  const updateUrlFromFilters = () => {
+    const filtrosAtuais = useFiltersStore.getState();
+    
+    console.log('🔍 [UPDATE-URL] Atualizando URL a partir dos filtros:', filtrosAtuais);
+    
+    if (filtrosAtuais.cidadeSelecionada && filtrosAtuais.finalidade && filtrosAtuais.categoriaSelecionada) {
+      const urlAmigavel = gerarUrlSeoFriendly(filtrosAtuais);
+      console.log('🔍 [UPDATE-URL] URL SEO-friendly gerada:', urlAmigavel);
+      
+      // USAR replace PARA NÃO QUEBRAR NAVEGAÇÃO
+      router.replace(urlAmigavel);
+      console.log('🔄 [NAVEGAÇÃO] URL atualizada com router.replace (preserva histórico)');
+    } else {
+      const params = new URLSearchParams();
+      if (filtrosAtuais.cidadeSelecionada) params.set('cidade', filtrosAtuais.cidadeSelecionada);
+      if (filtrosAtuais.finalidade) params.set('finalidade', filtrosAtuais.finalidade);
+      if (filtrosAtuais.categoriaSelecionada) params.set('categoria', filtrosAtuais.categoriaSelecionada);
+      if (filtrosAtuais.bairrosSelecionados && filtrosAtuais.bairrosSelecionados.length > 0) {
+        params.set('bairros', filtrosAtuais.bairrosSelecionados.join(','));
+      }
+      if (filtrosAtuais.quartos) params.set('quartos', filtrosAtuais.quartos);
+      if (filtrosAtuais.precoMin) params.set('precoMin', filtrosAtuais.precoMin);
+      if (filtrosAtuais.precoMax) params.set('precoMax', filtrosAtuais.precoMax);
+      
+      const urlComParams = params.toString() ? `/busca?${params.toString()}` : '/busca';
+      console.log('🔍 [UPDATE-URL] URL com params gerada:', urlComParams);
+      
+      // USAR replace PARA NÃO QUEBRAR NAVEGAÇÃO
+      router.replace(urlComParams);
+      console.log('🔄 [NAVEGAÇÃO] URL atualizada com router.replace (preserva histórico)');
+    }
+  };
+
+  // FUNÇÃO SIMPLIFICADA PARA BUSCAR IMÓVEIS COM DEBUG DETALHADO
+  const buscarImoveis = async (comFiltros = false) => {
+    console.log('🔍 [BUSCAR] Iniciando busca de imóveis, comFiltros:', comFiltros);
+    
+    if (mostrandoFavoritos) {
+      console.log('🔍 [BUSCAR] Modo favoritos ativo, pulando busca');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      let params = {};
+
+      if (comFiltros) {
+        const filtrosAtuais = useFiltersStore.getState();
+        console.log('🔍 [BUSCAR] Filtros atuais para busca:', filtrosAtuais);
+        
+        // CORREÇÃO 1: NÃO FORÇAR DEFAULT "Comprar"
+        const finalidade = filtrosAtuais.finalidade; // SEM || "Comprar"
+        
+        // CORREÇÃO 2: DEBUG LOGS ADICIONADOS
+        console.log('🎯 [FINALIDADE-DEBUG] Finalidade do store:', filtrosAtuais.finalidade);
+        console.log('🎯 [FINALIDADE-DEBUG] Finalidade processada:', finalidade);
+
+        params = {
+          finalidade: finalidade,
+          categoria: filtrosAtuais.categoriaSelecionada,
+          cidade: filtrosAtuais.cidadeSelecionada,
+          quartos: filtrosAtuais.quartos,
+          banheiros: filtrosAtuais.banheiros,
+          vagas: filtrosAtuais.vagas,
+        };
+
+        if (filtrosAtuais.bairrosSelecionados && filtrosAtuais.bairrosSelecionados.length > 0) {
+          params.bairrosArray = filtrosAtuais.bairrosSelecionados;
+        }
+
+        if (filtrosAtuais.precoMin !== null) {
+          params.precoMinimo = filtrosAtuais.precoMin;
+        }
+
+        if (filtrosAtuais.precoMax !== null) {
+          params.precoMaximo = filtrosAtuais.precoMax;
+        }
+
+        if (filtrosAtuais.areaMin && filtrosAtuais.areaMin !== "0") {
+          params.areaMinima = filtrosAtuais.areaMin;
+        }
+
+        if (filtrosAtuais.areaMax && filtrosAtuais.areaMax !== "0") {
+          params.areaMaxima = filtrosAtuais.areaMax;
+        }
+
         if (filtrosAtuais.abaixoMercado) {
           params.apenasCondominios = true;
         }
@@ -674,7 +1072,7 @@ export default function BuscaImoveis() {
     }
     
     if (filtrosAtuais.finalidade) {
-      // CORREÇÃO: Mapear corretamente finalidade para texto
+      // CORREÇÃO 3: Mapear corretamente finalidade para texto
       const finalidadeTexto = filtrosAtuais.finalidade === 'Comprar' ? 'a venda' : 
                              filtrosAtuais.finalidade === 'Alugar' ? 'para aluguel' : '';
       if (finalidadeTexto) {
@@ -768,401 +1166,4 @@ export default function BuscaImoveis() {
       </div>
     </>
   );
-}ais.categoriaSelecionada) {
-          const categoriaPluralMap = {
-            'Apartamento': 'Apartamentos',
-            'Casa': 'Casas',
-            'Casa Comercial': 'Casas comerciais',
-            'Casa em Condominio': 'Casas em condomínio',
-            'Cobertura': 'Coberturas',
-            'Flat': 'Flats',
-            'Garden': 'Gardens',
-            'Loft': 'Lofts',
-            'Loja': 'Lojas',
-            'Prédio Comercial': 'Prédios comerciais',
-            'Sala Comercial': 'Salas comerciais',
-            'Sobrado': 'Sobrados',
-            'Terreno': 'Terrenos'
-          };
-          categoriaPlural = categoriaPluralMap[filtrosAtuais.categoriaSelecionada] || 'Imóveis';
-          titleParts.push(categoriaPlural);
-          descriptionParts.push(categoriaPlural.toLowerCase());
-        } else {
-          titleParts.push('Imóveis');
-          descriptionParts.push('imóveis');
-        }
-        
-        // 2. Finalidade
-        let finalidadeTexto = '';
-        if (filtrosAtuais.finalidade === 'Comprar') {
-          finalidadeTexto = 'a venda';
-        } else if (filtrosAtuais.finalidade === 'Alugar') {
-          finalidadeTexto = 'para aluguel';
-        }
-        
-        if (finalidadeTexto) {
-          titleParts.push(finalidadeTexto);
-          descriptionParts.push(finalidadeTexto);
-        }
-        
-        // 3. Localização
-        if (filtrosAtuais.cidadeSelecionada) {
-          const cidadeFormatada = filtrosAtuais.cidadeSelecionada
-            .replace(/-/g, ' ')
-            .replace(/\b\w/g, l => l.toUpperCase());
-          titleParts.push(`no ${cidadeFormatada}`);
-          descriptionParts.push(cidadeFormatada);
-        }
-        
-        // 4. Bairros específicos (só na descrição)
-        if (filtrosAtuais.bairrosSelecionados && filtrosAtuais.bairrosSelecionados.length > 0) {
-          if (filtrosAtuais.bairrosSelecionados.length === 1) {
-            descriptionParts.push(`- ${filtrosAtuais.bairrosSelecionados[0]}`);
-          } else if (filtrosAtuais.bairrosSelecionados.length <= 2) {
-            descriptionParts.push(`- ${filtrosAtuais.bairrosSelecionados.join(', ')}`);
-          }
-        }
-        
-        // CONSTRUIR TÍTULO NO NOVO FORMATO: "Apartamentos a venda no Guarujá 54 imóveis"
-        const quantidadeAtual = quantidadeResultados !== null ? quantidadeResultados : (pagination?.totalItems || 0);
-        if (quantidadeAtual > 0) {
-          title = `${titleParts.join(' ')} ${quantidadeAtual} imóveis`;
-        } else {
-          title = `${titleParts.join(' ')}`;
-        }
-        
-        // CONSTRUIR DESCRIÇÃO: "Especialistas em apartamentos a venda Guarujá. NPi"
-        description = `Especialistas em ${descriptionParts.join(' ')}. NPi`;
-        
-        // CONSTRUIR URL CANÔNICA
-        const urlAtual = window?.location?.pathname || '';
-        
-        // SE JÁ ESTAMOS NUMA URL SEO-FRIENDLY (/buscar/...), USAR ELA COMO CANONICAL
-        if (urlAtual.startsWith('/buscar/') && urlAtual.split('/').length >= 5) {
-          canonicalUrl = (window?.location?.origin || baseUrl) + urlAtual;
-          console.log('🎯 [URL-CANONICAL] URL SEO detectada, usando atual como canonical:', canonicalUrl);
-        } else if (filtrosAtuais.cidadeSelecionada && filtrosAtuais.categoriaSelecionada && filtrosAtuais.finalidade) {
-          // Gerar URL SEO-friendly
-          let finalidadeSlug = 'venda';
-          if (filtrosAtuais.finalidade === 'Comprar' || filtrosAtuais.finalidade === 'venda') {
-            finalidadeSlug = 'venda';
-          } else if (filtrosAtuais.finalidade === 'Alugar' || filtrosAtuais.finalidade === 'aluguel') {
-            finalidadeSlug = 'aluguel';
-          }
-          
-          const categoriaSlugMap = {
-            'Apartamento': 'apartamentos',
-            'Casa': 'casas',
-            'Cobertura': 'coberturas',
-            'Terreno': 'terrenos',
-            'Flat': 'flats',
-            'Garden': 'gardens',
-            'Loft': 'lofts',
-            'Loja': 'lojas',
-            'Sobrado': 'sobrados'
-          };
-          const categoriaSlug = categoriaSlugMap[filtrosAtuais.categoriaSelecionada] || filtrosAtuais.categoriaSelecionada.toLowerCase();
-          const cidadeSlug = filtrosAtuais.cidadeSelecionada.toLowerCase().replace(/\s+/g, '-');
-          
-          canonicalUrl = `${baseUrl}/buscar/${finalidadeSlug}/${categoriaSlug}/${cidadeSlug}`;
-          console.log('🎯 [URL-CANONICAL] URL SEO gerada:', canonicalUrl);
-        } else {
-          canonicalUrl = (window?.location?.origin || baseUrl) + (window?.location?.pathname || '') + (window?.location?.search || '');
-          console.log('🎯 [URL-CANONICAL] Usando URL atual como fallback:', canonicalUrl);
-        }
-        
-        console.log('🎯 [TÍTULO DINÂMICO]:', title);
-        console.log('🎯 [FILTROS ATUAIS]:', filtrosAtuais);
-      }
-
-      // FORÇAR ATUALIZAÇÃO DO TÍTULO
-      document.title = title;
-      
-      // Remover qualquer meta title existente e criar novo
-      const existingTitleMeta = document.querySelector('meta[name="title"]');
-      if (existingTitleMeta) {
-        existingTitleMeta.remove();
-      }
-      
-      const titleMeta = document.createElement('meta');
-      titleMeta.setAttribute('name', 'title');
-      titleMeta.setAttribute('content', title);
-      document.head.appendChild(titleMeta);
-      
-      // Atualizar/criar meta tags restantes
-      const metaTags = [
-        { name: 'description', content: description },
-        { name: 'keywords', content: keywords },
-        { name: 'date', content: currentDate },
-        { name: 'last-modified', content: currentDate },
-        { name: 'datePublished', content: currentDate },
-        { name: 'dateModified', content: currentDate },
-        { property: 'article:published_time', content: currentDate },
-        { property: 'article:modified_time', content: currentDate },
-        { property: 'og:updated_time', content: currentDate },
-        { property: 'og:title', content: title },
-        { property: 'og:description', content: description },
-        { property: 'og:url', content: canonicalUrl },
-        { property: 'og:type', content: 'website' },
-        { property: 'og:site_name', content: 'NPi Imóveis' },
-        { property: 'og:locale', content: 'pt_BR' },
-        { property: 'og:image', content: `${baseUrl}/assets/busca-imoveis.jpg` },
-        { property: 'og:image:width', content: '1200' },
-        { property: 'og:image:height', content: '630' },
-        { property: 'og:image:alt', content: title },
-        { name: 'twitter:title', content: title },
-        { name: 'twitter:description', content: description },
-        { name: 'twitter:card', content: 'summary_large_image' },
-        { name: 'twitter:site', content: '@NPIImoveis' },
-        { name: 'twitter:creator', content: '@NPIImoveis' },
-        { name: 'twitter:image', content: `${baseUrl}/assets/busca-imoveis.jpg` },
-        { name: 'twitter:image:alt', content: title },
-        { name: 'DC.date.created', content: currentDate },
-        { name: 'DC.date.modified', content: currentDate },
-        { name: 'x-robots-tag', content: 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1' },
-      ];
-      
-      // Atualizar meta tags
-      metaTags.forEach(tag => {
-        const selector = tag.name ? `meta[name="${tag.name}"]` : `meta[property="${tag.property}"]`;
-        let existingTag = document.querySelector(selector);
-        
-        if (!existingTag) {
-          existingTag = document.createElement('meta');
-          if (tag.name) existingTag.setAttribute('name', tag.name);
-          if (tag.property) existingTag.setAttribute('property', tag.property);
-          document.head.appendChild(existingTag);
-        }
-        
-        existingTag.setAttribute('content', tag.content);
-      });
-      
-      // VERIFICAR E ATUALIZAR CANONICAL LINK
-      let canonicalLink = document.querySelector('link[rel="canonical"]');
-      if (!canonicalLink) {
-        canonicalLink = document.createElement('link');
-        canonicalLink.setAttribute('rel', 'canonical');
-        document.head.appendChild(canonicalLink);
-        console.log('🎯 [CANONICAL] Link canonical criado');
-      } else {
-        console.log('🎯 [CANONICAL] Link canonical já existe, atualizando');
-      }
-      
-      canonicalLink.setAttribute('href', canonicalUrl);
-      console.log('🎯 [CANONICAL] URL canonical definida:', canonicalUrl);
-      
-      // Adicionar hreflang
-      let hreflangPtBr = document.querySelector('link[rel="alternate"][hreflang="pt-BR"]');
-      if (!hreflangPtBr) {
-        hreflangPtBr = document.createElement('link');
-        hreflangPtBr.setAttribute('rel', 'alternate');
-        hreflangPtBr.setAttribute('hreflang', 'pt-BR');
-        document.head.appendChild(hreflangPtBr);
-      }
-      hreflangPtBr.setAttribute('href', canonicalUrl);
-      
-      console.log('✅ Meta tags SEO atualizadas:', { title, canonicalUrl });
-      
-    } catch (error) {
-      console.error('❌ Erro ao atualizar meta tags:', error);
-    }
-  };
-
-  // FUNÇÃO PARA NORMALIZAR NOME DE CIDADE
-  const normalizarCidade = (cidade) => {
-    if (!cidade) return null;
-    
-    // Mapeamento de cidades conhecidas
-    const cidadesMapeadas = {
-      'guaruja': 'Guarujá',
-      'guarujá': 'Guarujá',
-      'Guaruja': 'Guarujá',
-      'GUARUJA': 'Guarujá',
-      'sao-paulo': 'São Paulo',
-      'sao_paulo': 'São Paulo',
-      'santo-andre': 'Santo André',
-      'santos': 'Santos',
-      'praia-grande': 'Praia Grande',
-      'bertioga': 'Bertioga',
-      'mongagua': 'Mongaguá',
-      'mongaguá': 'Mongaguá',
-      'ubatuba': 'Ubatuba',
-      'caraguatatuba': 'Caraguatatuba',
-      'sao-sebastiao': 'São Sebastião',
-      'ilhabela': 'Ilhabela'
-    };
-    
-    // Tentar mapeamento direto primeiro
-    const cidadeNormalizada = cidadesMapeadas[cidade.toLowerCase()];
-    if (cidadeNormalizada) {
-      console.log(`🏙️ [CIDADE] Mapeamento: "${cidade}" → "${cidadeNormalizada}"`);
-      return cidadeNormalizada;
-    }
-    
-    // Se não houver mapeamento, aplicar normalização padrão
-    const resultado = cidade
-      .replace(/-/g, ' ')
-      .replace(/\b\w/g, l => l.toUpperCase())
-      .trim();
-    
-    console.log(`🏙️ [CIDADE] Normalização padrão: "${cidade}" → "${resultado}"`);
-    return resultado;
-  };
-
-  // FUNÇÃO CORRIGIDA PARA EXTRAIR PARÂMETROS DE URL SEO-FRIENDLY
-  const extractFromSeoUrl = () => {
-    if (typeof window === 'undefined') return null;
-    const path = window.location.pathname;
-    
-    console.log('🔍 [EXTRACT-SEO] Analisando path:', path);
-    
-    // Detectar padrão: /buscar/venda/apartamentos/guaruja
-    const seoUrlMatch = path.match(/\/buscar?\/([^\/]+)\/([^\/]+)\/([^\/]+)(?:\/([^\/]+))?/);
-    
-    if (seoUrlMatch) {
-      const [, finalidade, categoria, cidade, bairro] = seoUrlMatch;
-      
-      console.log('🔍 [EXTRACT-SEO] Parâmetros extraídos da URL:', { finalidade, categoria, cidade, bairro });
-      
-      // MAPEAMENTO CORRIGIDO E ROBUSTO: URL → STORE
-      let finalidadeStore = 'Comprar'; // Default para manter compatibilidade com links da home
-      
-      if (finalidade === 'venda' || finalidade === 'comprar' || finalidade === 'compra') {
-        finalidadeStore = 'Comprar';
-      } else if (finalidade === 'aluguel' || finalidade === 'alugar' || finalidade === 'locacao') {
-        finalidadeStore = 'Alugar';
-      }
-      
-      console.log(`🎯 [FINALIDADE] Mapeamento URL → Store: "${finalidade}" → "${finalidadeStore}"`);
-      
-      // MAPEAMENTO CATEGORIA PLURAL → SINGULAR
-      const categoriaSingularMap = {
-        'apartamentos': 'Apartamento',
-        'casas': 'Casa',
-        'coberturas': 'Cobertura',
-        'terrenos': 'Terreno',
-        'flats': 'Flat',
-        'gardens': 'Garden',
-        'lofts': 'Loft',
-        'lojas': 'Loja',
-        'sobrados': 'Sobrado',
-        // Adicionar variações
-        'apartamento': 'Apartamento',
-        'casa': 'Casa',
-        'cobertura': 'Cobertura',
-        'terreno': 'Terreno'
-      };
-      
-      const categoriaStore = categoriaSingularMap[categoria.toLowerCase()] || 
-        categoria.charAt(0).toUpperCase() + categoria.slice(1);
-      
-      console.log(`🏠 [CATEGORIA] Mapeamento URL → Store: "${categoria}" → "${categoriaStore}"`);
-      
-      // CIDADE: USAR FUNÇÃO DE NORMALIZAÇÃO
-      const cidadeStore = normalizarCidade(cidade);
-      
-      console.log('🔍 [EXTRACT-SEO] Mapeamentos finais:', {
-        finalidade: finalidade + ' → ' + finalidadeStore,
-        categoria: categoria + ' → ' + categoriaStore,
-        cidade: cidade + ' → ' + cidadeStore
-      });
-      
-      return {
-        finalidade: finalidadeStore,
-        categoria: categoriaStore,
-        cidade: cidadeStore,
-        bairro: bairro ? normalizarCidade(bairro) : null
-      };
-    }
-    
-    console.log('🔍 [EXTRACT-SEO] Nenhum padrão SEO encontrado');
-    return null;
-  };
-
-  // FUNÇÃO CORRIGIDA PARA ATUALIZAR URL (PRESERVAR HISTÓRICO)
-  const updateUrlFromFilters = () => {
-    const filtrosAtuais = useFiltersStore.getState();
-    
-    console.log('🔍 [UPDATE-URL] Atualizando URL a partir dos filtros:', filtrosAtuais);
-    
-    if (filtrosAtuais.cidadeSelecionada && filtrosAtuais.finalidade && filtrosAtuais.categoriaSelecionada) {
-      const urlAmigavel = gerarUrlSeoFriendly(filtrosAtuais);
-      console.log('🔍 [UPDATE-URL] URL SEO-friendly gerada:', urlAmigavel);
-      
-      // USAR replace PARA NÃO QUEBRAR NAVEGAÇÃO
-      router.replace(urlAmigavel);
-      console.log('🔄 [NAVEGAÇÃO] URL atualizada com router.replace (preserva histórico)');
-    } else {
-      const params = new URLSearchParams();
-      if (filtrosAtuais.cidadeSelecionada) params.set('cidade', filtrosAtuais.cidadeSelecionada);
-      if (filtrosAtuais.finalidade) params.set('finalidade', filtrosAtuais.finalidade);
-      if (filtrosAtuais.categoriaSelecionada) params.set('categoria', filtrosAtuais.categoriaSelecionada);
-      if (filtrosAtuais.bairrosSelecionados && filtrosAtuais.bairrosSelecionados.length > 0) {
-        params.set('bairros', filtrosAtuais.bairrosSelecionados.join(','));
-      }
-      if (filtrosAtuais.quartos) params.set('quartos', filtrosAtuais.quartos);
-      if (filtrosAtuais.precoMin) params.set('precoMin', filtrosAtuais.precoMin);
-      if (filtrosAtuais.precoMax) params.set('precoMax', filtrosAtuais.precoMax);
-      
-      const urlComParams = params.toString() ? `/busca?${params.toString()}` : '/busca';
-      console.log('🔍 [UPDATE-URL] URL com params gerada:', urlComParams);
-      
-      // USAR replace PARA NÃO QUEBRAR NAVEGAÇÃO
-      router.replace(urlComParams);
-      console.log('🔄 [NAVEGAÇÃO] URL atualizada com router.replace (preserva histórico)');
-    }
-  };
-
-  // FUNÇÃO SIMPLIFICADA PARA BUSCAR IMÓVEIS COM DEBUG DETALHADO
-  const buscarImoveis = async (comFiltros = false) => {
-    console.log('🔍 [BUSCAR] Iniciando busca de imóveis, comFiltros:', comFiltros);
-    
-    if (mostrandoFavoritos) {
-      console.log('🔍 [BUSCAR] Modo favoritos ativo, pulando busca');
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      let params = {};
-
-      if (comFiltros) {
-        const filtrosAtuais = useFiltersStore.getState();
-        console.log('🔍 [BUSCAR] Filtros atuais para busca:', filtrosAtuais);
-        
-        // CORREÇÃO: NÃO FORÇAR DEFAULT "Comprar"
-        const finalidade = filtrosAtuais.finalidade; // SEM || "Comprar"
-        
-        console.log('🎯 [FINALIDADE-DEBUG] Finalidade do store:', filtrosAtuais.finalidade);
-        console.log('🎯 [FINALIDADE-DEBUG] Finalidade processada:', finalidade);
-
-        params = {
-          finalidade: finalidade,
-          categoria: filtrosAtuais.categoriaSelecionada,
-          cidade: filtrosAtuais.cidadeSelecionada,
-          quartos: filtrosAtuais.quartos,
-          banheiros: filtrosAtuais.banheiros,
-          vagas: filtrosAtuais.vagas,
-        };
-
-        if (filtrosAtuais.bairrosSelecionados && filtrosAtuais.bairrosSelecionados.length > 0) {
-          params.bairrosArray = filtrosAtuais.bairrosSelecionados;
-        }
-
-        if (filtrosAtuais.precoMin !== null) {
-          params.precoMinimo = filtrosAtuais.precoMin;
-        }
-
-        if (filtrosAtuais.precoMax !== null) {
-          params.precoMaximo = filtrosAtuais.precoMax;
-        }
-
-        if (filtrosAtuais.areaMin && filtrosAtuais.areaMin !== "0") {
-          params.areaMinima = filtrosAtuais.areaMin;
-        }
-
-        if (filtrosAtuais.areaMax && filtrosAtuais.areaMax !== "0") {
-          params.areaMaxima = filtrosAtuais.areaMax;
-        }
-
-        if (filtrosAtu
+}
