@@ -452,8 +452,14 @@ export default function PropertyFilters({
       } else bairrosProcessados.push(b);
     });
 
+    // CORREÇÃO: Normalizar finalidade para o formato do banco
+    const finalidadeNormalizada = finalidade === "Alugar" ? "aluguel" : 
+                                 finalidade === "Comprar" ? "venda" : 
+                                 finalidade.toLowerCase();
+
     const filtrosLimpos = {
       finalidade,
+      finalidadeNormalizada, // Adiciona versão normalizada
       categoriaSelecionada,
       cidadeSelecionada,
       
@@ -481,6 +487,7 @@ export default function PropertyFilters({
     };
 
     console.log("🎯 Aplicando filtros:", filtrosLimpos);
+    console.log("🔍 Finalidade normalizada:", finalidadeNormalizada);
 
     setFilters(filtrosLimpos);
     aplicarFiltros();
