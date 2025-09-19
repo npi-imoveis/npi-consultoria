@@ -1,5 +1,6 @@
 "use client";
 
+import { InformationCircleIcon } from "@heroicons/react/24/outline";
 import { useEffect, useState, useRef, useCallback } from "react";
 import useFiltersStore from "@/app/store/filtrosStore";
 import { getImoveisByFilters, getBairrosPorCidade } from "@/app/services";
@@ -11,6 +12,28 @@ const useIsClient = () => {
   const [isClient, setIsClient] = useState(false);
   useEffect(() => setIsClient(true), []);
   return isClient;
+};
+
+const useIsMobile = () => {
+  const isClient = useIsClient();
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    if (!isClient) return;
+    let raf = 0;
+    const onResize = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => setIsMobile(window.innerWidth < 768));
+    };
+    onResize();
+    window.addEventListener("resize", onResize);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", onResize);
+    };
+  }, [isClient]);
+
+  return isMobile;
 };
 
 /* =========================
@@ -43,7 +66,8 @@ const InputPreco = ({ placeholder, value, onChange }) => {
     const novoValor = e.target.value;
     setInputValue(novoValor);
     const limpo = novoValor.replace(/[^\d]/g, "");
-    onChange(limpo ? Number(limpo) : null);
+    if (!limpo) onChange(null);
+    else onChange(Number(limpo));
   };
 
   const handleFocus = () => {
@@ -53,12 +77,11 @@ const InputPreco = ({ placeholder, value, onChange }) => {
 
   const handleBlur = () => {
     setIsFocused(false);
-    if (value == null) {
-      setInputValue("");
-    } else {
+    if (value == null) setInputValue("");
+    else {
       let v = value;
-      if (v < 0) v = 0;
-      if (v > 70000000) v = 70000000;
+      if (v < 65000) v = 65000;
+      if (v > 65000000) v = 65000000;
       onChange(v);
       setInputValue(formatarParaReal(v));
     }
@@ -151,6 +174,16 @@ export default function PropertyFilters({
   horizontal = false,
 }) {
   const isClient = useIsClient();
+  const isMobile = useIsMobile();
+
+  // Ref que era condicional — agora no topo para não quebrar hooks
+  const scrollRef = useRef(null);
+
+  const [uiVisible, setUiVisible] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setUiVisible(true), 60);
+    return () => clearTimeout(t);
+  }, []);
 
   // Store
   const setFilters = useFiltersStore((s) => s.setFilters);
@@ -197,9 +230,6 @@ export default function PropertyFilters({
   const cidadeRef = useRef(null);
   const quartosRef = useRef(null);
   const vagasRef = useRef(null);
-
-  // Altura do header fixo da página
-  const [headerOffset, setHeaderOffset] = useState(0);
 
   /* ====== Data fetch ====== */
   useEffect(() => {
@@ -259,7 +289,7 @@ export default function PropertyFilters({
     if (s.proximoMetro) setProximoMetro(s.proximoMetro);
   }, []);
 
-  /* ====== Outside click ====== */
+  /* ====== Outside click (mobile/desktop) with 1-tick delay ====== */
   useEffect(() => {
     let registered = false;
     let timer = null;
@@ -275,133 +305,35 @@ export default function PropertyFilters({
 
     if (bairrosExpanded || finalidadeExpanded || tipoExpanded || cidadeExpanded || quartosExpanded || vagasExpanded) {
       timer = setTimeout(() => {
-        document.addEventListener("pointerdown", handleOutside, { passive: true });
-        registered = true;
+        if (typeof document !== "undefined") {
+          document.addEventListener("pointerdown", handleOutside, { passive: true });
+          registered = true;
+        }
       }, 0);
     }
     return () => {
       if (timer) clearTimeout(timer);
-      if (registered) document.removeEventListener("pointerdown", handleOutside);
+      if (registered && typeof document !== "undefined") {
+        document.removeEventListener("pointerdown", handleOutside);
+      }
     };
   }, [bairrosExpanded, finalidadeExpanded, tipoExpanded, cidadeExpanded, quartosExpanded, vagasExpanded]);
 
-  /* ====== BLOQUEIO DE SUBMIT DE FORM ANCESTRAL (evita redirect) ====== */
-  useEffect(() => {
-    const root = document.getElementById("pf-root");
-    if (!root) return;
-
-    const onSubmitCapture = (e) => {
-      if (root.contains(e.target)) {
-        e.preventDefault();
-        e.stopPropagation();
-        e.stopImmediatePropagation?.();
-      }
-    };
-    const onKeyDownCapture = (e) => {
-      if (e.key !== "Enter") return;
-      const target = e.target;
-      if (root.contains(target)) {
-        const form = target.closest("form");
-        if (form) {
-          e.preventDefault();
-          e.stopPropagation();
-          e.stopImmediatePropagation?.();
-        }
-      }
-    };
-
-    document.addEventListener("submit", onSubmitCapture, true);
-    document.addEventListener("keydown", onKeyDownCapture, true);
-    return () => {
-      document.removeEventListener("submit", onSubmitCapture, true);
-      document.removeEventListener("keydown", onKeyDownCapture, true);
-    };
-  }, []);
-
-  /* ====== BLOQUEIO DE SCROLL (MOBILE) ====== */
+  // Bloquear scroll body quando off-canvas aberto
   useEffect(() => {
     if (!isClient) return;
-    const isMobileViewport = typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches;
-    if (!isMobileViewport) return;
-
-    const root = document.documentElement;
-    const body = document.body;
-
-    const prev = {
-      rootOverflowX: root.style.overflowX,
-      bodyOverflowX: body.style.overflowX,
-      rootTouch: root.style.touchAction,
-      bodyTouch: body.style.touchAction,
-      rootOBX: root.style.overscrollBehaviorX,
-      bodyOBX: body.style.overscrollBehaviorX,
-    };
-
-    root.style.overflowX = "hidden";
-    body.style.overflowX = "hidden";
-    root.style.touchAction = "pan-y";
-    body.style.touchAction = "pan-y";
-    root.style.overscrollBehaviorX = "none";
-    body.style.overscrollBehaviorX = "none";
-
-    return () => {
-      root.style.overflowX = prev.rootOverflowX;
-      body.style.overflowX = prev.bodyOverflowX;
-      root.style.touchAction = prev.rootTouch;
-      body.style.touchAction = prev.bodyTouch;
-      root.style.overscrollBehaviorX = prev.rootOBX;
-      body.style.overscrollBehaviorX = prev.bodyOBX;
-    };
-  }, [isClient]);
-
-  // Lock do body quando overlay aberto
-  useEffect(() => {
-    if (!isClient || !isVisible) return;
-    const isMobileViewport =
-      typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches;
-    if (!isMobileViewport) return;
-
-    const scrollY = window.scrollY || window.pageYOffset || 0;
-
-    const prev = {
-      position: document.body.style.position,
-      top: document.body.style.top,
-      width: document.body.style.width,
-      overflow: document.body.style.overflow,
-    };
-
-    document.body.style.position = "fixed";
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.width = "100%";
-    document.body.style.overflow = "hidden";
-
-    return () => {
-      document.body.style.position = prev.position;
-      document.body.style.top = prev.top;
-      document.body.style.width = prev.width;
-      document.body.style.overflow = prev.overflow;
-      window.scrollTo(0, scrollY);
-    };
-  }, [isClient, isVisible]);
-
-  // Medir header fixo externo
-  useEffect(() => {
-    if (!isClient || !isVisible) return;
-    const selectors = [".fixed.top-20", "[data-app-header]", "header[role='banner']", ".site-header"];
-    let foundRect = null;
-    for (const sel of selectors) {
-      const el = document.querySelector(sel);
-      if (el) {
-        const r = el.getBoundingClientRect();
-        if (r && r.bottom >= 0) {
-          foundRect = r;
-          break;
-        }
-      }
+    if (isMobile && isControlled && visible) {
+      const { overflow } = document.body.style;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = overflow;
+      };
     }
-    setHeaderOffset(foundRect ? Math.ceil(foundRect.bottom) : 0);
-  }, [isClient, isVisible]);
+  }, [isClient, isMobile, /* deps abaixo calculados depois */]);
 
   /* ====== Helpers ====== */
+  const opcoes = [1, 2, 3, "4+"];
+
   const bairrosFiltrados = bairros.filter((b) =>
     b.toLowerCase().includes(bairroFilter.toLowerCase())
   );
@@ -423,27 +355,15 @@ export default function PropertyFilters({
   const handlePrecoChange = (value, setter) => setter(value);
   const handleAreaChange = (value, setter) => setter(Math.min(value || 0, 999));
 
-  const handleFinalidadeChange = (e) => {
-    const v = e.target.value === "comprar" ? "Comprar" : e.target.value === "alugar" ? "Alugar" : "";
-    setFinalidade(v);
-    // zera preços ao trocar finalidade (evita herdar filtros da outra modalidade)
-    setPrecoMin(null);
-    setPrecoMax(null);
-  };
+  const handleFinalidadeChange = (e) =>
+    setFinalidade(e.target.value === "comprar" ? "Comprar" : e.target.value === "alugar" ? "Alugar" : "");
 
-  const fecharMobile = () => setIsVisible?.(false);
-
-  // ✅ CORREÇÃO PRINCIPAL - Validação mais robusta dos filtros
   const handleAplicarFiltros = () => {
-    // Validação básica obrigatória
-    if (!finalidade || !categoriaSelecionada || !cidadeSelecionada) {
-      console.warn("Filtros básicos não preenchidos:", { finalidade, categoriaSelecionada, cidadeSelecionada });
-      return;
-    }
+    const filtrosBasicosPreenchidos = !!(categoriaSelecionada && cidadeSelecionada && finalidade);
 
     const precoMinFinal = precoMin && precoMin > 0 ? precoMin : null;
     const precoMaxFinal = precoMax && precoMax > 0 ? precoMax : null;
-    
+
     const areaMinFinal = Math.min(areaMin || 0, 999);
     const areaMaxFinal = Math.min(areaMax || 0, 999);
 
@@ -454,49 +374,30 @@ export default function PropertyFilters({
       } else bairrosProcessados.push(b);
     });
 
-    // ✅ NOVO - Objeto de filtros mais limpo e consistente
-    const filtrosLimpos = {
-      // Filtros obrigatórios
+    setFilters({
       finalidade,
       categoriaSelecionada,
       cidadeSelecionada,
-      
-      // Arrays/listas
       bairrosSelecionados: bairrosProcessados,
-      categorias,
-      cidades,
-      bairros,
-      
-      // Opcionais numéricos
       quartos: quartosSelecionados,
       banheiros: banheirosSelecionados,
       vagas: vagasSelecionadas,
-      
-      // ✅ CORREÇÃO - Preços unificados (remove duplicação)
       precoMin: precoMinFinal != null ? String(precoMinFinal) : null,
       precoMax: precoMaxFinal != null ? String(precoMaxFinal) : null,
-      
-      // Área
-      areaMin: areaMinFinal > 0 ? String(areaMinFinal) : "0",
-      areaMax: areaMaxFinal > 0 ? String(areaMaxFinal) : "0",
+      precoMinimo: precoMinFinal != null ? String(precoMinFinal) : null,
+      precoMaximo: precoMaxFinal != null ? String(precoMaxFinal) : null,
+      areaMin: areaMinFinal ? String(areaMinFinal) : "0",
+      areaMax: areaMaxFinal ? String(areaMaxFinal) : "0",
       areaMinima: areaMinFinal > 0 ? String(areaMinFinal) : null,
       areaMaxima: areaMaxFinal > 0 ? String(areaMaxFinal) : null,
-      
-      // Flags especiais
       abaixoMercado,
       proximoMetro,
-      
-      // ✅ CORREÇÃO - Flag que sempre será true se chegou até aqui
-      filtrosBasicosPreenchidos: true,
-    };
+      filtrosBasicosPreenchidos,
+    });
 
-    // Debug log para acompanhar
-    console.log("🎯 Aplicando filtros:", filtrosLimpos);
-
-    setFilters(filtrosLimpos);
     aplicarFiltros();
     onFilter?.();
-    fecharMobile();
+    if (isControlled) setIsVisible(false);
   };
 
   const handleLimparFiltros = () => {
@@ -519,412 +420,586 @@ export default function PropertyFilters({
   };
 
   /* =========================
-     Desktop (horizontal) – render fixo
+     Controlled vs Uncontrolled
   ========================= */
-  const computeDropdownStyle = (ref, width = 160) => {
-    if (!ref.current) return {};
-    const rect = ref.current.getBoundingClientRect();
-    const left =
-      typeof window === "undefined"
-        ? rect.left
-        : Math.min(rect.left, Math.max(8, window.innerWidth - width - 8));
-    const top = rect.bottom + 4;
-    return { top, left, width };
-  };
+  const isControlled = typeof isVisible === "boolean" && typeof setIsVisible === "function";
+  const visible = isControlled ? isVisible : true;
 
-  const DesktopBar = (
-    <div className={`bg-white py-4 w-full border-b ${horizontal ? "" : "hidden"}`}>
-      <div className="max-w-full mx-auto px-2">
-        <div className="flex items-center">
-          <div
-            className="flex items-end gap-2 overflow-x-auto scrollbar-hide flex-1"
-            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-          >
-            {/* Finalidade */}
-            <div className="flex flex-col relative hidden md:block" ref={finalidadeRef}>
-              <label className="text-[10px] font-medium text-gray-600 mb-1">Finalidade</label>
-              <button
-                type="button"
-                onClick={() => setFinalidadeExpanded((v) => !v)}
-                className="px-2 py-2 text-xs bg-white border border-gray-300 hover:border-gray-400 focus:border-black focus:outline-none w-[92px] flex-shrink-0 text-left"
-              >
-                {finalidade || "Selecionar"}
-              </button>
-              <div
-                className={`fixed z-[60] mt-1 bg-white border border-gray-300 rounded shadow-lg ${!finalidadeExpanded ? "hidden" : ""}`}
-                style={{ ...computeDropdownStyle(finalidadeRef, 140) }}
-              >
-                {["", "Comprar", "Alugar"].map((op) => (
-                  <div
-                    key={op || "selecionar"}
-                    className="px-2 py-2 hover:bg-gray-50 cursor-pointer text-[11px]"
-                    onClick={() => {
-                      setFinalidade(op);
-                      setPrecoMin(null);
-                      setPrecoMax(null);
-                      setFinalidadeExpanded(false);
-                    }}
-                  >
-                    {op || "Selecionar"}
-                  </div>
-                ))}
+  /* ====== Atualiza deps do lock body scroll ====== */
+  useEffect(() => {
+    if (!isClient) return;
+    if (isMobile && isControlled && visible) {
+      const { overflow } = document.body.style;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = overflow;
+      };
+    }
+  }, [isClient, isMobile, isControlled, visible]);
+
+  /* =========================
+     Desktop (horizontal) — apenas no desktop!
+  ========================= */
+  if (horizontal && !isMobile) {
+    // Safe SSR
+    const computeDropdownStyle = (ref, width = 160) => {
+      if (typeof window === "undefined" || !ref?.current) return {};
+      const rect = ref.current.getBoundingClientRect();
+      const left = Math.min(rect.left, Math.max(8, window.innerWidth - width - 8));
+      const top = rect.bottom + 4;
+      return { top, left, width, position: "fixed" };
+    };
+
+    return (
+      <div className="bg-white py-4 w-full border-b">
+        <div className="max-w-full mx-auto px-2">
+          <div className="flex items-center">
+            <div
+              ref={scrollRef}
+              className="flex items-end gap-2 overflow-x-auto scrollbar-hide flex-1"
+              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+            >
+              {/* Finalidade */}
+              <div className="flex flex-col relative" ref={finalidadeRef}>
+                <label className="text-[10px] font-medium text-gray-600 mb-1">Finalidade</label>
+                <button
+                  type="button"
+                  onClick={() => setFinalidadeExpanded((v) => !v)}
+                  className="px-2 py-2 text-xs bg-white border border-gray-300 hover:border-gray-400 focus:border-black focus:outline-none w-[92px] flex-shrink-0 text-left"
+                >
+                  {finalidade || "Selecionar"}
+                </button>
+                <div
+                  className={`z-[60] mt-1 bg-white border border-gray-300 rounded shadow-lg ${!finalidadeExpanded ? "hidden" : ""}`}
+                  style={{ ...computeDropdownStyle(finalidadeRef, 140) }}
+                >
+                  {["", "Comprar", "Alugar"].map((op) => (
+                    <div
+                      key={op || "selecionar"}
+                      className="px-2 py-2 hover:bg-gray-50 cursor-pointer text-[11px]"
+                      onClick={() => {
+                        setFinalidade(op);
+                        setFinalidadeExpanded(false);
+                      }}
+                    >
+                      {op || "Selecionar"}
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            {/* Tipo */}
-            <div className="flex flex-col relative hidden md:block" ref={tipoRef}>
-              <label className="text-[10px] font-medium text-gray-600 mb-1">Tipo</label>
-              <button
-                type="button"
-                onClick={() => setTipoExpanded((v) => !v)}
-                className="px-2 py-2 text-xs bg-white border border-gray-300 hover:border-gray-400 focus:border-black focus:outline-none w-[114px] flex-shrink-0 text-left"
-              >
-                {categoriaSelecionada || "Todos"}
-              </button>
-              <div
-                className={`fixed z-[60] mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-48 overflow-y-auto ${!tipoExpanded ? "hidden" : ""}`}
-                style={{ ...computeDropdownStyle(tipoRef, 180) }}
-              >
-                {["", ...categorias].map((c) => (
-                  <div
-                    key={c || "todos"}
-                    className="px-2 py-2 hover:bg-gray-50 cursor-pointer text-[11px]"
-                    onClick={() => {
-                      setCategoriaSelecionada(c);
-                      setTipoExpanded(false);
-                    }}
-                  >
-                    {c || "Todos"}
-                  </div>
-                ))}
+              {/* Tipo */}
+              <div className="flex flex-col relative" ref={tipoRef}>
+                <label className="text-[10px] font-medium text-gray-600 mb-1">Tipo</label>
+                <button
+                  type="button"
+                  onClick={() => setTipoExpanded((v) => !v)}
+                  className="px-2 py-2 text-xs bg-white border border-gray-300 hover:border-gray-400 focus:border-black focus:outline-none w-[114px] flex-shrink-0 text-left"
+                >
+                  {categoriaSelecionada || "Todos"}
+                </button>
+                <div
+                  className={`z-[60] mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-48 overflow-y-auto ${!tipoExpanded ? "hidden" : ""}`}
+                  style={{ ...computeDropdownStyle(tipoRef, 180) }}
+                >
+                  {["", ...categorias].map((c) => (
+                    <div
+                      key={c || "todos"}
+                      className="px-2 py-2 hover:bg-gray-50 cursor-pointer text-[11px]"
+                      onClick={() => {
+                        setCategoriaSelecionada(c);
+                        setTipoExpanded(false);
+                      }}
+                    >
+                      {c || "Todos"}
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            {/* Cidade */}
-            <div className="flex flex-col relative hidden md:block" ref={cidadeRef}>
-              <label className="text-[10px] font-medium text-gray-600 mb-1">Cidade</label>
-              <button
-                type="button"
-                onClick={() => setCidadeExpanded((v) => !v)}
-                className="px-2 py-2 text-xs bg-white border border-gray-300 hover:border-gray-400 focus:border-black focus:outline-none w-[114px] flex-shrink-0 text-left"
-              >
-                {cidadeSelecionada || "Todas"}
-              </button>
-              <div
-                className={`fixed z-[60] mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-48 overflow-y-auto ${!cidadeExpanded ? "hidden" : ""}`}
-                style={{ ...computeDropdownStyle(cidadeRef, 180) }}
-              >
-                {["", ...cidades].map((c) => (
-                  <div
-                    key={c || "todas"}
-                    className="px-2 py-2 hover:bg-gray-50 cursor-pointer text-[11px]"
-                    onClick={() => {
-                      setCidadeSelecionada(c);
-                      setCidadeExpanded(false);
-                      setBairrosSelecionados([]);
-                      setBairroFilter("");
-                    }}
-                  >
-                    {c || "Todas"}
-                  </div>
-                ))}
+              {/* Cidade */}
+              <div className="flex flex-col relative" ref={cidadeRef}>
+                <label className="text-[10px] font-medium text-gray-600 mb-1">Cidade</label>
+                <button
+                  type="button"
+                  onClick={() => setCidadeExpanded((v) => !v)}
+                  className="px-2 py-2 text-xs bg-white border border-gray-300 hover:border-gray-400 focus:border-black focus:outline-none w-[114px] flex-shrink-0 text-left"
+                >
+                  {cidadeSelecionada || "Todas"}
+                </button>
+                <div
+                  className={`z-[60] mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-48 overflow-y-auto ${!cidadeExpanded ? "hidden" : ""}`}
+                  style={{ ...computeDropdownStyle(cidadeRef, 180) }}
+                >
+                  {["", ...cidades].map((c) => (
+                    <div
+                      key={c || "todas"}
+                      className="px-2 py-2 hover:bg-gray-50 cursor-pointer text-[11px]"
+                      onClick={() => {
+                        setCidadeSelecionada(c);
+                        setCidadeExpanded(false);
+                        setBairrosSelecionados([]);
+                        setBairroFilter("");
+                      }}
+                    >
+                      {c || "Todas"}
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            {/* Ações (desktop) */}
-            <div className="hidden md:flex gap-2 items-end ml-2">
-              <button
-                type="button"
-                onClick={handleAplicarFiltros}
-                className="px-4 py-2 text-sm bg-black text-white hover:bg-gray-800 focus:outline-none whitespace-nowrap flex-shrink-0 border border-black"
-              >
-                Aplicar
-              </button>
-              <button
-                type="button"
-                onClick={handleLimparFiltros}
-                className="px-4 py-2 text-sm bg-gray-100 text-black hover:bg-gray-200 focus:outline-none whitespace-nowrap flex-shrink-0 border border-gray-300"
-              >
-                Limpar
-              </button>
+              {/* Bairro (multi) */}
+              <div className="flex flex-col relative" ref={bairrosRef}>
+                <label className="text-[10px] font-medium text-gray-600 mb-1">Bairro</label>
+                <button
+                  type="button"
+                  onClick={() => setBairrosExpanded((v) => !v)}
+                  className="px-2 py-2 text-xs bg-white border border-gray-300 hover:border-gray-400 focus:border-black focus:outline-none w-[140px] flex-shrink-0 text-left relative"
+                >
+                  {bairrosSelecionados.length > 0
+                    ? bairrosSelecionados.length === 1
+                      ? bairrosSelecionados[0]
+                      : bairrosSelecionados.length <= 2
+                      ? bairrosSelecionados.join(", ")
+                      : `${bairrosSelecionados[0]} +${bairrosSelecionados.length - 1}`
+                    : "Todos"}
+                  {bairrosSelecionados.length > 0 && (
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2 bg-black text-white text-[9px] rounded-full w-4 h-4 grid place-items-center">
+                      {bairrosSelecionados.length}
+                    </span>
+                  )}
+                </button>
+                <div
+                  className={`z-[60] mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-60 overflow-y-auto w-80 ${
+                    !cidadeSelecionada || !bairrosExpanded ? "hidden" : ""
+                  }`}
+                  style={{ ...computeDropdownStyle(bairrosRef, 320) }}
+                >
+                  <div className="flex items-center gap-2 p-2 border-b bg-gray-50 sticky top-0">
+                    <input
+                      value={bairroFilter}
+                      onChange={(e) => setBairroFilter(e.target.value)}
+                      placeholder="Buscar bairro…"
+                      className="flex-1 border rounded px-2 py-1 text-[11px] outline-none"
+                    />
+                    <button
+                      className="text-[10px] px-2 py-1 border rounded hover:bg-gray-100"
+                      onClick={() => setBairrosSelecionados(bairrosFiltrados)}
+                    >
+                      Selecionar todos
+                    </button>
+                    <button
+                      className="text-[10px] px-2 py-1 border rounded hover:bg-gray-100"
+                      onClick={() => setBairrosSelecionados([])}
+                    >
+                      Limpar
+                    </button>
+                  </div>
+
+                  {bairrosFiltrados.length ? (
+                    bairrosFiltrados.map((b) => (
+                      <label
+                        key={b}
+                        className={`flex items-center px-2 py-1 hover:bg-gray-50 cursor-pointer ${
+                          bairrosSelecionados.includes(b) ? "bg-gray-100" : ""
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          className="mr-2 h-3 w-3"
+                          checked={bairrosSelecionados.includes(b)}
+                          onChange={() => handleBairroChange(b)}
+                        />
+                        <span className={`text-[11px] flex-1 ${bairrosSelecionados.includes(b) ? "font-semibold" : ""}`}>
+                          {b}
+                        </span>
+                        {bairrosSelecionados.includes(b) && <span className="text-green-600 text-xs">✓</span>}
+                      </label>
+                    ))
+                  ) : (
+                    <div className="px-2 py-3 text-[11px] text-gray-500 text-center">
+                      {bairroFilter ? "Nenhum bairro encontrado" : "Selecione uma cidade primeiro"}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Quartos */}
+              <div className="flex flex-col relative" ref={quartosRef}>
+                <label className="text-[10px] font-medium text-gray-600 mb-1">Quartos</label>
+                <button
+                  type="button"
+                  onClick={() => setQuartosExpanded((v) => !v)}
+                  className="px-2 py-2 text-xs bg-white border border-gray-300 hover:border-gray-400 focus:border-black focus:outline-none w-[70px] flex-shrink-0 text-left"
+                >
+                  {quartosSelecionados ?? "Todos"}
+                </button>
+                <div
+                  className={`z-[60] mt-1 bg-white border border-gray-300 rounded shadow-lg w-28 ${
+                    !quartosExpanded ? "hidden" : ""
+                  }`}
+                  style={{ ...computeDropdownStyle(quartosRef, 112) }}
+                >
+                  {["", "1", "2", "3", "4+"].map((op) => (
+                    <div
+                      key={op || "todos"}
+                      className="px-2 py-2 hover:bg-gray-50 cursor-pointer text-[11px]"
+                      onClick={() => {
+                        setQuartosSelecionados(op === "" ? null : op);
+                        setQuartosExpanded(false);
+                      }}
+                    >
+                      {op || "Todos"}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Vagas */}
+              <div className="flex flex-col relative" ref={vagasRef}>
+                <label className="text-[10px] font-medium text-gray-600 mb-1">Vagas</label>
+                <button
+                  type="button"
+                  onClick={() => setVagasExpanded((v) => !v)}
+                  className="px-2 py-2 text-xs bg-white border border-gray-300 hover:border-gray-400 focus:border-black focus:outline-none w-[70px] flex-shrink-0 text-left"
+                >
+                  {vagasSelecionadas ?? "Todas"}
+                </button>
+                <div
+                  className={`z-[60] mt-1 bg-white border border-gray-300 rounded shadow-lg w-28 ${
+                    !vagasExpanded ? "hidden" : ""
+                  }`}
+                  style={{ ...computeDropdownStyle(vagasRef, 112) }}
+                >
+                  {["", "1", "2", "3", "4+"].map((op) => (
+                    <div
+                      key={op || "todas"}
+                      className="px-2 py-2 hover:bg-gray-50 cursor-pointer text-[11px]"
+                      onClick={() => {
+                        setVagasSelecionadas(op === "" ? null : op);
+                        setVagasExpanded(false);
+                      }}
+                    >
+                      {op || "Todas"}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Preço mín/máx */}
+              <div className="flex flex-col">
+                <label className="text-[10px] font-medium text-gray-600 mb-1">Preço mín</label>
+                <InputPreco
+                  placeholder="R$ 65.000"
+                  value={precoMin}
+                  onChange={(v) => handlePrecoChange(v, setPrecoMin)}
+                />
+              </div>
+
+              <div className="flex flex-col">
+                <label className="text-[10px] font-medium text-gray-600 mb-1">Preço máx</label>
+                <InputPreco
+                  placeholder="R$ 65.000.000"
+                  value={precoMax}
+                  onChange={(v) => handlePrecoChange(v, setPrecoMax)}
+                />
+              </div>
+
+              {/* Área mín/máx */}
+              <div className="flex flex-col">
+                <label className="text-[10px] font-medium text-gray-600 mb-1">Área mín</label>
+                <InputArea placeholder="0 m²" value={areaMin} onChange={(v) => handleAreaChange(v, setAreaMin)} />
+              </div>
+
+              <div className="flex flex-col">
+                <label className="text-[10px] font-medium text-gray-600 mb-1">Área máx</label>
+                <InputArea placeholder="999 m²" value={areaMax} onChange={(v) => handleAreaChange(v, setAreaMax)} />
+              </div>
+
+              {/* Ações */}
+              <div className="flex gap-2 items-end ml-2">
+                <button
+                  onClick={handleAplicarFiltros}
+                  className="px-4 py-2 text-sm bg-black text-white hover:bg-gray-800 focus:outline-none whitespace-nowrap flex-shrink-0 border border-black"
+                >
+                  Aplicar
+                </button>
+                <button
+                  onClick={handleLimparFiltros}
+                  className="px-4 py-2 text-sm bg-gray-100 text-black hover:bg-gray-200 focus:outline-none whitespace-nowrap flex-shrink-0 border border-gray-300"
+                >
+                  Limpar
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  );
+    );
+  }
 
   /* =========================
-     Mobile / padrão (off-canvas)
+     Mobile / padrão (off-canvas com fallback inline)
   ========================= */
   return (
-    <div id="pf-root">
-      {/* Desktop bar (oculta em mobile) */}
-      <div className="hidden md:block">{DesktopBar}</div>
+    <>
+      {/* BOTÃO FLUTUANTE para abrir os filtros quando controlado e fechado */}
+      {isClient && isMobile && isControlled && !visible && (
+        <button
+          type="button"
+          onClick={() => setIsVisible(true)}
+          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[9997] bg-black text-white px-5 py-3 rounded-full shadow-lg text-sm font-semibold"
+          style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 12px)" }}
+        >
+          Abrir filtros
+        </button>
+      )}
 
-      {/* Backdrop */}
-      {isVisible && (
+      {/* Backdrop quando painel aberto */}
+      {isClient && isMobile && isControlled && visible && (
         <div
-          className="fixed inset-0 bg-black/60 z-[9998] md:hidden"
-          onClick={() => setIsVisible?.(false)}
+          className="fixed inset-0 bg-black/60 z-[9998]"
+          onClick={() => setIsVisible(false)}
           aria-hidden="true"
         />
       )}
 
-      {/* Off-canvas */}
+      {/* Painel */}
       <div
         className={[
-          "md:hidden fixed inset-x-0 bottom-0 z-[9999] max-h-[85vh] bg-white text-black rounded-t-2xl shadow-sm transition-transform duration-300",
-          isVisible ? "translate-y-0" : "translate-y-full",
+          "bg-white text-black rounded-t-2xl sm:rounded-lg shadow-sm w-full overflow-y-auto scrollbar-hide transition-transform duration-300",
+          isClient && isMobile
+            ? (isControlled
+                ? (visible
+                    ? "fixed inset-x-0 bottom-0 z-[9999] max-h-[85vh] translate-y-0"
+                    : "fixed inset-x-0 bottom-0 z-[9999] max-h-[85vh] translate-y-full")
+                : "relative") // fallback inline
+            : "relative"
         ].join(" ")}
-        style={{ WebkitOverflowScrolling: "touch" }}
-        role="dialog"
-        aria-modal="true"
+        style={{
+          display: !uiVisible ? "none" : "block",
+          paddingBottom:
+            isClient && isMobile && isControlled
+              ? "calc(env(safe-area-inset-bottom) + 88px)"
+              : undefined,
+        }}
+        role={isClient && isMobile && isControlled ? "dialog" : undefined}
+        aria-modal={isClient && isMobile && isControlled ? true : undefined}
       >
-        {/* Header sticky — respeita a altura do header da página */}
-        <div
-          className="sticky bg-white z-10 py-2 px-4 border-b"
-          style={{ top: headerOffset }}
-        >
-          <div className="flex items-center justify-between">
-            <h1 className="font-bold text-sm">Filtros Rápidos</h1>
-            <button
-              type="button"
-              onClick={() => setIsVisible?.(false)}
-              className="flex items-center justify-center bg-zinc-200 font-bold text-xs py-2 px-4 rounded-md hover:bg-gray-100"
-            >
-              Ver resultados
-            </button>
+        <div className="w-full p-4 sm:p-6">
+          {/* Header */}
+          <div className="flex justify-between items-center sticky top-0 bg-white z-10 py-2">
+            <h1 className="font-bold text-sm sm:text-base">Filtros Rápidos</h1>
+            {isClient && isMobile && isControlled && (
+              <button
+                onClick={() => setIsVisible(false)}
+                className="flex items-center justify-center bg-zinc-200 font-bold text-xs py-2 px-4 rounded-md hover:bg-gray-100"
+              >
+                Ver resultados
+              </button>
+            )}
           </div>
-        </div>
 
-        {/* Conteúdo scrollável */}
-        <div className="flex flex-col max-h-[calc(85vh-56px)]">
-          <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-3">
-            {/* Finalidade */}
-            <div className="my-1">
-              <span className="block text-[10px] font-semibold text-gray-800 mb-1 mt-2">
-                Finalidade
-              </span>
-              <select
-                className="w-full rounded-md border border-gray-300 bg-white text-xs p-2 focus:outline-none focus:ring-1 focus:ring-black"
-                value={finalidade === "Comprar" ? "comprar" : finalidade === "Alugar" ? "alugar" : ""}
-                onChange={handleFinalidadeChange}
-              >
-                <option value="">Selecione a finalidade</option>
-                <option value="comprar">Comprar</option>
-                <option value="alugar">Alugar</option>
-              </select>
+          {/* Finalidade */}
+          <div className="my-3 sm:my-4">
+            <span className="block text-[10px] font-semibold text-gray-800 mb-1 mt-2">
+              Finalidade
+            </span>
+            <select
+              className="w-full rounded-md border border-gray-300 bg-white text-xs p-2 focus:outline-none focus:ring-1 focus:ring-black"
+              value={finalidade === "Comprar" ? "comprar" : finalidade === "Alugar" ? "alugar" : ""}
+              onChange={handleFinalidadeChange}
+            >
+              <option value="">Selecione a finalidade</option>
+              <option value="comprar">Comprar</option>
+              <option value="alugar">Alugar</option>
+            </select>
 
-              {/* Tipo */}
-              <span className="block text-[10px] font-semibold text-gray-800 mb-1 mt-2">
-                Tipo de imóvel
-              </span>
-              <select
-                className="w-full rounded-md border border-gray-300 bg-white text-xs p-2 focus:outline-none focus:ring-1 focus:ring-black"
-                value={categoriaSelecionada}
-                onChange={handleCategoriaChange}
-              >
-                <option value="">Todos os imóveis</option>
-                {categorias.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
+            {/* Tipo */}
+            <span className="block text-[10px] font-semibold text-gray-800 mb-1 mt-2">
+              Tipo de imóvel
+            </span>
+            <select
+              className="w-full rounded-md border border-gray-300 bg-white text-xs p-2 focus:outline-none focus:ring-1 focus:ring-black"
+              value={categoriaSelecionada}
+              onChange={handleCategoriaChange}
+            >
+              <option value="">Todos os imóveis</option>
+              {categorias.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
 
-              {/* Cidade */}
-              <span className="block text-[10px] font-semibold text-gray-800 mb-1 mt-2">Cidade</span>
-              <select
-                className="w-full rounded-md border border-gray-300 bg-white text-xs p-2 focus:outline-none focus:ring-1 focus:ring-black"
-                value={cidadeSelecionada}
-                onChange={handleCidadeChange}
-              >
-                <option value="">Todas as cidades</option>
-                {cidades.map((c) => (
-                  <option className="text-xs" key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
+            {/* Cidade */}
+            <span className="block text-[10px] font-semibold text-gray-800 mb-1 mt-2">Cidade</span>
+            <select
+              className="w-full rounded-md border border-gray-300 bg-white text-xs p-2 focus:outline-none focus:ring-1 focus:ring-black"
+              value={cidadeSelecionada}
+              onChange={handleCidadeChange}
+            >
+              <option value="">Todas as cidades</option>
+              {cidades.map((c) => (
+                <option className="text-xs" key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
 
-              {/* Bairros (multi) */}
-              <div className="mt-2" ref={bairrosRef}>
-                <span className="block text-[10px] font-semibold text-gray-800 mb-1">Bairros</span>
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder={
-                      bairrosSelecionados.length > 0
-                        ? bairrosSelecionados.length === 1
-                          ? bairrosSelecionados[0]
-                          : bairrosSelecionados.length <= 2
-                            ? bairrosSelecionados.join(", ")
-                            : `${bairrosSelecionados[0]}, +${bairrosSelecionados.length - 1}`
-                        : "Selecionar bairros"
-                    }
-                    value={bairroFilter}
-                    onChange={(e) => setBairroFilter(e.target.value)}
-                    className="w-full rounded-md border border-gray-300 bg-white text-xs p-2 focus:outline-none focus:ring-1 focus:ring-black mb-1"
-                    onClick={() => setBairrosExpanded(true)}
-                    disabled={!cidadeSelecionada}
-                  />
+            {/* Bairros (multi) */}
+            <div className="mt-2" ref={bairrosRef}>
+              <span className="block text-[10px] font-semibold text-gray-800 mb-1">Bairros</span>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder={
+                    bairrosSelecionados.length > 0
+                      ? bairrosSelecionados.length === 1
+                        ? bairrosSelecionados[0]
+                        : bairrosSelecionados.length <= 2
+                          ? bairrosSelecionados.join(", ")
+                          : `${bairrosSelecionados[0]}, +${bairrosSelecionados.length - 1}`
+                      : "Selecionar bairros"
+                  }
+                  value={bairroFilter}
+                  onChange={(e) => setBairroFilter(e.target.value)}
+                  className="w-full rounded-md border border-gray-300 bg-white text-xs p-2 focus:outline-none focus:ring-1 focus:ring-black mb-1"
+                  onClick={() => setBairrosExpanded(true)}
+                  disabled={!cidadeSelecionada}
+                />
 
-                  {bairrosSelecionados.length > 0 && (
-                    <div className="absolute right-2 top-1/2 -translate-y-1/2 bg-black text-white text-[10px] rounded-full w-5 h-5 grid place-items-center">
-                      {bairrosSelecionados.length}
+                {bairrosSelecionados.length > 0 && (
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 bg-black text-white text-[10px] rounded-full w-5 h-5 grid place-items-center">
+                    {bairrosSelecionados.length}
+                  </div>
+                )}
+
+                <div
+                  className={`mt-1 border border-gray-200 rounded-md bg-white max-h-40 overflow-y-auto ${
+                    !cidadeSelecionada || !bairrosExpanded ? "hidden" : ""
+                  }`}
+                >
+                  {bairrosFiltrados.length > 0 && (
+                    <div className="flex justify-between border-b border-gray-100 px-2 py-1 sticky top-0 bg-white">
+                      <button
+                        onClick={() => setBairrosSelecionados(bairrosFiltrados)}
+                        className="text-[10px] text-black hover:underline"
+                      >
+                        Selecionar todos
+                      </button>
+                      <button
+                        onClick={() => setBairrosSelecionados([])}
+                        className="text-[10px] text-black hover:underline"
+                      >
+                        Limpar todos
+                      </button>
                     </div>
                   )}
 
-                  <div
-                    className={`mt-1 border border-gray-200 rounded-md bg-white max-h-40 overflow-y-auto ${
-                      !cidadeSelecionada || !bairrosExpanded ? "hidden" : ""
-                    }`}
-                  >
-                    {bairrosFiltrados.length > 0 && (
-                      <div className="flex justify-between border-b border-gray-100 px-2 py-1 sticky top-0 bg-white">
-                        <button
-                          type="button"
-                          onClick={() => setBairrosSelecionados(bairrosFiltrados)}
-                          className="text-[10px] text-black hover:underline"
-                        >
-                          Selecionar todos
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setBairrosSelecionados([])}
-                          className="text-[10px] text-black hover:underline"
-                        >
-                          Limpar todos
-                        </button>
-                      </div>
-                    )}
-
-                    {bairrosFiltrados.length ? (
-                      bairrosFiltrados.map((b) => (
-                        <label
-                          key={b}
-                          className={`flex items-center px-2 py-1 hover:bg-gray-50 cursor-pointer ${
-                            bairrosSelecionados.includes(b) ? "bg-gray-100" : ""
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            className="mr-2 h-4 w-4"
-                            checked={bairrosSelecionados.includes(b)}
-                            onChange={() => handleBairroChange(b)}
-                          />
-                          <span className={`text-xs flex-1 ${bairrosSelecionados.includes(b) ? "font-semibold" : ""}`}>
-                            {b}
-                          </span>
-                          {bairrosSelecionados.includes(b) && <span className="text-green-600 text-sm">✓</span>}
-                        </label>
-                      ))
-                    ) : (
-                      <div className="px-2 py-1 text-xs text-gray-500">
-                        {bairroFilter ? "Nenhum bairro encontrado" : "Selecione uma cidade primeiro"}
-                      </div>
-                    )}
-                  </div>
-
-                  {bairrosExpanded && (
-                    <button
-                      type="button"
-                      onClick={() => setBairrosExpanded(false)}
-                      className="text-xs text-black bg-gray-100 w-full py-1 rounded-b-md"
-                    >
-                      Fechar
-                    </button>
+                  {bairrosFiltrados.length ? (
+                    bairrosFiltrados.map((b) => (
+                      <label
+                        key={b}
+                        className={`flex items-center px-2 py-1 hover:bg-gray-50 cursor-pointer ${
+                          bairrosSelecionados.includes(b) ? "bg-gray-100" : ""
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          className="mr-2 h-4 w-4"
+                          checked={bairrosSelecionados.includes(b)}
+                          onChange={() => handleBairroChange(b)}
+                        />
+                        <span className={`text-xs flex-1 ${bairrosSelecionados.includes(b) ? "font-semibold" : ""}`}>
+                          {b}
+                        </span>
+                        {bairrosSelecionados.includes(b) && <span className="text-green-600 text-sm">✓</span>}
+                      </label>
+                    ))
+                  ) : (
+                    <div className="px-2 py-1 text-xs text-gray-500">
+                      {bairroFilter ? "Nenhum bairro encontrado" : "Selecione uma cidade primeiro"}
+                    </div>
                   )}
                 </div>
 
-                {bairrosSelecionados.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    {bairrosSelecionados.map((b) => (
-                      <span key={b} className="bg-gray-100 rounded-full px-2 py-1 text-[10px] flex items-center">
-                        {b}
-                        <button type="button" onClick={() => handleBairroChange(b)} className="ml-1 text-gray-500 hover:text-black">
-                          ×
-                        </button>
-                      </span>
-                    ))}
-                  </div>
+                {bairrosExpanded && (
+                  <button
+                    onClick={() => setBairrosExpanded(false)}
+                    className="text-xs text-black bg-gray-100 w-full py-1 rounded-b-md"
+                  >
+                    Fechar
+                  </button>
                 )}
               </div>
-            </div>
 
-            <Separator />
-
-            <OptionGroup label="Quartos" options={[1, 2, 3, "4+"]} selectedValue={quartosSelecionados} onChange={setQuartosSelecionados} />
-            <OptionGroup label="Vagas" options={[1, 2, 3, "4+"]} selectedValue={vagasSelecionadas} onChange={setVagasSelecionadas} />
-
-            <Separator />
-
-            <div className="mb-2">
-              <span className="block text-[10px] font-semibold text-gray-800 mb-2">Preço</span>
-              <div className="flex gap-2">
-                <InputPreco placeholder="R$ 10.000" value={precoMin} onChange={(v) => handlePrecoChange(v, setPrecoMin)} />
-                <InputPreco placeholder="R$ 70.000.000" value={precoMax} onChange={(v) => handlePrecoChange(v, setPrecoMax)} />
-              </div>
-            </div>
-
-            <Separator />
-
-            <div className="mb-2">
-              <span className="block text-[10px] font-semibold text-gray-800 mb-2">Área do imóvel</span>
-              <div className="flex gap-2">
-                <InputArea placeholder="0 m²" value={areaMin} onChange={(v) => handleAreaChange(v, setAreaMin)} />
-                <InputArea placeholder="999 m²" value={areaMax} onChange={(v) => handleAreaChange(v, setAreaMax)} />
-              </div>
+              {bairrosSelecionados.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {bairrosSelecionados.map((b) => (
+                    <span key={b} className="bg-gray-100 rounded-full px-2 py-1 text-[10px] flex items-center">
+                      {b}
+                      <button onClick={() => handleBairroChange(b)} className="ml-1 text-gray-500 hover:text-black">
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Barra de ações sticky */}
-          <div className="sticky bottom-0 bg-white border-t border-gray-200 z-10 px-4 py-3 shadow-[0_-4px_12px_rgba(0,0,0,0.06)]">
+          <Separator />
+
+          <OptionGroup label="Quartos" options={opcoes} selectedValue={quartosSelecionados} onChange={setQuartosSelecionados} />
+          {/* <OptionGroup label="Banheiros" options={opcoes} selectedValue={banheirosSelecionados} onChange={setBanheirosSelecionados} /> */}
+          <OptionGroup label="Vagas" options={opcoes} selectedValue={vagasSelecionadas} onChange={setVagasSelecionadas} />
+
+          <Separator />
+
+          <div className="mb-4">
+            <span className="block text-[10px] font-semibold text-gray-800 mb-2">Preço</span>
+            <div className="flex gap-2">
+              <InputPreco placeholder="R$ 65.000" value={precoMin} onChange={(v) => handlePrecoChange(v, setPrecoMin)} />
+              <InputPreco placeholder="R$ 65.000.000" value={precoMax} onChange={(v) => handlePrecoChange(v, setPrecoMax)} />
+            </div>
+          </div>
+
+          <Separator />
+
+          <div className="mb-4">
+            <span className="block text-[10px] font-semibold text-gray-800 mb-2">Área do imóvel</span>
+            <div className="flex gap-2">
+              <InputArea placeholder="0 m²" value={areaMin} onChange={(v) => handleAreaChange(v, setAreaMin)} />
+              <InputArea placeholder="999 m²" value={areaMax} onChange={(v) => handleAreaChange(v, setAreaMax)} />
+            </div>
+          </div>
+
+          <div
+            className={
+              isClient && isMobile && isControlled
+                ? "fixed bottom-0 left-0 right-0 w-full px-4 py-4 bg-white border-t border-gray-200 shadow-lg z-[9999]"
+                : "sticky bottom-0 bg-white pt-3 pb-1 z-10"
+            }
+            style={{
+              paddingBottom: isClient && isMobile && isControlled ? "calc(env(safe-area-inset-bottom) + 16px)" : undefined,
+            }}
+          >
             <button
-              type="button"
               onClick={handleAplicarFiltros}
-              className="w-full bg-black text-white px-4 py-3 rounded-md mb-2 text-xs"
+              className="w-full bg-black shadow-md text-white px-4 py-3 rounded-md mb-2 text-xs sm:text-sm"
             >
               Aplicar Filtros
             </button>
             <button
-              type="button"
               onClick={handleLimparFiltros}
-              className="w-full bg-zinc-300/80 text-black px-4 py-3 rounded-md text-xs"
+              className="w-full bg-zinc-300/80 shadow-md text-black px-4 py-3 rounded-md text-xs sm:text-sm"
             >
               Limpar
             </button>
           </div>
         </div>
       </div>
-
-      {/* FAB - Abrir filtros (mobile) */}
-      {!isVisible && (
-        <button
-          type="button"
-          onClick={() => setIsVisible?.(true)}
-          className="md:hidden fixed left-1/2 -translate-x-1/2 z-[9996] rounded-full bg-black text-white px-5 py-3 shadow-lg"
-          style={{ bottom: "calc(env(safe-area-inset-bottom) + 24px)" }}
-          aria-label="Abrir filtros"
-        >
-          Abrir filtros
-        </button>
-      )}
-
-      {/* Styles globais mínimos e seguros */}
-      <style jsx global>{`
-        @media (max-width: 767px) {
-          html, body {
-            overflow-x: hidden;
-            overscroll-behavior-x: none;
-            touch-action: pan-y;
-          }
-          .leaflet-container {
-            touch-action: auto !important;
-          }
-        }
-      `}</style>
-    </div>
+    </>
   );
 }
