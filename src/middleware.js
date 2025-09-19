@@ -1,684 +1,999 @@
-// middleware.js - VERSÃO CORRIGIDA: Imóveis Vendidos OK | Condomínios OK | Deletados → HOME + CORREÇÕES GSC
-import { NextResponse } from "next/server";
-import { getCityValidSlugsSync, converterSlugCidadeSync } from "@/app/utils/url-slugs";
+"use client";
 
-export async function middleware(request) {
-  const url = request.nextUrl.clone();
-  const { pathname, origin, searchParams } = url;
-  const userAgent = request.headers.get('user-agent') || '';
+import { useEffect, useState, useRef, useCallback } from "react";
+import useFiltersStore from "@/app/store/filtrosStore";
+import { getImoveisByFilters, getBairrosPorCidade } from "@/app/services";
 
-  console.log(`🔍 [MIDDLEWARE] =================== INÍCIO ===================`);
-  console.log(`🔍 [MIDDLEWARE] Processando: ${pathname}`);
-  
-  // 🚨 DEBUG: Log específico para iConatusIframe
-  if (pathname.includes('iConatusIframe')) {
-    console.log(`🚨 [DEBUG-IFRAME] Detectado iConatusIframe: ${pathname}`);
-  }
-  
-  // 🚨 RASTREAMENTO DETALHADO: URLs problemáticas específicas do CSV
-  const urlsProblematicas = [
-    'imovel-106524/facebook.com/npiimoveis',
-    'imovel-1685/facebook.com/npiimoveis', 
-    'imovel-4879/facebook.com/npiimoveis',
-    'imovel-106337/instagram.com/npi_imoveis',
-    'imovel-106939/indexdata/index.swf'
-  ];
-  
-  const isUrlProblematica = urlsProblematicas.some(url => pathname.includes(url));
-  if (isUrlProblematica) {
-    console.log(`🚨🚨🚨 [MIDDLEWARE] URL PROBLEMÁTICA DETECTADA: ${pathname}`);
-    console.log(`🚨🚨🚨 [MIDDLEWARE] User-Agent: ${userAgent.substring(0, 100)}`);
-    console.log(`🚨🚨🚨 [MIDDLEWARE] Is GoogleBot: ${isGoogleBot}`);
-    console.log(`🚨🚨🚨 [MIDDLEWARE] Referer: ${request.headers.get('referer') || 'N/A'}`);
-  }
-
-  // 🚨 REDIRECTS VERCEL.JSON → MIDDLEWARE (resolver conflito com noindex)
-  const REDIRECTS_MAP = {
-    '/maison-dor-cobertura-em-moema': '/maison-dor-moema',
-    '/rua-bela-cintra-2060': '/edificio-uirapuru-bela-cintra-2060',
-    '/rua-luiz-galhanone-528': '/residencial-reserva-do-visconde',
-    '/edificio-ritz-vila-nova-conceicao-cobertura': '/condominio-ritz-vila-nova',
-    '/ritz-vila-nova': '/condominio-ritz-vila-nova',
-    '/maison-jolie-jardins': '/condominio-edificio-maison-jolie',
-    '/rua-cacapava-83': '/taormina-jardim-america',
-    '//rua-lopes-neto-56': '/royal-palace-itaim-bibi',
-    '/sierra-branca-moema-ibijau-229': '/sierra-blanca-moema',
-    '/rua-gabriele-dannunzio-183': '/condominio-authentique-campo-belo',
-    '/rua-clodomiro-amazonas-1256': '/condominio-san-juan',
-    '/condominio-metropolitan': '/metropolitan-ibirapuera',
-    '/avenida-antonio-joaquim-de-moura-andrade-597': '/edificio-maison-adriana',
-    '/gran-ville-guaruja': '/condominio-granville-enseada',
-    '/avenida-marjory-da-silva-prado-2605': '/jardim-pernambuco-ii',
-    '/casas-a-venda-no-condominio-granville-guaruja': '/condominio-granville-enseada',
-    '/condominio-granville': '/condominio-granville-enseada',
-    '/casas-a-venda-na-peninsula-guaruja': '/condominio-peninsula-guaruja-enseada',
-    '/avenida-amarilis-50': '/amarilis-50-cidade-jardim',
-    '/rua-pedroso-alvarenga-121': '/residencial-piata',
-    '/alameda-ministro-rocha-azevedo-1368': '/edificio-guararapes-jardim-america',
-    '/edificio-michelangelo': '/edificio-michelangelo-moema',
-    '/edificio-isaura': '/edificio-isaura-pinheiros-sao-paulo',
-    '/rua-cristiano-viana-1211': '/4x4-pinheiros',
-    '/condominio-edificio-villa-adriana': '/edificio-villa-adriana',
-    '/avenida-jamaris-603': '/edificio-michelangelo',
-    '/east-blue': '/east-blue-residences-tatuape',
-    '/casas-em-condominio-gramado': '/casa-punta-gramado-rs',
-    '/e-side-vila-madalena-rua-girassol1280': '/e-side-vila-madalena',
-    '/edificio-itanhanga-santana': '/condominio-itanhanga',
-    '/residencial-azul': '/azul-idea-zarvos',
-    '/the-frame-vila-nova': '/the-frame-vila-nova-conceicao',
-    '/ibi-ara': '/condominio-ibi-aram',
-    '/residencial-jequitibas': '/condominio-portal-do-jequitiba-valinhos',
-    '/condominio-campo-de-toscana-vinhedo-enderecobarao-de-iguatemi': '/residencial-campo-de-toscana-vinhedo',
-    '/barao-de-iguatemi': '/edificio-barao-de-iguatemi',
-    '/residencial-platinum': '/platinum-morumbi',
-    '/residencial-malaga': '/malaga-analia-franco',
-    '/edificio-tiffany': '/tiffany-analia-franco',
-    '/medplex': '/thera-ibirapuera-by-yoo',
-    '/residencial-montblanc': '/montblanc-tatuape',
-    '/empreendimento-praca-henrique-monteiro': '/praca-henrique-monteiro',
-    '/j-h-s-f-fasano-residences-cidade-jardim': '/fasano-cidade-jardim',
-    '/rua-sebastiao-cardoso-168': '/condominio-santorini-residencial-club',
-    '/condominio-residencial-santorini': '/condominio-santorini-residencial-club',
-    '/rua-verbo-divino-1061': '/reserva-granja-julieta',
-    '/grand-habitarte-brooklin': '/grand-habitarte',
-    '/habitarte-2-brooklin': '/habitarte-2',
-    '/one-sixty-vila-olimpia': '/one-sixty',
-    '/one-sixty-cyrela-by-yoo': '/one-sixty',
-    '/acapulco-guaruja-condominio': '/condominio-jardim-acapulco',
-    '/casa-a-venda-condominio-acapulco': '/condominio-jardim-acapulco',
-    '/casa-a-venda-jardim-acapulco-guaruja': '/condominio-jardim-acapulco',
-    '/residencial-acapulco-guaruja': '/condominio-jardim-acapulco',
-    // Adicionar versões com trailing slash
-    '/maison-dor-cobertura-em-moema/': '/maison-dor-moema',
-    '/condominio-edificio-villa-adriana/': '/edificio-villa-adriana',
-    '/avenida-jamaris-603/': '/edificio-michelangelo',
-    '/east-blue/': '/east-blue-residences-tatuape',
-    '/casas-em-condominio-gramado/': '/casa-punta-gramado-rs',
-    '/e-side-vila-madalena-rua-girassol1280/': '/e-side-vila-madalena',
-    '/edificio-itanhanga-santana/': '/condominio-itanhanga',
-    '/residencial-azul/': '/azul-idea-zarvos',
-    '/the-frame-vila-nova/': '/the-frame-vila-nova-conceicao',
-    '/ibi-ara/': '/condominio-ibi-aram',
-    '/residencial-jequitibas/': '/condominio-portal-do-jequitiba-valinhos',
-    '/condominio-campo-de-toscana-vinhedo-enderecobarao-de-iguatemi/': '/residencial-campo-de-toscana-vinhedo',
-    '/barao-de-iguatemi/': '/edificio-barao-de-iguatemi',
-    '/residencial-platinum/': '/platinum-morumbi',
-    '/residencial-malaga/': '/malaga-analia-franco',
-    '/edificio-tiffany/': '/tiffany-analia-franco',
-    '/medplex/': '/thera-ibirapuera-by-yoo',
-    '/residencial-montblanc/': '/montblanc-tatuape',
-    '/empreendimento-praca-henrique-monteiro/': '/praca-henrique-monteiro',
-    '/j-h-s-f-fasano-residences-cidade-jardim/': '/fasano-cidade-jardim',
-    '/rua-sebastiao-cardoso-168/': '/condominio-santorini-residencial-club',
-    '/condominio-residencial-santorini/': '/condominio-santorini-residencial-club',
-    '/rua-verbo-divino-1061/': '/reserva-granja-julieta',
-    '/grand-habitarte-brooklin/': '/grand-habitarte',
-    '/habitarte-2-brooklin/': '/habitarte-2',
-    '/one-sixty-vila-olimpia/': '/one-sixty',
-    '/one-sixty-cyrela-by-yoo/': '/one-sixty',
-    '/acapulco-guaruja-condominio/': '/condominio-jardim-acapulco',
-    '/casa-a-venda-condominio-acapulco/': '/condominio-jardim-acapulco',
-    '/casa-a-venda-jardim-acapulco-guaruja/': '/condominio-jardim-acapulco',
-    '/residencial-acapulco-guaruja/': '/condominio-jardim-acapulco',
-    '/essencia-gonzaga/': '/pw36-gonzaga',
-  };
-
-  // Verificar se pathname está no mapa de redirects
-  if (REDIRECTS_MAP[pathname]) {
-    const destination = REDIRECTS_MAP[pathname];
-    console.log(`🔍 [MIDDLEWARE] 🔄 REDIRECT VERCEL: ${pathname} → ${destination}`);
-    return NextResponse.redirect(new URL(destination, origin), 301);
-  }
-
-  // 🚨 REDIRECTS PÁGINAS INSTITUCIONAIS (resolver noindex)
-  const INSTITUTIONAL_REDIRECTS = {
-    '/nossos-servicos': '/sobre/nossos-servicos',
-    '/nossos-servicos/': '/sobre/nossos-servicos',
-    '/trabalhe-conosco': '/sobre',
-    '/trabalhe-conosco/': '/sobre',
-    '/nossas-vantagens': '/sobre',
-    '/nossas-vantagens/': '/sobre',
-  };
-
-  if (INSTITUTIONAL_REDIRECTS[pathname]) {
-    const destination = INSTITUTIONAL_REDIRECTS[pathname];
-    console.log(`🔍 [MIDDLEWARE] 🔄 REDIRECT INSTITUCIONAL: ${pathname} → ${destination}`);
-    return NextResponse.redirect(new URL(destination, origin), 301);
-  }
-
-  // 🚨 CORREÇÃO GSC #1: DETECTAR GOOGLEBOT
-  const isGoogleBot = /googlebot|bingbot|slurp|duckduckbot/i.test(userAgent);
-
-  // 🚨 CORREÇÃO GSC #2: BLOQUEAR _RSC PARAMETERS (CRÍTICO)
-  if (searchParams.has('_rsc')) {
-    console.log('🚫 [GSC] Bloqueando _rsc parameter:', pathname);
-    
-    // Remove parâmetro _rsc e redireciona
-    searchParams.delete('_rsc');
-    url.search = searchParams.toString();
-    
-    return NextResponse.redirect(url, 301);
-  }
-
-  // 🚨 CORREÇÃO GSC #3: BLOQUEAR PARÂMETROS PROBLEMÁTICOS PARA BOTS
-  if (isGoogleBot) {
-    const problematicParams = ['utm_source', 'utm_medium', 'utm_campaign', 'fbclid', 'gclid', 'ref', 'v', 'cache', 't'];
-    let hasProblematicParams = false;
-    
-    problematicParams.forEach(param => {
-      if (searchParams.has(param)) {
-        searchParams.delete(param);
-        hasProblematicParams = true;
-      }
-    });
-    
-    if (hasProblematicParams) {
-      url.search = searchParams.toString();
-      console.log('🚫 [GSC] Removendo parâmetros problemáticos para bot:', pathname);
-      return NextResponse.redirect(url, 301);
-    }
-  }
-
-  // 🚨 CORREÇÃO GSC #4: BLOQUEAR PATHS PROBLEMÁTICOS PARA BOTS
-  const blockedPathsForBots = [
-    '/_next/static/chunks/',
-    '/_next/static/css/',
-    '/_next/static/js/',
-    '/_next/data/',
-    '/api/'
-  ];
-  
-  if (isGoogleBot && blockedPathsForBots.some(path => pathname.startsWith(path))) {
-    console.log('🚫 [GSC] Bloqueando path para bot:', pathname);
-    return new NextResponse(null, { status: 404 });
-  }
-
-  // 🚨 CORREÇÃO CANONICAL #4: URLs de busca malformadas
-  if (pathname === '/busca' || pathname === '/busca/') {
-    let hasCanonicalIssues = false;
-    const cleanParams = new URLSearchParams();
-    
-    // Limpar parâmetros duplicados e vazios
-    for (const [key, value] of searchParams) {
-      // Skip parâmetros vazios ou duplicados problemáticos
-      if (key === 'ordenar' && cleanParams.has('ordenar')) {
-        hasCanonicalIssues = true;
-        continue; // Skip ordenar duplicado
-      }
-      if (key === 'emp_cod_end' && !value) {
-        hasCanonicalIssues = true;  
-        continue; // Skip parâmetros vazios
-      }
-      if (key === 'finalidade' && !value) {
-        hasCanonicalIssues = true;
-        continue; // Skip finalidade vazia
-      }
-      if ((key === 'valor[0]' || key === 'valor[1]') && !value) {
-        hasCanonicalIssues = true;
-        continue; // Skip valores vazios
-      }
-      if ((key === 'area[0]' || key === 'area[1]') && !value) {
-        hasCanonicalIssues = true;
-        continue; // Skip áreas vazias
-      }
-      
-      // Manter parâmetros válidos
-      if (value || ['pagina', 'listagem'].includes(key)) {
-        cleanParams.set(key, value);
-      } else if (!value) {
-        hasCanonicalIssues = true;
-      }
-    }
-    
-    // Se há problemas canônicos, redirecionar para versão limpa
-    if (hasCanonicalIssues || pathname === '/busca/') {
-      const cleanUrl = new URL('/busca', origin);
-      cleanParams.forEach((value, key) => {
-        cleanUrl.searchParams.set(key, value);
-      });
-      
-      console.log(`🚨 [CANONICAL-FIX] Busca malformada: ${pathname}${url.search} → ${cleanUrl.pathname}${cleanUrl.search}`);
-      return NextResponse.redirect(cleanUrl, 301);
-    }
-  }
-
-  /* 
-  🎯 ESTRATÉGIA SEO OTIMIZADA (MANTIDA):
-  
-  1. IMÓVEIS VENDIDOS → Páginas funcionam NORMALMENTE (não redirecionar!)
-  2. CONDOMÍNIOS → Páginas funcionam NORMALMENTE (/slug-condominio)
-  3. IMÓVEIS DELETADOS (não existem no banco) → Redirect 301 para HOME
-  4. URLs MALFORMADAS → HOME 
-  5. URLs SEO INVÁLIDAS → HOME
-  6. TRAILING SLASHES → Versão sem trailing slash
-  
-  ⚠️ IMPORTANTE: 
-  - Só redirecionar quando imóvel NÃO EXISTE no banco!
-  - Permitir páginas de condomínio (pattern: /slug-nome)
-  */
-
-  // 🚨 MELHORIA: URLs com caracteres especiais ou malformadas → HOME
-  try {
-    // Teste se a URL é válida
-    decodeURIComponent(pathname);
-  } catch (error) {
-    console.log(`🔍 [MIDDLEWARE] 🏠 URL malformada → HOME: ${pathname}`);
-    return NextResponse.redirect(new URL('/', origin), 301);
-  }
-
-  // 🚨 CORREÇÃO GSC: TRATAMENTO UNIFICADO DE IMÓVEIS (elimina cascata de redirects)
-  
-  // ✅ PATTERN 1: /imovel/ID/slug → /imovel-ID/slug (formato incorreto)
-  const formatoErradoMatch = pathname.match(/^\/imovel\/(\d+)\/(.+)$/);
-  if (formatoErradoMatch) {
-    const [, id, slug] = formatoErradoMatch;
-    const formatoCorreto = `/imovel-${id}/${slug}`;
-    console.log(`🔍 [MIDDLEWARE] ❌ Formato incorreto: ${pathname} → ${formatoCorreto}`);
-    return NextResponse.redirect(new URL(formatoCorreto, origin), 301);
-  }
-  
-  // ✅ PATTERN 2: /imovel/ID (sem slug, formato incorreto) → /imovel-ID/slug
-  const formatoErradoSemSlugMatch = pathname.match(/^\/imovel\/(\d+)$/);
-  if (formatoErradoSemSlugMatch) {
-    const id = formatoErradoSemSlugMatch[1];
-    console.log(`🔍 [MIDDLEWARE] ❌ Formato incorreto sem slug: ${pathname}`);
-    // Redirect para versão correta sem slug (será tratado abaixo)
-    return NextResponse.redirect(new URL(`/imovel-${id}`, origin), 301);
-  }
-
-  // ✅ PATTERN 3: /imovel-ID/slug/ → /imovel-ID/slug (trailing slash)
-  const imovelComSlugTrailingMatch = pathname.match(/^\/imovel-(\d+)\/(.+)\/$/);
-  if (imovelComSlugTrailingMatch) {
-    const [, id, slug] = imovelComSlugTrailingMatch;
-    const semTrailingSlash = `/imovel-${id}/${slug}`;
-    console.log(`🔍 [MIDDLEWARE] 🚨 TRAILING SLASH: ${pathname} → ${semTrailingSlash}`);
-    return NextResponse.redirect(new URL(semTrailingSlash, origin), 301);
-  }
-
-  // ✅ PATTERN 4: /imovel-ID/ → /imovel-ID (trailing slash sem slug)
-  const imovelSemSlugTrailingMatch = pathname.match(/^\/imovel-(\d+)\/$/);
-  if (imovelSemSlugTrailingMatch) {
-    const id = imovelSemSlugTrailingMatch[1];
-    const semTrailingSlash = `/imovel-${id}`;
-    console.log(`🔍 [MIDDLEWARE] 🚨 TRAILING SLASH: ${pathname} → ${semTrailingSlash}`);
-    return NextResponse.redirect(new URL(semTrailingSlash, origin), 301);
-  }
-
-  // ✅ PATTERN 5: URLs 404 de redes sociais (problema histórico GSC) → redirect para imóvel
-  const urlRedeSocialMatch = pathname.match(/^\/imovel-(\d+)\/(facebook\.com\/npiimoveis|instagram\.com\/npi_imoveis|indexdata\/index\.swf)$/);
-  if (urlRedeSocialMatch) {
-    const id = urlRedeSocialMatch[1];
-    console.log(`🔍 [MIDDLEWARE] 🚨 URL rede social 404 (GSC): ${pathname} → /imovel-${id}`);
-    
-    // Redirect para página do imóvel (sem slug) - será tratado pelo pattern seguinte
-    return NextResponse.redirect(new URL(`/imovel-${id}`, origin), 301);
-  }
-
-  // ✅ PATTERN 6: /imovel-ID (sem slug) → buscar slug na API
-  const imovelSemSlugMatch = pathname.match(/^\/imovel-(\d+)$/);
-  if (imovelSemSlugMatch) {
-    const id = imovelSemSlugMatch[1];
-    console.log(`🔍 [MIDDLEWARE] 🔧 Imóvel sem slug: ${pathname}`);
-    
-    try {
-      const apiUrl = new URL(`/api/imoveis/${id}`, origin);
-      const response = await fetch(apiUrl, {
-        headers: { 'Content-Type': 'application/json' },
-        signal: AbortSignal.timeout(5000),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const imovel = data.data;
-        
-        // 🚨 CORREÇÃO GSC: Validar slug antes de redirecionar
-        const slugsInvalidos = [
-          'facebook.com/npiimoveis',
-          'instagram.com/npi_imoveis', 
-          'indexdata/index.swf'
-        ];
-        
-        if (imovel?.Slug && !slugsInvalidos.includes(imovel.Slug)) {
-          const finalUrl = `/imovel-${id}/${imovel.Slug}`;
-          console.log(`🔍 [MIDDLEWARE] ✅ Redirect para slug válido: ${pathname} → ${finalUrl}`);
-          return NextResponse.redirect(new URL(finalUrl, origin), 301);
-        } else if (imovel?.Slug && slugsInvalidos.includes(imovel.Slug)) {
-          console.log(`🚨 [MIDDLEWARE] ❌ Slug inválido detectado: ${imovel.Slug} → NÃO redirecionando`);
-          // Deixa a URL sem slug (/imovel-1234) e continua processamento
-        } else if (imovel?.Empreendimento) {
-          const slugGerado = imovel.Empreendimento
-            .toLowerCase()
-            .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
-            .replace(/[^a-z0-9\s-]/g, '')
-            .replace(/\s+/g, '-')
-            .replace(/-+/g, '-')
-            .replace(/^-|-$/g, '') || `imovel-${id}`;
-          
-          const finalUrl = `/imovel-${id}/${slugGerado}`;
-          console.log(`🔍 [MIDDLEWARE] ✅ Redirect slug gerado: ${pathname} → ${finalUrl}`);
-          return NextResponse.redirect(new URL(finalUrl, origin), 301);
-        } else if (imovel) {
-          // 🎯 NOVO: Se imóvel existe mas sem slug, redirecionar para HOME
-          console.log(`🔍 [MIDDLEWARE] 🏠 Imóvel sem slug → HOME: ${pathname}`);
-          return NextResponse.redirect(new URL('/', origin), 301);
-        }
-      }
-    } catch (error) {
-      console.error('🔍 [MIDDLEWARE] ❌ Erro API:', error.message);
-    }
-    
-    // 🎯 SOLUÇÃO UNIVERSAL: Se imóvel não existe → BUSCA RELEVANTE
-    console.log(`🔍 [MIDDLEWARE] 🔍 Imóvel não encontrado → BUSCA RELEVANTE: ${pathname}`);
-    return NextResponse.redirect(new URL('/busca', origin), 301);
-  }
-
-  // ✅ OUTRAS URLs COM TRAILING SLASH (não imóveis) 
-  if (pathname.endsWith('/') && pathname.length > 1 && !pathname.startsWith('/imovel')) {
-    const withoutTrailingSlash = pathname.slice(0, -1);
-    console.log(`🔍 [MIDDLEWARE] 🚨 TRAILING SLASH (geral): ${pathname} → ${withoutTrailingSlash}`);
-    
-    const redirectUrl = new URL(withoutTrailingSlash, origin);
-    url.searchParams.forEach((value, key) => {
-      redirectUrl.searchParams.set(key, value);
-    });
-    
-    return NextResponse.redirect(redirectUrl, 301);
-  }
-
-  // ✅ URLs SEO-FRIENDLY: /buscar/finalidade/categoria/cidade
-  const seoMatch = pathname.match(/^\/buscar\/([^\/]+)\/([^\/]+)\/([^\/]+)(.*)$/);
-  if (seoMatch) {
-    const [, finalidade, categoria, cidade, restPath] = seoMatch;
-    
-    const cidadesValidas = getCityValidSlugsSync();
-    const finalidadesValidas = ['compra', 'venda', 'aluguel'];
-    const categoriasValidas = [
-      'apartamentos', 'casas', 'casas-comerciais', 'casas-em-condominio', 
-      'coberturas', 'flats', 'gardens', 'lofts', 'lojas', 
-      'predios-comerciais', 'salas-comerciais', 'sobrados', 'terrenos'
-    ];
-    
-    if (cidadesValidas.includes(cidade) && finalidadesValidas.includes(finalidade) && categoriasValidas.includes(categoria)) {
-      console.log(`🔍 [MIDDLEWARE] ✅ URL SEO-friendly: /buscar/${finalidade}/${categoria}/${cidade}${restPath}`);
-      
-      const parametrosUrl = { finalidade, categoria, cidade };
-      
-      if (restPath && restPath.length > 1) {
-        const params = restPath.substring(1).split('/').filter(p => p.length > 0);
-        params.forEach((param, index) => {
-          if (param.includes('+')) {
-            parametrosUrl.bairros = param;
-          } else if (param.includes('-quarto')) {
-            parametrosUrl.quartos = param;
-          } else if (param.includes('mil') || param.includes('ate-') || param.includes('acima-')) {
-            parametrosUrl.preco = param;
-          } else if (index === 0 && !param.includes('-quarto') && !param.includes('mil')) {
-            parametrosUrl.bairros = param;
-          }
-        });
-      }
-      
-      const filtros = {
-        cidadeSelecionada: '', finalidade: '', categoriaSelecionada: '',
-        bairrosSelecionados: [], quartos: null, precoMin: null, precoMax: null
-      };
-
-      const MAPEAMENTO_CATEGORIAS = {
-        'apartamentos': 'Apartamento', 'casas': 'Casa', 'casas-comerciais': 'Casa Comercial',
-        'casas-em-condominio': 'Casa em Condominio', 'coberturas': 'Cobertura',
-        'flats': 'Flat', 'gardens': 'Garden', 'lofts': 'Loft', 'lojas': 'Loja',
-        'predios-comerciais': 'Prédio Comercial', 'salas-comerciais': 'Sala Comercial',
-        'sobrados': 'Sobrado', 'terrenos': 'Terreno'
-      };
-
-      const MAPEAMENTO_FINALIDADES = {
-        'compra': 'Comprar', 'venda': 'Comprar', 'locacao': 'Alugar', 'aluguel': 'Alugar',
-      };
-
-      filtros.cidadeSelecionada = converterSlugCidadeSync(parametrosUrl.cidade);
-      filtros.finalidade = MAPEAMENTO_FINALIDADES[parametrosUrl.finalidade] || parametrosUrl.finalidade;
-      filtros.categoriaSelecionada = MAPEAMENTO_CATEGORIAS[parametrosUrl.categoria] || parametrosUrl.categoria;
-
-      if (parametrosUrl.bairros) {
-        filtros.bairrosSelecionados = parametrosUrl.bairros.split('+').map(bairroSlug => {
-          return bairroSlug.split('-').map(palavra => palavra.charAt(0).toUpperCase() + palavra.slice(1)).join(' ');
-        });
-      }
-
-      if (parametrosUrl.quartos) {
-        if (parametrosUrl.quartos === '1-quarto') {
-          filtros.quartos = 1;
-        } else {
-          const match = parametrosUrl.quartos.match(/^(\d+)-quartos$/);
-          if (match) filtros.quartos = parseInt(match[1]);
-        }
-      }
-
-      if (parametrosUrl.preco) {
-        const converterValor = (valorStr) => {
-          if (valorStr.includes('mi')) return parseFloat(valorStr.replace('mi', '')) * 1000000;
-          if (valorStr.includes('mil')) return parseFloat(valorStr.replace('mil', '')) * 1000;
-          return parseFloat(valorStr);
-        };
-        
-        if (parametrosUrl.preco.startsWith('ate-')) {
-          filtros.precoMax = converterValor(parametrosUrl.preco.replace('ate-', ''));
-        } else if (parametrosUrl.preco.startsWith('acima-')) {
-          filtros.precoMin = converterValor(parametrosUrl.preco.replace('acima-', ''));
-        } else if (parametrosUrl.preco.includes('-')) {
-          const [minStr, maxStr] = parametrosUrl.preco.split('-');
-          filtros.precoMin = converterValor(minStr);
-          filtros.precoMax = converterValor(maxStr);
-        }
-      }
-      
-      const rewriteUrl = new URL('/busca', request.url);
-      if (filtros.cidadeSelecionada) rewriteUrl.searchParams.set('cidade', filtros.cidadeSelecionada);
-      if (filtros.finalidade) rewriteUrl.searchParams.set('finalidade', filtros.finalidade);
-      if (filtros.categoriaSelecionada) rewriteUrl.searchParams.set('categoria', filtros.categoriaSelecionada);
-      if (filtros.bairrosSelecionados?.length) rewriteUrl.searchParams.set('bairros', filtros.bairrosSelecionados.join(','));
-      if (filtros.quartos) rewriteUrl.searchParams.set('quartos', filtros.quartos.toString());
-      if (filtros.precoMin) rewriteUrl.searchParams.set('precoMin', filtros.precoMin.toString());
-      if (filtros.precoMax) rewriteUrl.searchParams.set('precoMax', filtros.precoMax.toString());
-      
-      console.log(`🔍 [MIDDLEWARE] ⚡ Rewrite: ${rewriteUrl.toString()}`);
-      return NextResponse.rewrite(rewriteUrl);
-    } else {
-      // 🎯 NOVA MELHORIA: URLs SEO inválidas → HOME
-      console.log(`🔍 [MIDDLEWARE] 🏠 URL SEO inválida → HOME: ${pathname}`);
-      return NextResponse.redirect(new URL('/', origin), 301);
-    }
-  }
-
-  // ✅ IMÓVEIS COM SLUG: Verificar se slug está correto
-  const imovelComSlugMatch = pathname.match(/^\/imovel-(\d+)\/(.+)$/);
-  if (imovelComSlugMatch) {
-    const [, id, currentSlug] = imovelComSlugMatch;
-    console.log(`🔍 [MIDDLEWARE] ✅ Imóvel com slug: ID=${id}, SLUG=${currentSlug}`);
-
-    try {
-      const apiUrl = new URL(`/api/imoveis/${id}`, origin);
-      const response = await fetch(apiUrl, {
-        headers: { 'Content-Type': 'application/json' },
-        signal: AbortSignal.timeout(5000),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const imovel = data.data;
-        
-        // Se imóvel NÃO EXISTE (deletado do banco) → REDIRECT HOME
-        if (!imovel) {
-          console.log(`🔍 [MIDDLEWARE] 🏠 Imóvel não existe → HOME: ${pathname}`);
-          return NextResponse.redirect(new URL('/', origin), 301);
-        }
-        
-        // ✅ IMÓVEL EXISTE (mesmo que vendido) → Continuar normal
-        
-        // 🚨 CORREÇÃO GSC: Se slug está desatualizado → validar antes de redirecionar
-        const slugsInvalidos = [
-          'facebook.com/npiimoveis',
-          'instagram.com/npi_imoveis', 
-          'indexdata/index.swf'
-        ];
-        
-        if (imovel.Slug && imovel.Slug !== currentSlug) {
-          if (!slugsInvalidos.includes(imovel.Slug)) {
-            const correctUrl = `/imovel-${id}/${imovel.Slug}`;
-            console.log(`🔍 [MIDDLEWARE] ✅ Slug antigo → válido: ${currentSlug} → ${imovel.Slug}`);
-            return NextResponse.redirect(new URL(correctUrl, origin), 301);
-          } else {
-            console.log(`🚨 [MIDDLEWARE] ❌ Slug inválido no banco: ${imovel.Slug} → redirecionando para sem slug`);
-            const urlSemSlug = `/imovel-${id}`;
-            return NextResponse.redirect(new URL(urlSemSlug, origin), 301);
-          }
-        }
-      } else {
-        // 🎯 SOLUÇÃO OTIMIZADA: API retornou erro → BUSCA RELEVANTE
-        console.log(`🔍 [MIDDLEWARE] 🔍 API erro (${response.status}) → BUSCA: ${pathname}`);
-        return NextResponse.redirect(new URL('/busca', origin), 301);
-      }
-    } catch (error) {
-      console.error('🔍 [MIDDLEWARE] ❌ Erro verificação:', error.message);
-      // 🎯 SOLUÇÃO OTIMIZADA: Erro na verificação → BUSCA RELEVANTE
-      console.log(`🔍 [MIDDLEWARE] 🔍 Erro técnico → BUSCA: ${pathname}`);
-      return NextResponse.redirect(new URL('/busca', origin), 301);
-    }
-    
-    // Se chegou aqui, imóvel existe e slug está correto → rewrite
-    console.log(`🔍 [MIDDLEWARE] 🔄 Rewrite: /imovel/${id}/${currentSlug}`);
-    const rewriteUrl = url.clone();
-    rewriteUrl.pathname = `/imovel/${id}/${currentSlug}`;
-    return NextResponse.rewrite(rewriteUrl);
-  }
-
-  // 🚨 CORREÇÃO CANONICAL #1: URLs de iframe legacy (PRIORIDADE ALTA)
-  const iframeLegacyMatch = pathname.match(/^\/(testeIframe|iConatusIframe)\/iframe\.php/);
-  if (iframeLegacyMatch) {
-    console.log(`🚨 [CANONICAL-FIX] Iframe legacy: ${pathname} → /busca`);
-    return NextResponse.redirect(new URL('/busca', origin), 301);
-  }
-  
-  // 🚨 CORREÇÃO CANONICAL #2: /imovel-/slug (ID ausente após hífen)
-  const imovelIDausenteMatch = pathname.match(/^\/imovel-\/(.+)$/);
-  if (imovelIDausenteMatch) {
-    console.log(`🚨 [CANONICAL-FIX] ID ausente após hífen: ${pathname} → /busca`);
-    return NextResponse.redirect(new URL('/busca', origin), 301);
-  }
-  
-  // 🚨 CORREÇÃO CANONICAL #3: URL malformada do Instagram 
-  if (pathname === '/instagram.com/npi_imoveis') {
-    console.log(`🚨 [CANONICAL-FIX] URL Instagram malformada: ${pathname} → https://instagram.com/npi_imoveis`);
-    return NextResponse.redirect('https://instagram.com/npi_imoveis', 301);
-  }
-  
-  // 🚨 DEBUG CANONICAL: Capturar URLs problemáticas /imovel/undefined/ 
-  const isProblematicoImovel = pathname.match(/^\/imovel\/(.*)$/);
-  if (isProblematicoImovel) {
-    const [, paramPath] = isProblematicoImovel;
-    console.log(`🚨🚨🚨 [DEBUG-CANONICAL] URL problemática detectada: ${pathname}`);
-    console.log(`🚨🚨🚨 [DEBUG-CANONICAL] Parâmetro: "${paramPath}"`);
-    console.log(`🚨🚨🚨 [DEBUG-CANONICAL] User-Agent: ${userAgent.slice(0, 50)}`);
-    console.log(`🚨🚨🚨 [DEBUG-CANONICAL] Referer: ${request.headers.get('referer') || 'N/A'}`);
-    
-    // Se não tem ID numérico, redirecionar para busca
-    if (!paramPath.match(/^\d+/) && paramPath !== 'undefined') {
-      console.log(`🚨 [DEBUG-CANONICAL] URL sem ID numérico válido → BUSCA`);
-      return NextResponse.redirect(new URL('/busca', origin), 301);
-    }
-  }
-
-  // ✅ PÁGINAS DE CONDOMÍNIO: /slug-condominio (sem ID)
-  // Padrão simples: apenas letras, números e hífens (sem barras)
-  const isCondominioPattern = pathname.match(/^\/[a-z0-9-]+$/);
-  
-  if (isCondominioPattern) {
-    console.log(`🔍 [MIDDLEWARE] 🏢 Condomínio permitido: ${pathname} → NEXT()`);
-    // Deixar passar para o Next.js resolver (página de condomínio ou 404 natural)
-    return NextResponse.next();
-  }
-
-  // 🎯 MELHORIA: Lista expandida de URLs válidas (páginas que realmente existem)
-  const urlsValidas = [
-    '/',
-    '/busca', 
-    '/sobre', 
-    '/contato', 
-    '/politica-de-privacidade', 
-    '/termos-de-uso',
-    '/venda-seu-imovel', 
-    '/sobre/hub-imobiliarias', 
-    '/sobre/npi-imoveis', 
-    '/sobre/nossos-servicos',
-    '/admin',
-    '/login',
-    '/cadastro',
-    '/recuperar-senha'
-  ];
-
-  // 🎯 MELHORIA: URLs que devem ser permitidas (patterns)
-  const padroesPemitidos = [
-    /^\/api\//,           // APIs
-    /^\/admin\//,         // Admin routes
-    /^\/_next\//,         // Next.js assets
-    /^\/favicon\./,       // Favicons
-    /^\/robots\.txt$/,    // Robots
-    /^\/sitemap/,         // Sitemaps
-    /^\/.*\.(ico|png|jpg|jpeg|gif|svg|css|js|woff|woff2|ttf|eot)$/  // Assets estáticos
-  ];
-
-  // Verificar se URL é válida por lista ou pattern
-  const urlPermitida = urlsValidas.includes(pathname) || 
-                      padroesPemitidos.some(pattern => pattern.test(pathname));
-
-  if (!urlPermitida) {
-    // ✅ CORREÇÃO CRÍTICA: Deixar Next.js resolver (404 natural) ao invés de redirecionar
-    console.log(`🔍 [MIDDLEWARE] 📄 URL não reconhecida, deixando Next.js resolver: ${pathname}`);
-    return NextResponse.next(); // 🔴 MUDANÇA CRÍTICA AQUI - era: redirect(new URL('/', origin), 301)
-  }
-
-  // 🚨 CORREÇÃO GSC #5: ADICIONAR HEADERS SEO APROPRIADOS
-  const response = NextResponse.next();
-  
-  // Cache para recursos estáticos
-  if (pathname.includes('.')) {
-    response.headers.set('Cache-Control', 'public, max-age=31536000, immutable');
-  }
-  // Cache para páginas HTML
-  else {
-    response.headers.set('Cache-Control', 'public, max-age=0, must-revalidate');
-  }
-  
-  // Headers para SEO
-  response.headers.set('X-Robots-Tag', 'index, follow');
-  
-  // 🚨 CORREÇÃO GSC #6: LOGGING ESPECÍFICO PARA BOTS E REDIRECTS
-  if (isGoogleBot) {
-    console.log(`🤖 [GSC] BOT REQUEST - ${request.method} ${pathname} - UA: ${userAgent.slice(0, 50)}`);
-  }
-  
-  // 🚨 CORREÇÃO GSC #7: LOG ESPECÍFICO PARA URLs PROBLEMÁTICAS IDENTIFICADAS
-  if (pathname.includes('/imovel-') || pathname.includes('/imovel/')) {
-    console.log(`🔍 [GSC-TRACKING] URL de imóvel processada: ${pathname} | Bot: ${isGoogleBot ? 'SIM' : 'NÃO'}`);
-  }
-
-  console.log(`🔍 [MIDDLEWARE] ➡️ Seguindo normalmente: ${pathname}`);
-  return response;
-}
-
-export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)  
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - robots.txt
-     * - sitemap.xml
-     * Allows .php files (for iframe redirects)
-     */
-    '/((?!api|_next/static|_next/image|favicon.ico|robots.txt|sitemap).*)',
-  ],
+/* =========================
+   Utils
+========================= */
+const useIsClient = () => {
+  const [isClient, setIsClient] = useState(false);
+  useEffect(() => setIsClient(true), []);
+  return isClient;
 };
+
+// ✅ Normaliza a finalidade da UI para o formato que a API/cards esperam
+const normalizarFinalidade = (ui) => {
+  const v = (ui || "").toLowerCase();
+  if (v === "alugar" || v === "locação" || v === "locacao" || v === "aluguel") return "locacao";
+  if (v === "comprar" || v === "venda") return "venda";
+  return "";
+};
+
+const useIsMobile = () => {
+  const isClient = useIsClient();
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    if (!isClient) return;
+    let raf = 0;
+    const onResize = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => setIsMobile(window.innerWidth < 768));
+    };
+    onResize();
+    window.addEventListener("resize", onResize);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", onResize);
+    };
+  }, [isClient]);
+
+  return isMobile;
+};
+
+/* =========================
+   Reusable Inputs
+========================= */
+const InputPreco = ({ placeholder, value, onChange }) => {
+  const [inputValue, setInputValue] = useState("");
+  const [isFocused, setIsFocused] = useState(false);
+
+  const formatarParaReal = useCallback((valor) => {
+    if (!valor) return "";
+    try {
+      return valor.toLocaleString("pt-BR", {
+        style: "currency",
+        currency: "BRL",
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0,
+      });
+    } catch {
+      return String(valor);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (value == null || value === 0) setInputValue("");
+    else if (!isFocused) setInputValue(formatarParaReal(value));
+  }, [value, isFocused, formatarParaReal]);
+
+  const handleInputChange = (e) => {
+    const novoValor = e.target.value;
+    setInputValue(novoValor);
+    const limpo = novoValor.replace(/[^\d]/g, "");
+    if (!limpo) onChange(null);
+    else onChange(Number(limpo));
+  };
+
+  const handleFocus = () => {
+    setIsFocused(true);
+    if (value != null) setInputValue(String(value).replace(/[^\d]/g, ""));
+  };
+
+  const handleBlur = () => {
+    setIsFocused(false);
+    if (value == null) setInputValue("");
+    else {
+      let v = value;
+      if (v < 0) v = 0;                 // sem piso arbitrário
+      if (v > 70000000) v = 70000000;   // teto seguro
+      onChange(v);
+      setInputValue(formatarParaReal(v));
+    }
+  };
+
+  return (
+    <div className="relative flex-1">
+      <input
+        type="text"
+        placeholder={placeholder}
+        value={inputValue}
+        onChange={handleInputChange}
+        onFocus={handleFocus}
+        onBlur={handleBlur}
+        className="w-full rounded-md border border-gray-300 text-[10px] text-gray-800 font-semibold py-2 pl-3 focus:outline-none focus:ring-1 focus:ring-black"
+      />
+    </div>
+  );
+};
+
+const InputArea = ({ placeholder, value, onChange }) => {
+  const [inputValue, setInputValue] = useState("");
+  const [isFocused, setIsFocused] = useState(false);
+
+  useEffect(() => {
+    if (!isFocused) setInputValue(value ? String(value) : "");
+  }, [value, isFocused]);
+
+  const onChangeLocal = (e) => {
+    const novoValor = e.target.value;
+    if (/^\d*$/.test(novoValor) || novoValor === "") {
+      setInputValue(novoValor);
+      const numero = novoValor === "" ? 0 : Math.min(parseInt(novoValor, 10) || 0, 999);
+      onChange(numero);
+    }
+  };
+
+  return (
+    <div className="relative flex-1">
+      <input
+        type="text"
+        placeholder={placeholder}
+        value={isFocused ? inputValue : value ? String(value) : ""}
+        onChange={onChangeLocal}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
+        className="w-full rounded-md border border-gray-300 text-[10px] text-gray-800 font-semibold py-2 pl-3 focus:outline-none focus:ring-1 focus:ring-black"
+      />
+      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-gray-500">m²</span>
+    </div>
+  );
+};
+
+const OptionButton = ({ value, selected, onClick }) => {
+  const pillBase =
+    "flex items-center justify-center w-16 rounded-lg border px-2 py-1 text-xs transition-colors";
+  const variant = selected ? "bg-zinc-200 text-black" : "bg-white text-gray-700 hover:bg-zinc-100";
+  return (
+    <button type="button" className={`${pillBase} ${variant}`} onClick={() => onClick(value)}>
+      {value}
+    </button>
+  );
+};
+
+const OptionGroup = ({ label, options, selectedValue, onChange }) => (
+  <div className="mb-4">
+    <span className="block text-[10px] font-semibold text-gray-800 mb-2">{label}</span>
+    <div className="flex gap-2">
+      {options.map((option) => (
+        <OptionButton
+          key={String(option)}
+          value={option}
+          selected={selectedValue === option}
+          onClick={onChange}
+        />
+      ))}
+    </div>
+  </div>
+);
+
+const Separator = () => <hr className="my-4 border-gray-200" />;
+
+/* =========================
+   Main Component
+========================= */
+export default function PropertyFilters({
+  onFilter,
+  isVisible,
+  setIsVisible,
+  horizontal = false,
+}) {
+  const isClient = useIsClient();
+  const isMobile = useIsMobile();
+
+  // Ref para barra desktop (mantido)
+  const scrollRef = useRef(null);
+
+  const [uiVisible, setUiVisible] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setUiVisible(true), 60);
+    return () => clearTimeout(t);
+  }, []);
+
+  // Store
+  const setFilters = useFiltersStore((s) => s.setFilters);
+  const limparFiltros = useFiltersStore((s) => s.limparFiltros);
+  const aplicarFiltros = useFiltersStore((s) => s.aplicarFiltros);
+
+  // Dados dinâmicos
+  const [categorias, setCategorias] = useState([]);
+  const [cidades, setCidades] = useState([]);
+  const [bairros, setBairros] = useState([]);
+
+  // Seleções
+  const [finalidade, setFinalidade] = useState("");
+  const [categoriaSelecionada, setCategoriaSelecionada] = useState("");
+  const [cidadeSelecionada, setCidadeSelecionada] = useState("");
+  const [bairrosSelecionados, setBairrosSelecionados] = useState([]);
+  const [quartosSelecionados, setQuartosSelecionados] = useState(null);
+  const [banheirosSelecionados, setBanheirosSelecionados] = useState(null);
+  const [vagasSelecionadas, setVagasSelecionadas] = useState(null);
+
+  // Numéricos
+  const [precoMin, setPrecoMin] = useState(null);
+  const [precoMax, setPrecoMax] = useState(null);
+  const [areaMin, setAreaMin] = useState(0);
+  const [areaMax, setAreaMax] = useState(0);
+
+  // Flags
+  const [abaixoMercado, setAbaixoMercado] = useState(false);
+  const [proximoMetro, setProximoMetro] = useState(false);
+
+  // Bairros UI
+  const [bairroFilter, setBairroFilter] = useState("");
+  const [bairrosExpanded, setBairrosExpanded] = useState(false);
+  const bairrosRef = useRef(null);
+
+  // Dropdowns desktop
+  const [finalidadeExpanded, setFinalidadeExpanded] = useState(false);
+  const [tipoExpanded, setTipoExpanded] = useState(false);
+  const [cidadeExpanded, setCidadeExpanded] = useState(false);
+  const [quartosExpanded, setQuartosExpanded] = useState(false);
+  const [vagasExpanded, setVagasExpanded] = useState(false);
+  const finalidadeRef = useRef(null);
+  const tipoRef = useRef(null);
+  const cidadeRef = useRef(null);
+  const quartosRef = useRef(null);
+  const vagasRef = useRef(null);
+
+  /* ====== Data fetch ====== */
+  useEffect(() => {
+    (async () => {
+      try {
+        const cat = await getImoveisByFilters("Categoria");
+        const categoriasList = cat?.data || [];
+        setCategorias(categoriasList);
+
+        const cid = await getImoveisByFilters("Cidade");
+        const cidadesList = cid?.data || [];
+        setCidades(cidadesList);
+
+        setFilters({ categorias: categoriasList, cidades: cidadesList, bairros: [] });
+      } catch (e) {
+        console.error("Erro ao buscar filtros:", e);
+      }
+    })();
+  }, [setFilters]);
+
+  useEffect(() => {
+    (async () => {
+      if (!cidadeSelecionada) {
+        setBairros([]);
+        setFilters({ bairros: [] });
+        return;
+      }
+      try {
+        const res = await getBairrosPorCidade(cidadeSelecionada, categoriaSelecionada);
+        const bairrosList = res?.data || [];
+        setBairros(bairrosList);
+        setFilters({ bairros: bairrosList });
+      } catch (e) {
+        console.error("Erro ao buscar bairros:", e);
+        setBairros([]);
+      }
+    })();
+  }, [cidadeSelecionada, categoriaSelecionada, setFilters]);
+
+  // Hidratar estados do store
+  useEffect(() => {
+    const s = useFiltersStore.getState();
+    if (s.finalidade) setFinalidade(s.finalidade);
+    if (s.categoriaSelecionada) setCategoriaSelecionada(s.categoriaSelecionada);
+    if (s.cidadeSelecionada) setCidadeSelecionada(s.cidadeSelecionada);
+    if (s.bairrosSelecionados?.length) setBairrosSelecionados(s.bairrosSelecionados);
+    if (s.quartos) setQuartosSelecionados(s.quartos);
+    if (s.banheiros) setBanheirosSelecionados(s.banheiros);
+    if (s.vagas) setVagasSelecionadas(s.vagas);
+
+    const asNum = (v) => (typeof v === "string" && v != null ? parseInt(v, 10) : v);
+    if (s.precoMin !== undefined) setPrecoMin(asNum(s.precoMin));
+    if (s.precoMax !== undefined) setPrecoMax(asNum(s.precoMax));
+    if (s.areaMin) setAreaMin(asNum(s.areaMin) || 0);
+    if (s.areaMax) setAreaMax(asNum(s.areaMax) || 0);
+    if (s.abaixoMercado) setAbaixoMercado(s.abaixoMercado);
+    if (s.proximoMetro) setProximoMetro(s.proximoMetro);
+  }, []);
+
+  /* ====== Outside click (mobile/desktop) with 1-tick delay ====== */
+  useEffect(() => {
+    let registered = false;
+    let timer = null;
+    const handleOutside = (event) => {
+      const target = event.target;
+      if (bairrosRef.current && !bairrosRef.current.contains(target)) setBairrosExpanded(false);
+      if (finalidadeRef.current && !finalidadeRef.current.contains(target)) setFinalidadeExpanded(false);
+      if (tipoRef.current && !tipoRef.current.contains(target)) setTipoExpanded(false);
+      if (cidadeRef.current && !cidadeRef.current.contains(target)) setCidadeExpanded(false);
+      if (quartosRef.current && !quartosRef.current.contains(target)) setQuartosExpanded(false);
+      if (vagasRef.current && !vagasRef.current.contains(target)) setVagasExpanded(false);
+    };
+
+    if (bairrosExpanded || finalidadeExpanded || tipoExpanded || cidadeExpanded || quartosExpanded || vagasExpanded) {
+      timer = setTimeout(() => {
+        if (typeof document !== "undefined") {
+          document.addEventListener("pointerdown", handleOutside, { passive: true });
+          registered = true;
+        }
+      }, 0);
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+      if (registered && typeof document !== "undefined") {
+        document.removeEventListener("pointerdown", handleOutside);
+      }
+    };
+  }, [bairrosExpanded, finalidadeExpanded, tipoExpanded, cidadeExpanded, quartosExpanded, vagasExpanded]);
+
+  /* ====== Helpers ====== */
+  const opcoes = [1, 2, 3, "4+"];
+
+  const bairrosFiltrados = bairros.filter((b) =>
+    b.toLowerCase().includes(bairroFilter.toLowerCase())
+  );
+
+  const handleCategoriaChange = (e) => setCategoriaSelecionada(e.target.value);
+
+  const handleCidadeChange = (e) => {
+    setCidadeSelecionada(e.target.value);
+    setBairrosSelecionados([]);
+    setBairroFilter("");
+  };
+
+  const handleBairroChange = (bairro) => {
+    setBairrosSelecionados((prev) =>
+      prev.includes(bairro) ? prev.filter((x) => x !== bairro) : [...prev, bairro]
+    );
+  };
+
+  const handlePrecoChange = (value, setter) => setter(value);
+  const handleAreaChange = (value, setter) => setter(Math.min(value || 0, 999));
+
+  const handleFinalidadeChange = (e) =>
+    setFinalidade(e.target.value === "comprar" ? "Comprar" : e.target.value === "alugar" ? "Alugar" : "");
+
+  const isControlled = typeof isVisible === "boolean" && typeof setIsVisible === "function";
+  const visible = isControlled ? isVisible : true;
+
+  const handleAplicarFiltros = () => {
+    const filtrosBasicosPreenchidos = !!(categoriaSelecionada && cidadeSelecionada && finalidade);
+
+    const precoMinFinal = precoMin && precoMin > 0 ? precoMin : null;
+    const precoMaxFinal = precoMax && precoMax > 0 ? precoMax : null;
+
+    const areaMinFinal = Math.min(areaMin || 0, 999);
+    const areaMaxFinal = Math.min(areaMax || 0, 999);
+
+    const bairrosProcessados = [];
+    bairrosSelecionados.forEach((b) => {
+      if (typeof b === "string" && b.includes(",")) {
+        b.split(",").map((p) => p.trim()).filter(Boolean).forEach((p) => bairrosProcessados.push(p));
+      } else bairrosProcessados.push(b);
+    });
+
+    // ✅ chave: normalizar finalidade para API/cards
+    const finalidadeApi = normalizarFinalidade(finalidade);
+
+    setFilters({
+      // UI
+      finalidade,
+      categoriaSelecionada,
+      cidadeSelecionada,
+      bairrosSelecionados: bairrosProcessados,
+      quartos: quartosSelecionados,
+      banheiros: banheirosSelecionados,
+      vagas: vagasSelecionadas,
+
+      // Preço (mantidos como você já usa)
+      precoMin: precoMinFinal != null ? String(precoMinFinal) : null,
+      precoMax: precoMaxFinal != null ? String(precoMaxFinal) : null,
+      precoMinimo: precoMinFinal != null ? String(precoMinFinal) : null,
+      precoMaximo: precoMaxFinal != null ? String(precoMaxFinal) : null,
+
+      // Área
+      areaMin: areaMinFinal ? String(areaMinFinal) : "0",
+      areaMax: areaMaxFinal ? String(areaMaxFinal) : "0",
+      areaMinima: areaMinFinal > 0 ? String(areaMinFinal) : null,
+      areaMaxima: areaMaxFinal > 0 ? String(areaMaxFinal) : null,
+
+      abaixoMercado,
+      proximoMetro,
+      filtrosBasicosPreenchidos,
+
+      // ✅ novas chaves para quem lê do store (cards/mapa)
+      finalidadeApi,              // "venda" | "locacao"
+      operacao: finalidadeApi,    // compat
+      modalidade: finalidadeApi,  // compat
+      listagemTipo: finalidadeApi // compat
+    });
+
+    aplicarFiltros();
+    onFilter?.();
+    if (isControlled) setIsVisible(false);
+  };
+
+  const handleLimparFiltros = () => {
+    limparFiltros();
+    setFinalidade("");
+    setCategoriaSelecionada("");
+    setCidadeSelecionada("");
+    setBairrosSelecionados([]);
+    setQuartosSelecionados(null);
+    setBanheirosSelecionados(null);
+    setVagasSelecionadas(null);
+    setPrecoMin(null);
+    setPrecoMax(null);
+    setAreaMin(0);
+    setAreaMax(0);
+    setAbaixoMercado(false);
+    setProximoMetro(false);
+    setBairroFilter("");
+    onFilter?.();
+  };
+
+  /* =========================
+     Desktop (horizontal) — apenas no desktop!
+  ========================= */
+  if (horizontal && !isMobile) {
+    const computeDropdownStyle = (ref, width = 160) => {
+      if (typeof window === "undefined" || !ref?.current) return {};
+      const rect = ref.current.getBoundingClientRect();
+      const left = Math.min(rect.left, Math.max(8, window.innerWidth - width - 8));
+      const top = rect.bottom + 4;
+      return { top, left, width, position: "fixed" };
+    };
+
+    return (
+      <div className="bg-white py-4 w-full border-b">
+        <div className="max-w-full mx-auto px-2">
+          <div className="flex items-center">
+            <div
+              ref={scrollRef}
+              className="flex items-end gap-2 overflow-x-auto scrollbar-hide flex-1"
+              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+            >
+              {/* Finalidade */}
+              <div className="flex flex-col relative" ref={finalidadeRef}>
+                <label className="text-[10px] font-medium text-gray-600 mb-1">Finalidade</label>
+                <button
+                  type="button"
+                  onClick={() => setFinalidadeExpanded((v) => !v)}
+                  className="px-2 py-2 text-xs bg-white border border-gray-300 hover:border-gray-400 focus:border-black focus:outline-none w-[92px] flex-shrink-0 text-left"
+                >
+                  {finalidade || "Selecionar"}
+                </button>
+                <div
+                  className={`z-[60] mt-1 bg-white border border-gray-300 rounded shadow-lg ${!finalidadeExpanded ? "hidden" : ""}`}
+                  style={{ ...computeDropdownStyle(finalidadeRef, 140) }}
+                >
+                  {["", "Comprar", "Alugar"].map((op) => (
+                    <div
+                      key={op || "selecionar"}
+                      className="px-2 py-2 hover:bg-gray-50 cursor-pointer text-[11px]"
+                      onClick={() => {
+                        setFinalidade(op);
+                        setFinalidadeExpanded(false);
+                      }}
+                    >
+                      {op || "Selecionar"}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Tipo */}
+              <div className="flex flex-col relative" ref={tipoRef}>
+                <label className="text-[10px] font-medium text-gray-600 mb-1">Tipo</label>
+                <button
+                  type="button"
+                  onClick={() => setTipoExpanded((v) => !v)}
+                  className="px-2 py-2 text-xs bg-white border border-gray-300 hover:border-gray-400 focus:border-black focus:outline-none w-[114px] flex-shrink-0 text-left"
+                >
+                  {categoriaSelecionada || "Todos"}
+                </button>
+                <div
+                  className={`z-[60] mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-48 overflow-y-auto ${!tipoExpanded ? "hidden" : ""}`}
+                  style={{ ...computeDropdownStyle(tipoRef, 180) }}
+                >
+                  {["", ...categorias].map((c) => (
+                    <div
+                      key={c || "todos"}
+                      className="px-2 py-2 hover:bg-gray-50 cursor-pointer text-[11px]"
+                      onClick={() => {
+                        setCategoriaSelecionada(c);
+                        setTipoExpanded(false);
+                      }}
+                    >
+                      {c || "Todos"}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Cidade */}
+              <div className="flex flex-col relative" ref={cidadeRef}>
+                <label className="text-[10px] font-medium text-gray-600 mb-1">Cidade</label>
+                <button
+                  type="button"
+                  onClick={() => setCidadeExpanded((v) => !v)}
+                  className="px-2 py-2 text-xs bg-white border border-gray-300 hover:border-gray-400 focus:border-black focus:outline-none w-[114px] flex-shrink-0 text-left"
+                >
+                  {cidadeSelecionada || "Todas"}
+                </button>
+                <div
+                  className={`z-[60] mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-48 overflow-y-auto ${!cidadeExpanded ? "hidden" : ""}`}
+                  style={{ ...computeDropdownStyle(cidadeRef, 180) }}
+                >
+                  {["", ...cidades].map((c) => (
+                    <div
+                      key={c || "todas"}
+                      className="px-2 py-2 hover:bg-gray-50 cursor-pointer text-[11px]"
+                      onClick={() => {
+                        setCidadeSelecionada(c);
+                        setCidadeExpanded(false);
+                        setBairrosSelecionados([]);
+                        setBairroFilter("");
+                      }}
+                    >
+                      {c || "Todas"}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Bairro (multi) */}
+              <div className="flex flex-col relative" ref={bairrosRef}>
+                <label className="text-[10px] font-medium text-gray-600 mb-1">Bairro</label>
+                <button
+                  type="button"
+                  onClick={() => setBairrosExpanded((v) => !v)}
+                  className="px-2 py-2 text-xs bg-white border border-gray-300 hover:border-gray-400 focus:border-black focus:outline-none w-[140px] flex-shrink-0 text-left relative"
+                >
+                  {bairrosSelecionados.length > 0
+                    ? bairrosSelecionados.length === 1
+                      ? bairrosSelecionados[0]
+                      : bairrosSelecionados.length <= 2
+                      ? bairrosSelecionados.join(", ")
+                      : `${bairrosSelecionados[0]} +${bairrosSelecionados.length - 1}`
+                    : "Todos"}
+                  {bairrosSelecionados.length > 0 && (
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2 bg-black text-white text-[9px] rounded-full w-4 h-4 grid place-items-center">
+                      {bairrosSelecionados.length}
+                    </span>
+                  )}
+                </button>
+                <div
+                  className={`z-[60] mt-1 bg-white border border-gray-300 rounded shadow-lg max-h-60 overflow-y-auto w-80 ${
+                    !cidadeSelecionada || !bairrosExpanded ? "hidden" : ""
+                  }`}
+                  style={{ ...computeDropdownStyle(bairrosRef, 320) }}
+                >
+                  <div className="flex items-center gap-2 p-2 border-b bg-gray-50 sticky top-0">
+                    <input
+                      value={bairroFilter}
+                      onChange={(e) => setBairroFilter(e.target.value)}
+                      placeholder="Buscar bairro…"
+                      className="flex-1 border rounded px-2 py-1 text-[11px] outline-none"
+                    />
+                    <button
+                      className="text-[10px] px-2 py-1 border rounded hover:bg-gray-100"
+                      onClick={() => setBairrosSelecionados(bairrosFiltrados)}
+                    >
+                      Selecionar todos
+                    </button>
+                    <button
+                      className="text-[10px] px-2 py-1 border rounded hover:bg-gray-100"
+                      onClick={() => setBairrosSelecionados([])}
+                    >
+                      Limpar
+                    </button>
+                  </div>
+
+                  {bairrosFiltrados.length ? (
+                    bairrosFiltrados.map((b) => (
+                      <label
+                        key={b}
+                        className={`flex items-center px-2 py-1 hover:bg-gray-50 cursor-pointer ${
+                          bairrosSelecionados.includes(b) ? "bg-gray-100" : ""
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          className="mr-2 h-3 w-3"
+                          checked={bairrosSelecionados.includes(b)}
+                          onChange={() => handleBairroChange(b)}
+                        />
+                        <span className={`text-[11px] flex-1 ${bairrosSelecionados.includes(b) ? "font-semibold" : ""}`}>
+                          {b}
+                        </span>
+                        {bairrosSelecionados.includes(b) && <span className="text-green-600 text-xs">✓</span>}
+                      </label>
+                    ))
+                  ) : (
+                    <div className="px-2 py-3 text-[11px] text-gray-500 text-center">
+                      {bairroFilter ? "Nenhum bairro encontrado" : "Selecione uma cidade primeiro"}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Quartos */}
+              <div className="flex flex-col relative" ref={quartosRef}>
+                <label className="text-[10px] font-medium text-gray-600 mb-1">Quartos</label>
+                <button
+                  type="button"
+                  onClick={() => setQuartosExpanded((v) => !v)}
+                  className="px-2 py-2 text-xs bg-white border border-gray-300 hover:border-gray-400 focus:border-black focus:outline-none w-[70px] flex-shrink-0 text-left"
+                >
+                  {quartosSelecionados ?? "Todos"}
+                </button>
+                <div
+                  className={`z-[60] mt-1 bg-white border border-gray-300 rounded shadow-lg w-28 ${
+                    !quartosExpanded ? "hidden" : ""
+                  }`}
+                  style={{ ...computeDropdownStyle(quartosRef, 112) }}
+                >
+                  {["", "1", "2", "3", "4+"].map((op) => (
+                    <div
+                      key={op || "todos"}
+                      className="px-2 py-2 hover:bg-gray-50 cursor-pointer text-[11px]"
+                      onClick={() => {
+                        setQuartosSelecionados(op === "" ? null : op);
+                        setQuartosExpanded(false);
+                      }}
+                    >
+                      {op || "Todos"}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Vagas */}
+              <div className="flex flex-col relative" ref={vagasRef}>
+                <label className="text-[10px] font-medium text-gray-600 mb-1">Vagas</label>
+                <button
+                  type="button"
+                  onClick={() => setVagasExpanded((v) => !v)}
+                  className="px-2 py-2 text-xs bg-white border border-gray-300 hover:border-gray-400 focus:border-black focus:outline-none w-[70px] flex-shrink-0 text-left"
+                >
+                  {vagasSelecionadas ?? "Todas"}
+                </button>
+                <div
+                  className={`z-[60] mt-1 bg-white border border-gray-300 rounded shadow-lg w-28 ${
+                    !vagasExpanded ? "hidden" : ""
+                  }`}
+                  style={{ ...computeDropdownStyle(vagasRef, 112) }}
+                >
+                  {["", "1", "2", "3", "4+"].map((op) => (
+                    <div
+                      key={op || "todas"}
+                      className="px-2 py-2 hover:bg-gray-50 cursor-pointer text-[11px]"
+                      onClick={() => {
+                        setVagasSelecionadas(op === "" ? null : op);
+                        setVagasExpanded(false);
+                      }}
+                    >
+                      {op || "Todas"}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Preço mín/máx */}
+              <div className="flex flex-col">
+                <label className="text-[10px] font-medium text-gray-600 mb-1">Preço mín</label>
+                <InputPreco
+                  placeholder="R$ 65.000"
+                  value={precoMin}
+                  onChange={(v) => handlePrecoChange(v, setPrecoMin)}
+                />
+              </div>
+
+              <div className="flex flex-col">
+                <label className="text-[10px] font-medium text-gray-600 mb-1">Preço máx</label>
+                <InputPreco
+                  placeholder="R$ 65.000.000"
+                  value={precoMax}
+                  onChange={(v) => handlePrecoChange(v, setPrecoMax)}
+                />
+              </div>
+
+              {/* Área mín/máx */}
+              <div className="flex flex-col">
+                <label className="text-[10px] font-medium text-gray-600 mb-1">Área mín</label>
+                <InputArea placeholder="0 m²" value={areaMin} onChange={(v) => handleAreaChange(v, setAreaMin)} />
+              </div>
+
+              <div className="flex flex-col">
+                <label className="text-[10px] font-medium text-gray-600 mb-1">Área máx</label>
+                <InputArea placeholder="999 m²" value={areaMax} onChange={(v) => handleAreaChange(v, setAreaMax)} />
+              </div>
+
+              {/* Ações */}
+              <div className="flex gap-2 items-end ml-2">
+                <button
+                  onClick={handleAplicarFiltros}
+                  className="px-4 py-2 text-sm bg-black text-white hover:bg-gray-800 focus:outline-none whitespace-nowrap flex-shrink-0 border border-black"
+                >
+                  Aplicar
+                </button>
+                <button
+                  onClick={handleLimparFiltros}
+                  className="px-4 py-2 text-sm bg-gray-100 text-black hover:bg-gray-200 focus:outline-none whitespace-nowrap flex-shrink-0 border border-gray-300"
+                >
+                  Limpar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* =========================
+     Mobile / padrão (off-canvas com fallback inline)
+  ========================= */
+  return (
+    <>
+      {/* BOTÃO FLUTUANTE para abrir os filtros quando controlado e fechado */}
+      {isClient && isMobile && isControlled && !visible && (
+        <button
+          type="button"
+          onClick={() => setIsVisible(true)}
+          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[9997] bg-black text-white px-5 py-3 rounded-full shadow-lg text-sm font-semibold"
+          style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 12px)" }}
+        >
+          Abrir filtros
+        </button>
+      )}
+
+      {/* Backdrop quando painel aberto */}
+      {isClient && isMobile && isControlled && visible && (
+        <div
+          className="fixed inset-0 bg-black/60 z-[9998]"
+          onClick={() => setIsVisible(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Painel */}
+      <div
+        className={[
+          "bg-white text-black rounded-t-2xl sm:rounded-lg shadow-sm w-full overflow-y-auto scrollbar-hide transition-transform duration-300",
+          isClient && isMobile
+            ? (isControlled
+                ? (visible
+                    ? "fixed inset-x-0 bottom-0 z-[9999] max-h-[85vh] translate-y-0"
+                    : "fixed inset-x-0 bottom-0 z-[9999] max-h-[85vh] translate-y-full")
+                : "relative")
+            : "relative"
+        ].join(" ")}
+        style={{
+          display: !uiVisible ? "none" : "block",
+          paddingBottom:
+            isClient && isMobile && isControlled
+              ? "calc(env(safe-area-inset-bottom) + 88px)"
+              : undefined,
+        }}
+        role={isClient && isMobile && isControlled ? "dialog" : undefined}
+        aria-modal={isClient && isMobile && isControlled ? true : undefined}
+      >
+        <div className="w-full p-4 sm:p-6">
+          {/* Header */}
+          <div className="flex justify-between items-center sticky top-0 bg-white z-10 py-2">
+            <h1 className="font-bold text-sm sm:text-base">Filtros Rápidos</h1>
+            {isClient && isMobile && isControlled && (
+              <button
+                onClick={() => setIsVisible(false)}
+                className="flex items-center justify-center bg-zinc-200 font-bold text-xs py-2 px-4 rounded-md hover:bg-gray-100"
+              >
+                Ver resultados
+              </button>
+            )}
+          </div>
+
+          {/* Finalidade */}
+          <div className="my-3 sm:my-4">
+            <span className="block text-[10px] font-semibold text-gray-800 mb-1 mt-2">
+              Finalidade
+            </span>
+            <select
+              className="w-full rounded-md border border-gray-300 bg-white text-xs p-2 focus:outline-none focus:ring-1 focus:ring-black"
+              value={finalidade === "Comprar" ? "comprar" : finalidade === "Alugar" ? "alugar" : ""}
+              onChange={handleFinalidadeChange}
+            >
+              <option value="">Selecione a finalidade</option>
+              <option value="comprar">Comprar</option>
+              <option value="alugar">Alugar</option>
+            </select>
+
+            {/* Tipo */}
+            <span className="block text-[10px] font-semibold text-gray-800 mb-1 mt-2">
+              Tipo de imóvel
+            </span>
+            <select
+              className="w-full rounded-md border border-gray-300 bg-white text-xs p-2 focus:outline-none focus:ring-1 focus:ring-black"
+              value={categoriaSelecionada}
+              onChange={handleCategoriaChange}
+            >
+              <option value="">Todos os imóveis</option>
+              {categorias.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+
+            {/* Cidade */}
+            <span className="block text-[10px] font-semibold text-gray-800 mb-1 mt-2">Cidade</span>
+            <select
+              className="w-full rounded-md border border-gray-300 bg-white text-xs p-2 focus:outline-none focus:ring-1 focus:ring-black"
+              value={cidadeSelecionada}
+              onChange={handleCidadeChange}
+            >
+              <option value="">Todas as cidades</option>
+              {cidades.map((c) => (
+                <option className="text-xs" key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+
+            {/* Bairros (multi) */}
+            <div className="mt-2" ref={bairrosRef}>
+              <span className="block text-[10px] font-semibold text-gray-800 mb-1">Bairros</span>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder={
+                    bairrosSelecionados.length > 0
+                      ? bairrosSelecionados.length === 1
+                        ? bairrosSelecionados[0]
+                        : bairrosSelecionados.length <= 2
+                          ? bairrosSelecionados.join(", ")
+                          : `${bairrosSelecionados[0]}, +${bairrosSelecionados.length - 1}`
+                      : "Selecionar bairros"
+                  }
+                  value={bairroFilter}
+                  onChange={(e) => setBairroFilter(e.target.value)}
+                  className="w-full rounded-md border border-gray-300 bg-white text-xs p-2 focus:outline-none focus:ring-1 focus:ring-black mb-1"
+                  onClick={() => setBairrosExpanded(true)}
+                  disabled={!cidadeSelecionada}
+                />
+
+                {bairrosSelecionados.length > 0 && (
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 bg-black text-white text-[10px] rounded-full w-5 h-5 grid place-items-center">
+                    {bairrosSelecionados.length}
+                  </div>
+                )}
+
+                <div
+                  className={`mt-1 border border-gray-200 rounded-md bg-white max-h-40 overflow-y-auto ${
+                    !cidadeSelecionada || !bairrosExpanded ? "hidden" : ""
+                  }`}
+                >
+                  {bairrosFiltrados.length > 0 && (
+                    <div className="flex justify-between border-b border-gray-100 px-2 py-1 sticky top-0 bg-white">
+                      <button
+                        onClick={() => setBairrosSelecionados(bairrosFiltrados)}
+                        className="text-[10px] text-black hover:underline"
+                      >
+                        Selecionar todos
+                      </button>
+                      <button
+                        onClick={() => setBairrosSelecionados([])}
+                        className="text-[10px] text-black hover:underline"
+                      >
+                        Limpar todos
+                      </button>
+                    </div>
+                  )}
+
+                  {bairrosFiltrados.length ? (
+                    bairrosFiltrados.map((b) => (
+                      <label
+                        key={b}
+                        className={`flex items-center px-2 py-1 hover:bg-gray-50 cursor-pointer ${
+                          bairrosSelecionados.includes(b) ? "bg-gray-100" : ""
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          className="mr-2 h-4 w-4"
+                          checked={bairrosSelecionados.includes(b)}
+                          onChange={() => handleBairroChange(b)}
+                        />
+                        <span className={`text-xs flex-1 ${bairrosSelecionados.includes(b) ? "font-semibold" : ""}`}>
+                          {b}
+                        </span>
+                        {bairrosSelecionados.includes(b) && <span className="text-green-600 text-sm">✓</span>}
+                      </label>
+                    ))
+                  ) : (
+                    <div className="px-2 py-1 text-xs text-gray-500">
+                      {bairroFilter ? "Nenhum bairro encontrado" : "Selecione uma cidade primeiro"}
+                    </div>
+                  )}
+                </div>
+
+                {bairrosExpanded && (
+                  <button
+                    onClick={() => setBairrosExpanded(false)}
+                    className="text-xs text-black bg-gray-100 w-full py-1 rounded-b-md"
+                  >
+                    Fechar
+                  </button>
+                )}
+              </div>
+
+              {bairrosSelecionados.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {bairrosSelecionados.map((b) => (
+                    <span key={b} className="bg-gray-100 rounded-full px-2 py-1 text-[10px] flex items-center">
+                      {b}
+                      <button onClick={() => handleBairroChange(b)} className="ml-1 text-gray-500 hover:text-black">
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <Separator />
+
+          <OptionGroup label="Quartos" options={opcoes} selectedValue={quartosSelecionados} onChange={setQuartosSelecionados} />
+          {/* <OptionGroup label="Banheiros" options={opcoes} selectedValue={banheirosSelecionados} onChange={setBanheirosSelecionados} /> */}
+          <OptionGroup label="Vagas" options={opcoes} selectedValue={vagasSelecionadas} onChange={setVagasSelecionadas} />
+
+          <Separator />
+
+          <div className="mb-4">
+            <span className="block text-[10px] font-semibold text-gray-800 mb-2">Preço</span>
+            <div className="flex gap-2">
+              <InputPreco placeholder="R$ 65.000" value={precoMin} onChange={(v) => handlePrecoChange(v, setPrecoMin)} />
+              <InputPreco placeholder="R$ 65.000.000" value={precoMax} onChange={(v) => handlePrecoChange(v, setPrecoMax)} />
+            </div>
+          </div>
+
+          <Separator />
+
+          <div className="mb-4">
+            <span className="block text-[10px] font-semibold text-gray-800 mb-2">Área do imóvel</span>
+            <div className="flex gap-2">
+              <InputArea placeholder="0 m²" value={areaMin} onChange={(v) => handleAreaChange(v, setAreaMin)} />
+              <InputArea placeholder="999 m²" value={areaMax} onChange={(v) => handleAreaChange(v, setAreaMax)} />
+            </div>
+          </div>
+
+          <div
+            className={
+              isClient && isMobile && isControlled
+                ? "fixed bottom-0 left-0 right-0 w-full px-4 py-4 bg-white border-t border-gray-200 shadow-lg z-[9999]"
+                : "sticky bottom-0 bg-white pt-3 pb-1 z-10"
+            }
+            style={{
+              paddingBottom: isClient && isMobile && isControlled ? "calc(env(safe-area-inset-bottom) + 16px)" : undefined,
+            }}
+          >
+            <button
+              onClick={handleAplicarFiltros}
+              className="w-full bg-black shadow-md text-white px-4 py-3 rounded-md mb-2 text-xs sm:text-sm"
+            >
+              Aplicar Filtros
+            </button>
+            <button
+              onClick={handleLimparFiltros}
+              className="w-full bg-zinc-300/80 shadow-md text-black px-4 py-3 rounded-md text-xs sm:text-sm"
+            >
+              Limpar
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
