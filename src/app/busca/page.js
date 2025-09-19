@@ -277,7 +277,7 @@ export default function BuscaImoveis() {
           let finalidadeSlug = 'venda';
           if (filtrosAtuais.finalidade === 'Comprar' || filtrosAtuais.finalidade === 'venda') {
             finalidadeSlug = 'venda';
-          } else if (filtrosAtuais.finalidade === 'Alugar' || filtrosAtuais.finalidade === 'aluguel') {
+          } else if (filtrosAtuais.finalidade === 'Alugar' || filtrosAtuais.finalidade === 'locacao') {
             finalidadeSlug = 'aluguel';
           }
           
