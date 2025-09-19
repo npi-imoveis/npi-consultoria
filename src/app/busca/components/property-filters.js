@@ -802,8 +802,7 @@ export default function PropertyFilters({
         </div>
 
         {/* Conteúdo scrollável */}
-        <div className="max-h-[calc(85vh-56px)]">
-          <div className="overflow-y-auto overscroll-contain px-4 py-3">
+        <div className="max-h-[calc(85vh-56px)] overflow-y-auto overscroll-contain px-4 pt-3 pb-[110px]">
             {/* Finalidade */}
             <div className="my-1">
               <span className="block text-[10px] font-semibold text-gray-800 mb-1 mt-2">
@@ -987,24 +986,31 @@ export default function PropertyFilters({
           </div>
 
           {/* Footer fixo */}
-          <div
-            className="sticky bottom-0 bg-white border-t border-gray-200 z-10 px-4 py-3 shadow-[0_-4px_12px_rgba(0,0,0,0.06)]"
-            style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 4px)" }}
-          >
-            <button
-              onClick={handleAplicarFiltros}
-              className="w-full bg-black text-white px-4 py-3 rounded-md mb-2 text-xs"
-            >
-              Aplicar Filtros
-            </button>
-            <button
-              onClick={handleLimparFiltros}
-              className="w-full bg-zinc-300/80 text-black px-4 py-3 rounded-md text-xs"
-            >
-              Limpar
-            </button>
-          </div>
-        </div>
+         <div
+  className={
+    (isControlled
+      ? "fixed left-0 right-0 bottom-0"
+      : "sticky bottom-0") +
+    " bg-white border-t border-gray-200 z-[10000] px-4 py-3 shadow-[0_-4px_12px_rgba(0,0,0,0.06)]"
+  }
+  style={{
+    paddingBottom: isControlled ? "calc(env(safe-area-inset-bottom) + 6px)" : undefined
+  }}
+>
+  <button
+    onClick={handleAplicarFiltros}
+    className="w-full bg-black text-white px-4 py-3 rounded-md mb-2 text-xs"
+  >
+    Aplicar Filtros
+  </button>
+  <button
+    onClick={handleLimparFiltros}
+    className="w-full bg-zinc-300/80 text-black px-4 py-3 rounded-md text-xs"
+  >
+    Limpar
+  </button>
+</div>
+</div>
       </div>
 
       {/* Styles globais mínimos e seguros para MOBILE */}
