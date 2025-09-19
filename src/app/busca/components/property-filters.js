@@ -424,7 +424,7 @@ export default function PropertyFilters({
   const handleAreaChange = (value, setter) => setter(Math.min(value || 0, 999));
 
   const handleFinalidadeChange = (e) => {
-    const v = e.target.value === "comprar" ? "Comprar" : e.target.value === "locacao" ? "Locação" : "";
+    const v = e.target.value === "comprar" ? "Comprar" : e.target.value === "alugar" ? "Alugar" : "";
     setFinalidade(v);
     setPrecoMin(null);
     setPrecoMax(null);
@@ -452,14 +452,13 @@ export default function PropertyFilters({
       } else bairrosProcessados.push(b);
     });
 
-    // CORREÇÃO: Normalizar finalidade para o formato do banco
-    const finalidadeNormalizada = finalidade === "Locação" ? "locacao" : 
-                                 finalidade === "Comprar" ? "venda" : 
-                                 finalidade.toLowerCase();
+    // CORREÇÃO: Usar exatamente o formato que o sistema espera (baseado no GitHub)
+    const finalidadeParaBanco = finalidade === "Alugar" ? "locacao" : 
+                               finalidade === "Comprar" ? "venda" : 
+                               "";
 
     const filtrosLimpos = {
-      finalidade,
-      finalidadeNormalizada, // Adiciona versão normalizada
+      finalidade: finalidadeParaBanco, // Enviar diretamente "locacao" ou "venda"
       categoriaSelecionada,
       cidadeSelecionada,
       
@@ -487,7 +486,7 @@ export default function PropertyFilters({
     };
 
     console.log("🎯 Aplicando filtros:", filtrosLimpos);
-    console.log("🔍 Finalidade normalizada:", finalidadeNormalizada);
+    console.log("🔍 Finalidade sendo enviada:", finalidadeParaBanco, "(UI mostrava:", finalidade, ")");
 
     setFilters(filtrosLimpos);
     aplicarFiltros();
@@ -550,7 +549,7 @@ export default function PropertyFilters({
                 className={`fixed z-[60] mt-1 bg-white border border-gray-300 rounded shadow-lg ${!finalidadeExpanded ? "hidden" : ""}`}
                 style={{ ...computeDropdownStyle(finalidadeRef, 140) }}
               >
-                {["", "Comprar", "Locação"].map((op) => (
+                {["", "Comprar", "Alugar"].map((op) => (
                   <div
                     key={op || "selecionar"}
                     className="px-2 py-2 hover:bg-gray-50 cursor-pointer text-[11px]"
@@ -704,12 +703,12 @@ export default function PropertyFilters({
               </span>
               <select
                 className="w-full rounded-md border border-gray-300 bg-white text-xs p-2 focus:outline-none focus:ring-1 focus:ring-black"
-                value={finalidade === "Comprar" ? "comprar" : finalidade === "Locação" ? "locacao" : ""}
+                value={finalidade === "Comprar" ? "comprar" : finalidade === "Alugar" ? "alugar" : ""}
                 onChange={handleFinalidadeChange}
               >
                 <option value="">Selecione a finalidade</option>
                 <option value="comprar">Comprar</option>
-                <option value="locacao">Locação</option>
+                <option value="alugar">Alugar</option>
               </select>
 
               {/* Tipo */}
