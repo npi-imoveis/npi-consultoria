@@ -433,7 +433,7 @@ export async function middleware(request) {
       };
 
       const MAPEAMENTO_FINALIDADES = {
-        'compra': 'Comprar', 'venda': 'Comprar', 'locacao': 'Alugar'
+        'compra': 'Comprar', 'venda': 'Comprar', 'locacao': 'Alugar', 'aluguel': 'Alugar',
       };
 
       filtros.cidadeSelecionada = converterSlugCidadeSync(parametrosUrl.cidade);
