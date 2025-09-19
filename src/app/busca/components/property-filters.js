@@ -1,6 +1,5 @@
 "use client";
 
-import { InformationCircleIcon } from "@heroicons/react/24/outline";
 import { useEffect, useState, useRef, useCallback } from "react";
 import useFiltersStore from "@/app/store/filtrosStore";
 import { getImoveisByFilters, getBairrosPorCidade } from "@/app/services";
@@ -79,10 +78,10 @@ const InputPreco = ({ placeholder, value, onChange }) => {
     setIsFocused(false);
     if (value == null) setInputValue("");
     else {
-      // sem piso arbitrário; só teto
+      // mantém o mesmo comportamento do seu arquivo que estava OK no desktop
       let v = value;
-      if (v < 0) v = 0;
-      if (v > 70000000) v = 70000000;
+      if (v < 65000) v = 65000;
+      if (v > 65000000) v = 65000000;
       onChange(v);
       setInputValue(formatarParaReal(v));
     }
@@ -177,7 +176,56 @@ export default function PropertyFilters({
   const isClient = useIsClient();
   const isMobile = useIsMobile();
 
-  const scrollRef = useRef(null);
+  // Controlled vs Uncontrolled
+  const isControlled = typeof isVisible === "boolean" && typeof setIsVisible === "function";
+  const visible = isControlled ? isVisible : true;
+
+  // Medida do header externo para o topo do painel não cobrir
+  const [headerOffset, setHeaderOffset] = useState(0);
+  useEffect(() => {
+    if (!isClient || !visible) return;
+    const selectors = [".fixed.top-20", "[data-app-header]", "header[role='banner']", ".site-header"];
+    let foundRect = null;
+    for (const sel of selectors) {
+      const el = document.querySelector(sel);
+      if (el) {
+        const r = el.getBoundingClientRect();
+        if (r && r.bottom >= 0) {
+          foundRect = r;
+          break;
+        }
+      }
+    }
+    setHeaderOffset(foundRect ? Math.ceil(foundRect.bottom) : 0);
+  }, [isClient, visible]);
+
+  // Lock do body quando painel mobile aberto
+  useEffect(() => {
+    if (!isClient) return;
+    const isMobileViewport = typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches;
+    if (!(isMobileViewport && isControlled && visible)) return;
+
+    const scrollY = window.scrollY || window.pageYOffset || 0;
+    const prev = {
+      position: document.body.style.position,
+      top: document.body.style.top,
+      width: document.body.style.width,
+      overflow: document.body.style.overflow,
+    };
+
+    document.body.style.position = "fixed";
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = "100%";
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.position = prev.position;
+      document.body.style.top = prev.top;
+      document.body.style.width = prev.width;
+      document.body.style.overflow = prev.overflow;
+      window.scrollTo(0, scrollY);
+    };
+  }, [isClient, isControlled, visible]);
 
   // Store
   const setFilters = useFiltersStore((s) => s.setFilters);
@@ -224,9 +272,6 @@ export default function PropertyFilters({
   const cidadeRef = useRef(null);
   const quartosRef = useRef(null);
   const vagasRef = useRef(null);
-
-  // Offset do header global (para o cabeçalho do painel não ficar escondido)
-  const [headerOffset, setHeaderOffset] = useState(0);
 
   /* ====== Data fetch ====== */
   useEffect(() => {
@@ -315,42 +360,6 @@ export default function PropertyFilters({
       }
     };
   }, [bairrosExpanded, finalidadeExpanded, tipoExpanded, cidadeExpanded, quartosExpanded, vagasExpanded]);
-
-  /* =========================
-     Controlled vs Uncontrolled
-  ========================= */
-  const isControlled = typeof isVisible === "boolean" && typeof setIsVisible === "function";
-  const visible = isControlled ? isVisible : true;
-
-  /* ====== Lock do body quando off-canvas aberto (só mobile, e no momento certo) ====== */
-  useEffect(() => {
-    if (!isClient) return;
-    if (isMobile && isControlled && visible) {
-      const prevOverflow = document.body.style.overflow;
-      document.body.style.overflow = "hidden";
-      return () => {
-        document.body.style.overflow = prevOverflow;
-      };
-    }
-  }, [isClient, isMobile, isControlled, visible]);
-
-  /* ====== Medir header global para não cobrir o topo do painel ====== */
-  useEffect(() => {
-    if (!isClient || !isMobile || !isControlled || !visible) return;
-    const selectors = [".fixed.top-20", "[data-app-header]", "header[role='banner']", ".site-header"];
-    let foundRect = null;
-    for (const sel of selectors) {
-      const el = document.querySelector(sel);
-      if (el) {
-        const r = el.getBoundingClientRect();
-        if (r && r.bottom >= 0) {
-          foundRect = r;
-          break;
-        }
-      }
-    }
-    setHeaderOffset(foundRect ? Math.ceil(foundRect.bottom) : 0);
-  }, [isClient, isMobile, isControlled, visible]);
 
   /* ====== Helpers ====== */
   const opcoes = [1, 2, 3, "4+"];
@@ -458,7 +467,6 @@ export default function PropertyFilters({
         <div className="max-w-full mx-auto px-2">
           <div className="flex items-center">
             <div
-              ref={scrollRef}
               className="flex items-end gap-2 overflow-x-auto scrollbar-hide flex-1"
               style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
             >
@@ -693,7 +701,7 @@ export default function PropertyFilters({
               <div className="flex flex-col">
                 <label className="text-[10px] font-medium text-gray-600 mb-1">Preço mín</label>
                 <InputPreco
-                  placeholder="R$ 10.000"
+                  placeholder="R$ 65.000"
                   value={precoMin}
                   onChange={(v) => handlePrecoChange(v, setPrecoMin)}
                 />
@@ -702,7 +710,7 @@ export default function PropertyFilters({
               <div className="flex flex-col">
                 <label className="text-[10px] font-medium text-gray-600 mb-1">Preço máx</label>
                 <InputPreco
-                  placeholder="R$ 70.000.000"
+                  placeholder="R$ 65.000.000"
                   value={precoMax}
                   onChange={(v) => handlePrecoChange(v, setPrecoMax)}
                 />
@@ -742,17 +750,22 @@ export default function PropertyFilters({
   }
 
   /* =========================
-     Mobile / padrão (off-canvas com scroll + header sticky + footer fixo)
+     Mobile / padrão (off-canvas)
+     — bloco cirúrgico restaurado com:
+       1) Header sticky (respeita header externo)
+       2) Conteúdo com overflow-y para rolar
+       3) Barra de ações fixa no rodapé do painel
   ========================= */
   return (
     <>
-      {/* FAB Abrir filtros (quando controlado e fechado) */}
+      {/* FAB (abrir filtros) */}
       {isClient && isMobile && isControlled && !visible && (
         <button
           type="button"
           onClick={() => setIsVisible(true)}
-          className="fixed left-1/2 -translate-x-1/2 z-[9997] bg-black text-white px-5 py-3 rounded-full shadow-lg text-sm font-semibold"
-          style={{ bottom: "calc(env(safe-area-inset-bottom) + 16px)" }}
+          className="fixed left-1/2 -translate-x-1/2 z-[9996] rounded-full bg-black text-white px-5 py-3 shadow-lg md:hidden"
+          style={{ bottom: "calc(env(safe-area-inset-bottom) + 24px)" }}
+          aria-label="Abrir filtros"
         >
           Abrir filtros
         </button>
@@ -761,48 +774,39 @@ export default function PropertyFilters({
       {/* Backdrop */}
       {isClient && isMobile && isControlled && visible && (
         <div
-          className="fixed inset-0 bg-black/60 z-[9998]"
+          className="fixed inset-0 bg-black/60 z-[9998] md:hidden"
           onClick={() => setIsVisible(false)}
           aria-hidden="true"
         />
       )}
 
-      {/* Painel */}
+      {/* Painel off-canvas */}
       <div
         className={[
-          "bg-white text-black rounded-t-2xl shadow-sm w-full transition-transform duration-300",
-          isClient && isMobile
-            ? (isControlled
-                ? (visible
-                    ? "fixed inset-x-0 bottom-0 z-[9999] max-h-[85vh] translate-y-0"
-                    : "fixed inset-x-0 bottom-0 z-[9999] max-h-[85vh] translate-y-full")
-                : "relative")
-            : "relative"
+          "md:hidden fixed inset-x-0 bottom-0 z-[9999] max-h-[85vh] bg-white text-black rounded-t-2xl shadow-sm transition-transform duration-300",
+          visible ? "translate-y-0" : "translate-y-full",
         ].join(" ")}
-        role={isClient && isMobile && isControlled ? "dialog" : undefined}
-        aria-modal={isClient && isMobile && isControlled ? true : undefined}
         style={{ WebkitOverflowScrolling: "touch" }}
+        role="dialog"
+        aria-modal="true"
       >
-        {/* Header sticky (respeita header externo) */}
-        <div
-          className="sticky bg-white z-10 py-2 px-4 border-b"
-          style={{ top: headerOffset }}
-        >
+        {/* Header sticky — respeita a altura do header da página */}
+        <div className="sticky bg-white z-10 py-2 px-4 border-b" style={{ top: headerOffset }}>
           <div className="flex items-center justify-between">
             <h1 className="font-bold text-sm">Filtros Rápidos</h1>
-            {isControlled && (
-              <button
-                onClick={() => setIsVisible(false)}
-                className="flex items-center justify-center bg-zinc-200 font-bold text-xs py-2 px-4 rounded-md hover:bg-gray-100"
-              >
-                Ver resultados
-              </button>
-            )}
+            <button
+              onClick={() => setIsVisible(false)}
+              className="flex items-center justify-center bg-zinc-200 font-bold text-xs py-2 px-4 rounded-md hover:bg-gray-100"
+            >
+              Ver resultados
+            </button>
           </div>
         </div>
 
-        {/* Conteúdo scrollável */}
-        <div className="max-h-[calc(85vh-56px)] overflow-y-auto overscroll-contain px-4 pt-3 pb-[110px]">
+        {/* Conteúdo + barra fixa */}
+        <div className="flex flex-col max-h-[calc(85vh-56px)]">
+          {/* Conteúdo rolável */}
+          <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-3">
             {/* Finalidade */}
             <div className="my-1">
               <span className="block text-[10px] font-semibold text-gray-800 mb-1 mt-2">
@@ -966,17 +970,17 @@ export default function PropertyFilters({
 
             <Separator />
 
-            <div className="mb-4">
+            <div className="mb-2">
               <span className="block text-[10px] font-semibold text-gray-800 mb-2">Preço</span>
               <div className="flex gap-2">
-                <InputPreco placeholder="R$ 10.000" value={precoMin} onChange={(v) => handlePrecoChange(v, setPrecoMin)} />
-                <InputPreco placeholder="R$ 70.000.000" value={precoMax} onChange={(v) => handlePrecoChange(v, setPrecoMax)} />
+                <InputPreco placeholder="R$ 65.000" value={precoMin} onChange={(v) => handlePrecoChange(v, setPrecoMin)} />
+                <InputPreco placeholder="R$ 65.000.000" value={precoMax} onChange={(v) => handlePrecoChange(v, setPrecoMax)} />
               </div>
             </div>
 
             <Separator />
 
-            <div className="mb-4">
+            <div className="mb-2">
               <span className="block text-[10px] font-semibold text-gray-800 mb-2">Área do imóvel</span>
               <div className="flex gap-2">
                 <InputArea placeholder="0 m²" value={areaMin} onChange={(v) => handleAreaChange(v, setAreaMin)} />
@@ -985,35 +989,25 @@ export default function PropertyFilters({
             </div>
           </div>
 
-          {/* Footer fixo */}
-         <div
-  className={
-    (isControlled
-      ? "fixed left-0 right-0 bottom-0"
-      : "sticky bottom-0") +
-    " bg-white border-t border-gray-200 z-[10000] px-4 py-3 shadow-[0_-4px_12px_rgba(0,0,0,0.06)]"
-  }
-  style={{
-    paddingBottom: isControlled ? "calc(env(safe-area-inset-bottom) + 6px)" : undefined
-  }}
->
-  <button
-    onClick={handleAplicarFiltros}
-    className="w-full bg-black text-white px-4 py-3 rounded-md mb-2 text-xs"
-  >
-    Aplicar Filtros
-  </button>
-  <button
-    onClick={handleLimparFiltros}
-    className="w-full bg-zinc-300/80 text-black px-4 py-3 rounded-md text-xs"
-  >
-    Limpar
-  </button>
-</div>
-</div>
+          {/* Barra de ações sticky no rodapé do painel */}
+          <div className="sticky bottom-0 bg-white border-t border-gray-200 z-10 px-4 py-3 shadow-[0_-4px_12px_rgba(0,0,0,0.06)]">
+            <button
+              onClick={handleAplicarFiltros}
+              className="w-full bg-black text-white px-4 py-3 rounded-md mb-2 text-xs"
+            >
+              Aplicar Filtros
+            </button>
+            <button
+              onClick={handleLimparFiltros}
+              className="w-full bg-zinc-300/80 text-black px-4 py-3 rounded-md text-xs"
+            >
+              Limpar
+            </button>
+          </div>
+        </div>
       </div>
 
-      {/* Styles globais mínimos e seguros para MOBILE */}
+      {/* Estilos globais seguros para travar “arrasto lateral” no mobile */}
       <style jsx global>{`
         @media (max-width: 767px) {
           html, body {
@@ -1021,7 +1015,6 @@ export default function PropertyFilters({
             overscroll-behavior-x: none;
             touch-action: pan-y;
           }
-          /* Mantém o pan/zoom do mapa */
           .leaflet-container {
             touch-action: auto !important;
           }
