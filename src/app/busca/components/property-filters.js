@@ -424,7 +424,7 @@ export default function PropertyFilters({
   const handleAreaChange = (value, setter) => setter(Math.min(value || 0, 999));
 
   const handleFinalidadeChange = (e) => {
-    const v = e.target.value === "comprar" ? "Comprar" : e.target.value === "alugar" ? "Alugar" : "";
+    const v = e.target.value === "comprar" ? "Comprar" : e.target.value === "locacao" ? "Locação" : "";
     setFinalidade(v);
     setPrecoMin(null);
     setPrecoMax(null);
@@ -453,7 +453,7 @@ export default function PropertyFilters({
     });
 
     // CORREÇÃO: Normalizar finalidade para o formato do banco
-    const finalidadeNormalizada = finalidade === "Alugar" ? "aluguel" : 
+    const finalidadeNormalizada = finalidade === "Locação" ? "locacao" : 
                                  finalidade === "Comprar" ? "venda" : 
                                  finalidade.toLowerCase();
 
@@ -550,7 +550,7 @@ export default function PropertyFilters({
                 className={`fixed z-[60] mt-1 bg-white border border-gray-300 rounded shadow-lg ${!finalidadeExpanded ? "hidden" : ""}`}
                 style={{ ...computeDropdownStyle(finalidadeRef, 140) }}
               >
-                {["", "Comprar", "Alugar"].map((op) => (
+                {["", "Comprar", "Locação"].map((op) => (
                   <div
                     key={op || "selecionar"}
                     className="px-2 py-2 hover:bg-gray-50 cursor-pointer text-[11px]"
@@ -704,12 +704,12 @@ export default function PropertyFilters({
               </span>
               <select
                 className="w-full rounded-md border border-gray-300 bg-white text-xs p-2 focus:outline-none focus:ring-1 focus:ring-black"
-                value={finalidade === "Comprar" ? "comprar" : finalidade === "Alugar" ? "alugar" : ""}
+                value={finalidade === "Comprar" ? "comprar" : finalidade === "Locação" ? "locacao" : ""}
                 onChange={handleFinalidadeChange}
               >
                 <option value="">Selecione a finalidade</option>
                 <option value="comprar">Comprar</option>
-                <option value="alugar">Alugar</option>
+                <option value="locacao">Locação</option>
               </select>
 
               {/* Tipo */}
