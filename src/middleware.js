@@ -120,6 +120,7 @@ export async function middleware(request) {
     '/casa-a-venda-condominio-acapulco/': '/condominio-jardim-acapulco',
     '/casa-a-venda-jardim-acapulco-guaruja/': '/condominio-jardim-acapulco',
     '/residencial-acapulco-guaruja/': '/condominio-jardim-acapulco',
+    '/essencia-gonzaga/': '/pw36-gonzaga',
   };
 
   // Verificar se pathname está no mapa de redirects
