@@ -57,8 +57,8 @@ const InputPreco = ({ placeholder, value, onChange }) => {
       setInputValue("");
     } else {
       let v = value;
-      if (v < 0) v = 0;                // sem piso arbitrário
-      if (v > 70000000) v = 70000000;  // teto seguro
+      if (v < 0) v = 0;
+      if (v > 70000000) v = 70000000;
       onChange(v);
       setInputValue(formatarParaReal(v));
     }
@@ -242,7 +242,7 @@ export default function PropertyFilters({
   // Hidratar estados do store
   useEffect(() => {
     const s = useFiltersStore.getState();
-    if (s.finalidade) setFinalidade(s.finalidade); // mantém "Comprar"|"Alugar"
+    if (s.finalidade) setFinalidade(s.finalidade);
     if (s.categoriaSelecionada) setCategoriaSelecionada(s.categoriaSelecionada);
     if (s.cidadeSelecionada) setCidadeSelecionada(s.cidadeSelecionada);
     if (s.bairrosSelecionados?.length) setBairrosSelecionados(s.bairrosSelecionados);
@@ -433,12 +433,17 @@ export default function PropertyFilters({
 
   const fecharMobile = () => setIsVisible?.(false);
 
+  // ✅ CORREÇÃO PRINCIPAL - Validação mais robusta dos filtros
   const handleAplicarFiltros = () => {
-    const filtrosBasicosPreenchidos = !!(categoriaSelecionada && cidadeSelecionada && finalidade);
+    // Validação básica obrigatória
+    if (!finalidade || !categoriaSelecionada || !cidadeSelecionada) {
+      console.warn("Filtros básicos não preenchidos:", { finalidade, categoriaSelecionada, cidadeSelecionada });
+      return;
+    }
 
     const precoMinFinal = precoMin && precoMin > 0 ? precoMin : null;
     const precoMaxFinal = precoMax && precoMax > 0 ? precoMax : null;
-
+    
     const areaMinFinal = Math.min(areaMin || 0, 999);
     const areaMaxFinal = Math.min(areaMax || 0, 999);
 
@@ -449,31 +454,46 @@ export default function PropertyFilters({
       } else bairrosProcessados.push(b);
     });
 
-    setFilters({
-      finalidade, // "Comprar" | "Alugar"
+    // ✅ NOVO - Objeto de filtros mais limpo e consistente
+    const filtrosLimpos = {
+      // Filtros obrigatórios
+      finalidade,
       categoriaSelecionada,
       cidadeSelecionada,
+      
+      // Arrays/listas
       bairrosSelecionados: bairrosProcessados,
+      categorias,
+      cidades,
+      bairros,
+      
+      // Opcionais numéricos
       quartos: quartosSelecionados,
       banheiros: banheirosSelecionados,
       vagas: vagasSelecionadas,
-
-      // mesma API para compra/aluguel
+      
+      // ✅ CORREÇÃO - Preços unificados (remove duplicação)
       precoMin: precoMinFinal != null ? String(precoMinFinal) : null,
       precoMax: precoMaxFinal != null ? String(precoMaxFinal) : null,
-      precoMinimo: precoMinFinal != null ? String(precoMinFinal) : null,
-      precoMaximo: precoMaxFinal != null ? String(precoMaxFinal) : null,
-
-      areaMin: areaMinFinal ? String(areaMinFinal) : "0",
-      areaMax: areaMaxFinal ? String(areaMaxFinal) : "0",
+      
+      // Área
+      areaMin: areaMinFinal > 0 ? String(areaMinFinal) : "0",
+      areaMax: areaMaxFinal > 0 ? String(areaMaxFinal) : "0",
       areaMinima: areaMinFinal > 0 ? String(areaMinFinal) : null,
       areaMaxima: areaMaxFinal > 0 ? String(areaMaxFinal) : null,
-
+      
+      // Flags especiais
       abaixoMercado,
       proximoMetro,
-      filtrosBasicosPreenchidos,
-    });
+      
+      // ✅ CORREÇÃO - Flag que sempre será true se chegou até aqui
+      filtrosBasicosPreenchidos: true,
+    };
 
+    // Debug log para acompanhar
+    console.log("🎯 Aplicando filtros:", filtrosLimpos);
+
+    setFilters(filtrosLimpos);
     aplicarFiltros();
     onFilter?.();
     fecharMobile();
@@ -836,7 +856,6 @@ export default function PropertyFilters({
             <Separator />
 
             <OptionGroup label="Quartos" options={[1, 2, 3, "4+"]} selectedValue={quartosSelecionados} onChange={setQuartosSelecionados} />
-            {/* <OptionGroup label="Banheiros" options={[1,2,3,"4+"]} selectedValue={banheirosSelecionados} onChange={setBanheirosSelecionados} /> */}
             <OptionGroup label="Vagas" options={[1, 2, 3, "4+"]} selectedValue={vagasSelecionadas} onChange={setVagasSelecionadas} />
 
             <Separator />
