@@ -13,14 +13,6 @@ const useIsClient = () => {
   return isClient;
 };
 
-// ✅ Normaliza a finalidade da UI para o formato que a API/cards esperam
-const normalizarFinalidade = (ui) => {
-  const v = (ui || "").toLowerCase();
-  if (v === "alugar" || v === "locação" || v === "locacao" || v === "aluguel") return "locacao";
-  if (v === "comprar" || v === "venda") return "venda";
-  return "";
-};
-
 const useIsMobile = () => {
   const isClient = useIsClient();
   const [isMobile, setIsMobile] = useState(false);
@@ -41,6 +33,21 @@ const useIsMobile = () => {
   }, [isClient]);
 
   return isMobile;
+};
+
+// UI -> API
+const normalizarFinalidade = (ui) => {
+  const v = (ui || "").toLowerCase();
+  if (v === "alugar" || v === "locação" || v === "locacao" || v === "aluguel") return "locacao";
+  if (v === "comprar" || v === "venda") return "venda";
+  return "";
+};
+// API -> UI (pra hidratar o select)
+const exibirFinalidade = (api) => {
+  const v = (api || "").toLowerCase();
+  if (v === "locacao") return "Alugar";
+  if (v === "venda") return "Comprar";
+  return "";
 };
 
 /* =========================
@@ -73,8 +80,7 @@ const InputPreco = ({ placeholder, value, onChange }) => {
     const novoValor = e.target.value;
     setInputValue(novoValor);
     const limpo = novoValor.replace(/[^\d]/g, "");
-    if (!limpo) onChange(null);
-    else onChange(Number(limpo));
+    onChange(limpo ? Number(limpo) : null);
   };
 
   const handleFocus = () => {
@@ -87,8 +93,8 @@ const InputPreco = ({ placeholder, value, onChange }) => {
     if (value == null) setInputValue("");
     else {
       let v = value;
-      if (v < 0) v = 0;                 // sem piso arbitrário
-      if (v > 70000000) v = 70000000;   // teto seguro
+      if (v < 0) v = 0;
+      if (v > 70000000) v = 70000000;
       onChange(v);
       setInputValue(formatarParaReal(v));
     }
@@ -183,7 +189,7 @@ export default function PropertyFilters({
   const isClient = useIsClient();
   const isMobile = useIsMobile();
 
-  // Ref para barra desktop (mantido)
+  // Ref desktop
   const scrollRef = useRef(null);
 
   const [uiVisible, setUiVisible] = useState(false);
@@ -203,7 +209,7 @@ export default function PropertyFilters({
   const [bairros, setBairros] = useState([]);
 
   // Seleções
-  const [finalidade, setFinalidade] = useState("");
+  const [finalidade, setFinalidade] = useState(""); // UI: "Comprar" | "Alugar"
   const [categoriaSelecionada, setCategoriaSelecionada] = useState("");
   const [cidadeSelecionada, setCidadeSelecionada] = useState("");
   const [bairrosSelecionados, setBairrosSelecionados] = useState([]);
@@ -279,7 +285,10 @@ export default function PropertyFilters({
   // Hidratar estados do store
   useEffect(() => {
     const s = useFiltersStore.getState();
-    if (s.finalidade) setFinalidade(s.finalidade);
+    // prioridade para finalidadeUi (para UI); senão, converte a finalidade da API (venda/locacao)
+    if (s.finalidadeUi) setFinalidade(s.finalidadeUi);
+    else if (s.finalidade) setFinalidade(exibirFinalidade(s.finalidade));
+
     if (s.categoriaSelecionada) setCategoriaSelecionada(s.categoriaSelecionada);
     if (s.cidadeSelecionada) setCidadeSelecionada(s.cidadeSelecionada);
     if (s.bairrosSelecionados?.length) setBairrosSelecionados(s.bairrosSelecionados);
@@ -296,7 +305,7 @@ export default function PropertyFilters({
     if (s.proximoMetro) setProximoMetro(s.proximoMetro);
   }, []);
 
-  /* ====== Outside click (mobile/desktop) with 1-tick delay ====== */
+  /* ====== Outside click ====== */
   useEffect(() => {
     let registered = false;
     let timer = null;
@@ -372,12 +381,15 @@ export default function PropertyFilters({
       } else bairrosProcessados.push(b);
     });
 
-    // ✅ chave: normalizar finalidade para API/cards
+    // 🔑 Finalidade para API/cards
     const finalidadeApi = normalizarFinalidade(finalidade);
 
     setFilters({
       // UI
-      finalidade,
+      finalidadeUi: finalidade, // mantém "Comprar/Alugar" para a interface
+      // API
+      finalidade: finalidadeApi, // grava "venda"/"locacao" para quem consome no carregamento dos cards
+
       categoriaSelecionada,
       cidadeSelecionada,
       bairrosSelecionados: bairrosProcessados,
@@ -385,13 +397,11 @@ export default function PropertyFilters({
       banheiros: banheirosSelecionados,
       vagas: vagasSelecionadas,
 
-      // Preço (mantidos como você já usa)
       precoMin: precoMinFinal != null ? String(precoMinFinal) : null,
       precoMax: precoMaxFinal != null ? String(precoMaxFinal) : null,
       precoMinimo: precoMinFinal != null ? String(precoMinFinal) : null,
       precoMaximo: precoMaxFinal != null ? String(precoMaxFinal) : null,
 
-      // Área
       areaMin: areaMinFinal ? String(areaMinFinal) : "0",
       areaMax: areaMaxFinal ? String(areaMaxFinal) : "0",
       areaMinima: areaMinFinal > 0 ? String(areaMinFinal) : null,
@@ -400,12 +410,6 @@ export default function PropertyFilters({
       abaixoMercado,
       proximoMetro,
       filtrosBasicosPreenchidos,
-
-      // ✅ novas chaves para quem lê do store (cards/mapa)
-      finalidadeApi,              // "venda" | "locacao"
-      operacao: finalidadeApi,    // compat
-      modalidade: finalidadeApi,  // compat
-      listagemTipo: finalidadeApi // compat
     });
 
     aplicarFiltros();
@@ -737,7 +741,7 @@ export default function PropertyFilters({
   ========================= */
   return (
     <>
-      {/* BOTÃO FLUTUANTE para abrir os filtros quando controlado e fechado */}
+      {/* FAB abrir filtros */}
       {isClient && isMobile && isControlled && !visible && (
         <button
           type="button"
@@ -749,7 +753,7 @@ export default function PropertyFilters({
         </button>
       )}
 
-      {/* Backdrop quando painel aberto */}
+      {/* Backdrop */}
       {isClient && isMobile && isControlled && visible && (
         <div
           className="fixed inset-0 bg-black/60 z-[9998]"
