@@ -57,8 +57,8 @@ const InputPreco = ({ placeholder, value, onChange }) => {
       setInputValue("");
     } else {
       let v = value;
-      if (v < 0) v = 0;
-      if (v > 70000000) v = 70000000;
+      if (v < 0) v = 0;                // sem piso arbitrário
+      if (v > 70000000) v = 70000000;  // teto seguro
       onChange(v);
       setInputValue(formatarParaReal(v));
     }
@@ -242,7 +242,7 @@ export default function PropertyFilters({
   // Hidratar estados do store
   useEffect(() => {
     const s = useFiltersStore.getState();
-    if (s.finalidade) setFinalidade(s.finalidade);
+    if (s.finalidade) setFinalidade(s.finalidade); // mantém "Comprar"|"Alugar"
     if (s.categoriaSelecionada) setCategoriaSelecionada(s.categoriaSelecionada);
     if (s.cidadeSelecionada) setCidadeSelecionada(s.cidadeSelecionada);
     if (s.bairrosSelecionados?.length) setBairrosSelecionados(s.bairrosSelecionados);
@@ -426,22 +426,19 @@ export default function PropertyFilters({
   const handleFinalidadeChange = (e) => {
     const v = e.target.value === "comprar" ? "Comprar" : e.target.value === "alugar" ? "Alugar" : "";
     setFinalidade(v);
+    // zera preços ao trocar finalidade (evita herdar filtros da outra modalidade)
     setPrecoMin(null);
     setPrecoMax(null);
   };
 
   const fecharMobile = () => setIsVisible?.(false);
 
-  // CORREÇÃO PRINCIPAL - Validação robusta dos filtros
   const handleAplicarFiltros = () => {
-    if (!finalidade || !categoriaSelecionada || !cidadeSelecionada) {
-      console.warn("Filtros básicos não preenchidos:", { finalidade, categoriaSelecionada, cidadeSelecionada });
-      return;
-    }
+    const filtrosBasicosPreenchidos = !!(categoriaSelecionada && cidadeSelecionada && finalidade);
 
     const precoMinFinal = precoMin && precoMin > 0 ? precoMin : null;
     const precoMaxFinal = precoMax && precoMax > 0 ? precoMax : null;
-    
+
     const areaMinFinal = Math.min(areaMin || 0, 999);
     const areaMaxFinal = Math.min(areaMax || 0, 999);
 
@@ -452,43 +449,31 @@ export default function PropertyFilters({
       } else bairrosProcessados.push(b);
     });
 
-    // CORREÇÃO: Usar exatamente o formato que o sistema espera (baseado no GitHub)
-    const finalidadeParaBanco = finalidade === "Alugar" ? "locacao" : 
-                               finalidade === "Comprar" ? "venda" : 
-                               "";
-
-    const filtrosLimpos = {
-      finalidade: finalidadeParaBanco, // Enviar diretamente "locacao" ou "venda"
+    setFilters({
+      finalidade, // "Comprar" | "Alugar"
       categoriaSelecionada,
       cidadeSelecionada,
-      
       bairrosSelecionados: bairrosProcessados,
-      categorias,
-      cidades,
-      bairros,
-      
       quartos: quartosSelecionados,
       banheiros: banheirosSelecionados,
       vagas: vagasSelecionadas,
-      
+
+      // mesma API para compra/aluguel
       precoMin: precoMinFinal != null ? String(precoMinFinal) : null,
       precoMax: precoMaxFinal != null ? String(precoMaxFinal) : null,
-      
-      areaMin: areaMinFinal > 0 ? String(areaMinFinal) : "0",
-      areaMax: areaMaxFinal > 0 ? String(areaMaxFinal) : "0",
+      precoMinimo: precoMinFinal != null ? String(precoMinFinal) : null,
+      precoMaximo: precoMaxFinal != null ? String(precoMaxFinal) : null,
+
+      areaMin: areaMinFinal ? String(areaMinFinal) : "0",
+      areaMax: areaMaxFinal ? String(areaMaxFinal) : "0",
       areaMinima: areaMinFinal > 0 ? String(areaMinFinal) : null,
       areaMaxima: areaMaxFinal > 0 ? String(areaMaxFinal) : null,
-      
+
       abaixoMercado,
       proximoMetro,
-      
-      filtrosBasicosPreenchidos: true,
-    };
+      filtrosBasicosPreenchidos,
+    });
 
-    console.log("🎯 Aplicando filtros:", filtrosLimpos);
-    console.log("🔍 Finalidade para banco:", finalidadeParaBanco);
-
-    setFilters(filtrosLimpos);
     aplicarFiltros();
     onFilter?.();
     fecharMobile();
@@ -851,6 +836,7 @@ export default function PropertyFilters({
             <Separator />
 
             <OptionGroup label="Quartos" options={[1, 2, 3, "4+"]} selectedValue={quartosSelecionados} onChange={setQuartosSelecionados} />
+            {/* <OptionGroup label="Banheiros" options={[1,2,3,"4+"]} selectedValue={banheirosSelecionados} onChange={setBanheirosSelecionados} /> */}
             <OptionGroup label="Vagas" options={[1, 2, 3, "4+"]} selectedValue={vagasSelecionadas} onChange={setVagasSelecionadas} />
 
             <Separator />
