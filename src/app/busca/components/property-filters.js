@@ -36,6 +36,18 @@ const useIsMobile = () => {
 };
 
 /* =========================
+   Helpers de finalidade (UI ↔ token)
+========================= */
+const labelFinalidade = (v) => (v === "venda" ? "Comprar" : v === "locacao" ? "Alugar" : "");
+const toTokenFinalidade = (v) => {
+  if (!v) return "";
+  const x = v.toLowerCase();
+  if (x === "comprar" || x === "venda") return "venda";
+  if (x === "alugar" || x === "locacao" || x === "locação") return "locacao";
+  return "";
+};
+
+/* =========================
    Reusable Inputs
 ========================= */
 const InputPreco = ({ placeholder, value, onChange }) => {
@@ -65,8 +77,7 @@ const InputPreco = ({ placeholder, value, onChange }) => {
     const novoValor = e.target.value;
     setInputValue(novoValor);
     const limpo = novoValor.replace(/[^\d]/g, "");
-    if (!limpo) onChange(null);
-    else onChange(Number(limpo));
+    onChange(limpo ? Number(limpo) : null);
   };
 
   const handleFocus = () => {
@@ -76,12 +87,13 @@ const InputPreco = ({ placeholder, value, onChange }) => {
 
   const handleBlur = () => {
     setIsFocused(false);
-    if (value == null) setInputValue("");
-    else {
-      // mantém o mesmo comportamento do seu arquivo que estava OK no desktop
+    if (value == null) {
+      setInputValue("");
+    } else {
+      // sem piso, só um teto de segurança bem alto
       let v = value;
-      if (v < 65000) v = 65000;
-      if (v > 65000000) v = 65000000;
+      if (v < 0) v = 0;
+      if (v > 700000000) v = 700000000;
       onChange(v);
       setInputValue(formatarParaReal(v));
     }
@@ -176,56 +188,14 @@ export default function PropertyFilters({
   const isClient = useIsClient();
   const isMobile = useIsMobile();
 
-  // Controlled vs Uncontrolled
-  const isControlled = typeof isVisible === "boolean" && typeof setIsVisible === "function";
-  const visible = isControlled ? isVisible : true;
+  // Ref para scroll container desktop
+  const scrollRef = useRef(null);
 
-  // Medida do header externo para o topo do painel não cobrir
-  const [headerOffset, setHeaderOffset] = useState(0);
+  const [uiVisible, setUiVisible] = useState(false);
   useEffect(() => {
-    if (!isClient || !visible) return;
-    const selectors = [".fixed.top-20", "[data-app-header]", "header[role='banner']", ".site-header"];
-    let foundRect = null;
-    for (const sel of selectors) {
-      const el = document.querySelector(sel);
-      if (el) {
-        const r = el.getBoundingClientRect();
-        if (r && r.bottom >= 0) {
-          foundRect = r;
-          break;
-        }
-      }
-    }
-    setHeaderOffset(foundRect ? Math.ceil(foundRect.bottom) : 0);
-  }, [isClient, visible]);
-
-  // Lock do body quando painel mobile aberto
-  useEffect(() => {
-    if (!isClient) return;
-    const isMobileViewport = typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches;
-    if (!(isMobileViewport && isControlled && visible)) return;
-
-    const scrollY = window.scrollY || window.pageYOffset || 0;
-    const prev = {
-      position: document.body.style.position,
-      top: document.body.style.top,
-      width: document.body.style.width,
-      overflow: document.body.style.overflow,
-    };
-
-    document.body.style.position = "fixed";
-    document.body.style.top = `-${scrollY}px`;
-    document.body.style.width = "100%";
-    document.body.style.overflow = "hidden";
-
-    return () => {
-      document.body.style.position = prev.position;
-      document.body.style.top = prev.top;
-      document.body.style.width = prev.width;
-      document.body.style.overflow = prev.overflow;
-      window.scrollTo(0, scrollY);
-    };
-  }, [isClient, isControlled, visible]);
+    const t = setTimeout(() => setUiVisible(true), 60);
+    return () => clearTimeout(t);
+  }, []);
 
   // Store
   const setFilters = useFiltersStore((s) => s.setFilters);
@@ -238,7 +208,7 @@ export default function PropertyFilters({
   const [bairros, setBairros] = useState([]);
 
   // Seleções
-  const [finalidade, setFinalidade] = useState("");
+  const [finalidade, setFinalidade] = useState(""); // tokens: "venda" | "locacao"
   const [categoriaSelecionada, setCategoriaSelecionada] = useState("");
   const [cidadeSelecionada, setCidadeSelecionada] = useState("");
   const [bairrosSelecionados, setBairrosSelecionados] = useState([]);
@@ -311,10 +281,10 @@ export default function PropertyFilters({
     })();
   }, [cidadeSelecionada, categoriaSelecionada, setFilters]);
 
-  // Hidratar estados do store
+  // Hidratar estados do store (normaliza finalidade)
   useEffect(() => {
     const s = useFiltersStore.getState();
-    if (s.finalidade) setFinalidade(s.finalidade);
+    if (s.finalidade) setFinalidade(toTokenFinalidade(s.finalidade));
     if (s.categoriaSelecionada) setCategoriaSelecionada(s.categoriaSelecionada);
     if (s.cidadeSelecionada) setCidadeSelecionada(s.cidadeSelecionada);
     if (s.bairrosSelecionados?.length) setBairrosSelecionados(s.bairrosSelecionados);
@@ -331,7 +301,7 @@ export default function PropertyFilters({
     if (s.proximoMetro) setProximoMetro(s.proximoMetro);
   }, []);
 
-  /* ====== Outside click (mobile/desktop) ====== */
+  /* ====== Outside click (mobile/desktop) with 1-tick delay ====== */
   useEffect(() => {
     let registered = false;
     let timer = null;
@@ -385,14 +355,14 @@ export default function PropertyFilters({
   const handlePrecoChange = (value, setter) => setter(value);
   const handleAreaChange = (value, setter) => setter(Math.min(value || 0, 999));
 
-  const handleFinalidadeChange = (e) =>
-    setFinalidade(e.target.value === "comprar" ? "Comprar" : e.target.value === "alugar" ? "Alugar" : "");
+  const isControlled = typeof isVisible === "boolean" && typeof setIsVisible === "function";
+  const visible = isControlled ? isVisible : true;
 
   const handleAplicarFiltros = () => {
     const filtrosBasicosPreenchidos = !!(categoriaSelecionada && cidadeSelecionada && finalidade);
 
-    const precoMinFinal = precoMin && precoMin > 0 ? precoMin : null;
-    const precoMaxFinal = precoMax && precoMax > 0 ? precoMax : null;
+    const precoMinFinal = precoMin != null && precoMin >= 0 ? precoMin : null;
+    const precoMaxFinal = precoMax != null && precoMax >= 0 ? precoMax : null;
 
     const areaMinFinal = Math.min(areaMin || 0, 999);
     const areaMaxFinal = Math.min(areaMax || 0, 999);
@@ -405,21 +375,25 @@ export default function PropertyFilters({
     });
 
     setFilters({
-      finalidade,
+      finalidade, // "venda" | "locacao"
       categoriaSelecionada,
       cidadeSelecionada,
       bairrosSelecionados: bairrosProcessados,
       quartos: quartosSelecionados,
       banheiros: banheirosSelecionados,
       vagas: vagasSelecionadas,
+
+      // Mantém sempre os mesmos nomes de campos (cards e mapa passam a se alinhar)
       precoMin: precoMinFinal != null ? String(precoMinFinal) : null,
       precoMax: precoMaxFinal != null ? String(precoMaxFinal) : null,
       precoMinimo: precoMinFinal != null ? String(precoMinFinal) : null,
       precoMaximo: precoMaxFinal != null ? String(precoMaxFinal) : null,
+
       areaMin: areaMinFinal ? String(areaMinFinal) : "0",
       areaMax: areaMaxFinal ? String(areaMaxFinal) : "0",
       areaMinima: areaMinFinal > 0 ? String(areaMinFinal) : null,
       areaMaxima: areaMaxFinal > 0 ? String(areaMaxFinal) : null,
+
       abaixoMercado,
       proximoMetro,
       filtrosBasicosPreenchidos,
@@ -453,7 +427,6 @@ export default function PropertyFilters({
      Desktop (horizontal) — apenas no desktop!
   ========================= */
   if (horizontal && !isMobile) {
-    // Safe SSR
     const computeDropdownStyle = (ref, width = 160) => {
       if (typeof window === "undefined" || !ref?.current) return {};
       const rect = ref.current.getBoundingClientRect();
@@ -467,6 +440,7 @@ export default function PropertyFilters({
         <div className="max-w-full mx-auto px-2">
           <div className="flex items-center">
             <div
+              ref={scrollRef}
               className="flex items-end gap-2 overflow-x-auto scrollbar-hide flex-1"
               style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
             >
@@ -478,13 +452,13 @@ export default function PropertyFilters({
                   onClick={() => setFinalidadeExpanded((v) => !v)}
                   className="px-2 py-2 text-xs bg-white border border-gray-300 hover:border-gray-400 focus:border-black focus:outline-none w-[92px] flex-shrink-0 text-left"
                 >
-                  {finalidade || "Selecionar"}
+                  {labelFinalidade(finalidade) || "Selecionar"}
                 </button>
                 <div
                   className={`z-[60] mt-1 bg-white border border-gray-300 rounded shadow-lg ${!finalidadeExpanded ? "hidden" : ""}`}
-                  style={{ ...computeDropdownStyle(finalidadeRef, 140) }}
+                  style={{ ...computeDropdownStyle(finalidadeRef, 160) }}
                 >
-                  {["", "Comprar", "Alugar"].map((op) => (
+                  {["", "venda", "locacao"].map((op) => (
                     <div
                       key={op || "selecionar"}
                       className="px-2 py-2 hover:bg-gray-50 cursor-pointer text-[11px]"
@@ -493,7 +467,7 @@ export default function PropertyFilters({
                         setFinalidadeExpanded(false);
                       }}
                     >
-                      {op || "Selecionar"}
+                      {op === "" ? "Selecionar" : labelFinalidade(op)}
                     </div>
                   ))}
                 </div>
@@ -701,7 +675,7 @@ export default function PropertyFilters({
               <div className="flex flex-col">
                 <label className="text-[10px] font-medium text-gray-600 mb-1">Preço mín</label>
                 <InputPreco
-                  placeholder="R$ 65.000"
+                  placeholder="R$ 0"
                   value={precoMin}
                   onChange={(v) => handlePrecoChange(v, setPrecoMin)}
                 />
@@ -710,7 +684,7 @@ export default function PropertyFilters({
               <div className="flex flex-col">
                 <label className="text-[10px] font-medium text-gray-600 mb-1">Preço máx</label>
                 <InputPreco
-                  placeholder="R$ 65.000.000"
+                  placeholder="R$ 700.000.000"
                   value={precoMax}
                   onChange={(v) => handlePrecoChange(v, setPrecoMax)}
                 />
@@ -750,276 +724,267 @@ export default function PropertyFilters({
   }
 
   /* =========================
-     Mobile / padrão (off-canvas)
-     — bloco cirúrgico restaurado com:
-       1) Header sticky (respeita header externo)
-       2) Conteúdo com overflow-y para rolar
-       3) Barra de ações fixa no rodapé do painel
+     Mobile / padrão (off-canvas com fallback inline)
   ========================= */
   return (
     <>
-      {/* FAB (abrir filtros) */}
+      {/* BOTÃO FLUTUANTE para abrir os filtros quando controlado e fechado */}
       {isClient && isMobile && isControlled && !visible && (
         <button
           type="button"
           onClick={() => setIsVisible(true)}
-          className="fixed left-1/2 -translate-x-1/2 z-[9996] rounded-full bg-black text-white px-5 py-3 shadow-lg md:hidden"
-          style={{ bottom: "calc(env(safe-area-inset-bottom) + 24px)" }}
-          aria-label="Abrir filtros"
+          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[9997] bg-black text-white px-5 py-3 rounded-full shadow-lg text-sm font-semibold"
+          style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 12px)" }}
         >
           Abrir filtros
         </button>
       )}
 
-      {/* Backdrop */}
+      {/* Backdrop quando painel aberto */}
       {isClient && isMobile && isControlled && visible && (
         <div
-          className="fixed inset-0 bg-black/60 z-[9998] md:hidden"
+          className="fixed inset-0 bg-black/60 z-[9998]"
           onClick={() => setIsVisible(false)}
           aria-hidden="true"
         />
       )}
 
-      {/* Painel off-canvas */}
+      {/* Painel */}
       <div
         className={[
-          "md:hidden fixed inset-x-0 bottom-0 z-[9999] max-h-[85vh] bg-white text-black rounded-t-2xl shadow-sm transition-transform duration-300",
-          visible ? "translate-y-0" : "translate-y-full",
+          "bg-white text-black rounded-t-2xl sm:rounded-lg shadow-sm w-full overflow-y-auto scrollbar-hide transition-transform duration-300",
+          isClient && isMobile
+            ? (isControlled
+                ? (visible
+                    ? "fixed inset-x-0 bottom-0 z-[9999] max-h-[85vh] translate-y-0"
+                    : "fixed inset-x-0 bottom-0 z-[9999] max-h-[85vh] translate-y-full")
+                : "relative")
+            : "relative"
         ].join(" ")}
-        style={{ WebkitOverflowScrolling: "touch" }}
-        role="dialog"
-        aria-modal="true"
+        style={{
+          display: !uiVisible ? "none" : "block",
+          paddingBottom:
+            isClient && isMobile && isControlled
+              ? "calc(env(safe-area-inset-bottom) + 88px)"
+              : undefined,
+        }}
+        role={isClient && isMobile && isControlled ? "dialog" : undefined}
+        aria-modal={isClient && isMobile && isControlled ? true : undefined}
       >
-        {/* Header sticky — respeita a altura do header da página */}
-        <div className="sticky bg-white z-10 py-2 px-4 border-b" style={{ top: headerOffset }}>
-          <div className="flex items-center justify-between">
-            <h1 className="font-bold text-sm">Filtros Rápidos</h1>
-            <button
-              onClick={() => setIsVisible(false)}
-              className="flex items-center justify-center bg-zinc-200 font-bold text-xs py-2 px-4 rounded-md hover:bg-gray-100"
-            >
-              Ver resultados
-            </button>
+        <div className="w-full p-4 sm:p-6">
+          {/* Header */}
+          <div className="flex justify-between items-center sticky top-0 bg-white z-10 py-2">
+            <h1 className="font-bold text-sm sm:text-base">Filtros Rápidos</h1>
+            {isClient && isMobile && isControlled && (
+              <button
+                onClick={() => setIsVisible(false)}
+                className="flex items-center justify-center bg-zinc-200 font-bold text-xs py-2 px-4 rounded-md hover:bg-gray-100"
+              >
+                Ver resultados
+              </button>
+            )}
           </div>
-        </div>
 
-        {/* Conteúdo + barra fixa */}
-        <div className="flex flex-col max-h-[calc(85vh-56px)]">
-          {/* Conteúdo rolável */}
-          <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-3">
-            {/* Finalidade */}
-            <div className="my-1">
-              <span className="block text-[10px] font-semibold text-gray-800 mb-1 mt-2">
-                Finalidade
-              </span>
-              <select
-                className="w-full rounded-md border border-gray-300 bg-white text-xs p-2 focus:outline-none focus:ring-1 focus:ring-black"
-                value={finalidade === "Comprar" ? "comprar" : finalidade === "Alugar" ? "alugar" : ""}
-                onChange={(e) =>
-                  setFinalidade(e.target.value === "comprar" ? "Comprar" : e.target.value === "alugar" ? "Alugar" : "")
-                }
-              >
-                <option value="">Selecione a finalidade</option>
-                <option value="comprar">Comprar</option>
-                <option value="alugar">Alugar</option>
-              </select>
+          {/* Finalidade */}
+          <div className="my-3 sm:my-4">
+            <span className="block text-[10px] font-semibold text-gray-800 mb-1 mt-2">
+              Finalidade
+            </span>
+            <select
+              className="w-full rounded-md border border-gray-300 bg-white text-xs p-2 focus:outline-none focus:ring-1 focus:ring-black"
+              value={finalidade || ""}
+              onChange={(e) => setFinalidade(e.target.value)}  // "venda" | "locacao"
+            >
+              <option value="">Selecione a finalidade</option>
+              <option value="venda">Comprar</option>
+              <option value="locacao">Alugar</option>
+            </select>
 
-              {/* Tipo */}
-              <span className="block text-[10px] font-semibold text-gray-800 mb-1 mt-2">
-                Tipo de imóvel
-              </span>
-              <select
-                className="w-full rounded-md border border-gray-300 bg-white text-xs p-2 focus:outline-none focus:ring-1 focus:ring-black"
-                value={categoriaSelecionada}
-                onChange={(e) => setCategoriaSelecionada(e.target.value)}
-              >
-                <option value="">Todos os imóveis</option>
-                {categorias.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
+            {/* Tipo */}
+            <span className="block text-[10px] font-semibold text-gray-800 mb-1 mt-2">
+              Tipo de imóvel
+            </span>
+            <select
+              className="w-full rounded-md border border-gray-300 bg-white text-xs p-2 focus:outline-none focus:ring-1 focus:ring-black"
+              value={categoriaSelecionada}
+              onChange={(e) => setCategoriaSelecionada(e.target.value)}
+            >
+              <option value="">Todos os imóveis</option>
+              {categorias.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
 
-              {/* Cidade */}
-              <span className="block text-[10px] font-semibold text-gray-800 mb-1 mt-2">Cidade</span>
-              <select
-                className="w-full rounded-md border border-gray-300 bg-white text-xs p-2 focus:outline-none focus:ring-1 focus:ring-black"
-                value={cidadeSelecionada}
-                onChange={(e) => {
-                  setCidadeSelecionada(e.target.value);
-                  setBairrosSelecionados([]);
-                  setBairroFilter("");
-                }}
-              >
-                <option value="">Todas as cidades</option>
-                {cidades.map((c) => (
-                  <option className="text-xs" key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
+            {/* Cidade */}
+            <span className="block text-[10px] font-semibold text-gray-800 mb-1 mt-2">Cidade</span>
+            <select
+              className="w-full rounded-md border border-gray-300 bg-white text-xs p-2 focus:outline-none focus:ring-1 focus:ring-black"
+              value={cidadeSelecionada}
+              onChange={handleCidadeChange}
+            >
+              <option value="">Todas as cidades</option>
+              {cidades.map((c) => (
+                <option className="text-xs" key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
 
-              {/* Bairros (multi) */}
-              <div className="mt-2" ref={bairrosRef}>
-                <span className="block text-[10px] font-semibold text-gray-800 mb-1">Bairros</span>
-                <div className="relative">
-                  <input
-                    type="text"
-                    placeholder={
-                      bairrosSelecionados.length > 0
-                        ? bairrosSelecionados.length === 1
-                          ? bairrosSelecionados[0]
-                          : bairrosSelecionados.length <= 2
-                            ? bairrosSelecionados.join(", ")
-                            : `${bairrosSelecionados[0]}, +${bairrosSelecionados.length - 1}`
-                        : "Selecionar bairros"
-                    }
-                    value={bairroFilter}
-                    onChange={(e) => setBairroFilter(e.target.value)}
-                    className="w-full rounded-md border border-gray-300 bg-white text-xs p-2 focus:outline-none focus:ring-1 focus:ring-black mb-1"
-                    onClick={() => setBairrosExpanded(true)}
-                    disabled={!cidadeSelecionada}
-                  />
+            {/* Bairros (multi) */}
+            <div className="mt-2" ref={bairrosRef}>
+              <span className="block text-[10px] font-semibold text-gray-800 mb-1">Bairros</span>
+              <div className="relative">
+                <input
+                  type="text"
+                  placeholder={
+                    bairrosSelecionados.length > 0
+                      ? bairrosSelecionados.length === 1
+                        ? bairrosSelecionados[0]
+                        : bairrosSelecionados.length <= 2
+                          ? bairrosSelecionados.join(", ")
+                          : `${bairrosSelecionados[0]}, +${bairrosSelecionados.length - 1}`
+                      : "Selecionar bairros"
+                  }
+                  value={bairroFilter}
+                  onChange={(e) => setBairroFilter(e.target.value)}
+                  className="w-full rounded-md border border-gray-300 bg-white text-xs p-2 focus:outline-none focus:ring-1 focus:ring-black mb-1"
+                  onClick={() => setBairrosExpanded(true)}
+                  disabled={!cidadeSelecionada}
+                />
 
-                  {bairrosSelecionados.length > 0 && (
-                    <div className="absolute right-2 top-1/2 -translate-y-1/2 bg-black text-white text-[10px] rounded-full w-5 h-5 grid place-items-center">
-                      {bairrosSelecionados.length}
+                {bairrosSelecionados.length > 0 && (
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2 bg-black text-white text-[10px] rounded-full w-5 h-5 grid place-items-center">
+                    {bairrosSelecionados.length}
+                  </div>
+                )}
+
+                <div
+                  className={`mt-1 border border-gray-200 rounded-md bg-white max-h-40 overflow-y-auto ${
+                    !cidadeSelecionada || !bairrosExpanded ? "hidden" : ""
+                  }`}
+                >
+                  {bairrosFiltrados.length > 0 && (
+                    <div className="flex justify-between border-b border-gray-100 px-2 py-1 sticky top-0 bg-white">
+                      <button
+                        onClick={() => setBairrosSelecionados(bairrosFiltrados)}
+                        className="text-[10px] text-black hover:underline"
+                      >
+                        Selecionar todos
+                      </button>
+                      <button
+                        onClick={() => setBairrosSelecionados([])}
+                        className="text-[10px] text-black hover:underline"
+                      >
+                        Limpar todos
+                      </button>
                     </div>
                   )}
 
-                  <div
-                    className={`mt-1 border border-gray-200 rounded-md bg-white max-h-40 overflow-y-auto ${
-                      !cidadeSelecionada || !bairrosExpanded ? "hidden" : ""
-                    }`}
-                  >
-                    {bairrosFiltrados.length > 0 && (
-                      <div className="flex justify-between border-b border-gray-100 px-2 py-1 sticky top-0 bg-white">
-                        <button
-                          onClick={() => setBairrosSelecionados(bairrosFiltrados)}
-                          className="text-[10px] text-black hover:underline"
-                        >
-                          Selecionar todos
-                        </button>
-                        <button
-                          onClick={() => setBairrosSelecionados([])}
-                          className="text-[10px] text-black hover:underline"
-                        >
-                          Limpar todos
-                        </button>
-                      </div>
-                    )}
-
-                    {bairrosFiltrados.length ? (
-                      bairrosFiltrados.map((b) => (
-                        <label
-                          key={b}
-                          className={`flex items-center px-2 py-1 hover:bg-gray-50 cursor-pointer ${
-                            bairrosSelecionados.includes(b) ? "bg-gray-100" : ""
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            className="mr-2 h-4 w-4"
-                            checked={bairrosSelecionados.includes(b)}
-                            onChange={() => handleBairroChange(b)}
-                          />
-                          <span className={`text-xs flex-1 ${bairrosSelecionados.includes(b) ? "font-semibold" : ""}`}>
-                            {b}
-                          </span>
-                          {bairrosSelecionados.includes(b) && <span className="text-green-600 text-sm">✓</span>}
-                        </label>
-                      ))
-                    ) : (
-                      <div className="px-2 py-1 text-xs text-gray-500">
-                        {bairroFilter ? "Nenhum bairro encontrado" : "Selecione uma cidade primeiro"}
-                      </div>
-                    )}
-                  </div>
-
-                  {bairrosExpanded && (
-                    <button
-                      onClick={() => setBairrosExpanded(false)}
-                      className="text-xs text-black bg-gray-100 w-full py-1 rounded-b-md"
-                    >
-                      Fechar
-                    </button>
+                  {bairrosFiltrados.length ? (
+                    bairrosFiltrados.map((b) => (
+                      <label
+                        key={b}
+                        className={`flex items-center px-2 py-1 hover:bg-gray-50 cursor-pointer ${
+                          bairrosSelecionados.includes(b) ? "bg-gray-100" : ""
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          className="mr-2 h-4 w-4"
+                          checked={bairrosSelecionados.includes(b)}
+                          onChange={() => handleBairroChange(b)}
+                        />
+                        <span className={`text-xs flex-1 ${bairrosSelecionados.includes(b) ? "font-semibold" : ""}`}>
+                          {b}
+                        </span>
+                        {bairrosSelecionados.includes(b) && <span className="text-green-600 text-sm">✓</span>}
+                      </label>
+                    ))
+                  ) : (
+                    <div className="px-2 py-1 text-xs text-gray-500">
+                      {bairroFilter ? "Nenhum bairro encontrado" : "Selecione uma cidade primeiro"}
+                    </div>
                   )}
                 </div>
 
-                {bairrosSelecionados.length > 0 && (
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    {bairrosSelecionados.map((b) => (
-                      <span key={b} className="bg-gray-100 rounded-full px-2 py-1 text-[10px] flex items-center">
-                        {b}
-                        <button onClick={() => handleBairroChange(b)} className="ml-1 text-gray-500 hover:text-black">
-                          ×
-                        </button>
-                      </span>
-                    ))}
-                  </div>
+                {bairrosExpanded && (
+                  <button
+                    onClick={() => setBairrosExpanded(false)}
+                    className="text-xs text-black bg-gray-100 w-full py-1 rounded-b-md"
+                  >
+                    Fechar
+                  </button>
                 )}
               </div>
-            </div>
 
-            <Separator />
-
-            <OptionGroup label="Quartos" options={opcoes} selectedValue={quartosSelecionados} onChange={setQuartosSelecionados} />
-            {/* <OptionGroup label="Banheiros" options={opcoes} selectedValue={banheirosSelecionados} onChange={setBanheirosSelecionados} /> */}
-            <OptionGroup label="Vagas" options={opcoes} selectedValue={vagasSelecionadas} onChange={setVagasSelecionadas} />
-
-            <Separator />
-
-            <div className="mb-2">
-              <span className="block text-[10px] font-semibold text-gray-800 mb-2">Preço</span>
-              <div className="flex gap-2">
-                <InputPreco placeholder="R$ 65.000" value={precoMin} onChange={(v) => handlePrecoChange(v, setPrecoMin)} />
-                <InputPreco placeholder="R$ 65.000.000" value={precoMax} onChange={(v) => handlePrecoChange(v, setPrecoMax)} />
-              </div>
-            </div>
-
-            <Separator />
-
-            <div className="mb-2">
-              <span className="block text-[10px] font-semibold text-gray-800 mb-2">Área do imóvel</span>
-              <div className="flex gap-2">
-                <InputArea placeholder="0 m²" value={areaMin} onChange={(v) => handleAreaChange(v, setAreaMin)} />
-                <InputArea placeholder="999 m²" value={areaMax} onChange={(v) => handleAreaChange(v, setAreaMax)} />
-              </div>
+              {bairrosSelecionados.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {bairrosSelecionados.map((b) => (
+                    <span key={b} className="bg-gray-100 rounded-full px-2 py-1 text-[10px] flex items-center">
+                      {b}
+                      <button onClick={() => handleBairroChange(b)} className="ml-1 text-gray-500 hover:text-black">
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Barra de ações sticky no rodapé do painel */}
-          <div className="sticky bottom-0 bg-white border-t border-gray-200 z-10 px-4 py-3 shadow-[0_-4px_12px_rgba(0,0,0,0.06)]">
+          <Separator />
+
+          <OptionGroup label="Quartos" options={opcoes} selectedValue={quartosSelecionados} onChange={setQuartosSelecionados} />
+          {/* <OptionGroup label="Banheiros" options={opcoes} selectedValue={banheirosSelecionados} onChange={setBanheirosSelecionados} /> */}
+          <OptionGroup label="Vagas" options={opcoes} selectedValue={vagasSelecionadas} onChange={setVagasSelecionadas} />
+
+          <Separator />
+
+          <div className="mb-4">
+            <span className="block text-[10px] font-semibold text-gray-800 mb-2">Preço</span>
+            <div className="flex gap-2">
+              <InputPreco placeholder="R$ 0" value={precoMin} onChange={(v) => handlePrecoChange(v, setPrecoMin)} />
+              <InputPreco placeholder="R$ 700.000.000" value={precoMax} onChange={(v) => handlePrecoChange(v, setPrecoMax)} />
+            </div>
+          </div>
+
+          <Separator />
+
+          <div className="mb-4">
+            <span className="block text-[10px] font-semibold text-gray-800 mb-2">Área do imóvel</span>
+            <div className="flex gap-2">
+              <InputArea placeholder="0 m²" value={areaMin} onChange={(v) => handleAreaChange(v, setAreaMin)} />
+              <InputArea placeholder="999 m²" value={areaMax} onChange={(v) => handleAreaChange(v, setAreaMax)} />
+            </div>
+          </div>
+
+          <div
+            className={
+              isClient && isMobile && isControlled
+                ? "fixed bottom-0 left-0 right-0 w-full px-4 py-4 bg-white border-t border-gray-200 shadow-lg z-[9999]"
+                : "sticky bottom-0 bg-white pt-3 pb-1 z-10"
+            }
+            style={{
+              paddingBottom: isClient && isMobile && isControlled ? "calc(env(safe-area-inset-bottom) + 16px)" : undefined,
+            }}
+          >
             <button
               onClick={handleAplicarFiltros}
-              className="w-full bg-black text-white px-4 py-3 rounded-md mb-2 text-xs"
+              className="w-full bg-black shadow-md text-white px-4 py-3 rounded-md mb-2 text-xs sm:text-sm"
             >
               Aplicar Filtros
             </button>
             <button
               onClick={handleLimparFiltros}
-              className="w-full bg-zinc-300/80 text-black px-4 py-3 rounded-md text-xs"
+              className="w-full bg-zinc-300/80 shadow-md text-black px-4 py-3 rounded-md text-xs sm:text-sm"
             >
               Limpar
             </button>
           </div>
         </div>
       </div>
-
-      {/* Estilos globais seguros para travar “arrasto lateral” no mobile */}
-      <style jsx global>{`
-        @media (max-width: 767px) {
-          html, body {
-            overflow-x: hidden;
-            overscroll-behavior-x: none;
-            touch-action: pan-y;
-          }
-          .leaflet-container {
-            touch-action: auto !important;
-          }
-        }
-      `}</style>
     </>
   );
 }
