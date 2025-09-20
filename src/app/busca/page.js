@@ -1,4 +1,4 @@
-// src/app/busca/page.js - SOLUÇÃO COMPLETA - CORRIGIDO FINALIDADE + NAVEGAÇÃO
+// src/app/busca/page.js - CORRIGIDO: cards usam a mesma finalidade do mapa ("locacao"/"venda")
 
 "use client";
 
@@ -32,6 +32,23 @@ import useFavoritosStore from "../store/favoritosStore";
 import useImovelStore from "../store/imovelStore";
 import { gerarTituloSeoFriendly, gerarDescricaoSeoFriendly, gerarUrlSeoFriendly } from "../utils/url-slugs";
 import { useRouter } from "next/navigation";
+
+/* =========================
+   Helpers de finalidade (igual ao mapa)
+========================= */
+const normalize = (s) =>
+  (s ?? "")
+    .toString()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/\p{Diacritic}/gu, "");
+
+const finalidadeToApi = (finalidadeUI) => {
+  const f = normalize(finalidadeUI);
+  if (["alugar", "aluguel", "locacao", "locação", "locar", "rent"].includes(f)) return "locacao";
+  if (["comprar", "venda", "buy", "sell", "compra"].includes(f)) return "venda";
+  return ""; // sem filtro
+};
 
 export default function BuscaImoveis() {
   const [imoveis, setImoveis] = useState([]);
@@ -254,7 +271,7 @@ export default function BuscaImoveis() {
           }
         }
         
-        // 🎯 CONSTRUIR TÍTULO NO NOVO FORMATO: "Apartamentos a venda no Guarujá 54 imóveis"
+        // 🎯 CONSTRUIR TÍTULO NO NOVO FORMATO
         const quantidadeAtual = quantidadeResultados !== null ? quantidadeResultados : (pagination?.totalItems || 0);
         if (quantidadeAtual > 0) {
           title = `${titleParts.join(' ')} ${quantidadeAtual} imóveis`;
@@ -262,16 +279,12 @@ export default function BuscaImoveis() {
           title = `${titleParts.join(' ')}`;
         }
         
-        // 🎯 CONSTRUIR DESCRIÇÃO: "Especialistas em apartamentos a venda Guarujá. NPi"
         description = `Especialistas em ${descriptionParts.join(' ')}. NPi`;
         
         // 🎯 CONSTRUIR URL CANÔNICA
         const urlAtual = window?.location?.pathname || '';
-        
-        // 🔥 SE JÁ ESTAMOS NUMA URL SEO-FRIENDLY (/buscar/...), USAR ELA COMO CANONICAL
         if (urlAtual.startsWith('/buscar/') && urlAtual.split('/').length >= 5) {
           canonicalUrl = (window?.location?.origin || baseUrl) + urlAtual;
-          console.log('🎯 [URL-CANONICAL] URL SEO detectada, usando atual como canonical:', canonicalUrl);
         } else if (filtrosAtuais.cidadeSelecionada && filtrosAtuais.categoriaSelecionada && filtrosAtuais.finalidade) {
           // Gerar URL SEO-friendly
           let finalidadeSlug = 'venda';
@@ -296,31 +309,21 @@ export default function BuscaImoveis() {
           const cidadeSlug = filtrosAtuais.cidadeSelecionada.toLowerCase().replace(/\s+/g, '-');
           
           canonicalUrl = `${baseUrl}/buscar/${finalidadeSlug}/${categoriaSlug}/${cidadeSlug}`;
-          console.log('🎯 [URL-CANONICAL] URL SEO gerada:', canonicalUrl);
         } else {
           canonicalUrl = (window?.location?.origin || baseUrl) + (window?.location?.pathname || '') + (window?.location?.search || '');
-          console.log('🎯 [URL-CANONICAL] Usando URL atual como fallback:', canonicalUrl);
         }
-        
-        console.log('🎯 [TÍTULO DINÂMICO]:', title);
-        console.log('🎯 [FILTROS ATUAIS]:', filtrosAtuais);
       }
 
       // 🔥 FORÇAR ATUALIZAÇÃO DO TÍTULO
       document.title = title;
       
-      // Remover qualquer meta title existente e criar novo
       const existingTitleMeta = document.querySelector('meta[name="title"]');
-      if (existingTitleMeta) {
-        existingTitleMeta.remove();
-      }
-      
+      if (existingTitleMeta) existingTitleMeta.remove();
       const titleMeta = document.createElement('meta');
       titleMeta.setAttribute('name', 'title');
       titleMeta.setAttribute('content', title);
       document.head.appendChild(titleMeta);
       
-      // Atualizar/criar meta tags restantes
       const metaTags = [
         { name: 'description', content: description },
         { name: 'keywords', content: keywords },
@@ -353,36 +356,26 @@ export default function BuscaImoveis() {
         { name: 'x-robots-tag', content: 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1' },
       ];
       
-      // Atualizar meta tags
       metaTags.forEach(tag => {
         const selector = tag.name ? `meta[name="${tag.name}"]` : `meta[property="${tag.property}"]`;
         let existingTag = document.querySelector(selector);
-        
         if (!existingTag) {
           existingTag = document.createElement('meta');
           if (tag.name) existingTag.setAttribute('name', tag.name);
           if (tag.property) existingTag.setAttribute('property', tag.property);
           document.head.appendChild(existingTag);
         }
-        
         existingTag.setAttribute('content', tag.content);
       });
       
-      // 🔥 VERIFICAR E ATUALIZAR CANONICAL LINK
       let canonicalLink = document.querySelector('link[rel="canonical"]');
       if (!canonicalLink) {
         canonicalLink = document.createElement('link');
         canonicalLink.setAttribute('rel', 'canonical');
         document.head.appendChild(canonicalLink);
-        console.log('🎯 [CANONICAL] Link canonical criado');
-      } else {
-        console.log('🎯 [CANONICAL] Link canonical já existe, atualizando');
       }
-      
       canonicalLink.setAttribute('href', canonicalUrl);
-      console.log('🎯 [CANONICAL] URL canonical definida:', canonicalUrl);
       
-      // Adicionar hreflang
       let hreflangPtBr = document.querySelector('link[rel="alternate"][hreflang="pt-BR"]');
       if (!hreflangPtBr) {
         hreflangPtBr = document.createElement('link');
@@ -392,8 +385,6 @@ export default function BuscaImoveis() {
       }
       hreflangPtBr.setAttribute('href', canonicalUrl);
       
-      console.log('✅ Meta tags SEO atualizadas:', { title, canonicalUrl });
-      
     } catch (error) {
       console.error('❌ Erro ao atualizar meta tags:', error);
     }
@@ -402,8 +393,6 @@ export default function BuscaImoveis() {
   // 🔥 FUNÇÃO PARA NORMALIZAR NOME DE CIDADE
   const normalizarCidade = (cidade) => {
     if (!cidade) return null;
-    
-    // Mapeamento de cidades conhecidas
     const cidadesMapeadas = {
       'guaruja': 'Guarujá',
       'guarujá': 'Guarujá',
@@ -422,51 +411,25 @@ export default function BuscaImoveis() {
       'sao-sebastiao': 'São Sebastião',
       'ilhabela': 'Ilhabela'
     };
-    
-    // Tentar mapeamento direto primeiro
     const cidadeNormalizada = cidadesMapeadas[cidade.toLowerCase()];
-    if (cidadeNormalizada) {
-      console.log(`🏙️ [CIDADE] Mapeamento: "${cidade}" → "${cidadeNormalizada}"`);
-      return cidadeNormalizada;
-    }
-    
-    // Se não houver mapeamento, aplicar normalização padrão
-    const resultado = cidade
-      .replace(/-/g, ' ')
-      .replace(/\b\w/g, l => l.toUpperCase())
-      .trim();
-    
-    console.log(`🏙️ [CIDADE] Normalização padrão: "${cidade}" → "${resultado}"`);
-    return resultado;
+    if (cidadeNormalizada) return cidadeNormalizada;
+    return cidade.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()).trim();
   };
 
   // 🔥 FUNÇÃO CORRIGIDA PARA EXTRAIR PARÂMETROS DE URL SEO-FRIENDLY
   const extractFromSeoUrl = () => {
     if (typeof window === 'undefined') return null;
     const path = window.location.pathname;
-    
-    console.log('🔍 [EXTRACT-SEO] Analisando path:', path);
-    
-    // Detectar padrão: /buscar/venda/apartamentos/guaruja
     const seoUrlMatch = path.match(/\/buscar?\/([^\/]+)\/([^\/]+)\/([^\/]+)(?:\/([^\/]+))?/);
-    
     if (seoUrlMatch) {
       const [, finalidade, categoria, cidade, bairro] = seoUrlMatch;
-      
-      console.log('🔍 [EXTRACT-SEO] Parâmetros extraídos da URL:', { finalidade, categoria, cidade, bairro });
-      
-      // 🔥 MAPEAMENTO CORRIGIDO E ROBUSTO: URL → STORE
-      let finalidadeStore = 'Comprar'; // Default para manter compatibilidade com links da home
-      
+
+      let finalidadeStore = 'Comprar';
       if (finalidade === 'venda' || finalidade === 'comprar' || finalidade === 'compra') {
         finalidadeStore = 'Comprar';
       } else if (finalidade === 'aluguel' || finalidade === 'alugar' || finalidade === 'locacao') {
         finalidadeStore = 'Alugar';
       }
-      
-      console.log(`🎯 [FINALIDADE] Mapeamento URL → Store: "${finalidade}" → "${finalidadeStore}"`);
-      
-      // 🔥 MAPEAMENTO CATEGORIA PLURAL → SINGULAR
       const categoriaSingularMap = {
         'apartamentos': 'Apartamento',
         'casas': 'Casa',
@@ -477,27 +440,15 @@ export default function BuscaImoveis() {
         'lofts': 'Loft',
         'lojas': 'Loja',
         'sobrados': 'Sobrado',
-        // Adicionar variações
         'apartamento': 'Apartamento',
         'casa': 'Casa',
         'cobertura': 'Cobertura',
         'terreno': 'Terreno'
       };
-      
       const categoriaStore = categoriaSingularMap[categoria.toLowerCase()] || 
         categoria.charAt(0).toUpperCase() + categoria.slice(1);
-      
-      console.log(`🏠 [CATEGORIA] Mapeamento URL → Store: "${categoria}" → "${categoriaStore}"`);
-      
-      // 🔥 CIDADE: USAR FUNÇÃO DE NORMALIZAÇÃO
       const cidadeStore = normalizarCidade(cidade);
-      
-      console.log('🔍 [EXTRACT-SEO] Mapeamentos finais:', {
-        finalidade: finalidade + ' → ' + finalidadeStore,
-        categoria: categoria + ' → ' + categoriaStore,
-        cidade: cidade + ' → ' + cidadeStore
-      });
-      
+
       return {
         finalidade: finalidadeStore,
         categoria: categoriaStore,
@@ -505,24 +456,15 @@ export default function BuscaImoveis() {
         bairro: bairro ? normalizarCidade(bairro) : null
       };
     }
-    
-    console.log('🔍 [EXTRACT-SEO] Nenhum padrão SEO encontrado');
     return null;
   };
 
   // 🔥 FUNÇÃO CORRIGIDA PARA ATUALIZAR URL (PRESERVAR HISTÓRICO)
   const updateUrlFromFilters = () => {
     const filtrosAtuais = useFiltersStore.getState();
-    
-    console.log('🔍 [UPDATE-URL] Atualizando URL a partir dos filtros:', filtrosAtuais);
-    
     if (filtrosAtuais.cidadeSelecionada && filtrosAtuais.finalidade && filtrosAtuais.categoriaSelecionada) {
       const urlAmigavel = gerarUrlSeoFriendly(filtrosAtuais);
-      console.log('🔍 [UPDATE-URL] URL SEO-friendly gerada:', urlAmigavel);
-      
-      // 🔥 USAR replace PARA NÃO QUEBRAR NAVEGAÇÃO
       router.replace(urlAmigavel);
-      console.log('🔄 [NAVEGAÇÃO] URL atualizada com router.replace (preserva histórico)');
     } else {
       const params = new URLSearchParams();
       if (filtrosAtuais.cidadeSelecionada) params.set('cidade', filtrosAtuais.cidadeSelecionada);
@@ -534,24 +476,14 @@ export default function BuscaImoveis() {
       if (filtrosAtuais.quartos) params.set('quartos', filtrosAtuais.quartos);
       if (filtrosAtuais.precoMin) params.set('precoMin', filtrosAtuais.precoMin);
       if (filtrosAtuais.precoMax) params.set('precoMax', filtrosAtuais.precoMax);
-      
       const urlComParams = params.toString() ? `/busca?${params.toString()}` : '/busca';
-      console.log('🔍 [UPDATE-URL] URL com params gerada:', urlComParams);
-      
-      // 🔥 USAR replace PARA NÃO QUEBRAR NAVEGAÇÃO
       router.replace(urlComParams);
-      console.log('🔄 [NAVEGAÇÃO] URL atualizada com router.replace (preserva histórico)');
     }
   };
 
-  // 🔥 FUNÇÃO SIMPLIFICADA PARA BUSCAR IMÓVEIS COM DEBUG DETALHADO
+  // 🔥 FUNÇÃO SIMPLIFICADA PARA BUSCAR IMÓVEIS (cards) — agora com finalidade da API
   const buscarImoveis = async (comFiltros = false) => {
-    console.log('🔍 [BUSCAR] Iniciando busca de imóveis, comFiltros:', comFiltros);
-    
-    if (mostrandoFavoritos) {
-      console.log('🔍 [BUSCAR] Modo favoritos ativo, pulando busca');
-      return;
-    }
+    if (mostrandoFavoritos) return;
 
     setIsLoading(true);
     try {
@@ -559,95 +491,53 @@ export default function BuscaImoveis() {
 
       if (comFiltros) {
         const filtrosAtuais = useFiltersStore.getState();
-        console.log('🔍 [BUSCAR] Filtros atuais para busca:', filtrosAtuais);
-        
-        const finalidade = filtrosAtuais.finalidade || "Comprar";
+        const finalidadeApi = finalidadeToApi(filtrosAtuais.finalidade);
 
         params = {
-          finalidade: finalidade,
-          categoria: filtrosAtuais.categoriaSelecionada,
-          cidade: filtrosAtuais.cidadeSelecionada,
-          quartos: filtrosAtuais.quartos,
-          banheiros: filtrosAtuais.banheiros,
-          vagas: filtrosAtuais.vagas,
+          categoria: filtrosAtuais.categoriaSelecionada || undefined,
+          cidade: filtrosAtuais.cidadeSelecionada || undefined,
+          quartos: filtrosAtuais.quartos || undefined,
+          banheiros: filtrosAtuais.banheiros || undefined,
+          vagas: filtrosAtuais.vagas || undefined,
         };
+
+        if (finalidadeApi) params.finalidade = finalidadeApi;
 
         if (filtrosAtuais.bairrosSelecionados && filtrosAtuais.bairrosSelecionados.length > 0) {
           params.bairrosArray = filtrosAtuais.bairrosSelecionados;
         }
 
-        if (filtrosAtuais.precoMin !== null) {
+        // preços — enviar sempre precoMinimo/Maximo; se locação, duplicar
+        if (filtrosAtuais.precoMin != null) {
           params.precoMinimo = filtrosAtuais.precoMin;
+          if (finalidadeApi === "locacao") params.precoAluguelMin = filtrosAtuais.precoMin;
         }
-
-        if (filtrosAtuais.precoMax !== null) {
+        if (filtrosAtuais.precoMax != null) {
           params.precoMaximo = filtrosAtuais.precoMax;
+          if (finalidadeApi === "locacao") params.precoAluguelMax = filtrosAtuais.precoMax;
         }
 
         if (filtrosAtuais.areaMin && filtrosAtuais.areaMin !== "0") {
           params.areaMinima = filtrosAtuais.areaMin;
         }
-
         if (filtrosAtuais.areaMax && filtrosAtuais.areaMax !== "0") {
           params.areaMaxima = filtrosAtuais.areaMax;
         }
+        if (filtrosAtuais.abaixoMercado) params.apenasCondominios = true;
+        if (filtrosAtuais.proximoMetro) params.proximoMetro = true;
 
-        if (filtrosAtuais.abaixoMercado) {
-          params.apenasCondominios = true;
-        }
-
-        if (filtrosAtuais.proximoMetro) {
-          params.proximoMetro = true;
-        }
-        
-        console.log('🔍 [BUSCAR] Parâmetros finais da API:', params);
-        
-        // 🚨 DEBUG ESPECIAL PARA GUARUJÁ
-        if (params.cidade) {
-          console.log('🏙️ [GUARUJA-DEBUG] Cidade sendo enviada para API:', params.cidade);
-          console.log('🏙️ [GUARUJA-DEBUG] Tipo da cidade:', typeof params.cidade);
-          console.log('🏙️ [GUARUJA-DEBUG] Comprimento:', params.cidade.length);
-          console.log('🏙️ [GUARUJA-DEBUG] Caracteres:', params.cidade.split('').map(c => c.charCodeAt(0)));
-        }
-        
-        // 🚨 DEBUG ESPECIAL PARA FINALIDADE
-        console.log('🎯 [FINALIDADE-DEBUG] Finalidade sendo enviada para API:', params.finalidade);
-        console.log('🎯 [FINALIDADE-DEBUG] Store finalidade:', filtrosAtuais.finalidade);
+        console.log('🔍 [BUSCAR] Params finais para API (cards):', params);
       }
 
-      console.log('🚀 [API-CALL] Chamando getImoveis com params:', params);
       const response = await getImoveis(params, currentPage, 12);
-      console.log('🔍 [BUSCAR] Resposta completa da API:', response);
 
       if (response && response.imoveis) {
         setImoveis(response.imoveis);
-        console.log('🔍 [BUSCAR] Imóveis encontrados:', response.imoveis.length);
-        
-        // 🚨 DEBUG: Se 0 imóveis, mostrar algumas amostras do banco para comparação
-        if (response.imoveis.length === 0 && params.cidade) {
-          console.log('❌ [GUARUJA-DEBUG] 0 imóveis encontrados! Possíveis problemas:');
-          console.log('   1. Nome da cidade no banco é diferente de:', params.cidade);
-          console.log('   2. Cidade está em outro campo (ex: municipio, localidade)');
-          console.log('   3. Cidade tem caracteres especiais/encoding diferentes');
-          console.log('   4. Case sensitive (maiúscula/minúscula)');
-          console.log('   5. Finalidade incompatível:', params.finalidade);
-        }
-
         if (Array.isArray(response.imoveis) && response.imoveis.length > 0) {
           adicionarVariosImoveisCache(response.imoveis);
-          
-          // 🚨 DEBUG: Mostrar algumas amostras das cidades encontradas
-          const cidadesAmostra = response.imoveis.slice(0, 5).map(imovel => ({
-            codigo: imovel.Codigo,
-            cidade: imovel.Cidade || imovel.cidade || imovel.municipio || imovel.localidade,
-            finalidade: imovel.Finalidade || imovel.Status || imovel.TipoNegocio,
-            outros: Object.keys(imovel).filter(k => k.toLowerCase().includes('cidad') || k.toLowerCase().includes('munic'))
-          }));
-          console.log('🏙️ [CIDADES-AMOSTRA] Primeiros 5 imóveis encontrados:', cidadesAmostra);
         }
       } else {
         setImoveis([]);
-        console.log('🔍 [BUSCAR] Nenhum imóvel encontrado na resposta');
       }
 
       if (response && response.pagination) {
@@ -659,14 +549,8 @@ export default function BuscaImoveis() {
           limit: Number(response.pagination.itemsPerPage) || 12,
         };
         setPagination(validPagination);
-        console.log('🔍 [BUSCAR] Paginação definida:', validPagination);
-        
         updateStructuredData(validPagination.totalItems, response.imoveis || []);
-        
-        setTimeout(() => {
-          updateClientMetaTags(validPagination.totalItems);
-          console.log('🎯 [BUSCAR] Meta tags atualizadas com total:', validPagination.totalItems);
-        }, 100);
+        setTimeout(() => updateClientMetaTags(validPagination.totalItems), 100);
       }
     } catch (error) {
       console.error("❌ [BUSCAR] Erro ao buscar imóveis:", error);
@@ -678,7 +562,6 @@ export default function BuscaImoveis() {
         itemsPerPage: 12,
         limit: 12,
       });
-      
       updateStructuredData(0, []);
     } finally {
       setIsLoading(false);
@@ -688,14 +571,9 @@ export default function BuscaImoveis() {
   // 🔥 EFEITO PRINCIPAL INICIAL: PROCESSAR URL E BUSCAR
   useEffect(() => {
     if (!initialLoad) return;
-    
-    console.log('🚀 [INITIAL] Iniciando carregamento da página');
     setIsBrowser(true);
     
-    // 1. Extrair parâmetros de URL SEO-friendly primeiro
     const seoParams = extractFromSeoUrl();
-    
-    // 2. Extrair parâmetros de query string como fallback
     const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
     const cidade = searchParams.get('cidade');
     const finalidade = searchParams.get('finalidade');
@@ -705,32 +583,15 @@ export default function BuscaImoveis() {
     const precoMin = searchParams.get('precoMin');
     const precoMax = searchParams.get('precoMax');
     const searchQuery = searchParams.get('q');
-    
-    console.log('🚀 [INITIAL] Parâmetros encontrados:', {
-      seoParams,
-      queryParams: { cidade, finalidade, categoria, bairros, quartos, precoMin, precoMax, searchQuery }
-    });
-    
-    // 3. Se há parâmetros para aplicar
+
     if (seoParams || cidade || finalidade || categoria || bairros || quartos || precoMin || precoMax) {
       const filtrosParaAplicar = {};
-      
-      // Priorizar parâmetros SEO-friendly
       if (seoParams) {
-        console.log('🚀 [INITIAL] Usando parâmetros SEO-friendly:', seoParams);
-        filtrosParaAplicar.cidadeSelecionada = seoParams.cidade; // 🔥 USAR CIDADE NORMALIZADA
-        filtrosParaAplicar.finalidade = seoParams.finalidade; // 🔥 USAR FINALIDADE CORRIGIDA
+        filtrosParaAplicar.cidadeSelecionada = seoParams.cidade;
+        filtrosParaAplicar.finalidade = seoParams.finalidade;
         filtrosParaAplicar.categoriaSelecionada = seoParams.categoria;
-        
-        if (seoParams.bairro) {
-          filtrosParaAplicar.bairrosSelecionados = [seoParams.bairro];
-        }
-        
-        // 🚨 DEBUG ESPECIAL PARA FINALIDADE
-        console.log('🎯 [FINALIDADE-DEBUG] Finalidade extraída da URL:', seoParams.finalidade);
-        console.log('🎯 [FINALIDADE-DEBUG] Finalidade que será aplicada no store:', filtrosParaAplicar.finalidade);
+        if (seoParams.bairro) filtrosParaAplicar.bairrosSelecionados = [seoParams.bairro];
       } else {
-        console.log('🚀 [INITIAL] Usando query parameters como fallback');
         if (cidade) filtrosParaAplicar.cidadeSelecionada = normalizarCidade(cidade);
         if (finalidade) filtrosParaAplicar.finalidade = finalidade;
         if (categoria) filtrosParaAplicar.categoriaSelecionada = categoria;
@@ -739,77 +600,42 @@ export default function BuscaImoveis() {
           filtrosParaAplicar.bairrosSelecionados = bairrosArray;
         }
       }
-      
-      // Parâmetros adicionais sempre vêm de query string
       if (quartos) filtrosParaAplicar.quartos = parseInt(quartos);
       if (precoMin) filtrosParaAplicar.precoMin = parseFloat(precoMin);
       if (precoMax) filtrosParaAplicar.precoMax = parseFloat(precoMax);
-      
-      console.log('🚀 [INITIAL] Filtros finais extraídos da URL:', filtrosParaAplicar);
-      
-      // 4. Aplicar filtros no store
+
       const filtrosStore = useFiltersStore.getState();
-      
-      // 🚨 DEBUG: Estado do store ANTES da aplicação
-      console.log('🗃️ [STORE-ANTES] Estado atual do store:', filtrosStore);
-      
-      // 🔥 LIMPAR STORE ANTES DE APLICAR NOVOS FILTROS
       filtrosStore.limparFiltros();
-      
-      // 🔥 AGUARDAR UM TICK PARA LIMPEZA
+
       setTimeout(() => {
         filtrosStore.setFilters(filtrosParaAplicar);
         filtrosStore.aplicarFiltros();
-        
-        // 🚨 DEBUG: Estado do store DEPOIS da aplicação
         setTimeout(() => {
           const storeDepois = useFiltersStore.getState();
-          console.log('🗃️ [STORE-DEPOIS] Estado do store após aplicação:', storeDepois);
-          console.log('🗃️ [STORE-DEPOIS] Filtros aplicados?', storeDepois.filtrosAplicados);
-          console.log('🗃️ [STORE-DEPOIS] Cidade no store:', storeDepois.cidadeSelecionada);
-          console.log('🗃️ [STORE-DEPOIS] Finalidade no store:', storeDepois.finalidade);
-          
-          // 🔥 FORÇAR REFRESH DOS COMPONENTES DE FILTRO
-          const event = new CustomEvent('filtrosUpdated', { 
-            detail: storeDepois 
-          });
-          if (typeof window !== 'undefined') {
-            window.dispatchEvent(event);
-          }
-          console.log('📡 [EVENT] Evento filtrosUpdated disparado para atualizar componentes');
-          
+          const event = new CustomEvent('filtrosUpdated', { detail: storeDepois });
+          if (typeof window !== 'undefined') window.dispatchEvent(event);
         }, 50);
       }, 50);
-      
-      // 5. Executar busca COM filtros
+
       setTimeout(() => {
-        console.log('🚀 [INITIAL] Executando busca com filtros...');
         buscarImoveis(true);
         setInitialLoad(false);
       }, 200);
-      
     } else {
-      console.log('🚀 [INITIAL] Nenhum filtro encontrado na URL, busca padrão');
-      
-      // Query de busca
       if (searchQuery) {
-        console.log('🚀 [INITIAL] Query de busca encontrada:', searchQuery);
         setSearchTerm(searchQuery);
         setTimeout(() => {
           handleSearch(searchQuery);
           setInitialLoad(false);
         }, 100);
       } else {
-        // Busca padrão sem filtros
         setTimeout(() => {
-          console.log('🚀 [INITIAL] Executando busca padrão...');
           buscarImoveis(false);
           setInitialLoad(false);
         }, 100);
       }
     }
-    
-    // Atualizar meta tags iniciais
+
     setTimeout(() => {
       updateClientMetaTags();
     }, 300);
@@ -819,18 +645,13 @@ export default function BuscaImoveis() {
   // 🔥 EFEITO PARA BUSCA QUANDO FILTROS SÃO APLICADOS MANUALMENTE (APÓS INICIALIZAÇÃO)
   useEffect(() => {
     if (initialLoad || !filtrosAplicados) return;
-    
-    console.log('🔍 [MANUAL-FILTERS] Executando busca após aplicação manual de filtros');
     buscarImoveis(true);
-    
   }, [filtrosAplicados, atualizacoesFiltros, initialLoad]);
 
   // 🔥 EFEITO PARA FAVORITOS
   useEffect(() => {
     if (initialLoad) return;
-    
     if (mostrandoFavoritos) {
-      console.log('🔍 [FAVORITES] Mostrando favoritos');
       setImoveis(favoritos);
       setPagination({
         totalItems: favoritos.length,
@@ -840,34 +661,26 @@ export default function BuscaImoveis() {
         limit: 12,
       });
       setIsLoading(false);
-      
       updateStructuredData(favoritos.length, favoritos);
       setTimeout(() => updateClientMetaTags(favoritos.length), 100);
     }
-    
   }, [mostrandoFavoritos, favoritos, initialLoad]);
 
   // 🔥 EFEITO PARA PAGINAÇÃO
   useEffect(() => {
     if (initialLoad || currentPage === 1) return;
-    
-    console.log('🔍 [PAGINATION] Mudança de página:', currentPage);
-    
     if (mostrandoFavoritos) {
-      // Lógica de paginação para favoritos se necessário
+      // nada
     } else if (filtrosAplicados) {
       buscarImoveis(true);
     } else {
       buscarImoveis(false);
     }
-    
   }, [currentPage, initialLoad]);
 
   // 🔥 EFEITO PARA ATUALIZAR URL QUANDO FILTROS MUDAM (APLICAÇÃO MANUAL)
   useEffect(() => {
     if (!isBrowser || initialLoad) return;
-    
-    // Só atualizar URL se os filtros foram aplicados manualmente (não da URL inicial)
     const filtrosAtuais = useFiltersStore.getState();
     if (filtrosAtuais.filtrosAplicados) {
       setTimeout(() => {
@@ -881,7 +694,6 @@ export default function BuscaImoveis() {
     if (isBrowser && !isLoading && pagination.totalItems >= 0) {
       setTimeout(() => {
         updateClientMetaTags(pagination.totalItems);
-        console.log('🎯 [META-UPDATE] Meta tags atualizadas após carregamento de dados');
       }, 100);
     }
   }, [isBrowser, isLoading, pagination.totalItems]);
@@ -907,14 +719,12 @@ export default function BuscaImoveis() {
 
   useEffect(() => {
     if (!isClient) return;
-
     const checkScreenSize = () => {
       if (typeof window !== 'undefined') {
         setIsMobile(window.innerWidth < 768);
       }
       setFullyInitialized(true);
     };
-
     checkScreenSize();
     if (typeof window !== 'undefined') {
       window.addEventListener("resize", checkScreenSize);
@@ -944,7 +754,6 @@ export default function BuscaImoveis() {
         limit: 12,
       };
       setPagination(paginationData);
-      
       updateStructuredData(favoritos.length, favoritos);
       setTimeout(() => updateClientMetaTags(favoritos.length), 100);
     } else {
@@ -977,7 +786,6 @@ export default function BuscaImoveis() {
         if (Array.isArray(response.data) && response.data.length > 0) {
           adicionarVariosImoveisCache(response.data);
         }
-        
         updateStructuredData(response.data.length, response.data);
         setTimeout(() => updateClientMetaTags(response.data.length), 100);
       } else {
@@ -996,7 +804,6 @@ export default function BuscaImoveis() {
   const toggleFiltro = () => {
     setFiltroVisivel(!filtroVisivel);
   };
-
 
   const renderCards = () => {
     if (isLoading) {
@@ -1042,12 +849,9 @@ export default function BuscaImoveis() {
 
   const construirTextoFiltros = () => {
     const filtrosAtuais = useFiltersStore.getState();
-    
     let texto = '';
-    
     const quantidade = pagination.totalItems || 0;
     texto += `${quantidade}`;
-    
     if (filtrosAtuais.categoriaSelecionada) {
       const categoriaPluralMap = {
         'Apartamento': 'apartamentos',
@@ -1069,12 +873,13 @@ export default function BuscaImoveis() {
     } else {
       texto += ' imóveis';
     }
-    
     if (filtrosAtuais.finalidade) {
-      const finalidadeTexto = filtrosAtuais.finalidade === 'Comprar' ? 'a venda' : 'para venda';
-      texto += ` ${finalidadeTexto}`;
+      const finalidadeTexto =
+        filtrosAtuais.finalidade === 'Comprar' ? 'a venda'
+        : filtrosAtuais.finalidade === 'Alugar' ? 'para aluguel'
+        : '';
+      if (finalidadeTexto) texto += ` ${finalidadeTexto}`;
     }
-    
     if (filtrosAtuais.bairrosSelecionados && filtrosAtuais.bairrosSelecionados.length > 0) {
       if (filtrosAtuais.bairrosSelecionados.length === 1) {
         texto += ` em ${filtrosAtuais.bairrosSelecionados[0]}`;
@@ -1089,7 +894,6 @@ export default function BuscaImoveis() {
         .replace(/\b\w/g, l => l.toUpperCase());
       texto += ` em ${cidadeFormatada}`;
     }
-
     return texto || 'Busca de imóveis';
   };
 
@@ -1100,89 +904,11 @@ export default function BuscaImoveis() {
   const resetarEstadoBusca = () => {
     setSearchTerm("");
     setCurrentPage(1);
-
-    if (mostrandoFavoritos) {
-      setMostrandoFavoritos(false);
-    }
+    if (mostrandoFavoritos) setMostrandoFavoritos(false);
   };
 
   return (
     <>
-      {/* COMENTADO: Fixed search bar that stays below the header
-      <div
-        className={`fixed top-20 left-0 right-0 ${
-          filtroVisivel ? "z-[999997]" : "z-40"
-        } bg-white px-4 sm:px-6 md:px-10 py-4 md:py-6 shadow-sm`}
-      >
-        <div className="flex flex-col md:flex-row justify-between items-center gap-3 w-full mx-auto">
-          <div className="grid grid-cols-2 items-center gap-2 w-full md:w-[300px]">
-            {isMobile && (
-              <button
-                onClick={toggleFiltro}
-                className={`flex items-center justify-center gap-1 sm:gap-2 ${
-                  filtroVisivel ? "bg-black text-white" : "bg-zinc-200 text-black"
-                } font-bold px-2 sm:px-4 py-2 rounded-lg hover:bg-zinc-200/40 transition-colors`}
-              >
-                <AdjustmentsHorizontalIcon className="h-4 w-4 sm:h-5 sm:w-5" />
-                <span className="text-xs">{filtroVisivel ? "Fechar Filtros" : "Filtros"}</span>
-              </button>
-            )}
-          </div>
-          <div className="relative w-full mt-2 md:mt-0 md:w-[600px]">
-            <div className="absolute inset-y-0 left-2 sm:left-3 flex items-center pointer-events-none">
-              <svg
-                className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 20 20"
-                fill="currentColor"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                  clipRule="evenodd"
-                ></path>
-              </svg>
-            </div>
-            <input
-              type="text"
-              placeholder="Digite código, endereço, cidade ou condomínio..."
-              className="w-full rounded-md border-2 border-gray-100 text-xs bg-white pl-8 sm:pl-10 pr-24 sm:pr-36 py-2.5 focus:outline-none focus:ring-1 focus:ring-black"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  handleSearch(searchTerm);
-                }
-              }}
-            />
-            <button
-              onClick={() => handleSearch(searchTerm)}
-              className="absolute inset-y-0 right-0 px-3 sm:px-4 py-2 bg-black text-white rounded-r-md hover:bg-gray-800 text-xs transition-colors flex items-center justify-center"
-            >
-              Buscar
-            </button>
-          </div>
-
-          <div className="mt-2 md:mt-0">
-            <button
-              onClick={toggleFavoritos}
-              className={`flex items-center gap-1 sm:gap-2 ${
-                mostrandoFavoritos ? "bg-red-500 text-white" : "bg-zinc-200 text-black"
-              } font-bold px-3 sm:px-4 py-2 rounded-lg hover:bg-red-400 transition-colors relative`}
-            >
-              <HeartIcon className="h-4 w-4 sm:h-5 sm:w-5" />
-              <span className="text-xs">Favoritos</span>
-              {isBrowser && quantidadeFavoritos > 0 && (
-                <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-4 h-4 sm:w-5 sm:h-5 flex items-center justify-center">
-                  {quantidadeFavoritos}
-                </span>
-                )}
-            </button>
-          </div>
-        </div>
-      </div>
-      */}
-
       {/* Filtros horizontais */}
       <div className="fixed top-20 left-0 w-full bg-white z-40 shadow-sm border-b px-4 md:px-10">
         <PropertyFilters
@@ -1220,7 +946,7 @@ export default function BuscaImoveis() {
                 <Pagination pagination={pagination} onPageChange={handlePageChange} />
               </div>
 
-              {/* Footer no final da rolagem dos cards - como no QuintoAndar */}
+              {/* Footer no final da rolagem dos cards */}
               <div className="mt-12">
                 <Footer />
               </div>
