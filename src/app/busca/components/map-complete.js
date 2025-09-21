@@ -23,328 +23,6 @@ const DefaultIcon = L.icon({
 });
 L.Marker.prototype.options.icon = DefaultIcon;
 
-// Inject custom styles
-if (typeof document !== 'undefined' && !document.querySelector('#map-complete-styles')) {
-  const styleSheet = document.createElement("style");
-  styleSheet.id = 'map-complete-styles';
-  styleSheet.innerHTML = `
-    .property-popup .leaflet-popup-content-wrapper {
-      padding: 0;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-    }
-    
-    .property-popup .leaflet-popup-content {
-      margin: 0;
-      width: 320px !important;
-    }
-    
-    .property-popup .leaflet-popup-tip {
-      background: white;
-    }
-    
-    .popup-content {
-      background: white;
-      border-radius: 12px;
-      overflow: hidden;
-    }
-    
-    .property-link {
-      display: block;
-      text-decoration: none;
-      color: inherit;
-      transition: transform 0.2s;
-    }
-    
-    .property-link:hover {
-      transform: translateY(-2px);
-    }
-    
-    .image-container {
-      position: relative;
-      width: 320px;
-      height: 180px;
-      background: #f3f4f6;
-      overflow: hidden;
-    }
-    
-    .image-skeleton {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.5s infinite;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    
-    @keyframes shimmer {
-      0% { background-position: 200% 0; }
-      100% { background-position: -200% 0; }
-    }
-    
-    .skeleton-icon {
-      color: #9ca3af;
-    }
-    
-    .property-image {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      transition: opacity 0.3s;
-    }
-    
-    .property-image.loading {
-      opacity: 0;
-    }
-    
-    .price-badge {
-      position: absolute;
-      bottom: 12px;
-      left: 12px;
-      background: rgba(0, 0, 0, 0.85);
-      color: white;
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-weight: 600;
-      font-size: 14px;
-      backdrop-filter: blur(4px);
-    }
-    
-    .price-period {
-      font-size: 12px;
-      font-weight: 400;
-      opacity: 0.9;
-    }
-    
-    .highlight-badge {
-      position: absolute;
-      top: 12px;
-      right: 12px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 600;
-    }
-    
-    .property-info {
-      padding: 16px;
-    }
-    
-    .property-title {
-      font-size: 16px;
-      font-weight: 700;
-      color: #111827;
-      margin: 0 0 8px 0;
-      display: -webkit-box;
-      -webkit-line-clamp: 1;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-    
-    .property-location {
-      font-size: 13px;
-      color: #6b7280;
-      margin: 0 0 12px 0;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-    
-    .property-features {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-    
-    .feature-item {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      color: #374151;
-      font-size: 12px;
-    }
-    
-    .feature-item svg {
-      color: #6b7280;
-    }
-    
-    .property-cta {
-      text-align: center;
-      padding: 10px;
-      background: #f9fafb;
-      margin: 0 -16px -16px;
-      border-top: 1px solid #e5e7eb;
-    }
-    
-    .cta-text {
-      font-size: 13px;
-      font-weight: 600;
-      color: #111827;
-    }
-    
-    .map-wrapper {
-      width: 100%;
-      height: 100%;
-      position: relative;
-      border-radius: 12px;
-      overflow: hidden;
-      border: 1px solid #e5e7eb;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    }
-
-    .leaflet-map {
-      width: 100%;
-      height: 100%;
-    }
-
-    .map-loading {
-      position: absolute;
-      inset: 0;
-      background: rgba(255, 255, 255, 0.95);
-      z-index: 1000;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-    }
-
-    .loading-spinner {
-      width: 40px;
-      height: 40px;
-      border: 4px solid #e5e7eb;
-      border-top-color: #111827;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    .map-loading p {
-      font-size: 14px;
-      color: #6b7280;
-      margin: 0;
-    }
-
-    .map-error {
-      position: absolute;
-      top: 16px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #fee2e2;
-      border: 1px solid #fecaca;
-      color: #991b1b;
-      padding: 8px 16px;
-      border-radius: 8px;
-      z-index: 1000;
-      font-size: 14px;
-    }
-
-    .map-counter {
-      position: absolute;
-      bottom: 16px;
-      left: 16px;
-      background: rgba(255, 255, 255, 0.95);
-      backdrop-filter: blur(8px);
-      padding: 8px 16px;
-      border-radius: 24px;
-      z-index: 500;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      border: 1px solid #e5e7eb;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .counter-indicator {
-      width: 8px;
-      height: 8px;
-      background: #10b981;
-      border-radius: 50%;
-      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% {
-        opacity: 1;
-      }
-      50% {
-        opacity: 0.5;
-      }
-    }
-
-    .counter-text {
-      font-size: 13px;
-      color: #6b7280;
-    }
-
-    .counter-text strong {
-      color: #111827;
-      font-weight: 700;
-    }
-
-    .leaflet-control-zoom {
-      border: 1px solid #e5e7eb !important;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
-    }
-
-    .leaflet-control-zoom a {
-      color: #374151 !important;
-      background: white !important;
-      border-bottom: 1px solid #e5e7eb !important;
-    }
-
-    .leaflet-control-zoom a:hover {
-      background: #f9fafb !important;
-    }
-
-    .leaflet-control-zoom a:last-child {
-      border-bottom: none !important;
-    }
-
-    .leaflet-popup {
-      animation: fadeInUp 0.3s ease-out;
-    }
-
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    @media (max-width: 768px) {
-      .map-counter {
-        bottom: 12px;
-        left: 12px;
-        padding: 6px 12px;
-      }
-
-      .counter-text {
-        font-size: 12px;
-      }
-
-      .leaflet-control-zoom {
-        margin-bottom: 60px !important;
-      }
-    }
-  `;
-  document.head.appendChild(styleSheet);
-}
-
 /* =========================
    Helpers
 ========================= */
@@ -412,8 +90,20 @@ const getLatLng = (item) => {
   return null;
 };
 
-// Obtém URL da imagem de destaque
+// Obtém URL da imagem de destaque - DEBUG: LOG DE TODOS OS CAMPOS
 const getCoverUrl = (imovel) => {
+  console.log('🖼️ [DEBUG-FOTO] Estrutura completa do imóvel:', imovel);
+  console.log('🖼️ [DEBUG-FOTO] Campos de foto disponíveis:', {
+    Foto1: imovel?.Foto1,
+    fotoDestaque: imovel?.fotoDestaque,
+    Capa: imovel?.Capa,
+    ImagemCapa: imovel?.ImagemCapa,
+    Fotos: imovel?.Fotos,
+    Foto: imovel?.Foto,
+    imagens: imovel?.imagens,
+    Imagens: imovel?.Imagens
+  });
+  
   // Tenta múltiplos campos possíveis
   const candidates = [
     imovel?.Foto1,
@@ -433,7 +123,10 @@ const getCoverUrl = (imovel) => {
       : undefined,
   ].filter(Boolean);
   
-  return candidates[0] || PLACEHOLDER_IMAGE;
+  const resultado = candidates[0] || PLACEHOLDER_IMAGE;
+  console.log('🖼️ [DEBUG-FOTO] URL final escolhida:', resultado);
+  
+  return resultado;
 };
 
 // Formata preço em BRL
@@ -523,160 +216,152 @@ function MapController() {
   return null;
 }
 
-// Componente do Card/Popup otimizado
+// 🔥🔥🔥 VERSÃO DEBUG DO CARD COM FOTO FORÇADA 🔥🔥🔥
 function PropertyCard({ imovel }) {
-  const [imageError, setImageError] = useState(false);
-  const [imageLoading, setImageLoading] = useState(true);
-  
-  // Extrai informações do imóvel
-  const foto = !imageError ? getCoverUrl(imovel) : PLACEHOLDER_IMAGE;
-  const titulo = imovel.NomeImovel || imovel.Titulo || imovel.Empreendimento || 
-                 `${imovel.Categoria || imovel.Tipo || "Imóvel"} ${imovel.Codigo ? `• ${imovel.Codigo}` : ""}`;
-  const cidade = imovel.Cidade || imovel.cidade || "";
-  const bairro = imovel.Bairro || imovel.BairroComercial || imovel.bairro || "";
-  const endereco = imovel.Endereco || imovel.endereco || "";
-  
-  // Determina se é aluguel ou venda
-  const finalidade = (imovel.Finalidade || imovel.Status || imovel.TipoNegocio || "").toString().toLowerCase();
-  const isRent = finalidade.includes("alug") || finalidade.includes("loca") || finalidade === "locacao";
-  
-  // Obtém o preço correto
-  const precoBruto = isRent
-    ? (imovel.ValorAluguelNumerico ?? imovel.ValorAluguel ?? imovel.Aluguel)
-    : (imovel.ValorNumerico ?? imovel.ValorVenda ?? imovel.Valor ?? imovel.Preco);
-  
-  const preco = formatBRL(precoBruto);
-  
-  // Informações adicionais
-  const info = getPropertyInfo(imovel);
-  
-  const handleImageError = () => {
-    setImageError(true);
-    setImageLoading(false);
-  };
-  
-  const handleImageLoad = () => {
-    setImageLoading(false);
-  };
-  
   // URL do imóvel
   const href = `/imovel/${imovel.Codigo || imovel._id}`;
   
+  // 🔥 FORÇAR IMAGEM DE TESTE VERDE
+  const fotoTeste = "https://via.placeholder.com/320x180/4CAF50/FFFFFF?text=FOTO+TESTE+DEBUG";
+  
+  // Obter preço
+  const finalidade = (imovel.Finalidade || imovel.Status || imovel.TipoNegocio || "").toString().toLowerCase();
+  const isRent = finalidade.includes("alug") || finalidade.includes("loca") || finalidade === "locacao";
+  const precoBruto = isRent
+    ? (imovel.ValorAluguelNumerico ?? imovel.ValorAluguel ?? imovel.Aluguel)
+    : (imovel.ValorNumerico ?? imovel.ValorVenda ?? imovel.Valor ?? imovel.Preco);
+  const preco = formatBRL(precoBruto);
+  
+  // Debug: Log do imóvel
+  console.log('🎯 [DEBUG-CARD] Renderizando card para imóvel:', {
+    Codigo: imovel.Codigo,
+    Nome: imovel.NomeImovel || imovel.Titulo,
+    Preco: preco,
+    Estrutura: imovel
+  });
+  
   return (
     <Popup 
-      className="property-popup"
+      className="property-popup-debug"
       maxWidth={320}
       minWidth={280}
       autoPan={true}
       keepInView={true}
     >
-      <div className="popup-content">
-        <a 
-          href={href}
-          target="_blank"
-          rel="noreferrer"
-          className="property-link"
-        >
-          {/* Container da Imagem */}
-          <div className="image-container">
-            {imageLoading && (
-              <div className="image-skeleton">
-                <div className="skeleton-icon">
-                  <svg width="40" height="40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
-              </div>
-            )}
-            
-            <img
-              src={foto}
-              alt={titulo}
-              className={`property-image ${imageLoading ? 'loading' : ''}`}
-              onError={handleImageError}
-              onLoad={handleImageLoad}
-              loading="lazy"
-              referrerPolicy="no-referrer"
-            />
-            
-            {/* Badge de preço sobre a imagem */}
-            {preco && (
-              <div className="price-badge">
-                <span className="price-value">{preco}</span>
-                {isRent && <span className="price-period">/mês</span>}
-              </div>
-            )}
-            
-            {/* Badge de destaque */}
-            {imovel.Destaque && (
-              <div className="highlight-badge">
-                ★ Destaque
-              </div>
-            )}
+      <div style={{
+        width: '320px',
+        background: 'white',
+        borderRadius: '8px',
+        overflow: 'hidden',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+        border: '2px solid #4CAF50' // Borda verde para identificar
+      }}>
+        {/* 🖼️ IMAGEM FORÇADA DE TESTE */}
+        <div style={{ position: 'relative', width: '320px', height: '180px' }}>
+          <img
+            src={fotoTeste}
+            alt="TESTE DEBUG"
+            style={{ 
+              width: '100%', 
+              height: '100%', 
+              objectFit: 'cover',
+              display: 'block'
+            }}
+          />
+          {/* Badge de preço */}
+          {preco && (
+            <div style={{
+              position: 'absolute',
+              bottom: '10px',
+              left: '10px',
+              background: 'rgba(0,0,0,0.85)',
+              color: 'white',
+              padding: '6px 12px',
+              borderRadius: '4px',
+              fontWeight: 'bold',
+              fontSize: '14px'
+            }}>
+              {preco} {isRent && '/mês'}
+            </div>
+          )}
+        </div>
+        
+        {/* 📝 INFORMAÇÕES DO IMÓVEL */}
+        <div style={{ padding: '15px' }}>
+          <h3 style={{ 
+            margin: '0 0 10px 0', 
+            fontSize: '16px', 
+            fontWeight: 'bold',
+            color: '#111'
+          }}>
+            {imovel.NomeImovel || imovel.Titulo || imovel.Empreendimento || `Imóvel ${imovel.Codigo}`}
+          </h3>
+          
+          <p style={{ 
+            margin: '0 0 10px 0', 
+            fontSize: '13px', 
+            color: '#666' 
+          }}>
+            {imovel.Endereco || imovel.endereco || ''} 
+            {imovel.Cidade && ` - ${imovel.Cidade}`}
+            {imovel.Bairro && ` - ${imovel.Bairro}`}
+          </p>
+          
+          {/* 🔍 DEBUG INFO - IMPORTANTE! */}
+          <div style={{ 
+            background: '#ffeb3b', 
+            padding: '10px', 
+            borderRadius: '4px',
+            fontSize: '11px',
+            marginTop: '10px',
+            border: '1px solid #f57c00',
+            fontFamily: 'monospace'
+          }}>
+            <strong style={{color: '#e65100'}}>🔍 DEBUG INFO:</strong><br/>
+            <div style={{marginTop: '5px'}}>
+              Código: <strong>{imovel.Codigo || 'N/A'}</strong><br/>
+              Tem Foto1? <strong style={{color: imovel.Foto1 ? 'green' : 'red'}}>{imovel.Foto1 ? '✅ SIM' : '❌ NÃO'}</strong><br/>
+              Tem Fotos[]? <strong style={{color: imovel.Fotos ? 'green' : 'red'}}>{imovel.Fotos ? `✅ SIM (${imovel.Fotos.length} fotos)` : '❌ NÃO'}</strong><br/>
+              Tem Foto[]? <strong style={{color: imovel.Foto ? 'green' : 'red'}}>{imovel.Foto ? `✅ SIM (${imovel.Foto.length} fotos)` : '❌ NÃO'}</strong><br/>
+              Tem Imagens[]? <strong style={{color: imovel.Imagens ? 'green' : 'red'}}>{imovel.Imagens ? `✅ SIM` : '❌ NÃO'}</strong><br/>
+              {imovel.Foto1 && <span>Foto1: {imovel.Foto1.substring(0, 50)}...</span>}
+            </div>
           </div>
           
-          {/* Informações do Imóvel */}
-          <div className="property-info">
-            <h3 className="property-title">{titulo}</h3>
-            
-            <p className="property-location">
-              {endereco && <span>{endereco}</span>}
-              {endereco && (bairro || cidade) && <span>, </span>}
-              {bairro && <span>{bairro}</span>}
-              {bairro && cidade && <span> • </span>}
-              {cidade && <span>{cidade}</span>}
-            </p>
-            
-            {/* Características */}
-            <div className="property-features">
-              {info.quartos && (
-                <div className="feature-item">
-                  <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                          d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                  </svg>
-                  <span>{info.quartos} {info.quartos > 1 ? "quartos" : "quarto"}</span>
-                </div>
-              )}
-              
-              {info.suites && (
-                <div className="feature-item">
-                  <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                          d="M7 7h10M7 12h10m-7 5h4" />
-                  </svg>
-                  <span>{info.suites} {info.suites > 1 ? "suítes" : "suíte"}</span>
-                </div>
-              )}
-              
-              {info.vagas && (
-                <div className="feature-item">
-                  <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                          d="M5 13l4 4L19 7" />
-                  </svg>
-                  <span>{info.vagas} {info.vagas > 1 ? "vagas" : "vaga"}</span>
-                </div>
-              )}
-              
-              {info.area && (
-                <div className="feature-item">
-                  <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
-                          d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                  </svg>
-                  <span>{info.area} m²</span>
-                </div>
-              )}
-            </div>
-            
-            {/* CTA */}
-            <div className="property-cta">
-              <span className="cta-text">Ver Detalhes →</span>
-            </div>
+          {/* Características */}
+          <div style={{
+            display: 'flex',
+            gap: '10px',
+            marginTop: '10px',
+            fontSize: '12px',
+            color: '#666'
+          }}>
+            {imovel.Quartos && <span>🛏️ {imovel.Quartos} quartos</span>}
+            {imovel.Vagas && <span>🚗 {imovel.Vagas} vagas</span>}
+            {imovel.AreaPrivativa && <span>📐 {imovel.AreaPrivativa}m²</span>}
           </div>
-        </a>
+          
+          {/* Botão CTA */}
+          <a 
+            href={href}
+            target="_blank"
+            rel="noreferrer"
+            style={{
+              display: 'block',
+              marginTop: '15px',
+              padding: '12px',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              color: 'white',
+              textAlign: 'center',
+              borderRadius: '6px',
+              textDecoration: 'none',
+              fontWeight: 'bold',
+              fontSize: '14px'
+            }}
+          >
+            Ver Detalhes →
+          </a>
+        </div>
       </div>
     </Popup>
   );
@@ -758,8 +443,12 @@ export default function MapComplete({ filtros }) {
       setError(null);
       
       try {
+        console.log('🗺️ [MAPA] Buscando imóveis com params:', searchParams);
         const res = await getImoveis(searchParams, 1, 200);
+        console.log('🗺️ [MAPA] Resposta da API:', res);
+        
         const list = Array.isArray(res?.imoveis) ? res.imoveis : [];
+        console.log('🗺️ [MAPA] Total de imóveis recebidos:', list.length);
 
         // Transforma em markers com lat/lng válidos
         const withCoords = list
@@ -769,12 +458,14 @@ export default function MapComplete({ filtros }) {
             return { ...it, __lat: ll.lat, __lng: ll.lng };
           })
           .filter(Boolean);
+        
+        console.log('🗺️ [MAPA] Imóveis com coordenadas válidas:', withCoords.length);
 
         if (mounted) {
           setMarkers(withCoords);
         }
       } catch (err) {
-        console.error("[MAP] Erro ao carregar imóveis:", err);
+        console.error("❌ [MAPA] Erro ao carregar imóveis:", err);
         if (mounted) {
           setMarkers([]);
           setError("Não foi possível carregar os imóveis no mapa");
@@ -796,19 +487,58 @@ export default function MapComplete({ filtros }) {
   const points = markers.map((m) => ({ lat: m.__lat, lng: m.__lng }));
 
   return (
-    <div className="map-wrapper">
+    <div style={{
+      width: '100%',
+      height: '100%',
+      position: 'relative',
+      borderRadius: '12px',
+      overflow: 'hidden',
+      border: '1px solid #e5e7eb',
+      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+    }}>
       {/* Loading Overlay */}
       {loading && (
-        <div className="map-loading">
-          <div className="loading-spinner" />
-          <p>Carregando imóveis no mapa...</p>
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'rgba(255, 255, 255, 0.95)',
+          zIndex: 1000,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '12px'
+        }}>
+          <div style={{
+            width: '40px',
+            height: '40px',
+            border: '4px solid #e5e7eb',
+            borderTopColor: '#111827',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite'
+          }} />
+          <p style={{ fontSize: '14px', color: '#6b7280', margin: 0 }}>
+            Carregando imóveis no mapa...
+          </p>
         </div>
       )}
 
       {/* Error Message */}
       {error && (
-        <div className="map-error">
-          <span>{error}</span>
+        <div style={{
+          position: 'absolute',
+          top: '16px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: '#fee2e2',
+          border: '1px solid #fecaca',
+          color: '#991b1b',
+          padding: '8px 16px',
+          borderRadius: '8px',
+          zIndex: 1000,
+          fontSize: '14px'
+        }}>
+          {error}
         </div>
       )}
 
@@ -846,13 +576,47 @@ export default function MapComplete({ filtros }) {
 
       {/* Contador de Imóveis */}
       {!loading && !error && (
-        <div className="map-counter">
-          <div className="counter-indicator" />
-          <span className="counter-text">
-            <strong>{markers.length}</strong> imóveis encontrados
+        <div style={{
+          position: 'absolute',
+          bottom: '16px',
+          left: '16px',
+          background: 'rgba(255, 255, 255, 0.95)',
+          backdropFilter: 'blur(8px)',
+          padding: '8px 16px',
+          borderRadius: '24px',
+          zIndex: 500,
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+          border: '1px solid #e5e7eb',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+        }}>
+          <div style={{
+            width: '8px',
+            height: '8px',
+            background: '#10b981',
+            borderRadius: '50%',
+            animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite'
+          }} />
+          <span style={{ fontSize: '13px', color: '#6b7280' }}>
+            <strong style={{ color: '#111827', fontWeight: '700' }}>
+              {markers.length}
+            </strong> imóveis encontrados
           </span>
         </div>
       )}
+
+      {/* CSS Animations */}
+      <style jsx>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+        
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
+        }
+      `}</style>
     </div>
   );
 }
