@@ -363,7 +363,7 @@ export default function MapComplete({ filtros }) {
                       color: 'inherit'
                     }}
                   >
-                    {/* Container da imagem */}
+                    {/* Container da imagem com DEBUG */}
                     <div style={{
                       position: 'relative',
                       width: '300px',
@@ -371,6 +371,34 @@ export default function MapComplete({ filtros }) {
                       backgroundColor: '#f3f4f6',
                       overflow: 'hidden'
                     }}>
+                      {/* DEBUG VISÍVEL */}
+                      <div style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        background: 'rgba(255,0,0,0.9)',
+                        color: 'white',
+                        fontSize: '10px',
+                        padding: '4px',
+                        zIndex: 100,
+                        maxHeight: '160px',
+                        overflowY: 'auto'
+                      }}>
+                        <div><strong>DEBUG FOTO:</strong></div>
+                        <div>URL: {foto || 'NENHUMA'}</div>
+                        <div>Tem Foto? {m.Foto ? 'SIM' : 'NÃO'}</div>
+                        <div>É Array? {Array.isArray(m.Foto) ? 'SIM' : 'NÃO'}</div>
+                        <div>Tamanho: {m.Foto?.length || 0}</div>
+                        {m.Foto && m.Foto[0] && (
+                          <div>
+                            <div>Foto[0]: {JSON.stringify(Object.keys(m.Foto[0]))}</div>
+                            <div>URL em Foto[0].Foto: {m.Foto[0].Foto || 'NÃO'}</div>
+                          </div>
+                        )}
+                        <div>Foto1: {m.Foto1 || 'NÃO'}</div>
+                      </div>
+                      
                       <img
                         src={foto}
                         alt={titulo}
