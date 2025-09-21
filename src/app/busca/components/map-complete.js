@@ -81,24 +81,26 @@ const getLatLng = (item) => {
   return null;
 };
 
-// FUNÇÃO BASEADA NO CARDHOME - ESTRUTURA CORRETA DE FOTOS
+// FUNÇÃO SIMPLIFICADA - TENTA FOTO1 PRIMEIRO
 const getCoverUrl = (imovel) => {
-  // Debug completo
-  console.log('Imovel completo:', imovel);
-  console.log('Campo Foto:', imovel.Foto);
+  // PRIORIDADE 1: Campo Foto1 direto (mais comum na API de busca)
+  if (imovel.Foto1) {
+    const url = imovel.Foto1;
+    if (url.startsWith('/')) {
+      return `https://npiconsultoria.com.br${url}`;
+    }
+    return url;
+  }
   
-  // Verificar se há fotos disponíveis (IGUAL AO CARDHOME)
+  // PRIORIDADE 2: Array Foto (estrutura do CardHome)
   const temFoto = imovel.Foto && Array.isArray(imovel.Foto) && imovel.Foto.length > 0;
   
   if (temFoto) {
-    // Encontrar foto destacada ou usar a primeira foto (IGUAL AO CARDHOME)
+    // Encontrar foto destacada ou usar a primeira foto
     const fotoDestacada = imovel.Foto.find((foto) => foto && foto.Destaque === "Sim") || imovel.Foto[0];
-    
-    console.log('Foto destacada/primeira:', fotoDestacada);
     
     // A URL está em fotoDestacada.Foto
     if (fotoDestacada && fotoDestacada.Foto) {
-      console.log('URL encontrada:', fotoDestacada.Foto);
       const url = fotoDestacada.Foto;
       
       // Se for caminho relativo, adiciona domínio
@@ -109,11 +111,10 @@ const getCoverUrl = (imovel) => {
     }
   }
   
-  // Fallback - tentar outros campos possíveis
-  const camposFallback = ['Foto1', 'FotoPrincipal', 'ImagemCapa', 'FotoDestaque'];
+  // PRIORIDADE 3: Outros campos possíveis
+  const camposFallback = ['FotoPrincipal', 'ImagemCapa', 'FotoDestaque', 'Imagem1'];
   for (const campo of camposFallback) {
     if (imovel[campo]) {
-      console.log(`Fallback - foto encontrada em ${campo}:`, imovel[campo]);
       const url = imovel[campo];
       if (url.startsWith('/')) {
         return `https://npiconsultoria.com.br${url}`;
@@ -122,7 +123,7 @@ const getCoverUrl = (imovel) => {
     }
   }
   
-  console.log('Nenhuma foto encontrada para o imovel:', imovel.Codigo);
+  // Fallback final
   return '/placeholder-imovel.jpg';
 };
 
@@ -363,7 +364,7 @@ export default function MapComplete({ filtros }) {
                       color: 'inherit'
                     }}
                   >
-                    {/* Container da imagem com DEBUG */}
+                    {/* Container da imagem */}
                     <div style={{
                       position: 'relative',
                       width: '300px',
@@ -371,34 +372,6 @@ export default function MapComplete({ filtros }) {
                       backgroundColor: '#f3f4f6',
                       overflow: 'hidden'
                     }}>
-                      {/* DEBUG VISÍVEL */}
-                      <div style={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        background: 'rgba(255,0,0,0.9)',
-                        color: 'white',
-                        fontSize: '10px',
-                        padding: '4px',
-                        zIndex: 100,
-                        maxHeight: '160px',
-                        overflowY: 'auto'
-                      }}>
-                        <div><strong>DEBUG FOTO:</strong></div>
-                        <div>URL: {foto || 'NENHUMA'}</div>
-                        <div>Tem Foto? {m.Foto ? 'SIM' : 'NÃO'}</div>
-                        <div>É Array? {Array.isArray(m.Foto) ? 'SIM' : 'NÃO'}</div>
-                        <div>Tamanho: {m.Foto?.length || 0}</div>
-                        {m.Foto && m.Foto[0] && (
-                          <div>
-                            <div>Foto[0]: {JSON.stringify(Object.keys(m.Foto[0]))}</div>
-                            <div>URL em Foto[0].Foto: {m.Foto[0].Foto || 'NÃO'}</div>
-                          </div>
-                        )}
-                        <div>Foto1: {m.Foto1 || 'NÃO'}</div>
-                      </div>
-                      
                       <img
                         src={foto}
                         alt={titulo}
