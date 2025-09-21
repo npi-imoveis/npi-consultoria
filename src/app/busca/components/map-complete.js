@@ -81,32 +81,82 @@ const getLatLng = (item) => {
   return null;
 };
 
-// FUNÇÃO MELHORADA para obter a URL da foto
-const getCoverUrl = (imovel) => {
-  // Tenta múltiplos campos possíveis
-  const candidates = [
-    imovel?.Foto1,
-    imovel?.fotoDestaque,
-    imovel?.Capa,
-    imovel?.ImagemCapa,
-    // Arrays de fotos
-    Array.isArray(imovel?.Fotos) && imovel.Fotos[0]?.Foto ? imovel.Fotos[0].Foto : undefined,
-    Array.isArray(imovel?.Fotos) ? imovel.Fotos[0] : undefined,
-    Array.isArray(imovel?.Foto) && imovel.Foto[0]?.Foto ? imovel.Foto[0].Foto : undefined,
-    Array.isArray(imovel?.Foto) ? imovel.Foto[0] : undefined,
-  ].filter(Boolean);
-  
-  // Se encontrou uma foto válida, retorna
-  if (candidates[0]) {
-    // Se for caminho relativo, adiciona o domínio
-    if (String(candidates[0]).startsWith('/') && !String(candidates[0]).startsWith('//')) {
-      return `https://npiconsultoria.com.br${candidates[0]}`;
+/**
+ * FUNÇÃO BASEADA NO PADRÃO DA PÁGINA DO IMÓVEL
+ * Extrai a URL da foto seguindo a mesma lógica do MapComponent
+ */
+const getCoverUrl = (imovelFoto) => {
+  try {
+    let imageUrl = null;
+    
+    // MÉTODO 1: Array de fotos (mais comum - padrão da página do imóvel)
+    if (Array.isArray(imovelFoto) && imovelFoto.length > 0) {
+      const foto = imovelFoto[0];
+      
+      if (foto && typeof foto === 'object') {
+        // Prioridade: FotoGrande > Foto > FotoMedia > FotoPequena
+        const possibleUrls = [
+          foto.FotoGrande,
+          foto.Foto,
+          foto.FotoMedia,
+          foto.FotoPequena
+        ];
+        
+        for (const url of possibleUrls) {
+          if (url && typeof url === 'string' && url.trim() !== '') {
+            imageUrl = url.trim();
+            break;
+          }
+        }
+      } else if (foto && typeof foto === 'string' && foto.trim() !== '') {
+        imageUrl = foto.trim();
+      }
     }
-    return candidates[0];
+    
+    // MÉTODO 2: String direta
+    if (!imageUrl && typeof imovelFoto === 'string' && imovelFoto.trim() !== '') {
+      imageUrl = imovelFoto.trim();
+    }
+    
+    // MÉTODO 3: Objeto único
+    if (!imageUrl && imovelFoto && typeof imovelFoto === 'object' && !Array.isArray(imovelFoto)) {
+      const possibleUrls = [
+        imovelFoto.FotoGrande,
+        imovelFoto.Foto,
+        imovelFoto.FotoMedia,
+        imovelFoto.FotoPequena
+      ];
+      
+      for (const url of possibleUrls) {
+        if (url && typeof url === 'string' && url.trim() !== '') {
+          imageUrl = url.trim();
+          break;
+        }
+      }
+    }
+    
+    // VALIDAÇÃO E OTIMIZAÇÃO DA URL
+    if (imageUrl) {
+      // Garantir HTTPS
+      if (imageUrl.startsWith('http://')) {
+        imageUrl = imageUrl.replace('http://', 'https://');
+      }
+      
+      // Se URL relativa, converter para absoluta
+      if (imageUrl.startsWith('/')) {
+        imageUrl = `https://npiconsultoria.com.br${imageUrl}`;
+      }
+      
+      return imageUrl;
+    }
+    
+    // FALLBACK - Placeholder em base64
+    return "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjE4MCIgdmlld0JveD0iMCAwIDMyMCAxODAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdyYWQiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdHlsZT0ic3RvcC1jb2xvcjojZjNmNGY2O3N0b3Atb3BhY2l0eToxIiAvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiNlNWU3ZWI7c3RvcC1vcGFjaXR5OjEiIC8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8cmVjdCB3aWR0aD0iMzIwIiBoZWlnaHQ9IjE4MCIgZmlsbD0idXJsKCNncmFkKSIvPgogIDxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDE2MCwgOTApIj4KICAgIDxyZWN0IHg9Ii00MCIgeT0iLTIwIiB3aWR0aD0iODAiIGhlaWdodD0iNTAiIGZpbGw9IiNkMWQ1ZGIiIHJ4PSIyIi8+CiAgICA8cmVjdCB4PSItMzAiIHk9Ii0xMCIgd2lkdGg9IjE1IiBoZWlnaHQ9IjE1IiBmaWxsPSIjOWNhM2FmIi8+CiAgICA8cmVjdCB4PSItNSIgeT0iLTEwIiB3aWR0aD0iMTUiIGhlaWdodD0iMTUiIGZpbGw9IiM5Y2EzYWYiLz4KICAgIDxyZWN0IHg9IjE1IiB5PSItMTAiIHdpZHRoPSIxNSIgaGVpZ2h0PSIxNSIgZmlsbD0iIzljYTNhZiIvPgogICAgPHJlY3QgeD0iLTMwIiB5PSIxMCIgd2lkdGg9IjE1IiBoZWlnaHQ9IjE1IiBmaWxsPSIjOWNhM2FmIi8+CiAgICA8cmVjdCB4PSItNSIgeT0iMTAiIHdpZHRoPSIxNSIgaGVpZ2h0PSIxNSIgZmlsbD0iIzljYTNhZiIvPgogICAgPHJlY3QgeD0iMTUiIHk9IjEwIiB3aWR0aD0iMTUiIGhlaWdodD0iMTUiIGZpbGw9IiM5Y2EzYWYiLz4KICAgIDxwb2x5Z29uIHBvaW50cz0iLTQ1LC0yMCAwLC0zNSA0NSwtMjAiIGZpbGw9IiM5Y2EzYWYiLz4KICAgIDxyZWN0IHg9Ii03IiB5PSIxNSIgd2lkdGg9IjE0IiBoZWlnaHQ9IjE1IiBmaWxsPSIjNmI3MjgwIi8+CiAgPC9nPgogIDx0ZXh0IHg9IjE2MCIgeT0iMTQwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjNmI3MjgwIiBmb250LWZhbWlseT0ic3lzdGVtLXVpIiBmb250LXNpemU9IjExIiBmb250LXdlaWdodD0iNTAwIj5JbWFnZW0gbsOjbyBkaXNwb27DrXZlbDwvdGV4dD4KPC9zdmc+";
+    
+  } catch (error) {
+    console.error('Erro ao obter URL da foto:', error);
+    return "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjE4MCIgdmlld0JveD0iMCAwIDMyMCAxODAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdyYWQiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdHlsZT0ic3RvcC1jb2xvcjojZjNmNGY2O3N0b3Atb3BhY2l0eToxIiAvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiNlNWU3ZWI7c3RvcC1vcGFjaXR5OjEiIC8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8cmVjdCB3aWR0aD0iMzIwIiBoZWlnaHQ9IjE4MCIgZmlsbD0idXJsKCNncmFkKSIvPgogIDxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDE2MCwgOTApIj4KICAgIDxyZWN0IHg9Ii00MCIgeT0iLTIwIiB3aWR0aD0iODAiIGhlaWdodD0iNTAiIGZpbGw9IiNkMWQ1ZGIiIHJ4PSIyIi8+CiAgICA8cmVjdCB4PSItMzAiIHk9Ii0xMCIgd2lkdGg9IjE1IiBoZWlnaHQ9IjE1IiBmaWxsPSIjOWNhM2FmIi8+CiAgICA8cmVjdCB4PSItNSIgeT0iLTEwIiB3aWR0aD0iMTUiIGhlaWdodD0iMTUiIGZpbGw9IiM5Y2EzYWYiLz4KICAgIDxyZWN0IHg9IjE1IiB5PSItMTAiIHdpZHRoPSIxNSIgaGVpZ2h0PSIxNSIgZmlsbD0iIzljYTNhZiIvPgogICAgPHJlY3QgeD0iLTMwIiB5PSIxMCIgd2lkdGg9IjE1IiBoZWlnaHQ9IjE1IiBmaWxsPSIjOWNhM2FmIi8+CiAgICA8cmVjdCB4PSItNSIgeT0iMTAiIHdpZHRoPSIxNSIgaGVpZ2h0PSIxNSIgZmlsbD0iIzljYTNhZiIvPgogICAgPHJlY3QgeD0iMTUiIHk9IjEwIiB3aWR0aD0iMTUiIGhlaWdodD0iMTUiIGZpbGw9IiM5Y2EzYWYiLz4KICAgIDxwb2x5Z29uIHBvaW50cz0iLTQ1LC0yMCAwLC0zNSA0NSwtMjAiIGZpbGw9IiM5Y2EzYWYiLz4KICAgIDxyZWN0IHg9Ii03IiB5PSIxNSIgd2lkdGg9IjE0IiBoZWlnaHQ9IjE1IiBmaWxsPSIjNmI3MjgwIi8+CiAgPC9nPgogIDx0ZXh0IHg9IjE2MCIgeT0iMTQwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjNmI3MjgwIiBmb250LWZhbWlseT0ic3lzdGVtLXVpIiBmb250LXNpemU9IjExIiBmb250LXdlaWdodD0iNTAwIj5JbWFnZW0gbsOjbyBkaXNwb27DrXZlbDwvdGV4dD4KPC9zdmc+";
   }
-  
-  // Placeholder em base64 se não encontrar foto
-  return "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjE4MCIgdmlld0JveD0iMCAwIDMyMCAxODAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdyYWQiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdHlsZT0ic3RvcC1jb2xvcjojZjNmNGY2O3N0b3Atb3BhY2l0eToxIiAvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiNlNWU3ZWI7c3RvcC1vcGFjaXR5OjEiIC8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8cmVjdCB3aWR0aD0iMzIwIiBoZWlnaHQ9IjE4MCIgZmlsbD0idXJsKCNncmFkKSIvPgogIDxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDE2MCwgOTApIj4KICAgIDxyZWN0IHg9Ii00MCIgeT0iLTIwIiB3aWR0aD0iODAiIGhlaWdodD0iNTAiIGZpbGw9IiNkMWQ1ZGIiIHJ4PSIyIi8+CiAgICA8cmVjdCB4PSItMzAiIHk9Ii0xMCIgd2lkdGg9IjE1IiBoZWlnaHQ9IjE1IiBmaWxsPSIjOWNhM2FmIi8+CiAgICA8cmVjdCB4PSItNSIgeT0iLTEwIiB3aWR0aD0iMTUiIGhlaWdodD0iMTUiIGZpbGw9IiM5Y2EzYWYiLz4KICAgIDxyZWN0IHg9IjE1IiB5PSItMTAiIHdpZHRoPSIxNSIgaGVpZ2h0PSIxNSIgZmlsbD0iIzljYTNhZiIvPgogICAgPHJlY3QgeD0iLTMwIiB5PSIxMCIgd2lkdGg9IjE1IiBoZWlnaHQ9IjE1IiBmaWxsPSIjOWNhM2FmIi8+CiAgICA8cmVjdCB4PSItNSIgeT0iMTAiIHdpZHRoPSIxNSIgaGVpZ2h0PSIxNSIgZmlsbD0iIzljYTNhZiIvPgogICAgPHJlY3QgeD0iMTUiIHk9IjEwIiB3aWR0aD0iMTUiIGhlaWlnaHQ9IjE1IiBmaWxsPSIjOWNhM2FmIi8+CiAgICA8cG9seWdvbiBwb2ludHM9Ii00NSwtMjAgMCwtMzUgNDUsLTIwIiBmaWxsPSIjOWNhM2FmIi8+CiAgICA8cmVjdCB4PSItNyIgeT0iMTUiIHdpZHRoPSIxNCIgaGVpZ2h0PSIxNSIgZmlsbD0iIzZiNzI4MCIvPgogIDwvZz4KICA8dGV4dCB4PSIxNjAiIHk9IjE0MCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZmlsbD0iIzZiNzI4MCIgZm9udC1mYW1pbHk9InN5c3RlbS11aSIgZm9udC1zaXplPSIxMSI+SW1hZ2VtIG7Do28gZGlzcG9uw612ZWw8L3RleHQ+Cjwvc3ZnPg==";
 };
 
 const formatBRL = (n) => {
@@ -257,21 +307,35 @@ export default function MapComplete({ filtros }) {
 
         {markers.map((m) => {
           const key = m.Codigo || m._id || `${m.__lat}-${m.__lng}-${Math.random()}`;
-          const foto = getCoverUrl(m);
+          
+          // CORREÇÃO PRINCIPAL: Passa m.Foto para getCoverUrl
+          const foto = getCoverUrl(m.Foto);
+          
+          // Adiciona suporte para m.Empreendimento e outros campos
           const titulo =
+            m.Empreendimento ||
             m.NomeImovel ||
             m.Titulo ||
             `${m.Categoria || m.Tipo || "Imóvel"} ${m.Codigo ? `• ${m.Codigo}` : ""}`;
           const cidade = m.Cidade || m.cidade || "";
           const bairro = m.Bairro || m.BairroComercial || m.bairro || "";
           const endereco = m.Endereco || "";
+          const numero = m.Numero || "";
+          
+          // Compatibilidade com campos antigos
+          const quartos = m.Quartos || m.DormitoriosAntigo;
+          const vagas = m.Vagas || m.VagasAntigo;
+          const area = m.AreaPrivativa || m.MetragemAnt;
+          
           const finalidade = (m.Finalidade || m.Status || m.TipoNegocio || "").toString().toLowerCase();
           const isRent =
             finalidade.includes("alug") || finalidade.includes("loca") || finalidade === "locacao";
+          
+          // Adiciona suporte para ValorAntigo
           const precoBruto =
             (isRent
               ? (m.ValorAluguelNumerico ?? m.ValorAluguel ?? m.Aluguel)
-              : (m.ValorNumerico ?? m.ValorVenda ?? m.Valor ?? m.Preco)) ?? null;
+              : (m.ValorNumerico ?? m.ValorVenda ?? m.Valor ?? m.Preco ?? m.ValorAntigo)) ?? null;
           const preco = formatBRL(String(precoBruto).replace(/\D/g, ""));
 
           return (
@@ -363,6 +427,7 @@ export default function MapComplete({ filtros }) {
                           whiteSpace: 'nowrap'
                         }}>
                           {endereco}
+                          {numero ? `, ${numero}` : ""}
                           {endereco && (bairro || cidade) ? ", " : ""}
                           {bairro}
                           {bairro && cidade ? " • " : ""}
@@ -377,9 +442,9 @@ export default function MapComplete({ filtros }) {
                         display: 'flex',
                         gap: '10px'
                       }}>
-                        {m.Quartos && <span>{m.Quartos} quartos</span>}
-                        {m.Vagas && <span>{m.Vagas} vagas</span>}
-                        {m.AreaPrivativa && <span>{m.AreaPrivativa}m²</span>}
+                        {quartos && <span>{quartos} quartos</span>}
+                        {vagas && <span>{vagas} vagas</span>}
+                        {area && <span>{area}m²</span>}
                       </div>
                       
                       {/* Botão Ver Mais */}
