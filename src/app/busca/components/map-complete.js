@@ -81,89 +81,58 @@ const getLatLng = (item) => {
   return null;
 };
 
-/**
- * FUNÇÃO BASEADA NO PADRÃO DA PÁGINA DO IMÓVEL
- * Extrai a URL da foto seguindo a mesma lógica do MapComponent
- */
-const getCoverUrl = (imovelFoto) => {
-  try {
-    let imageUrl = null;
-    
-  console.log('🔍 Campos de foto disponíveis:', {
-  Foto: m.Foto,
-  Foto1: m.Foto1,
-  FotoPrincipal: m.FotoPrincipal,
-  ImagemCapa: m.ImagemCapa,
-  todasAsChaves: Object.keys(m).filter(k => k.toLowerCase().includes('foto') || k.toLowerCase().includes('imag'))
-});
-    // MÉTODO 1: Array de fotos (mais comum - padrão da página do imóvel)
-    if (Array.isArray(imovelFoto) && imovelFoto.length > 0) {
-      const foto = imovelFoto[0];
-      
-      if (foto && typeof foto === 'object') {
-        // Prioridade: FotoGrande > Foto > FotoMedia > FotoPequena
-        const possibleUrls = [
-          foto.FotoGrande,
-          foto.Foto,
-          foto.FotoMedia,
-          foto.FotoPequena
-        ];
-        
-        for (const url of possibleUrls) {
-          if (url && typeof url === 'string' && url.trim() !== '') {
-            imageUrl = url.trim();
-            break;
-          }
-        }
-      } else if (foto && typeof foto === 'string' && foto.trim() !== '') {
-        imageUrl = foto.trim();
+// FUNÇÃO CORRIGIDA para obter a URL da foto
+const getCoverUrl = (imovel) => {
+  // Debug para entender a estrutura
+  console.log('Imovel completo:', imovel);
+  
+  // Lista de todos os campos possíveis de foto
+  const possiblePhotoFields = [
+    'Foto1',
+    'FotoPrincipal', 
+    'FotoDestaque',
+    'ImagemCapa',
+    'ImagemPrincipal',
+    'FotoCapa',
+    'Imagem',
+    'Image',
+    'Thumb',
+    'Thumbnail'
+  ];
+  
+  // Tenta encontrar a foto em campos diretos
+  for (const field of possiblePhotoFields) {
+    if (imovel[field]) {
+      console.log(`Foto encontrada em: ${field} = ${imovel[field]}`);
+      const url = imovel[field];
+      // Se for caminho relativo, adiciona domínio
+      if (url.startsWith('/')) {
+        return `https://npiconsultoria.com.br${url}`;
       }
+      return url;
     }
-    
-    // MÉTODO 2: String direta
-    if (!imageUrl && typeof imovelFoto === 'string' && imovelFoto.trim() !== '') {
-      imageUrl = imovelFoto.trim();
-    }
-    
-    // MÉTODO 3: Objeto único
-    if (!imageUrl && imovelFoto && typeof imovelFoto === 'object' && !Array.isArray(imovelFoto)) {
-      const possibleUrls = [
-        imovelFoto.FotoGrande,
-        imovelFoto.Foto,
-        imovelFoto.FotoMedia,
-        imovelFoto.FotoPequena
-      ];
-      
-      for (const url of possibleUrls) {
-        if (url && typeof url === 'string' && url.trim() !== '') {
-          imageUrl = url.trim();
-          break;
-        }
-      }
-    }
-    
-    // VALIDAÇÃO E OTIMIZAÇÃO DA URL
-    if (imageUrl) {
-      // Garantir HTTPS
-      if (imageUrl.startsWith('http://')) {
-        imageUrl = imageUrl.replace('http://', 'https://');
-      }
-      
-      // Se URL relativa, converter para absoluta
-      if (imageUrl.startsWith('/')) {
-        imageUrl = `https://npiconsultoria.com.br${imageUrl}`;
-      }
-      
-      return imageUrl;
-    }
-    
-    // FALLBACK - Placeholder em base64
-    return "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjE4MCIgdmlld0JveD0iMCAwIDMyMCAxODAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdyYWQiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdHlsZT0ic3RvcC1jb2xvcjojZjNmNGY2O3N0b3Atb3BhY2l0eToxIiAvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiNlNWU3ZWI7c3RvcC1vcGFjaXR5OjEiIC8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8cmVjdCB3aWR0aD0iMzIwIiBoZWlnaHQ9IjE4MCIgZmlsbD0idXJsKCNncmFkKSIvPgogIDxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDE2MCwgOTApIj4KICAgIDxyZWN0IHg9Ii00MCIgeT0iLTIwIiB3aWR0aD0iODAiIGhlaWdodD0iNTAiIGZpbGw9IiNkMWQ1ZGIiIHJ4PSIyIi8+CiAgICA8cmVjdCB4PSItMzAiIHk9Ii0xMCIgd2lkdGg9IjE1IiBoZWlnaHQ9IjE1IiBmaWxsPSIjOWNhM2FmIi8+CiAgICA8cmVjdCB4PSItNSIgeT0iLTEwIiB3aWR0aD0iMTUiIGhlaWdodD0iMTUiIGZpbGw9IiM5Y2EzYWYiLz4KICAgIDxyZWN0IHg9IjE1IiB5PSItMTAiIHdpZHRoPSIxNSIgaGVpZ2h0PSIxNSIgZmlsbD0iIzljYTNhZiIvPgogICAgPHJlY3QgeD0iLTMwIiB5PSIxMCIgd2lkdGg9IjE1IiBoZWlnaHQ9IjE1IiBmaWxsPSIjOWNhM2FmIi8+CiAgICA8cmVjdCB4PSItNSIgeT0iMTAiIHdpZHRoPSIxNSIgaGVpZ2h0PSIxNSIgZmlsbD0iIzljYTNhZiIvPgogICAgPHJlY3QgeD0iMTUiIHk9IjEwIiB3aWR0aD0iMTUiIGhlaWdodD0iMTUiIGZpbGw9IiM5Y2EzYWYiLz4KICAgIDxwb2x5Z29uIHBvaW50cz0iLTQ1LC0yMCAwLC0zNSA0NSwtMjAiIGZpbGw9IiM5Y2EzYWYiLz4KICAgIDxyZWN0IHg9Ii03IiB5PSIxNSIgd2lkdGg9IjE0IiBoZWlnaHQ9IjE1IiBmaWxsPSIjNmI3MjgwIi8+CiAgPC9nPgogIDx0ZXh0IHg9IjE2MCIgeT0iMTQwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjNmI3MjgwIiBmb250LWZhbWlseT0ic3lzdGVtLXVpIiBmb250LXNpemU9IjExIiBmb250LXdlaWdodD0iNTAwIj5JbWFnZW0gbsOjbyBkaXNwb27DrXZlbDwvdGV4dD4KPC9zdmc+";
-    
-  } catch (error) {
-    console.error('Erro ao obter URL da foto:', error);
-    return "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjE4MCIgdmlld0JveD0iMCAwIDMyMCAxODAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdyYWQiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdHlsZT0ic3RvcC1jb2xvcjojZjNmNGY2O3N0b3Atb3BhY2l0eToxIiAvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiNlNWU3ZWI7c3RvcC1vcGFjaXR5OjEiIC8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8cmVjdCB3aWR0aD0iMzIwIiBoZWlnaHQ9IjE4MCIgZmlsbD0idXJsKCNncmFkKSIvPgogIDxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDE2MCwgOTApIj4KICAgIDxyZWN0IHg9Ii00MCIgeT0iLTIwIiB3aWR0aD0iODAiIGhlaWdodD0iNTAiIGZpbGw9IiNkMWQ1ZGIiIHJ4PSIyIi8+CiAgICA8cmVjdCB4PSItMzAiIHk9Ii0xMCIgd2lkdGg9IjE1IiBoZWlnaHQ9IjE1IiBmaWxsPSIjOWNhM2FmIi8+CiAgICA8cmVjdCB4PSItNSIgeT0iLTEwIiB3aWR0aD0iMTUiIGhlaWdodD0iMTUiIGZpbGw9IiM5Y2EzYWYiLz4KICAgIDxyZWN0IHg9IjE1IiB5PSItMTAiIHdpZHRoPSIxNSIgaGVpZ2h0PSIxNSIgZmlsbD0iIzljYTNhZiIvPgogICAgPHJlY3QgeD0iLTMwIiB5PSIxMCIgd2lkdGg9IjE1IiBoZWlnaHQ9IjE1IiBmaWxsPSIjOWNhM2FmIi8+CiAgICA8cmVjdCB4PSItNSIgeT0iMTAiIHdpZHRoPSIxNSIgaGVpZ2h0PSIxNSIgZmlsbD0iIzljYTNhZiIvPgogICAgPHJlY3QgeD0iMTUiIHk9IjEwIiB3aWR0aD0iMTUiIGhlaWdodD0iMTUiIGZpbGw9IiM5Y2EzYWYiLz4KICAgIDxwb2x5Z29uIHBvaW50cz0iLTQ1LC0yMCAwLC0zNSA0NSwtMjAiIGZpbGw9IiM5Y2EzYWYiLz4KICAgIDxyZWN0IHg9Ii03IiB5PSIxNSIgd2lkdGg9IjE0IiBoZWlnaHQ9IjE1IiBmaWxsPSIjNmI3MjgwIi8+CiAgPC9nPgogIDx0ZXh0IHg9IjE2MCIgeT0iMTQwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjNmI3MjgwIiBmb250LWZhbWlseT0ic3lzdGVtLXVpIiBmb250LXNpemU9IjExIiBmb250LXdlaWdodD0iNTAwIj5JbWFnZW0gbsOjbyBkaXNwb27DrXZlbDwvdGV4dD4KPC9zdmc+";
   }
+  
+  // Se tem array Foto
+  if (imovel.Foto && Array.isArray(imovel.Foto) && imovel.Foto.length > 0) {
+    const primeiraFoto = imovel.Foto[0];
+    if (typeof primeiraFoto === 'string') return primeiraFoto;
+    if (primeiraFoto?.Foto) return primeiraFoto.Foto;
+    if (primeiraFoto?.url) return primeiraFoto.url;
+  }
+  
+  // Se tem array Fotos  
+  if (imovel.Fotos && Array.isArray(imovel.Fotos) && imovel.Fotos.length > 0) {
+    const primeiraFoto = imovel.Fotos[0];
+    if (typeof primeiraFoto === 'string') return primeiraFoto;
+    if (primeiraFoto?.Foto) return primeiraFoto.Foto;
+    if (primeiraFoto?.url) return primeiraFoto.url;
+  }
+  
+  console.log('Nenhuma foto encontrada para o imovel:', imovel.Codigo);
+  
+  // Retorna placeholder
+  return '/placeholder-imovel.jpg';
 };
 
 const formatBRL = (n) => {
@@ -315,16 +284,8 @@ export default function MapComplete({ filtros }) {
         {markers.map((m) => {
           const key = m.Codigo || m._id || `${m.__lat}-${m.__lng}-${Math.random()}`;
           
-          // CORREÇÃO PRINCIPAL: Passa m.Foto para getCoverUrl
-          // Tenta TODOS os campos possíveis de foto
-const foto = getCoverUrl(m.Foto) || 
-             getCoverUrl(m.Foto1) || 
-             getCoverUrl(m.FotoPrincipal) || 
-             getCoverUrl(m.ImagemCapa) || 
-             m.Foto1 || 
-             m.FotoPrincipal || 
-             m.ImagemCapa ||
-             '/placeholder-imovel.jpg';
+          // CORREÇÃO: Passa o objeto inteiro para getCoverUrl
+          const foto = getCoverUrl(m);
           
           // Adiciona suporte para m.Empreendimento e outros campos
           const titulo =
@@ -394,7 +355,7 @@ const foto = getCoverUrl(m.Foto) ||
                         }}
                         loading="lazy"
                         onError={(e) => {
-                          e.target.style.display = 'none';
+                          e.target.src = '/placeholder-imovel.jpg';
                         }}
                       />
                       
