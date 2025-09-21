@@ -52,21 +52,14 @@ const normalize = (s) =>
 
 const isLocacao = (status) => {
   const n = normalize(status);
-  // cobre: locacao/locação, aluguel, alugar, em locação, para aluguel etc.
-  return (
-    n.includes("loca") || // locacao, em locacao, locação
-    n.includes("alug") // aluguel, alugar
-  );
+  return (n.includes("loca") || n.includes("alug"));
 };
 
 const stripCents = (v) => String(v || "").replace(/,\d{2}$/, "");
 
 const fotoUrlFrom = (Foto) => {
   if (!Foto) return null;
-
-  // Array de objetos OU strings
   if (Array.isArray(Foto) && Foto.length > 0) {
-    // tenta destaque tolerante
     const destaque =
       Foto.find((f) => {
         if (!f) return false;
@@ -78,10 +71,7 @@ const fotoUrlFrom = (Foto) => {
     if (typeof destaque === "string") return destaque;
     return destaque?.Foto || destaque?.foto || null;
   }
-
-  // String única
   if (typeof Foto === "string") return Foto;
-
   return null;
 };
 
@@ -107,9 +97,9 @@ export default function CardImovel({
   Endereco,
   ValorAntigo,
   ValorAluguelSite,
-  ValorAluguel,   // alternativos
-  Aluguel,        // alternativos
-  ValorLocacao,   // alternativos
+  ValorAluguel,
+  Aluguel,
+  ValorLocacao,
   Numero,
   DormitoriosAntigo,
   Dormitorios,
@@ -119,6 +109,9 @@ export default function CardImovel({
   isLoading,
   target,
 }) {
+  // DEBUG!
+  console.log("==== CARDIMOVEL PROPS ====", { Codigo, Status, ValorAluguelSite, ValorAluguel, Aluguel, ValorLocacao, Foto });
+
   if (isLoading || !Codigo) {
     return <CardImovelSkeleton />;
   }
@@ -131,24 +124,21 @@ export default function CardImovel({
   const limitar = (t, n) => (t ? (t.length <= n ? t : `${t.slice(0, n)}...`) : "");
   const titulo = limitar(Empreendimento || descricao || nome, 45);
 
-  // Share
   const base = process.env.NEXT_PUBLIC_SITE_URL || "";
   const shareUrl = `${base}/imovel/${Codigo}/${slug}`;
   const tituloCompartilhamento = `Confira este imóvel: ${nome || titulo}`;
 
-  // Clique
   const handleButtonClick = () => {
     setImovelSelecionado(Codigo, slug);
     document.cookie = `Codigo=${Codigo}; path=/`;
     document.cookie = `slug=${slug}; path=/`;
   };
 
-  // Foto
   const urlFoto = fotoUrlFrom(Foto);
 
-  // Preço (locação prioriza aluguel; venda cai no ValorAntigo)
   const ehLocacao = isLocacao(Status);
 
+  // Tenta todos os campos possíveis de aluguel
   const aluguelRaw =
     ValorAluguelSite || ValorAluguel || Aluguel || ValorLocacao || null;
 
