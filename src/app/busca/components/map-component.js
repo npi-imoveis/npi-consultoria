@@ -1,367 +1,85 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import { MapContainer, TileLayer, ZoomControl, useMap, Marker, Popup } from "react-leaflet";
-import Image from "next/image";
-import dynamic from "next/dynamic";
+
+// import "leaflet-geosearch/dist/geosearch.css"; // Movido para dentro do useEffect para evitar SSR
 
 import { getImoveisParaMapa } from "@/app/services";
 import { Button } from "@/app/components/ui/button";
 import { formatterSlug } from "@/app/utils/formatter-slug";
+import Image from "next/image";
 
-/* =========================
-   Placeholder Image Base64
-========================= */
-const PLACEHOLDER_IMAGE = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjE4MCIgdmlld0JveD0iMCAwIDMyMCAxODAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdyYWQiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdHlsZT0ic3RvcC1jb2xvcjojZjNmNGY2O3N0b3Atb3BhY2l0eToxIiAvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiNlNWU3ZWI7c3RvcC1vcGFjaXR5OjEiIC8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8cmVjdCB3aWR0aD0iMzIwIiBoZWlnaHQ9IjE4MCIgZmlsbD0idXJsKCNncmFkKSIvPgogIDxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDE2MCwgOTApIj4KICAgIDxyZWN0IHg9Ii00MCIgeT0iLTIwIiB3aWR0aD0iODAiIGhlaWdodD0iNTAiIGZpbGw9IiNkMWQ1ZGIiIHJ4PSIyIi8+CiAgICA8cmVjdCB4PSItMzAiIHk9Ii0xMCIgd2lkdGg9IjE1IiBoZWlnaHQ9IjE1IiBmaWxsPSIjOWNhM2FmIi8+CiAgICA8cmVjdCB4PSItNSIgeT0iLTEwIiB3aWR0aD0iMTUiIGhlaWdodD0iMTUiIGZpbGw9IiM5Y2EzYWYiLz4KICAgIDxyZWN0IHg9IjE1IiB5PSItMTAiIHdpZHRoPSIxNSIgaGVpZ2h0PSIxNSIgZmlsbD0iIzljYTNhZiIvPgogICAgPHJlY3QgeD0iLTMwIiB5PSIxMCIgd2lkdGg9IjE1IiBoZWlnaHQ9IjE1IiBmaWxsPSIjOWNhM2FmIi8+CiAgICA8cmVjdCB4PSItNSIgeT0iMTAiIHdpZHRoPSIxNSIgaGVpZ2h0PSIxNSIgZmlsbD0iIzljYTNhZiIvPgogICAgPHJlY3QgeD0iMTUiIHk9IjEwIiB3aWR0aD0iMTUiIGhlaWdodD0iMTUiIGZpbGw9IiM5Y2EzYWYiLz4KICAgIDxwb2x5Z29uIHBvaW50cz0iLTQ1LC0yMCAwLC0zNSA0NSwtMjAiIGZpbGw9IiM5Y2EzYWYiLz4KICAgIDxyZWN0IHg9Ii03IiB5PSIxNSIgd2lkdGg9IjE0IiBoZWlnaHQ9IjE1IiBmaWxsPSIjNmI3MjgwIi8+CiAgPC9nPgogIDx0ZXh0IHg9IjE2MCIgeT0iMTQwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjNmI3MjgwIiBmb250LWZhbWlseT0ic3lzdGVtLXVpIiBmb250LXNpemU9IjExIiBmb250LXdlaWdodD0iNTAwIj5JbWFnZW0gbsOjbyBkaXNwb27DrXZlbDwvdGV4dD4KPC9zdmc+";
-
-/* =========================
-   Leaflet Icon URLs CDN
-========================= */
-const LEAFLET_ICONS = {
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png"
-};
-
-/* =========================
-   Types & Interfaces
-========================= */
-type Imovel = {
-  _id?: string;
-  Codigo?: string | number;
-  Empreendimento?: string;
-  Endereco?: string;
-  BairroComercial?: string;
-  Cidade?: string;
-  Numero?: string | number;
-  Latitude?: string | number;
-  Longitude?: string | number;
-  ValorVenda?: number | string;
-  ValorAluguel?: number | string;
-  ValorAntigo?: number | string;
-  Quartos?: number;
-  DormitoriosAntigo?: number;
-  Suites?: number;
-  SuiteAntigo?: number;
-  Vagas?: number;
-  VagasAntigo?: number;
-  AreaPrivativa?: number;
-  MetragemAnt?: number;
-  Foto?: any;
-  [key: string]: any;
-};
-
-/* =========================
-   Helpers
-========================= */
-const isValidCoord = (lat: any, lng: any): boolean => {
-  const la = parseFloat(lat);
-  const ln = parseFloat(lng);
-  return (
-    Number.isFinite(la) &&
-    Number.isFinite(ln) &&
-    la !== 0 &&
-    ln !== 0 &&
-    la >= -90 &&
-    la <= 90 &&
-    ln >= -180 &&
-    ln <= 180
-  );
-};
-
-const formatCurrency = (value: number | string | undefined): string => {
-  if (!value) return "Consulte-nos";
-  const numValue = typeof value === "string" ? parseFloat(value.replace(/\D/g, '')) : value;
-  if (isNaN(numValue) || numValue === 0) return "Consulte-nos";
-  return numValue.toLocaleString("pt-BR", { 
-    style: "currency", 
-    currency: "BRL",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0
-  });
-};
-
-/**
- * FUNÇÃO BASEADA NO PADRÃO DA PÁGINA DO IMÓVEL
- * Extrai a URL da foto seguindo a mesma lógica do getLCPOptimizedImageUrl
- */
-const getPhotoUrl = (imovelFoto: any): string => {
-  try {
-    let imageUrl = null;
-    
-    // MÉTODO 1: Array de fotos (mais comum)
-    if (Array.isArray(imovelFoto) && imovelFoto.length > 0) {
-      const foto = imovelFoto[0];
-      
-      if (foto && typeof foto === 'object') {
-        // Prioridade: FotoGrande > Foto > FotoMedia
-        const possibleUrls = [
-          foto.FotoGrande,
-          foto.Foto,
-          foto.FotoMedia,
-          foto.FotoPequena
-        ];
-        
-        for (const url of possibleUrls) {
-          if (url && typeof url === 'string' && url.trim() !== '') {
-            imageUrl = url.trim();
-            break;
-          }
-        }
-      } else if (foto && typeof foto === 'string' && foto.trim() !== '') {
-        imageUrl = foto.trim();
-      }
-    }
-    
-    // MÉTODO 2: String direta
-    if (!imageUrl && typeof imovelFoto === 'string' && imovelFoto.trim() !== '') {
-      imageUrl = imovelFoto.trim();
-    }
-    
-    // MÉTODO 3: Objeto único
-    if (!imageUrl && imovelFoto && typeof imovelFoto === 'object' && !Array.isArray(imovelFoto)) {
-      const possibleUrls = [
-        imovelFoto.FotoGrande,
-        imovelFoto.Foto,
-        imovelFoto.FotoMedia,
-        imovelFoto.FotoPequena
-      ];
-      
-      for (const url of possibleUrls) {
-        if (url && typeof url === 'string' && url.trim() !== '') {
-          imageUrl = url.trim();
-          break;
-        }
-      }
-    }
-    
-    // VALIDAÇÃO E OTIMIZAÇÃO DA URL
-    if (imageUrl) {
-      // Garantir HTTPS
-      if (imageUrl.startsWith('http://')) {
-        imageUrl = imageUrl.replace('http://', 'https://');
-      }
-      
-      // Se URL relativa, converter para absoluta
-      if (imageUrl.startsWith('/')) {
-        imageUrl = `https://npiconsultoria.com.br${imageUrl}`;
-      }
-      
-      return imageUrl;
-    }
-    
-    // FALLBACK
-    return PLACEHOLDER_IMAGE;
-    
-  } catch (error) {
-    console.error('Erro ao obter URL da foto:', error);
-    return PLACEHOLDER_IMAGE;
-  }
-};
-
-/* =========================
-   Subcomponentes
-========================= */
-
-// Controller: invalida o tamanho quando o container muda
-const MapController = ({ observeRef }: { observeRef?: React.RefObject<HTMLDivElement | null> }) => {
+// Componente auxiliar para acessar a instância do mapa
+const MapController = () => {
   const map = useMap();
 
   useEffect(() => {
-    const invalidate = () => {
-      requestAnimationFrame(() => {
-        map.invalidateSize();
-      });
-    };
-    
-    const t = setTimeout(invalidate, 300);
-    window.addEventListener("resize", invalidate);
+    // Aguardar um momento para garantir que o mapa foi renderizado
+    setTimeout(() => {
+      map.invalidateSize();
+    }, 200);
 
-    let ro: ResizeObserver | null = null;
-    if (observeRef?.current && "ResizeObserver" in window) {
-      ro = new ResizeObserver(() => invalidate());
-      ro.observe(observeRef.current);
-    }
+    // Função para lidar com o redimensionamento
+    const handleResize = () => {
+      map.invalidateSize();
+    };
+
+    window.addEventListener("resize", handleResize);
 
     return () => {
-      clearTimeout(t);
-      window.removeEventListener("resize", invalidate);
-      ro?.disconnect();
+      window.removeEventListener("resize", handleResize);
     };
-  }, [map, observeRef]);
+  }, [map]);
 
   return null;
 };
 
-// Atualiza centro/zoom
-const MapUpdater = ({ center, zoom }: { center: [number, number]; zoom: number }) => {
+// Componente para atualizar o centro e zoom do mapa
+const MapUpdater = ({ center, zoom }) => {
   const map = useMap();
+
   useEffect(() => {
-    if (center && Number.isFinite(zoom)) {
-      map.setView(center, zoom, { animate: true });
+    if (center && zoom) {
+      map.setView(center, zoom);
     }
   }, [map, center, zoom]);
+
   return null;
 };
 
-// Ajusta bounds com base nos imóveis
-const FitToMarkers = ({ points }: { points: [number, number][] }) => {
-  const map = useMap();
-  
-  useEffect(() => {
-    if (!points.length) return;
-    
-    if (points.length === 1) {
-      map.setView(points[0], 16, { animate: true });
-      return;
-    }
-    
-    const L = (window as any).L;
-    if (L?.latLngBounds) {
-      const bounds = L.latLngBounds(points);
-      map.fitBounds(bounds, { 
-        padding: [50, 50], 
-        maxZoom: 15,
-        animate: true 
-      });
-    }
-  }, [map, points]);
-  
-  return null;
-};
-
-// Card/Popup Otimizado do Imóvel
-const ImovelPopup = ({ imovel }: { imovel: Imovel }) => {
-  const [imageError, setImageError] = useState(false);
-  const [imageLoading, setImageLoading] = useState(true);
-  
+// Componente de popup personalizado para imóveis
+const ImovelPopup = ({ imovel }) => {
   const slug = formatterSlug(imovel.Empreendimento || "");
-  
-  // Usa a função baseada no padrão da página do imóvel
-  const fotoUrl = !imageError ? getPhotoUrl(imovel.Foto) : PLACEHOLDER_IMAGE;
-  
-  const href = `/imovel-${imovel.Codigo}/${slug}`;
-  
-  // Determina o preço correto (compatível com a página do imóvel)
-  const preco = imovel.ValorVenda || imovel.ValorAluguel || imovel.ValorAntigo;
-  const isRent = !imovel.ValorVenda && imovel.ValorAluguel;
-
-  const handleImageError = () => {
-    setImageError(true);
-    setImageLoading(false);
-  };
-
-  const handleImageLoad = () => {
-    setImageLoading(false);
-  };
-
-  // Pega os valores corretos dos campos (compatível com a página do imóvel)
-  const quartos = imovel.Quartos || imovel.DormitoriosAntigo;
-  const vagas = imovel.Vagas || imovel.VagasAntigo;
-  const area = imovel.AreaPrivativa || imovel.MetragemAnt;
-
+  const fotoUrl = imovel?.Foto?.[0]?.Foto || "/placeholder-imovel.jpg"; // Adiciona fallback para imagem
   return (
-    <Popup 
-      className="custom-popup"
-      maxWidth={320}
-      minWidth={280}
-      autoPan={true}
-      keepInView={true}
-    >
-      <div className="p-0 -m-[20px] rounded-lg overflow-hidden">
-        {/* Container da Imagem */}
-        <div className="relative w-[320px] h-[180px] bg-gray-100">
-          {imageLoading && fotoUrl !== PLACEHOLDER_IMAGE && (
-            <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center z-10">
-              <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </div>
-          )}
-          
-          {/* Imagem com Next/Image para melhor performance */}
-          {fotoUrl === PLACEHOLDER_IMAGE ? (
-            <div 
-              className="w-full h-full flex items-center justify-center bg-gray-100"
-              dangerouslySetInnerHTML={{ __html: PLACEHOLDER_IMAGE }}
-            />
-          ) : (
-            <Image
-              src={fotoUrl}
-              alt={imovel.Empreendimento || "Imóvel"}
-              width={320}
-              height={180}
-              className={`w-full h-full object-cover transition-opacity duration-300 ${
-                imageLoading ? 'opacity-0' : 'opacity-100'
-              }`}
-              onError={handleImageError}
-              onLoad={handleImageLoad}
-              priority={false}
-              quality={85}
-              placeholder="empty"
-              unoptimized
-            />
-          )}
-          
-          {/* Badge de preço sobre a imagem */}
-          {preco && (
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
-              <p className="text-white font-bold text-lg drop-shadow-lg">
-                {formatCurrency(preco)}
-                {isRent && <span className="text-sm font-normal"> /mês</span>}
-              </p>
-            </div>
-          )}
-        </div>
+    <Popup>
+      <div className="p-2">
+        <Image
+          src={fotoUrl}
+          alt={imovel.Empreendimento || "Imóvel"}
+          width={300}
+          height={150}
+          className="rounded-lg w-[300px] h-[150px] object-cover"
+        />
+        <h1 className="font-bold text-sm mt-4">{imovel.Empreendimento}</h1>
+        <p className="text-xs">
+          {imovel.Endereco}, {imovel.BairroComercial}, {imovel.Cidade}, {imovel.Numero}
+        </p>
 
-        {/* Informações do Imóvel */}
-        <div className="p-4 bg-white">
-          <h3 className="font-bold text-base text-gray-900 mb-1 line-clamp-1">
-            {imovel.Empreendimento || `Imóvel ${imovel.Codigo}` || "Imóvel"}
-          </h3>
-          
-          <p className="text-sm text-gray-600 mb-2 line-clamp-2">
-            {imovel.Endereco}
-            {imovel.Numero ? `, ${imovel.Numero}` : ""}
-            {imovel.BairroComercial ? ` - ${imovel.BairroComercial}` : ""}
-            {imovel.Cidade ? `, ${imovel.Cidade}` : ""}
-          </p>
-
-          {/* Características */}
-          <div className="flex items-center gap-3 text-xs text-gray-600 mb-3">
-            {quartos && (
-              <div className="flex items-center gap-1">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-                </svg>
-                <span>{quartos} {quartos === 1 ? 'quarto' : 'quartos'}</span>
-              </div>
-            )}
-            
-            {vagas && (
-              <div className="flex items-center gap-1">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-                <span>{vagas} {vagas === 1 ? 'vaga' : 'vagas'}</span>
-              </div>
-            )}
-            
-            {area && (
-              <div className="flex items-center gap-1">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                </svg>
-                <span>{area} m²</span>
-              </div>
-            )}
-          </div>
-
-          {/* Botão CTA */}
-          <Button 
-            link={href} 
-            text="Ver Detalhes" 
-            className="w-full bg-black hover:bg-gray-800 text-white font-semibold py-2 px-4 rounded transition-colors duration-200"
+        <p className="text-sm font-bold mt-1">
+          {imovel.ValorVenda
+            ? Number(imovel.ValorVenda).toLocaleString("pt-BR", {
+                style: "currency",
+                currency: "BRL",
+              })
+            : "Consulte"}
+        </p>
+        <div className="mt-2">
+          <Button
+            link={`imovel-${imovel.Codigo}/${slug}`}
+            text="Saiba mais"
+            className="text-white"
           />
         </div>
       </div>
@@ -369,264 +87,181 @@ const ImovelPopup = ({ imovel }: { imovel: Imovel }) => {
   );
 };
 
-/* =========================
-   Componente Principal
-========================= */
-const MapComponent = ({ filtros }: { filtros: any }) => {
-  const wrapRef = useRef<HTMLDivElement | null>(null);
-  const [imoveis, setImoveis] = useState<Imovel[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+const MapComponent = ({ filtros }) => {
   const [mapReady, setMapReady] = useState(false);
+  const [imoveis, setImoveis] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [mapCenter, setMapCenter] = useState(null);
+  const [mapZoom, setMapZoom] = useState(null);
 
-  // Centro inicial (São Paulo)
-  const initialCenter: [number, number] = [-23.5505, -46.6333];
-
-  // Define zoom baseado nos filtros
-  const getZoomLevel = useCallback(() => {
-    if (filtros?.bairrosSelecionados?.length) return 15;
-    if (filtros?.cidadeSelecionada) return 12;
+  // Função para determinar o nível de zoom baseado nos filtros
+  const getZoomLevel = () => {
+    // Se tiver bairro selecionado, zoom mais próximo
+    if (filtros.bairrosSelecionados && filtros.bairrosSelecionados.length > 0) {
+      return 15; // Aumentamos o zoom para focar melhor no imóvel
+    }
+    // Se tiver cidade selecionada, zoom intermediário
+    if (filtros.cidadeSelecionada) {
+      return 10;
+    }
+    // Se não tiver nem bairro nem cidade, zoom mais distante
     return 11;
-  }, [filtros]);
+  };
 
-  // Busca imóveis
+  // Função para buscar imóveis
+  const buscarImoveisParaMapa = async () => {
+    try {
+      setLoading(true);
+      const filtrosParaMapa = {
+        categoria: filtros.categoriaSelecionada,
+        cidade: filtros.cidadeSelecionada,
+        bairros: filtros.bairrosSelecionados,
+        quartos: filtros.quartos,
+        banheiros: filtros.banheiros,
+        vagas: filtros.vagas,
+      };
+      const response = await getImoveisParaMapa(filtrosParaMapa);
+      setImoveis(response.data || []);
+    } catch (err) {
+      console.error("Erro ao buscar imóveis para o mapa:", err);
+      setError("Não foi possível carregar os imóveis para o mapa");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Buscar imóveis quando o componente for montado
   useEffect(() => {
-    const buscarImoveisParaMapa = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        const filtrosParaMapa = {
-          categoria: filtros?.categoriaSelecionada,
-          cidade: filtros?.cidadeSelecionada,
-          bairros: filtros?.bairrosSelecionados,
-          quartos: filtros?.quartos,
-          banheiros: filtros?.banheiros,
-          vagas: filtros?.vagas,
-        };
-        
-        const response = await getImoveisParaMapa(filtrosParaMapa);
-        const imoveisData = Array.isArray(response?.data) ? response.data : [];
-        
-        // Log para debug apenas no desenvolvimento
-        if (process.env.NODE_ENV === 'development' && imoveisData.length > 0) {
-          console.log('📍 Estrutura do primeiro imóvel:', imoveisData[0]);
-        }
-        
-        setImoveis(imoveisData);
-      } catch (err) {
-        console.error("Erro ao buscar imóveis:", err);
-        setError("Não foi possível carregar os imóveis");
-      } finally {
-        setLoading(false);
-      }
-    };
-    
     buscarImoveisParaMapa();
   }, [filtros]);
 
-  // Filtra pontos válidos
-  const validPoints = useMemo<[number, number][]>(() => {
-    return imoveis
-      .filter((i) => isValidCoord(i.Latitude, i.Longitude))
-      .map((i) => [parseFloat(String(i.Latitude)), parseFloat(String(i.Longitude))]);
-  }, [imoveis]);
-
-  // Setup Leaflet
+  // Fix para o ícone do Leaflet no Next.js
   useEffect(() => {
-    // CSS do Leaflet
-    if (!document.querySelector('link[href*="leaflet.css"]')) {
-      const link = document.createElement("link");
-      link.rel = "stylesheet";
-      link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
-      link.integrity = "sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=";
-      link.crossOrigin = "";
-      document.head.appendChild(link);
-    }
+    // Indica que o componente foi montado
+    setMapReady(true);
 
-    // Estilos customizados para o popup
-    if (!document.querySelector('#leaflet-custom-styles')) {
-      const style = document.createElement("style");
-      style.id = 'leaflet-custom-styles';
-      style.innerHTML = `
-        .custom-popup .leaflet-popup-content-wrapper {
-          padding: 0;
-          border-radius: 8px;
-          overflow: hidden;
-        }
-        .custom-popup .leaflet-popup-content {
-          margin: 0;
-          width: 320px !important;
-        }
-        .custom-popup .leaflet-popup-tip {
-          background: white;
-        }
-        .leaflet-popup {
-          animation: fadeInUp 0.3s ease-out;
-        }
-        @keyframes fadeInUp {
-          from {
-            opacity: 0;
-            transform: translateY(10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-        .leaflet-popup-content-wrapper {
-          box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
-        }
-        .leaflet-popup-close-button {
-          color: #666 !important;
-          font-size: 20px !important;
-          font-weight: normal !important;
-          width: 24px !important;
-          height: 24px !important;
-          top: 8px !important;
-          right: 8px !important;
-        }
-        .leaflet-popup-close-button:hover {
-          color: #333 !important;
-        }
-        @media (max-width: 768px) {
-          .leaflet-marker-icon {
-            width: 20px !important;
-            height: 30px !important;
-          }
-        }
-      `;
-      document.head.appendChild(style);
-    }
-
-    // Configuração dos ícones
-    import("leaflet")
-      .then((L) => {
-        if (L && (L as any).Icon) {
-          delete (L.Icon.Default.prototype as any)._getIconUrl;
+    try {
+      import("leaflet").then((L) => {
+        if (L && L.Icon) {
+          delete L.Icon.Default.prototype._getIconUrl;
           L.Icon.Default.mergeOptions({
-            iconRetinaUrl: LEAFLET_ICONS.iconRetinaUrl,
-            iconUrl: LEAFLET_ICONS.iconUrl,
-            shadowUrl: LEAFLET_ICONS.shadowUrl,
+            iconRetinaUrl: "/leaflet/marker-icon-2x.png",
+            iconUrl: "/leaflet/marker-icon.png",
+            shadowUrl: "/leaflet/marker-shadow.png",
           });
-          (window as any).L = L;
-          setMapReady(true);
         }
-      })
-      .catch((e) => console.error("Erro ao carregar Leaflet:", e));
+      });
+    } catch (error) {
+      console.error("Erro ao carregar o Leaflet:", error);
+    }
   }, []);
 
-  if (!mapReady) {
-    return (
-      <div className="w-full h-full rounded-lg overflow-hidden border border-gray-300 shadow-lg flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-black" />
-          <p className="mt-2 text-gray-700">Carregando mapa...</p>
-        </div>
-      </div>
+  // Calcular o centro do mapa e atualizar quando os imóveis mudarem
+  useEffect(() => {
+    if (imoveis.length === 0) {
+      // Sem imóveis, usar coordenadas padrão de São Paulo
+      setMapCenter([-23.5505, -46.6333]);
+      setMapZoom(11);
+      return;
+    }
+
+    // Filtrar apenas imóveis com coordenadas válidas
+    const imoveisValidos = imoveis.filter(
+      (imovel) =>
+        imovel.Latitude &&
+        imovel.Longitude &&
+        !isNaN(parseFloat(imovel.Latitude)) &&
+        !isNaN(parseFloat(imovel.Longitude)) &&
+        parseFloat(imovel.Latitude) !== 0 &&
+        parseFloat(imovel.Longitude) !== 0
     );
-  }
+    
+    if (imoveisValidos.length === 0) {
+      setMapCenter([-23.5505, -46.6333]);
+      setMapZoom(11);
+      return;
+    }
+
+    // Calcular centro baseado na média das coordenadas
+    const somaLat = imoveisValidos.reduce((soma, imovel) => soma + parseFloat(imovel.Latitude), 0);
+    const somaLng = imoveisValidos.reduce((soma, imovel) => soma + parseFloat(imovel.Longitude), 0);
+    const centroCalculado = [somaLat / imoveisValidos.length, somaLng / imoveisValidos.length];
+    
+    setMapCenter(centroCalculado);
+    
+    // Definir zoom baseado na quantidade e dispersão dos imóveis
+    if (imoveisValidos.length === 1) {
+      setMapZoom(16); // Zoom bem próximo para um único imóvel
+    } else if (imoveisValidos.length <= 5) {
+      setMapZoom(14); // Zoom médio para poucos imóveis
+    } else {
+      setMapZoom(12); // Zoom mais distante para muitos imóveis
+    }
+  }, [imoveis]);
+
+  // Centro inicial para o MapContainer
+  const initialCenter = [-23.5505, -46.6333]; // São Paulo como padrão
 
   return (
-    <div 
-      ref={wrapRef} 
-      className="w-full h-full rounded-lg overflow-hidden border border-gray-300 shadow-lg relative"
-    >
-      {/* Loading Overlay */}
+    <div className="w-full h-full rounded-lg overflow-hidden border border-gray-300 shadow-lg relative">
+      {/* Mostrar indicador de carregamento */}
       {loading && (
-        <div className="absolute inset-0 bg-white/90 z-[1000] flex items-center justify-center">
+        <div className="absolute top-0 left-0 w-full h-full bg-white bg-opacity-70 z-20 flex items-center justify-center">
           <div className="text-center">
-            <div className="inline-block animate-spin rounded-full h-10 w-10 border-4 border-black border-t-transparent" />
-            <p className="mt-3 text-gray-700 font-medium">Carregando imóveis...</p>
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-black"></div>
+            <p className="mt-2 text-gray-700">Carregando imóveis...</p>
           </div>
         </div>
       )}
 
-      {/* Error Message */}
+      {/* Mostrar erro, se houver */}
       {error && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded-md z-[1000] shadow-lg">
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-red-100 text-red-700 px-4 py-2 rounded-md z-20">
           {error}
         </div>
       )}
 
       <MapContainer
         center={initialCenter}
-        zoom={getZoomLevel()}
+        zoom={11}
         style={{ width: "100%", height: "100%" }}
         zoomControl={false}
-        scrollWheelZoom
-        doubleClickZoom
-        dragging
-        attributionControl
-        className="w-full h-full"
+        scrollWheelZoom={true}
+        doubleClickZoom={true}
+        dragging={true}
+        attributionControl={true}
+        className="w-full h-full google-maps-style"
       >
-        <MapController observeRef={wrapRef} />
-
-        {validPoints.length > 0 ? (
-          <FitToMarkers points={validPoints} />
-        ) : (
-          <MapUpdater center={initialCenter} zoom={getZoomLevel()} />
-        )}
-
+        <MapController />
+        {mapCenter && mapZoom && <MapUpdater center={mapCenter} zoom={mapZoom} />}
         <ZoomControl position="bottomright" />
 
-        {/* Markers com coordenadas válidas */}
-        {imoveis.map((imovel) => {
-          const lat = imovel.Latitude;
-          const lng = imovel.Longitude;
-          
-          if (!isValidCoord(lat, lng)) return null;
-          
-          const position: [number, number] = [
-            parseFloat(String(lat)), 
-            parseFloat(String(lng))
-          ];
-          
-          const key = String(
-            imovel._id ?? 
-            imovel.Codigo ?? 
-            `${position[0]}-${position[1]}`
-          );
-          
-          return (
-            <Marker key={key} position={position}>
-              <ImovelPopup imovel={imovel} />
-            </Marker>
-          );
-        })}
+        {/* Marcadores para os imóveis */}
+        {imoveis.map((imovel) => (
+          <Marker
+            key={imovel._id || imovel.Codigo}
+            position={[parseFloat(imovel.Latitude), parseFloat(imovel.Longitude)]}
+          >
+            <ImovelPopup imovel={imovel} />
+          </Marker>
+        ))}
 
         <TileLayer
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           maxZoom={19}
         />
       </MapContainer>
 
-      {/* Contador de Imóveis */}
+      {/* Contador de imóveis */}
       {!loading && !error && (
-        <div className="absolute bottom-4 left-4 bg-white/95 backdrop-blur px-4 py-2 rounded-full z-[500] shadow-lg border border-gray-200">
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            <span className="text-sm">
-              <span className="font-bold text-gray-900">{imoveis.length}</span>
-              <span className="text-gray-600"> imóveis encontrados</span>
-            </span>
-          </div>
+        <div className="absolute bottom-4 left-4 bg-white px-3 py-1 rounded-full  z-10 text-xs">
+          <span className="font-bold">{imoveis.length}</span> imóveis encontrados
         </div>
       )}
     </div>
   );
 };
 
-// Export com lazy loading para melhor performance
-export default dynamic(() => Promise.resolve(MapComponent), {
-  ssr: false,
-  loading: () => (
-    <div className="w-full h-full rounded-lg overflow-hidden border border-gray-300 shadow-lg flex items-center justify-center bg-gray-50">
-      <div className="text-center">
-        <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-black" />
-        <p className="mt-2 text-gray-700">Carregando mapa...</p>
-      </div>
-    </div>
-  )
-});
+export default MapComponent;
