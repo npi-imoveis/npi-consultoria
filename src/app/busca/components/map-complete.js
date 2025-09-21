@@ -81,30 +81,26 @@ const getLatLng = (item) => {
   return null;
 };
 
-// FUNÇÃO CORRIGIDA para obter a URL da foto
+// FUNÇÃO BASEADA NO CARDHOME - ESTRUTURA CORRETA DE FOTOS
 const getCoverUrl = (imovel) => {
-  // Debug para entender a estrutura
+  // Debug completo
   console.log('Imovel completo:', imovel);
+  console.log('Campo Foto:', imovel.Foto);
   
-  // Lista de todos os campos possíveis de foto
-  const possiblePhotoFields = [
-    'Foto1',
-    'FotoPrincipal', 
-    'FotoDestaque',
-    'ImagemCapa',
-    'ImagemPrincipal',
-    'FotoCapa',
-    'Imagem',
-    'Image',
-    'Thumb',
-    'Thumbnail'
-  ];
+  // Verificar se há fotos disponíveis (IGUAL AO CARDHOME)
+  const temFoto = imovel.Foto && Array.isArray(imovel.Foto) && imovel.Foto.length > 0;
   
-  // Tenta encontrar a foto em campos diretos
-  for (const field of possiblePhotoFields) {
-    if (imovel[field]) {
-      console.log(`Foto encontrada em: ${field} = ${imovel[field]}`);
-      const url = imovel[field];
+  if (temFoto) {
+    // Encontrar foto destacada ou usar a primeira foto (IGUAL AO CARDHOME)
+    const fotoDestacada = imovel.Foto.find((foto) => foto && foto.Destaque === "Sim") || imovel.Foto[0];
+    
+    console.log('Foto destacada/primeira:', fotoDestacada);
+    
+    // A URL está em fotoDestacada.Foto
+    if (fotoDestacada && fotoDestacada.Foto) {
+      console.log('URL encontrada:', fotoDestacada.Foto);
+      const url = fotoDestacada.Foto;
+      
       // Se for caminho relativo, adiciona domínio
       if (url.startsWith('/')) {
         return `https://npiconsultoria.com.br${url}`;
@@ -113,25 +109,20 @@ const getCoverUrl = (imovel) => {
     }
   }
   
-  // Se tem array Foto
-  if (imovel.Foto && Array.isArray(imovel.Foto) && imovel.Foto.length > 0) {
-    const primeiraFoto = imovel.Foto[0];
-    if (typeof primeiraFoto === 'string') return primeiraFoto;
-    if (primeiraFoto?.Foto) return primeiraFoto.Foto;
-    if (primeiraFoto?.url) return primeiraFoto.url;
-  }
-  
-  // Se tem array Fotos  
-  if (imovel.Fotos && Array.isArray(imovel.Fotos) && imovel.Fotos.length > 0) {
-    const primeiraFoto = imovel.Fotos[0];
-    if (typeof primeiraFoto === 'string') return primeiraFoto;
-    if (primeiraFoto?.Foto) return primeiraFoto.Foto;
-    if (primeiraFoto?.url) return primeiraFoto.url;
+  // Fallback - tentar outros campos possíveis
+  const camposFallback = ['Foto1', 'FotoPrincipal', 'ImagemCapa', 'FotoDestaque'];
+  for (const campo of camposFallback) {
+    if (imovel[campo]) {
+      console.log(`Fallback - foto encontrada em ${campo}:`, imovel[campo]);
+      const url = imovel[campo];
+      if (url.startsWith('/')) {
+        return `https://npiconsultoria.com.br${url}`;
+      }
+      return url;
+    }
   }
   
   console.log('Nenhuma foto encontrada para o imovel:', imovel.Codigo);
-  
-  // Retorna placeholder
   return '/placeholder-imovel.jpg';
 };
 
@@ -284,35 +275,45 @@ export default function MapComplete({ filtros }) {
         {markers.map((m) => {
           const key = m.Codigo || m._id || `${m.__lat}-${m.__lng}-${Math.random()}`;
           
-          // CORREÇÃO: Passa o objeto inteiro para getCoverUrl
+          // CORREÇÃO: Usa a função baseada no CardHome
           const foto = getCoverUrl(m);
           
-          // Adiciona suporte para m.Empreendimento e outros campos
-          const titulo =
-            m.Empreendimento ||
-            m.NomeImovel ||
-            m.Titulo ||
-            `${m.Categoria || m.Tipo || "Imóvel"} ${m.Codigo ? `• ${m.Codigo}` : ""}`;
-          const cidade = m.Cidade || m.cidade || "";
-          const bairro = m.Bairro || m.BairroComercial || m.bairro || "";
+          // Título do imóvel (compatível com CardHome)
+          const titulo = m.Empreendimento || 
+                        m.NomeImovel ||
+                        m.Titulo ||
+                        `${m.Categoria || m.Tipo || "Imóvel"} ${m.Codigo ? `• ${m.Codigo}` : ""}`;
+          
+          // Endereço (compatível com CardHome)
+          const tipoEndereco = m.TipoEndereco || "";
           const endereco = m.Endereco || "";
           const numero = m.Numero || "";
+          const cidade = m.Cidade || m.cidade || "";
+          const bairro = m.Bairro || m.BairroComercial || m.bairro || "";
           
-          // Compatibilidade com campos antigos
-          const quartos = m.Quartos || m.DormitoriosAntigo;
+          // Características (compatível com CardHome - usar campos "Antigo")
+          const quartos = m.Quartos || m.DormitoriosAntigo || m.Dormitorios;
+          const banheiros = m.BanheiroSocialQtd || m.Banheiros;
           const vagas = m.Vagas || m.VagasAntigo;
           const area = m.AreaPrivativa || m.MetragemAnt;
           
-          const finalidade = (m.Finalidade || m.Status || m.TipoNegocio || "").toString().toLowerCase();
-          const isRent =
-            finalidade.includes("alug") || finalidade.includes("loca") || finalidade === "locacao";
+          // Preço (compatível com CardHome)
+          const status = (m.Status || m.Finalidade || m.TipoNegocio || "").toString().toUpperCase();
+          const isRent = status.includes("LOCAÇÃO") || status.includes("ALUGUEL");
           
-          // Adiciona suporte para ValorAntigo
-          const precoBruto =
-            (isRent
-              ? (m.ValorAluguelNumerico ?? m.ValorAluguel ?? m.Aluguel)
-              : (m.ValorNumerico ?? m.ValorVenda ?? m.Valor ?? m.Preco ?? m.ValorAntigo)) ?? null;
-          const preco = formatBRL(String(precoBruto).replace(/\D/g, ""));
+          let preco = "";
+          if (isRent && m.ValorAluguelSite && m.ValorAluguelSite !== "0" && m.ValorAluguelSite !== "") {
+            preco = formatBRL(String(m.ValorAluguelSite).replace(/\D/g, ""));
+          } else if (m.ValorAntigo) {
+            // Remove os centavos como no CardHome
+            const valorFormatado = formatBRL(String(m.ValorAntigo).replace(/\D/g, ""));
+            preco = valorFormatado.replace(/,00$/, '');
+          } else {
+            const valorBruto = m.ValorVenda || m.Valor || m.Preco || m.ValorNumerico;
+            if (valorBruto) {
+              preco = formatBRL(String(valorBruto).replace(/\D/g, ""));
+            }
+          }
 
           return (
             <Marker key={key} position={[m.__lat, m.__lng]}>
@@ -327,7 +328,7 @@ export default function MapComplete({ filtros }) {
                   }}
                 >
                   <a
-                    href={`/imovel/${m.Codigo}`}
+                    href={`/imovel-${m.Codigo}`}
                     target="_blank"
                     rel="noreferrer"
                     style={{
@@ -356,6 +357,7 @@ export default function MapComplete({ filtros }) {
                         loading="lazy"
                         onError={(e) => {
                           e.target.src = '/placeholder-imovel.jpg';
+                          e.target.onerror = null;
                         }}
                       />
                       
@@ -381,6 +383,17 @@ export default function MapComplete({ filtros }) {
                     <div style={{
                       padding: '12px'
                     }}>
+                      {/* Categoria */}
+                      <div style={{
+                        fontSize: '10px',
+                        color: '#666',
+                        fontWeight: '600',
+                        marginBottom: '4px'
+                      }}>
+                        {m.Categoria || "Imóvel"}
+                      </div>
+                      
+                      {/* Título */}
                       <div style={{
                         fontSize: '14px',
                         fontWeight: 'bold',
@@ -393,48 +406,43 @@ export default function MapComplete({ filtros }) {
                         {titulo}
                       </div>
                       
-                      {(endereco || bairro || cidade) && (
-                        <div style={{
-                          fontSize: '12px',
-                          color: '#666',
-                          marginBottom: '8px',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap'
-                        }}>
-                          {endereco}
-                          {numero ? `, ${numero}` : ""}
-                          {endereco && (bairro || cidade) ? ", " : ""}
-                          {bairro}
-                          {bairro && cidade ? " • " : ""}
-                          {cidade}
-                        </div>
-                      )}
+                      {/* Endereço */}
+                      <div style={{
+                        fontSize: '11px',
+                        color: '#666',
+                        marginBottom: '8px',
+                        fontWeight: '600',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }}>
+                        {tipoEndereco && `${tipoEndereco} `}
+                        {endereco}
+                        {numero && `, ${numero}`}
+                        {bairro && ` - ${bairro}`}
+                      </div>
                       
                       {/* Características */}
                       <div style={{
                         fontSize: '11px',
-                        color: '#888',
+                        color: '#333',
                         display: 'flex',
-                        gap: '10px'
-                      }}>
-                        {quartos && <span>{quartos} quartos</span>}
-                        {vagas && <span>{vagas} vagas</span>}
-                        {area && <span>{area}m²</span>}
-                      </div>
-                      
-                      {/* Botão Ver Mais */}
-                      <div style={{
-                        marginTop: '10px',
-                        textAlign: 'center',
-                        padding: '8px',
-                        backgroundColor: '#000',
-                        color: 'white',
-                        borderRadius: '4px',
-                        fontSize: '12px',
+                        gap: '12px',
                         fontWeight: 'bold'
                       }}>
-                        Ver Detalhes →
+                        {area && <span>{area} m²</span>}
+                        {quartos && <span>{quartos} dorm</span>}
+                        {banheiros && <span>{banheiros} banh</span>}
+                        {vagas && <span>{vagas} vagas</span>}
+                      </div>
+                      
+                      {/* Código do imóvel */}
+                      <div style={{
+                        marginTop: '8px',
+                        fontSize: '10px',
+                        color: '#999'
+                      }}>
+                        Cód: {m.Codigo}
                       </div>
                     </div>
                   </a>
