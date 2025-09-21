@@ -278,6 +278,32 @@ export default function MapComplete({ filtros }) {
           // CORREÇÃO: Usa a função baseada no CardHome
           const foto = getCoverUrl(m);
           
+          // DEBUG COMPLETO DO IMÓVEL
+          console.log('=====================================');
+          console.log('Imóvel código:', m.Codigo);
+          console.log('Foto URL retornada:', foto);
+          console.log('Campo Foto existe?', m.Foto ? 'SIM' : 'NÃO');
+          if (m.Foto) {
+            console.log('Tipo de m.Foto:', typeof m.Foto);
+            console.log('É array?', Array.isArray(m.Foto));
+            console.log('Tamanho do array:', m.Foto.length);
+            if (m.Foto.length > 0) {
+              console.log('Primeira entrada:', m.Foto[0]);
+              console.log('Tem propriedade Foto?', m.Foto[0].Foto ? 'SIM' : 'NÃO');
+            }
+          }
+          // Lista TODOS os campos que contém "foto" ou "image"
+          const camposComFoto = Object.keys(m).filter(k => 
+            k.toLowerCase().includes('foto') || 
+            k.toLowerCase().includes('image') || 
+            k.toLowerCase().includes('img')
+          );
+          console.log('Campos relacionados a foto:', camposComFoto);
+          camposComFoto.forEach(campo => {
+            console.log(`${campo}:`, m[campo]);
+          });
+          console.log('=====================================');
+          
           // Título do imóvel (compatível com CardHome)
           const titulo = m.Empreendimento || 
                         m.NomeImovel ||
