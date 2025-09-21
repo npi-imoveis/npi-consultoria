@@ -38,16 +38,17 @@ type Imovel = {
   Longitude?: string | number;
   ValorVenda?: number | string;
   ValorAluguel?: number | string;
+  ValorAntigo?: number | string;
   Quartos?: number;
+  DormitoriosAntigo?: number;
   Suites?: number;
+  SuiteAntigo?: number;
   Vagas?: number;
+  VagasAntigo?: number;
   AreaPrivativa?: number;
+  MetragemAnt?: number;
   Foto?: any;
-  Fotos?: any;
-  Foto1?: string;
-  fotoDestaque?: string;
-  Imagens?: any;
-  [key: string]: any; // Para campos dinâmicos
+  [key: string]: any;
 };
 
 /* =========================
@@ -80,90 +81,83 @@ const formatCurrency = (value: number | string | undefined): string => {
   });
 };
 
-// FUNÇÃO MELHORADA para encontrar a foto do imóvel
-const getPhotoUrl = (imovel: Imovel): string => {
-  // Debug apenas no primeiro imóvel
-  if (!window.PHOTO_LOGGED) {
-    console.log('🖼️ Estrutura do primeiro imóvel:', imovel);
-    window.PHOTO_LOGGED = true;
-  }
-  
-  // Lista de todos os campos possíveis para foto
-  const photoFields = [
-    // Campos diretos de string
-    imovel?.Foto1,
-    imovel?.foto1,
-    imovel?.fotoDestaque,
-    imovel?.FotoDestaque,
-    imovel?.fotoPrincipal,
-    imovel?.FotoPrincipal,
-    imovel?.imagemPrincipal,
-    imovel?.ImagemPrincipal,
-    imovel?.imagemCapa,
-    imovel?.ImagemCapa,
-    imovel?.capa,
-    imovel?.Capa,
+/**
+ * FUNÇÃO BASEADA NO PADRÃO DA PÁGINA DO IMÓVEL
+ * Extrai a URL da foto seguindo a mesma lógica do getLCPOptimizedImageUrl
+ */
+const getPhotoUrl = (imovelFoto: any): string => {
+  try {
+    let imageUrl = null;
     
-    // Arrays - campo Foto
-    imovel?.Foto?.[0]?.Foto,
-    imovel?.Foto?.[0]?.foto,
-    imovel?.Foto?.[0]?.url,
-    imovel?.Foto?.[0]?.URL,
-    imovel?.Foto?.[0],
-    
-    // Arrays - campo Fotos
-    imovel?.Fotos?.[0]?.Foto,
-    imovel?.Fotos?.[0]?.foto,
-    imovel?.Fotos?.[0]?.url,
-    imovel?.Fotos?.[0]?.URL,
-    imovel?.Fotos?.[0],
-    
-    // Arrays - campo fotos (minúsculo)
-    imovel?.fotos?.[0]?.foto,
-    imovel?.fotos?.[0]?.Foto,
-    imovel?.fotos?.[0]?.url,
-    imovel?.fotos?.[0],
-    
-    // Arrays - campo Imagens
-    imovel?.Imagens?.[0]?.url,
-    imovel?.Imagens?.[0]?.URL,
-    imovel?.Imagens?.[0]?.imagem,
-    imovel?.Imagens?.[0],
-    
-    // Arrays - campo imagens (minúsculo)
-    imovel?.imagens?.[0]?.url,
-    imovel?.imagens?.[0]?.imagem,
-    imovel?.imagens?.[0],
-  ];
-  
-  // Encontra a primeira URL válida
-  for (const field of photoFields) {
-    if (field && typeof field === 'string' && field.length > 0) {
-      // Se for caminho relativo, adiciona o domínio
-      if (field.startsWith('/') && !field.startsWith('//')) {
-        return `https://npiconsultoria.com.br${field}`;
-      }
-      // Se for URL completa ou data URL, retorna direto
-      if (field.startsWith('http') || field.startsWith('data:')) {
-        return field;
-      }
-      // Se for só o nome do arquivo, assume que está na raiz
-      if (field.includes('.jpg') || field.includes('.jpeg') || field.includes('.png') || field.includes('.webp')) {
-        return `https://npiconsultoria.com.br/${field}`;
+    // MÉTODO 1: Array de fotos (mais comum)
+    if (Array.isArray(imovelFoto) && imovelFoto.length > 0) {
+      const foto = imovelFoto[0];
+      
+      if (foto && typeof foto === 'object') {
+        // Prioridade: FotoGrande > Foto > FotoMedia
+        const possibleUrls = [
+          foto.FotoGrande,
+          foto.Foto,
+          foto.FotoMedia,
+          foto.FotoPequena
+        ];
+        
+        for (const url of possibleUrls) {
+          if (url && typeof url === 'string' && url.trim() !== '') {
+            imageUrl = url.trim();
+            break;
+          }
+        }
+      } else if (foto && typeof foto === 'string' && foto.trim() !== '') {
+        imageUrl = foto.trim();
       }
     }
+    
+    // MÉTODO 2: String direta
+    if (!imageUrl && typeof imovelFoto === 'string' && imovelFoto.trim() !== '') {
+      imageUrl = imovelFoto.trim();
+    }
+    
+    // MÉTODO 3: Objeto único
+    if (!imageUrl && imovelFoto && typeof imovelFoto === 'object' && !Array.isArray(imovelFoto)) {
+      const possibleUrls = [
+        imovelFoto.FotoGrande,
+        imovelFoto.Foto,
+        imovelFoto.FotoMedia,
+        imovelFoto.FotoPequena
+      ];
+      
+      for (const url of possibleUrls) {
+        if (url && typeof url === 'string' && url.trim() !== '') {
+          imageUrl = url.trim();
+          break;
+        }
+      }
+    }
+    
+    // VALIDAÇÃO E OTIMIZAÇÃO DA URL
+    if (imageUrl) {
+      // Garantir HTTPS
+      if (imageUrl.startsWith('http://')) {
+        imageUrl = imageUrl.replace('http://', 'https://');
+      }
+      
+      // Se URL relativa, converter para absoluta
+      if (imageUrl.startsWith('/')) {
+        imageUrl = `https://npiconsultoria.com.br${imageUrl}`;
+      }
+      
+      return imageUrl;
+    }
+    
+    // FALLBACK
+    return PLACEHOLDER_IMAGE;
+    
+  } catch (error) {
+    console.error('Erro ao obter URL da foto:', error);
+    return PLACEHOLDER_IMAGE;
   }
-  
-  // Se não encontrou nenhuma foto, retorna o placeholder
-  return PLACEHOLDER_IMAGE;
 };
-
-// Declaração global para TypeScript
-declare global {
-  interface Window {
-    PHOTO_LOGGED?: boolean;
-  }
-}
 
 /* =========================
    Subcomponentes
@@ -243,19 +237,16 @@ const ImovelPopup = ({ imovel }: { imovel: Imovel }) => {
   
   const slug = formatterSlug(imovel.Empreendimento || "");
   
-  // Usa a função melhorada para obter a foto
-  const fotoUrl = !imageError ? getPhotoUrl(imovel) : PLACEHOLDER_IMAGE;
+  // Usa a função baseada no padrão da página do imóvel
+  const fotoUrl = !imageError ? getPhotoUrl(imovel.Foto) : PLACEHOLDER_IMAGE;
   
   const href = `/imovel-${imovel.Codigo}/${slug}`;
   
-  // Determina se é aluguel ou venda
-  const valorVenda = imovel.ValorVenda;
-  const valorAluguel = imovel.ValorAluguel;
-  const preco = valorVenda || valorAluguel;
-  const isRent = !valorVenda && valorAluguel;
+  // Determina o preço correto (compatível com a página do imóvel)
+  const preco = imovel.ValorVenda || imovel.ValorAluguel || imovel.ValorAntigo;
+  const isRent = !imovel.ValorVenda && imovel.ValorAluguel;
 
   const handleImageError = () => {
-    console.log('❌ Erro ao carregar imagem:', fotoUrl);
     setImageError(true);
     setImageLoading(false);
   };
@@ -263,6 +254,11 @@ const ImovelPopup = ({ imovel }: { imovel: Imovel }) => {
   const handleImageLoad = () => {
     setImageLoading(false);
   };
+
+  // Pega os valores corretos dos campos (compatível com a página do imóvel)
+  const quartos = imovel.Quartos || imovel.DormitoriosAntigo;
+  const vagas = imovel.Vagas || imovel.VagasAntigo;
+  const area = imovel.AreaPrivativa || imovel.MetragemAnt;
 
   return (
     <Popup 
@@ -275,23 +271,20 @@ const ImovelPopup = ({ imovel }: { imovel: Imovel }) => {
       <div className="p-0 -m-[20px] rounded-lg overflow-hidden">
         {/* Container da Imagem */}
         <div className="relative w-[320px] h-[180px] bg-gray-100">
-          {imageLoading && (
-            <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center">
+          {imageLoading && fotoUrl !== PLACEHOLDER_IMAGE && (
+            <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center z-10">
               <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             </div>
           )}
           
-          {/* Imagem com fallback */}
+          {/* Imagem com Next/Image para melhor performance */}
           {fotoUrl === PLACEHOLDER_IMAGE ? (
-            <div className="w-full h-full flex items-center justify-center bg-gray-100">
-              <img
-                src={PLACEHOLDER_IMAGE}
-                alt="Sem imagem"
-                className="w-full h-full object-cover"
-              />
-            </div>
+            <div 
+              className="w-full h-full flex items-center justify-center bg-gray-100"
+              dangerouslySetInnerHTML={{ __html: PLACEHOLDER_IMAGE }}
+            />
           ) : (
             <Image
               src={fotoUrl}
@@ -336,30 +329,30 @@ const ImovelPopup = ({ imovel }: { imovel: Imovel }) => {
 
           {/* Características */}
           <div className="flex items-center gap-3 text-xs text-gray-600 mb-3">
-            {imovel.Quartos && (
+            {quartos && (
               <div className="flex items-center gap-1">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                 </svg>
-                <span>{imovel.Quartos} {imovel.Quartos === 1 ? 'quarto' : 'quartos'}</span>
+                <span>{quartos} {quartos === 1 ? 'quarto' : 'quartos'}</span>
               </div>
             )}
             
-            {imovel.Vagas && (
+            {vagas && (
               <div className="flex items-center gap-1">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                <span>{imovel.Vagas} {imovel.Vagas === 1 ? 'vaga' : 'vagas'}</span>
+                <span>{vagas} {vagas === 1 ? 'vaga' : 'vagas'}</span>
               </div>
             )}
             
-            {imovel.AreaPrivativa && (
+            {area && (
               <div className="flex items-center gap-1">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-5h-4m4 0v4m0-4l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
                 </svg>
-                <span>{imovel.AreaPrivativa} m²</span>
+                <span>{area} m²</span>
               </div>
             )}
           </div>
@@ -412,16 +405,12 @@ const MapComponent = ({ filtros }: { filtros: any }) => {
           vagas: filtros?.vagas,
         };
         
-        console.log('🗺️ Buscando imóveis para o mapa com filtros:', filtrosParaMapa);
-        
         const response = await getImoveisParaMapa(filtrosParaMapa);
         const imoveisData = Array.isArray(response?.data) ? response.data : [];
         
-        console.log(`📍 ${imoveisData.length} imóveis encontrados para o mapa`);
-        
-        // Log do primeiro imóvel para debug
-        if (imoveisData.length > 0) {
-          console.log('🏠 Exemplo de estrutura do imóvel:', imoveisData[0]);
+        // Log para debug apenas no desenvolvimento
+        if (process.env.NODE_ENV === 'development' && imoveisData.length > 0) {
+          console.log('📍 Estrutura do primeiro imóvel:', imoveisData[0]);
         }
         
         setImoveis(imoveisData);
@@ -628,48 +617,7 @@ const MapComponent = ({ filtros }: { filtros: any }) => {
     </div>
   );
 };
-// ADICIONE ISSO NO FINAL DO ARQUIVO, ANTES DO export default
 
-// Forçar reload dos popups após 1 segundo
-if (typeof window !== 'undefined') {
-  window.addEventListener('load', () => {
-    setTimeout(() => {
-      // Interceptar todos os cliques em markers
-      document.addEventListener('click', (e) => {
-        if (e.target.closest('.leaflet-marker-icon')) {
-          setTimeout(() => {
-            const popup = document.querySelector('.leaflet-popup-content');
-            if (popup && !popup.querySelector('img')) {
-              console.log('🔧 Forçando renderização da imagem...');
-              
-              // Pegar o conteúdo atual
-              const content = popup.innerHTML;
-              
-              // Se não tem imagem, adicionar uma de teste
-              if (!content.includes('<img')) {
-                popup.innerHTML = `
-                  <div style="width: 300px; text-align: center; padding: 10px;">
-                    <div style="background: #ff0000; color: white; padding: 20px; margin-bottom: 10px;">
-                      ⚠️ ERRO: Estrutura de dados incompatível
-                    </div>
-                    <div style="font-size: 12px;">
-                      ${content}
-                    </div>
-                    <div style="margin-top: 10px; padding: 10px; background: #f0f0f0;">
-                      <strong>DEBUG:</strong><br/>
-                      Por favor, tire um print desta mensagem<br/>
-                      e envie para o desenvolvedor.
-                    </div>
-                  </div>
-                `;
-              }
-            }
-          }, 100);
-        }
-      });
-    }, 1000);
-  });
-}
 // Export com lazy loading para melhor performance
 export default dynamic(() => Promise.resolve(MapComponent), {
   ssr: false,
