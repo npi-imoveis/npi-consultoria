@@ -7,45 +7,6 @@ import useImovelStore from "./../../store/imovelStore";
 import { ArrowRightLeftIcon, Bed, CarIcon } from "lucide-react";
 import { formatterValue } from "@/app/utils/formatter-value";
 
-
-/* ================= Skeleton ================= */
-export function CardImovelSkeleton() {
-  return (
-    <section className="w-[280px] h-full rounded-lg overflow-hidden bg-white flex flex-col shadow-[0px_0px_15px_rgba(0,0,0,0.09)]">
-      <div className="relative w-full aspect-[3/2] bg-gray-200 animate-pulse rounded-t-lg">
-        <div className="absolute w-full top-2 flex justify-between px-2 py-1">
-          <div className="w-8 h-8 bg-gray-300 rounded-full animate-pulse" />
-          <div className="w-20 h-5 bg-gray-300 rounded animate-pulse" />
-        </div>
-      </div>
-      <div className="px-4 py-6 flex flex-col flex-grow">
-        <div className="w-full h-4 bg-gray-200 rounded animate-pulse mb-2" />
-        <div className="w-2/3 h-5 bg-gray-300 rounded animate-pulse mb-6" />
-        <div className="space-y-4">
-          <div className="flex items-center space-x-2">
-            <div className="w-5 h-5 bg-gray-200 rounded animate-pulse" />
-            <div className="w-3/4 h-4 bg-gray-200 rounded animate-pulse" />
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-5 h-5 bg-gray-200 rounded animate-pulse" />
-            <div className="w-1/2 h-4 bg-gray-200 rounded animate-pulse" />
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-5 h-5 bg-gray-200 rounded animate-pulse" />
-            <div className="w-full h-4 bg-gray-200 rounded animate-pulse" />
-          </div>
-        </div>
-        <div className="mt-auto pt-4">
-          <div className="w-full h-10 bg-gray-300 rounded-full animate-pulse" />
-        </div>
-      </div>
-    // Dentro da função/página onde monta os cards (antes do return)
-console.log("imoveis recebidos para os cards:", imoveis);
-    </section>
-  );
-}
-
-/* ================= Helpers ================= */
 const normalize = (s) =>
   String(s || "")
     .normalize("NFD")
@@ -55,7 +16,7 @@ const normalize = (s) =>
 
 const isLocacao = (status) => {
   const n = normalize(status);
-  return (n.includes("loca") || n.includes("alug"));
+  return n.includes("loca") || n.includes("alug");
 };
 
 const stripCents = (v) => String(v || "").replace(/,\d{2}$/, "");
@@ -85,7 +46,6 @@ const enderecoFormatado = (tipo, logradouro, numero) => {
   return [t && `${t}`, e, n && `${n}`].filter(Boolean).join(" ");
 };
 
-/* ================= Card ================= */
 export default function CardImovel({
   nome,
   descricao,
@@ -112,11 +72,15 @@ export default function CardImovel({
   isLoading,
   target,
 }) {
-  // DEBUG!
+  // DEBUG INDIVIDUAL:
   console.log("==== CARDIMOVEL PROPS ====", { Codigo, Status, ValorAluguelSite, ValorAluguel, Aluguel, ValorLocacao, Foto });
 
   if (isLoading || !Codigo) {
-    return <CardImovelSkeleton />;
+    return (
+      <section className="w-[280px] h-full rounded-lg overflow-hidden bg-white flex flex-col shadow-[0px_0px_15px_rgba(0,0,0,0.09)]">
+        {/* ... Skeleton ... */}
+      </section>
+    );
   }
 
   const setImovelSelecionado = useImovelStore((state) => state.setImovelSelecionado);
@@ -141,7 +105,6 @@ export default function CardImovel({
 
   const ehLocacao = isLocacao(Status);
 
-  // Tenta todos os campos possíveis de aluguel
   const aluguelRaw =
     ValorAluguelSite || ValorAluguel || Aluguel || ValorLocacao || null;
 
@@ -150,7 +113,9 @@ export default function CardImovel({
     ValorAntigo && ValorAntigo !== "0" ? `R$ ${stripCents(ValorAntigo)}` : null;
 
   const valorPrincipal =
-    ehLocacao ? (aluguelFmt || "Consultar Disponibilidade") : (vendaFmt || "Consultar Disponibilidade");
+    ehLocacao
+      ? aluguelFmt || "Consultar Disponibilidade"
+      : vendaFmt || "Consultar Disponibilidade";
 
   return (
     <section className="max-w-[350px] h-[420px] rounded-lg overflow-hidden bg-white flex flex-col shadow-[0px_0px_15px_rgba(0,0,0,0.09)] transition-transform duration-300 hover:shadow-[0px_0px_20px_rgba(0,0,0,0.15)] hover:-translate-y-1">
@@ -204,11 +169,9 @@ export default function CardImovel({
         <h2 className="text-[11px] font-semibold leading-4 break-words overflow-hidden text-zinc-600 truncate">
           {titulo}
         </h2>
-
         <h3 className="text-sm font-bold text-black mb-3 pt-2 truncate">
           {valorPrincipal}
         </h3>
-
         <ul className="space-y-2 text-[10px]">
           <li className="flex items-center space-x-2 overflow-hidden">
             <ArrowRightLeftIcon className="w-4 h-4 md:w-5 md:h-5 text-gray-500 flex-shrink-0" />
@@ -229,7 +192,6 @@ export default function CardImovel({
             <span className="font-bold truncate">{enderecoStr}</span>
           </li>
         </ul>
-
         <div className="mt-auto pt-4">
           <Button
             link={`/imovel/${Codigo}/${slug}`}
