@@ -12,7 +12,7 @@ import { formatterSlug } from "@/app/utils/formatter-slug";
 /* =========================
    Placeholder Image Base64
 ========================= */
-const PLACEHOLDER_IMAGE = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjE4MCIgdmlld0JveD0iMCAwIDMyMCAxODAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdyYWQiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdHlsZT0ic3RvcC1jb2xvcjojZjNmNGY2O3N0b3Atb3BhY2l0eToxIiAvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiNlNWU3ZWI7c3RvcC1vcGFjaXR5OjEiIC8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICAKICA8cmVjdCB3aWR0aD0iMzIwIiBoZWlnaHQ9IjE4MCIgZmlsbD0idXJsKCNncmFkKSIvPgogIAogIDxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDE2MCwgOTApIj4KICAgIDxyZWN0IHg9Ii00MCIgeT0iLTIwIiB3aWR0aD0iODAiIGhlaWdodD0iNTAiIGZpbGw9IiNkMWQ1ZGIiIHJ4PSIyIi8+CiAgICA8cmVjdCB4PSItMzAiIHk9Ii0xMCIgd2lkdGg9IjE1IiBoZWlnaHQ9IjE1IiBmaWxsPSIjOWNhM2FmIi8+CiAgICA8cmVjdCB4PSItNSIgeT0iLTEwIiB3aWR0aD0iMTUiIGhlaWdodD0iMTUiIGZpbGw9IiM5Y2EzYWYiLz4KICAgIDxyZWN0IHg9IjE1IiB5PSItMTAiIHdpZHRoPSIxNSIgaGVpZ2h0PSIxNSIgZmlsbD0iIzljYTNhZiIvPgogICAgPHJlY3QgeD0iLTMwIiB5PSIxMCIgd2lkdGg9IjE1IiBoZWlnaHQ9IjE1IiBmaWxsPSIjOWNhM2FmIi8+CiAgICA8cmVjdCB4PSItNSIgeT0iMTAiIHdpZHRoPSIxNSIgaGVpZ2h0PSIxNSIgZmlsbD0iIzljYTNhZiIvPgogICAgPHJlY3QgeD0iMTUiIHk9IjEwIiB3aWR0aD0iMTUiIGhlaWdodD0iMTUiIGZpbGw9IiM5Y2EzYWYiLz4KICAgIDxwb2x5Z29uIHBvaW50cz0iLTQ1LC0yMCAwLC0zNSA0NSwtMjAiIGZpbGw9IiM5Y2EzYWYiLz4KICAgIDxyZWN0IHg9Ii03IiB5PSIxNSIgd2lkdGg9IjE0IiBoZWlnaHQ9IjE1IiBmaWxsPSIjNmI3MjgwIi8+CiAgPC9nPgogIAogIDx0ZXh0IHg9IjE2MCIgeT0iMTQwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjNmI3MjgwIiBmb250LWZhbWlseT0iLWFwcGxlLXN5c3RlbSwgQmxpbmtNYWNTeXN0ZW1Gb250LCAnU2Vnb2UgVUknLCBSb2JvdG8sIHNhbnMtc2VyaWYiIGZvbnQtc2l6ZT0iMTEiIGZvbnQtd2VpZ2h0PSI1MDAiPgogICAgSW1hZ2VtIG7Do28gZGlzcG9uw612ZWwKICA8L3RleHQ+Cjwvc3ZnPg==";
+const PLACEHOLDER_IMAGE = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIwIiBoZWlnaHQ9IjE4MCIgdmlld0JveD0iMCAwIDMyMCAxODAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CiAgPGRlZnM+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9ImdyYWQiIHgxPSIwJSIgeTE9IjAlIiB4Mj0iMTAwJSIgeTI9IjEwMCUiPgogICAgICA8c3RvcCBvZmZzZXQ9IjAlIiBzdHlsZT0ic3RvcC1jb2xvcjojZjNmNGY2O3N0b3Atb3BhY2l0eToxIiAvPgogICAgICA8c3RvcCBvZmZzZXQ9IjEwMCUiIHN0eWxlPSJzdG9wLWNvbG9yOiNlNWU3ZWI7c3RvcC1vcGFjaXR5OjEiIC8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogIDwvZGVmcz4KICA8cmVjdCB3aWR0aD0iMzIwIiBoZWlnaHQ9IjE4MCIgZmlsbD0idXJsKCNncmFkKSIvPgogIDxnIHRyYW5zZm9ybT0idHJhbnNsYXRlKDE2MCwgOTApIj4KICAgIDxyZWN0IHg9Ii00MCIgeT0iLTIwIiB3aWR0aD0iODAiIGhlaWdodD0iNTAiIGZpbGw9IiNkMWQ1ZGIiIHJ4PSIyIi8+CiAgICA8cmVjdCB4PSItMzAiIHk9Ii0xMCIgd2lkdGg9IjE1IiBoZWlnaHQ9IjE1IiBmaWxsPSIjOWNhM2FmIi8+CiAgICA8cmVjdCB4PSItNSIgeT0iLTEwIiB3aWR0aD0iMTUiIGhlaWdodD0iMTUiIGZpbGw9IiM5Y2EzYWYiLz4KICAgIDxyZWN0IHg9IjE1IiB5PSItMTAiIHdpZHRoPSIxNSIgaGVpZ2h0PSIxNSIgZmlsbD0iIzljYTNhZiIvPgogICAgPHJlY3QgeD0iLTMwIiB5PSIxMCIgd2lkdGg9IjE1IiBoZWlnaHQ9IjE1IiBmaWxsPSIjOWNhM2FmIi8+CiAgICA8cmVjdCB4PSItNSIgeT0iMTAiIHdpZHRoPSIxNSIgaGVpZ2h0PSIxNSIgZmlsbD0iIzljYTNhZiIvPgogICAgPHJlY3QgeD0iMTUiIHk9IjEwIiB3aWR0aD0iMTUiIGhlaWdodD0iMTUiIGZpbGw9IiM5Y2EzYWYiLz4KICAgIDxwb2x5Z29uIHBvaW50cz0iLTQ1LC0yMCAwLC0zNSA0NSwtMjAiIGZpbGw9IiM5Y2EzYWYiLz4KICAgIDxyZWN0IHg9Ii03IiB5PSIxNSIgd2lkdGg9IjE0IiBoZWlnaHQ9IjE1IiBmaWxsPSIjNmI3MjgwIi8+CiAgPC9nPgogIDx0ZXh0IHg9IjE2MCIgeT0iMTQwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjNmI3MjgwIiBmb250LWZhbWlseT0ic3lzdGVtLXVpIiBmb250LXNpemU9IjExIiBmb250LXdlaWdodD0iNTAwIj5JbWFnZW0gbsOjbyBkaXNwb27DrXZlbDwvdGV4dD4KPC9zdmc+";
 
 /* =========================
    Leaflet Icon URLs CDN
@@ -37,11 +37,17 @@ type Imovel = {
   Latitude?: string | number;
   Longitude?: string | number;
   ValorVenda?: number | string;
+  ValorAluguel?: number | string;
   Quartos?: number;
   Suites?: number;
   Vagas?: number;
   AreaPrivativa?: number;
-  Foto?: { Foto?: string }[];
+  Foto?: any;
+  Fotos?: any;
+  Foto1?: string;
+  fotoDestaque?: string;
+  Imagens?: any;
+  [key: string]: any; // Para campos dinâmicos
 };
 
 /* =========================
@@ -64,8 +70,8 @@ const isValidCoord = (lat: any, lng: any): boolean => {
 
 const formatCurrency = (value: number | string | undefined): string => {
   if (!value) return "Consulte-nos";
-  const numValue = typeof value === "string" ? parseFloat(value) : value;
-  if (isNaN(numValue)) return "Consulte-nos";
+  const numValue = typeof value === "string" ? parseFloat(value.replace(/\D/g, '')) : value;
+  if (isNaN(numValue) || numValue === 0) return "Consulte-nos";
   return numValue.toLocaleString("pt-BR", { 
     style: "currency", 
     currency: "BRL",
@@ -73,6 +79,91 @@ const formatCurrency = (value: number | string | undefined): string => {
     maximumFractionDigits: 0
   });
 };
+
+// FUNÇÃO MELHORADA para encontrar a foto do imóvel
+const getPhotoUrl = (imovel: Imovel): string => {
+  // Debug apenas no primeiro imóvel
+  if (!window.PHOTO_LOGGED) {
+    console.log('🖼️ Estrutura do primeiro imóvel:', imovel);
+    window.PHOTO_LOGGED = true;
+  }
+  
+  // Lista de todos os campos possíveis para foto
+  const photoFields = [
+    // Campos diretos de string
+    imovel?.Foto1,
+    imovel?.foto1,
+    imovel?.fotoDestaque,
+    imovel?.FotoDestaque,
+    imovel?.fotoPrincipal,
+    imovel?.FotoPrincipal,
+    imovel?.imagemPrincipal,
+    imovel?.ImagemPrincipal,
+    imovel?.imagemCapa,
+    imovel?.ImagemCapa,
+    imovel?.capa,
+    imovel?.Capa,
+    
+    // Arrays - campo Foto
+    imovel?.Foto?.[0]?.Foto,
+    imovel?.Foto?.[0]?.foto,
+    imovel?.Foto?.[0]?.url,
+    imovel?.Foto?.[0]?.URL,
+    imovel?.Foto?.[0],
+    
+    // Arrays - campo Fotos
+    imovel?.Fotos?.[0]?.Foto,
+    imovel?.Fotos?.[0]?.foto,
+    imovel?.Fotos?.[0]?.url,
+    imovel?.Fotos?.[0]?.URL,
+    imovel?.Fotos?.[0],
+    
+    // Arrays - campo fotos (minúsculo)
+    imovel?.fotos?.[0]?.foto,
+    imovel?.fotos?.[0]?.Foto,
+    imovel?.fotos?.[0]?.url,
+    imovel?.fotos?.[0],
+    
+    // Arrays - campo Imagens
+    imovel?.Imagens?.[0]?.url,
+    imovel?.Imagens?.[0]?.URL,
+    imovel?.Imagens?.[0]?.imagem,
+    imovel?.Imagens?.[0],
+    
+    // Arrays - campo imagens (minúsculo)
+    imovel?.imagens?.[0]?.url,
+    imovel?.imagens?.[0]?.imagem,
+    imovel?.imagens?.[0],
+  ];
+  
+  // Encontra a primeira URL válida
+  for (const field of photoFields) {
+    if (field && typeof field === 'string' && field.length > 0) {
+      // Se for caminho relativo, adiciona o domínio
+      if (field.startsWith('/') && !field.startsWith('//')) {
+        return `https://npiconsultoria.com.br${field}`;
+      }
+      // Se for URL completa ou data URL, retorna direto
+      if (field.startsWith('http') || field.startsWith('data:')) {
+        return field;
+      }
+      // Se for só o nome do arquivo, assume que está na raiz
+      if (field.includes('.jpg') || field.includes('.jpeg') || field.includes('.png') || field.includes('.webp')) {
+        return `https://npiconsultoria.com.br/${field}`;
+      }
+    }
+  }
+  
+  // Se não encontrou nenhuma foto, retorna o placeholder
+  return PLACEHOLDER_IMAGE;
+};
+
+// Declaração global para TypeScript
+declare global {
+  interface Window {
+    PHOTO_LOGGED?: boolean;
+  }
+}
 
 /* =========================
    Subcomponentes
@@ -89,13 +180,9 @@ const MapController = ({ observeRef }: { observeRef?: React.RefObject<HTMLDivEle
       });
     };
     
-    // Aguarda render completo
     const t = setTimeout(invalidate, 300);
-
-    // Listener para resize da janela
     window.addEventListener("resize", invalidate);
 
-    // ResizeObserver para mudanças no container
     let ro: ResizeObserver | null = null;
     if (observeRef?.current && "ResizeObserver" in window) {
       ro = new ResizeObserver(() => invalidate());
@@ -155,12 +242,20 @@ const ImovelPopup = ({ imovel }: { imovel: Imovel }) => {
   const [imageLoading, setImageLoading] = useState(true);
   
   const slug = formatterSlug(imovel.Empreendimento || "");
-  const fotoUrl = !imageError && imovel?.Foto?.[0]?.Foto 
-    ? imovel.Foto[0].Foto 
-    : PLACEHOLDER_IMAGE;
+  
+  // Usa a função melhorada para obter a foto
+  const fotoUrl = !imageError ? getPhotoUrl(imovel) : PLACEHOLDER_IMAGE;
+  
   const href = `/imovel-${imovel.Codigo}/${slug}`;
+  
+  // Determina se é aluguel ou venda
+  const valorVenda = imovel.ValorVenda;
+  const valorAluguel = imovel.ValorAluguel;
+  const preco = valorVenda || valorAluguel;
+  const isRent = !valorVenda && valorAluguel;
 
   const handleImageError = () => {
+    console.log('❌ Erro ao carregar imagem:', fotoUrl);
     setImageError(true);
     setImageLoading(false);
   };
@@ -178,7 +273,7 @@ const ImovelPopup = ({ imovel }: { imovel: Imovel }) => {
       keepInView={true}
     >
       <div className="p-0 -m-[20px] rounded-lg overflow-hidden">
-        {/* Container da Imagem com Skeleton */}
+        {/* Container da Imagem */}
         <div className="relative w-[320px] h-[180px] bg-gray-100">
           {imageLoading && (
             <div className="absolute inset-0 bg-gray-200 animate-pulse flex items-center justify-center">
@@ -187,34 +282,49 @@ const ImovelPopup = ({ imovel }: { imovel: Imovel }) => {
               </svg>
             </div>
           )}
-          <Image
-            src={fotoUrl}
-            alt={imovel.Empreendimento || "Imóvel"}
-            width={320}
-            height={180}
-            className={`w-full h-full object-cover transition-opacity duration-300 ${
-              imageLoading ? 'opacity-0' : 'opacity-100'
-            }`}
-            onError={handleImageError}
-            onLoad={handleImageLoad}
-            priority={false}
-            quality={85}
-            placeholder="empty"
-            unoptimized={fotoUrl === PLACEHOLDER_IMAGE}
-          />
+          
+          {/* Imagem com fallback */}
+          {fotoUrl === PLACEHOLDER_IMAGE ? (
+            <div className="w-full h-full flex items-center justify-center bg-gray-100">
+              <img
+                src={PLACEHOLDER_IMAGE}
+                alt="Sem imagem"
+                className="w-full h-full object-cover"
+              />
+            </div>
+          ) : (
+            <Image
+              src={fotoUrl}
+              alt={imovel.Empreendimento || "Imóvel"}
+              width={320}
+              height={180}
+              className={`w-full h-full object-cover transition-opacity duration-300 ${
+                imageLoading ? 'opacity-0' : 'opacity-100'
+              }`}
+              onError={handleImageError}
+              onLoad={handleImageLoad}
+              priority={false}
+              quality={85}
+              placeholder="empty"
+              unoptimized
+            />
+          )}
           
           {/* Badge de preço sobre a imagem */}
-          <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
-            <p className="text-white font-bold text-lg drop-shadow-lg">
-              {formatCurrency(imovel.ValorVenda)}
-            </p>
-          </div>
+          {preco && (
+            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
+              <p className="text-white font-bold text-lg drop-shadow-lg">
+                {formatCurrency(preco)}
+                {isRent && <span className="text-sm font-normal"> /mês</span>}
+              </p>
+            </div>
+          )}
         </div>
 
         {/* Informações do Imóvel */}
         <div className="p-4 bg-white">
           <h3 className="font-bold text-base text-gray-900 mb-1 line-clamp-1">
-            {imovel.Empreendimento || "Imóvel"}
+            {imovel.Empreendimento || `Imóvel ${imovel.Codigo}` || "Imóvel"}
           </h3>
           
           <p className="text-sm text-gray-600 mb-2 line-clamp-2">
@@ -231,7 +341,7 @@ const ImovelPopup = ({ imovel }: { imovel: Imovel }) => {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                 </svg>
-                <span>{imovel.Quartos} quartos</span>
+                <span>{imovel.Quartos} {imovel.Quartos === 1 ? 'quarto' : 'quartos'}</span>
               </div>
             )}
             
@@ -240,7 +350,7 @@ const ImovelPopup = ({ imovel }: { imovel: Imovel }) => {
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                 </svg>
-                <span>{imovel.Vagas} vagas</span>
+                <span>{imovel.Vagas} {imovel.Vagas === 1 ? 'vaga' : 'vagas'}</span>
               </div>
             )}
             
@@ -302,8 +412,19 @@ const MapComponent = ({ filtros }: { filtros: any }) => {
           vagas: filtros?.vagas,
         };
         
+        console.log('🗺️ Buscando imóveis para o mapa com filtros:', filtrosParaMapa);
+        
         const response = await getImoveisParaMapa(filtrosParaMapa);
-        setImoveis(Array.isArray(response?.data) ? response.data : []);
+        const imoveisData = Array.isArray(response?.data) ? response.data : [];
+        
+        console.log(`📍 ${imoveisData.length} imóveis encontrados para o mapa`);
+        
+        // Log do primeiro imóvel para debug
+        if (imoveisData.length > 0) {
+          console.log('🏠 Exemplo de estrutura do imóvel:', imoveisData[0]);
+        }
+        
+        setImoveis(imoveisData);
       } catch (err) {
         console.error("Erro ao buscar imóveis:", err);
         setError("Não foi possível carregar os imóveis");
@@ -366,6 +487,18 @@ const MapComponent = ({ filtros }: { filtros: any }) => {
         }
         .leaflet-popup-content-wrapper {
           box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+        }
+        .leaflet-popup-close-button {
+          color: #666 !important;
+          font-size: 20px !important;
+          font-weight: normal !important;
+          width: 24px !important;
+          height: 24px !important;
+          top: 8px !important;
+          right: 8px !important;
+        }
+        .leaflet-popup-close-button:hover {
+          color: #333 !important;
         }
         @media (max-width: 768px) {
           .leaflet-marker-icon {
