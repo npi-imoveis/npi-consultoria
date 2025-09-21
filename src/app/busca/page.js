@@ -30,7 +30,7 @@ const MapComplete = dynamic(() => import("./components/map-complete"), {
 });
 
 /* =========================================================
-   AUXILIARES DE UI (MOBILE)
+   UI MOBILE
 ========================================================= */
 function MobileActionsBar({ onOpenFilters, onOpenMap, resultsText = "" }) {
   return (
@@ -94,11 +94,10 @@ function MapOverlay({ open, onClose, filtros }) {
 export default function BuscaImoveis() {
   const router = useRouter();
 
-  // Dados
+  // Dados & Stores
   const [imoveis, setImoveis] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Stores
   const filtrosAtuais = useFiltersStore((state) => state);
   const filtrosAplicados = useFiltersStore((state) => state.filtrosAplicados);
   const atualizacoesFiltros = useFiltersStore((state) => state.atualizacoesFiltros);
@@ -110,7 +109,7 @@ export default function BuscaImoveis() {
     (state) => state.adicionarVariosImoveisCache
   );
 
-  // UI / paginação / mobile
+  // UI / paginação
   const [ordenacao, setOrdenacao] = useState("relevancia");
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState({
@@ -123,11 +122,11 @@ export default function BuscaImoveis() {
   const [searchTerm, setSearchTerm] = useState("");
   const [mostrandoFavoritos, setMostrandoFavoritos] = useState(false);
 
-  const [isBrowser, setIsBrowser] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-  const [filtersMobileOpen, setFiltersMobileOpen] = useState(false);
+  // Mobile overlay states
   const [mapOpenMobile, setMapOpenMobile] = useState(false);
+  const [filtersMobileOpen, setFiltersMobileOpen] = useState(false);
 
+  const [isBrowser, setIsBrowser] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
 
   /* ================= META + STRUCTURED DATA ================= */
@@ -150,7 +149,10 @@ export default function BuscaImoveis() {
         {
           "@type": "SearchResultsPage",
           "@id": `${baseUrl}/busca#webpage`,
-          url: typeof window !== "undefined" ? window.location.href : `${baseUrl}/busca`,
+          url:
+            typeof window !== "undefined"
+              ? window.location.href
+              : `${baseUrl}/busca`,
           name: document.title,
           datePublished: currentDate,
           dateModified: currentDate,
@@ -196,7 +198,6 @@ export default function BuscaImoveis() {
     const currentDate = new Date().toISOString();
     const fs = useFiltersStore.getState();
 
-    // Título básico dinâmico
     const plural = {
       Apartamento: "Apartamentos",
       Casa: "Casas",
@@ -214,12 +215,11 @@ export default function BuscaImoveis() {
     };
 
     const tParts = [];
-    if (fs.categoriaSelecionada) tParts.push(plural[fs.categoriaSelecionada] || "Imóveis");
+    if (fs.categoriaSelecionada)
+      tParts.push(plural[fs.categoriaSelecionada] || "Imóveis");
     else tParts.push("Imóveis");
-
     if (fs.finalidade === "Comprar") tParts.push("a venda");
     else if (fs.finalidade === "Alugar") tParts.push("para aluguel");
-
     if (fs.cidadeSelecionada) tParts.push(`no ${fs.cidadeSelecionada}`);
 
     const qtd =
@@ -249,7 +249,6 @@ export default function BuscaImoveis() {
     ensureMeta("og:site_name", "NPi Imóveis", true);
     ensureMeta("og:updated_time", currentDate, true);
 
-    // canonical
     let canonicalLink = document.querySelector('link[rel="canonical"]');
     if (!canonicalLink) {
       canonicalLink = document.createElement("link");
@@ -421,10 +420,7 @@ export default function BuscaImoveis() {
         }
 
         // preço (somente se usuário informou)
-        Object.assign(
-          params,
-          buildPriceParams(isRent, s.precoMin, s.precoMax)
-        );
+        Object.assign(params, buildPriceParams(isRent, s.precoMin, s.precoMax));
 
         // área
         if (s.areaMin && s.areaMin !== "0") params.areaMinima = s.areaMin;
@@ -470,7 +466,7 @@ export default function BuscaImoveis() {
         updateStructuredData(totalLocal, response?.imoveis || []);
         setTimeout(() => updateClientMetaTags(totalLocal), 50);
       }
-    } catch (e) {
+    } catch {
       setImoveis([]);
       setPagination({
         totalItems: 0,
@@ -488,7 +484,6 @@ export default function BuscaImoveis() {
   /* ======================== INITIAL LOAD ======================== */
   useEffect(() => {
     if (!initialLoad) return;
-
     setIsBrowser(true);
 
     const seoParams = extractFromSeoUrl();
@@ -558,9 +553,7 @@ export default function BuscaImoveis() {
       }, 60);
     }
 
-    setTimeout(() => {
-      updateClientMetaTags();
-    }, 300);
+    setTimeout(() => updateClientMetaTags(), 300);
   }, [initialLoad]);
 
   // Busca ao aplicar filtros manualmente
@@ -585,9 +578,7 @@ export default function BuscaImoveis() {
   useEffect(() => {
     if (!isBrowser || initialLoad) return;
     const s = useFiltersStore.getState();
-    if (s.filtrosAplicados) {
-      setTimeout(updateUrlFromFilters, 80);
-    }
+    if (s.filtrosAplicados) setTimeout(updateUrlFromFilters, 80);
   }, [atualizacoesFiltros, isBrowser, initialLoad]);
 
   // Atualiza meta quando carrega dados
@@ -597,23 +588,15 @@ export default function BuscaImoveis() {
     }
   }, [isBrowser, isLoading, pagination.totalItems]);
 
-  // Mobile detection + body lock quando mapa aberto
-  useEffect(() => {
-    const onResize = () =>
-      setIsMobile(typeof window !== "undefined" ? window.innerWidth < 768 : false);
-    onResize();
-    if (typeof window !== "undefined") {
-      window.addEventListener("resize", onResize);
-      return () => window.removeEventListener("resize", onResize);
-    }
-  }, []);
+  // lock scroll quando mapa mobile está aberto
   useEffect(() => {
     if (mapOpenMobile) {
       const prev = document.body.style.overflow;
       document.body.dataset.prevOverflow = prev || "";
       document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = document.body.dataset.prevOverflow || "";
+      return () => {
+        document.body.style.overflow = document.body.dataset.prevOverflow || "";
+      };
     }
   }, [mapOpenMobile]);
 
@@ -622,28 +605,6 @@ export default function BuscaImoveis() {
     setCurrentPage(newPage);
     if (typeof window !== "undefined") {
       window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  };
-
-  const toggleFavoritos = () => {
-    const novo = !mostrandoFavoritos;
-    setMostrandoFavoritos(novo);
-    setCurrentPage(1);
-
-    if (novo) {
-      setImoveis(favoritos);
-      const p = {
-        totalItems: favoritos.length,
-        totalPages: Math.ceil(favoritos.length / 12),
-        currentPage: 1,
-        itemsPerPage: 12,
-        limit: 12,
-      };
-      setPagination(p);
-      updateStructuredData(favoritos.length, favoritos);
-      setTimeout(() => updateClientMetaTags(favoritos.length), 50);
-    } else {
-      buscarImoveis(filtrosAplicados);
     }
   };
 
@@ -788,79 +749,71 @@ export default function BuscaImoveis() {
   /* ======================== RENDER ======================== */
   return (
     <>
-      {/* DESKTOP: filtros horizontais fixos */}
-      {!isMobile && (
-        <div className="fixed top-20 left-0 w-full bg-white z-40 shadow-sm border-b px-4 md:px-10">
-          <PropertyFilters
-            horizontal
-            onFilter={resetarEstadoBusca}
-            isVisible
-            setIsVisible={() => {}}
-          />
-        </div>
-      )}
+      {/* DESKTOP (>= md): filtros horizontais fixos */}
+      <div className="fixed top-20 left-0 w-full bg-white z-40 shadow-sm border-b px-4 md:px-10 hidden md:block">
+        <PropertyFilters
+          horizontal
+          onFilter={resetarEstadoBusca}
+          isVisible
+          setIsVisible={() => {}}
+        />
+      </div>
 
-      {/* MOBILE: barra de ações + filtros off-canvas */}
-      {isMobile && (
-        <>
-          <MobileActionsBar
-            onOpenFilters={() => setFiltersMobileOpen(true)}
-            onOpenMap={() => setMapOpenMobile(true)}
-            resultsText={construirTextoFiltros()}
-          />
-          <div className="md:hidden">
-            <PropertyFilters
-              horizontal={false}
-              onFilter={resetarEstadoBusca}
-              isVisible={filtersMobileOpen}
-              setIsVisible={setFiltersMobileOpen}
-            />
-          </div>
-        </>
-      )}
-
-      {/* DESKTOP: layout 50/50 */}
-      {!isMobile && (
-        <div className="fixed top-28 left-0 w-full h-[calc(100vh-7rem)] flex overflow-hidden bg-zinc-100">
-          {/* Cards */}
-          <div className="w-1/2 flex flex-col overflow-hidden">
-            <div className="flex justify-between items-center gap-2 p-4 border-b border-gray-200 bg-white">
-              <h2 className="text-xs font-bold text-zinc-500">
-                {construirTextoFiltros()}
-              </h2>
-              <select
-                className="text-xs font-bold text-zinc-500 bg-zinc-100 p-2 rounded-md"
-                value={ordenacao}
-                onChange={(e) => setOrdenacao(e.target.value)}
-              >
-                <option value="relevancia">Mais relevantes</option>
-                <option value="maior_valor">Maior Valor</option>
-                <option value="menor_valor">Menor Valor</option>
-              </select>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-4">
-              <div className="flex flex-wrap gap-3">{renderCards()}</div>
-              <div className="mt-6 mb-6">
-                <Pagination pagination={pagination} onPageChange={handlePageChange} />
-              </div>
-              <div className="mt-12">
-                <Footer />
-              </div>
-            </div>
+      {/* DESKTOP (>= md): layout 50/50 */}
+      <div className="hidden md:flex fixed top-28 left-0 w-full h-[calc(100vh-7rem)] overflow-hidden bg-zinc-100">
+        {/* Cards */}
+        <div className="w-1/2 flex flex-col overflow-hidden">
+          <div className="flex justify-between items-center gap-2 p-4 border-b border-gray-200 bg-white">
+            <h2 className="text-xs font-bold text-zinc-500">
+              {construirTextoFiltros()}
+            </h2>
+            <select
+              className="text-xs font-bold text-zinc-500 bg-zinc-100 p-2 rounded-md"
+              value={ordenacao}
+              onChange={(e) => setOrdenacao(e.target.value)}
+            >
+              <option value="relevancia">Mais relevantes</option>
+              <option value="maior_valor">Maior Valor</option>
+              <option value="menor_valor">Menor Valor</option>
+            </select>
           </div>
 
-          {/* Mapa */}
-          <div className="w-1/2 relative h-full">
-            <div className="absolute inset-0 right-0 h-full overflow-hidden">
-              <MapComplete filtros={filtrosAtuais} />
+          <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex flex-wrap gap-3">{renderCards()}</div>
+            <div className="mt-6 mb-6">
+              <Pagination pagination={pagination} onPageChange={handlePageChange} />
+            </div>
+            <div className="mt-12">
+              <Footer />
             </div>
           </div>
         </div>
-      )}
 
-      {/* MOBILE: lista + paginação + footer (sem mapa lateral) */}
-      {isMobile && (
+        {/* Mapa */}
+        <div className="w-1/2 relative h-full">
+          <div className="absolute inset-0 right-0 h-full overflow-hidden">
+            <MapComplete filtros={filtrosAtuais} />
+          </div>
+        </div>
+      </div>
+
+      {/* MOBILE (< md): barra ações + filtros off-canvas + lista */}
+      <div className="md:hidden">
+        <MobileActionsBar
+          onOpenFilters={() => setFiltersMobileOpen(true)}
+          onOpenMap={() => setMapOpenMobile(true)}
+          resultsText={construirTextoFiltros()}
+        />
+
+        {/* Off-canvas dos filtros (já existente no componente) */}
+        <PropertyFilters
+          horizontal={false}
+          onFilter={resetarEstadoBusca}
+          isVisible={filtersMobileOpen}
+          setIsVisible={setFiltersMobileOpen}
+        />
+
+        {/* Lista de cards + paginação + footer */}
         <div className="pt-2 pb-24 px-3">
           <div className="flex items-center justify-between gap-2 p-2 rounded-md bg-white border">
             <span className="text-[11px] text-zinc-600 font-semibold">
@@ -885,7 +838,7 @@ export default function BuscaImoveis() {
 
           <Footer />
         </div>
-      )}
+      </div>
 
       {/* MOBILE: overlay do mapa */}
       <MapOverlay
