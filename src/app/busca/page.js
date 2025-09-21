@@ -1,4 +1,4 @@
-// src/app/busca/page.js - SOLUÇÃO COMPLETA - CORRIGIDO FINALIDADE + NAVEGAÇÃO
+// src/app/busca/page.js - SOLUÇÃO COMPLETA - CORRIGIDO FINALIDADE + NAVEGAÇÃO + MOBILE MAP/FILTROS
 
 "use client";
 
@@ -19,6 +19,7 @@ const MapComplete = dynamic(() => import("./components/map-complete"), {
     </div>
   ),
 });
+
 import { Footer } from "../components/ui/footer";
 
 import {
@@ -33,6 +34,77 @@ import useImovelStore from "../store/imovelStore";
 import { gerarTituloSeoFriendly, gerarDescricaoSeoFriendly, gerarUrlSeoFriendly } from "../utils/url-slugs";
 import { useRouter } from "next/navigation";
 
+/* =========================
+   COMPONENTES AUXILIARES (mobile)
+========================= */
+function MobileActionsBar({ onOpenFilters, onOpenMap, resultsText = "", favoritesButton = null }) {
+  return (
+    <div className="md:hidden sticky top-20 z-[45] bg-white border-b shadow-sm">
+      <div className="px-3 py-2 flex items-center justify-between gap-2">
+        <span className="text-[11px] text-zinc-600 font-semibold truncate">{resultsText}</span>
+        <div className="flex items-center gap-2 shrink-0">
+          {favoritesButton}
+          <button
+            onClick={onOpenFilters}
+            className="px-3 py-2 rounded-lg text-[12px] font-semibold bg-zinc-200 hover:bg-zinc-300 text-black"
+          >
+            Filtros
+          </button>
+          <button
+            onClick={onOpenMap}
+            className="px-3 py-2 rounded-lg text-[12px] font-semibold bg-black hover:bg-zinc-900 text-white"
+          >
+            Mapa
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function MapOverlay({ open, onClose, filtros }) {
+  return (
+    <div
+      className={[
+        "md:hidden fixed inset-0 z-[9999] transition-transform duration-300",
+        open ? "translate-y-0" : "translate-y-full",
+      ].join(" ")}
+      aria-hidden={!open}
+      role="dialog"
+      aria-modal={open ? "true" : "false"}
+    >
+      {/* backdrop */}
+      <div
+        className="absolute inset-0 bg-black/55"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+
+      {/* painel */}
+      <div className="absolute inset-x-0 bottom-0 top-0 bg-white rounded-t-2xl overflow-hidden flex flex-col">
+        {/* header */}
+        <div className="shrink-0 px-4 py-3 flex items-center justify-between border-b">
+          <h3 className="text-sm font-bold">Mapa</h3>
+          <button
+            onClick={onClose}
+            className="px-3 py-2 rounded-md bg-zinc-200 hover:bg-zinc-300 text-xs font-semibold"
+          >
+            Ver resultados
+          </button>
+        </div>
+
+        {/* mapa ocupa todo o restante */}
+        <div className="grow">
+          <MapComplete filtros={filtros} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* =========================
+   PAGE
+========================= */
 export default function BuscaImoveis() {
   const [imoveis, setImoveis] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -69,6 +141,9 @@ export default function BuscaImoveis() {
   const [isClient, setIsClient] = useState(false);
   const [fullyInitialized, setFullyInitialized] = useState(false);
   const [uiVisible, setUiVisible] = useState(false);
+
+  // 🔥 mobile: overlay do mapa
+  const [mapOpenMobile, setMapOpenMobile] = useState(false);
 
   // 🔥 CONTROLE DE INICIALIZAÇÃO SIMPLIFICADO
   const [initialLoad, setInitialLoad] = useState(true);
@@ -1082,7 +1157,7 @@ export default function BuscaImoveis() {
     }
     
     if (filtrosAtuais.finalidade) {
-      const finalidadeTexto = filtrosAtuais.finalidade === 'Comprar' ? 'a venda' : 'para venda';
+      const finalidadeTexto = filtrosAtuais.finalidade === 'Comprar' ? 'a venda' : 'para aluguel';
       texto += ` ${finalidadeTexto}`;
     }
     
@@ -1117,59 +1192,121 @@ export default function BuscaImoveis() {
     }
   };
 
+  // handlers mobile
+  const openFiltersMobile = () => setFiltroVisivel(true);
+  const openMapMobile = () => {
+    // trava scroll do body
+    const { overflow } = document.body.style;
+    document.body.dataset.prevOverflow = overflow || "";
+    document.body.style.overflow = "hidden";
+    setMapOpenMobile(true);
+  };
+  const closeMapMobile = () => {
+    setMapOpenMobile(false);
+    // restaura scroll
+    const prev = document.body.dataset.prevOverflow || "";
+    document.body.style.overflow = prev;
+  };
+
   return (
     <>
-      {/* Filtros horizontais */}
-      <div className="fixed top-20 left-0 w-full bg-white z-40 shadow-sm border-b px-4 md:px-10">
+      {/* ====== DESKTOP: filtros horizontais fixos ====== */}
+      <div className="hidden md:block fixed top-20 left-0 w-full bg-white z-40 shadow-sm border-b px-4 md:px-10">
         <PropertyFilters
           horizontal={true}
+          onFilter={resetarEstadoBusca}
+          isVisible={true}
+          setIsVisible={() => {}}
+        />
+      </div>
+
+      {/* ====== MOBILE: barra de ações (Filtros/Mapa) ====== */}
+      <MobileActionsBar
+        onOpenFilters={openFiltersMobile}
+        onOpenMap={openMapMobile}
+        resultsText={construirTextoFiltros()}
+      />
+
+      {/* ====== MOBILE: off-canvas de filtros ====== */}
+      <div className="md:hidden">
+        <PropertyFilters
+          horizontal={false}
           onFilter={resetarEstadoBusca}
           isVisible={filtroVisivel}
           setIsVisible={setFiltroVisivel}
         />
       </div>
 
-      {/* Layout 50/50 simétrico - Cards + Mapa ocupando toda viewport */}
-      <div className="fixed top-28 left-0 w-full h-[calc(100vh-7rem)] flex overflow-hidden bg-zinc-100">
+      {/* ====== DESKTOP: Layout 50/50 (cards + mapa) ====== */}
+      <div className="hidden md:flex fixed top-28 left-0 w-full h-[calc(100vh-7rem)] overflow-hidden bg-zinc-100">
         {/* Área dos Cards - 50% */}
-        <div className="w-1/2 flex flex-col overflow-hidden">
-            {/* Header dos cards */}
-            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 sm:gap-0 p-4 border-b border-gray-200 bg-white">
-              <h2 className="text-xs font-bold text-zinc-500">{construirTextoFiltros()}</h2>
-              <select
-                className="text-xs font-bold text-zinc-500 bg-zinc-100 p-2 rounded-md w-full sm:w-auto"
-                value={ordenacao}
-                onChange={handleOrdenacaoChange}
-              >
-                <option value="relevancia">Mais relevantes</option>
-                <option value="maior_valor">Maior Valor</option>
-                <option value="menor_valor">Menor Valor</option>
-              </select>
-            </div>
-
-            {/* Área rolável dos cards */}
-            <div className="flex-1 overflow-y-auto p-4">
-              <div className="flex flex-wrap gap-3">{renderCards()}</div>
-              
-              {/* Paginação */}
-              <div className="mt-6 mb-6">
-                <Pagination pagination={pagination} onPageChange={handlePageChange} />
-              </div>
-
-              {/* Footer no final da rolagem dos cards - como no QuintoAndar */}
-              <div className="mt-12">
-                <Footer />
-              </div>
-            </div>
+        <div className="md:w-1/2 w-full flex flex-col overflow-hidden">
+          {/* Header dos cards */}
+          <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 sm:gap-0 p-4 border-b border-gray-200 bg-white">
+            <h2 className="text-xs font-bold text-zinc-500">{construirTextoFiltros()}</h2>
+            <select
+              className="text-xs font-bold text-zinc-500 bg-zinc-100 p-2 rounded-md w-full sm:w-auto"
+              value={ordenacao}
+              onChange={handleOrdenacaoChange}
+            >
+              <option value="relevancia">Mais relevantes</option>
+              <option value="maior_valor">Maior Valor</option>
+              <option value="menor_valor">Menor Valor</option>
+            </select>
           </div>
 
-        {/* Área do Mapa - 50% */}
-        <div className="w-1/2 relative h-full">
+          {/* Área rolável dos cards */}
+          <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex flex-wrap gap-3">{renderCards()}</div>
+            
+            {/* Paginação */}
+            <div className="mt-6 mb-6">
+              <Pagination pagination={pagination} onPageChange={handlePageChange} />
+            </div>
+
+            {/* Footer no final da rolagem dos cards */}
+            <div className="mt-12">
+              <Footer />
+            </div>
+          </div>
+        </div>
+
+        {/* Área do Mapa - 50% (apenas desktop) */}
+        <div className="md:w-1/2 relative h-full hidden md:block">
           <div className="absolute inset-0 right-0 h-full overflow-hidden">
             <MapComplete filtros={filtrosAtuais} />
           </div>
         </div>
       </div>
+
+      {/* ====== MOBILE: Lista de cards em fluxo normal ====== */}
+      <div className="md:hidden pt-2 pb-24 px-3">
+        {/* header compacto de ordenação */}
+        <div className="flex items-center justify-between gap-2 p-2 rounded-md bg-white border">
+          <span className="text-[11px] text-zinc-600 font-semibold">{pagination.totalItems || 0} resultados</span>
+          <select
+            className="text-[12px] font-semibold text-zinc-600 bg-zinc-100 p-2 rounded-md"
+            value={ordenacao}
+            onChange={handleOrdenacaoChange}
+          >
+            <option value="relevancia">Mais relevantes</option>
+            <option value="maior_valor">Maior Valor</option>
+            <option value="menor_valor">Menor Valor</option>
+          </select>
+        </div>
+
+        <div className="mt-3 flex flex-wrap gap-3">{renderCards()}</div>
+
+        {/* Paginação */}
+        <div className="mt-6 mb-10">
+          <Pagination pagination={pagination} onPageChange={handlePageChange} />
+        </div>
+
+        <Footer />
+      </div>
+
+      {/* ====== MOBILE: Overlay do mapa ====== */}
+      <MapOverlay open={mapOpenMobile} onClose={closeMapMobile} filtros={filtrosAtuais} />
     </>
   );
 }
