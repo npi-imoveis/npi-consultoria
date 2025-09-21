@@ -309,7 +309,15 @@ export default function MapComplete({ filtros }) {
           const key = m.Codigo || m._id || `${m.__lat}-${m.__lng}-${Math.random()}`;
           
           // CORREÇÃO PRINCIPAL: Passa m.Foto para getCoverUrl
-          const foto = getCoverUrl(m.Foto);
+          // Tenta TODOS os campos possíveis de foto
+const foto = getCoverUrl(m.Foto) || 
+             getCoverUrl(m.Foto1) || 
+             getCoverUrl(m.FotoPrincipal) || 
+             getCoverUrl(m.ImagemCapa) || 
+             m.Foto1 || 
+             m.FotoPrincipal || 
+             m.ImagemCapa ||
+             '/placeholder-imovel.jpg';
           
           // Adiciona suporte para m.Empreendimento e outros campos
           const titulo =
