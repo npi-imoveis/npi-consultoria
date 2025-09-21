@@ -628,7 +628,48 @@ const MapComponent = ({ filtros }: { filtros: any }) => {
     </div>
   );
 };
+// ADICIONE ISSO NO FINAL DO ARQUIVO, ANTES DO export default
 
+// Forçar reload dos popups após 1 segundo
+if (typeof window !== 'undefined') {
+  window.addEventListener('load', () => {
+    setTimeout(() => {
+      // Interceptar todos os cliques em markers
+      document.addEventListener('click', (e) => {
+        if (e.target.closest('.leaflet-marker-icon')) {
+          setTimeout(() => {
+            const popup = document.querySelector('.leaflet-popup-content');
+            if (popup && !popup.querySelector('img')) {
+              console.log('🔧 Forçando renderização da imagem...');
+              
+              // Pegar o conteúdo atual
+              const content = popup.innerHTML;
+              
+              // Se não tem imagem, adicionar uma de teste
+              if (!content.includes('<img')) {
+                popup.innerHTML = `
+                  <div style="width: 300px; text-align: center; padding: 10px;">
+                    <div style="background: #ff0000; color: white; padding: 20px; margin-bottom: 10px;">
+                      ⚠️ ERRO: Estrutura de dados incompatível
+                    </div>
+                    <div style="font-size: 12px;">
+                      ${content}
+                    </div>
+                    <div style="margin-top: 10px; padding: 10px; background: #f0f0f0;">
+                      <strong>DEBUG:</strong><br/>
+                      Por favor, tire um print desta mensagem<br/>
+                      e envie para o desenvolvedor.
+                    </div>
+                  </div>
+                `;
+              }
+            }
+          }, 100);
+        }
+      });
+    }, 1000);
+  });
+}
 // Export com lazy loading para melhor performance
 export default dynamic(() => Promise.resolve(MapComponent), {
   ssr: false,
