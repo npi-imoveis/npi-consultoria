@@ -1,501 +1,213 @@
-// src/app/busca/components/map-complete.jsx
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
-import L from "leaflet";
-import "leaflet/dist/leaflet.css";
-import useFiltersStore from "@/app/store/filtrosStore";
-import { getImoveis } from "@/app/services";
+import { useEffect, useRef, useState } from "react";
 
-// Corrige o bug do marker padrão do Leaflet
-const DefaultIcon = L.icon({
-  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
-  iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
-  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-});
-L.Marker.prototype.options.icon = DefaultIcon;
-
-/* Helpers */
-const coerceNumber = (v) => {
-  if (v === null || v === undefined) return undefined;
-  const n = Number(v);
-  return Number.isFinite(n) ? n : undefined;
-};
-
-const buildPriceParams = (isRent, min, max) => {
-  const out = {};
-  const hasMin = min !== null && min !== undefined && min !== "" && Number(min) > 0;
-  const hasMax = max !== null && max !== undefined && max !== "" && Number(max) > 0;
-
-  if (!hasMin && !hasMax) return out;
-
-  if (isRent) {
-    if (hasMin) {
-      out.precoAluguelMin = String(min);
-      out.valorAluguelMin = String(min);
-      out.aluguelMin = String(min);
-      out.precoMinimo = String(min);
-    }
-    if (hasMax) {
-      out.precoAluguelMax = String(max);
-      out.valorAluguelMax = String(max);
-      out.aluguelMax = String(max);
-      out.precoMaximo = String(max);
-    }
-  } else {
-    if (hasMin) {
-      out.precoMinimo = String(min);
-      out.precoMin = String(min);
-      out.valorMin = String(min);
-    }
-    if (hasMax) {
-      out.precoMaximo = String(max);
-      out.precoMax = String(max);
-      out.valorMax = String(max);
-    }
-  }
-  return out;
-};
-
-const getLatLng = (item) => {
-  const lat =
-    coerceNumber(item?.Latitude) ??
-    coerceNumber(item?.Lat) ??
-    coerceNumber(item?.latitude) ??
-    (Array.isArray(item?.Coordenadas) ? coerceNumber(item.Coordenadas[0]) : undefined) ??
-    undefined;
-
-  const lng =
-    coerceNumber(item?.Longitude) ??
-    coerceNumber(item?.Lng) ??
-    coerceNumber(item?.longitude) ??
-    (Array.isArray(item?.Coordenadas) ? coerceNumber(item.Coordenadas[1]) : undefined) ??
-    undefined;
-
-  if (typeof lat === "number" && typeof lng === "number") {
-    return { lat, lng };
-  }
-  return null;
-};
-
-// FUNÇÃO SIMPLIFICADA - TENTA FOTO1 PRIMEIRO
-const getCoverUrl = (imovel) => {
-  // PRIORIDADE 1: Campo Foto1 direto (mais comum na API de busca)
-  if (imovel.Foto1) {
-    const url = imovel.Foto1;
-    if (url.startsWith('/')) {
-      return `https://npiconsultoria.com.br${url}`;
-    }
-    return url;
-  }
-  
-  // PRIORIDADE 2: Array Foto (estrutura do CardHome)
-  const temFoto = imovel.Foto && Array.isArray(imovel.Foto) && imovel.Foto.length > 0;
-  
-  if (temFoto) {
-    // Encontrar foto destacada ou usar a primeira foto
-    const fotoDestacada = imovel.Foto.find((foto) => foto && foto.Destaque === "Sim") || imovel.Foto[0];
-    
-    // A URL está em fotoDestacada.Foto
-    if (fotoDestacada && fotoDestacada.Foto) {
-      const url = fotoDestacada.Foto;
-      
-      // Se for caminho relativo, adiciona domínio
-      if (url.startsWith('/')) {
-        return `https://npiconsultoria.com.br${url}`;
-      }
-      return url;
-    }
-  }
-  
-  // PRIORIDADE 3: Outros campos possíveis
-  const camposFallback = ['FotoPrincipal', 'ImagemCapa', 'FotoDestaque', 'Imagem1'];
-  for (const campo of camposFallback) {
-    if (imovel[campo]) {
-      const url = imovel[campo];
-      if (url.startsWith('/')) {
-        return `https://npiconsultoria.com.br${url}`;
-      }
-      return url;
-    }
-  }
-  
-  // Fallback final
-  return '/placeholder-imovel.jpg';
-};
-
-const formatBRL = (n) => {
-  const num = Number(String(n).replace(/\D/g, ""));
-  if (!Number.isFinite(num) || num === 0) return "";
-  try {
-    return num.toLocaleString("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    });
-  } catch {
-    return `R$ ${num}`;
-  }
-};
-
-function FitToMarkers({ points }) {
-  const map = useMap();
-  const didFitRef = useRef(false);
-
-  useEffect(() => {
-    if (!map || didFitRef.current) return;
-    if (!points || points.length === 0) return;
-
-    const bounds = L.latLngBounds(points.map((p) => [p.lat, p.lng]));
-    if (bounds.isValid()) {
-      map.fitBounds(bounds, { padding: [40, 40] });
-      didFitRef.current = true;
-    }
-  }, [map, points]);
-
-  return null;
-}
-
-export default function MapComplete({ filtros }) {
-  const store = useFiltersStore();
-  const [markers, setMarkers] = useState([]);
+const MapComplete = ({ filtros }) => {
+  const [imoveis, setImoveis] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [mapReady, setMapReady] = useState(false);
+  const mapRef = useRef(null);
+  const mapInstanceRef = useRef(null);
+  const markersRef = useRef([]);
 
-  // monta params coerentes com a page (cards)
-  const searchParams = useMemo(() => {
-    const finalidadeUi = store.finalidade || filtros?.finalidade || "Comprar";
-    const isRent = finalidadeUi === "Alugar";
-
-    const params = {
-      categoria: store.categoriaSelecionada || filtros?.categoriaSelecionada || undefined,
-      cidade: store.cidadeSelecionada || filtros?.cidadeSelecionada || undefined,
-      quartos: store.quartos || filtros?.quartos || undefined,
-      banheiros: store.banheiros || filtros?.banheiros || undefined,
-      vagas: store.vagas || filtros?.vagas || undefined,
-    };
-
-    // bairros
-    const bairros = store.bairrosSelecionados?.length
-      ? store.bairrosSelecionados
-      : filtros?.bairrosSelecionados?.length
-      ? filtros.bairrosSelecionados
-      : [];
-    if (Array.isArray(bairros) && bairros.length > 0) params.bairrosArray = bairros;
-
-    // finalidade — aliases de locação p/ garantir consistência com os pins
-    if (isRent) {
-      params.finalidade = "locacao";
-      params.status = "locacao";
-      params.tipoNegocio = "locacao";
-      params.negocio = "locacao";
-      params.modalidade = "locacao";
-    } else {
-      params.finalidade = "venda";
-      params.status = "venda";
-      params.tipoNegocio = "venda";
-    }
-
-    // preços (somente se usuário informou)
-    Object.assign(
-      params,
-      buildPriceParams(
-        isRent,
-        store.precoMin ?? filtros?.precoMin ?? null,
-        store.precoMax ?? filtros?.precoMax ?? null
-      )
-    );
-
-    // área, somente se > 0
-    const areaMin = store.areaMin ?? filtros?.areaMin;
-    const areaMax = store.areaMax ?? filtros?.areaMax;
-    if (areaMin && String(areaMin) !== "0") params.areaMinima = String(areaMin);
-    if (areaMax && String(areaMax) !== "0") params.areaMaxima = String(areaMax);
-
-    if (store.abaixoMercado || filtros?.abaixoMercado) params.apenasCondominios = true;
-    if (store.proximoMetro || filtros?.proximoMetro) params.proximoMetro = true;
-
-    return params;
-  }, [store, filtros]);
-
-  // busca os imóveis para o mapa
   useEffect(() => {
-    let mounted = true;
-    (async () => {
-      setLoading(true);
+    // Only run on client
+    if (typeof window === 'undefined') return;
+
+    let isMounted = true;
+
+    const loadMap = async () => {
       try {
-        // usa a mesma API, mas pode aumentar o limite para mais pins no mapa
-        const res = await getImoveis(searchParams, 1, 200);
-        const list = Array.isArray(res?.imoveis) ? res.imoveis : [];
+        console.log('[MapComplete] Iniciando carregamento do mapa...');
+        
+        // Load Leaflet CSS
+        if (!document.querySelector('link[href*="leaflet.css"]')) {
+          const link = document.createElement('link');
+          link.rel = 'stylesheet';
+          link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+          document.head.appendChild(link);
+        }
 
-        // transforma em markers com lat/lng válidos
-        const withCoords = list
-          .map((it) => {
-            const ll = getLatLng(it);
-            if (!ll) return null;
-            return { ...it, __lat: ll.lat, __lng: ll.lng };
-          })
-          .filter(Boolean);
+        // Wait for CSS to load
+        await new Promise(resolve => setTimeout(resolve, 500));
 
-        if (mounted) setMarkers(withCoords);
-      } catch (err) {
-        console.error("[MAP] Erro ao carregar imóveis do mapa:", err);
-        if (mounted) setMarkers([]);
+        // Dynamically import Leaflet
+        const L = (await import('leaflet')).default;
+
+        // Configure icon paths
+        delete L.Icon.Default.prototype._getIconUrl;
+        L.Icon.Default.mergeOptions({
+          iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+          iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+          shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+        });
+
+        if (!isMounted) return;
+
+        // Build API query params
+        const params = new URLSearchParams();
+        
+        // Use the exact same parameters as the search
+        if (filtros?.categoriaSelecionada) {
+          // Convert to API format
+          let categoria = filtros.categoriaSelecionada;
+          if (categoria === 'Casa em Condominio') {
+            categoria = 'Casa em Condominio';
+          }
+          params.append('categoria', categoria);
+        }
+        
+        if (filtros?.cidadeSelecionada) {
+          params.append('cidade', filtros.cidadeSelecionada);
+        }
+        
+        if (filtros?.bairrosSelecionados?.length > 0) {
+          // Adicionar cada bairro como um parâmetro separado (como a API espera)
+          filtros.bairrosSelecionados.forEach(bairro => {
+            params.append('bairros', bairro);
+          });
+        }
+
+        const url = `/api/imoveis/mapa?${params.toString()}`;
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (!isMounted) return;
+
+        if (data.data && Array.isArray(data.data)) {
+          setImoveis(data.data);
+
+          // Filter ALL properties with valid coordinates
+          const validProperties = data.data.filter(imovel => {
+            const lat = parseFloat(imovel.Latitude);
+            const lng = parseFloat(imovel.Longitude);
+            const isValid = !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0 &&
+                          lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180;
+            
+            if (!isValid) {
+              console.log(`[MapComplete] Imóvel sem coordenadas válidas:`, imovel.Empreendimento, `Lat: ${imovel.Latitude}, Lng: ${imovel.Longitude}`);
+            }
+            
+            return isValid;
+          });
+
+          console.log(`[MapComplete] Total: ${data.data.length}, Válidos: ${validProperties.length}`);
+          console.log('[MapComplete] Imóveis válidos:', validProperties.map(i => ({
+            nome: i.Empreendimento,
+            lat: i.Latitude,
+            lng: i.Longitude
+          })));
+
+          // Initialize map only once
+          if (mapRef.current && !mapInstanceRef.current) {
+            const map = L.map(mapRef.current).setView([-23.6050, -46.6950], 13); // Brooklin coordinates
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+              attribution: '© OpenStreetMap contributors',
+              maxZoom: 18
+            }).addTo(map);
+
+            mapInstanceRef.current = map;
+            setMapReady(true);
+          }
+
+          if (mapInstanceRef.current) {
+            // Clear ALL existing markers
+            markersRef.current.forEach(marker => {
+              mapInstanceRef.current.removeLayer(marker);
+            });
+            markersRef.current = [];
+
+            // Add ALL valid properties as markers
+            const bounds = [];
+            validProperties.forEach((imovel, index) => {
+              const lat = parseFloat(imovel.Latitude);
+              const lng = parseFloat(imovel.Longitude);
+
+              const marker = L.marker([lat, lng]).addTo(mapInstanceRef.current);
+              
+              const popupContent = `
+                <div style="padding: 8px; min-width: 200px;">
+                  <strong>${index + 1}. ${imovel.Empreendimento || 'Imóvel'}</strong><br/>
+                  <small>${imovel.Endereco || ''}</small><br/>
+                  <small>${imovel.BairroComercial || ''}</small>
+                  ${imovel.ValorVenda ? `<br/><strong style="color: green;">
+                    ${Number(imovel.ValorVenda).toLocaleString("pt-BR", { 
+                      style: "currency", 
+                      currency: "BRL" 
+                    })}
+                  </strong>` : ''}
+                  <br/><small style="color: #666;">Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}</small>
+                </div>
+              `;
+              
+              marker.bindPopup(popupContent);
+              markersRef.current.push(marker);
+              bounds.push([lat, lng]);
+            });
+
+            // Fit map to show ALL markers
+            if (bounds.length > 0) {
+              const latLngBounds = L.latLngBounds(bounds);
+              mapInstanceRef.current.fitBounds(latLngBounds, { 
+                padding: [50, 50],
+                maxZoom: 15
+              });
+              
+              console.log(`[MapComplete] Mapa ajustado para mostrar ${markersRef.current.length} marcadores`);
+            }
+          }
+        }
+      } catch (error) {
+        console.error('[MapComplete] Erro:', error);
       } finally {
-        if (mounted) setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
-    })();
-    return () => {
-      mounted = false;
     };
-  }, [searchParams]);
 
-  // Ponto inicial (fallback)
-  const initialCenter = [ -23.55052, -46.633308 ]; // SP como fallback
-  const points = markers.map((m) => ({ lat: m.__lat, lng: m.__lng }));
+    // Small delay to ensure component is mounted
+    const timer = setTimeout(loadMap, 100);
+
+    return () => {
+      isMounted = false;
+      clearTimeout(timer);
+      // Don't remove map on cleanup to avoid re-initialization issues
+    };
+  }, [filtros]);
 
   return (
-    <div className="w-full h-full">
-      <MapContainer
-        center={initialCenter}
-        zoom={12}
-        scrollWheelZoom
-        style={{ width: "100%", height: "100%" }}
-      >
-        <TileLayer
-          attribution='&copy; OpenStreetMap'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-
-        {/* Ajusta o mapa para abranger os markers ao carregar */}
-        {points.length > 0 && <FitToMarkers points={points} />}
-
-        {markers.map((m) => {
-          const key = m.Codigo || m._id || `${m.__lat}-${m.__lng}-${Math.random()}`;
-          
-          // CORREÇÃO: Usa a função baseada no CardHome
-          const foto = getCoverUrl(m);
-          
-          // DEBUG COMPLETO DO IMÓVEL
-          console.log('=====================================');
-          console.log('Imóvel código:', m.Codigo);
-          console.log('Foto URL retornada:', foto);
-          console.log('Campo Foto existe?', m.Foto ? 'SIM' : 'NÃO');
-          if (m.Foto) {
-            console.log('Tipo de m.Foto:', typeof m.Foto);
-            console.log('É array?', Array.isArray(m.Foto));
-            console.log('Tamanho do array:', m.Foto.length);
-            if (m.Foto.length > 0) {
-              console.log('Primeira entrada:', m.Foto[0]);
-              console.log('Tem propriedade Foto?', m.Foto[0].Foto ? 'SIM' : 'NÃO');
-            }
-          }
-          // Lista TODOS os campos que contém "foto" ou "image"
-          const camposComFoto = Object.keys(m).filter(k => 
-            k.toLowerCase().includes('foto') || 
-            k.toLowerCase().includes('image') || 
-            k.toLowerCase().includes('img')
-          );
-          console.log('Campos relacionados a foto:', camposComFoto);
-          camposComFoto.forEach(campo => {
-            console.log(`${campo}:`, m[campo]);
-          });
-          console.log('=====================================');
-          
-          // Título do imóvel (compatível com CardHome)
-          const titulo = m.Empreendimento || 
-                        m.NomeImovel ||
-                        m.Titulo ||
-                        `${m.Categoria || m.Tipo || "Imóvel"} ${m.Codigo ? `• ${m.Codigo}` : ""}`;
-          
-          // Endereço (compatível com CardHome)
-          const tipoEndereco = m.TipoEndereco || "";
-          const endereco = m.Endereco || "";
-          const numero = m.Numero || "";
-          const cidade = m.Cidade || m.cidade || "";
-          const bairro = m.Bairro || m.BairroComercial || m.bairro || "";
-          
-          // Características (compatível com CardHome - usar campos "Antigo")
-          const quartos = m.Quartos || m.DormitoriosAntigo || m.Dormitorios;
-          const banheiros = m.BanheiroSocialQtd || m.Banheiros;
-          const vagas = m.Vagas || m.VagasAntigo;
-          const area = m.AreaPrivativa || m.MetragemAnt;
-          
-          // Preço (compatível com CardHome)
-          const status = (m.Status || m.Finalidade || m.TipoNegocio || "").toString().toUpperCase();
-          const isRent = status.includes("LOCAÇÃO") || status.includes("ALUGUEL");
-          
-          let preco = "";
-          if (isRent && m.ValorAluguelSite && m.ValorAluguelSite !== "0" && m.ValorAluguelSite !== "") {
-            preco = formatBRL(String(m.ValorAluguelSite).replace(/\D/g, ""));
-          } else if (m.ValorAntigo) {
-            // Remove os centavos como no CardHome
-            const valorFormatado = formatBRL(String(m.ValorAntigo).replace(/\D/g, ""));
-            preco = valorFormatado.replace(/,00$/, '');
-          } else {
-            const valorBruto = m.ValorVenda || m.Valor || m.Preco || m.ValorNumerico;
-            if (valorBruto) {
-              preco = formatBRL(String(valorBruto).replace(/\D/g, ""));
-            }
-          }
-
-          return (
-            <Marker key={key} position={[m.__lat, m.__lng]}>
-              <Popup maxWidth={320} minWidth={280}>
-                <div 
-                  style={{
-                    width: '300px',
-                    margin: '-20px',
-                    overflow: 'hidden',
-                    borderRadius: '8px',
-                    background: 'white'
-                  }}
-                >
-                  <a
-                    href={`/imovel-${m.Codigo}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{
-                      display: 'block',
-                      textDecoration: 'none',
-                      color: 'inherit'
-                    }}
-                  >
-                    {/* Container da imagem */}
-                    <div style={{
-                      position: 'relative',
-                      width: '300px',
-                      height: '160px',
-                      backgroundColor: '#f3f4f6',
-                      overflow: 'hidden'
-                    }}>
-                      <img
-                        src={foto}
-                        alt={titulo}
-                        style={{
-                          width: '100%',
-                          height: '100%',
-                          objectFit: 'cover',
-                          display: 'block'
-                        }}
-                        loading="lazy"
-                        onError={(e) => {
-                          e.target.src = '/placeholder-imovel.jpg';
-                          e.target.onerror = null;
-                        }}
-                      />
-                      
-                      {/* Badge de preço sobre a imagem */}
-                      {preco && (
-                        <div style={{
-                          position: 'absolute',
-                          bottom: '10px',
-                          left: '10px',
-                          backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                          color: 'white',
-                          padding: '5px 10px',
-                          borderRadius: '4px',
-                          fontSize: '13px',
-                          fontWeight: 'bold'
-                        }}>
-                          {preco}{isRent ? "/mês" : ""}
-                        </div>
-                      )}
-                    </div>
-                    
-                    {/* Informações do imóvel */}
-                    <div style={{
-                      padding: '12px'
-                    }}>
-                      {/* Categoria */}
-                      <div style={{
-                        fontSize: '10px',
-                        color: '#666',
-                        fontWeight: '600',
-                        marginBottom: '4px'
-                      }}>
-                        {m.Categoria || "Imóvel"}
-                      </div>
-                      
-                      {/* Título */}
-                      <div style={{
-                        fontSize: '14px',
-                        fontWeight: 'bold',
-                        marginBottom: '6px',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        color: '#111'
-                      }}>
-                        {titulo}
-                      </div>
-                      
-                      {/* Endereço */}
-                      <div style={{
-                        fontSize: '11px',
-                        color: '#666',
-                        marginBottom: '8px',
-                        fontWeight: '600',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap'
-                      }}>
-                        {tipoEndereco && `${tipoEndereco} `}
-                        {endereco}
-                        {numero && `, ${numero}`}
-                        {bairro && ` - ${bairro}`}
-                      </div>
-                      
-                      {/* Características */}
-                      <div style={{
-                        fontSize: '11px',
-                        color: '#333',
-                        display: 'flex',
-                        gap: '12px',
-                        fontWeight: 'bold'
-                      }}>
-                        {area && <span>{area} m²</span>}
-                        {quartos && <span>{quartos} dorm</span>}
-                        {banheiros && <span>{banheiros} banh</span>}
-                        {vagas && <span>{vagas} vagas</span>}
-                      </div>
-                      
-                      {/* Código do imóvel */}
-                      <div style={{
-                        marginTop: '8px',
-                        fontSize: '10px',
-                        color: '#999'
-                      }}>
-                        Cód: {m.Codigo}
-                      </div>
-                    </div>
-                  </a>
-                </div>
-              </Popup>
-            </Marker>
-          );
-        })}
-      </MapContainer>
+    <div className="w-full h-full rounded-lg overflow-hidden border border-gray-300 shadow-lg relative">
+      {loading && (
+        <div className="absolute inset-0 bg-white z-50 flex items-center justify-center">
+          <div className="text-center">
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-black"></div>
+            <p className="mt-2 text-gray-700">Carregando mapa...</p>
+          </div>
+        </div>
+      )}
       
-      {/* Contador de imóveis */}
+      <div 
+        ref={mapRef}
+        className="w-full h-full"
+        style={{ minHeight: '500px' }}
+      />
+      
       {!loading && (
-        <div style={{
-          position: 'absolute',
-          bottom: '20px',
-          left: '20px',
-          backgroundColor: 'rgba(255, 255, 255, 0.95)',
-          padding: '8px 16px',
-          borderRadius: '20px',
-          boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-          fontSize: '13px',
-          zIndex: 1000
-        }}>
-          <span style={{ fontWeight: 'bold' }}>{markers.length}</span> imóveis encontrados
+        <div className="absolute bottom-4 left-4 bg-white px-3 py-2 rounded-lg shadow-lg z-[1000]">
+          <div className="text-sm">
+            <span className="font-bold text-lg">{imoveis.length}</span> imóveis encontrados
+          </div>
+          {markersRef.current.length < imoveis.length && (
+            <div className="text-xs text-orange-600">
+              {imoveis.length - markersRef.current.length} sem coordenadas
+            </div>
+          )}
         </div>
       )}
     </div>
   );
-}
+};
+
+export default MapComplete;
