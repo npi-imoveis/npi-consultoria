@@ -89,6 +89,13 @@ const getCoverUrl = (imovelFoto) => {
   try {
     let imageUrl = null;
     
+  console.log('🔍 Campos de foto disponíveis:', {
+  Foto: m.Foto,
+  Foto1: m.Foto1,
+  FotoPrincipal: m.FotoPrincipal,
+  ImagemCapa: m.ImagemCapa,
+  todasAsChaves: Object.keys(m).filter(k => k.toLowerCase().includes('foto') || k.toLowerCase().includes('imag'))
+});
     // MÉTODO 1: Array de fotos (mais comum - padrão da página do imóvel)
     if (Array.isArray(imovelFoto) && imovelFoto.length > 0) {
       const foto = imovelFoto[0];
