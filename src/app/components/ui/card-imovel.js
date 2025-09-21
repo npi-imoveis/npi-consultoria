@@ -7,6 +7,7 @@ import useImovelStore from "./../../store/imovelStore";
 import { ArrowRightLeftIcon, Bed, CarIcon } from "lucide-react";
 import { formatterValue } from "@/app/utils/formatter-value";
 
+
 /* ================= Skeleton ================= */
 export function CardImovelSkeleton() {
   return (
@@ -38,6 +39,8 @@ export function CardImovelSkeleton() {
           <div className="w-full h-10 bg-gray-300 rounded-full animate-pulse" />
         </div>
       </div>
+    // Dentro da função/página onde monta os cards (antes do return)
+console.log("imoveis recebidos para os cards:", imoveis);
     </section>
   );
 }
