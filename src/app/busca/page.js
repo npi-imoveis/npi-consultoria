@@ -16,9 +16,7 @@ import useFavoritosStore from "../store/favoritosStore";
 import useImovelStore from "../store/imovelStore";
 import { gerarUrlSeoFriendly } from "../utils/url-slugs";
 
-// --- CORREÇÃO DO CAMINHO APLICADA AQUI ---
-import MapOverlay from "./components/MapOverlay"; 
-
+// --- INÍCIO DA CORREÇÃO ---
 // Importa o componente de mapa centralizado e com diagnóstico.
 const MapWithNoSSR = dynamic(() => import("../components/maps/MapWithDetails"), {
   ssr: false,
@@ -31,6 +29,44 @@ const MapWithNoSSR = dynamic(() => import("../components/maps/MapWithDetails"), 
     </div>
   ),
 });
+
+// O código do MapOverlay foi movido para DENTRO deste arquivo para evitar erros de importação.
+function MapOverlay({ open, onClose, filtros }) {
+  useEffect(() => {
+    if (!open) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [open]);
+
+  return (
+    <div
+      className={[
+        "md:hidden fixed inset-0 z-[9999] transition-transform duration-300",
+        open ? "translate-y-0" : "translate-y-full",
+      ].join(" ")}
+      aria-hidden={!open}
+      role="dialog"
+      aria-modal={open ? "true" : "false"}
+    >
+      <div className="absolute inset-0 bg-black/55" onClick={onClose} aria-hidden="true" />
+      <div className="absolute inset-x-0 bottom-0 top-0 bg-white rounded-t-2xl overflow-hidden flex flex-col">
+        <div className="shrink-0 px-4 py-3 flex items-center justify-between border-b">
+          <h3 className="text-sm font-bold">Mapa</h3>
+          <button onClick={onClose} className="px-3 py-2 rounded-md bg-zinc-200 hover:bg-zinc-300 text-xs font-semibold">
+            Ver resultados
+          </button>
+        </div>
+        <div className="grow">
+          <MapWithNoSSR filtros={filtros} />
+        </div>
+      </div>
+    </div>
+  );
+}
+// --- FIM DA CORREÇÃO ---
 
 
 /* =========================================================
@@ -679,6 +715,33 @@ export default function BuscaImoveis() {
     return txt;
   };
 
+  // Componente interno para evitar problemas de importação
+  function MobileActionsBar({ onOpenFilters, onOpenMap, resultsText = "" }) {
+    return (
+      <div className="sticky top-20 z-[45] bg-white border-b shadow-sm md:hidden">
+        <div className="px-3 py-2 flex items-center justify-between gap-2">
+          <span className="text-[11px] text-zinc-600 font-semibold truncate">
+            {resultsText}
+          </span>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={onOpenFilters}
+              className="px-3 py-2 rounded-lg text-[12px] font-semibold bg-zinc-200 hover:bg-zinc-300 text-black"
+            >
+              Filtros
+            </button>
+            <button
+              onClick={onOpenMap}
+              className="px-3 py-2 rounded-lg text-[12px] font-semibold bg-black hover:bg-zinc-900 text-white"
+            >
+              Mapa
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   /* ======================== RENDER ======================== */
   return (
     <>
@@ -703,80 +766,4 @@ export default function BuscaImoveis() {
             <select
               className="text-xs font-bold text-zinc-500 bg-zinc-100 p-2 rounded-md"
               value={ordenacao}
-              onChange={(e) => setOrdenacao(e.target.value)}
-            >
-              <option value="relevancia">Mais relevantes</option>
-              <option value="maior_valor">Maior Valor</option>
-              <option value="menor_valor">Menor Valor</option>
-            </select>
-          </div>
-
-          <div className="flex-1 overflow-y-auto p-4">
-            <div className="flex flex-wrap gap-3">{renderCards()}</div>
-            <div className="mt-6 mb-6">
-              <Pagination pagination={pagination} onPageChange={handlePageChange} />
-            </div>
-            <div className="mt-12">
-              <Footer />
-            </div>
-          </div>
-        </div>
-
-        {/* Mapa */}
-        <div className="w-1/2 relative h-full">
-          <div className="absolute inset-0 right-0 h-full overflow-hidden">
-            <MapWithNoSSR filtros={filtrosAtuais} />
-          </div>
-        </div>
-      </div>
-
-      {/* MOBILE (< md): barra ações + filtros off-canvas + lista */}
-      <div className="md:hidden">
-        <MobileActionsBar
-          onOpenFilters={() => setFiltersMobileOpen(true)}
-          onOpenMap={() => setMapOpenMobile(true)}
-          resultsText={construirTextoFiltros()}
-        />
-
-        <PropertyFilters
-          horizontal={false}
-          onFilter={resetarEstadoBusca}
-          isVisible={filtersMobileOpen}
-          setIsVisible={setFiltersMobileOpen}
-        />
-
-        <div className="pt-2 pb-24 px-3">
-          <div className="flex items-center justify-between gap-2 p-2 rounded-md bg-white border">
-            <span className="text-[11px] text-zinc-600 font-semibold">
-              {pagination.totalItems || 0} resultados
-            </span>
-            <select
-              className="text-[12px] font-semibold text-zinc-600 bg-zinc-100 p-2 rounded-md"
-              value={ordenacao}
-              onChange={(e) => setOrdenacao(e.target.value)}
-            >
-              <option value="relevancia">Mais relevantes</option>
-              <option value="maior_valor">Maior Valor</option>
-              <option value="menor_valor">Menor Valor</option>
-            </select>
-          </div>
-
-          <div className="mt-3 flex flex-wrap gap-3">{renderCards()}</div>
-
-          <div className="mt-6 mb-10">
-            <Pagination pagination={pagination} onPageChange={handlePageChange} />
-          </div>
-
-          <Footer />
-        </div>
-      </div>
-
-      {/* MOBILE: overlay do mapa */}
-      <MapOverlay
-        open={mapOpenMobile}
-        onClose={() => setMapOpenMobile(false)}
-        filtros={filtrosAtuais}
-      />
-    </>
-  );
-}
+              onChange
