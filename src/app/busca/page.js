@@ -16,8 +16,10 @@ import useFavoritosStore from "../store/favoritosStore";
 import useImovelStore from "../store/imovelStore";
 import { gerarUrlSeoFriendly } from "../utils/url-slugs";
 
-// Mapa com import dinâmico (evita SSR)
-const MapComplete = dynamic(() => import("./components/map-complete"), {
+// --- INÍCIO DA CORREÇÃO ---
+// Mapa com import dinâmico (evita SSR), agora apontando para o componente correto.
+// Assumindo que o caminho para o seu MapComponent seja este. Ajuste se necessário.
+const MapComponentWithNoSSR = dynamic(() => import("../components/maps/MapComponent"), {
   ssr: false,
   loading: () => (
     <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
@@ -28,6 +30,8 @@ const MapComplete = dynamic(() => import("./components/map-complete"), {
     </div>
   ),
 });
+// --- FIM DA CORREÇÃO ---
+
 
 /* =========================================================
    UI MOBILE
@@ -58,6 +62,7 @@ function MobileActionsBar({ onOpenFilters, onOpenMap, resultsText = "" }) {
   );
 }
 
+// --- INÍCIO DA CORREÇÃO ---
 function MapOverlay({ open, onClose, filtros }) {
   return (
     <div
@@ -81,12 +86,15 @@ function MapOverlay({ open, onClose, filtros }) {
           </button>
         </div>
         <div className="grow">
-          <MapComplete filtros={filtros} />
+          {/* Chamando o componente correto também na versão mobile */}
+          <MapComponentWithNoSSR filtros={filtros} />
         </div>
       </div>
     </div>
   );
 }
+// --- FIM DA CORREÇÃO ---
+
 
 /* =========================================================
    PÁGINA
@@ -134,7 +142,7 @@ export default function BuscaImoveis() {
     if (typeof document === "undefined") return;
     const baseUrl =
       process.env.NEXT_PUBLIC_SITE_URL || "https://npiconsultoria.com.br";
-    const currentDate = new Date().toISOString();
+    const currentDate = new Date( ).toISOString();
 
     let script = document.querySelector('script[type="application/ld+json"]');
     if (!script) {
@@ -159,7 +167,7 @@ export default function BuscaImoveis() {
           mainEntity: {
             "@type": "ItemList",
             numberOfItems: totalItems,
-            itemListElement: imoveisData.slice(0, 10).map((imovel, index) => ({
+            itemListElement: imoveisData.slice(0, 10 ).map((imovel, index) => ({
               "@type": "ListItem",
               position: index + 1,
               item: {
@@ -181,7 +189,7 @@ export default function BuscaImoveis() {
                   addressCountry: "BR",
                 },
               },
-            })),
+            } )),
           },
         },
       ],
@@ -195,7 +203,7 @@ export default function BuscaImoveis() {
 
     const baseUrl =
       process.env.NEXT_PUBLIC_SITE_URL || "https://npiconsultoria.com.br";
-    const currentDate = new Date().toISOString();
+    const currentDate = new Date( ).toISOString();
     const fs = useFiltersStore.getState();
 
     const plural = {
@@ -792,9 +800,12 @@ export default function BuscaImoveis() {
         {/* Mapa */}
         <div className="w-1/2 relative h-full">
           <div className="absolute inset-0 right-0 h-full overflow-hidden">
-            <MapComplete filtros={filtrosAtuais} />
+            {/* Chamando o componente correto */}
+            <MapComponentWithNoSSR filtros={filtrosAtuais} />
           </div>
         </div>
+        {/* --- FIM DA CORREÇÃO --- */}
+
       </div>
 
       {/* MOBILE (< md): barra ações + filtros off-canvas + lista */}
