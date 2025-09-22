@@ -6,7 +6,7 @@ import Image from "next/image";
 
 // Componente de Popup Customizado e Otimizado
 const ImovelPopup = ({ imovel }) => {
-  // Função para formatar o slug (adapte se o caminho estiver diferente)
+  // Função para formatar o slug (incluída para não depender de import externo)
   const formatterSlug = (text) => {
     if (!text) return "";
     return text.toString().toLowerCase()
@@ -38,13 +38,12 @@ const ImovelPopup = ({ imovel }) => {
   return (
     <Popup>
       <div className="w-[240px] font-sans">
-        <div className="relative w-full h-[130px] rounded-lg overflow-hidden mb-2">
+        <div className="relative w-full h-[130px] rounded-lg overflow-hidden mb-2 bg-gray-200">
           <Image
             src={fotoUrl}
             alt={`Destaque do imóvel ${imovel.Empreendimento}`}
             layout="fill"
             objectFit="cover"
-            className="bg-gray-200"
           />
         </div>
         <h3 className="font-bold text-sm truncate">{imovel.Empreendimento}</h3>
@@ -103,9 +102,7 @@ const MapComplete = ({ filtros }) => {
         
         const response = await fetch(`/api/imoveis/mapa?${params.toString()}`);
         const data = await response.json();
-
         setImoveis(data.data || []);
-
       } catch (err) {
         console.error("Erro ao buscar imóveis para o mapa:", err);
         setError("Não foi possível carregar os imóveis.");
