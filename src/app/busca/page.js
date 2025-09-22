@@ -15,11 +15,11 @@ import useFiltersStore from "../store/filtrosStore";
 import useFavoritosStore from "../store/favoritosStore";
 import useImovelStore from "../store/imovelStore";
 import { gerarUrlSeoFriendly } from "../utils/url-slugs";
-import MapOverlay from "./MapOverlay"; // Supondo que MapOverlay.js esteja na mesma pasta
 
-// --- INÍCIO DA CORREÇÃO ---
+// --- CORREÇÃO DO CAMINHO APLICADA AQUI ---
+import MapOverlay from "./components/MapOverlay"; 
+
 // Importa o componente de mapa centralizado e com diagnóstico.
-// O caminho agora é único para toda a aplicação.
 const MapWithNoSSR = dynamic(() => import("../components/maps/MapWithDetails"), {
   ssr: false,
   loading: () => (
@@ -31,7 +31,6 @@ const MapWithNoSSR = dynamic(() => import("../components/maps/MapWithDetails"), 
     </div>
   ),
 });
-// --- FIM DA CORREÇÃO ---
 
 
 /* =========================================================
