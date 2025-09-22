@@ -6,53 +6,51 @@ import Image from "next/image";
 
 // Componente de Popup Customizado e Otimizado
 const ImovelPopup = ({ imovel }) => {
+  // LOG 3: VERIFICAR O OBJETO 'imovel' QUE CHEGA AO POPUP
+  console.log("LOG 3: Objeto 'imovel' recebido pelo ImovelPopup:", imovel);
+
   const formatterSlug = (text) => {
     if (!text) return "";
-    return text.toString().toLowerCase()
-      .replace(/\s+/g, '-')
-      .replace(/[^\w\-]+/g, '')
-      .replace(/\-\-+/g, '-')
-      .replace(/^-+/, '').replace(/-+$/, '');
+    return text.toString().toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]+/g, '').replace(/\-\-+/g, '-').replace(/^-+/, '').replace(/-+$/, '');
   };
 
   const slug = formatterSlug(imovel.Empreendimento || "");
 
   const getFotoDestaqueUrl = (imovel) => {
     const temFoto = imovel.Foto && Array.isArray(imovel.Foto) && imovel.Foto.length > 0;
-    if (!temFoto) return '/placeholder-imovel.jpg';
+    if (!temFoto) {
+      // LOG 4a: AVISAR SE NÃO HÁ FOTOS
+      console.log(`LOG 4a: Imóvel ${imovel.Codigo} não possui array 'Foto'.`);
+      return '/placeholder-imovel.jpg';
+    }
     
     const fotoDestaqueObj = imovel.Foto.find(foto => foto && foto.Destaque === "Sim");
-    if (fotoDestaqueObj && fotoDestaqueObj.Foto) return fotoDestaqueObj.Foto;
+    if (fotoDestaqueObj && fotoDestaqueObj.Foto) {
+      // LOG 4b: AVISAR QUE ENCONTROU FOTO DESTAQUE
+      console.log(`LOG 4b: Imóvel ${imovel.Codigo} - Foto Destaque encontrada:`, fotoDestaqueObj.Foto);
+      return fotoDestaqueObj.Foto;
+    }
     
+    // LOG 4c: AVISAR QUE USOU FALLBACK
+    console.log(`LOG 4c: Imóvel ${imovel.Codigo} - Nenhuma foto destaque. Usando fallback (primeira foto).`, imovel.Foto[0]?.Foto);
     return imovel.Foto[0]?.Foto || '/placeholder-imovel.jpg';
   };
 
   const fotoUrl = getFotoDestaqueUrl(imovel);
 
-  const valorPrincipal = imovel.ValorVenda
-    ? Number(imovel.ValorVenda).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
-    : "Consulte";
+  const valorPrincipal = imovel.ValorVenda ? Number(imovel.ValorVenda).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "Consulte";
 
   return (
     <Popup>
       <div className="w-[240px] font-sans">
         <div className="relative w-full h-[130px] rounded-lg overflow-hidden mb-2 bg-gray-200">
-          <Image
-            src={fotoUrl}
-            alt={`Destaque do imóvel ${imovel.Empreendimento}`}
-            layout="fill"
-            objectFit="cover"
-          />
+          <Image src={fotoUrl} alt={`Destaque do imóvel ${imovel.Empreendimento}`} layout="fill" objectFit="cover" />
         </div>
         <h3 className="font-bold text-sm truncate">{imovel.Empreendimento}</h3>
         <p className="text-xs text-gray-600 truncate">{imovel.BairroComercial || imovel.Endereco}</p>
         <p className="text-base font-bold text-green-700 mt-1">{valorPrincipal}</p>
         <a href={`/imovel/${imovel.Codigo}/${slug}`} target="_blank" rel="noopener noreferrer" className="!no-underline">
-           <button 
-             className="w-full mt-3 px-3 py-2 bg-black text-white text-sm font-semibold rounded-lg hover:bg-gray-800 transition-colors"
-           >
-             Ver Detalhes
-           </button>
+           <button className="w-full mt-3 px-3 py-2 bg-black text-white text-sm font-semibold rounded-lg hover:bg-gray-800 transition-colors">Ver Detalhes</button>
         </a>
       </div>
     </Popup>
@@ -79,7 +77,7 @@ const MapUpdater = ({ center, zoom }) => {
   return null;
 };
 
-// O componente principal, agora com a lógica correta
+// O componente principal
 const MapComplete = ({ filtros }) => {
   const [imoveis, setImoveis] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -98,11 +96,18 @@ const MapComplete = ({ filtros }) => {
           filtros.bairrosSelecionados.forEach(bairro => params.append('bairros', bairro));
         }
         
-        // --- CORREÇÃO DE CACHE APLICADA AQUI ---
         const cacheBuster = `&t=${new Date().getTime()}`;
-        const response = await fetch(`/api/imoveis/mapa?${params.toString()}${cacheBuster}`);
+        const url = `/api/imoveis/mapa?${params.toString()}${cacheBuster}`;
         
+        // LOG 1: VERIFICAR A URL DA API
+        console.log("LOG 1: Chamando API com a URL:", url);
+
+        const response = await fetch(url);
         const data = await response.json();
+
+        // LOG 2: VERIFICAR OS DADOS BRUTOS DA API
+        console.log("LOG 2: Dados brutos recebidos da API:", data);
+        
         setImoveis(data.data || []);
 
       } catch (err) {
