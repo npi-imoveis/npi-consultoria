@@ -1,4 +1,5 @@
 "use client";
+console.log("### MAPA RENDERIZADO: MapComponent.js ###");
 
 import { useEffect, useState, useRef } from "react";
 import { MapContainer, TileLayer, ZoomControl, useMap, Marker, Popup } from "react-leaflet";
