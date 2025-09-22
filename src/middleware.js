@@ -187,11 +187,11 @@ export async function middleware(request) {
     '/api/'
   ];
   
-  // TESTE: Comentar temporariamente
-// if (isGoogleBot && blockedPathsForBots.some(path => pathname.startsWith(path))) {
-//   console.log('🚫 [GSC] Bloqueando path para bot:', pathname);
-//   return new NextResponse(null, { status: 404 });
-// }
+
+if (isGoogleBot && blockedPathsForBots.some(path => pathname.startsWith(path))) {
+  console.log('🚫 [GSC] Bloqueando path para bot:', pathname);
+  return new NextResponse(null, { status: 404 });
+ }
 
   // 🚨 CORREÇÃO CANONICAL #4: URLs de busca malformadas
   if (pathname === '/busca' || pathname === '/busca/') {
