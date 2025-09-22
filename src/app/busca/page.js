@@ -16,12 +16,12 @@ import useFavoritosStore from "../store/favoritosStore";
 import useImovelStore from "../store/imovelStore";
 import { gerarUrlSeoFriendly } from "../utils/url-slugs";
 
-// --- CORREÇÃO DO CAMINHO APLICADA AQUI ---
-// O caminho correto para o MapOverlay, que está dentro da pasta 'components' da rota 'busca'
+// --- CORREÇÃO APLICADA AQUI ---
+// Mudança: importar map-component ao invés de MapWithDetails
 import MapOverlay from "./components/map-overlay.jsx"; 
 
-// Importa o componente de mapa centralizado e com diagnóstico.
-const MapWithNoSSR = dynamic(() => import("../components/maps/MapWithDetails"), {
+// CORREÇÃO: Importar o componente correto que tem as fotos funcionando
+const MapWithNoSSR = dynamic(() => import("./components/map-component"), {
   ssr: false,
   loading: () => (
     <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
