@@ -1,11 +1,13 @@
+// src/app/components/maps/MapWithDetails.js
 "use client";
 
 import { useEffect, useState } from "react";
 import { MapContainer, TileLayer, ZoomControl, useMap, Marker, Popup } from "react-leaflet";
 import Image from "next/image";
 
-// Componente de Popup Customizado
+// Componente de Popup Customizado com LOGS
 const ImovelPopup = ({ imovel }) => {
+  // LOG 3: VERIFICAR O OBJETO 'imovel' QUE CHEGA AO POPUP
   console.log("LOG 3: Objeto 'imovel' recebido pelo ImovelPopup:", imovel);
 
   const formatterSlug = (text) => {
@@ -17,15 +19,17 @@ const ImovelPopup = ({ imovel }) => {
   const getFotoDestaqueUrl = (imovel) => {
     const temFoto = imovel.Foto && Array.isArray(imovel.Foto) && imovel.Foto.length > 0;
     if (!temFoto) {
-      console.log(`LOG 4a: Imóvel ${imovel.Codigo} não possui array 'Foto'.`);
+      console.log(`LOG 4a: Imóvel ${imovel.Codigo} não possui array 'Foto' ou ele está vazio.`);
       return '/placeholder-imovel.jpg';
     }
+    
     const fotoDestaqueObj = imovel.Foto.find(foto => foto && foto.Destaque === "Sim");
     if (fotoDestaqueObj && fotoDestaqueObj.Foto) {
       console.log(`LOG 4b: Imóvel ${imovel.Codigo} - Foto Destaque encontrada:`, fotoDestaqueObj.Foto);
       return fotoDestaqueObj.Foto;
     }
-    console.log(`LOG 4c: Imóvel ${imovel.Codigo} - Nenhuma foto destaque. Usando fallback.`, imovel.Foto[0]?.Foto);
+    
+    console.log(`LOG 4c: Imóvel ${imovel.Codigo} - Nenhuma foto destaque. Usando fallback (primeira foto).`, imovel.Foto[0]?.Foto);
     return imovel.Foto[0]?.Foto || '/placeholder-imovel.jpg';
   };
   const fotoUrl = getFotoDestaqueUrl(imovel);
@@ -61,7 +65,7 @@ const MapController = ({ map }) => {
   return null;
 };
 
-// Componente principal do Mapa
+// Componente principal do Mapa com LOGS
 export default function MapWithDetails({ filtros }) {
   const [imoveis, setImoveis] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -121,7 +125,7 @@ export default function MapWithDetails({ filtros }) {
           <div className="text-center"><div className="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-black"></div><p className="mt-2 text-gray-700">Carregando...</p></div>
         </div>
       )}
-      <MapContainer center={[-23.5505, -46.6333]} zoom={11} style={{ width: "100%", height: "100%" }} zoomControl={false} className="z-10" whenCreated={setMap}>
+      <MapContainer center={[-23.5505, -46.6333]} zoom={11} style={{ width: "100%", height: "100%" }} zoomControl={false} className="z-10" ref={setMap}>
         <MapController map={map} />
         <ZoomControl position="bottomright" />
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; OpenStreetMap' />
