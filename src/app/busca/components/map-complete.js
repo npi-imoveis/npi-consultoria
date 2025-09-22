@@ -1,5 +1,7 @@
+// src/app/busca/components/map-complete.js
+
 "use client";
-console.log("### MAPA RENDERIZADO: MapComplete.js ###"); 
+
 import { useEffect, useRef, useState } from "react";
 
 
