@@ -1,13 +1,11 @@
 import { connectToDatabase } from "@/app/lib/mongodb";
-import Imovel, { IImovel } from "@/app/models/Imovel";
-import { Model } from "mongoose";
+import Imovel from "@/app/models/Imovel";
 import { NextResponse } from "next/server";
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request) {
   try {
-    // Obter parâmetros da URL
     const { searchParams } = request.nextUrl;
     const categoria = searchParams.get("categoria");
     const cidade = searchParams.get("cidade");
@@ -16,7 +14,6 @@ export async function GET(request) {
     const banheiros = searchParams.get("banheiros");
     const vagas = searchParams.get("vagas");
 
-    // Construir o filtro base
     const filtro = {
       Latitude: { $exists: true, $ne: null, $ne: "" },
       Longitude: { $exists: true, $ne: null, $ne: "" },
@@ -72,13 +69,11 @@ export async function GET(request) {
       else filtro.Vagas = parseInt(vagas);
     }
 
-    // --- CORREÇÃO APLICADA AQUI ---
-    // Buscar imóveis com os filtros aplicados, selecionando explicitamente os campos necessários.
-    // O "+Foto" força a inclusão do campo 'Foto', mesmo que ele esteja com "select: false" no Schema.
+    // --- CORREÇÃO FINAL APLICADA AQUI ---
     const imoveis = await Imovel.find(filtro)
       .select('Empreendimento Latitude Longitude ValorVenda BairroComercial Codigo Endereco +Foto')
       .limit(200)
-      .lean(); // Adicionar .lean() para uma performance muito superior em buscas "read-only".
+      .lean();
 
     return NextResponse.json({
       status: 200,
