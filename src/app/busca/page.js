@@ -33,7 +33,6 @@ const MapWithNoSSR = dynamic(() => import("../components/maps/MapWithDetails"), 
   ),
 });
 
-
 /* =========================================================
    PÁGINA
 ========================================================= */
@@ -80,7 +79,7 @@ export default function BuscaImoveis() {
     if (typeof document === "undefined") return;
     const baseUrl =
       process.env.NEXT_PUBLIC_SITE_URL || "https://npiconsultoria.com.br";
-    const currentDate = new Date( ).toISOString();
+    const currentDate = new Date().toISOString();
 
     let script = document.querySelector('script[type="application/ld+json"]');
     if (!script) {
@@ -105,7 +104,7 @@ export default function BuscaImoveis() {
           mainEntity: {
             "@type": "ItemList",
             numberOfItems: totalItems,
-            itemListElement: imoveisData.slice(0, 10 ).map((imovel, index) => ({
+            itemListElement: imoveisData.slice(0, 10).map((imovel, index) => ({
               "@type": "ListItem",
               position: index + 1,
               item: {
@@ -127,7 +126,7 @@ export default function BuscaImoveis() {
                   addressCountry: "BR",
                 },
               },
-            } )),
+            })),
           },
         },
       ],
@@ -141,7 +140,7 @@ export default function BuscaImoveis() {
 
     const baseUrl =
       process.env.NEXT_PUBLIC_SITE_URL || "https://npiconsultoria.com.br";
-    const currentDate = new Date( ).toISOString();
+    const currentDate = new Date().toISOString();
     const fs = useFiltersStore.getState();
 
     const plural = {
@@ -506,6 +505,7 @@ export default function BuscaImoveis() {
   useEffect(() => {
     if (initialLoad || currentPage === 1) return;
     if (mostrandoFavoritos) {
+      // Handle favorites pagination if needed
     } else if (filtrosAplicados) {
       buscarImoveis(true);
     } else {
@@ -783,4 +783,28 @@ export default function BuscaImoveis() {
               value={ordenacao}
               onChange={(e) => setOrdenacao(e.target.value)}
             >
-              <option
+              <option value="relevancia">Mais relevantes</option>
+              <option value="maior_valor">Maior Valor</option>
+              <option value="menor_valor">Menor Valor</option>
+            </select>
+          </div>
+
+          <div className="mt-3 flex flex-wrap gap-3">{renderCards()}</div>
+
+          <div className="mt-6 mb-10">
+            <Pagination pagination={pagination} onPageChange={handlePageChange} />
+          </div>
+
+          <Footer />
+        </div>
+      </div>
+
+      {/* MOBILE: overlay do mapa */}
+      <MapOverlay
+        open={mapOpenMobile}
+        onClose={() => setMapOpenMobile(false)}
+        filtros={filtrosAtuais}
+      />
+    </>
+  );
+}
