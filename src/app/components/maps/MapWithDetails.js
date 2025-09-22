@@ -1,6 +1,9 @@
 // src/app/components/maps/MapWithDetails.js
 "use client";
+export default function MapWithDetails({ filtros }) {
+console.log("🚨 EXECUTANDO MapWithDetails.js - SE VOCÊ VÊ ISSO, ESTE É O ARQUIVO CERTO!");
 
+}
 import { useEffect, useState } from "react";
 import { MapContainer, TileLayer, ZoomControl, useMap, Marker, Popup } from "react-leaflet";
 import Image from "next/image";
