@@ -4,6 +4,9 @@ import { useEffect, useState } from "react";
 import { MapContainer, TileLayer, ZoomControl, useMap, Marker, Popup } from "react-leaflet";
 import Image from "next/image";
 
+// ADICIONADO: Log de carregamento do arquivo
+console.log("🚨 ARQUIVO MAP-COMPONENT.JS CARREGADO!");
+
 // Componente de Popup Customizado e Otimizado
 const ImovelPopup = ({ imovel }) => {
   // LOG 3: VERIFICAR O OBJETO 'imovel' QUE CHEGA AO POPUP
@@ -21,7 +24,8 @@ const ImovelPopup = ({ imovel }) => {
     if (!temFoto) {
       // LOG 4a: AVISAR SE NÃO HÁ FOTOS
       console.log(`LOG 4a: Imóvel ${imovel.Codigo} não possui array 'Foto'.`);
-      return '/placeholder-imovel.jpg';
+      // CORREÇÃO: Usar placeholder válido
+      return 'https://via.placeholder.com/240x130/E5E7EB/6B7280?text=Sem+foto';
     }
     
     const fotoDestaqueObj = imovel.Foto.find(foto => foto && foto.Destaque === "Sim");
@@ -33,7 +37,7 @@ const ImovelPopup = ({ imovel }) => {
     
     // LOG 4c: AVISAR QUE USOU FALLBACK
     console.log(`LOG 4c: Imóvel ${imovel.Codigo} - Nenhuma foto destaque. Usando fallback (primeira foto).`, imovel.Foto[0]?.Foto);
-    return imovel.Foto[0]?.Foto || '/placeholder-imovel.jpg';
+    return imovel.Foto[0]?.Foto || 'https://via.placeholder.com/240x130/E5E7EB/6B7280?text=Sem+foto';
   };
 
   const fotoUrl = getFotoDestaqueUrl(imovel);
@@ -43,8 +47,21 @@ const ImovelPopup = ({ imovel }) => {
   return (
     <Popup>
       <div className="w-[240px] font-sans">
+        {/* CORREÇÃO: Versão atualizada do Next.js Image */}
         <div className="relative w-full h-[130px] rounded-lg overflow-hidden mb-2 bg-gray-200">
-          <Image src={fotoUrl} alt={`Destaque do imóvel ${imovel.Empreendimento}`} layout="fill" objectFit="cover" />
+          <Image 
+            src={fotoUrl} 
+            alt={`Destaque do imóvel ${imovel.Empreendimento}`} 
+            fill
+            style={{ objectFit: 'cover' }}
+            onError={(e) => {
+              console.log(`❌ Erro ao carregar imagem: ${fotoUrl}`);
+              e.target.src = 'https://via.placeholder.com/240x130/FF0000/FFFFFF?text=ERRO';
+            }}
+            onLoad={() => {
+              console.log(`✅ Imagem carregada com sucesso: ${fotoUrl}`);
+            }}
+          />
         </div>
         <h3 className="font-bold text-sm truncate">{imovel.Empreendimento}</h3>
         <p className="text-xs text-gray-600 truncate">{imovel.BairroComercial || imovel.Endereco}</p>
@@ -78,7 +95,9 @@ const MapUpdater = ({ center, zoom }) => {
 };
 
 // O componente principal
-  const MapComponent = ({ filtros }) => {
+const MapComponent = ({ filtros }) => {
+  console.log("🚨 EXECUTANDO MapComponent - FUNÇÃO PRINCIPAL!");
+  
   const [imoveis, setImoveis] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -107,6 +126,7 @@ const MapUpdater = ({ center, zoom }) => {
 
         // LOG 2: VERIFICAR OS DADOS BRUTOS DA API
         console.log("LOG 2: Dados brutos recebidos da API:", data);
+        console.log("LOG 2b: Primeiro imóvel exemplo:", data.data?.[0]);
         
         setImoveis(data.data || []);
 
@@ -128,7 +148,7 @@ const MapUpdater = ({ center, zoom }) => {
           iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
           iconUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
           shadowUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-        } );
+        });
       });
     } catch (error) {
       console.error("Erro ao carregar o Leaflet:", error);
@@ -150,6 +170,11 @@ const MapUpdater = ({ center, zoom }) => {
 
   return (
     <div className="w-full h-full rounded-lg overflow-hidden border border-gray-300 shadow-lg relative">
+      {/* ADICIONADO: Debug visual */}
+      <div className="absolute top-2 left-2 bg-blue-500 text-white px-2 py-1 rounded text-xs z-50">
+        map-component.js ativo!
+      </div>
+      
       {loading && (
         <div className="absolute inset-0 bg-white z-50 flex items-center justify-center">
           <div className="text-center">
@@ -163,7 +188,7 @@ const MapUpdater = ({ center, zoom }) => {
         <MapUpdater center={mapCenter} zoom={mapZoom} />
         <ZoomControl position="bottomright" />
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution='&copy; OpenStreetMap' />
-        {imoveis.map((imovel ) => (
+        {imoveis.map((imovel) => (
           (imovel.Latitude && imovel.Longitude) && (
             <Marker key={imovel._id || imovel.Codigo} position={[parseFloat(imovel.Latitude), parseFloat(imovel.Longitude)]}>
               <ImovelPopup imovel={imovel} />
