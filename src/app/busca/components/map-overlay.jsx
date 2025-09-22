@@ -1,12 +1,10 @@
 // src/app/busca/components/map-overlay.jsx
 "use client";
-
 import { useEffect } from "react";
 import dynamic from "next/dynamic";
 
-// --- CORREÇÃO ---
-// Importa o componente de mapa centralizado e com diagnóstico.
-const MapWithNoSSR = dynamic(() => import("../../components/maps/MapWithDetails"), {
+// CORREÇÃO: Importar map-component ao invés de MapWithDetails
+const MapWithNoSSR = dynamic(() => import("./map-component"), {
   ssr: false,
   loading: () => (
     <div className="w-full h-full flex items-center justify-center bg-gray-100">
