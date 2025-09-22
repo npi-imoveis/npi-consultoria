@@ -1,6 +1,7 @@
 "use client";
-
+console.log("### MAPA RENDERIZADO: MapComplete.js ###"); 
 import { useEffect, useRef, useState } from "react";
+
 
 const MapComplete = ({ filtros }) => {
   const [imoveis, setImoveis] = useState([]);
