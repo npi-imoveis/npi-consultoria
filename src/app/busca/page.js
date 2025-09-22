@@ -21,7 +21,7 @@ import { gerarUrlSeoFriendly } from "../utils/url-slugs";
 import MapOverlay from "./components/map-overlay.jsx"; 
 
 // Importa o componente de mapa centralizado e com diagnóstico.
-const MapWithNoSSR = dynamic(() => import("./components/map-component"), {
+const MapWithNoSSR = dynamic(() => import("../components/maps/MapWithDetails"), {
   ssr: false,
   loading: () => (
     <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
