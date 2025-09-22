@@ -1,8 +1,8 @@
 // src/app/busca/components/map-overlay.jsx
 "use client";
 
-import dynamic from "next/dynamic";
 import { useEffect } from "react";
+import dynamic from "next/dynamic";
 
 // --- CORREÇÃO ---
 // Importa o componente de mapa centralizado e com diagnóstico.
@@ -22,19 +22,20 @@ export default function MapOverlay({ open, onClose, filtros }) {
   // trava o scroll do body quando aberto
   useEffect(() => {
     if (!open) return;
+    
     const { overflow } = document.body.style;
     document.body.style.overflow = "hidden";
+    
     return () => {
       document.body.style.overflow = overflow;
     };
   }, [open]);
 
+  if (!open) return null;
+
   return (
     <div
-      className={[
-        "md:hidden fixed inset-0 z-[9999] transition-transform duration-300",
-        open ? "translate-y-0" : "translate-y-full",
-      ].join(" ")}
+      className="md:hidden fixed inset-0 z-[9999] transition-transform duration-300 translate-y-0"
       aria-hidden={!open}
       role="dialog"
       aria-modal={open ? "true" : "false"}
@@ -45,7 +46,7 @@ export default function MapOverlay({ open, onClose, filtros }) {
         onClick={onClose}
         aria-hidden="true"
       />
-
+      
       {/* painel */}
       <div className="absolute inset-x-0 bottom-0 top-0 bg-white rounded-t-2xl overflow-hidden flex flex-col">
         {/* header */}
@@ -58,7 +59,7 @@ export default function MapOverlay({ open, onClose, filtros }) {
             Ver resultados
           </button>
         </div>
-
+        
         {/* mapa ocupa todo o restante */}
         <div className="grow">
           <MapWithNoSSR filtros={filtros} />
