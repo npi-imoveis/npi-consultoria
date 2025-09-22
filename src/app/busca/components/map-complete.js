@@ -6,7 +6,6 @@ import Image from "next/image";
 
 // Componente de Popup Customizado e Otimizado
 const ImovelPopup = ({ imovel }) => {
-  // Função para formatar o slug (incluída para não depender de import externo)
   const formatterSlug = (text) => {
     if (!text) return "";
     return text.toString().toLowerCase()
@@ -18,10 +17,9 @@ const ImovelPopup = ({ imovel }) => {
 
   const slug = formatterSlug(imovel.Empreendimento || "");
 
-  // Lógica para buscar a foto de destaque
   const getFotoDestaqueUrl = (imovel) => {
     const temFoto = imovel.Foto && Array.isArray(imovel.Foto) && imovel.Foto.length > 0;
-    if (!temFoto) return '/placeholder-imovel.jpg'; // Certifique-se que este placeholder existe em /public
+    if (!temFoto) return '/placeholder-imovel.jpg';
     
     const fotoDestaqueObj = imovel.Foto.find(foto => foto && foto.Destaque === "Sim");
     if (fotoDestaqueObj && fotoDestaqueObj.Foto) return fotoDestaqueObj.Foto;
@@ -100,9 +98,13 @@ const MapComplete = ({ filtros }) => {
           filtros.bairrosSelecionados.forEach(bairro => params.append('bairros', bairro));
         }
         
-        const response = await fetch(`/api/imoveis/mapa?${params.toString()}`);
+        // --- CORREÇÃO DE CACHE APLICADA AQUI ---
+        const cacheBuster = `&t=${new Date().getTime()}`;
+        const response = await fetch(`/api/imoveis/mapa?${params.toString()}${cacheBuster}`);
+        
         const data = await response.json();
         setImoveis(data.data || []);
+
       } catch (err) {
         console.error("Erro ao buscar imóveis para o mapa:", err);
         setError("Não foi possível carregar os imóveis.");
