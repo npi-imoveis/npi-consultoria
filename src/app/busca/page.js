@@ -19,7 +19,7 @@ import { gerarUrlSeoFriendly } from "../utils/url-slugs";
 // --- INÍCIO DA CORREÇÃO ---
 // Mapa com import dinâmico (evita SSR), agora apontando para o componente correto.
 // Assumindo que o caminho para o seu MapComponent seja este. Ajuste se necessário.
-const MapComponentWithNoSSR = dynamic(() => import("../components/maps/MapComponent"), {
+const MapComponentWithNoSSR = dynamic(() => import("./components/MapComponent"), {
   ssr: false,
   loading: () => (
     <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
