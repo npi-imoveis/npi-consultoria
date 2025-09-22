@@ -1,3 +1,5 @@
+// src/app/busca/components/map-component.js
+
 "use client";
 
 import { useEffect, useState, useRef } from "react";
