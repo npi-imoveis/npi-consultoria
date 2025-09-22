@@ -16,8 +16,6 @@ const MapComplete = ({ filtros }) => {
 
     const loadMap = async () => {
       try {
-        console.log('[MapComplete] Iniciando carregamento do mapa...');
-        
         if (!document.querySelector('link[href*="leaflet.css"]')) {
           const link = document.createElement('link');
           link.rel = 'stylesheet';
@@ -41,11 +39,7 @@ const MapComplete = ({ filtros }) => {
         const params = new URLSearchParams();
         
         if (filtros?.categoriaSelecionada) {
-          let categoria = filtros.categoriaSelecionada;
-          if (categoria === 'Casa em Condominio') {
-            categoria = 'Casa em Condominio';
-          }
-          params.append('categoria', categoria);
+          params.append('categoria', filtros.categoriaSelecionada);
         }
         
         if (filtros?.cidadeSelecionada) {
@@ -98,19 +92,32 @@ const MapComplete = ({ filtros }) => {
 
               const marker = L.marker([lat, lng]).addTo(mapInstanceRef.current);
               
-              // --- INÍCIO DA MODIFICAÇÃO ---
-              // 1. Obter a URL da foto de destaque
-              // Baseado na estrutura do seu outro componente, assumindo imovel.Foto[0].Foto
-              // Adicionado fallback para uma imagem placeholder caso não haja foto.
-              const fotoDestaqueUrl = imovel.Foto && imovel.Foto.length > 0 && imovel.Foto[0].Foto
-                ? imovel.Foto[0].Foto
-                : '/placeholder-imovel.jpg'; // Crie ou use um placeholder em sua pasta /public
+              // --- INÍCIO DA MODIFICAÇÃO CORRIGIDA ---
+              
+              // 1. Função para encontrar a URL da foto de destaque, replicando a lógica do CardImovel.js
+              const getFotoDestaqueUrl = (imovel) => {
+                const temFoto = imovel.Foto && Array.isArray(imovel.Foto) && imovel.Foto.length > 0;
+                if (!temFoto) {
+                  return '/placeholder-imovel.jpg'; // Fallback se não houver array de fotos
+                }
+                
+                const fotoDestaqueObj = imovel.Foto.find(foto => foto && foto.Destaque === "Sim");
+                
+                if (fotoDestaqueObj && fotoDestaqueObj.Foto) {
+                  return fotoDestaqueObj.Foto; // Retorna a foto com Destaque="Sim"
+                }
+                
+                // Fallback para a primeira foto do array se nenhuma for destaque
+                return imovel.Foto[0].Foto || '/placeholder-imovel.jpg';
+              };
+
+              const fotoUrl = getFotoDestaqueUrl(imovel);
 
               // 2. Criar o conteúdo HTML do popup com a imagem
               const popupContent = `
                 <div style="font-family: sans-serif; min-width: 220px; line-height: 1.5;">
                   <img 
-                    src="${fotoDestaqueUrl}" 
+                    src="${fotoUrl}" 
                     alt="Destaque do imóvel ${imovel.Empreendimento || 'sem nome'}" 
                     style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px; margin-bottom: 8px;"
                     loading="lazy"
@@ -127,7 +134,7 @@ const MapComplete = ({ filtros }) => {
                   </strong>` : ''}
                 </div>
               `;
-              // --- FIM DA MODIFICAÇÃO ---
+              // --- FIM DA MODIFICAÇÃO CORRIGIDA ---
               
               marker.bindPopup(popupContent);
               markersRef.current.push(marker);
