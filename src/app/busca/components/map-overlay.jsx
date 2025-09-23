@@ -3,9 +3,10 @@
 import { useEffect } from "react";
 import dynamic from "next/dynamic";
 
-// CORREÇÃO: Importar MapWithDetails com o caminho correto
-// Caminho: de /busca/components/ para /components/maps/
-const MapWithNoSSR = dynamic(() => import("../../components/maps/MapWithDetails"), {
+// CORREÇÃO DO CAMINHO: 3 níveis para cima
+// De: /src/app/busca/components/
+// Para: /src/app/components/maps/
+const MapWithNoSSR = dynamic(() => import("../../../components/maps/MapWithDetails"), {
   ssr: false,
   loading: () => (
     <div className="w-full h-full flex items-center justify-center bg-gray-100">
@@ -18,7 +19,6 @@ const MapWithNoSSR = dynamic(() => import("../../components/maps/MapWithDetails"
 });
 
 export default function MapOverlay({ open, onClose, filtros }) {
-  // trava o scroll do body quando aberto
   useEffect(() => {
     if (!open) return;
     
