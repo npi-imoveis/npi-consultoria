@@ -3,10 +3,8 @@
 import { useEffect } from "react";
 import dynamic from "next/dynamic";
 
-// CORREÇÃO DO CAMINHO: 3 níveis para cima
-// De: /src/app/busca/components/
-// Para: /src/app/components/maps/
-const MapWithNoSSR = dynamic(() => import("../../../components/maps/MapWithDetails"), {
+// CORREÇÃO TEMPORÁRIA: Usar o map-component.js que está na mesma pasta
+const MapWithNoSSR = dynamic(() => import("./map-component"), {
   ssr: false,
   loading: () => (
     <div className="w-full h-full flex items-center justify-center bg-gray-100">
