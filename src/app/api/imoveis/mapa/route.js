@@ -7,7 +7,6 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request) {
   try {
-    // Conectar ao banco (se necessário)
     await connectToDatabase();
     
     const { searchParams } = request.nextUrl;
@@ -77,103 +76,84 @@ export async function GET(request) {
       else filtro.Vagas = parseInt(vagas);
     }
     
-    console.log("Filtro da API do mapa:", filtro);
-    
-    // CORREÇÃO PRINCIPAL: Incluir TODOS os campos necessários para o card do mapa
+    // CORREÇÃO IMPORTANTE: Não usar .select() para garantir que todos os campos venham
+    // Vamos buscar tudo e depois filtrar o que precisamos
     const imoveis = await Imovel.find(filtro)
-      .select(`
-        Empreendimento 
-        Latitude 
-        Longitude 
-        ValorVenda 
-        ValorLocacao
-        BairroComercial 
-        Codigo 
-        Endereco 
-        Foto 
-        FotoDestaque 
-        imagemDestaque
-        AreaPrivativa 
-        AreaConstruida 
-        Dormitorios 
-        Quartos
-        Banheiros 
-        Vagas
-        TipoNegocio
-        TipoImovel
-        _id
-      `)
       .limit(200)
-      .lean();
+      .lean()
+      .exec();
     
-    // LOG para debug - verificar estrutura dos dados
-    console.log(`API Mapa: ${imoveis.length} imóveis encontrados`);
-    
-    if (imoveis.length > 0) {
-      console.log("=== ESTRUTURA DO PRIMEIRO IMÓVEL ===");
-      console.log("Campos principais:", {
-        Codigo: imoveis[0].Codigo,
-        Empreendimento: imoveis[0].Empreendimento,
-        temFoto: !!imoveis[0].Foto,
-        quantidadeFotos: imoveis[0].Foto?.length || 0,
-        temFotoDestaque: !!imoveis[0].FotoDestaque,
-        temImagemDestaque: !!imoveis[0].imagemDestaque,
-        AreaPrivativa: imoveis[0].AreaPrivativa,
-        Dormitorios: imoveis[0].Dormitorios,
-        Quartos: imoveis[0].Quartos,
-        Vagas: imoveis[0].Vagas
-      });
-      
-      // Log da estrutura do array Foto
-      if (imoveis[0].Foto && Array.isArray(imoveis[0].Foto) && imoveis[0].Foto.length > 0) {
-        console.log("Estrutura primeira foto:", {
-          temCampoFoto: !!imoveis[0].Foto[0].Foto,
-          temCampoUrl: !!imoveis[0].Foto[0].url,
-          temCampoSrc: !!imoveis[0].Foto[0].src,
-          temCampoDestaque: !!imoveis[0].Foto[0].Destaque,
-          valorDestaque: imoveis[0].Foto[0].Destaque,
-          primeiraFotoURL: imoveis[0].Foto[0].Foto || imoveis[0].Foto[0].url || imoveis[0].Foto[0].src || 'Nenhuma URL encontrada'
-        });
-      }
-    }
-    
-    // Processar imóveis para garantir que a foto destaque esteja disponível
+    // Processar os imóveis para garantir que o campo Foto está correto
     const imoveisProcessados = imoveis.map(imovel => {
-      // Encontrar a foto destaque
-      let fotoDestaque = null;
+      // Extrair apenas os campos necessários
+      const imovelLimpo = {
+        _id: imovel._id,
+        Codigo: imovel.Codigo,
+        Empreendimento: imovel.Empreendimento,
+        Latitude: imovel.Latitude,
+        Longitude: imovel.Longitude,
+        ValorVenda: imovel.ValorVenda,
+        ValorLocacao: imovel.ValorLocacao,
+        BairroComercial: imovel.BairroComercial,
+        Bairro: imovel.Bairro,
+        Endereco: imovel.Endereco,
+        AreaPrivativa: imovel.AreaPrivativa,
+        AreaConstruida: imovel.AreaConstruida,
+        Dormitorios: imovel.Dormitorios,
+        Quartos: imovel.Quartos,
+        Banheiros: imovel.Banheiros,
+        Vagas: imovel.Vagas,
+        TipoNegocio: imovel.TipoNegocio,
+        TipoImovel: imovel.TipoImovel,
+      };
       
-      // Tentar encontrar no array Foto
-      if (imovel.Foto && Array.isArray(imovel.Foto) && imovel.Foto.length > 0) {
-        // Procurar por Destaque = "Sim"
-        const fotoComDestaque = imovel.Foto.find(f => f?.Destaque === "Sim" && f?.Foto);
-        if (fotoComDestaque) {
-          fotoDestaque = fotoComDestaque.Foto;
+      // Processar o campo Foto
+      if (imovel.Foto && Array.isArray(imovel.Foto)) {
+        // Garantir que o array Foto está completo
+        imovelLimpo.Foto = imovel.Foto;
+        
+        // Adicionar foto destaque processada para facilitar
+        const fotoDestaque = imovel.Foto.find(f => f?.Destaque === "Sim" && f?.Foto);
+        if (fotoDestaque) {
+          imovelLimpo._fotoDestaqueProcessada = fotoDestaque.Foto;
         } else {
-          // Se não encontrar, pegar a primeira foto disponível
-          const primeiraFotoValida = imovel.Foto.find(f => f?.Foto);
-          if (primeiraFotoValida) {
-            fotoDestaque = primeiraFotoValida.Foto;
+          // Pegar primeira foto disponível
+          const primeiraFoto = imovel.Foto.find(f => f?.Foto);
+          if (primeiraFoto) {
+            imovelLimpo._fotoDestaqueProcessada = primeiraFoto.Foto;
           }
         }
       }
       
-      // Se não encontrou no array, tentar campos alternativos
-      if (!fotoDestaque) {
-        fotoDestaque = imovel.FotoDestaque || imovel.imagemDestaque;
+      // Campos alternativos de foto
+      if (!imovelLimpo._fotoDestaqueProcessada) {
+        if (imovel.FotoDestaque) imovelLimpo._fotoDestaqueProcessada = imovel.FotoDestaque;
+        else if (imovel.FotoPrincipal) imovelLimpo._fotoDestaqueProcessada = imovel.FotoPrincipal;
+        else if (imovel.imagemDestaque) imovelLimpo._fotoDestaqueProcessada = imovel.imagemDestaque;
       }
       
-      // Adicionar a foto destaque processada ao objeto
-      return {
-        ...imovel,
-        _fotoDestaqueProcessada: fotoDestaque // Campo auxiliar com a foto já processada
-      };
+      return imovelLimpo;
     });
+    
+    // Headers para evitar cache
+    const headers = new Headers();
+    headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    headers.set('Pragma', 'no-cache');
+    headers.set('Expires', '0');
     
     return NextResponse.json({
       status: 200,
       count: imoveisProcessados.length,
       data: imoveisProcessados,
-    });
+      debug: {
+        primeiroImovel: imoveisProcessados[0] ? {
+          codigo: imoveisProcessados[0].Codigo,
+          temFoto: !!imoveisProcessados[0].Foto,
+          qtdFotos: imoveisProcessados[0].Foto?.length || 0,
+          fotoDestaque: imoveisProcessados[0]._fotoDestaqueProcessada || 'Sem foto'
+        } : null
+      }
+    }, { headers });
     
   } catch (error) {
     console.error("Erro ao buscar imóveis para o mapa:", error);
