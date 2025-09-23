@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import "leaflet/dist/leaflet.css";
 
-// Importar MapWithDetails para desktop também
+// Usar o map-component.js que está na mesma pasta
 const MapWithNoSSR = dynamic(
-  () => import("../../components/maps/MapWithDetails"),
+  () => import("./map-component"),
   {
     ssr: false,
     loading: () => (
