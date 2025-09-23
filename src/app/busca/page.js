@@ -760,13 +760,13 @@ export default function BuscaImoveis() {
 
       {/* MOBILE (< md): barra ações + filtros off-canvas + lista */}
       <div className="md:hidden">
-        <MobileActionsBar
-          onOpenFilters={() => setFiltersMobileOpen(true)}
-          onOpenMap={() => setMapOpenMobile(true)}
-          resultsText={construirTextoFiltros()}
-        />
+      <MobileActionsBar
+      onOpenFilters={() => setFiltersMobileOpen(true)}
+      onOpenMap={() => setMapOpenMobile(true)}
+      resultsText={construirTextoFiltros()}
+       />
 
-        <PropertyFilters
+          <PropertyFilters
           horizontal={false}
           onFilter={resetarEstadoBusca}
           isVisible={filtersMobileOpen}
