@@ -36,6 +36,7 @@ const ImovelPopup = ({ imovel }) => {
       // Tentar campos alternativos
       if (imovel.FotoDestaque) return imovel.FotoDestaque;
       if (imovel.imagemDestaque) return imovel.imagemDestaque;
+      if (imovel.FotoPrincipal) return imovel.FotoPrincipal;
       
       return 'https://via.placeholder.com/240x130/E5E7EB/6B7280?text=Sem+foto';
     }
@@ -52,11 +53,24 @@ const ImovelPopup = ({ imovel }) => {
       return fotoDestaque.Foto;
     }
 
-    // Fallback: primeira foto disponível
-    const primeiraFoto = imovel.Foto.find(foto => foto && foto.Foto);
+    // Fallback: primeira foto com campo Foto preenchido
+    const primeiraFoto = imovel.Foto.find(foto => 
+      foto && foto.Foto && typeof foto.Foto === 'string' && foto.Foto.trim() !== ''
+    );
+    
     if (primeiraFoto && primeiraFoto.Foto) {
       console.log(`📷 Usando primeira foto: ${primeiraFoto.Foto}`);
       return primeiraFoto.Foto;
+    }
+
+    // Fallback 2: tentar FotoPequena
+    const primeiraFotoPequena = imovel.Foto.find(foto => 
+      foto && foto.FotoPequena && typeof foto.FotoPequena === 'string' && foto.FotoPequena.trim() !== ''
+    );
+    
+    if (primeiraFotoPequena && primeiraFotoPequena.FotoPequena) {
+      console.log(`📷 Usando FotoPequena: ${primeiraFotoPequena.FotoPequena}`);
+      return primeiraFotoPequena.FotoPequena;
     }
 
     console.log(`❌ Nenhuma foto válida encontrada`);
@@ -64,8 +78,22 @@ const ImovelPopup = ({ imovel }) => {
   };
 
   const fotoUrl = getFotoDestaqueUrl(imovel);
+  
+  // Formatar valor com verificação de locação também
   const valorPrincipal = imovel.ValorVenda 
-    ? Number(imovel.ValorVenda).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) 
+    ? Number(imovel.ValorVenda).toLocaleString("pt-BR", { 
+        style: "currency", 
+        currency: "BRL",
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }) 
+    : imovel.ValorLocacao 
+    ? Number(imovel.ValorLocacao).toLocaleString("pt-BR", { 
+        style: "currency", 
+        currency: "BRL",
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }) + "/mês"
     : "Consulte";
 
   // Monta informações extras
@@ -133,8 +161,8 @@ const ImovelPopup = ({ imovel }) => {
         </h3>
         
         {/* Localização */}
-        <p className="text-xs text-gray-600 truncate" title={imovel.BairroComercial || imovel.Endereco}>
-          {imovel.BairroComercial || imovel.Endereco || "Localização não informada"}
+        <p className="text-xs text-gray-600 truncate" title={imovel.BairroComercial || imovel.Bairro || imovel.Endereco}>
+          {imovel.BairroComercial || imovel.Bairro || imovel.Endereco || "Localização"}
         </p>
         
         {/* Info extra (área, dormitórios, vagas) */}
@@ -217,7 +245,8 @@ export default function MapComponent({ filtros }) {
           console.log("Estrutura do campo Foto:", {
             temFoto: !!data.data[0].Foto,
             ehArray: Array.isArray(data.data[0].Foto),
-            quantidade: data.data[0].Foto?.length || 0
+            quantidade: data.data[0].Foto?.length || 0,
+            primeiraFoto: data.data[0].Foto?.[0]
           });
         }
         
