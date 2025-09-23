@@ -3,8 +3,8 @@
 import { useEffect } from "react";
 import dynamic from "next/dynamic";
 
-// CORREÇÃO: Importar map-component ao invés de MapWithDetails
-const MapWithNoSSR = dynamic(() => import("./map-component"), {
+// CORREÇÃO: Importar MapWithDetails com o caminho correto
+const MapWithNoSSR = dynamic(() => import("../../components/maps/MapWithDetails"), {
   ssr: false,
   loading: () => (
     <div className="w-full h-full flex items-center justify-center bg-gray-100">
@@ -28,9 +28,9 @@ export default function MapOverlay({ open, onClose, filtros }) {
       document.body.style.overflow = overflow;
     };
   }, [open]);
-
+  
   if (!open) return null;
-
+  
   return (
     <div
       className="md:hidden fixed inset-0 z-[9999] transition-transform duration-300 translate-y-0"
