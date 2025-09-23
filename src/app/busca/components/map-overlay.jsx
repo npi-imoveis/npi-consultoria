@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import dynamic from "next/dynamic";
 
 // CORREÇÃO: Importar MapWithDetails com o caminho correto
+// Caminho: de /busca/components/ para /components/maps/
 const MapWithNoSSR = dynamic(() => import("../../components/maps/MapWithDetails"), {
   ssr: false,
   loading: () => (
