@@ -22,22 +22,35 @@ const ImovelPopup = ({ imovel }) => {
   const getFotoDestaqueUrl = (imovel) => {
     const temFoto = imovel.Foto && Array.isArray(imovel.Foto) && imovel.Foto.length > 0;
     if (!temFoto) {
-      // LOG 4a: AVISAR SE NÃO HÁ FOTOS
       console.log(`LOG 4a: Imóvel ${imovel.Codigo} não possui array 'Foto'.`);
-      // CORREÇÃO: Usar placeholder válido
       return 'https://via.placeholder.com/240x130/E5E7EB/6B7280?text=Sem+foto';
     }
     
-    const fotoDestaqueObj = imovel.Foto.find(foto => foto && foto.Destaque === "Sim");
+    // CORREÇÃO: Primeiro procura por "Sim", depois por "Nao", depois primeira
+    let fotoDestaqueObj = imovel.Foto.find(foto => foto && foto.Destaque === "Sim");
+    
     if (fotoDestaqueObj && fotoDestaqueObj.Foto) {
-      // LOG 4b: AVISAR QUE ENCONTROU FOTO DESTAQUE
-      console.log(`LOG 4b: Imóvel ${imovel.Codigo} - Foto Destaque encontrada:`, fotoDestaqueObj.Foto);
+      console.log(`LOG 4b: Imóvel ${imovel.Codigo} - Foto Destaque "Sim" encontrada:`, fotoDestaqueObj.Foto);
       return fotoDestaqueObj.Foto;
     }
     
-    // LOG 4c: AVISAR QUE USOU FALLBACK
-    console.log(`LOG 4c: Imóvel ${imovel.Codigo} - Nenhuma foto destaque. Usando fallback (primeira foto).`, imovel.Foto[0]?.Foto);
-    return imovel.Foto[0]?.Foto || 'https://via.placeholder.com/240x130/E5E7EB/6B7280?text=Sem+foto';
+    // NOVO: Se não tem "Sim", pega qualquer uma com "Nao"
+    fotoDestaqueObj = imovel.Foto.find(foto => foto && foto.Destaque === "Nao" && foto.Foto);
+    
+    if (fotoDestaqueObj && fotoDestaqueObj.Foto) {
+      console.log(`LOG 4c: Imóvel ${imovel.Codigo} - Usando foto com Destaque "Nao":`, fotoDestaqueObj.Foto);
+      return fotoDestaqueObj.Foto;
+    }
+    
+    // FALLBACK: Primeira foto disponível
+    const primeiraFoto = imovel.Foto.find(foto => foto && foto.Foto);
+    if (primeiraFoto && primeiraFoto.Foto) {
+      console.log(`LOG 4d: Imóvel ${imovel.Codigo} - Usando primeira foto disponível:`, primeiraFoto.Foto);
+      return primeiraFoto.Foto;
+    }
+    
+    console.log(`LOG 4e: Nenhuma foto válida encontrada`);
+    return 'https://via.placeholder.com/240x130/E5E7EB/6B7280?text=Sem+foto';
   };
 
   const fotoUrl = getFotoDestaqueUrl(imovel);
