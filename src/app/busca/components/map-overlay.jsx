@@ -1,9 +1,7 @@
-// src/app/busca/components/map-overlay.jsx
 "use client";
 import { useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 
-// carrega o mapa só quando o overlay abre (sem SSR)
 const MapWithNoSSR = dynamic(() => import("./map-component"), {
   ssr: false,
   loading: () => (
@@ -21,14 +19,11 @@ export default function MapOverlay({ open, onClose, filtros }) {
   const closeBtnRef = useRef(null);
   const lastFocusedRef = useRef(null);
 
-  // travar scroll + gerenciar foco ao abrir/fechar
   useEffect(() => {
     if (!open) return;
     lastFocusedRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-
     const t = setTimeout(() => closeBtnRef.current?.focus(), 0);
     return () => {
       clearTimeout(t);
@@ -37,7 +32,6 @@ export default function MapOverlay({ open, onClose, filtros }) {
     };
   }, [open]);
 
-  // fechar com ESC + foco trap simples
   useEffect(() => {
     if (!open) return;
     const onKey = (e) => {
@@ -50,11 +44,8 @@ export default function MapOverlay({ open, onClose, filtros }) {
         if (!nodes.length) return;
         const first = nodes[0];
         const last = nodes[nodes.length - 1];
-        if (!e.shiftKey && document.activeElement === last) {
-          e.preventDefault(); first.focus();
-        } else if (e.shiftKey && document.activeElement === first) {
-          e.preventDefault(); last.focus();
-        }
+        if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+        else if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
       }
     };
     document.addEventListener("keydown", onKey);
@@ -71,22 +62,8 @@ export default function MapOverlay({ open, onClose, filtros }) {
       aria-labelledby="mobile-map-title"
       ref={dialogRef}
     >
-      {/* backdrop */}
-      <button
-        aria-label="Fechar mapa"
-        onClick={onClose}
-        className="absolute inset-0 bg-black/55"
-      />
-
-      {/* painel */}
-      <div
-        className="
-          absolute inset-x-0 bottom-0 top-0
-          bg-white rounded-t-2xl overflow-hidden
-          flex flex-col
-          h-[100dvh] overscroll-contain
-        "
-      >
+      <button aria-label="Fechar mapa" onClick={onClose} className="absolute inset-0 bg-black/55" />
+      <div className="absolute inset-x-0 bottom-0 top-0 bg-white rounded-t-2xl overflow-hidden flex flex-col h-[100dvh] overscroll-contain">
         <div className="shrink-0 px-4 py-3 flex items-center justify-between border-b">
           <h3 id="mobile-map-title" className="text-sm font-bold">Mapa</h3>
           <button
@@ -97,7 +74,6 @@ export default function MapOverlay({ open, onClose, filtros }) {
             Ver resultados
           </button>
         </div>
-
         <div className="grow">
           <MapWithNoSSR filtros={filtros} />
         </div>
