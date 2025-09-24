@@ -9,8 +9,8 @@ import CardImovel, { CardImovelSkeleton } from "../components/ui/card-imovel";
 import Pagination from "../components/ui/pagination";
 import { Footer } from "../components/ui/footer";
 import PropertyFilters from "./components/property-filters";
-import MobileActionsBar from "./components/mobile-actions-bar";     // ✅ componente único
-import MapOverlay from "./components/map-overlay.jsx";              // ✅ overlay do mapa
+import MobileActionsBar from "./components/mobile-actions-bar"; // ✅
+import MapOverlay from "./components/map-overlay.jsx";          // ✅
 
 import { getImoveis, searchImoveis } from "../services";
 import useFiltersStore from "../store/filtrosStore";
@@ -18,7 +18,7 @@ import useFavoritosStore from "../store/favoritosStore";
 import useImovelStore from "../store/imovelStore";
 import { gerarUrlSeoFriendly } from "../utils/url-slugs";
 
-// Mapa do desktop segue 50/50 (SSR off)
+// Mapa desktop (SSR off)
 const MapWithNoSSR = dynamic(() => import("./components/map-component"), {
   ssr: false,
   loading: () => (
