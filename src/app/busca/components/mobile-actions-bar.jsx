@@ -1,3 +1,4 @@
+// src/app/busca/components/mobile-actions-bar.jsx
 "use client";
 
 export default function MobileActionsBar({
@@ -9,7 +10,9 @@ export default function MobileActionsBar({
   return (
     <div className="md:hidden sticky top-20 z-[45] bg-white border-b shadow-sm">
       <div className="px-3 py-2 flex items-center justify-between gap-2">
-        <span className="text-[11px] text-zinc-600 font-semibold truncate">{resultsText}</span>
+        <span className="text-[11px] text-zinc-600 font-semibold truncate">
+          {resultsText}
+        </span>
 
         <div className="flex items-center gap-2 shrink-0">
           {favoritesButton}
