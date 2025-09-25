@@ -219,44 +219,66 @@ export default function ImovelFormClient() {
         console.log("Nenhuma imagem para fazer upload");
       }
 
-      // ✅ Preparar dados para o email - TODOS os campos preenchidos
+      // ✅ GARANTIR QUE TODOS OS VALORES ESTEJAM PREENCHIDOS
+      console.log("Valores do formulário antes do envio:", {
+        nome: formData.nome || "VAZIO",
+        email: formData.email || "VAZIO", 
+        tipoImovel: formData.tipoImovel || "VAZIO",
+        valorImovel: formData.valorImovel || "VAZIO",
+        valorCondominio: formData.valorCondominio || "VAZIO",
+        valorIptu: formData.valorIptu || "VAZIO"
+      });
+
+      // ✅ Preparar dados usando EXATAMENTE os nomes que aparecem no template
       const emailData = {
-        // Dados básicos
+        // Campos básicos do EmailJS
         to_name: "NPI Consultoria",
-        from_name: formData.nome,
-        reply_to: formData.email,
+        from_name: formData.nome || "Nome não informado",
+        reply_to: formData.email || "email@nao-informado.com",
         
-        // Dados pessoais
-        nome: formData.nome,
-        email: formData.email,
-        telefone: formData.telefone,
-        
-        // Dados do imóvel
-        tipo_imovel: formData.tipoImovel,
-        acao: formData.acao,
-        cep: formData.cep,
-        endereco: formData.endereco,
-        numero: formData.numero,
+        // ✅ USANDO OS NOMES EXATOS QUE APARECEM NO EMAIL RECEBIDO
+        name: formData.nome || "Nome não informado",
+        email: formData.email || "Email não informado",
+        telefone: formData.telefone || "Telefone não informado",
+        tipoImovel: formData.tipoImovel || "Tipo não informado",
+        acao: formData.acao || "Ação não informada",
+        cep: formData.cep || "CEP não informado",
+        endereco: formData.endereco || "Endereço não informado",
+        numero: formData.numero || "Número não informado",
         complemento: formData.complemento || "Não informado",
-        bairro: formData.bairro,
-        cidade: formData.cidade,
-        estado: formData.estado,
+        bairro: formData.bairro || "Bairro não informado",
+        cidade: formData.cidade || "Cidade não informada",
+        estado: formData.estado || "Estado não informado",
+        valorImovel: formData.valorImovel || "Valor não informado",
+        valorCondominio: formData.valorCondominio || "Valor não informado",
+        valorIptu: formData.valorIptu || "Valor não informado",
+        descricao: formData.descricao || "Descrição não informada",
+        imagensUrls: imageUrls.length > 0 ? imageUrls.join(", ") : "Nenhuma imagem enviada",
         
-        // Valores
-        valor_imovel: `R$ ${formData.valorImovel}`,
-        valor_condominio: `R$ ${formData.valorCondominio}`,
-        valor_iptu: `R$ ${formData.valorIptu}`,
+        // ✅ Versões alternativas dos campos para garantir compatibilidade
+        "E-mail": formData.email || "Email não informado",
+        "Tipo Imóvel": formData.tipoImovel || "Tipo não informado",
+        "Venda ou Locação": formData.acao || "Ação não informada",
+        "Cep": formData.cep || "CEP não informado",
+        "Endereco": formData.endereco || "Endereço não informado",
+        "Numero": formData.numero || "Número não informado",
+        "Complemento": formData.complemento || "Não informado",
+        "Bairro": formData.bairro || "Bairro não informado",
+        "Cidade": formData.cidade || "Cidade não informada",
+        "Estado": formData.estado || "Estado não informado",
+        "Valor Imóvel": formData.valorImovel || "Valor não informado",
+        "Valor Condomínio": formData.valorCondominio || "Valor não informado",
+        "Valor Iptu": formData.valorIptu || "Valor não informado",
+        "Descrição": formData.descricao || "Descrição não informada",
+        "Imagens": imageUrls.length > 0 ? imageUrls.join(", ") : "Nenhuma imagem enviada",
         
-        // Descrição e imagens
-        descricao: formData.descricao,
+        // Campos com underscores (formato comum do EmailJS)
+        tipo_imovel: formData.tipoImovel || "Tipo não informado",
+        venda_ou_locacao: formData.acao || "Ação não informada",
+        valor_imovel: formData.valorImovel || "Valor não informado",
+        valor_condominio: formData.valorCondominio || "Valor não informado",
+        valor_iptu: formData.valorIptu || "Valor não informado",
         imagens_urls: imageUrls.length > 0 ? imageUrls.join(", ") : "Nenhuma imagem enviada",
-        
-        // Campos específicos que podem estar no template
-        tipoImovel: formData.tipoImovel,
-        valorImovel: formData.valorImovel,
-        valorCondominio: formData.valorCondominio,
-        valorIptu: formData.valorIptu,
-        imagensUrls: imageUrls.join(", "),
         
         // Mensagem formatada completa
         message: `🏠 NOVO CADASTRO DE IMÓVEL
