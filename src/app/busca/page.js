@@ -1,6 +1,7 @@
+// src/app/busca/page.js
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 
@@ -8,8 +9,6 @@ import CardImovel, { CardImovelSkeleton } from "../components/ui/card-imovel";
 import Pagination from "../components/ui/pagination";
 import { Footer } from "../components/ui/footer";
 import PropertyFilters from "./components/property-filters";
-import MobileActionsBar from "./components/mobile-actions-bar";
-import MapOverlay from "./components/map-overlay";
 
 import { getImoveis, searchImoveis } from "../services";
 import useFiltersStore from "../store/filtrosStore";
@@ -17,8 +16,11 @@ import useFavoritosStore from "../store/favoritosStore";
 import useImovelStore from "../store/imovelStore";
 import { gerarUrlSeoFriendly } from "../utils/url-slugs";
 
-// Mapa desktop (SSR off)
-const MapWithNoSSR = dynamic(() => import("./components/map-component"), {
+// --- NOVO COMPONENTE GOOGLE MAPS ---
+import MapOverlay from "./components/map-overlay.jsx"; 
+
+// Importar o novo componente Google Maps integrado
+const IntegratedMapWithNoSSR = dynamic(() => import("./components/integrated-map-component"), {
   ssr: false,
   loading: () => (
     <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
@@ -30,35 +32,161 @@ const MapWithNoSSR = dynamic(() => import("./components/map-component"), {
   ),
 });
 
+/* =========================================================
+   PÁGINA
+========================================================= */
 export default function BuscaImoveis() {
   const router = useRouter();
 
-  // ====== ESTADOS ORIGINAIS ======
+  // Dados & Stores
   const [imoveis, setImoveis] = useState([]);
+  const [filteredImoveis, setFilteredImoveis] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+
   const filtrosAtuais = useFiltersStore((state) => state);
   const filtrosAplicados = useFiltersStore((state) => state.filtrosAplicados);
   const atualizacoesFiltros = useFiltersStore((state) => state.atualizacoesFiltros);
-  const { getQuantidadeFavoritos } = useFavoritosStore();
-  const adicionarVariosImoveisCache = useImovelStore((state) => state.adicionarVariosImoveisCache);
 
+  const { favoritos, getQuantidadeFavoritos } = useFavoritosStore();
+  const quantidadeFavoritos = getQuantidadeFavoritos();
+
+  const adicionarVariosImoveisCache = useImovelStore(
+    (state) => state.adicionarVariosImoveisCache
+  );
+
+  // UI / paginação
   const [ordenacao, setOrdenacao] = useState("relevancia");
   const [currentPage, setCurrentPage] = useState(1);
   const [pagination, setPagination] = useState({
-    totalItems: 0, totalPages: 1, currentPage: 1, itemsPerPage: 12,
+    totalItems: 0,
+    totalPages: 1,
+    currentPage: 1,
+    itemsPerPage: 12,
   });
 
   const [searchTerm, setSearchTerm] = useState("");
   const [mostrandoFavoritos, setMostrandoFavoritos] = useState(false);
+
+  // Mobile overlay states
   const [mapOpenMobile, setMapOpenMobile] = useState(false);
   const [filtersMobileOpen, setFiltersMobileOpen] = useState(false);
+
   const [isBrowser, setIsBrowser] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
 
-  // ====== SEO / Structured Data ======
+  // Estados para integração com o mapa
+  const [selectedProperty, setSelectedProperty] = useState(null);
+  const [selectedCluster, setSelectedCluster] = useState(null);
+  const [isMapFilterActive, setIsMapFilterActive] = useState(false);
+
+  const effectiveImoveis = useMemo(() => {
+    if (!isMapFilterActive) return imoveis;
+    if (!Array.isArray(filteredImoveis) || filteredImoveis.length === 0) return imoveis;
+    return filteredImoveis;
+  }, [filteredImoveis, imoveis, isMapFilterActive]);
+
+  const effectivePagination = useMemo(() => {
+    const itemsPerPage = pagination.itemsPerPage || pagination.limit || 12;
+    const basePagination = {
+      ...pagination,
+      itemsPerPage,
+      limit: itemsPerPage,
+      currentPage,
+    };
+
+    if (!isMapFilterActive) {
+      return basePagination;
+    }
+
+    const totalItems = Array.isArray(filteredImoveis) ? filteredImoveis.length : 0;
+    const totalPages = Math.max(1, Math.ceil(totalItems / itemsPerPage));
+    const safeCurrentPage = Math.min(basePagination.currentPage, totalPages);
+
+    return {
+      ...basePagination,
+      totalItems,
+      totalPages,
+      currentPage: safeCurrentPage,
+    };
+  }, [currentPage, filteredImoveis, isMapFilterActive, pagination]);
+
+  const clearMapSelection = useCallback(() => {
+    setFilteredImoveis([]);
+    setIsMapFilterActive(false);
+    setSelectedCluster(null);
+    setSelectedProperty(null);
+  }, []);
+
+  const mapPropertiesToImoveis = useCallback(
+    (properties) => {
+      if (!Array.isArray(properties) || properties.length === 0) return [];
+
+      const ids = new Set();
+      properties.forEach((property) => {
+        [property?.Codigo, property?._id, property?.id, property?.IdImovel]
+          .filter((value) => value !== undefined && value !== null && value !== "")
+          .forEach((value) => ids.add(String(value)));
+      });
+
+      const matches = imoveis.filter((imovel) =>
+        [imovel?.Codigo, imovel?._id, imovel?.id, imovel?.IdImovel]
+          .filter((value) => value !== undefined && value !== null && value !== "")
+          .some((value) => ids.has(String(value)))
+      );
+
+      if (matches.length === 0) {
+        return properties.filter((item) =>
+          [item?.Codigo, item?._id, item?.id, item?.IdImovel]
+            .some((value) => value !== undefined && value !== null && value !== "")
+        );
+      }
+
+      return matches;
+    },
+    [imoveis]
+  );
+
+  const handlePropertySelect = useCallback(
+    (property) => {
+      if (!property) {
+        clearMapSelection();
+        return;
+      }
+
+      const normalized = mapPropertiesToImoveis([property]);
+      const result = normalized.length > 0 ? normalized : [property];
+
+      setSelectedCluster(null);
+      setSelectedProperty(result[0] ?? null);
+      setFilteredImoveis(result);
+      setIsMapFilterActive(true);
+    },
+    [clearMapSelection, mapPropertiesToImoveis]
+  );
+
+  const handleClusterSelect = useCallback(
+    (properties) => {
+      if (!Array.isArray(properties) || properties.length === 0) {
+        clearMapSelection();
+        return;
+      }
+
+      const normalized = mapPropertiesToImoveis(properties);
+      const result = normalized.length > 0 ? normalized : properties;
+
+      setSelectedProperty(null);
+      setSelectedCluster(result);
+      setFilteredImoveis(result);
+      setIsMapFilterActive(true);
+    },
+    [clearMapSelection, mapPropertiesToImoveis]
+  );
+
+  /* ================= META + STRUCTURED DATA ================= */
   const updateStructuredData = (totalItems = 0, imoveisData = []) => {
     if (typeof document === "undefined") return;
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://npiconsultoria.com.br";
+    const baseUrl =
+      process.env.NEXT_PUBLIC_SITE_URL || "https://npiconsultoria.com.br";
     const currentDate = new Date().toISOString();
 
     let script = document.querySelector('script[type="application/ld+json"]');
@@ -74,7 +202,10 @@ export default function BuscaImoveis() {
         {
           "@type": "SearchResultsPage",
           "@id": `${baseUrl}/busca#webpage`,
-          url: typeof window !== "undefined" ? window.location.href : `${baseUrl}/busca`,
+          url:
+            typeof window !== "undefined"
+              ? window.location.href
+              : `${baseUrl}/busca`,
           name: document.title,
           datePublished: currentDate,
           dateModified: currentDate,
@@ -88,9 +219,20 @@ export default function BuscaImoveis() {
                 "@type": "RealEstateAgent",
                 name: imovel.NomeImovel || `Imóvel ${imovel.Codigo}`,
                 url: `${baseUrl}/imovel/${imovel.Codigo}`,
-                image: imovel.Foto1 || `${baseUrl}/assets/default-property.jpg`,
-                offers: { "@type": "Offer", price: imovel.ValorNumerico || 0, priceCurrency: "BRL", availability: "https://schema.org/InStock" },
-                address: { "@type": "PostalAddress", addressLocality: imovel.Cidade || "São Paulo", addressRegion: "SP", addressCountry: "BR" },
+                image:
+                  imovel.Foto1 || `${baseUrl}/assets/default-property.jpg`,
+                offers: {
+                  "@type": "Offer",
+                  price: imovel.ValorNumerico || 0,
+                  priceCurrency: "BRL",
+                  availability: "https://schema.org/InStock",
+                },
+                address: {
+                  "@type": "PostalAddress",
+                  addressLocality: imovel.Cidade || "São Paulo",
+                  addressRegion: "SP",
+                  addressCountry: "BR",
+                },
               },
             })),
           },
@@ -103,25 +245,38 @@ export default function BuscaImoveis() {
 
   const updateClientMetaTags = (quantidadeResultados = null) => {
     if (typeof window === "undefined") return;
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://npiconsultoria.com.br";
+
+    const baseUrl =
+      process.env.NEXT_PUBLIC_SITE_URL || "https://npiconsultoria.com.br";
     const currentDate = new Date().toISOString();
     const fs = useFiltersStore.getState();
 
     const plural = {
-      Apartamento: "Apartamentos", Casa: "Casas", "Casa Comercial": "Casas comerciais",
-      "Casa em Condominio": "Casas em condomínio", Cobertura: "Coberturas", Flat: "Flats",
-      Garden: "Gardens", Loft: "Lofts", Loja: "Lojas", "Prédio Comercial": "Prédios comerciais",
-      "Sala Comercial": "Salas comerciais", Sobrado: "Sobrados", Terreno: "Terrenos",
+      Apartamento: "Apartamentos",
+      Casa: "Casas",
+      "Casa Comercial": "Casas comerciais",
+      "Casa em Condominio": "Casas em condomínio",
+      Cobertura: "Coberturas",
+      Flat: "Flats",
+      Garden: "Gardens",
+      Loft: "Lofts",
+      Loja: "Lojas",
+      "Prédio Comercial": "Prédios comerciais",
+      "Sala Comercial": "Salas comerciais",
+      Sobrado: "Sobrados",
+      Terreno: "Terrenos",
     };
 
     const tParts = [];
-    if (fs.categoriaSelecionada) tParts.push(plural[fs.categoriaSelecionada] || "Imóveis");
+    if (fs.categoriaSelecionada)
+      tParts.push(plural[fs.categoriaSelecionada] || "Imóveis");
     else tParts.push("Imóveis");
     if (fs.finalidade === "Comprar") tParts.push("a venda");
     else if (fs.finalidade === "Alugar") tParts.push("para aluguel");
     if (fs.cidadeSelecionada) tParts.push(`no ${fs.cidadeSelecionada}`);
 
-    const qtd = quantidadeResultados !== null ? quantidadeResultados : pagination.totalItems;
+    const qtd =
+      quantidadeResultados !== null ? quantidadeResultados : pagination.totalItems;
     const title = `${tParts.join(" ")}${qtd ? ` ${qtd} imóveis` : ""}`.trim();
     const description = `Especialistas em ${tParts.join(" ")}. NPi`;
 
@@ -160,19 +315,32 @@ export default function BuscaImoveis() {
     canonicalLink.setAttribute("href", canonicalUrl);
   };
 
-  // ====== Helpers de URL ======
+  /* ======================== URL / SEO HELPERS ======================== */
   const normalizarCidade = (cidade) => {
     if (!cidade) return null;
     const m = {
-      guaruja: "Guarujá", "guarujá": "Guarujá", guaruja_: "Guarujá",
-      "sao-paulo": "São Paulo", "sao_paulo": "São Paulo",
-      "santo-andre": "Santo André", santos: "Santos", "praia-grande": "Praia Grande",
-      bertioga: "Bertioga", mongagua: "Mongaguá", "mongaguá": "Mongaguá",
-      ubatuba: "Ubatuba", caraguatatuba: "Caraguatatuba", "sao-sebastiao": "São Sebastião", ilhabela: "Ilhabela",
+      guaruja: "Guarujá",
+      "guarujá": "Guarujá",
+      guaruja_: "Guarujá",
+      "sao-paulo": "São Paulo",
+      "sao_paulo": "São Paulo",
+      "santo-andre": "Santo André",
+      santos: "Santos",
+      "praia-grande": "Praia Grande",
+      bertioga: "Bertioga",
+      mongagua: "Mongaguá",
+      "mongaguá": "Mongaguá",
+      ubatuba: "Ubatuba",
+      caraguatatuba: "Caraguatatuba",
+      "sao-sebastiao": "São Sebastião",
+      ilhabela: "Ilhabela",
     };
     const k = cidade.toLowerCase();
     if (m[k]) return m[k];
-    return cidade.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase()).trim();
+    return cidade
+      .replace(/-/g, " ")
+      .replace(/\b\w/g, (l) => l.toUpperCase())
+      .trim();
   };
 
   const extractFromSeoUrl = () => {
@@ -182,11 +350,33 @@ export default function BuscaImoveis() {
     if (!m) return null;
 
     const [, finalidade, categoria, cidade, bairro] = m;
-    const finalidadeStore = (finalidade === "aluguel" || finalidade === "alugar" || finalidade === "locacao") ? "Alugar" : "Comprar";
-    const singular = { apartamentos: "Apartamento", casas: "Casa", coberturas: "Cobertura", terrenos: "Terreno", flats: "Flat", gardens: "Garden", lofts: "Loft", lojas: "Loja", sobrados: "Sobrado" };
-    const categoriaStore = singular[categoria.toLowerCase()] || categoria.charAt(0).toUpperCase() + categoria.slice(1);
 
-    return { finalidade: finalidadeStore, categoria: categoriaStore, cidade: normalizarCidade(cidade), bairro: bairro ? normalizarCidade(bairro) : null };
+    const finalidadeStore =
+      finalidade === "aluguel" || finalidade === "alugar" || finalidade === "locacao"
+        ? "Alugar"
+        : "Comprar";
+
+    const singular = {
+      apartamentos: "Apartamento",
+      casas: "Casa",
+      coberturas: "Cobertura",
+      terrenos: "Terreno",
+      flats: "Flat",
+      gardens: "Garden",
+      lofts: "Loft",
+      lojas: "Loja",
+      sobrados: "Sobrado",
+    };
+    const categoriaStore =
+      singular[categoria.toLowerCase()] ||
+      categoria.charAt(0).toUpperCase() + categoria.slice(1);
+
+    return {
+      finalidade: finalidadeStore,
+      categoria: categoriaStore,
+      cidade: normalizarCidade(cidade),
+      bairro: bairro ? normalizarCidade(bairro) : null,
+    };
   };
 
   const updateUrlFromFilters = () => {
@@ -199,32 +389,56 @@ export default function BuscaImoveis() {
       if (s.cidadeSelecionada) params.set("cidade", s.cidadeSelecionada);
       if (s.finalidade) params.set("finalidade", s.finalidade);
       if (s.categoriaSelecionada) params.set("categoria", s.categoriaSelecionada);
-      if (s.bairrosSelecionados?.length) params.set("bairros", s.bairrosSelecionados.join(","));
+      if (s.bairrosSelecionados?.length)
+        params.set("bairros", s.bairrosSelecionados.join(","));
       if (s.quartos) params.set("quartos", s.quartos);
       if (s.precoMin) params.set("precoMin", s.precoMin);
       if (s.precoMax) params.set("precoMax", s.precoMax);
+
       router.replace(params.toString() ? `/busca?${params.toString()}` : "/busca");
     }
   };
+
+  /* ======================== BUSCA ======================== */
 
   const buildPriceParams = (isRent, min, max) => {
     const out = {};
     const hasMin = min !== null && min !== undefined && min !== "" && Number(min) > 0;
     const hasMax = max !== null && max !== undefined && max !== "" && Number(max) > 0;
+
     if (!hasMin && !hasMax) return out;
 
     if (isRent) {
-      if (hasMin) { out.precoAluguelMin = String(min); out.valorAluguelMin = String(min); out.aluguelMin = String(min); out.precoMinimo = String(min); }
-      if (hasMax) { out.precoAluguelMax = String(max); out.valorAluguelMax = String(max); out.aluguelMax = String(max); out.precoMaximo = String(max); }
+      if (hasMin) {
+        out.precoAluguelMin = String(min);
+        out.valorAluguelMin = String(min);
+        out.aluguelMin = String(min);
+        out.precoMinimo = String(min);
+      }
+      if (hasMax) {
+        out.precoAluguelMax = String(max);
+        out.valorAluguelMax = String(max);
+        out.aluguelMax = String(max);
+        out.precoMaximo = String(max);
+      }
     } else {
-      if (hasMin) { out.precoMinimo = String(min); out.precoMin = String(min); out.valorMin = String(min); }
-      if (hasMax) { out.precoMaximo = String(max); out.precoMax = String(max); out.valorMax = String(max); }
+      if (hasMin) {
+        out.precoMinimo = String(min);
+        out.precoMin = String(min);
+        out.valorMin = String(min);
+      }
+      if (hasMax) {
+        out.precoMaximo = String(max);
+        out.precoMax = String(max);
+        out.valorMax = String(max);
+      }
     }
     return out;
   };
 
   const buscarImoveis = async (comFiltros = false) => {
     if (mostrandoFavoritos) return;
+
     setIsLoading(true);
     try {
       let params = {};
@@ -244,8 +458,17 @@ export default function BuscaImoveis() {
           params.bairrosArray = s.bairrosSelecionados;
         }
 
-        if (isRent) { params.finalidade = "locacao"; params.status = "locacao"; params.tipoNegocio = "locacao"; params.negocio = "locacao"; params.modalidade = "locacao"; }
-        else { params.finalidade = "venda"; params.status = "venda"; params.tipoNegocio = "venda"; }
+        if (isRent) {
+          params.finalidade = "locacao";
+          params.status = "locacao";
+          params.tipoNegocio = "locacao";
+          params.negocio = "locacao";
+          params.modalidade = "locacao";
+        } else {
+          params.finalidade = "venda";
+          params.status = "venda";
+          params.tipoNegocio = "venda";
+        }
 
         Object.assign(params, buildPriceParams(isRent, s.precoMin, s.precoMax));
 
@@ -258,16 +481,24 @@ export default function BuscaImoveis() {
 
       const response = await getImoveis(params, currentPage, 12);
 
+      clearMapSelection();
+
       if (response && Array.isArray(response.imoveis)) {
         setImoveis(response.imoveis);
-        if (response.imoveis.length > 0) adicionarVariosImoveisCache(response.imoveis);
+        setFilteredImoveis(response.imoveis);
+        if (response.imoveis.length > 0) {
+          adicionarVariosImoveisCache(response.imoveis);
+        }
       } else {
         setImoveis([]);
+        setFilteredImoveis([]);
       }
 
       if (response && response.pagination) {
         const validPagination = {
-          totalItems: Number(response.pagination.totalItems) || (Array.isArray(response.imoveis) ? response.imoveis.length : 0),
+          totalItems:
+            Number(response.pagination.totalItems) ||
+            (Array.isArray(response.imoveis) ? response.imoveis.length : 0),
           totalPages: Number(response.pagination.totalPages) || 1,
           currentPage: Number(response.pagination.currentPage) || 1,
           itemsPerPage: Number(response.pagination.itemsPerPage) || 12,
@@ -277,28 +508,45 @@ export default function BuscaImoveis() {
         updateStructuredData(validPagination.totalItems, response.imoveis || []);
         setTimeout(() => updateClientMetaTags(validPagination.totalItems), 50);
       } else {
-        const totalLocal = Array.isArray(response?.imoveis) ? response.imoveis.length : 0;
-        setPagination((prev) => ({ ...prev, totalItems: totalLocal, totalPages: Math.max(1, Math.ceil(totalLocal / 12)) }));
+        const totalLocal = Array.isArray(response?.imoveis)
+          ? response.imoveis.length
+          : 0;
+        setPagination((prev) => ({
+          ...prev,
+          totalItems: totalLocal,
+          totalPages: Math.max(1, Math.ceil(totalLocal / 12)),
+        }));
         updateStructuredData(totalLocal, response?.imoveis || []);
         setTimeout(() => updateClientMetaTags(totalLocal), 50);
       }
     } catch {
+      clearMapSelection();
       setImoveis([]);
-      setPagination({ totalItems: 0, totalPages: 1, currentPage: 1, itemsPerPage: 12, limit: 12 });
+      setFilteredImoveis([]);
+      setPagination({
+        totalItems: 0,
+        totalPages: 1,
+        currentPage: 1,
+        itemsPerPage: 12,
+        limit: 12,
+      });
       updateStructuredData(0, []);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // ====== Efeitos iniciais / navegação ======
+  /* ======================== INITIAL LOAD ======================== */
   useEffect(() => {
     if (!initialLoad) return;
     setIsBrowser(true);
 
     const seoParams = extractFromSeoUrl();
 
-    const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : new URLSearchParams();
+    const searchParams =
+      typeof window !== "undefined"
+        ? new URLSearchParams(window.location.search)
+        : new URLSearchParams();
     const cidade = searchParams.get("cidade");
     const finalidade = searchParams.get("finalidade");
     const categoria = searchParams.get("categoria");
@@ -308,7 +556,16 @@ export default function BuscaImoveis() {
     const precoMax = searchParams.get("precoMax");
     const searchQuery = searchParams.get("q");
 
-    if (seoParams || cidade || finalidade || categoria || bairros || quartos || precoMin || precoMax) {
+    if (
+      seoParams ||
+      cidade ||
+      finalidade ||
+      categoria ||
+      bairros ||
+      quartos ||
+      precoMin ||
+      precoMax
+    ) {
       const filtrosParaAplicar = {};
       if (seoParams) {
         filtrosParaAplicar.cidadeSelecionada = seoParams.cidade;
@@ -333,14 +590,24 @@ export default function BuscaImoveis() {
       setTimeout(() => {
         store.setFilters(filtrosParaAplicar);
         store.aplicarFiltros();
-        setTimeout(() => { buscarImoveis(true); setInitialLoad(false); }, 80);
+        setTimeout(() => {
+          buscarImoveis(true);
+          setInitialLoad(false);
+        }, 80);
       }, 50);
     } else if (searchQuery) {
       setSearchTerm(searchQuery);
-      setTimeout(() => { handleSearch(searchQuery); setInitialLoad(false); }, 60);
+      setTimeout(() => {
+        handleSearch(searchQuery);
+        setInitialLoad(false);
+      }, 60);
     } else {
-      setTimeout(() => { buscarImoveis(false); setInitialLoad(false); }, 60);
+      setTimeout(() => {
+        buscarImoveis(false);
+        setInitialLoad(false);
+      }, 60);
     }
+
     setTimeout(() => updateClientMetaTags(), 300);
   }, [initialLoad]);
 
@@ -350,12 +617,15 @@ export default function BuscaImoveis() {
   }, [filtrosAplicados, atualizacoesFiltros, initialLoad]);
 
   useEffect(() => {
-    if (initialLoad || currentPage === 1) return;
+    if (initialLoad || currentPage === 1 || isMapFilterActive) return;
     if (mostrandoFavoritos) {
-      // paginação favoritos se necessário
-    } else if (filtrosAplicados) buscarImoveis(true);
-    else buscarImoveis(false);
-  }, [currentPage, initialLoad]);
+      // Handle favorites pagination if needed
+    } else if (filtrosAplicados) {
+      buscarImoveis(true);
+    } else {
+      buscarImoveis(false);
+    }
+  }, [currentPage, initialLoad, isMapFilterActive]);
 
   useEffect(() => {
     if (!isBrowser || initialLoad) return;
@@ -369,29 +639,69 @@ export default function BuscaImoveis() {
     }
   }, [isBrowser, isLoading, pagination.totalItems]);
 
+  useEffect(() => {
+    if (mapOpenMobile) {
+      const prev = document.body.style.overflow;
+      document.body.dataset.prevOverflow = prev || "";
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = document.body.dataset.prevOverflow || "";
+      };
+    }
+  }, [mapOpenMobile]);
+
   const handlePageChange = (newPage) => {
-    setCurrentPage(newPage);
-    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+    const clampedPage = isMapFilterActive
+      ? Math.max(1, Math.min(newPage, effectivePagination.totalPages || 1))
+      : newPage;
+
+    setCurrentPage(clampedPage);
+    if (typeof window !== "undefined") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   };
 
   const handleSearch = async (term) => {
     useFiltersStore.getState().limparFiltros();
-    if (!term || term.trim() === "") { buscarImoveis(false); return; }
-    setIsLoading(true);
+    clearMapSelection();
+
+    if (!term || term.trim() === "") {
+      buscarImoveis(false);
+      return;
+    }
+
+  setIsLoading(true);
+  clearMapSelection();
     try {
       const response = await searchImoveis(term);
       if (response && response.data) {
+        clearMapSelection();
         setImoveis(response.data);
-        const p = { totalItems: response.data.length, totalPages: Math.ceil(response.data.length / 12), currentPage: 1, itemsPerPage: 12, limit: 12 };
+        setFilteredImoveis(response.data);
+        const p = {
+          totalItems: response.data.length,
+          totalPages: Math.ceil(response.data.length / 12),
+          currentPage: 1,
+          itemsPerPage: 12,
+          limit: 12,
+        };
         setPagination(p);
-        if (Array.isArray(response.data) && response.data.length > 0) adicionarVariosImoveisCache(response.data);
+        if (Array.isArray(response.data) && response.data.length > 0) {
+          adicionarVariosImoveisCache(response.data);
+        }
         updateStructuredData(response.data.length, response.data);
         setTimeout(() => updateClientMetaTags(response.data.length), 50);
       } else {
-        setImoveis([]); updateStructuredData(0, []);
+        clearMapSelection();
+        setImoveis([]);
+        setFilteredImoveis([]);
+        updateStructuredData(0, []);
       }
     } catch {
-      setImoveis([]); updateStructuredData(0, []);
+      clearMapSelection();
+      setImoveis([]);
+      setFilteredImoveis([]);
+      updateStructuredData(0, []);
     } finally {
       setIsLoading(false);
     }
@@ -401,18 +711,26 @@ export default function BuscaImoveis() {
     setSearchTerm("");
     setCurrentPage(1);
     if (mostrandoFavoritos) setMostrandoFavoritos(false);
+    clearMapSelection();
   };
 
   const renderCards = () => {
     if (isLoading) {
-      return Array(12).fill(null).map((_, i) => (
-        <div key={`skeleton-${i}`} className="w-full sm:w-1/2 xl:w-[32%] min-w-0 flex-shrink-0">
-          <CardImovelSkeleton />
-        </div>
-      ));
+      return Array(12)
+        .fill(null)
+        .map((_, i) => (
+          <div
+            key={`skeleton-${i}`}
+            className="w-full sm:w-1/2 xl:w-[32%] min-w-0 flex-shrink-0"
+          >
+            <CardImovelSkeleton />
+          </div>
+        ));
     }
-    if (Array.isArray(imoveis) && imoveis.length > 0) {
-      let arr = [...imoveis];
+
+    if (Array.isArray(effectiveImoveis) && effectiveImoveis.length > 0) {
+      let arr = [...effectiveImoveis];
+
       if (ordenacao === "maior_valor") {
         arr.sort((a, b) => {
           const va = a.ValorAntigo ? parseFloat(String(a.ValorAntigo).replace(/\D/g, "")) : 0;
@@ -426,56 +744,159 @@ export default function BuscaImoveis() {
           return va - vb;
         });
       }
+
+      if (isMapFilterActive) {
+        const startIndex = (effectivePagination.currentPage - 1) * effectivePagination.itemsPerPage;
+        const endIndex = startIndex + effectivePagination.itemsPerPage;
+        arr = arr.slice(startIndex, endIndex);
+      }
+
       return arr.map((imovel) => {
-        const key = imovel.Codigo || `imovel-${imovel._id || Math.random().toString(36).slice(2)}`;
+        const key =
+          imovel.Codigo || `imovel-${imovel._id || Math.random().toString(36).slice(2)}`;
+        
+        // Destacar o card se a propriedade está selecionada
+        const isSelected = selectedProperty && 
+          (selectedProperty.Codigo === imovel.Codigo || selectedProperty._id === imovel._id);
+        
         return (
-          <div key={key} className="w-full sm:w-1/2 xl:w-[32%] min-w-0 flex-shrink-0">
+          <div 
+            key={key} 
+            className={`w-full sm:w-1/2 xl:w-[32%] min-w-0 flex-shrink-0 transition-all duration-200 ${
+              isSelected ? 'ring-2 ring-blue-500 ring-opacity-50 scale-[1.02]' : ''
+            }`}
+          >
             <CardImovel {...imovel} target="_blank" />
           </div>
         );
       });
     }
+
     return <p className="text-center w-full py-8">Nenhum imóvel encontrado.</p>;
   };
 
   const construirTextoFiltros = () => {
     const s = useFiltersStore.getState();
-    const qtd = pagination.totalItems || 0;
+    const qtd = effectivePagination.totalItems || 0;
+
     const plural = {
-      Apartamento: "apartamentos", Casa: "casas", "Casa Comercial": "casas comerciais",
-      "Casa em Condominio": "casas em condomínio", Cobertura: "coberturas", Flat: "flats",
-      Garden: "gardens", Loft: "lofts", Loja: "lojas", "Prédio Comercial": "prédios comerciais",
-      "Sala Comercial": "salas comerciais", Sobrado: "sobrados", Terreno: "terrenos",
+      Apartamento: "apartamentos",
+      Casa: "casas",
+      "Casa Comercial": "casas comerciais",
+      "Casa em Condominio": "casas em condomínio",
+      Cobertura: "coberturas",
+      Flat: "flats",
+      Garden: "gardens",
+      Loft: "lofts",
+      Loja: "lojas",
+      "Prédio Comercial": "prédios comerciais",
+      "Sala Comercial": "salas comerciais",
+      Sobrado: "sobrados",
+      Terreno: "terrenos",
     };
 
     let txt = `${qtd}`;
-    if (s.categoriaSelecionada) txt += ` ${plural[s.categoriaSelecionada] || "imóveis"}`;
-    else txt += " imóveis";
-    if (s.finalidade) txt += ` ${s.finalidade === "Comprar" ? "a venda" : "para aluguel"}`;
+    if (s.categoriaSelecionada) {
+      txt += ` ${plural[s.categoriaSelecionada] || "imóveis"}`;
+    } else {
+      txt += " imóveis";
+    }
+
+    if (s.finalidade) {
+      txt += ` ${s.finalidade === "Comprar" ? "a venda" : "para aluguel"}`;
+    }
+
     if (s.bairrosSelecionados?.length) {
-      if (s.bairrosSelecionados.length === 1) txt += ` em ${s.bairrosSelecionados[0]}`;
-      else if (s.bairrosSelecionados.length <= 3) txt += ` em ${s.bairrosSelecionados.join(", ")}`;
-      else txt += ` em ${s.bairrosSelecionados.slice(0, 2).join(", ")} e mais ${s.bairrosSelecionados.length - 2} bairros`;
+      if (s.bairrosSelecionados.length === 1) {
+        txt += ` em ${s.bairrosSelecionados[0]}`;
+      } else if (s.bairrosSelecionados.length <= 3) {
+        txt += ` em ${s.bairrosSelecionados.join(", ")}`;
+      } else {
+        txt += ` em ${s.bairrosSelecionados.slice(0, 2).join(", ")} e mais ${
+          s.bairrosSelecionados.length - 2
+        } bairros`;
+      }
     } else if (s.cidadeSelecionada) {
       const c = s.cidadeSelecionada.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
       txt += ` em ${c}`;
     }
+
     return txt;
   };
 
-  // ====== RENDER ======
+  // Componente interno para evitar problemas de importação
+  function MobileActionsBar({ onOpenFilters, onOpenMap, resultsText = "" }) {
+    return (
+      <div className="sticky top-20 z-[45] bg-white border-b shadow-sm md:hidden">
+        <div className="px-3 py-2 flex items-center justify-between gap-2">
+          <span className="text-[11px] text-zinc-600 font-semibold truncate">
+            {resultsText}
+          </span>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={onOpenFilters}
+              className="px-3 py-2 rounded-lg text-[12px] font-semibold bg-zinc-200 hover:bg-zinc-300 text-black"
+            >
+              Filtros
+            </button>
+            <button
+              onClick={onOpenMap}
+              className="px-3 py-2 rounded-lg text-[12px] font-semibold bg-black hover:bg-zinc-900 text-white"
+            >
+              Mapa
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  /* ======================== RENDER ======================== */
   return (
     <>
-      {/* DESKTOP: filtros horizontais fixos */}
-      <div className="fixed top-20 left-0 w-full bg-white z-40 shadow-sm border-b px-4 md:px-10 hidden md:block">
-        <PropertyFilters horizontal onFilter={resetarEstadoBusca} isVisible setIsVisible={() => {}} />
+      {/* DESKTOP (>= md): filtros horizontais fixos */}
+      <div className="fixed top-20 left-0 w-full bg-white z-40 shadow-sm border-b px-4 md:px-10 hidden md:block overflow-x-auto">
+        <PropertyFilters
+          horizontal
+          onFilter={resetarEstadoBusca}
+          isVisible
+          setIsVisible={() => {}}
+          onMapSelectionClear={clearMapSelection}
+        />
       </div>
 
-      {/* DESKTOP: layout 50/50 */}
+      {/* DESKTOP (>= md): layout 50/50 */}
       <div className="hidden md:flex fixed top-28 left-0 w-full h-[calc(100vh-7rem)] overflow-hidden bg-zinc-100">
+        {/* Cards */}
         <div className="w-1/2 flex flex-col overflow-hidden">
           <div className="flex justify-between items-center gap-2 p-4 border-b border-gray-200 bg-white">
-            <h2 className="text-xs font-bold text-zinc-500">{construirTextoFiltros()}</h2>
+            <div className="flex flex-col">
+              <h2 className="text-xs font-bold text-zinc-500">
+                {construirTextoFiltros()}
+              </h2>
+              {isMapFilterActive && (
+                <div className="flex items-center justify-between text-xs text-blue-600 mt-1 bg-blue-50 px-2 py-1 rounded">
+                  <span>
+                    {(() => {
+                      const count = filteredImoveis?.length ?? 0;
+                      const suffix = count === 1 ? "" : "is";
+                      const selectionText =
+                        selectedCluster && count !== 1
+                          ? " do cluster selecionado"
+                          : " selecionado no mapa";
+
+                      return `📍 Mostrando ${count} imóvel${suffix}${selectionText}`;
+                    })()}
+                  </span>
+                  <button
+                    onClick={clearMapSelection}
+                    className="ml-2 text-red-500 hover:text-red-700 font-bold"
+                  >
+                    ✕ Mostrar todos
+                  </button>
+                </div>
+              )}
+            </div>
             <select
               className="text-xs font-bold text-zinc-500 bg-zinc-100 p-2 rounded-md"
               value={ordenacao}
@@ -490,7 +911,10 @@ export default function BuscaImoveis() {
           <div className="flex-1 overflow-y-auto p-4">
             <div className="flex flex-wrap gap-3">{renderCards()}</div>
             <div className="mt-6 mb-6">
-              <Pagination pagination={pagination} onPageChange={handlePageChange} />
+              <Pagination
+                pagination={effectivePagination}
+                onPageChange={handlePageChange}
+              />
             </div>
             <div className="mt-12">
               <Footer />
@@ -498,33 +922,42 @@ export default function BuscaImoveis() {
           </div>
         </div>
 
-        {/* Mapa desktop */}
+        {/* Google Maps */}
         <div className="w-1/2 relative h-full">
           <div className="absolute inset-0 right-0 h-full overflow-hidden">
-            <MapWithNoSSR filtros={filtrosAtuais} />
+            <IntegratedMapWithNoSSR
+              filtros={filtrosAtuais}
+              onPropertySelect={handlePropertySelect}
+              onClusterSelect={handleClusterSelect}
+              selectedCluster={selectedCluster}
+              selectedProperty={selectedProperty}
+              onClearSelection={clearMapSelection}
+            />
           </div>
         </div>
       </div>
 
-      {/* MOBILE */}
-      <div className="md:hidden">
+      {/* MOBILE (< md): barra ações + filtros off-canvas + lista */}
+      <div className="md:hidden flex flex-col h-[100dvh] overflow-hidden bg-zinc-50">
         <MobileActionsBar
           onOpenFilters={() => setFiltersMobileOpen(true)}
           onOpenMap={() => setMapOpenMobile(true)}
           resultsText={construirTextoFiltros()}
         />
 
-        <PropertyFilters
-          horizontal={false}
-          onFilter={resetarEstadoBusca}
-          isVisible={filtersMobileOpen}
-          setIsVisible={setFiltersMobileOpen}
-        />
+        <div className="flex flex-col flex-1 min-h-0">
+          <PropertyFilters
+            horizontal={false}
+            onFilter={resetarEstadoBusca}
+            isVisible={filtersMobileOpen}
+            setIsVisible={setFiltersMobileOpen}
+            onMapSelectionClear={clearMapSelection}
+          />
 
-        <div className="pt-2 pb-24 px-3">
+          <div className="pt-2 pb-24 px-3 flex-1 overflow-y-auto min-h-0">
           <div className="flex items-center justify-between gap-2 p-2 rounded-md bg-white border">
             <span className="text-[11px] text-zinc-600 font-semibold">
-              {pagination.totalItems || 0} resultados
+              {effectivePagination.totalItems || 0} resultados
             </span>
             <select
               className="text-[12px] font-semibold text-zinc-600 bg-zinc-100 p-2 rounded-md"
@@ -537,18 +970,31 @@ export default function BuscaImoveis() {
             </select>
           </div>
 
-          <div className="mt-3 flex flex-wrap gap-3">{renderCards()}</div>
+            <div className="mt-3 flex flex-col gap-6 pb-10">
+              <div className="flex flex-wrap gap-3">{renderCards()}</div>
 
-          <div className="mt-6 mb-10">
-            <Pagination pagination={pagination} onPageChange={handlePageChange} />
+              <Pagination
+                pagination={effectivePagination}
+                onPageChange={handlePageChange}
+              />
+
+              <Footer />
+            </div>
           </div>
-
-          <Footer />
         </div>
       </div>
 
-      {/* Overlay do MAPA no mobile */}
-      <MapOverlay open={mapOpenMobile} onClose={() => setMapOpenMobile(false)} filtros={filtrosAtuais} />
+      {/* MOBILE: overlay do mapa */}
+      <MapOverlay
+        open={mapOpenMobile}
+        onClose={() => setMapOpenMobile(false)}
+        filtros={filtrosAtuais}
+        onPropertySelect={handlePropertySelect}
+        onClusterSelect={handleClusterSelect}
+        selectedCluster={selectedCluster}
+        selectedProperty={selectedProperty}
+        onClearSelection={clearMapSelection}
+      />
     </>
   );
 }

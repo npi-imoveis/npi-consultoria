@@ -843,7 +843,7 @@ export default function AdminImoveis() {
                   <div className="flex flex-wrap gap-2">
                     {searchTerm && (
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        Busca: "{searchTerm}"
+                        Busca: {'"'}{searchTerm}{'"'}
                       </span>
                     )}
                     {filters.Categoria && (
