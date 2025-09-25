@@ -58,7 +58,7 @@ function Typewriter() {
   }, [charIndex, isDeleting, currentWordIndex]);
   return (
     <div className="w-full h-full flex flex-col justify-end items-center">
-      <span>Uma nova experiência em</span>
+      <span>Uma nova experiência em @</span>
       <span className="text-xl h-8 font-bold text-zinc-400">{text}</span>
     </div>
   );
