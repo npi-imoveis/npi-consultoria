@@ -1,10 +1,10 @@
-// app/venda-seu-imovel/ImovelFormClient.js
 "use client";
 
 import React, { useState, useRef } from "react";
 import Image from "next/image";
 import { getImageUploadMetadata, uploadToS3 } from "../utils/s3-upload";
 import { PhotoIcon, XCircleIcon } from "@heroicons/react/24/outline";
+import emailjs from '@emailjs/browser'; // ✅ Import estático ao invés de dinâmico
 
 export default function ImovelFormClient() {
   const [formState, setFormState] = useState("form"); // estados: "form", "loading", "success"
@@ -47,6 +47,11 @@ export default function ImovelFormClient() {
     imagens: false,
   });
   const fileInputRef = useRef(null);
+
+  // ✅ Inicialização do EmailJS
+  React.useEffect(() => {
+    emailjs.init("sraRHEjyadY96d2x1");
+  }, []);
 
   // Função para formatar número de telefone
   const formatarTelefone = (valor) => {
@@ -163,13 +168,17 @@ export default function ImovelFormClient() {
     }
   };
 
-  // Função para fazer upload das imagens para o S3
+  // ✅ Função melhorada para fazer upload das imagens para o S3
   const uploadImages = async () => {
     try {
-      const uploadPromises = imagensTemporarias.map(async (imagem) => {
+      console.log("Iniciando upload das imagens...", imagensTemporarias.length);
+      
+      const uploadPromises = imagensTemporarias.map(async (imagem, index) => {
         try {
+          console.log(`Uploading imagem ${index + 1}/${imagensTemporarias.length}`);
           const metadata = await getImageUploadMetadata(imagem.file);
           await uploadToS3(metadata);
+          console.log(`Imagem ${index + 1} enviada com sucesso:`, metadata.fileUrl);
           return metadata.fileUrl;
         } catch (error) {
           console.error(`Erro ao fazer upload da imagem ${imagem.id}:`, error);
@@ -177,83 +186,141 @@ export default function ImovelFormClient() {
         }
       });
 
-      return await Promise.all(uploadPromises);
+      const urls = await Promise.all(uploadPromises);
+      console.log("Todas as imagens foram enviadas:", urls);
+      return urls;
     } catch (error) {
       console.error("Erro ao fazer upload das imagens:", error);
       throw new Error("Falha ao enviar uma ou mais imagens");
     }
   };
 
+  // ✅ Função de envio corrigida
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
+    
+    console.log("Iniciando envio do formulário...");
 
-    if (validarFormulario()) {
-      setFormState("loading");
+    if (!validarFormulario()) {
+      console.log("Formulário inválido, parando envio");
+      return;
+    }
 
-      try {
-        // Fazer upload das imagens para o S3
-        const imageUrls = await uploadImages();
+    setFormState("loading");
 
-        import("@emailjs/browser").then((emailjs) => {
-          emailjs.default
-            .send(
-              "service_az9rp6u",
-              "template_p8hi73i",
-              {
-                name: formData.nome,
-                email: formData.email,
-                telefone: formData.telefone,
-                tipoImovel: formData.tipoImovel,
-                acao: formData.acao,
-                cep: formData.cep,
-                endereco: formData.endereco,
-                numero: formData.numero,
-                complemento: formData.complemento,
-                bairro: formData.bairro,
-                cidade: formData.cidade,
-                estado: formData.estado,
-                valorImovel: formData.valorImovel,
-                valorCondominio: formData.valorCondominio,
-                valorIptu: formData.valorIptu,
-                descricao: formData.descricao,
-                imagensUrls: imageUrls.join(", "),
-              },
-              "sraRHEjyadY96d2x1"
-            )
-            .then(() => {
-              setFormState("success");
-              // Limpar o formulário após o sucesso
-              setFormData({
-                nome: "",
-                email: "",
-                telefone: "",
-                tipoImovel: "",
-                acao: "",
-                cep: "",
-                endereco: "",
-                numero: "",
-                complemento: "",
-                bairro: "",
-                cidade: "",
-                estado: "",
-                valorImovel: "",
-                valorCondominio: "",
-                valorIptu: "",
-                descricao: "",
-              });
-              setImagensTemporarias([]);
-            })
-            .catch((error) => {
-              console.error("Erro ao enviar mensagem:", error);
-              setFormState("form");
-              alert("Erro ao enviar mensagem. Por favor, tente novamente.");
-            });
-        });
-      } catch (error) {
-        console.error("Erro no processo de envio:", error);
-        setFormState("form");
-        alert("Erro ao processar as imagens. Por favor, tente novamente.");
+    try {
+      // ✅ Primeiro, fazer upload das imagens
+      let imageUrls = [];
+      
+      if (imagensTemporarias.length > 0) {
+        console.log("Fazendo upload das imagens...");
+        imageUrls = await uploadImages();
+      } else {
+        console.log("Nenhuma imagem para fazer upload");
       }
+
+      // ✅ Preparar dados para o email
+      const emailData = {
+        to_name: "NPI Consultoria", // ✅ Adicionado
+        from_name: formData.nome,
+        from_email: formData.email,
+        telefone: formData.telefone,
+        tipo_imovel: formData.tipoImovel,
+        acao: formData.acao,
+        cep: formData.cep,
+        endereco: formData.endereco,
+        numero: formData.numero,
+        complemento: formData.complemento || "Não informado",
+        bairro: formData.bairro,
+        cidade: formData.cidade,
+        estado: formData.estado,
+        valor_imovel: formData.valorImovel,
+        valor_condominio: formData.valorCondominio,
+        valor_iptu: formData.valorIptu,
+        descricao: formData.descricao,
+        imagens_urls: imageUrls.length > 0 ? imageUrls.join("\n") : "Nenhuma imagem enviada",
+        message: `
+🏠 NOVO CADASTRO DE IMÓVEL
+
+👤 DADOS PESSOAIS:
+Nome: ${formData.nome}
+E-mail: ${formData.email}
+Telefone: ${formData.telefone}
+
+🏘️ DADOS DO IMÓVEL:
+Tipo: ${formData.tipoImovel}
+Ação: ${formData.acao}
+CEP: ${formData.cep}
+Endereço: ${formData.endereco}, ${formData.numero}
+Complemento: ${formData.complemento || "Não informado"}
+Bairro: ${formData.bairro}
+Cidade: ${formData.cidade}
+Estado: ${formData.estado}
+
+💰 VALORES:
+Valor do Imóvel: R$ ${formData.valorImovel}
+Condomínio: R$ ${formData.valorCondominio}
+IPTU: R$ ${formData.valorIptu}
+
+📝 DESCRIÇÃO:
+${formData.descricao}
+
+📸 IMAGENS:
+${imageUrls.length > 0 ? imageUrls.join("\n") : "Nenhuma imagem enviada"}
+        `
+      };
+
+      console.log("Enviando email com os dados:", emailData);
+
+      // ✅ Enviar email com await
+      const result = await emailjs.send(
+        "service_az9rp6u",
+        "template_p8hi73i",
+        emailData,
+        "sraRHEjyadY96d2x1"
+      );
+
+      console.log("Email enviado com sucesso:", result);
+      
+      setFormState("success");
+      
+      // Limpar o formulário após o sucesso
+      setFormData({
+        nome: "",
+        email: "",
+        telefone: "",
+        tipoImovel: "",
+        acao: "",
+        cep: "",
+        endereco: "",
+        numero: "",
+        complemento: "",
+        bairro: "",
+        cidade: "",
+        estado: "",
+        valorImovel: "",
+        valorCondominio: "",
+        valorIptu: "",
+        descricao: "",
+      });
+      setImagensTemporarias([]);
+
+    } catch (error) {
+      console.error("Erro no processo de envio:", error);
+      setFormState("form");
+      
+      // ✅ Mensagem de erro mais específica
+      let errorMessage = "Erro ao enviar formulário. ";
+      
+      if (error.message && error.message.includes("imagens")) {
+        errorMessage += "Problema no upload das imagens. ";
+      } else if (error.text) {
+        errorMessage += `Erro do EmailJS: ${error.text}`;
+      } else {
+        errorMessage += "Por favor, tente novamente.";
+      }
+      
+      alert(errorMessage);
     }
   };
 
