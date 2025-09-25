@@ -712,6 +712,7 @@ export default function AdminImoveis() {
 
   return (
     <AuthCheck>
+          
       {isModalOpen && (
         <ModalDelete
           id={codigoImovel}
