@@ -1,10 +1,11 @@
+// src/app/busca/page.js
 "use client";
 
 export const revalidate = 0;                  // evita cache de HTML da rota
 export const dynamic = "force-dynamic";       // força dinâmica no App Router
 
 import { useEffect, useState } from "react";
-import dynamic from "next/dynamic";
+import NextDynamic from "next/dynamic";       // 🛠️ RENOMEADO: antes era `dynamic`
 import { useRouter } from "next/navigation";
 
 import CardImovel, { CardImovelSkeleton } from "../components/ui/card-imovel";
@@ -12,7 +13,7 @@ import Pagination from "../components/ui/pagination";
 import { Footer } from "../components/ui/footer";
 import PropertyFilters from "./components/property-filters";
 import MobileActionsBar from "./components/mobile-actions-bar";
-import MapOverlay from "./components/map-overlay.jsx";
+import MapOverlay from "./components/map-overlay";
 
 import { getImoveis, searchImoveis } from "../services";
 import useFiltersStore from "../store/filtrosStore";
@@ -20,8 +21,8 @@ import useFavoritosStore from "../store/favoritosStore";
 import useImovelStore from "../store/imovelStore";
 import { gerarUrlSeoFriendly } from "../utils/url-slugs";
 
-// Mapa (SSR off)
-const MapWithNoSSR = dynamic(() => import("./components/map-component"), {
+// Mapa desktop (SSR off)
+const MapWithNoSSR = NextDynamic(() => import("./components/map-component"), {
   ssr: false,
   loading: () => (
     <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
@@ -33,28 +34,8 @@ const MapWithNoSSR = dynamic(() => import("./components/map-component"), {
   ),
 });
 
-/* Hook responsivo: decide em runtime se é desktop (>=768px) */
-function useIsDesktop() {
-  const [isDesktop, setIsDesktop] = useState(false);
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const mq = window.matchMedia("(min-width: 768px)");
-    const apply = () => setIsDesktop(mq.matches);
-    apply();
-    // compatibilidade com browsers antigos
-    if (mq.addEventListener) mq.addEventListener("change", apply);
-    else mq.addListener(apply);
-    return () => {
-      if (mq.removeEventListener) mq.removeEventListener("change", apply);
-      else mq.removeListener(apply);
-    };
-  }, []);
-  return isDesktop;
-}
-
 export default function BuscaImoveis() {
   const router = useRouter();
-  const isDesktop = useIsDesktop(); // <— chave: controla render de blocos
 
   // ====== ESTADOS ORIGINAIS ======
   const [imoveis, setImoveis] = useState([]);
@@ -78,7 +59,7 @@ export default function BuscaImoveis() {
   const [isBrowser, setIsBrowser] = useState(false);
   const [initialLoad, setInitialLoad] = useState(true);
 
-  // ====== SEO / Structured Data (mantidos) ======
+  // ====== SEO / Structured Data ======
   const updateStructuredData = (totalItems = 0, imoveisData = []) => {
     if (typeof document === "undefined") return;
     const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://npiconsultoria.com.br";
@@ -314,7 +295,7 @@ export default function BuscaImoveis() {
     }
   };
 
-  // ====== Initial load / efeitos (mantidos) ======
+  // ====== Efeitos iniciais / navegação ======
   useEffect(() => {
     if (!initialLoad) return;
     setIsBrowser(true);
@@ -489,97 +470,89 @@ export default function BuscaImoveis() {
   // ====== RENDER ======
   return (
     <>
-      {/* DESKTOP: só renderiza quando realmente for desktop */}
-      {isDesktop && (
-        <>
-          {/* filtros horizontais fixos */}
-          <div className="fixed top-20 left-0 w-full bg-white z-40 shadow-sm border-b px-4 md:px-10">
-            <PropertyFilters horizontal onFilter={resetarEstadoBusca} isVisible setIsVisible={() => {}} />
+      {/* DESKTOP: filtros horizontais fixos */}
+      <div className="fixed top-20 left-0 w-full bg-white z-40 shadow-sm border-b px-4 md:px-10 hidden md:block">
+        <PropertyFilters horizontal onFilter={resetarEstadoBusca} isVisible setIsVisible={() => {}} />
+      </div>
+
+      {/* DESKTOP: layout 50/50 */}
+      <div className="hidden md:flex fixed top-28 left-0 w-full h-[calc(100vh-7rem)] overflow-hidden bg-zinc-100">
+        <div className="w-1/2 flex flex-col overflow-hidden">
+          <div className="flex justify-between items-center gap-2 p-4 border-b border-gray-200 bg-white">
+            <h2 className="text-xs font-bold text-zinc-500">{construirTextoFiltros()}</h2>
+            <select
+              className="text-xs font-bold text-zinc-500 bg-zinc-100 p-2 rounded-md"
+              value={ordenacao}
+              onChange={(e) => setOrdenacao(e.target.value)}
+            >
+              <option value="relevancia">Mais relevantes</option>
+              <option value="maior_valor">Maior Valor</option>
+              <option value="menor_valor">Menor Valor</option>
+            </select>
           </div>
 
-          {/* layout 50/50 */}
-          <div className="flex fixed top-28 left-0 w-full h-[calc(100vh-7rem)] overflow-hidden bg-zinc-100">
-            {/* Cards */}
-            <div className="w-1/2 flex flex-col overflow-hidden">
-              <div className="flex justify-between items-center gap-2 p-4 border-b border-gray-200 bg-white">
-                <h2 className="text-xs font-bold text-zinc-500">{construirTextoFiltros()}</h2>
-                <select
-                  className="text-xs font-bold text-zinc-500 bg-zinc-100 p-2 rounded-md"
-                  value={ordenacao}
-                  onChange={(e) => setOrdenacao(e.target.value)}
-                >
-                  <option value="relevancia">Mais relevantes</option>
-                  <option value="maior_valor">Maior Valor</option>
-                  <option value="menor_valor">Menor Valor</option>
-                </select>
-              </div>
-
-              <div className="flex-1 overflow-y-auto p-4">
-                <div className="flex flex-wrap gap-3">{renderCards()}</div>
-                <div className="mt-6 mb-6">
-                  <Pagination pagination={pagination} onPageChange={handlePageChange} />
-                </div>
-                <div className="mt-12">
-                  <Footer />
-                </div>
-              </div>
-            </div>
-
-            {/* Mapa desktop */}
-            <div className="w-1/2 relative h-full">
-              <div className="absolute inset-0 right-0 h-full overflow-hidden">
-                <MapWithNoSSR filtros={filtrosAtuais} />
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* MOBILE: só renderiza quando realmente for mobile */}
-      {!isDesktop && (
-        <div className="md:hidden">
-          <MobileActionsBar
-            onOpenFilters={() => setFiltersMobileOpen(true)}
-            onOpenMap={() => setMapOpenMobile(true)}
-            resultsText={construirTextoFiltros()}
-          />
-
-          <PropertyFilters
-            horizontal={false}
-            onFilter={resetarEstadoBusca}
-            isVisible={filtersMobileOpen}
-            setIsVisible={setFiltersMobileOpen}
-          />
-
-          <div className="pt-2 pb-24 px-3">
-            <div className="flex items-center justify-between gap-2 p-2 rounded-md bg-white border">
-              <span className="text-[11px] text-zinc-600 font-semibold">
-                {pagination.totalItems || 0} resultados
-              </span>
-              <select
-                className="text-[12px] font-semibold text-zinc-600 bg-zinc-100 p-2 rounded-md"
-                value={ordenacao}
-                onChange={(e) => setOrdenacao(e.target.value)}
-              >
-                <option value="relevancia">Mais relevantes</option>
-                <option value="maior_valor">Maior Valor</option>
-                <option value="menor_valor">Menor Valor</option>
-              </select>
-            </div>
-
-            <div className="mt-3 flex flex-wrap gap-3">{renderCards()}</div>
-
-            <div className="mt-6 mb-10">
+          <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex flex-wrap gap-3">{renderCards()}</div>
+            <div className="mt-6 mb-6">
               <Pagination pagination={pagination} onPageChange={handlePageChange} />
             </div>
+            <div className="mt-12">
+              <Footer />
+            </div>
+          </div>
+        </div>
 
-            <Footer />
+        {/* Mapa desktop */}
+        <div className="w-1/2 relative h-full">
+          <div className="absolute inset-0 right-0 h-full overflow-hidden">
+            <MapWithNoSSR filtros={filtrosAtuais} />
+          </div>
+        </div>
+      </div>
+
+      {/* MOBILE */}
+      <div className="md:hidden">
+        <MobileActionsBar
+          onOpenFilters={() => setFiltersMobileOpen(true)}
+          onOpenMap={() => setMapOpenMobile(true)}
+          resultsText={construirTextoFiltros()}
+        />
+
+        <PropertyFilters
+          horizontal={false}
+          onFilter={resetarEstadoBusca}
+          isVisible={filtersMobileOpen}
+          setIsVisible={setFiltersMobileOpen}
+        />
+
+        <div className="pt-2 pb-24 px-3">
+          <div className="flex items-center justify-between gap-2 p-2 rounded-md bg-white border">
+            <span className="text-[11px] text-zinc-600 font-semibold">
+              {pagination.totalItems || 0} resultados
+            </span>
+            <select
+              className="text-[12px] font-semibold text-zinc-600 bg-zinc-100 p-2 rounded-md"
+              value={ordenacao}
+              onChange={(e) => setOrdenacao(e.target.value)}
+            >
+              <option value="relevancia">Mais relevantes</option>
+              <option value="maior_valor">Maior Valor</option>
+              <option value="menor_valor">Menor Valor</option>
+            </select>
           </div>
 
-          {/* Overlay do MAPA no mobile */}
-          <MapOverlay open={mapOpenMobile} onClose={() => setMapOpenMobile(false)} filtros={filtrosAtuais} />
+          <div className="mt-3 flex flex-wrap gap-3">{renderCards()}</div>
+
+          <div className="mt-6 mb-10">
+            <Pagination pagination={pagination} onPageChange={handlePageChange} />
+          </div>
+
+          <Footer />
         </div>
-      )}
+      </div>
+
+      {/* Overlay do MAPA no mobile */}
+      <MapOverlay open={mapOpenMobile} onClose={() => setMapOpenMobile(false)} filtros={filtrosAtuais} />
     </>
   );
 }
