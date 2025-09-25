@@ -1401,3 +1401,44 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           )}
           {construtorasSelecionadas.length > 0 && (
             <span className="text-purple-600 font-medium">
+              🏢 {construtorasSelecionadas.length} construtoras
+            </span>
+          )}
+          {bairrosSelecionados.length > 0 && (
+            <span className="text-indigo-600 font-medium">
+              🏘️ {bairrosSelecionados.length} bairros
+            </span>
+          )}
+          {isRestoringFromCache && (
+            <span className="text-yellow-600 font-medium animate-pulse">
+              🔄 Restaurando cache...
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SelectFilter({ options, name, onChange, value, placeholder }) {
+  return (
+    <div>
+      <label htmlFor={name} className="text-xs text-gray-500 block mb-2">
+        {name}
+      </label>
+      <select
+        name={name}
+        className="w-full text-xs rounded-lg border border-gray-300 bg-white p-2 focus:outline-none focus:ring-1 focus:ring-black"
+        onChange={onChange}
+        value={value || ""}
+      >
+        <option value="">{placeholder || `Selecione ${name}`}</option>
+        {options.map((option, index) => (
+          <option className="text-xs" key={index} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
