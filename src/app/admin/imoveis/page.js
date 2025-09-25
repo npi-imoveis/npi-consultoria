@@ -712,62 +712,6 @@ export default function AdminImoveis() {
 
   return (
     <AuthCheck>
-      {/* ✅ MODIFICADO: CSS mais agressivo para ocultar TUDO do player de música */}
-      <style jsx global>{`
-        /* Ocultar TODOS os elementos do player de música no admin */
-        [class*="music"], [class*="play"], [class*="audio"], [class*="player"],
-        [class*="sound"], [class*="media"], [class*="track"],
-        button[style*="position: fixed"], 
-        div[style*="position: fixed"][style*="bottom"], 
-        div[style*="position: fixed"][style*="right"],
-        .fixed.bottom-0, .fixed.bottom-1, .fixed.bottom-2, .fixed.bottom-3,
-        .fixed.bottom-4, .fixed.bottom-5, .fixed.bottom-6, .fixed.bottom-8,
-        .fixed.right-0, .fixed.right-1, .fixed.right-2, .fixed.right-3,
-        .fixed.right-4, .fixed.right-5, .fixed.right-6, .fixed.right-8,
-        button.fixed, div.fixed.right-4, div.fixed.bottom-4,
-        [style*="z-index: 40"], [style*="z-index: 50"], [style*="z-index: 100"],
-        [style*="z-index: 999"], [style*="z-index: 9999"],
-        
-        /* Específico para botões circulares flutuantes */
-        button[style*="border-radius"][style*="position: fixed"],
-        div[style*="border-radius"][style*="position: fixed"],
-        button[style*="border-radius: 50%"], div[style*="border-radius: 50%"],
-        button[style*="rounded"], div[style*="rounded"],
-        
-        /* Sombras e overlays */
-        [style*="box-shadow"][style*="position: fixed"],
-        [style*="shadow"][style*="position: fixed"],
-        div[style*="shadow-lg"], button[style*="shadow-lg"],
-        div[style*="shadow-xl"], button[style*="shadow-xl"],
-        
-        /* Elementos flutuantes no canto direito/inferior */
-        *[style*="position: fixed"][style*="right: 16px"],
-        *[style*="position: fixed"][style*="right: 20px"],
-        *[style*="position: fixed"][style*="right: 24px"],
-        *[style*="position: fixed"][style*="bottom: 16px"],
-        *[style*="position: fixed"][style*="bottom: 20px"],
-        *[style*="position: fixed"][style*="bottom: 24px"],
-        
-        /* Capturar qualquer coisa com z-index alto e position fixed */
-        *[style*="position: fixed"][style*="z-index"],
-        
-        /* IDs e classes comuns de players */
-        #music-player, #audio-player, #media-player,
-        .music-player, .audio-player, .media-player,
-        .floating-player, .sticky-player {
-          display: none !important;
-          visibility: hidden !important;
-          opacity: 0 !important;
-          pointer-events: none !important;
-        }
-        
-        /* Extra: ocultar qualquer elemento com atributos de áudio */
-        audio, video[style*="display: none"] + *, 
-        [data-testid*="player"], [data-testid*="music"], [data-testid*="audio"] {
-          display: none !important;
-        }
-      `}</style>
-      
       {isModalOpen && (
         <ModalDelete
           id={codigoImovel}
