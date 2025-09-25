@@ -769,7 +769,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           </div>
         </div>
 
-        {/* Dropdown de construtoras - MOVIDO PARA LINHA PRINCIPAL */}
+        {/* ✅ MODIFICADO: Dropdown de construtoras movido para a primeira linha */}
         <div ref={construtoraRef} className="relative">
           <label htmlFor="construtora" className="text-xs text-gray-500 block mb-2">
             Construtora
