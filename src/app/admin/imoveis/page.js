@@ -1,5 +1,3 @@
-// src/app/admin/imoveis/page.js
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -827,7 +825,7 @@ export default function AdminImoveis() {
             <FiltersImoveisAdmin onFilter={handleFilterApply} />
           </div>
 
-          {/* ✅ ADICIONADO: Indicador de resultados filtrados */}
+          {/* ✅ MODIFICADO: Indicador de resultados filtrados com suporte para construtoras */}
           {(Object.keys(filters).length > 0 || searchTerm) && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
               <div className="flex items-center justify-between">
@@ -863,6 +861,12 @@ export default function AdminImoveis() {
                         {filters.Situacao.length === 1 ? filters.Situacao[0] : `${filters.Situacao.length} situações`}
                       </span>
                     )}
+                    {/* ✅ ADICIONADO: Badge para construtoras selecionadas */}
+                    {Array.isArray(filters.Construtora) && filters.Construtora.length > 0 && (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                        {filters.Construtora.length === 1 ? filters.Construtora[0] : `${filters.Construtora.length} construtoras`}
+                      </span>
+                    )}
                     {filters.Cidade && (
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
                         {filters.Cidade}
@@ -889,7 +893,7 @@ export default function AdminImoveis() {
                     } else {
                       setFilters({});
                       setCurrentPage(1);
-                      clearFiltersState(); // ✅ ADICIONADO: Limpar cache
+                      clearFiltersState();
                       loadImoveis(1, "");
                     }
                   }}
@@ -901,7 +905,7 @@ export default function AdminImoveis() {
             </div>
           )}
 
-          {/* ✅ MODIFICADO: Legenda com cor preta para 120+ dias */}
+          {/* Legenda com cor preta para 120+ dias */}
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-1">
@@ -952,7 +956,7 @@ export default function AdminImoveis() {
             </div>
           </div>
 
-          {/* 🚨 LAYOUT OTIMIZADO: Espaçamento ajustado sem desperdício */}
+          {/* Tabela de imóveis */}
           <div className="overflow-x-auto">
             <div className="inline-block min-w-full align-middle">
               <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
