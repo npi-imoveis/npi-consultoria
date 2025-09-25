@@ -1,5 +1,4 @@
 src/app/admin/imoveis/components/filters.js
-
 import { getBairrosPorCidade, getImoveisByFilters } from "@/app/services";
 import { useEffect, useState, useRef } from "react";
 
@@ -1050,5 +1049,4 @@ function SelectFilter({ options, name, onChange, value, placeholder }) {
       </select>
     </div>
   );
-}
 }
