@@ -114,7 +114,7 @@ export default function ImovelFormClient() {
       valorCondominio: !formData.valorCondominio.trim(),
       valorIptu: !formData.valorIptu.trim(),
       descricao: !formData.descricao.trim(),
-      imagens: imagensTemporarias.length === 0,
+      imagens: false, // ✅ Removido obrigatório para imagens
     };
 
     setErrors(novosErros);
@@ -219,12 +219,19 @@ export default function ImovelFormClient() {
         console.log("Nenhuma imagem para fazer upload");
       }
 
-      // ✅ Preparar dados para o email
+      // ✅ Preparar dados para o email - TODOS os campos preenchidos
       const emailData = {
-        to_name: "NPI Consultoria", // ✅ Adicionado
+        // Dados básicos
+        to_name: "NPI Consultoria",
         from_name: formData.nome,
-        from_email: formData.email,
+        reply_to: formData.email,
+        
+        // Dados pessoais
+        nome: formData.nome,
+        email: formData.email,
         telefone: formData.telefone,
+        
+        // Dados do imóvel
         tipo_imovel: formData.tipoImovel,
         acao: formData.acao,
         cep: formData.cep,
@@ -234,13 +241,25 @@ export default function ImovelFormClient() {
         bairro: formData.bairro,
         cidade: formData.cidade,
         estado: formData.estado,
-        valor_imovel: formData.valorImovel,
-        valor_condominio: formData.valorCondominio,
-        valor_iptu: formData.valorIptu,
+        
+        // Valores
+        valor_imovel: `R$ ${formData.valorImovel}`,
+        valor_condominio: `R$ ${formData.valorCondominio}`,
+        valor_iptu: `R$ ${formData.valorIptu}`,
+        
+        // Descrição e imagens
         descricao: formData.descricao,
-        imagens_urls: imageUrls.length > 0 ? imageUrls.join("\n") : "Nenhuma imagem enviada",
-        message: `
-🏠 NOVO CADASTRO DE IMÓVEL
+        imagens_urls: imageUrls.length > 0 ? imageUrls.join(", ") : "Nenhuma imagem enviada",
+        
+        // Campos específicos que podem estar no template
+        tipoImovel: formData.tipoImovel,
+        valorImovel: formData.valorImovel,
+        valorCondominio: formData.valorCondominio,
+        valorIptu: formData.valorIptu,
+        imagensUrls: imageUrls.join(", "),
+        
+        // Mensagem formatada completa
+        message: `🏠 NOVO CADASTRO DE IMÓVEL
 
 👤 DADOS PESSOAIS:
 Nome: ${formData.nome}
@@ -266,11 +285,14 @@ IPTU: R$ ${formData.valorIptu}
 ${formData.descricao}
 
 📸 IMAGENS:
-${imageUrls.length > 0 ? imageUrls.join("\n") : "Nenhuma imagem enviada"}
-        `
+${imageUrls.length > 0 ? imageUrls.map((url, index) => `${index + 1}. ${url}`).join('\n') : "Nenhuma imagem enviada"}`
       };
 
-      console.log("Enviando email com os dados:", emailData);
+      console.log("Dados que serão enviados para o EmailJS:", {
+        ...emailData,
+        numeroImagens: imageUrls.length,
+        imagensDetalhes: imageUrls
+      });
 
       // ✅ Enviar email com await
       const result = await emailjs.send(
@@ -647,9 +669,7 @@ ${imageUrls.length > 0 ? imageUrls.join("\n") : "Nenhuma imagem enviada"}
               </div>
 
               <div
-                className={`border-2 border-dashed ${
-                  errors.imagens ? "border-red-500" : "border-gray-300"
-                } rounded-md p-6 flex flex-col items-center justify-center text-center`}
+                className={`border-2 border-dashed border-gray-300 rounded-md p-6 flex flex-col items-center justify-center text-center`}
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
               >
@@ -671,11 +691,6 @@ ${imageUrls.length > 0 ? imageUrls.join("\n") : "Nenhuma imagem enviada"}
                   onChange={handleFileInputChange}
                   style={{ display: "none" }}
                 />
-                {errors.imagens && (
-                  <p className="text-red-500 text-xs mt-2">
-                    Por favor, adicione pelo menos uma imagem
-                  </p>
-                )}
               </div>
 
               {/* Visualização das imagens selecionadas */}
