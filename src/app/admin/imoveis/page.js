@@ -19,23 +19,31 @@ const calculateRelevance = (imovel, searchTerm) => {
   const term = searchTerm.toLowerCase().trim();
   let score = 0;
   
+  // Pontuação para diferentes campos
   const fields = [
-    { field: imovel.Codigo?.toString().toLowerCase(), weight: 100 },
-    { field: imovel.Empreendimento?.toLowerCase(), weight: 80 },
-    { field: imovel.Endereco?.toLowerCase(), weight: 60 },
-    { field: imovel.Bairro?.toLowerCase(), weight: 40 },
-    { field: imovel.Cidade?.toLowerCase(), weight: 30 },
+    { field: imovel.Codigo?.toString().toLowerCase(), weight: 100 }, // Código tem maior peso
+    { field: imovel.Empreendimento?.toLowerCase(), weight: 80 },     // Empreendimento peso alto
+    { field: imovel.Endereco?.toLowerCase(), weight: 60 },          // Endereço peso médio
+    { field: imovel.Bairro?.toLowerCase(), weight: 40 },            // Bairro peso menor
+    { field: imovel.Cidade?.toLowerCase(), weight: 30 },            // Cidade peso menor
   ];
   
   fields.forEach(({ field, weight }) => {
     if (field) {
+      // Match exato recebe pontuação máxima
       if (field === term) {
         score += weight * 10;
-      } else if (field.startsWith(term)) {
+      }
+      // Match no início da string recebe pontuação alta
+      else if (field.startsWith(term)) {
         score += weight * 5;
-      } else if (field.includes(term)) {
+      }
+      // Match em qualquer lugar recebe pontuação média
+      else if (field.includes(term)) {
         score += weight * 2;
-      } else {
+      }
+      // Match de palavras individuais
+      else {
         const termWords = term.split(' ');
         const fieldWords = field.split(' ');
         
@@ -53,6 +61,7 @@ const calculateRelevance = (imovel, searchTerm) => {
   return score;
 };
 
+// ✅ ADICIONADO: Função para calcular dias desde a última atualização
 const calcularDiasDesdeAtualizacao = (dataAtualizacao) => {
   if (!dataAtualizacao) return null;
   
@@ -60,6 +69,7 @@ const calcularDiasDesdeAtualizacao = (dataAtualizacao) => {
     const dataAtual = new Date();
     const dataUpdate = new Date(dataAtualizacao);
     
+    // Verificar se a data é válida
     if (isNaN(dataUpdate.getTime())) return null;
     
     const diferencaMs = dataAtual - dataUpdate;
@@ -72,7 +82,9 @@ const calcularDiasDesdeAtualizacao = (dataAtualizacao) => {
   }
 };
 
+// ✅ SUPER EXPANDIDO: Função para detectar qualquer campo que contenha data
 const detectarCampoComData = (imovel) => {
+  // Lista completa de possíveis nomes de campos (incluindo português e variações)
   const camposPossiveis = [
     'updatedAt', 'DataAtualizacao', 'DataModificacao', 'DataUltimaAtualizacao',
     'lastModified', 'updated_at', 'data_atualizacao', 'dataAtualizacao',
@@ -86,36 +98,48 @@ const detectarCampoComData = (imovel) => {
     'date', 'Date', 'datetime', 'DateTime', 'data', 'Data'
   ];
 
+  // Primeiro: verificar campos conhecidos
   for (const campo of camposPossiveis) {
     if (imovel[campo]) {
       const testDate = new Date(imovel[campo]);
       if (!isNaN(testDate.getTime())) {
+        console.log(`[DETECTOU DATA] Imóvel ${imovel.Codigo}: Campo "${campo}" = ${imovel[campo]}`);
         return imovel[campo];
       }
     }
   }
 
+  // Segundo: buscar por qualquer campo que contenha uma data válida
   for (const [key, value] of Object.entries(imovel)) {
     if (value && typeof value === 'string') {
+      // Verificar se o valor parece ser uma data
       if (value.match(/^\d{4}-\d{2}-\d{2}/) || 
           value.match(/^\d{2}\/\d{2}\/\d{4}/) || 
           value.match(/^\d{4}\/\d{2}\/\d{2}/)) {
         const testDate = new Date(value);
         if (!isNaN(testDate.getTime())) {
+          console.log(`[DETECTOU DATA PATTERN] Imóvel ${imovel.Codigo}: Campo "${key}" = ${value}`);
           return value;
         }
       }
     }
   }
 
+  console.log(`[SEM DATA] Imóvel ${imovel.Codigo}: Nenhuma data detectada`);
   return null;
 };
 
+// ✅ MODIFICADO: Função para obter badge usando detecção inteligente de data
 const getStatusBadge = (imovel) => {
   const dataAtualizacao = detectarCampoComData(imovel);
   const diasDesdeAtualizacao = calcularDiasDesdeAtualizacao(dataAtualizacao);
   
   if (diasDesdeAtualizacao === null) {
+    // Debug detalhado para imóveis sem data
+    console.log(`[DEBUG SEM DATA] Imóvel ${imovel.Codigo}:`);
+    console.log('- Todos os campos:', Object.keys(imovel));
+    console.log('- Campos com string:', Object.entries(imovel).filter(([k,v]) => typeof v === 'string').map(([k,v]) => `${k}: ${v}`));
+    
     return {
       color: 'bg-gray-400',
       text: '?',
@@ -123,6 +147,7 @@ const getStatusBadge = (imovel) => {
     };
   }
   
+  // ✅ Sistema de cores com nova cor preta
   if (diasDesdeAtualizacao >= 120) {
     return {
       color: 'bg-black',
@@ -156,19 +181,38 @@ const getStatusBadge = (imovel) => {
   }
 };
 
+// ✅ MODIFICADO: Função para obter texto do status usando detecção inteligente
+const getStatusAtualizacao = (imovel) => {
+  const dataAtualizacao = detectarCampoComData(imovel);
+  const diasDesdeAtualizacao = calcularDiasDesdeAtualizacao(dataAtualizacao);
+  
+  if (diasDesdeAtualizacao === null) return 'Data não disponível';
+  
+  if (diasDesdeAtualizacao === 0) return 'Atualizado hoje';
+  if (diasDesdeAtualizacao === 1) return 'Atualizado ontem';
+  if (diasDesdeAtualizacao <= 7) return `${diasDesdeAtualizacao} dias atrás`;
+  if (diasDesdeAtualizacao <= 30) return `${diasDesdeAtualizacao} dias atrás`;
+  if (diasDesdeAtualizacao <= 60) return `${Math.floor(diasDesdeAtualizacao / 7)} semanas atrás`;
+  return `${Math.floor(diasDesdeAtualizacao / 30)} meses atrás`;
+};
+
+// ✅ MODIFICADO: Função para ordenar usando detecção inteligente de data
 const sortByRelevance = (imoveis, searchTerm) => {
   if (!Array.isArray(imoveis)) return imoveis;
   
   return [...imoveis].sort((a, b) => {
+    // Se há termo de busca, priorizar relevância
     if (searchTerm) {
       const scoreA = calculateRelevance(a, searchTerm);
       const scoreB = calculateRelevance(b, searchTerm);
       
+      // Ordenação decrescente por relevância
       if (scoreB !== scoreA) {
         return scoreB - scoreA;
       }
     }
     
+    // ✅ USANDO DETECÇÃO INTELIGENTE: Ordenação por data de atualização
     const dataA = detectarCampoComData(a);
     const dataB = detectarCampoComData(b);
     
@@ -177,13 +221,16 @@ const sortByRelevance = (imoveis, searchTerm) => {
       const dateB = new Date(dataB);
       
       if (!isNaN(dateA.getTime()) && !isNaN(dateB.getTime())) {
+        // ✅ MAIS RECENTE PRIMEIRO (dateB - dateA = decrescente)
         return dateB - dateA;
       }
     }
     
+    // Se apenas um tem data, priorizar o que tem data
     if (dataA && !dataB) return -1;
     if (!dataA && dataB) return 1;
     
+    // Fallback: ordenar por código
     const codigoA = parseInt(a.Codigo) || 0;
     const codigoB = parseInt(b.Codigo) || 0;
     return codigoA - codigoB;
@@ -207,93 +254,52 @@ export default function AdminImoveis() {
     itemsPerPage: 30,
   });
 
-  // CACHE SYSTEM - Sistema simplificado e funcional
-  
-  // Salvar estado atual completo
-  const saveCurrentState = () => {
-    try {
-      const currentState = {
-        searchTerm,
-        currentPage,
-        filters,
-        imoveis,
-        pagination,
-        timestamp: Date.now(),
-        url: window.location.pathname
-      };
-      
-      localStorage.setItem("admin_imoveis_state", JSON.stringify(currentState));
-      console.log("[CACHE] Estado salvo:", {
-        searchTerm,
-        currentPage,
-        hasFilters: Object.keys(filters).length > 0,
-        imoveisCount: imoveis.length,
-        totalItems: pagination.totalItems
-      });
-    } catch (error) {
-      console.error("[CACHE] Erro ao salvar:", error);
-    }
+  // Função para salvar busca livre
+  const saveSearchState = (term, results, paginationData) => {
+    localStorage.setItem("admin_searchTerm", term);
+    localStorage.setItem("admin_searchResults", JSON.stringify(results));
+    localStorage.setItem("admin_searchPagination", JSON.stringify(paginationData));
   };
 
-  // Restaurar estado salvo
-  const restoreState = () => {
-    try {
-      const savedState = localStorage.getItem("admin_imoveis_state");
-      
-      if (savedState) {
-        const parsedState = JSON.parse(savedState);
-        
-        // Verificar se não é muito antigo (30 minutos)
-        const isRecent = (Date.now() - parsedState.timestamp) < (30 * 60 * 1000);
-        
-        if (isRecent && parsedState.imoveis && parsedState.imoveis.length > 0) {
-          console.log("[CACHE] Restaurando estado...");
-          
-          setSearchTerm(parsedState.searchTerm || "");
-          setCurrentPage(parsedState.currentPage || 1);
-          setFilters(parsedState.filters || {});
-          setImoveis(parsedState.imoveis || []);
-          setPagination(parsedState.pagination || {
-            totalItems: 0,
-            totalPages: 1,
-            currentPage: 1,
-            itemsPerPage: 30,
-          });
-          
-          setIsLoading(false);
-          
-          console.log("[CACHE] Estado restaurado com sucesso!");
-          return true;
-        } else if (!isRecent) {
-          console.log("[CACHE] Estado expirado, removendo...");
-          localStorage.removeItem("admin_imoveis_state");
-        }
-      }
-    } catch (error) {
-      console.error("[CACHE] Erro ao restaurar:", error);
-      localStorage.removeItem("admin_imoveis_state");
-    }
-    
-    return false;
-  };
-
-  // Limpar cache
-  const clearCache = () => {
-    localStorage.removeItem("admin_imoveis_state");
+  // Função para limpar busca livre
+  const clearSearchState = () => {
     localStorage.removeItem("admin_searchTerm");
     localStorage.removeItem("admin_searchResults");
     localStorage.removeItem("admin_searchPagination");
+  };
+
+  // ✅ ADICIONADO: Funções de cache para filtros (MÍNIMAS)
+  const saveFiltersState = (appliedFilters, results, paginationData) => {
+    localStorage.setItem("admin_appliedFilters", JSON.stringify(appliedFilters));
+    localStorage.setItem("admin_filterResults", JSON.stringify(results));
+    localStorage.setItem("admin_filterPagination", JSON.stringify(paginationData));
+  };
+
+  const clearFiltersState = () => {
     localStorage.removeItem("admin_appliedFilters");
     localStorage.removeItem("admin_filterResults");
     localStorage.removeItem("admin_filterPagination");
-    console.log("[CACHE] Cache limpo");
   };
 
-  // Função principal para carregar dados
-  const loadImoveis = async (page = 1, search = "", customFilters = null, skipCache = false) => {
-    console.log("[API] Carregando imóveis:", { page, search, customFilters });
-    setIsLoading(true);
+  const getFiltersState = () => {
+    const savedFilters = localStorage.getItem("admin_appliedFilters");
+    const savedResults = localStorage.getItem("admin_filterResults");
+    const savedPagination = localStorage.getItem("admin_filterPagination");
     
+    if (savedFilters && savedResults && savedPagination) {
+      return {
+        filters: JSON.parse(savedFilters),
+        results: JSON.parse(savedResults),
+        pagination: JSON.parse(savedPagination)
+      };
+    }
+    return null;
+  };
+
+  // loadImoveis function is already well-defined to handle search and filters
+  const loadImoveis = async (page = 1, search = "", customFilters = null) => {
+    console.log("🔍 loadImoveis chamado. Página:", page, "Busca:", search, "Filtros:", customFilters);
+    setIsLoading(true);
     try {
       let responseData;
       let newPaginationData;
@@ -305,10 +311,15 @@ export default function AdminImoveis() {
         if (data && data.status === 200 && data.data) {
           responseData = data.data;
           newPaginationData = data.pagination;
+          console.log("📥 Dados da API de busca livre recebidos:", data);
+          console.log("📊 Paginação da API de busca livre (newPaginationData):", newPaginationData);
           
+          // 🔥 MODIFICAÇÃO: Aplicar ordenação por relevância apenas na primeira página
           if (page === 1 && responseData.length > 1) {
             responseData = sortByRelevance(responseData, search);
+            console.log("✨ Resultados ordenados por relevância para:", search);
           }
+          
         } else {
           responseData = [];
           newPaginationData = {
@@ -318,10 +329,24 @@ export default function AdminImoveis() {
             itemsPerPage: 30,
           };
         }
+
+        // Salvar o estado da busca livre APÓS a requisição da API
+        saveSearchState(search, responseData, newPaginationData);
+        // ✅ ADICIONADO: Limpar cache de filtros quando há busca livre
+        clearFiltersState();
+
       } else {
         const filtersToUse = customFilters || filters;
         const apiFilters = { ...filtersToUse };
 
+        // 🚨 DEBUG SITUAÇÃO: Log detalhado antes da conversão
+        console.log("🔍 DEBUG SITUAÇÃO - Filtros originais:", filtersToUse);
+        console.log("🔍 DEBUG SITUAÇÃO - apiFilters.Situacao antes:", apiFilters.Situacao);
+        console.log("🔍 DEBUG SITUAÇÃO - Tipo:", typeof apiFilters.Situacao);
+        console.log("🔍 DEBUG SITUAÇÃO - É array?", Array.isArray(apiFilters.Situacao));
+
+        // ✅ MODIFICADO: Conversão de array para string com debug detalhado
+       
         if (apiFilters.ValorMin) {
           apiFilters.ValorMin = apiFilters.ValorMin.toString();
         }
@@ -329,11 +354,20 @@ export default function AdminImoveis() {
           apiFilters.ValorMax = apiFilters.ValorMax.toString();
         }
 
+        // 🚨 LOG FINAL DOS FILTROS ENVIADOS PARA API
+        console.log('🚨 [DEBUG FINAL] Filtros que serão enviados para getImoveisDashboard:', apiFilters);
+        console.log('🚨 [DEBUG FINAL] Especificamente Situacao:', apiFilters.Situacao);
+
         const response = await getImoveisDashboard(apiFilters, page, 30);
+        
+        // 🚨 DEBUG: Log da resposta da API
+        console.log('📥 [DEBUG SITUAÇÃO] Resposta da API getImoveisDashboard:', response);
+        console.log('📥 [DEBUG SITUAÇÃO] Dados retornados:', response?.data?.length || 0, 'imóveis');
         
         if (response && response.data) {
           responseData = response.data;
           
+          // ✅ CORRIGIDO: Garantir que a paginação tenha todos os campos necessários
           const paginacaoAPI = response.paginacao || {};
           newPaginationData = {
             totalItems: paginacaoAPI.totalItems || paginacaoAPI.total || responseData.length || 0,
@@ -341,6 +375,8 @@ export default function AdminImoveis() {
             currentPage: page,
             itemsPerPage: 30,
           };
+          console.log("📊 Paginação dos filtros:", newPaginationData);
+          console.log("📊 Response paginacao original:", response.paginacao);
         } else {
           responseData = [];
           newPaginationData = {
@@ -351,23 +387,42 @@ export default function AdminImoveis() {
           };
         }
 
+        // ✅ MODIFICADO: Aplicar ordenação por data para filtros também
         if (responseData.length > 1) {
-          responseData = sortByRelevance(responseData, "");
+          responseData = sortByRelevance(responseData, ""); // Sem termo de busca = ordena por data
+          console.log("📅 Resultados dos filtros ordenados por data de atualização");
         }
+
+        // ✅ ADICIONADO: Salvar cache de filtros quando não há busca livre
+        if (Object.keys(apiFilters).length > 0) {
+          saveFiltersState(filtersToUse, responseData, newPaginationData);
+        }
+
+        // Limpar o estado da busca livre se não for uma busca livre
+        clearSearchState();
       }
 
       setImoveis(responseData);
       setPagination(newPaginationData);
       
-      // Salvar no cache após atualizar os dados
-      if (!skipCache) {
-        setTimeout(saveCurrentState, 100);
+      // ✅ ADICIONADO: Debug para identificar campos de data disponíveis
+      if (responseData.length > 0) {
+        const exemploImovel = responseData[0];
+        console.log("🔍 [DEBUG DATA] Exemplo de imóvel e seus campos relacionados a data:");
+        console.log("- Código:", exemploImovel.Codigo);
+        console.log("- Todos os campos:", Object.keys(exemploImovel));
+        console.log("- Campos com 'data':", Object.keys(exemploImovel).filter(key => key.toLowerCase().includes('data')));
+        console.log("- Campos com 'update':", Object.keys(exemploImovel).filter(key => key.toLowerCase().includes('update')));
+        console.log("- Campos com 'modified':", Object.keys(exemploImovel).filter(key => key.toLowerCase().includes('modified')));
+        console.log("- Campos com 'ultima':", Object.keys(exemploImovel).filter(key => key.toLowerCase().includes('ultima')));
+        console.log("- Objeto completo do primeiro imóvel:", exemploImovel);
       }
       
-      console.log("[API] Dados carregados:", responseData.length, "imóveis");
+      console.log("✅ Estado de imóveis e paginação atualizado. Imóveis count:", responseData.length, "Paginação atual:", newPaginationData);
+      console.log("🔍 DEBUG: totalItems final:", newPaginationData.totalItems);
 
     } catch (error) {
-      console.error("[API] Erro ao carregar:", error);
+      console.error("Erro ao carregar imóveis:", error);
       setImoveis([]);
       setPagination({
         totalItems: 0,
@@ -377,94 +432,95 @@ export default function AdminImoveis() {
       });
     } finally {
       setIsLoading(false);
+      console.log("⏳ Carregamento finalizado.");
     }
   };
 
-  // Effect inicial - tentar restaurar cache primeiro
+  // ✅ MODIFICADO: Initial load useEffect com cache de filtros
   useEffect(() => {
-    console.log("[INIT] Componente iniciado");
+    const savedTerm = localStorage.getItem("admin_searchTerm");
+    const savedResults = localStorage.getItem("admin_searchResults");
+    const savedPagination = localStorage.getItem("admin_searchPagination");
     
-    const stateRestored = restoreState();
+    const savedFiltersState = getFiltersState();
     
-    if (!stateRestored) {
-      console.log("[INIT] Nenhum cache válido, carregando dados da API");
-      loadImoveis(1, "", {}, true);
+    let initialPage = 1;
+    let initialSearchTerm = "";
+    let initialImoveis = [];
+    let initialPagination = { totalItems: 0, totalPages: 1, currentPage: 1, itemsPerPage: 30 };
+
+    // PRIORIDADE 1: Busca livre se existir
+    if (savedTerm && savedResults && savedPagination) {
+      initialSearchTerm = savedTerm;
+      initialImoveis = JSON.parse(savedResults);
+      initialPagination = JSON.parse(savedPagination);
+      initialPage = initialPagination.currentPage || 1;
+
+      // Exibe os dados do cache imediatamente para uma UX mais rápida
+      setSearchTerm(initialSearchTerm);
+      setImoveis(initialImoveis);
+      setPagination(initialPagination);
+      setIsLoading(true); // Mantém o loading para a requisição da API
     }
+    // PRIORIDADE 2: Filtros se não houver busca livre
+    else if (savedFiltersState) {
+      const initialFilters = savedFiltersState.filters;
+      initialImoveis = savedFiltersState.results;
+      initialPagination = savedFiltersState.pagination;
+      initialPage = initialPagination.currentPage || 1;
 
-    // Salvar estado ao sair da página
-    const handleBeforeUnload = () => {
-      console.log("[EVENT] Salvando antes de sair da página");
-      saveCurrentState();
-    };
+      setFilters(initialFilters);
+      setImoveis(initialImoveis);
+      setPagination(initialPagination);
+      setIsLoading(true);
+    }
+    
+    // Sempre chama loadImoveis para buscar dados frescos,
+    // seja com o termo salvo ou para carregar todos os imóveis
+    loadImoveis(initialPage, initialSearchTerm);
 
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        console.log("[EVENT] Página ficou oculta, salvando estado");
-        saveCurrentState();
-      }
-    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Dependência vazia para rodar apenas na montagem
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      console.log("[CLEANUP] Salvando estado no cleanup");
-      saveCurrentState();
-    };
-  }, []);
-
-  // Effect para mudanças de página/filtros (não executar se acabou de restaurar)
+  // useEffect for handling page changes or filter changes
   useEffect(() => {
-    if (isFilteringManually) {
+    // This useEffect now handles subsequent changes to currentPage or filters
+    // The initial load is handled by the first useEffect
+    if (isFilteringManually) { // Se for filtro manual, já foi tratado no handleFilterApply
       setIsFilteringManually(false);
       return;
     }
-
-    // Verificar se acabou de restaurar do cache
-    const savedState = localStorage.getItem("admin_imoveis_state");
-    if (savedState) {
-      const parsedState = JSON.parse(savedState);
-      const justRestored = (Date.now() - parsedState.timestamp) < 2000; // 2 segundos
-      
-      if (justRestored && imoveis.length > 0) {
-        console.log("[SKIP] Pulando reload - acabou de restaurar do cache");
-        return;
-      }
-    }
-    
+    // Se houver searchTerm, recarrega a busca livre para a página atual
+    // Se não houver searchTerm, carrega com filtros
     loadImoveis(currentPage, searchTerm, filters);
-  }, [currentPage, filters, searchTerm]);
 
-  // Auto-save quando há mudanças significativas
-  useEffect(() => {
-    if (imoveis.length > 0 || searchTerm || Object.keys(filters).length > 0) {
-      const timeoutId = setTimeout(saveCurrentState, 1000);
-      return () => clearTimeout(timeoutId);
-    }
-  }, [imoveis, searchTerm, filters, currentPage, pagination]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentPage, filters, searchTerm]); // Adicione 'searchTerm' como dependência aqui
 
-  // Handlers
+  // Função para lidar com a mudança de página
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  // Função para lidar com a busca
   const handleSearch = (e) => {
     e.preventDefault();
-    setCurrentPage(1);
-    loadImoveis(1, searchTerm);
+    setCurrentPage(1); // Resetar para a primeira página ao realizar nova busca
+    loadImoveis(1, searchTerm); // Trigger search with current term
   };
 
+  // ✅ MODIFICADO: Função para limpar a busca
   const clearSearch = () => {
     setSearchTerm("");
     setCurrentPage(1);
-    setFilters({});
-    clearCache();
-    loadImoveis(1, "");
+    setFilters({}); // Limpar filtros também
+    clearSearchState(); // Limpar estado salvo de busca
+    clearFiltersState(); // ✅ ADICIONADO: Limpar cache de filtros
+    loadImoveis(1, ""); // Carregar todos os imóveis sem busca ou filtro
   };
 
+  // ✅ MODIFICADO: Handler para os filtros
   const handleFilterApply = (newFilters) => {
     const processedFilters = { ...newFilters };
 
@@ -481,15 +537,16 @@ export default function AdminImoveis() {
     setIsFilteringManually(true);
     setFilters(processedFilters);
     setCurrentPage(1);
+
+    // ✅ ADICIONADO: Limpar busca livre ao aplicar filtros
     setSearchTerm("");
+    clearSearchState();
 
     loadImoveis(1, "", processedFilters);
   };
 
+  // Função para navegar para a página de edição
   const handleEdit = async (imovelCodigo) => {
-    // Salvar estado antes de navegar
-    saveCurrentState();
-    
     setIsLoading(true);
     try {
       const response = await getImovelById(imovelCodigo);
@@ -514,7 +571,9 @@ export default function AdminImoveis() {
     }
   };
 
+  // Função para verificar se imóvel está ativo
   const verificarImovelAtivo = (imovel) => {
+    // Verificar se tem valor válido
     const valor = imovel.ValorAntigo;
     let temValor = false;
     
@@ -528,6 +587,7 @@ export default function AdminImoveis() {
       }
     }
     
+    // Se tem valor válido e o campo Ativo não é explicitamente "Não", considera ativo
     const ativoExplicito = imovel.Ativo?.toString().toLowerCase();
     const estaAtivo = temValor && ativoExplicito !== "não" && ativoExplicito !== "nao";
     
@@ -537,6 +597,7 @@ export default function AdminImoveis() {
     };
   };
 
+  // Função para formatar valores monetários - CORRIGIDA PARA FORMATO BRASILEIRO
   const formatarValor = (valor) => {
     if (valor === null || valor === undefined || valor === "") {
       return "-";
@@ -546,6 +607,8 @@ export default function AdminImoveis() {
     if (typeof valor === "number") {
       valorNumerico = valor;
     } else if (typeof valor === "string") {
+      // CORREÇÃO CRÍTICA: Para formato brasileiro, remove TODOS os pontos primeiro
+      // e depois substitui vírgula por ponto para conversão
       const cleanedValue = valor.replace(/\./g, '').replace(',', '.');
       valorNumerico = parseFloat(cleanedValue);
     } else {
@@ -564,6 +627,7 @@ export default function AdminImoveis() {
     }).format(valorNumerico);
   };
 
+  // Função para formatar área privativa
   const formatarArea = (area) => {
     if (area === null || area === undefined || area === "") {
       return "-";
@@ -573,6 +637,7 @@ export default function AdminImoveis() {
     if (typeof area === "number") {
       areaNumerico = area;
     } else if (typeof area === "string") {
+      // Remove caracteres não numéricos exceto vírgula e ponto
       const cleanedValue = area.replace(/[^\d.,]/g, '').replace(',', '.');
       areaNumerico = parseFloat(cleanedValue);
     } else {
@@ -593,39 +658,45 @@ export default function AdminImoveis() {
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
+    // After closing modal, re-load current page with current search/filters
     loadImoveis(currentPage, searchTerm, filters);
   };
 
   const handleCadastrarNovoImovel = () => {
-    saveCurrentState(); // Salvar estado antes de navegar
     const limparImovelSelecionado = useImovelStore.getState().limparImovelSelecionado;
     limparImovelSelecionado();
     router.push("/admin/imoveis/gerenciar");
   };
 
+  // Função para gerar números das páginas a serem exibidas
   const getPageNumbers = () => {
     const pages = [];
     const totalPages = pagination.totalPages;
     const currentPage = pagination.currentPage;
     
     if (totalPages <= 7) {
+      // Se há 7 páginas ou menos, mostra todas
       for (let i = 1; i <= totalPages; i++) {
         pages.push(i);
       }
     } else {
+      // Lógica para mostrar páginas com reticências
       if (currentPage <= 4) {
+        // Início: 1, 2, 3, 4, 5, ..., última
         for (let i = 1; i <= 5; i++) {
           pages.push(i);
         }
         pages.push('...');
         pages.push(totalPages);
       } else if (currentPage >= totalPages - 3) {
+        // Final: 1, ..., antepenúltima, penúltima, última
         pages.push(1);
         pages.push('...');
         for (let i = totalPages - 4; i <= totalPages; i++) {
           pages.push(i);
         }
       } else {
+        // Meio: 1, ..., atual-1, atual, atual+1, ..., última
         pages.push(1);
         pages.push('...');
         for (let i = currentPage - 1; i <= currentPage + 1; i++) {
@@ -641,7 +712,9 @@ export default function AdminImoveis() {
 
   return (
     <AuthCheck>
+      {/* ✅ MODIFICADO: CSS mais agressivo para ocultar TUDO do player de música */}
       <style jsx global>{`
+        /* Ocultar TODOS os elementos do player de música no admin */
         [class*="music"], [class*="play"], [class*="audio"], [class*="player"],
         [class*="sound"], [class*="media"], [class*="track"],
         button[style*="position: fixed"], 
@@ -654,21 +727,31 @@ export default function AdminImoveis() {
         button.fixed, div.fixed.right-4, div.fixed.bottom-4,
         [style*="z-index: 40"], [style*="z-index: 50"], [style*="z-index: 100"],
         [style*="z-index: 999"], [style*="z-index: 9999"],
+        
+        /* Específico para botões circulares flutuantes */
         button[style*="border-radius"][style*="position: fixed"],
         div[style*="border-radius"][style*="position: fixed"],
         button[style*="border-radius: 50%"], div[style*="border-radius: 50%"],
         button[style*="rounded"], div[style*="rounded"],
+        
+        /* Sombras e overlays */
         [style*="box-shadow"][style*="position: fixed"],
         [style*="shadow"][style*="position: fixed"],
         div[style*="shadow-lg"], button[style*="shadow-lg"],
         div[style*="shadow-xl"], button[style*="shadow-xl"],
+        
+        /* Elementos flutuantes no canto direito/inferior */
         *[style*="position: fixed"][style*="right: 16px"],
         *[style*="position: fixed"][style*="right: 20px"],
         *[style*="position: fixed"][style*="right: 24px"],
         *[style*="position: fixed"][style*="bottom: 16px"],
         *[style*="position: fixed"][style*="bottom: 20px"],
         *[style*="position: fixed"][style*="bottom: 24px"],
+        
+        /* Capturar qualquer coisa com z-index alto e position fixed */
         *[style*="position: fixed"][style*="z-index"],
+        
+        /* IDs e classes comuns de players */
         #music-player, #audio-player, #media-player,
         .music-player, .audio-player, .media-player,
         .floating-player, .sticky-player {
@@ -677,6 +760,8 @@ export default function AdminImoveis() {
           opacity: 0 !important;
           pointer-events: none !important;
         }
+        
+        /* Extra: ocultar qualquer elemento com atributos de áudio */
         audio, video[style*="display: none"] + *, 
         [data-testid*="player"], [data-testid*="music"], [data-testid*="audio"] {
           display: none !important;
@@ -694,7 +779,6 @@ export default function AdminImoveis() {
           type="imovel"
         />
       )}
-      
       <div className="">
         <div className="mb-8">
           <div className="flex justify-between items-center mb-4">
@@ -708,7 +792,7 @@ export default function AdminImoveis() {
           </div>
 
           {/* Barra de pesquisa */}
-          <div className="bg-white p-4 rounded-lg mb-6">
+          <div className="bg-white p-4 rounded-lg  mb-6">
             <form onSubmit={handleSearch} className="flex items-center gap-2">
               <div className="flex w-full items-center justify-center gap-2">
                 <input
@@ -741,7 +825,7 @@ export default function AdminImoveis() {
             <FiltersImoveisAdmin onFilter={handleFilterApply} />
           </div>
 
-          {/* Indicador de resultados filtrados */}
+          {/* ✅ MODIFICADO: Indicador de resultados filtrados com suporte para construtoras */}
           {(Object.keys(filters).length > 0 || searchTerm) && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
               <div className="flex items-center justify-between">
@@ -755,6 +839,7 @@ export default function AdminImoveis() {
                     </span>
                   </div>
                   
+                  {/* Mostrar filtros ativos */}
                   <div className="flex flex-wrap gap-2">
                     {searchTerm && (
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
@@ -763,12 +848,12 @@ export default function AdminImoveis() {
                     )}
                     {filters.Categoria && (
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        {Array.isArray(filters.Categoria) ? `${filters.Categoria.length} categorias` : filters.Categoria}
+                        {filters.Categoria}
                       </span>
                     )}
                     {filters.Status && (
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                        {Array.isArray(filters.Status) ? `${filters.Status.length} status` : filters.Status}
+                        {filters.Status}
                       </span>
                     )}
                     {Array.isArray(filters.Situacao) && filters.Situacao.length > 0 && (
@@ -776,6 +861,7 @@ export default function AdminImoveis() {
                         {filters.Situacao.length === 1 ? filters.Situacao[0] : `${filters.Situacao.length} situações`}
                       </span>
                     )}
+                    {/* ✅ ADICIONADO: Badge para construtoras selecionadas */}
                     {Array.isArray(filters.Construtora) && filters.Construtora.length > 0 && (
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
                         {filters.Construtora.length === 1 ? filters.Construtora[0] : `${filters.Construtora.length} construtoras`}
@@ -799,6 +885,7 @@ export default function AdminImoveis() {
                   </div>
                 </div>
                 
+                {/* Botão para limpar filtros */}
                 <button
                   onClick={() => {
                     if (searchTerm) {
@@ -806,7 +893,7 @@ export default function AdminImoveis() {
                     } else {
                       setFilters({});
                       setCurrentPage(1);
-                      clearCache();
+                      clearFiltersState();
                       loadImoveis(1, "");
                     }
                   }}
@@ -818,7 +905,7 @@ export default function AdminImoveis() {
             </div>
           )}
 
-          {/* Legenda de status */}
+          {/* Legenda com cor preta para 120+ dias */}
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-1">
@@ -901,6 +988,7 @@ export default function AdminImoveis() {
                   </thead>
                   <tbody className="divide-y divide-gray-200 bg-white">
                     {isLoading ? (
+                      // Linha de carregamento
                       Array(10)
                         .fill(null)
                         .map((_, index) => (
@@ -913,6 +1001,7 @@ export default function AdminImoveis() {
                           </tr>
                         ))
                     ) : imoveis.length > 0 ? (
+                      // Dados dos imóveis
                       imoveis.map((imovel) => {
                         const statusBadge = getStatusBadge(imovel);
                         
@@ -996,6 +1085,7 @@ export default function AdminImoveis() {
                         );
                       })
                     ) : (
+                      // Nenhum resultado encontrado
                       <tr>
                         <td colSpan={7} className="px-3 py-8 text-center text-xs text-gray-500">
                           Nenhum imóvel encontrado.
@@ -1008,10 +1098,11 @@ export default function AdminImoveis() {
             </div>
           </div>
 
-          {/* Paginação */}
+          {/* Paginação Inline Simples */}
           {pagination.totalPages > 1 && (
             <div className="mt-6 flex items-center justify-between border-t border-gray-200 bg-white px-4 py-3 sm:px-6">
               <div className="flex flex-1 justify-between sm:hidden">
+                {/* Mobile: Apenas Anterior/Próximo */}
                 <button
                   onClick={() => handlePageChange(pagination.currentPage - 1)}
                   disabled={pagination.currentPage === 1}
@@ -1054,6 +1145,7 @@ export default function AdminImoveis() {
                 
                 <div>
                   <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                    {/* Botão Anterior */}
                     <button
                       onClick={() => handlePageChange(pagination.currentPage - 1)}
                       disabled={pagination.currentPage === 1}
@@ -1067,6 +1159,7 @@ export default function AdminImoveis() {
                       </svg>
                     </button>
 
+                    {/* Números das páginas */}
                     {getPageNumbers().map((pageNumber, index) => (
                       pageNumber === '...' ? (
                         <span
@@ -1090,6 +1183,7 @@ export default function AdminImoveis() {
                       )
                     ))}
 
+                    {/* Botão Próximo */}
                     <button
                       onClick={() => handlePageChange(pagination.currentPage + 1)}
                       disabled={pagination.currentPage === pagination.totalPages}
