@@ -1,4 +1,6 @@
-src/app/admin/imoveis/components/filters.js
+// src/app/admin/imoveis/components/filters.js
+"use client";
+
 import { getBairrosPorCidade, getImoveisByFilters } from "@/app/services";
 import { useEffect, useState, useRef } from "react";
 
@@ -308,6 +310,9 @@ export default function FiltersImoveisAdmin({ onFilter }) {
   // useEffect para restaurar filtros do cache
   useEffect(() => {
     const restoreFiltersFromCache = () => {
+      // Verificar se estamos no lado do cliente
+      if (typeof localStorage === 'undefined') return;
+
       try {
         const savedFilters = localStorage.getItem("admin_appliedFilters");
         
@@ -397,12 +402,17 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       }
     }
 
+    // Só adicionar o listener se pelo menos um dropdown estiver expandido
     if (bairrosExpanded || situacaoExpanded || construtoraExpanded) {
-      document.addEventListener("mousedown", handleClickOutside);
+      if (typeof document !== 'undefined') {
+        document.addEventListener("mousedown", handleClickOutside);
+      }
     }
 
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+      if (typeof document !== 'undefined') {
+        document.removeEventListener("mousedown", handleClickOutside);
+      }
     };
   }, [bairrosExpanded, situacaoExpanded, construtoraExpanded]);
 
@@ -618,13 +628,15 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     setBairrosMapeamento({});
     setConstrutorasMapeamento({});
 
-    // Limpar cache
-    localStorage.removeItem("admin_appliedFilters");
-    localStorage.removeItem("admin_filterResults");
-    localStorage.removeItem("admin_filterPagination");
-    localStorage.removeItem("admin_searchTerm");
-    localStorage.removeItem("admin_searchResults");
-    localStorage.removeItem("admin_searchPagination");
+    // Limpar cache - verificar se localStorage está disponível
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem("admin_appliedFilters");
+      localStorage.removeItem("admin_filterResults");
+      localStorage.removeItem("admin_filterPagination");
+      localStorage.removeItem("admin_searchTerm");
+      localStorage.removeItem("admin_searchResults");
+      localStorage.removeItem("admin_searchPagination");
+    }
     
     if (onFilter) {
       onFilter({});
@@ -633,7 +645,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
 
   return (
     <div className="w-full mt-4 flex flex-col gap-4 border-t py-4">
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
         <SelectFilter
           name="cadastro"
           options={[
@@ -675,7 +687,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         {/* Dropdown de situação */}
         <div ref={situacaoRef} className="relative">
           <label htmlFor="situacao" className="text-xs text-gray-500 block mb-2">
-            situacao
+            Situação
           </label>
           <div className="relative">
             <input
@@ -757,17 +769,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           </div>
         </div>
 
-        <SelectFilter
-          name="cidade"
-          options={cidades.map((cidade) => ({ value: cidade, label: cidade }))}
-          placeholder="Cidade"
-          onChange={(e) => setCidadeSelecionada(e.target.value)}
-          value={cidadeSelecionada}
-        />
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {/* Dropdown de construtoras */}
+        {/* Dropdown de construtoras - MOVIDO PARA LINHA PRINCIPAL */}
         <div ref={construtoraRef} className="relative">
           <label htmlFor="construtora" className="text-xs text-gray-500 block mb-2">
             Construtora
@@ -852,6 +854,16 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           </div>
         </div>
 
+        <SelectFilter
+          name="cidade"
+          options={cidades.map((cidade) => ({ value: cidade, label: cidade }))}
+          placeholder="Cidade"
+          onChange={(e) => setCidadeSelecionada(e.target.value)}
+          value={cidadeSelecionada}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Dropdown de bairros */}
         <div ref={bairrosRef}>
           <label htmlFor="bairros" className="text-xs text-gray-500 block mb-2">
