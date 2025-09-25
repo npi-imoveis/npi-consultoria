@@ -1,11 +1,7 @@
-// src/app/busca/page.js
 "use client";
 
-export const revalidate = 0;                  // evita cache de HTML da rota
-export const dynamic = "force-dynamic";       // força dinâmica no App Router
-
 import { useEffect, useState } from "react";
-import NextDynamic from "next/dynamic";       // 🛠️ RENOMEADO: antes era `dynamic`
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 
 import CardImovel, { CardImovelSkeleton } from "../components/ui/card-imovel";
@@ -22,7 +18,7 @@ import useImovelStore from "../store/imovelStore";
 import { gerarUrlSeoFriendly } from "../utils/url-slugs";
 
 // Mapa desktop (SSR off)
-const MapWithNoSSR = NextDynamic(() => import("./components/map-component"), {
+const MapWithNoSSR = dynamic(() => import("./components/map-component"), {
   ssr: false,
   loading: () => (
     <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
