@@ -63,7 +63,7 @@ export function TestimonialsSection({ testimonials }) {
               <SwiperSlide key={testimonial.id}>
                 <figure>
                   <blockquote className="text-center text-lg font-semibold text-gray-900 ">
-                    <p>"{testimonial.content}"</p>
+                    <p>&ldquo;{testimonial.content}&rdquo;</p>
                   </blockquote>
                   <figcaption className="mt-10">
                     <div className="mt-4 flex items-center justify-center space-x-3 text-base">
