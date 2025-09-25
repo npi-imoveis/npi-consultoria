@@ -20,7 +20,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
   const [situacoesReais, setSituacoesReais] = useState([]);
   const [construtorasReais, setConstrutorasReais] = useState([]);
 
-  // Estados de seleção (arrays para múltipla escolha)
+  // Estados de seleção (CATEGORIA e STATUS agora são arrays)
   const [categoriasSelecionadas, setCategoriasSelecionadas] = useState([]);
   const [statusSelecionados, setStatusSelecionados] = useState([]);
   const [cidadeSelecionada, setCidadeSelecionada] = useState("");
@@ -32,21 +32,19 @@ export default function FiltersImoveisAdmin({ onFilter }) {
   const [areaMin, setAreaMin] = useState(null);
   const [areaMax, setAreaMax] = useState(null);
 
-  // Estados de UI para filtros de texto
+  // Estados de UI
   const [bairroFilter, setBairroFilter] = useState("");
   const [situacaoFilter, setSituacaoFilter] = useState("");
   const [construtoraFilter, setConstrutoraFilter] = useState("");
   const [categoriaFilter, setCategoriaFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-
-  // Estados de expansão dos dropdowns
   const [bairrosExpanded, setBairrosExpanded] = useState(false);
   const [situacaoExpanded, setSituacaoExpanded] = useState(false);
   const [construtoraExpanded, setConstrutoraExpanded] = useState(false);
   const [categoriaExpanded, setCategoriaExpanded] = useState(false);
   const [statusExpanded, setStatusExpanded] = useState(false);
 
-  // Estado para outros filtros simples
+  // Estado para outros filtros
   const [filters, setFilters] = useState({
     categoria: "",
     status: "",
@@ -61,10 +59,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
   const [bairrosMapeamento, setBairrosMapeamento] = useState({});
   const [construtorasMapeamento, setConstrutorasMapeamento] = useState({});
 
-  // Flag para controle de restauração de cache
-  const [isRestoringFromCache, setIsRestoringFromCache] = useState(false);
-
-  // Opções hardcoded
+  // Opções de situação e status hardcoded
   const situacaoOptionsHardcoded = [
     "EM CONSTRUÇÃO",
     "LANÇAMENTO", 
@@ -83,8 +78,6 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     "VENDIDO"
   ];
 
-  // UTILITY FUNCTIONS
-  
   // Função auxiliar para capitalização
   const capitalizarNomesProprios = (texto) => {
     if (!texto || typeof texto !== 'string') return texto;
@@ -112,181 +105,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       .replace(/[ñ]/g, 'n');
   };
 
-  // CACHE FUNCTIONS - Sistema integrado com AdminImoveis
-  
-  // Função para salvar estado dos filtros no cache completo
-  const saveToCompleteCache = () => {
-    if (isRestoringFromCache) return; // Evita salvar durante restauração
-    
-    try {
-      const completeState = localStorage.getItem("admin_completeState");
-      
-      if (completeState) {
-        const parsedState = JSON.parse(completeState);
-        
-        // Atualizar apenas a parte dos filtros
-        parsedState.filtersState = {
-          categoriasSelecionadas,
-          statusSelecionados,
-          cidadeSelecionada,
-          bairrosSelecionados,
-          situacoesSelecionadas,
-          construtorasSelecionadas,
-          valorMin,
-          valorMax,
-          areaMin,
-          areaMax,
-          filters,
-          situacoesMapeamento,
-          bairrosMapeamento,
-          construtorasMapeamento,
-          timestamp: new Date().getTime()
-        };
-        
-        localStorage.setItem("admin_completeState", JSON.stringify(parsedState));
-        console.log("✅ Estado dos filtros salvo no cache completo");
-      }
-    } catch (error) {
-      console.error("❌ Erro ao salvar estado dos filtros no cache:", error);
-    }
-  };
-
-  // Função para restaurar estado dos filtros do cache completo
-  const restoreFromCompleteCache = () => {
-    try {
-      const completeState = localStorage.getItem("admin_completeState");
-      
-      if (completeState) {
-        const parsedState = JSON.parse(completeState);
-        
-        if (parsedState.filtersState) {
-          const filterState = parsedState.filtersState;
-          
-          console.log("🔄 Restaurando estado dos filtros do cache completo...");
-          
-          setIsRestoringFromCache(true);
-          
-          // Restaurar todos os estados dos filtros
-          setCategoriasSelecionadas(filterState.categoriasSelecionadas || []);
-          setStatusSelecionados(filterState.statusSelecionados || []);
-          setCidadeSelecionada(filterState.cidadeSelecionada || "");
-          setBairrosSelecionados(filterState.bairrosSelecionados || []);
-          setSituacoesSelecionadas(filterState.situacoesSelecionadas || []);
-          setConstrutorasSelecionadas(filterState.construtorasSelecionadas || []);
-          setValorMin(filterState.valorMin);
-          setValorMax(filterState.valorMax);
-          setAreaMin(filterState.areaMin);
-          setAreaMax(filterState.areaMax);
-          setFilters(filterState.filters || {});
-          setSituacoesMapeamento(filterState.situacoesMapeamento || {});
-          setBairrosMapeamento(filterState.bairrosMapeamento || {});
-          setConstrutorasMapeamento(filterState.construtorasMapeamento || {});
-          
-          console.log("✅ Estado dos filtros restaurado do cache completo");
-          
-          setTimeout(() => setIsRestoringFromCache(false), 1000);
-          return true;
-        }
-      }
-      
-      // Fallback para cache antigo
-      return restoreFiltersFromOldCache();
-      
-    } catch (error) {
-      console.error("❌ Erro ao restaurar filtros do cache completo:", error);
-      return restoreFiltersFromOldCache();
-    }
-  };
-
-  // Função para restaurar do cache antigo (compatibilidade)
-  const restoreFiltersFromOldCache = () => {
-    try {
-      const savedFilters = localStorage.getItem("admin_appliedFilters");
-      
-      if (savedFilters) {
-        const parsedFilters = JSON.parse(savedFilters);
-        console.log("🔄 Restaurando do cache antigo (compatibilidade)...");
-        
-        setIsRestoringFromCache(true);
-        
-        // Restaurar categorias
-        if (parsedFilters.Categoria) {
-          if (Array.isArray(parsedFilters.Categoria)) {
-            setCategoriasSelecionadas(parsedFilters.Categoria);
-          } else if (typeof parsedFilters.Categoria === 'string') {
-            setCategoriasSelecionadas([parsedFilters.Categoria]);
-          }
-        }
-
-        // Restaurar status
-        if (parsedFilters.Status) {
-          if (Array.isArray(parsedFilters.Status)) {
-            setStatusSelecionados(parsedFilters.Status);
-          } else if (typeof parsedFilters.Status === 'string') {
-            setStatusSelecionados([parsedFilters.Status]);
-          }
-        }
-        
-        if (parsedFilters.Ativo) {
-          setFilters(prev => ({ ...prev, cadastro: parsedFilters.Ativo }));
-        }
-        
-        if (parsedFilters.Cidade) {
-          setCidadeSelecionada(parsedFilters.Cidade);
-        }
-        
-        if (parsedFilters.Situacao) {
-          if (Array.isArray(parsedFilters.Situacao)) {
-            setSituacoesSelecionadas(parsedFilters.Situacao);
-          } else if (typeof parsedFilters.Situacao === 'string') {
-            const situacoesArray = parsedFilters.Situacao.split(',').map(s => s.trim());
-            setSituacoesSelecionadas(situacoesArray);
-          }
-        }
-
-        // Restaurar construtoras
-        if (parsedFilters.Construtora) {
-          if (Array.isArray(parsedFilters.Construtora)) {
-            setConstrutorasSelecionadas(parsedFilters.Construtora);
-          } else if (typeof parsedFilters.Construtora === 'string') {
-            const construtorasArray = parsedFilters.Construtora.split(',').map(c => c.trim());
-            setConstrutorasSelecionadas(construtorasArray);
-          }
-        }
-        
-        if (parsedFilters.bairros && Array.isArray(parsedFilters.bairros)) {
-          setBairrosSelecionados(parsedFilters.bairros);
-        }
-        
-        if (parsedFilters.ValorMin) {
-          setValorMin(typeof parsedFilters.ValorMin === 'number' ? parsedFilters.ValorMin : parseFloat(parsedFilters.ValorMin));
-        }
-        
-        if (parsedFilters.ValorMax) {
-          setValorMax(typeof parsedFilters.ValorMax === 'number' ? parsedFilters.ValorMax : parseFloat(parsedFilters.ValorMax));
-        }
-        
-        if (parsedFilters.AreaMin) {
-          setAreaMin(typeof parsedFilters.AreaMin === 'number' ? parsedFilters.AreaMin : parseInt(parsedFilters.AreaMin));
-        }
-        
-        if (parsedFilters.AreaMax) {
-          setAreaMax(typeof parsedFilters.AreaMax === 'number' ? parsedFilters.AreaMax : parseInt(parsedFilters.AreaMax));
-        }
-        
-        setTimeout(() => setIsRestoringFromCache(false), 1000);
-        return true;
-      }
-    } catch (error) {
-      console.error('❌ Erro ao restaurar filtros do cache antigo:', error);
-    }
-    
-    setIsRestoringFromCache(false);
-    return false;
-  };
-
-  // DATA FETCHING - Carregar dados dos filtros
-  
+  // useEffect para carregar dados dos filtros incluindo construtoras
   useEffect(() => {
     async function fetchFilterData() {
       try {
@@ -357,7 +176,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
             setSituacoesReais(situacoesFinais);
             setSituacoesMapeamento(novoMapeamento);
             
-            console.log(`✅ ${situacoesFinais.length} situações carregadas`);
+            console.log(`✅ ${situacoesFinais.length} situações carregadas com sucesso`);
           }
         } else {
           console.log("⚠️ Usando situações padrão");
@@ -419,7 +238,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
             setConstrutorasReais(construtorasFinais);
             setConstrutorasMapeamento(novoMapeamentoConst);
             
-            console.log(`✅ ${construtorasFinais.length} construtoras carregadas`);
+            console.log(`✅ ${construtorasFinais.length} construtoras carregadas com sucesso`);
           } else {
             setConstrutorasReais([]);
             setConstrutorasMapeamento({});
@@ -429,11 +248,6 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           setConstrutorasReais([]);
           setConstrutorasMapeamento({});
         }
-
-        // Após carregar os dados, tentar restaurar do cache
-        setTimeout(() => {
-          restoreFromCompleteCache();
-        }, 500);
 
       } catch (error) {
         console.error("❌ Erro ao carregar filtros:", error);
@@ -446,7 +260,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     fetchFilterData();
   }, []);
 
-  // BAIRROS LOADING - Carregar bairros quando cidade muda
+  // useEffect para bairros
   useEffect(() => {
     async function fetchBairros() {
       if (!cidadeSelecionada) {
@@ -510,23 +324,96 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     fetchBairros();
   }, [cidadeSelecionada, categoriasSelecionadas]);
 
-  // AUTO SAVE - Salvar no cache sempre que houver mudanças
+  // useEffect para restaurar filtros do cache
   useEffect(() => {
-    if (!isRestoringFromCache) {
-      const timeoutId = setTimeout(() => {
-        saveToCompleteCache();
-      }, 500); // Debounce de 500ms
-      
-      return () => clearTimeout(timeoutId);
-    }
-  }, [
-    categoriasSelecionadas, statusSelecionados, cidadeSelecionada, 
-    bairrosSelecionados, situacoesSelecionadas, construtorasSelecionadas,
-    valorMin, valorMax, areaMin, areaMax, filters,
-    isRestoringFromCache
-  ]);
+    const restoreFiltersFromCache = () => {
+      if (typeof localStorage === 'undefined') return;
 
-  // CLICK OUTSIDE - Fechar dropdowns
+      try {
+        const savedFilters = localStorage.getItem("admin_appliedFilters");
+        
+        if (savedFilters) {
+          const parsedFilters = JSON.parse(savedFilters);
+          
+          // Restaurar categorias como array
+          if (parsedFilters.Categoria) {
+            if (Array.isArray(parsedFilters.Categoria)) {
+              setCategoriasSelecionadas(parsedFilters.Categoria);
+            } else if (typeof parsedFilters.Categoria === 'string') {
+              setCategoriasSelecionadas([parsedFilters.Categoria]);
+            }
+          }
+
+          // Restaurar status como array
+          if (parsedFilters.Status) {
+            if (Array.isArray(parsedFilters.Status)) {
+              setStatusSelecionados(parsedFilters.Status);
+            } else if (typeof parsedFilters.Status === 'string') {
+              setStatusSelecionados([parsedFilters.Status]);
+            }
+          }
+          
+          if (parsedFilters.Ativo) {
+            setFilters(prev => ({ ...prev, cadastro: parsedFilters.Ativo }));
+          }
+          
+          if (parsedFilters.Cidade) {
+            setCidadeSelecionada(parsedFilters.Cidade);
+          }
+          
+          if (parsedFilters.Situacao) {
+            if (Array.isArray(parsedFilters.Situacao)) {
+              setSituacoesSelecionadas(parsedFilters.Situacao);
+            } else if (typeof parsedFilters.Situacao === 'string') {
+              const situacoesArray = parsedFilters.Situacao.split(',').map(s => s.trim());
+              setSituacoesSelecionadas(situacoesArray);
+            } else {
+              setFilters(prev => ({ ...prev, situacao: parsedFilters.Situacao }));
+            }
+          }
+
+          // Restaurar construtoras do cache
+          if (parsedFilters.Construtora) {
+            if (Array.isArray(parsedFilters.Construtora)) {
+              setConstrutorasSelecionadas(parsedFilters.Construtora);
+            } else if (typeof parsedFilters.Construtora === 'string') {
+              const construtorasArray = parsedFilters.Construtora.split(',').map(c => c.trim());
+              setConstrutorasSelecionadas(construtorasArray);
+            } else {
+              setFilters(prev => ({ ...prev, construtora: parsedFilters.Construtora }));
+            }
+          }
+          
+          if (parsedFilters.bairros && Array.isArray(parsedFilters.bairros)) {
+            setBairrosSelecionados(parsedFilters.bairros);
+          }
+          
+          if (parsedFilters.ValorMin) {
+            setValorMin(typeof parsedFilters.ValorMin === 'number' ? parsedFilters.ValorMin : parseFloat(parsedFilters.ValorMin));
+          }
+          
+          if (parsedFilters.ValorMax) {
+            setValorMax(typeof parsedFilters.ValorMax === 'number' ? parsedFilters.ValorMax : parseFloat(parsedFilters.ValorMax));
+          }
+          
+          if (parsedFilters.AreaMin) {
+            setAreaMin(typeof parsedFilters.AreaMin === 'number' ? parsedFilters.AreaMin : parseInt(parsedFilters.AreaMin));
+          }
+          
+          if (parsedFilters.AreaMax) {
+            setAreaMax(typeof parsedFilters.AreaMax === 'number' ? parsedFilters.AreaMax : parseInt(parsedFilters.AreaMax));
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao restaurar filtros do cache:', error);
+      }
+    };
+    
+    const timeoutId = setTimeout(restoreFiltersFromCache, 100);
+    return () => clearTimeout(timeoutId);
+  }, []);
+
+  // Fechar dropdowns ao clicar fora
   useEffect(() => {
     function handleClickOutside(event) {
       if (bairrosRef.current && !bairrosRef.current.contains(event.target)) {
@@ -559,8 +446,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     };
   }, [bairrosExpanded, situacaoExpanded, construtoraExpanded, categoriaExpanded, statusExpanded]);
 
-  // FORMATTING FUNCTIONS - Funções para formatação de valores
-  
+  // Funções utilitárias para formatação
   const formatarParaReal = (valor) => {
     if (valor === null || valor === undefined || valor === 0) return "";
     try {
@@ -585,8 +471,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     return valor ? valor.toString() : "";
   };
 
-  // FILTERING FUNCTIONS - Filtrar arrays para exibição
-  
+  // Filtrar arrays
   const categoriasFiltradas = categorias.filter((categoria) =>
     categoria.toLowerCase().includes(categoriaFilter.toLowerCase())
   );
@@ -607,31 +492,26 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     construtora.toLowerCase().includes(construtoraFilter.toLowerCase())
   );
 
-  // HANDLERS - Funções de manipulação de seleção
-  
+  // Handlers de manipulação
   const handleCategoriaChange = (categoria) => {
-    if (isRestoringFromCache) return;
     setCategoriasSelecionadas((prev) =>
       prev.includes(categoria) ? prev.filter((c) => c !== categoria) : [...prev, categoria]
     );
   };
 
   const handleStatusChange = (status) => {
-    if (isRestoringFromCache) return;
     setStatusSelecionados((prev) =>
       prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status]
     );
   };
 
   const handleBairroChange = (bairro) => {
-    if (isRestoringFromCache) return;
     setBairrosSelecionados((prev) =>
       prev.includes(bairro) ? prev.filter((b) => b !== bairro) : [...prev, bairro]
     );
   };
 
   const handleSituacaoChange = (situacao) => {
-    if (isRestoringFromCache) return;
     setSituacoesSelecionadas((prev) => {
       const isSelected = prev.includes(situacao);
       const newSituacoes = isSelected 
@@ -643,7 +523,6 @@ export default function FiltersImoveisAdmin({ onFilter }) {
   };
 
   const handleConstrutoraChange = (construtora) => {
-    if (isRestoringFromCache) return;
     setConstrutorasSelecionadas((prev) => {
       const isSelected = prev.includes(construtora);
       const newConstrutoras = isSelected 
@@ -654,8 +533,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     });
   };
 
-  // API NORMALIZATION - Normalizar dados para envio à API
-  
+  // Normalização para API
   const normalizarSituacaoParaAPI = (situacoesSelecionadas) => {
     if (!Array.isArray(situacoesSelecionadas) || situacoesSelecionadas.length === 0) {
       return undefined;
@@ -740,8 +618,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     return construtorasSemDuplicatas;
   };
 
-  // MAIN HANDLERS - Aplicar e limpar filtros
-  
+  // handleFilters
   const handleFilters = () => {
     const situacaoProcessada = normalizarSituacaoParaAPI(situacoesSelecionadas);
     const construtoraProcessada = normalizarConstrutoraParaAPI(construtorasSelecionadas);
@@ -767,22 +644,15 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       }
     });
 
-    console.log("🔍 Aplicando filtros:", filtersForAPI);
-
-    // Salvar no cache antes de aplicar
-    saveToCompleteCache();
+    console.log("Aplicando filtros:", filtersForAPI);
 
     if (onFilter) {
       onFilter(filtersToApply);
     }
   };
 
+  // handleClearFilters
   const handleClearFilters = () => {
-    console.log("🧹 Limpando todos os filtros...");
-    
-    setIsRestoringFromCache(true);
-    
-    // Limpar todos os estados
     setFilters({
       categoria: "",
       status: "",
@@ -809,9 +679,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     setBairrosMapeamento({});
     setConstrutorasMapeamento({});
 
-    // Limpar todos os caches
     if (typeof localStorage !== 'undefined') {
-      localStorage.removeItem("admin_completeState");
       localStorage.removeItem("admin_appliedFilters");
       localStorage.removeItem("admin_filterResults");
       localStorage.removeItem("admin_filterPagination");
@@ -819,8 +687,6 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       localStorage.removeItem("admin_searchResults");
       localStorage.removeItem("admin_searchPagination");
     }
-    
-    setTimeout(() => setIsRestoringFromCache(false), 500);
     
     if (onFilter) {
       onFilter({});
@@ -837,11 +703,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
             { value: "Não", label: "Não" },
           ]}
           placeholder="Cadastro"
-          onChange={(e) => {
-            if (!isRestoringFromCache) {
-              setFilters({ ...filters, cadastro: e.target.value });
-            }
-          }}
+          onChange={(e) => setFilters({ ...filters, cadastro: e.target.value })}
           value={filters.cadastro}
         />
         
@@ -872,13 +734,13 @@ export default function FiltersImoveisAdmin({ onFilter }) {
                   <>
                     <div className="flex justify-between border-b border-gray-100 px-2 py-1">
                       <button
-                        onClick={() => !isRestoringFromCache && setCategoriasSelecionadas(categoriasFiltradas)}
+                        onClick={() => setCategoriasSelecionadas(categoriasFiltradas)}
                         className="text-[10px] text-black hover:underline"
                       >
                         Selecionar todos
                       </button>
                       <button
-                        onClick={() => !isRestoringFromCache && setCategoriasSelecionadas([])}
+                        onClick={() => setCategoriasSelecionadas([])}
                         className="text-[10px] text-black hover:underline"
                       >
                         Limpar todos
@@ -957,13 +819,13 @@ export default function FiltersImoveisAdmin({ onFilter }) {
                   <>
                     <div className="flex justify-between border-b border-gray-100 px-2 py-1">
                       <button
-                        onClick={() => !isRestoringFromCache && setStatusSelecionados(statusFiltrados)}
+                        onClick={() => setStatusSelecionados(statusFiltrados)}
                         className="text-[10px] text-black hover:underline"
                       >
                         Selecionar todos
                       </button>
                       <button
-                        onClick={() => !isRestoringFromCache && setStatusSelecionados([])}
+                        onClick={() => setStatusSelecionados([])}
                         className="text-[10px] text-black hover:underline"
                       >
                         Limpar todos
@@ -1042,13 +904,13 @@ export default function FiltersImoveisAdmin({ onFilter }) {
                   <>
                     <div className="flex justify-between border-b border-gray-100 px-2 py-1">
                       <button
-                        onClick={() => !isRestoringFromCache && setSituacoesSelecionadas(situacoesFiltradas)}
+                        onClick={() => setSituacoesSelecionadas(situacoesFiltradas)}
                         className="text-[10px] text-black hover:underline"
                       >
                         Selecionar todos
                       </button>
                       <button
-                        onClick={() => !isRestoringFromCache && setSituacoesSelecionadas([])}
+                        onClick={() => setSituacoesSelecionadas([])}
                         className="text-[10px] text-black hover:underline"
                       >
                         Limpar todos
@@ -1135,13 +997,13 @@ export default function FiltersImoveisAdmin({ onFilter }) {
                   <>
                     <div className="flex justify-between border-b border-gray-100 px-2 py-1">
                       <button
-                        onClick={() => !isRestoringFromCache && setConstrutorasSelecionadas(construtorasFiltradas)}
+                        onClick={() => setConstrutorasSelecionadas(construtorasFiltradas)}
                         className="text-[10px] text-black hover:underline"
                       >
                         Selecionar todos
                       </button>
                       <button
-                        onClick={() => !isRestoringFromCache && setConstrutorasSelecionadas([])}
+                        onClick={() => setConstrutorasSelecionadas([])}
                         className="text-[10px] text-black hover:underline"
                       >
                         Limpar todos
@@ -1205,11 +1067,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           name="cidade"
           options={cidades.map((cidade) => ({ value: cidade, label: cidade }))}
           placeholder="Cidade"
-          onChange={(e) => {
-            if (!isRestoringFromCache) {
-              setCidadeSelecionada(e.target.value);
-            }
-          }}
+          onChange={(e) => setCidadeSelecionada(e.target.value)}
           value={cidadeSelecionada}
         />
       </div>
@@ -1243,13 +1101,13 @@ export default function FiltersImoveisAdmin({ onFilter }) {
                   <>
                     <div className="flex justify-between border-b border-gray-100 px-2 py-1">
                       <button
-                        onClick={() => !isRestoringFromCache && setBairrosSelecionados(bairrosFiltrados)}
+                        onClick={() => setBairrosSelecionados(bairrosFiltrados)}
                         className="text-[10px] text-black hover:underline"
                       >
                         Selecionar todos
                       </button>
                       <button
-                        onClick={() => !isRestoringFromCache && setBairrosSelecionados([])}
+                        onClick={() => setBairrosSelecionados([])}
                         className="text-[10px] text-black hover:underline"
                       >
                         Limpar todos
@@ -1316,14 +1174,14 @@ export default function FiltersImoveisAdmin({ onFilter }) {
               type="text"
               placeholder="Valor Mínimo"
               value={valorMin ? formatarParaReal(valorMin) : ""}
-              onChange={(e) => !isRestoringFromCache && setValorMin(converterParaNumero(e.target.value))}
+              onChange={(e) => setValorMin(converterParaNumero(e.target.value))}
               className="w-full text-xs rounded-lg border border-gray-300 bg-white p-2 focus:outline-none focus:ring-1 focus:ring-black"
             />
             <input
               type="text"
               placeholder="Valor Máximo"
               value={valorMax ? formatarParaReal(valorMax) : ""}
-              onChange={(e) => !isRestoringFromCache && setValorMax(converterParaNumero(e.target.value))}
+              onChange={(e) => setValorMax(converterParaNumero(e.target.value))}
               className="w-full text-xs rounded-lg border border-gray-300 bg-white p-2 focus:outline-none focus:ring-1 focus:ring-black"
             />
           </div>
@@ -1338,10 +1196,8 @@ export default function FiltersImoveisAdmin({ onFilter }) {
               placeholder="Área Mínima"
               value={areaMin ? formatarArea(areaMin) : ""}
               onChange={(e) => {
-                if (!isRestoringFromCache) {
-                  const valor = e.target.value.replace(/[^\d]/g, "").slice(0, 4);
-                  setAreaMin(valor ? parseInt(valor, 10) : null);
-                }
+                const valor = e.target.value.replace(/[^\d]/g, "").slice(0, 4);
+                setAreaMin(valor ? parseInt(valor, 10) : null);
               }}
               className="w-full text-xs rounded-lg border border-gray-300 bg-white p-2 focus:outline-none focus:ring-1 focus:ring-black"
             />
@@ -1350,10 +1206,8 @@ export default function FiltersImoveisAdmin({ onFilter }) {
               placeholder="Área Máxima"
               value={areaMax ? formatarArea(areaMax) : ""}
               onChange={(e) => {
-                if (!isRestoringFromCache) {
-                  const valor = e.target.value.replace(/[^\d]/g, "").slice(0, 4);
-                  setAreaMax(valor ? parseInt(valor, 10) : null);
-                }
+                const valor = e.target.value.replace(/[^\d]/g, "").slice(0, 4);
+                setAreaMax(valor ? parseInt(valor, 10) : null);
               }}
               className="w-full text-xs rounded-lg border border-gray-300 bg-white p-2 focus:outline-none focus:ring-1 focus:ring-black"
             />
@@ -1365,16 +1219,14 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       <div className="flex flex-wrap gap-3 items-center pt-4 border-t">
         <button
           onClick={handleFilters}
-          disabled={isRestoringFromCache}
-          className="px-4 py-2 bg-black text-white text-sm rounded-lg hover:bg-gray-800 transition-colors disabled:bg-gray-400"
+          className="px-4 py-2 bg-black text-white text-sm rounded-lg hover:bg-gray-800 transition-colors"
         >
           Aplicar Filtros
         </button>
 
         <button
           onClick={handleClearFilters}
-          disabled={isRestoringFromCache}
-          className="px-4 py-2 bg-gray-500 text-white text-sm rounded-lg hover:bg-gray-600 transition-colors disabled:bg-gray-400"
+          className="px-4 py-2 bg-gray-500 text-white text-sm rounded-lg hover:bg-gray-600 transition-colors"
         >
           Limpar Filtros
         </button>
@@ -1407,11 +1259,6 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           {bairrosSelecionados.length > 0 && (
             <span className="text-indigo-600 font-medium">
               🏘️ {bairrosSelecionados.length} bairros
-            </span>
-          )}
-          {isRestoringFromCache && (
-            <span className="text-yellow-600 font-medium animate-pulse">
-              🔄 Restaurando cache...
             </span>
           )}
         </div>
