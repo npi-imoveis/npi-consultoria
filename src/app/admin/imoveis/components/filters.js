@@ -1004,7 +1004,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           onClick={handleFilters}
           className="px-4 py-2 bg-black text-white text-sm rounded-lg hover:bg-gray-800 transition-colors"
         >
-          Aplicar Filtros 1
+          Aplicar Filtros 2
         </button>
 
         <button
