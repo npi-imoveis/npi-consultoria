@@ -712,7 +712,6 @@ export default function AdminImoveis() {
 
   return (
     <AuthCheck>
-          
       {isModalOpen && (
         <ModalDelete
           id={codigoImovel}
@@ -814,6 +813,11 @@ export default function AdminImoveis() {
                     {filters.bairros && Array.isArray(filters.bairros) && filters.bairros.length > 0 && (
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-pink-100 text-pink-800">
                         {filters.bairros.length} {filters.bairros.length === 1 ? 'bairro' : 'bairros'}
+                      </span>
+                    )}
+                    {filters.Construtora && Array.isArray(filters.Construtora) && filters.Construtora.length > 0 && (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-cyan-100 text-cyan-800">
+                        {filters.Construtora.length === 1 ? filters.Construtora[0] : `${filters.Construtora.length} construtoras`}
                       </span>
                     )}
                     {(filters.ValorMin || filters.ValorMax) && (
