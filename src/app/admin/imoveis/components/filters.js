@@ -1,3 +1,5 @@
+src/app/admin/imoveis/components/filters.js
+
 import { getBairrosPorCidade, getImoveisByFilters } from "@/app/services";
 import { useEffect, useState, useRef } from "react";
 
@@ -5,6 +7,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
   // Refs para os dropdowns
   const bairrosRef = useRef(null);
   const situacaoRef = useRef(null);
+  const construtoraRef = useRef(null);
 
   // Estados principais
   const [categorias, setCategorias] = useState([]);
@@ -12,12 +15,14 @@ export default function FiltersImoveisAdmin({ onFilter }) {
   const [bairros, setBairros] = useState([]);
   const [bairrosReais, setBairrosReais] = useState([]);
   const [situacoesReais, setSituacoesReais] = useState([]);
+  const [construtorasReais, setConstrutorasReais] = useState([]);
 
   // Estados de seleção
   const [categoriaSelecionada, setCategoriaSelecionada] = useState("");
   const [cidadeSelecionada, setCidadeSelecionada] = useState("");
   const [bairrosSelecionados, setBairrosSelecionados] = useState([]);
   const [situacoesSelecionadas, setSituacoesSelecionadas] = useState([]);
+  const [construtorasSelecionadas, setConstrutorasSelecionadas] = useState([]);
   const [valorMin, setValorMin] = useState(null);
   const [valorMax, setValorMax] = useState(null);
   const [areaMin, setAreaMin] = useState(null);
@@ -26,8 +31,10 @@ export default function FiltersImoveisAdmin({ onFilter }) {
   // Estados de UI
   const [bairroFilter, setBairroFilter] = useState("");
   const [situacaoFilter, setSituacaoFilter] = useState("");
+  const [construtoraFilter, setConstrutoraFilter] = useState("");
   const [bairrosExpanded, setBairrosExpanded] = useState(false);
   const [situacaoExpanded, setSituacaoExpanded] = useState(false);
+  const [construtoraExpanded, setConstrutoraExpanded] = useState(false);
 
   // Estado para outros filtros
   const [filters, setFilters] = useState({
@@ -36,11 +43,13 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     situacao: "",
     cadastro: "",
     bairros: "",
+    construtora: "",
   });
 
   // Estados para armazenar mapeamentos localmente
   const [situacoesMapeamento, setSituacoesMapeamento] = useState({});
   const [bairrosMapeamento, setBairrosMapeamento] = useState({});
+  const [construtorasMapeamento, setConstrutorasMapeamento] = useState({});
 
   // Opções de situação hardcoded
   const situacaoOptionsHardcoded = [
@@ -62,10 +71,10 @@ export default function FiltersImoveisAdmin({ onFilter }) {
   };
 
   // Função de normalização robusta
-  const criarChaveNormalizada = (situacao) => {
-    if (!situacao || typeof situacao !== 'string') return '';
+  const criarChaveNormalizada = (texto) => {
+    if (!texto || typeof texto !== 'string') return '';
     
-    return situacao
+    return texto
       .toLowerCase()
       .trim()
       .replace(/\s+/g, ' ')
@@ -78,7 +87,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       .replace(/[ñ]/g, 'n');
   };
 
-  // useEffect para situações
+  // useEffect para carregar dados dos filtros incluindo construtoras
   useEffect(() => {
     async function fetchFilterData() {
       try {
@@ -87,10 +96,12 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         const catResponse = await getImoveisByFilters("Categoria");
         const cidResponse = await getImoveisByFilters("Cidade");
         const sitResponse = await getImoveisByFilters("Situacao");
+        const constResponse = await getImoveisByFilters("Construtora");
 
         setCategorias(catResponse.data || []);
         setCidades(cidResponse.data || []);
         
+        // Processar situações
         if (sitResponse?.data && Array.isArray(sitResponse.data) && sitResponse.data.length > 0) {
           console.log("✅ Processando situações do backend...");
           
@@ -99,68 +110,133 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           if (situacoesBrutas.length === 0) {
             setSituacoesReais(situacaoOptionsHardcoded);
             setSituacoesMapeamento({});
-            return;
-          }
-
-          const novoMapeamento = {};
-          const situacoesParaUI = new Set();
-          
-          situacoesBrutas.forEach((situacaoOriginal) => {
-            if (situacaoOriginal && situacaoOriginal.toString().trim() !== '') {
-              const chaveRobusta = criarChaveNormalizada(situacaoOriginal);
-              const chaveSimples = situacaoOriginal.toLowerCase().trim();
-              
-              if (!novoMapeamento[chaveRobusta]) {
-                novoMapeamento[chaveRobusta] = [];
-              }
-              
-              if (!novoMapeamento[chaveRobusta].includes(situacaoOriginal)) {
-                novoMapeamento[chaveRobusta].push(situacaoOriginal);
-              }
-              
-              if (chaveRobusta !== chaveSimples) {
-                if (!novoMapeamento[chaveSimples]) {
-                  novoMapeamento[chaveSimples] = [];
-                }
-                if (!novoMapeamento[chaveSimples].includes(situacaoOriginal)) {
-                  novoMapeamento[chaveSimples].push(situacaoOriginal);
-                }
-              }
-            }
-          });
-          
-          Object.keys(novoMapeamento).forEach(chave => {
-            const situacoesGrupo = novoMapeamento[chave];
+          } else {
+            const novoMapeamento = {};
+            const situacoesParaUI = new Set();
             
-            const versaoMaiuscula = situacoesGrupo.find(s => {
-              const somenteLetras = s.replace(/[^A-Za-záàâãéèêíìîóòôõúùûçÁÀÂÃÉÈÊÍÌÎÓÒÔÕÚÙÛÇ\s-]/g, '');
-              return somenteLetras === somenteLetras.toUpperCase() && s.trim() !== "";
+            situacoesBrutas.forEach((situacaoOriginal) => {
+              if (situacaoOriginal && situacaoOriginal.toString().trim() !== '') {
+                const chaveRobusta = criarChaveNormalizada(situacaoOriginal);
+                const chaveSimples = situacaoOriginal.toLowerCase().trim();
+                
+                if (!novoMapeamento[chaveRobusta]) {
+                  novoMapeamento[chaveRobusta] = [];
+                }
+                
+                if (!novoMapeamento[chaveRobusta].includes(situacaoOriginal)) {
+                  novoMapeamento[chaveRobusta].push(situacaoOriginal);
+                }
+                
+                if (chaveRobusta !== chaveSimples) {
+                  if (!novoMapeamento[chaveSimples]) {
+                    novoMapeamento[chaveSimples] = [];
+                  }
+                  if (!novoMapeamento[chaveSimples].includes(situacaoOriginal)) {
+                    novoMapeamento[chaveSimples].push(situacaoOriginal);
+                  }
+                }
+              }
             });
             
-            const situacaoParaUI = versaoMaiuscula || capitalizarNomesProprios(situacoesGrupo[0]) || situacoesGrupo[0];
+            Object.keys(novoMapeamento).forEach(chave => {
+              const situacoesGrupo = novoMapeamento[chave];
+              
+              const versaoMaiuscula = situacoesGrupo.find(s => {
+                const somenteLetras = s.replace(/[^A-Za-záàâãéèêíìîóòôõúùûçÁÀÂÃÉÈÊÍÌÎÓÒÔÕÚÙÛÇ\s-]/g, '');
+                return somenteLetras === somenteLetras.toUpperCase() && s.trim() !== "";
+              });
+              
+              const situacaoParaUI = versaoMaiuscula || capitalizarNomesProprios(situacoesGrupo[0]) || situacoesGrupo[0];
+              
+              if (situacaoParaUI && !situacoesParaUI.has(situacaoParaUI)) {
+                situacoesParaUI.add(situacaoParaUI);
+              }
+            });
             
-            if (situacaoParaUI && !situacoesParaUI.has(situacaoParaUI)) {
-              situacoesParaUI.add(situacaoParaUI);
-            }
-          });
-          
-          const situacoesFinais = Array.from(situacoesParaUI).sort();
-          
-          setSituacoesReais(situacoesFinais);
-          setSituacoesMapeamento(novoMapeamento);
-          
-          console.log(`✅ ${situacoesFinais.length} situações carregadas com sucesso`);
-          
+            const situacoesFinais = Array.from(situacoesParaUI).sort();
+            
+            setSituacoesReais(situacoesFinais);
+            setSituacoesMapeamento(novoMapeamento);
+            
+            console.log(`✅ ${situacoesFinais.length} situações carregadas com sucesso`);
+          }
         } else {
           console.log("⚠️ Usando situações padrão");
           setSituacoesReais(situacaoOptionsHardcoded);
           setSituacoesMapeamento({});
         }
 
+        // Processar construtoras
+        if (constResponse?.data && Array.isArray(constResponse.data) && constResponse.data.length > 0) {
+          console.log("✅ Processando construtoras do backend...");
+          
+          const construtorasBrutas = constResponse.data.filter(c => c && c.toString().trim() !== '');
+          
+          if (construtorasBrutas.length > 0) {
+            const novoMapeamentoConst = {};
+            const construtorasParaUI = new Set();
+            
+            construtorasBrutas.forEach((construtoraOriginal) => {
+              if (construtoraOriginal && construtoraOriginal.toString().trim() !== '') {
+                const chaveRobusta = criarChaveNormalizada(construtoraOriginal);
+                const chaveSimples = construtoraOriginal.toLowerCase().trim();
+                
+                if (!novoMapeamentoConst[chaveRobusta]) {
+                  novoMapeamentoConst[chaveRobusta] = [];
+                }
+                
+                if (!novoMapeamentoConst[chaveRobusta].includes(construtoraOriginal)) {
+                  novoMapeamentoConst[chaveRobusta].push(construtoraOriginal);
+                }
+                
+                if (chaveRobusta !== chaveSimples) {
+                  if (!novoMapeamentoConst[chaveSimples]) {
+                    novoMapeamentoConst[chaveSimples] = [];
+                  }
+                  if (!novoMapeamentoConst[chaveSimples].includes(construtoraOriginal)) {
+                    novoMapeamentoConst[chaveSimples].push(construtoraOriginal);
+                  }
+                }
+              }
+            });
+            
+            Object.keys(novoMapeamentoConst).forEach(chave => {
+              const construtorasGrupo = novoMapeamentoConst[chave];
+              
+              const versaoMaiuscula = construtorasGrupo.find(c => {
+                const somenteLetras = c.replace(/[^A-Za-záàâãéèêíìîóòôõúùûçÁÀÂÃÉÈÊÍÌÎÓÒÔÕÚÙÛÇ\s-]/g, '');
+                return somenteLetras === somenteLetras.toUpperCase() && c.trim() !== "";
+              });
+              
+              const construtoraParaUI = versaoMaiuscula || capitalizarNomesProprios(construtorasGrupo[0]) || construtorasGrupo[0];
+              
+              if (construtoraParaUI && !construtorasParaUI.has(construtoraParaUI)) {
+                construtorasParaUI.add(construtoraParaUI);
+              }
+            });
+            
+            const construtorasFinais = Array.from(construtorasParaUI).sort();
+            
+            setConstrutorasReais(construtorasFinais);
+            setConstrutorasMapeamento(novoMapeamentoConst);
+            
+            console.log(`✅ ${construtorasFinais.length} construtoras carregadas com sucesso`);
+          } else {
+            setConstrutorasReais([]);
+            setConstrutorasMapeamento({});
+          }
+        } else {
+          console.log("⚠️ Nenhuma construtora encontrada");
+          setConstrutorasReais([]);
+          setConstrutorasMapeamento({});
+        }
+
       } catch (error) {
         console.error("❌ Erro ao carregar filtros:", error);
         setSituacoesReais(situacaoOptionsHardcoded);
         setSituacoesMapeamento({});
+        setConstrutorasReais([]);
+        setConstrutorasMapeamento({});
       }
     }
     fetchFilterData();
@@ -266,6 +342,18 @@ export default function FiltersImoveisAdmin({ onFilter }) {
               setFilters(prev => ({ ...prev, situacao: parsedFilters.Situacao }));
             }
           }
+
+          // Restaurar construtoras do cache
+          if (parsedFilters.Construtora) {
+            if (Array.isArray(parsedFilters.Construtora)) {
+              setConstrutorasSelecionadas(parsedFilters.Construtora);
+            } else if (typeof parsedFilters.Construtora === 'string') {
+              const construtorasArray = parsedFilters.Construtora.split(',').map(c => c.trim());
+              setConstrutorasSelecionadas(construtorasArray);
+            } else {
+              setFilters(prev => ({ ...prev, construtora: parsedFilters.Construtora }));
+            }
+          }
           
           if (parsedFilters.bairros && Array.isArray(parsedFilters.bairros)) {
             setBairrosSelecionados(parsedFilters.bairros);
@@ -305,16 +393,19 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       if (situacaoRef.current && !situacaoRef.current.contains(event.target)) {
         setSituacaoExpanded(false);
       }
+      if (construtoraRef.current && !construtoraRef.current.contains(event.target)) {
+        setConstrutoraExpanded(false);
+      }
     }
 
-    if (bairrosExpanded || situacaoExpanded) {
+    if (bairrosExpanded || situacaoExpanded || construtoraExpanded) {
       document.addEventListener("mousedown", handleClickOutside);
     }
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [bairrosExpanded, situacaoExpanded]);
+  }, [bairrosExpanded, situacaoExpanded, construtoraExpanded]);
 
   // Funções utilitárias para formatação
   const formatarParaReal = (valor) => {
@@ -341,13 +432,17 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     return valor ? valor.toString() : "";
   };
 
-  // Filtrar bairros e situações
+  // Filtrar bairros, situações e construtoras
   const bairrosFiltrados = bairrosReais.filter((bairro) =>
     bairro.toLowerCase().includes(bairroFilter.toLowerCase())
   );
 
   const situacoesFiltradas = situacoesReais.filter((situacao) =>
     situacao.toLowerCase().includes(situacaoFilter.toLowerCase())
+  );
+
+  const construtorasFiltradas = construtorasReais.filter((construtora) =>
+    construtora.toLowerCase().includes(construtoraFilter.toLowerCase())
   );
 
   // Handlers de manipulação
@@ -368,7 +463,18 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     });
   };
 
-  // Função de normalização para API
+  const handleConstrutoraChange = (construtora) => {
+    setConstrutorasSelecionadas((prev) => {
+      const isSelected = prev.includes(construtora);
+      const newConstrutoras = isSelected 
+        ? prev.filter((c) => c !== construtora) 
+        : [...prev, construtora];
+      
+      return newConstrutoras;
+    });
+  };
+
+  // Função de normalização para API - Situações
   const normalizarSituacaoParaAPI = (situacoesSelecionadas) => {
     if (!Array.isArray(situacoesSelecionadas) || situacoesSelecionadas.length === 0) {
       return undefined;
@@ -422,14 +528,49 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     return [...new Set(todasVariacoes)];
   };
 
+  // Normalizar construtoras para API
+  const normalizarConstrutoraParaAPI = (construtorasSelecionadas) => {
+    if (!Array.isArray(construtorasSelecionadas) || construtorasSelecionadas.length === 0) {
+      return undefined;
+    }
+
+    const todasVariacoesConstrutora = [];
+    
+    construtorasSelecionadas.forEach((construtoraSelecionada) => {
+      const chaveRobusta = criarChaveNormalizada(construtoraSelecionada);
+      const chaveSimples = construtoraSelecionada.toLowerCase().trim();
+      
+      let encontrouVariacoes = false;
+      
+      if (construtorasMapeamento[chaveRobusta] && construtorasMapeamento[chaveRobusta].length > 0) {
+        todasVariacoesConstrutora.push(...construtorasMapeamento[chaveRobusta]);
+        encontrouVariacoes = true;
+      }
+      
+      if (!encontrouVariacoes && chaveRobusta !== chaveSimples && construtorasMapeamento[chaveSimples] && construtorasMapeamento[chaveSimples].length > 0) {
+        todasVariacoesConstrutora.push(...construtorasMapeamento[chaveSimples]);
+        encontrouVariacoes = true;
+      }
+      
+      if (!encontrouVariacoes) {
+        todasVariacoesConstrutora.push(construtoraSelecionada);
+      }
+    });
+
+    const construtorasSemDuplicatas = [...new Set(todasVariacoesConstrutora)];
+    return construtorasSemDuplicatas;
+  };
+
   // handleFilters
   const handleFilters = () => {
     const situacaoProcessada = normalizarSituacaoParaAPI(situacoesSelecionadas);
+    const construtoraProcessada = normalizarConstrutoraParaAPI(construtorasSelecionadas);
     
     const filtersToApply = {
       Categoria: filters.categoria || categoriaSelecionada,
       Status: filters.status,
       Situacao: situacaoProcessada || filters.situacao || undefined,
+      Construtora: construtoraProcessada || filters.construtora || undefined,
       Ativo: filters.cadastro,
       Cidade: cidadeSelecionada,
       bairros: normalizarBairrosParaAPI(bairrosSelecionados) || undefined,
@@ -460,19 +601,23 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       status: "",
       situacao: "",
       cadastro: "",
+      construtora: "",
     });
     setCategoriaSelecionada("");
     setCidadeSelecionada("");
     setBairrosSelecionados([]);
     setSituacoesSelecionadas([]);
+    setConstrutorasSelecionadas([]);
     setBairroFilter("");
     setSituacaoFilter("");
+    setConstrutoraFilter("");
     setValorMin(null);
     setValorMax(null);
     setAreaMin(null);
     setAreaMax(null);
     setSituacoesMapeamento({});
     setBairrosMapeamento({});
+    setConstrutorasMapeamento({});
 
     // Limpar cache
     localStorage.removeItem("admin_appliedFilters");
@@ -622,7 +767,92 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        {/* Dropdown de construtoras */}
+        <div ref={construtoraRef} className="relative">
+          <label htmlFor="construtora" className="text-xs text-gray-500 block mb-2">
+            Construtora
+          </label>
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Selecionar construtoras"
+              value={construtoraFilter}
+              onChange={(e) => setConstrutoraFilter(e.target.value)}
+              onClick={() => setConstrutoraExpanded(true)}
+              className="w-full text-xs rounded-lg border border-gray-300 bg-white p-2 focus:outline-none focus:ring-1 focus:ring-black"
+            />
+
+            {construtorasSelecionadas.length > 0 && (
+              <div className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center">
+                {construtorasSelecionadas.length}
+              </div>
+            )}
+
+            {construtoraExpanded && (
+              <div className="absolute z-50 w-full mt-1 border border-gray-200 rounded-md bg-white max-h-40 overflow-y-auto shadow-lg">
+                {construtorasFiltradas.length > 0 ? (
+                  <>
+                    <div className="flex justify-between border-b border-gray-100 px-2 py-1">
+                      <button
+                        onClick={() => setConstrutorasSelecionadas(construtorasFiltradas)}
+                        className="text-[10px] text-black hover:underline"
+                      >
+                        Selecionar todos
+                      </button>
+                      <button
+                        onClick={() => setConstrutorasSelecionadas([])}
+                        className="text-[10px] text-black hover:underline"
+                      >
+                        Limpar todos
+                      </button>
+                    </div>
+                    
+                    {construtorasFiltradas.map((construtora, index) => {
+                      const chaveRobusta = criarChaveNormalizada(construtora);
+                      const chaveSimples = construtora.toLowerCase().trim();
+                      const variacoes = construtorasMapeamento[chaveRobusta] || construtorasMapeamento[chaveSimples] || [];
+                      
+                      return (
+                        <div key={`${construtora}-${index}`} className="flex items-center px-2 py-1 hover:bg-gray-50">
+                          <input
+                            type="checkbox"
+                            id={`construtora-${construtora}-${index}`}
+                            checked={construtorasSelecionadas.includes(construtora)}
+                            onChange={() => handleConstrutoraChange(construtora)}
+                            className="mr-2 h-4 w-4"
+                          />
+                          <label
+                            htmlFor={`construtora-${construtora}-${index}`}
+                            className="text-xs cursor-pointer flex-1 flex justify-between"
+                          >
+                            <span>{construtora}</span>
+                            {variacoes.length > 1 && (
+                              <span className="text-green-500 text-[8px] font-bold" title={`${variacoes.length} variações no banco`}>
+                                {variacoes.length}x
+                              </span>
+                            )}
+                          </label>
+                        </div>
+                      );
+                    })}
+                  </>
+                ) : (
+                  <div className="px-2 py-1 text-xs text-gray-500">
+                    {construtoraFilter ? "Nenhuma construtora encontrada" : "Carregando construtoras..."}
+                  </div>
+                )}
+                <button
+                  onClick={() => setConstrutoraExpanded(false)}
+                  className="text-xs text-black bg-gray-100 w-full py-1 rounded-b-md"
+                >
+                  Fechar
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Dropdown de bairros */}
         <div ref={bairrosRef}>
           <label htmlFor="bairros" className="text-xs text-gray-500 block mb-2">
@@ -776,10 +1006,16 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         {/* Informações de status */}
         <div className="text-xs text-gray-500 flex items-center gap-4 flex-wrap">
           <span>📊 Situações: {situacoesReais.length}</span>
+          <span>🏗️ Construtoras: {construtorasReais.length}</span>
           <span>🗂️ Mapeamentos: {Object.keys(situacoesMapeamento).length}</span>
           {situacoesSelecionadas.length > 0 && (
             <span className="text-blue-600 font-medium">
-              ✅ {situacoesSelecionadas.length} selecionadas
+              ✅ {situacoesSelecionadas.length} situações
+            </span>
+          )}
+          {construtorasSelecionadas.length > 0 && (
+            <span className="text-purple-600 font-medium">
+              🏢 {construtorasSelecionadas.length} construtoras
             </span>
           )}
           {bairrosSelecionados.length > 0 && (
@@ -814,4 +1050,5 @@ function SelectFilter({ options, name, onChange, value, placeholder }) {
       </select>
     </div>
   );
+}
 }
