@@ -9,6 +9,8 @@ export default function FiltersImoveisAdmin({ onFilter }) {
   const bairrosRef = useRef(null);
   const situacaoRef = useRef(null);
   const construtoraRef = useRef(null);
+  const categoriaRef = useRef(null);
+  const statusRef = useRef(null);
 
   // Estados principais
   const [categorias, setCategorias] = useState([]);
@@ -18,8 +20,9 @@ export default function FiltersImoveisAdmin({ onFilter }) {
   const [situacoesReais, setSituacoesReais] = useState([]);
   const [construtorasReais, setConstrutorasReais] = useState([]);
 
-  // Estados de seleção
-  const [categoriaSelecionada, setCategoriaSelecionada] = useState("");
+  // Estados de seleção (CATEGORIA e STATUS agora são arrays)
+  const [categoriasSelecionadas, setCategoriasSelecionadas] = useState([]);
+  const [statusSelecionados, setStatusSelecionados] = useState([]);
   const [cidadeSelecionada, setCidadeSelecionada] = useState("");
   const [bairrosSelecionados, setBairrosSelecionados] = useState([]);
   const [situacoesSelecionadas, setSituacoesSelecionadas] = useState([]);
@@ -33,9 +36,13 @@ export default function FiltersImoveisAdmin({ onFilter }) {
   const [bairroFilter, setBairroFilter] = useState("");
   const [situacaoFilter, setSituacaoFilter] = useState("");
   const [construtoraFilter, setConstrutoraFilter] = useState("");
+  const [categoriaFilter, setCategoriaFilter] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
   const [bairrosExpanded, setBairrosExpanded] = useState(false);
   const [situacaoExpanded, setSituacaoExpanded] = useState(false);
   const [construtoraExpanded, setConstrutoraExpanded] = useState(false);
+  const [categoriaExpanded, setCategoriaExpanded] = useState(false);
+  const [statusExpanded, setStatusExpanded] = useState(false);
 
   // Estado para outros filtros
   const [filters, setFilters] = useState({
@@ -52,13 +59,23 @@ export default function FiltersImoveisAdmin({ onFilter }) {
   const [bairrosMapeamento, setBairrosMapeamento] = useState({});
   const [construtorasMapeamento, setConstrutorasMapeamento] = useState({});
 
-  // Opções de situação hardcoded
+  // Opções de situação e status hardcoded
   const situacaoOptionsHardcoded = [
     "EM CONSTRUÇÃO",
     "LANÇAMENTO", 
     "PRÉ-LANÇAMENTO",
     "PRONTO NOVO",
     "PRONTO USADO"
+  ];
+
+  const statusOptions = [
+    "LOCAÇÃO",
+    "LOCADO",
+    "PENDENTE", 
+    "SUSPENSO",
+    "VENDA",
+    "VENDA E LOCAÇÃO",
+    "VENDIDO"
   ];
 
   // Função auxiliar para capitalização
@@ -254,7 +271,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       }
 
       try {
-        const response = await getBairrosPorCidade(cidadeSelecionada, categoriaSelecionada);
+        const response = await getBairrosPorCidade(cidadeSelecionada, categoriasSelecionadas[0] || "");
         const bairrosBrutos = response?.data || [];
         
         if (bairrosBrutos.length > 0) {
@@ -305,12 +322,11 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       }
     }
     fetchBairros();
-  }, [cidadeSelecionada, categoriaSelecionada]);
+  }, [cidadeSelecionada, categoriasSelecionadas]);
 
   // useEffect para restaurar filtros do cache
   useEffect(() => {
     const restoreFiltersFromCache = () => {
-      // Verificar se estamos no lado do cliente
       if (typeof localStorage === 'undefined') return;
 
       try {
@@ -319,13 +335,22 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         if (savedFilters) {
           const parsedFilters = JSON.parse(savedFilters);
           
+          // Restaurar categorias como array
           if (parsedFilters.Categoria) {
-            setCategoriaSelecionada(parsedFilters.Categoria);
-            setFilters(prev => ({ ...prev, categoria: parsedFilters.Categoria }));
+            if (Array.isArray(parsedFilters.Categoria)) {
+              setCategoriasSelecionadas(parsedFilters.Categoria);
+            } else if (typeof parsedFilters.Categoria === 'string') {
+              setCategoriasSelecionadas([parsedFilters.Categoria]);
+            }
           }
-          
+
+          // Restaurar status como array
           if (parsedFilters.Status) {
-            setFilters(prev => ({ ...prev, status: parsedFilters.Status }));
+            if (Array.isArray(parsedFilters.Status)) {
+              setStatusSelecionados(parsedFilters.Status);
+            } else if (typeof parsedFilters.Status === 'string') {
+              setStatusSelecionados([parsedFilters.Status]);
+            }
           }
           
           if (parsedFilters.Ativo) {
@@ -400,10 +425,15 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       if (construtoraRef.current && !construtoraRef.current.contains(event.target)) {
         setConstrutoraExpanded(false);
       }
+      if (categoriaRef.current && !categoriaRef.current.contains(event.target)) {
+        setCategoriaExpanded(false);
+      }
+      if (statusRef.current && !statusRef.current.contains(event.target)) {
+        setStatusExpanded(false);
+      }
     }
 
-    // Só adicionar o listener se pelo menos um dropdown estiver expandido
-    if (bairrosExpanded || situacaoExpanded || construtoraExpanded) {
+    if (bairrosExpanded || situacaoExpanded || construtoraExpanded || categoriaExpanded || statusExpanded) {
       if (typeof document !== 'undefined') {
         document.addEventListener("mousedown", handleClickOutside);
       }
@@ -414,7 +444,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
         document.removeEventListener("mousedown", handleClickOutside);
       }
     };
-  }, [bairrosExpanded, situacaoExpanded, construtoraExpanded]);
+  }, [bairrosExpanded, situacaoExpanded, construtoraExpanded, categoriaExpanded, statusExpanded]);
 
   // Funções utilitárias para formatação
   const formatarParaReal = (valor) => {
@@ -441,7 +471,15 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     return valor ? valor.toString() : "";
   };
 
-  // Filtrar bairros, situações e construtoras
+  // Filtrar arrays
+  const categoriasFiltradas = categorias.filter((categoria) =>
+    categoria.toLowerCase().includes(categoriaFilter.toLowerCase())
+  );
+
+  const statusFiltrados = statusOptions.filter((status) =>
+    status.toLowerCase().includes(statusFilter.toLowerCase())
+  );
+
   const bairrosFiltrados = bairrosReais.filter((bairro) =>
     bairro.toLowerCase().includes(bairroFilter.toLowerCase())
   );
@@ -455,6 +493,18 @@ export default function FiltersImoveisAdmin({ onFilter }) {
   );
 
   // Handlers de manipulação
+  const handleCategoriaChange = (categoria) => {
+    setCategoriasSelecionadas((prev) =>
+      prev.includes(categoria) ? prev.filter((c) => c !== categoria) : [...prev, categoria]
+    );
+  };
+
+  const handleStatusChange = (status) => {
+    setStatusSelecionados((prev) =>
+      prev.includes(status) ? prev.filter((s) => s !== status) : [...prev, status]
+    );
+  };
+
   const handleBairroChange = (bairro) => {
     setBairrosSelecionados((prev) =>
       prev.includes(bairro) ? prev.filter((b) => b !== bairro) : [...prev, bairro]
@@ -483,7 +533,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     });
   };
 
-  // Função de normalização para API - Situações
+  // Normalização para API
   const normalizarSituacaoParaAPI = (situacoesSelecionadas) => {
     if (!Array.isArray(situacoesSelecionadas) || situacoesSelecionadas.length === 0) {
       return undefined;
@@ -516,7 +566,6 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     return situacoesSemDuplicatas;
   };
 
-  // Normalizar bairros para API
   const normalizarBairrosParaAPI = (bairrosSelecionados) => {
     if (!Array.isArray(bairrosSelecionados) || bairrosSelecionados.length === 0) {
       return undefined;
@@ -537,7 +586,6 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     return [...new Set(todasVariacoes)];
   };
 
-  // Normalizar construtoras para API
   const normalizarConstrutoraParaAPI = (construtorasSelecionadas) => {
     if (!Array.isArray(construtorasSelecionadas) || construtorasSelecionadas.length === 0) {
       return undefined;
@@ -576,8 +624,8 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     const construtoraProcessada = normalizarConstrutoraParaAPI(construtorasSelecionadas);
     
     const filtersToApply = {
-      Categoria: filters.categoria || categoriaSelecionada,
-      Status: filters.status,
+      Categoria: categoriasSelecionadas.length > 0 ? categoriasSelecionadas : undefined,
+      Status: statusSelecionados.length > 0 ? statusSelecionados : undefined,
       Situacao: situacaoProcessada || filters.situacao || undefined,
       Construtora: construtoraProcessada || filters.construtora || undefined,
       Ativo: filters.cadastro,
@@ -612,11 +660,14 @@ export default function FiltersImoveisAdmin({ onFilter }) {
       cadastro: "",
       construtora: "",
     });
-    setCategoriaSelecionada("");
+    setCategoriasSelecionadas([]);
+    setStatusSelecionados([]);
     setCidadeSelecionada("");
     setBairrosSelecionados([]);
     setSituacoesSelecionadas([]);
     setConstrutorasSelecionadas([]);
+    setCategoriaFilter("");
+    setStatusFilter("");
     setBairroFilter("");
     setSituacaoFilter("");
     setConstrutoraFilter("");
@@ -628,7 +679,6 @@ export default function FiltersImoveisAdmin({ onFilter }) {
     setBairrosMapeamento({});
     setConstrutorasMapeamento({});
 
-    // Limpar cache - verificar se localStorage está disponível
     if (typeof localStorage !== 'undefined') {
       localStorage.removeItem("admin_appliedFilters");
       localStorage.removeItem("admin_filterResults");
@@ -657,32 +707,175 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           value={filters.cadastro}
         />
         
-        <SelectFilter
-          name="categoria"
-          options={categorias.map((cat) => ({ value: cat, label: cat }))}
-          placeholder="Categoria"
-          onChange={(e) => {
-            setCategoriaSelecionada(e.target.value);
-            setFilters({ ...filters, categoria: e.target.value });
-          }}
-          value={filters.categoria || categoriaSelecionada}
-        />
-        
-        <SelectFilter
-          name="status"
-          options={[
-            { value: "LOCAÇÃO", label: "LOCAÇÃO" },
-            { value: "LOCADO", label: "LOCADO" },
-            { value: "PENDENTE", label: "PENDENTE" },
-            { value: "SUSPENSO", label: "SUSPENSO" },
-            { value: "VENDA", label: "VENDA" },
-            { value: "VENDA E LOCAÇÃO", label: "VENDA E LOCAÇÃO" },
-            { value: "VENDIDO", label: "VENDIDO" },
-          ]}
-          placeholder="Status"
-          onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-          value={filters.status}
-        />
+        {/* Dropdown de categoria com múltipla escolha */}
+        <div ref={categoriaRef} className="relative">
+          <label htmlFor="categoria" className="text-xs text-gray-500 block mb-2">
+            Categoria
+          </label>
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Selecionar categorias"
+              value={categoriaFilter}
+              onChange={(e) => setCategoriaFilter(e.target.value)}
+              onClick={() => setCategoriaExpanded(true)}
+              className="w-full text-xs rounded-lg border border-gray-300 bg-white p-2 focus:outline-none focus:ring-1 focus:ring-black"
+            />
+
+            {categoriasSelecionadas.length > 0 && (
+              <div className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center">
+                {categoriasSelecionadas.length}
+              </div>
+            )}
+
+            {categoriaExpanded && (
+              <div className="absolute z-50 w-full mt-1 border border-gray-200 rounded-md bg-white max-h-40 overflow-y-auto shadow-lg">
+                {categoriasFiltradas.length > 0 ? (
+                  <>
+                    <div className="flex justify-between border-b border-gray-100 px-2 py-1">
+                      <button
+                        onClick={() => setCategoriasSelecionadas(categoriasFiltradas)}
+                        className="text-[10px] text-black hover:underline"
+                      >
+                        Selecionar todos
+                      </button>
+                      <button
+                        onClick={() => setCategoriasSelecionadas([])}
+                        className="text-[10px] text-black hover:underline"
+                      >
+                        Limpar todos
+                      </button>
+                    </div>
+                    
+                    {categoriasFiltradas.map((categoria, index) => {
+                      const isSelected = categoriasSelecionadas.includes(categoria);
+                      
+                      return (
+                        <div 
+                          key={`${categoria}-${index}`} 
+                          className={`flex items-center px-2 py-1 hover:bg-gray-50 ${
+                            isSelected ? 'bg-gray-100' : ''
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            id={`categoria-${categoria}-${index}`}
+                            checked={isSelected}
+                            onChange={() => handleCategoriaChange(categoria)}
+                            className="mr-2 h-4 w-4"
+                          />
+                          <label
+                            htmlFor={`categoria-${categoria}-${index}`}
+                            className={`text-xs cursor-pointer flex-1 ${
+                              isSelected ? 'font-medium text-gray-900' : ''
+                            }`}
+                          >
+                            {categoria}
+                          </label>
+                        </div>
+                      );
+                    })}
+                  </>
+                ) : (
+                  <div className="px-2 py-1 text-xs text-gray-500">
+                    {categoriaFilter ? "Nenhuma categoria encontrada" : "Carregando categorias..."}
+                  </div>
+                )}
+                <button
+                  onClick={() => setCategoriaExpanded(false)}
+                  className="text-xs text-black bg-gray-100 w-full py-1 rounded-b-md"
+                >
+                  Fechar
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Dropdown de status com múltipla escolha */}
+        <div ref={statusRef} className="relative">
+          <label htmlFor="status" className="text-xs text-gray-500 block mb-2">
+            Status
+          </label>
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Selecionar status"
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              onClick={() => setStatusExpanded(true)}
+              className="w-full text-xs rounded-lg border border-gray-300 bg-white p-2 focus:outline-none focus:ring-1 focus:ring-black"
+            />
+
+            {statusSelecionados.length > 0 && (
+              <div className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black text-white text-[10px] rounded-full w-5 h-5 flex items-center justify-center">
+                {statusSelecionados.length}
+              </div>
+            )}
+
+            {statusExpanded && (
+              <div className="absolute z-50 w-full mt-1 border border-gray-200 rounded-md bg-white max-h-40 overflow-y-auto shadow-lg">
+                {statusFiltrados.length > 0 ? (
+                  <>
+                    <div className="flex justify-between border-b border-gray-100 px-2 py-1">
+                      <button
+                        onClick={() => setStatusSelecionados(statusFiltrados)}
+                        className="text-[10px] text-black hover:underline"
+                      >
+                        Selecionar todos
+                      </button>
+                      <button
+                        onClick={() => setStatusSelecionados([])}
+                        className="text-[10px] text-black hover:underline"
+                      >
+                        Limpar todos
+                      </button>
+                    </div>
+                    
+                    {statusFiltrados.map((status, index) => {
+                      const isSelected = statusSelecionados.includes(status);
+                      
+                      return (
+                        <div 
+                          key={`${status}-${index}`} 
+                          className={`flex items-center px-2 py-1 hover:bg-gray-50 ${
+                            isSelected ? 'bg-gray-100' : ''
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            id={`status-${status}-${index}`}
+                            checked={isSelected}
+                            onChange={() => handleStatusChange(status)}
+                            className="mr-2 h-4 w-4"
+                          />
+                          <label
+                            htmlFor={`status-${status}-${index}`}
+                            className={`text-xs cursor-pointer flex-1 ${
+                              isSelected ? 'font-medium text-gray-900' : ''
+                            }`}
+                          >
+                            {status}
+                          </label>
+                        </div>
+                      );
+                    })}
+                  </>
+                ) : (
+                  <div className="px-2 py-1 text-xs text-gray-500">
+                    {statusFilter ? "Nenhum status encontrado" : "Carregando status..."}
+                  </div>
+                )}
+                <button
+                  onClick={() => setStatusExpanded(false)}
+                  className="text-xs text-black bg-gray-100 w-full py-1 rounded-b-md"
+                >
+                  Fechar
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
         
         {/* Dropdown de situação */}
         <div ref={situacaoRef} className="relative">
@@ -728,19 +921,27 @@ export default function FiltersImoveisAdmin({ onFilter }) {
                       const chaveRobusta = criarChaveNormalizada(situacao);
                       const chaveSimples = situacao.toLowerCase().trim();
                       const variacoes = situacoesMapeamento[chaveRobusta] || situacoesMapeamento[chaveSimples] || [];
+                      const isSelected = situacoesSelecionadas.includes(situacao);
                       
                       return (
-                        <div key={`${situacao}-${index}`} className="flex items-center px-2 py-1 hover:bg-gray-50">
+                        <div 
+                          key={`${situacao}-${index}`} 
+                          className={`flex items-center px-2 py-1 hover:bg-gray-50 ${
+                            isSelected ? 'bg-gray-100' : ''
+                          }`}
+                        >
                           <input
                             type="checkbox"
                             id={`situacao-${situacao}-${index}`}
-                            checked={situacoesSelecionadas.includes(situacao)}
+                            checked={isSelected}
                             onChange={() => handleSituacaoChange(situacao)}
                             className="mr-2 h-4 w-4"
                           />
                           <label
                             htmlFor={`situacao-${situacao}-${index}`}
-                            className="text-xs cursor-pointer flex-1 flex justify-between"
+                            className={`text-xs cursor-pointer flex-1 flex justify-between ${
+                              isSelected ? 'font-medium text-gray-900' : ''
+                            }`}
                           >
                             <span>{situacao}</span>
                             {variacoes.length > 1 && (
@@ -769,7 +970,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           </div>
         </div>
 
-        {/* ✅ MODIFICADO: Dropdown de construtoras movido para a primeira linha */}
+        {/* Dropdown de construtoras */}
         <div ref={construtoraRef} className="relative">
           <label htmlFor="construtora" className="text-xs text-gray-500 block mb-2">
             Construtora
@@ -813,19 +1014,27 @@ export default function FiltersImoveisAdmin({ onFilter }) {
                       const chaveRobusta = criarChaveNormalizada(construtora);
                       const chaveSimples = construtora.toLowerCase().trim();
                       const variacoes = construtorasMapeamento[chaveRobusta] || construtorasMapeamento[chaveSimples] || [];
+                      const isSelected = construtorasSelecionadas.includes(construtora);
                       
                       return (
-                        <div key={`${construtora}-${index}`} className="flex items-center px-2 py-1 hover:bg-gray-50">
+                        <div 
+                          key={`${construtora}-${index}`} 
+                          className={`flex items-center px-2 py-1 hover:bg-gray-50 ${
+                            isSelected ? 'bg-gray-100' : ''
+                          }`}
+                        >
                           <input
                             type="checkbox"
                             id={`construtora-${construtora}-${index}`}
-                            checked={construtorasSelecionadas.includes(construtora)}
+                            checked={isSelected}
                             onChange={() => handleConstrutoraChange(construtora)}
                             className="mr-2 h-4 w-4"
                           />
                           <label
                             htmlFor={`construtora-${construtora}-${index}`}
-                            className="text-xs cursor-pointer flex-1 flex justify-between"
+                            className={`text-xs cursor-pointer flex-1 flex justify-between ${
+                              isSelected ? 'font-medium text-gray-900' : ''
+                            }`}
                           >
                             <span>{construtora}</span>
                             {variacoes.length > 1 && (
@@ -908,19 +1117,27 @@ export default function FiltersImoveisAdmin({ onFilter }) {
                     {bairrosFiltrados.map((bairro, index) => {
                       const chave = bairro.toLowerCase().trim();
                       const variacoes = bairrosMapeamento[chave] || [];
+                      const isSelected = bairrosSelecionados.includes(bairro);
                       
                       return (
-                        <div key={`${bairro}-${index}`} className="flex items-center px-2 py-1 hover:bg-gray-50">
+                        <div 
+                          key={`${bairro}-${index}`} 
+                          className={`flex items-center px-2 py-1 hover:bg-gray-50 ${
+                            isSelected ? 'bg-gray-100' : ''
+                          }`}
+                        >
                           <input
                             type="checkbox"
                             id={`bairro-${bairro}-${index}`}
-                            checked={bairrosSelecionados.includes(bairro)}
+                            checked={isSelected}
                             onChange={() => handleBairroChange(bairro)}
                             className="mr-2 h-4 w-4"
                           />
                           <label
                             htmlFor={`bairro-${bairro}-${index}`}
-                            className="text-xs cursor-pointer flex-1 flex justify-between"
+                            className={`text-xs cursor-pointer flex-1 flex justify-between ${
+                              isSelected ? 'font-medium text-gray-900' : ''
+                            }`}
                           >
                             <span>{bairro}</span>
                             {variacoes.length > 1 && (
@@ -1019,6 +1236,16 @@ export default function FiltersImoveisAdmin({ onFilter }) {
           <span>📊 Situações: {situacoesReais.length}</span>
           <span>🏗️ Construtoras: {construtorasReais.length}</span>
           <span>🗂️ Mapeamentos: {Object.keys(situacoesMapeamento).length}</span>
+          {categoriasSelecionadas.length > 0 && (
+            <span className="text-green-600 font-medium">
+              📁 {categoriasSelecionadas.length} categorias
+            </span>
+          )}
+          {statusSelecionados.length > 0 && (
+            <span className="text-red-600 font-medium">
+              📋 {statusSelecionados.length} status
+            </span>
+          )}
           {situacoesSelecionadas.length > 0 && (
             <span className="text-blue-600 font-medium">
               ✅ {situacoesSelecionadas.length} situações
@@ -1030,7 +1257,7 @@ export default function FiltersImoveisAdmin({ onFilter }) {
             </span>
           )}
           {bairrosSelecionados.length > 0 && (
-            <span className="text-green-600 font-medium">
+            <span className="text-indigo-600 font-medium">
               🏘️ {bairrosSelecionados.length} bairros
             </span>
           )}
