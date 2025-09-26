@@ -19,7 +19,7 @@ export default function Pagination({ pagination, onPageChange }) {
   // Função para gerar os números de página a serem exibidos
   const getPageNumbers = () => {
     const pageNumbers = [];
-    const maxPagesToShow = 5; // Número máximo de páginas a serem exibidas
+    const maxPagesToShow = 4; // Número máximo de páginas a serem exibidas
 
     if (totalPages <= maxPagesToShow) {
       // Se o total de páginas for menor ou igual ao máximo, mostra todas
@@ -66,21 +66,21 @@ export default function Pagination({ pagination, onPageChange }) {
   };
 
   return (
-    <nav className="flex flex-col items-center mt-10 mb-6 border-t border-gray-200 pt-4">
+    <nav className="flex flex-col items-center w-full max-w-full px-2 mt-10 mb-6 border-t border-gray-200 pt-4">
       {/* Informação sobre os resultados */}
-      <div className="text-sm text-gray-700 mb-3">
+      <div className="text-xs sm:text-sm text-gray-700 mb-3 text-center">
         Mostrando <span className="font-medium">{formatNumber(start)}</span> a{" "}
         <span className="font-medium">{formatNumber(end)}</span> de{" "}
         <span className="font-medium">{formatNumber(totalItems)}</span> resultados
       </div>
 
-      <ul className="flex items-center -space-x-px">
+      <ul className="flex flex-wrap justify-center items-center gap-1 sm:gap-0 sm:-space-x-px w-full sm:w-auto">
         {/* Botão Anterior */}
         <li>
           <button
             onClick={() => currentPage > 1 && onPageChange(currentPage - 1)}
             disabled={currentPage === 1}
-            className={`block px-3 py-2 ml-0 leading-tight border rounded-l-lg ${
+            className={`block px-2.5 sm:px-3 py-1.5 sm:py-2 leading-tight text-xs sm:text-sm border rounded-l-lg ${
               currentPage === 1
                 ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                 : "bg-white text-gray-700 hover:bg-gray-100 hover:text-gray-900 border-gray-300"
@@ -104,7 +104,7 @@ export default function Pagination({ pagination, onPageChange }) {
                 disabled={
                   page === "ellipsis-start" || page === "ellipsis-end" || page === currentPage
                 }
-                className={`px-4 py-2 leading-tight border ${
+                className={`px-2.5 sm:px-4 py-1.5 sm:py-2 leading-tight text-xs sm:text-sm border ${
                   page === currentPage
                     ? "bg-black text-white border-black z-10"
                     : page === "ellipsis-start" || page === "ellipsis-end"
@@ -123,7 +123,7 @@ export default function Pagination({ pagination, onPageChange }) {
           <button
             onClick={() => currentPage < totalPages && onPageChange(currentPage + 1)}
             disabled={currentPage === totalPages}
-            className={`block px-3 py-2 leading-tight border rounded-r-lg ${
+            className={`block px-2.5 sm:px-3 py-1.5 sm:py-2 leading-tight text-xs sm:text-sm border rounded-r-lg ${
               currentPage === totalPages
                 ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                 : "bg-white text-gray-700 hover:bg-gray-100 hover:text-gray-900 border-gray-300"

@@ -766,16 +766,16 @@ export default function PropertyFilters({
 
       {/* Painel */}
       <div
-        className={[
-          "bg-white text-black rounded-t-2xl sm:rounded-lg shadow-sm w-full overflow-y-auto scrollbar-hide transition-transform duration-300",
-          isClient && isMobile
-            ? (isControlled
-                ? (visible
-                    ? "fixed inset-x-0 bottom-0 z-[9999] max-h-[85vh] translate-y-0"
-                    : "fixed inset-x-0 bottom-0 z-[9999] max-h-[85vh] translate-y-full")
-                : "relative")
-            : "relative"
-        ].join(" ")}
+    className={[
+      "bg-white text-black rounded-t-2xl sm:rounded-lg shadow-sm w-full overflow-y-auto scrollbar-hide transition-transform duration-300",
+      isClient && isMobile
+      ? (isControlled
+        ? (visible
+          ? "fixed inset-x-0 bottom-0 z-[9999] top-[5.5rem] max-h-[calc(100dvh-5.5rem)] translate-y-0"
+          : "fixed inset-x-0 bottom-0 z-[9999] top-[5.5rem] max-h-[calc(100dvh-5.5rem)] translate-y-full")
+        : "relative")
+      : "relative"
+    ].join(" ")}
         style={{
           display: !uiVisible ? "none" : "block",
           paddingBottom:
