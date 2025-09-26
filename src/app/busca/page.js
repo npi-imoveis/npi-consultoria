@@ -3,12 +3,33 @@
 "use client";
 
 import { useEffect, useState } from "react";
+<<<<<<< Updated upstream
+=======
+import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
+
+>>>>>>> Stashed changes
 import CardImovel, { CardImovelSkeleton } from "../components/ui/card-imovel";
 import Pagination from "../components/ui/pagination";
 import dynamic from "next/dynamic";
 
+<<<<<<< Updated upstream
 // Import map component dynamically to avoid SSR issues
 const MapComplete = dynamic(() => import("./components/map-complete"), {
+=======
+import { getImoveis, searchImoveis } from "../services";
+import useFiltersStore from "../store/filtrosStore";
+import useFavoritosStore from "../store/favoritosStore";
+import useImovelStore from "../store/imovelStore";
+import { gerarUrlSeoFriendly } from "../utils/url-slugs";
+
+// --- CORREÇÃO APLICADA AQUI ---
+// Mudança: importar map-component ao invés de MapWithDetails
+import MapOverlay from "./components/map-overlay.jsx"; 
+
+// CORREÇÃO: Importar o componente correto que tem as fotos funcionando
+const MapWithNoSSR = dynamic(() => import("./components/map-component"), {
+>>>>>>> Stashed changes
   ssr: false,
   loading: () => (
     <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
@@ -73,7 +94,11 @@ export default function BuscaImoveis() {
   // 🔥 CONTROLE DE INICIALIZAÇÃO SIMPLIFICADO
   const [initialLoad, setInitialLoad] = useState(true);
 
+<<<<<<< Updated upstream
   // 🎯 FUNÇÃO PARA ATUALIZAR STRUCTURED DATA DINAMICAMENTE
+=======
+  /* ================= META + STRUCTURED DATA ================= */
+>>>>>>> Stashed changes
   const updateStructuredData = (totalItems = 0, imoveisData = []) => {
     try {
       const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://npiconsultoria.com.br';
@@ -619,6 +644,7 @@ export default function BuscaImoveis() {
       const response = await getImoveis(params, currentPage, 12);
       console.log('🔍 [BUSCAR] Resposta completa da API:', response);
 
+<<<<<<< Updated upstream
       if (response && response.imoveis) {
         setImoveis(response.imoveis);
         console.log('🔍 [BUSCAR] Imóveis encontrados:', response.imoveis.length);
@@ -634,6 +660,11 @@ export default function BuscaImoveis() {
         }
 
         if (Array.isArray(response.imoveis) && response.imoveis.length > 0) {
+=======
+      if (response && Array.isArray(response.imoveis)) {
+        setImoveis(response.imoveis);
+        if (response.imoveis.length > 0) {
+>>>>>>> Stashed changes
           adicionarVariosImoveisCache(response.imoveis);
           
           // 🚨 DEBUG: Mostrar algumas amostras das cidades encontradas
@@ -647,7 +678,10 @@ export default function BuscaImoveis() {
         }
       } else {
         setImoveis([]);
+<<<<<<< Updated upstream
         console.log('🔍 [BUSCAR] Nenhum imóvel encontrado na resposta');
+=======
+>>>>>>> Stashed changes
       }
 
       if (response && response.pagination) {
@@ -668,8 +702,12 @@ export default function BuscaImoveis() {
           console.log('🎯 [BUSCAR] Meta tags atualizadas com total:', validPagination.totalItems);
         }, 100);
       }
+<<<<<<< Updated upstream
     } catch (error) {
       console.error("❌ [BUSCAR] Erro ao buscar imóveis:", error);
+=======
+    } catch {
+>>>>>>> Stashed changes
       setImoveis([]);
       setPagination({
         totalItems: 0,
@@ -827,8 +865,12 @@ export default function BuscaImoveis() {
 
   // 🔥 EFEITO PARA FAVORITOS
   useEffect(() => {
+<<<<<<< Updated upstream
     if (initialLoad) return;
     
+=======
+    if (initialLoad || currentPage === 1) return;
+>>>>>>> Stashed changes
     if (mostrandoFavoritos) {
       console.log('🔍 [FAVORITES] Mostrando favoritos');
       setImoveis(favoritos);
@@ -860,7 +902,10 @@ export default function BuscaImoveis() {
     } else {
       buscarImoveis(false);
     }
+<<<<<<< Updated upstream
     
+=======
+>>>>>>> Stashed changes
   }, [currentPage, initialLoad]);
 
   // 🔥 EFEITO PARA ATUALIZAR URL QUANDO FILTROS MUDAM (APLICAÇÃO MANUAL)
@@ -924,7 +969,11 @@ export default function BuscaImoveis() {
 
   const handlePageChange = (newPage) => {
     setCurrentPage(newPage);
+<<<<<<< Updated upstream
     if (typeof window !== 'undefined') {
+=======
+    if (typeof window !== "undefined") {
+>>>>>>> Stashed changes
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
@@ -965,7 +1014,11 @@ export default function BuscaImoveis() {
       const response = await searchImoveis(term);
       if (response && response.data) {
         setImoveis(response.data);
+<<<<<<< Updated upstream
         const paginationData = {
+=======
+        const p = {
+>>>>>>> Stashed changes
           totalItems: response.data.length,
           totalPages: Math.ceil(response.data.length / 12),
           currentPage: 1,
@@ -984,8 +1037,12 @@ export default function BuscaImoveis() {
         setImoveis([]);
         updateStructuredData(0, []);
       }
+<<<<<<< Updated upstream
     } catch (error) {
       console.error("Erro na busca:", error);
+=======
+    } catch {
+>>>>>>> Stashed changes
       setImoveis([]);
       updateStructuredData(0, []);
     } finally {
@@ -993,8 +1050,15 @@ export default function BuscaImoveis() {
     }
   };
 
+<<<<<<< Updated upstream
   const toggleFiltro = () => {
     setFiltroVisivel(!filtroVisivel);
+=======
+  const resetarEstadoBusca = () => {
+    setSearchTerm("");
+    setCurrentPage(1);
+    if (mostrandoFavoritos) setMostrandoFavoritos(false);
+>>>>>>> Stashed changes
   };
 
 
@@ -1010,8 +1074,12 @@ export default function BuscaImoveis() {
     }
 
     if (Array.isArray(imoveis) && imoveis.length > 0) {
+<<<<<<< Updated upstream
       let imoveisOrdenados = [...imoveis];
 
+=======
+      let arr = [...imoveis];
+>>>>>>> Stashed changes
       if (ordenacao === "maior_valor") {
         imoveisOrdenados.sort((a, b) => {
           const valorA = a.ValorAntigo ? parseFloat(a.ValorAntigo.replace(/\D/g, "")) : 0;
@@ -1026,9 +1094,15 @@ export default function BuscaImoveis() {
         });
       }
 
+<<<<<<< Updated upstream
       return imoveisOrdenados.map((imovel) => {
         const key =
           imovel.Codigo || `imovel-${imovel._id || Math.random().toString(36).substr(2, 9)}`;
+=======
+      return arr.map((imovel) => {
+        const key =
+          imovel.Codigo || `imovel-${imovel._id || Math.random().toString(36).slice(2)}`;
+>>>>>>> Stashed changes
         return (
           <div key={key} className="w-full sm:w-1/2 xl:w-[32%] min-w-0 flex-shrink-0">
             <CardImovel {...imovel} target="_blank" />
@@ -1041,6 +1115,7 @@ export default function BuscaImoveis() {
   };
 
   const construirTextoFiltros = () => {
+<<<<<<< Updated upstream
     const filtrosAtuais = useFiltersStore.getState();
     
     let texto = '';
@@ -1066,6 +1141,30 @@ export default function BuscaImoveis() {
       };
       const categoriaPlural = categoriaPluralMap[filtrosAtuais.categoriaSelecionada] || 'imóveis';
       texto += ` ${categoriaPlural}`;
+=======
+    const s = useFiltersStore.getState();
+    const qtd = pagination.totalItems || 0;
+
+    const plural = {
+      Apartamento: "apartamentos",
+      Casa: "casas",
+      "Casa Comercial": "casas comerciais",
+      "Casa em Condominio": "casas em condomínio",
+      Cobertura: "coberturas",
+      Flat: "flats",
+      Garden: "gardens",
+      Loft: "lofts",
+      Loja: "lojas",
+      "Prédio Comercial": "prédios comerciais",
+      "Sala Comercial": "salas comerciais",
+      Sobrado: "sobrados",
+      Terreno: "terrenos",
+    };
+
+    let txt = `${qtd}`;
+    if (s.categoriaSelecionada) {
+      txt += ` ${plural[s.categoriaSelecionada] || "imóveis"}`;
+>>>>>>> Stashed changes
     } else {
       texto += ' imóveis';
     }
@@ -1108,6 +1207,7 @@ export default function BuscaImoveis() {
 
   return (
     <>
+<<<<<<< Updated upstream
       {/* COMENTADO: Fixed search bar that stays below the header
       <div
         className={`fixed top-20 left-0 right-0 ${
@@ -1185,11 +1285,20 @@ export default function BuscaImoveis() {
 
       {/* Filtros horizontais */}
       <div className="fixed top-20 left-0 w-full bg-white z-40 shadow-sm border-b px-4 md:px-10">
+=======
+      {/* DESKTOP (>= md): filtros horizontais fixos */}
+      <div className="fixed top-20 left-0 w-full bg-white z-40 shadow-sm border-b px-4 md:px-10 hidden md:block">
+>>>>>>> Stashed changes
         <PropertyFilters
           horizontal={true}
           onFilter={resetarEstadoBusca}
+<<<<<<< Updated upstream
           isVisible={filtroVisivel}
           setIsVisible={setFiltroVisivel}
+=======
+          isVisible
+          setIsVisible={() => {}}
+>>>>>>> Stashed changes
         />
       </div>
 
@@ -1197,6 +1306,7 @@ export default function BuscaImoveis() {
       <div className="fixed top-28 left-0 w-full h-[calc(100vh-7rem)] flex overflow-hidden bg-zinc-100">
         {/* Área dos Cards - 50% */}
         <div className="w-1/2 flex flex-col overflow-hidden">
+<<<<<<< Updated upstream
             {/* Header dos cards */}
             <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 sm:gap-0 p-4 border-b border-gray-200 bg-white">
               <h2 className="text-xs font-bold text-zinc-500">{construirTextoFiltros()}</h2>
@@ -1224,9 +1334,34 @@ export default function BuscaImoveis() {
               <div className="mt-12">
                 <Footer />
               </div>
+=======
+          <div className="flex justify-between items-center gap-2 p-4 border-b border-gray-200 bg-white">
+            <h2 className="text-xs font-bold text-zinc-500">
+              {construirTextoFiltros()}
+            </h2>
+            <select
+              className="text-xs font-bold text-zinc-500 bg-zinc-100 p-2 rounded-md"
+              value={ordenacao}
+              onChange={(e) => setOrdenacao(e.target.value)}
+            >
+              <option value="relevancia">Mais relevantes</option>
+              <option value="maior_valor">Maior Valor</option>
+              <option value="menor_valor">Menor Valor</option>
+            </select>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-4">
+            <div className="flex flex-wrap gap-3">{renderCards()}</div>
+            <div className="mt-6 mb-6">
+              <Pagination pagination={pagination} onPageChange={handlePageChange} />
+            </div>
+            <div className="mt-12">
+              <Footer />
+>>>>>>> Stashed changes
             </div>
           </div>
 
+<<<<<<< Updated upstream
         {/* Área do Mapa - 50% */}
         <div className="w-1/2 relative h-full">
           <div className="absolute inset-0 right-0 h-full overflow-hidden">
@@ -1234,6 +1369,63 @@ export default function BuscaImoveis() {
           </div>
         </div>
       </div>
+=======
+        {/* Mapa */}
+        <div className="w-1/2 relative h-full">
+          <div className="absolute inset-0 right-0 h-full overflow-hidden">
+            <MapWithNoSSR filtros={filtrosAtuais} />
+          </div>
+        </div>
+      </div>
+
+      {/* MOBILE (< md): barra ações + filtros off-canvas + lista */}
+      <div className="md:hidden">
+      <MobileActionsBar
+      onOpenFilters={() => setFiltersMobileOpen(true)}
+      onOpenMap={() => setMapOpenMobile(true)}
+      resultsText={construirTextoFiltros()}
+       />
+
+          <PropertyFilters
+          horizontal={false}
+          onFilter={resetarEstadoBusca}
+          isVisible={filtersMobileOpen}
+          setIsVisible={setFiltersMobileOpen}
+        />
+
+        <div className="pt-2 pb-24 px-3">
+          <div className="flex items-center justify-between gap-2 p-2 rounded-md bg-white border">
+            <span className="text-[11px] text-zinc-600 font-semibold">
+              {pagination.totalItems || 0} resultados
+            </span>
+            <select
+              className="text-[12px] font-semibold text-zinc-600 bg-zinc-100 p-2 rounded-md"
+              value={ordenacao}
+              onChange={(e) => setOrdenacao(e.target.value)}
+            >
+              <option value="relevancia">Mais relevantes</option>
+              <option value="maior_valor">Maior Valor</option>
+              <option value="menor_valor">Menor Valor</option>
+            </select>
+          </div>
+
+          <div className="mt-3 flex flex-wrap gap-3">{renderCards()}</div>
+
+          <div className="mt-6 mb-10">
+            <Pagination pagination={pagination} onPageChange={handlePageChange} />
+          </div>
+
+          <Footer />
+        </div>
+      </div>
+
+      {/* MOBILE: overlay do mapa */}
+      <MapOverlay
+        open={mapOpenMobile}
+        onClose={() => setMapOpenMobile(false)}
+        filtros={filtrosAtuais}
+      />
+>>>>>>> Stashed changes
     </>
   );
 }

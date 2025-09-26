@@ -49,11 +49,20 @@ export const metadata = {
       "max-snippet": -1,
     },
   },
+<<<<<<< Updated upstream
+=======
+  alternates: {
+    canonical: process.env.NEXT_PUBLIC_SITE_URL || "https://www.npiconsultoria.com.br",
+    languages: {
+      "pt-BR": process.env.NEXT_PUBLIC_SITE_URL || "https://www.npiconsultoria.com.br",
+    },
+  },
+>>>>>>> Stashed changes
   // OpenGraph SEM imagens específicas - deixa o sistema usar as imagens das páginas
   openGraph: {
     type: "website",
     locale: "pt_BR",
-    url: "https://npiconsultoria.com.br",
+    url: process.env.NEXT_PUBLIC_SITE_URL || "https://www.npiconsultoria.com.br",
     siteName: "NPi Consultoria",
     title: "NPi Consultoria - Imóveis de Alto Padrão",
     description: "Especialistas em imóveis de alto padrão com a melhor consultoria imobiliária.",

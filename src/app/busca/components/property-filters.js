@@ -185,12 +185,26 @@ const InputGroup = ({
 // Componente de Separador reutilizável
 const Separator = () => <hr className="my-4 border-gray-200" />;
 
+<<<<<<< Updated upstream
 // Componente de Botão reutilizável
 const Button = ({ label, primary = false, onClick }) => {
   const baseClasses = "w-full block font-semibold py-2 px-4 rounded-full transition-colors text-sm";
   const variantClasses = primary
     ? "bg-black text-white hover:bg-black/80"
     : "bg-gray-200 text-gray-800 hover:bg-gray-300";
+=======
+/* =========================
+   Main Component
+========================= */
+export default function PropertyFilters({
+  onFilter,
+  isVisible,
+  setIsVisible,
+  horizontal = false,
+}) {
+  const isClient = useIsClient();
+  const isMobile = useIsMobile();
+>>>>>>> Stashed changes
 
   return (
     <button type="button" className={`${baseClasses} ${variantClasses}`} onClick={onClick}>
@@ -717,12 +731,16 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible, hor
 
   // Handler para aplicar os filtros
   const handleAplicarFiltros = () => {
+<<<<<<< Updated upstream
     // Verifica se tanto a categoria quanto a cidade foram selecionadas
     const filtrosBasicosPreenchidos = categoriaSelecionada && cidadeSelecionada && finalidade;
 
     // Validação final dos valores de preço
     const precoMinFinal = precoMin !== null && precoMin > 0 ? precoMin : null;
     const precoMaxFinal = precoMax !== null && precoMax > 0 ? precoMax : null;
+=======
+    const filtrosBasicosPreenchidos = !!(categoriaSelecionada && cidadeSelecionada && finalidade);
+>>>>>>> Stashed changes
 
     // Validação final dos valores de área
     const areaMinFinal = areaMin > 999 ? 999 : areaMin;
@@ -791,7 +809,10 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible, hor
   };
   // Handler para limpar os filtros
   const handleLimparFiltros = () => {
+<<<<<<< Updated upstream
     // Limpa o store
+=======
+>>>>>>> Stashed changes
     limparFiltros();
 
     // Limpa os estados locais
@@ -826,7 +847,11 @@ export default function PropertyFilters({ onFilter, isVisible, setIsVisible, hor
             <div 
               ref={scrollRef}
               className="flex items-end gap-2 overflow-x-auto scrollbar-hide flex-1"
+<<<<<<< Updated upstream
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+=======
+              style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+>>>>>>> Stashed changes
             >
               {/* Finalidade */}
               <div className="flex flex-col relative" ref={finalidadeRef}>
