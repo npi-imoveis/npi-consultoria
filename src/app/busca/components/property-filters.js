@@ -778,10 +778,6 @@ export default function PropertyFilters({
     ].join(" ")}
         style={{
           display: !uiVisible ? "none" : "block",
-          paddingBottom:
-            isClient && isMobile && isControlled
-              ? "calc(env(safe-area-inset-bottom) + 88px)"
-              : undefined,
         }}
         role={isClient && isMobile && isControlled ? "dialog" : undefined}
         aria-modal={isClient && isMobile && isControlled ? true : undefined}
@@ -976,14 +972,11 @@ export default function PropertyFilters({
           </div>
 
           <div
-            className={
+            className={`mt-6 bg-white px-4 pt-3 pb-4 ${
               isClient && isMobile && isControlled
-                ? "fixed bottom-0 left-0 right-0 w-full px-4 py-4 bg-white border-t border-gray-200 shadow-lg z-[9999]"
-                : "sticky bottom-0 bg-white pt-3 pb-1 z-10"
-            }
-            style={{
-              paddingBottom: isClient && isMobile && isControlled ? "calc(env(safe-area-inset-bottom) + 16px)" : undefined,
-            }}
+                ? "pb-[calc(env(safe-area-inset-bottom)+24px)]"
+                : ""
+            }`}
           >
             <button
               onClick={handleAplicarFiltros}
