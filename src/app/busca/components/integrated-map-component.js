@@ -6,6 +6,8 @@ import GoogleMapComponent from "./google-map-component";
 
 export default function IntegratedMapComponent({
   filtros,
+  imoveis: imoveisExternos,
+  isLoadingResultados = false,
   onPropertySelect,
   onClusterSelect,
   selectedCluster,
@@ -13,7 +15,37 @@ export default function IntegratedMapComponent({
   onClearSelection,
 }) {
   const [imoveis, setImoveis] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => Boolean(isLoadingResultados));
+
+  const temDadosExternos = Array.isArray(imoveisExternos);
+
+  const filtrarImoveisComCoordenadas = useCallback((lista = []) => {
+    if (!Array.isArray(lista)) return [];
+
+    return lista.filter((imovel) => {
+      const lat = parseFloat(
+        imovel?.Latitude ?? imovel?.latitude ?? imovel?.Lat ?? imovel?.lat
+      );
+      const lng = parseFloat(
+        imovel?.Longitude ?? imovel?.longitude ?? imovel?.Lng ?? imovel?.lng
+      );
+
+      return Number.isFinite(lat) && Number.isFinite(lng) && lat !== 0 && lng !== 0;
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!temDadosExternos) return;
+
+    if (isLoadingResultados) {
+      setLoading(true);
+      return;
+    }
+
+    const imoveisFiltrados = filtrarImoveisComCoordenadas(imoveisExternos);
+    setImoveis(imoveisFiltrados);
+    setLoading(false);
+  }, [filtrarImoveisComCoordenadas, imoveisExternos, isLoadingResultados, temDadosExternos]);
 
   console.log("🗺️ IntegratedMapComponent recebeu filtros:", {
     filtrosAplicados: filtros?.filtrosAplicados,
@@ -40,6 +72,8 @@ export default function IntegratedMapComponent({
   } = filtros || {};
 
   useEffect(() => {
+    if (temDadosExternos) return;
+
     const buscarImoveisParaMapa = async () => {
       try {
         setLoading(true);
@@ -135,32 +169,34 @@ export default function IntegratedMapComponent({
         console.log("🗺️ Parâmetros do mapa:", params);
         
         // Fazer a requisição usando o mesmo endpoint da busca principal
-        const urlParams = new URLSearchParams();
+        const filtrosParams = new URLSearchParams();
         Object.entries(params).forEach(([key, value]) => {
           if (Array.isArray(value)) {
-            value.forEach(v => urlParams.append(key, v));
-          } else {
-            urlParams.append(key, value);
+            value.forEach((v) => filtrosParams.append(key, v));
+          } else if (value !== undefined && value !== null && value !== "") {
+            filtrosParams.append(key, value);
           }
         });
-        
-        const cacheBuster = `&t=${new Date().getTime()}`;
-        const url = `/api/imoveis?${urlParams.toString()}${cacheBuster}&limit=1000`; // Aumentar limite para o mapa
-        
+
+        const possuiFiltros = filtrosParams.toString() !== "";
+        const requestParams = new URLSearchParams(filtrosParams);
+        requestParams.set("limit", "1000");
+        requestParams.set("page", "1");
+        requestParams.set("t", String(Date.now()));
+
+        const endpointBase = possuiFiltros
+          ? "/api/imoveis/params/filtro"
+          : "/api/imoveis";
+        const url = `${endpointBase}?${requestParams.toString()}`;
+
         console.log("🗺️ Buscando imóveis para o mapa:", url);
-        const response = await fetch(url);
+        const response = await fetch(url, { cache: "no-store" });
         const data = await response.json();
         
         const imoveisData = data.imoveis || data.data || [];
         console.log(`✅ ${imoveisData.length} imóveis recebidos para o mapa`);
         
-        // Filtrar apenas imóveis com coordenadas válidas
-        const imoveisValidos = imoveisData.filter(imovel => {
-          const lat = parseFloat(imovel.Latitude);
-          const lng = parseFloat(imovel.Longitude);
-          return !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0;
-        });
-        
+        const imoveisValidos = filtrarImoveisComCoordenadas(imoveisData);
         console.log(`📍 ${imoveisValidos.length} imóveis com coordenadas válidas`);
         setImoveis(imoveisValidos);
       } catch (err) {
@@ -173,6 +209,7 @@ export default function IntegratedMapComponent({
     
     buscarImoveisParaMapa();
   }, [
+    temDadosExternos,
     filtrosAplicados,
     atualizacoesFiltros,
     finalidade,
@@ -188,6 +225,7 @@ export default function IntegratedMapComponent({
     areaMax,
     abaixoMercado,
     proximoMetro,
+    filtrarImoveisComCoordenadas,
   ]);
 
   const handlePropertyClick = useCallback(

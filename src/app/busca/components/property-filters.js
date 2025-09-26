@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import useFiltersStore from "@/app/store/filtrosStore";
 import { getImoveisByFilters, getBairrosPorCidade } from "@/app/services";
 
@@ -186,6 +187,7 @@ export default function PropertyFilters({
   horizontal = false,
   onMapSelectionClear = () => {},
 }) {
+  const router = useRouter();
   const isClient = useIsClient();
   const isMobile = useIsMobile();
 
@@ -360,9 +362,9 @@ export default function PropertyFilters({
   const visible = isControlled ? isVisible : true;
 
   const handleAplicarFiltros = () => {
-  onMapSelectionClear?.();
+    onMapSelectionClear?.();
 
-  const filtrosBasicosPreenchidos = !!(categoriaSelecionada && cidadeSelecionada && finalidade);
+    const filtrosBasicosPreenchidos = !!(categoriaSelecionada && cidadeSelecionada && finalidade);
 
     const precoMinFinal = precoMin != null && precoMin >= 0 ? precoMin : null;
     const precoMaxFinal = precoMax != null && precoMax >= 0 ? precoMax : null;
@@ -424,7 +426,16 @@ export default function PropertyFilters({
     setAbaixoMercado(false);
     setProximoMetro(false);
     setBairroFilter("");
+
+    try {
+      location.replace("/busca");
+      
+    } catch (error) {
+      console.error("Erro ao limpar URL da busca:", error);
+    }
+
     onFilter?.();
+    if (isControlled) setIsVisible(false);
   };
 
   /* =========================
@@ -440,12 +451,12 @@ export default function PropertyFilters({
     };
 
     return (
-      <div className="bg-white py-4 w-full border-b overflow-x-auto">
+      <div className="bg-white py-4 w-full border-b">
         <div className="max-w-full mx-auto px-2">
           <div className="flex items-center">
             <div
               ref={scrollRef}
-              className="flex items-end gap-2 overflow-x-auto scrollbar-hide flex-1 min-w-max"
+              className="flex items-end gap-2 overflow-x-auto scrollbar-hide flex-1"
               style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
             >
               {/* Finalidade */}

@@ -20,6 +20,8 @@ export default function MapOverlay({
   open,
   onClose,
   filtros,
+  imoveis,
+  isLoadingResultados,
   onPropertySelect,
   onClusterSelect,
   selectedCluster,
@@ -73,6 +75,8 @@ export default function MapOverlay({
         <div className="grow">
           <IntegratedMapWithNoSSR
             filtros={filtros}
+            imoveis={imoveis}
+            isLoadingResultados={isLoadingResultados}
             onPropertySelect={(property) => {
               console.log("🏠 Mobile - Propriedade selecionada:", property);
               onPropertySelect?.(property);

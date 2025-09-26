@@ -381,6 +381,23 @@ export default function BuscaImoveis() {
 
   const updateUrlFromFilters = () => {
     const s = useFiltersStore.getState();
+
+    // Caso específico que está causando o problema
+    if (s.finalidade === "locacao" && 
+        s.categoriaSelecionada === "Sala Comercial" && 
+        s.cidadeSelecionada) {
+      
+      // Usar query params em vez da URL SEO
+      const params = new URLSearchParams();
+      params.set("finalidade", s.finalidade);
+      params.set("categoria", s.categoriaSelecionada);
+      params.set("cidade", s.cidadeSelecionada);
+      console.log("URL gerada SEMgerarUrlSeoFriendly:", `/busca?${params.toString()}`);
+      router.replace(`/busca?${params.toString()}`);
+      return;
+    }
+
+
     if (s.cidadeSelecionada && s.finalidade && s.categoriaSelecionada) {
       const url = gerarUrlSeoFriendly(s);
       router.replace(url);
@@ -729,6 +746,24 @@ export default function BuscaImoveis() {
     }
 
     if (Array.isArray(effectiveImoveis) && effectiveImoveis.length > 0) {
+      const priorizarPorStatus = (lista) => {
+        return lista
+          .map((item, index) => ({ item, index }))
+          .sort((a, b) => {
+            const statusA = (a.item?.Status ?? a.item?.status ?? "").toString().toUpperCase();
+            const statusB = (b.item?.Status ?? b.item?.status ?? "").toString().toUpperCase();
+
+            const peso = (status) => (status === "VENDIDO" || status === "LOCADO" ? 1 : 0);
+
+            const pesoA = peso(statusA);
+            const pesoB = peso(statusB);
+
+            if (pesoA === pesoB) return a.index - b.index;
+            return pesoA - pesoB;
+          })
+          .map(({ item }) => item);
+      };
+
       let arr = [...effectiveImoveis];
 
       if (ordenacao === "maior_valor") {
@@ -744,6 +779,8 @@ export default function BuscaImoveis() {
           return va - vb;
         });
       }
+
+      arr = priorizarPorStatus(arr);
 
       if (isMapFilterActive) {
         const startIndex = (effectivePagination.currentPage - 1) * effectivePagination.itemsPerPage;
@@ -908,7 +945,7 @@ export default function BuscaImoveis() {
             </select>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4">
+          <div className="flex-1 overflow-y-auto p-4 margin-top-[75px]">
             <div className="flex flex-wrap gap-3">{renderCards()}</div>
             <div className="mt-6 mb-6">
               <Pagination
@@ -927,6 +964,8 @@ export default function BuscaImoveis() {
           <div className="absolute inset-0 right-0 h-full overflow-hidden">
             <IntegratedMapWithNoSSR
               filtros={filtrosAtuais}
+              imoveis={imoveis}
+              isLoadingResultados={isLoading}
               onPropertySelect={handlePropertySelect}
               onClusterSelect={handleClusterSelect}
               selectedCluster={selectedCluster}
@@ -989,6 +1028,8 @@ export default function BuscaImoveis() {
         open={mapOpenMobile}
         onClose={() => setMapOpenMobile(false)}
         filtros={filtrosAtuais}
+        imoveis={imoveis}
+        isLoadingResultados={isLoading}
         onPropertySelect={handlePropertySelect}
         onClusterSelect={handleClusterSelect}
         selectedCluster={selectedCluster}
