@@ -2,9 +2,8 @@
 
 import React, { useState, useRef } from "react";
 import Image from "next/image";
-import { getImageUploadMetadata, uploadToS3 } from "../utils/s3-upload";
 import { PhotoIcon, XCircleIcon } from "@heroicons/react/24/outline";
-import emailjs from '@emailjs/browser'; // ✅ Import estático ao invés de dinâmico
+import emailjs from '@emailjs/browser';
 
 export default function ImovelFormClient() {
   const [formState, setFormState] = useState("form"); // estados: "form", "loading", "success"
@@ -48,7 +47,7 @@ export default function ImovelFormClient() {
   });
   const fileInputRef = useRef(null);
 
-  // ✅ Inicialização do EmailJS
+  // Inicialização do EmailJS
   React.useEffect(() => {
     emailjs.init("sraRHEjyadY96d2x1");
   }, []);
@@ -114,7 +113,7 @@ export default function ImovelFormClient() {
       valorCondominio: !formData.valorCondominio.trim(),
       valorIptu: !formData.valorIptu.trim(),
       descricao: !formData.descricao.trim(),
-      imagens: false, // ✅ Removido obrigatório para imagens
+      imagens: false, // Imagens não obrigatórias
     };
 
     setErrors(novosErros);
@@ -168,119 +167,112 @@ export default function ImovelFormClient() {
     }
   };
 
-  // ✅ Função melhorada para fazer upload das imagens para o S3
-  const uploadImages = async () => {
-    try {
-      console.log("Iniciando upload das imagens...", imagensTemporarias.length);
-      
-      const uploadPromises = imagensTemporarias.map(async (imagem, index) => {
-        try {
-          console.log(`Uploading imagem ${index + 1}/${imagensTemporarias.length}`);
-          const metadata = await getImageUploadMetadata(imagem.file);
-          await uploadToS3(metadata);
-          console.log(`Imagem ${index + 1} enviada com sucesso:`, metadata.fileUrl);
-          return metadata.fileUrl;
-        } catch (error) {
-          console.error(`Erro ao fazer upload da imagem ${imagem.id}:`, error);
-          throw error;
-        }
-      });
-
-      const urls = await Promise.all(uploadPromises);
-      console.log("Todas as imagens foram enviadas:", urls);
-      return urls;
-    } catch (error) {
-      console.error("Erro ao fazer upload das imagens:", error);
-      throw new Error("Falha ao enviar uma ou mais imagens");
-    }
+  // Função para converter imagem para Base64
+  const convertToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
   };
 
-  // ✅ Função de envio corrigida
+  // Função de envio simplificada - SEM S3, COM informações detalhadas das imagens
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
     
     console.log("Iniciando envio do formulário...");
 
     if (!validarFormulario()) {
-      console.log("Formulário inválido, parando envio");
+      console.log("Formulário inválido");
       return;
     }
 
     setFormState("loading");
 
     try {
-      // ✅ Primeiro, fazer upload das imagens
-      let imageUrls = [];
+      // Processar imagens localmente
+      let imagensInfo = [];
       
       if (imagensTemporarias.length > 0) {
-        console.log("Fazendo upload das imagens...");
-        imageUrls = await uploadImages();
-      } else {
-        console.log("Nenhuma imagem para fazer upload");
+        console.log(`Processando ${imagensTemporarias.length} imagens...`);
+        
+        for (let i = 0; i < imagensTemporarias.length; i++) {
+          const imagem = imagensTemporarias[i];
+          
+          try {
+            // Informações básicas da imagem
+            const info = {
+              nome: imagem.file.name,
+              tamanho: `${(imagem.file.size / 1024 / 1024).toFixed(2)} MB`,
+              tipo: imagem.file.type,
+              preview: imagem.previewUrl
+            };
+            
+            imagensInfo.push(info);
+            console.log(`Imagem ${i + 1} processada:`, info.nome);
+            
+          } catch (error) {
+            console.error(`Erro na imagem ${i + 1}:`, error);
+          }
+        }
       }
 
-      // ✅ GARANTIR QUE TODOS OS VALORES ESTEJAM PREENCHIDOS
-      console.log("Valores do formulário antes do envio:", {
-        nome: formData.nome || "VAZIO",
-        email: formData.email || "VAZIO", 
-        tipoImovel: formData.tipoImovel || "VAZIO",
-        valorImovel: formData.valorImovel || "VAZIO",
-        valorCondominio: formData.valorCondominio || "VAZIO",
-        valorIptu: formData.valorIptu || "VAZIO"
-      });
-
-      // ✅ Preparar dados usando EXATAMENTE os nomes que aparecem no template
+      // Preparar dados do email com TODAS as variações possíveis para imagens
       const emailData = {
-        // Campos básicos do EmailJS
-        to_name: "NPI Consultoria",
-        from_name: formData.nome || "Nome não informado",
-        reply_to: formData.email || "email@nao-informado.com",
+        // Dados pessoais
+        name: formData.nome,
+        nome: formData.nome,
+        from_name: formData.nome,
+        email: formData.email,
+        reply_to: formData.email,
+        telefone: formData.telefone,
         
-        // ✅ USANDO OS NOMES EXATOS QUE APARECEM NO EMAIL RECEBIDO
-        name: formData.nome || "Nome não informado",
-        email: formData.email || "Email não informado",
-        telefone: formData.telefone || "Telefone não informado",
-        tipoImovel: formData.tipoImovel || "Tipo não informado",
-        acao: formData.acao || "Ação não informada",
-        cep: formData.cep || "CEP não informado",
-        endereco: formData.endereco || "Endereço não informado",
-        numero: formData.numero || "Número não informado",
+        // Dados do imóvel
+        tipoImovel: formData.tipoImovel,
+        tipo_imovel: formData.tipoImovel,
+        acao: formData.acao,
+        finalidade: formData.acao,
+        cep: formData.cep,
+        endereco: formData.endereco,
+        numero: formData.numero,
         complemento: formData.complemento || "Não informado",
-        bairro: formData.bairro || "Bairro não informado",
-        cidade: formData.cidade || "Cidade não informada",
-        estado: formData.estado || "Estado não informado",
-        valorImovel: formData.valorImovel || "Valor não informado",
-        valorCondominio: formData.valorCondominio || "Valor não informado",
-        valorIptu: formData.valorIptu || "Valor não informado",
-        descricao: formData.descricao || "Descrição não informada",
-        imagensUrls: imageUrls.length > 0 ? imageUrls.join(", ") : "Nenhuma imagem enviada",
+        bairro: formData.bairro,
+        cidade: formData.cidade,
+        estado: formData.estado,
         
-        // ✅ Versões alternativas dos campos para garantir compatibilidade
-        "E-mail": formData.email || "Email não informado",
-        "Tipo Imóvel": formData.tipoImovel || "Tipo não informado",
-        "Venda ou Locação": formData.acao || "Ação não informada",
-        "Cep": formData.cep || "CEP não informado",
-        "Endereco": formData.endereco || "Endereço não informado",
-        "Numero": formData.numero || "Número não informado",
-        "Complemento": formData.complemento || "Não informado",
-        "Bairro": formData.bairro || "Bairro não informado",
-        "Cidade": formData.cidade || "Cidade não informada",
-        "Estado": formData.estado || "Estado não informado",
-        "Valor Imóvel": formData.valorImovel || "Valor não informado",
-        "Valor Condomínio": formData.valorCondominio || "Valor não informado",
-        "Valor Iptu": formData.valorIptu || "Valor não informado",
-        "Descrição": formData.descricao || "Descrição não informada",
-        "Imagens": imageUrls.length > 0 ? imageUrls.join(", ") : "Nenhuma imagem enviada",
+        // Valores
+        valorImovel: formData.valorImovel,
+        valor_imovel: formData.valorImovel,
+        valorCondominio: formData.valorCondominio,
+        valor_condominio: formData.valorCondominio,
+        valorIptu: formData.valorIptu,
+        valor_iptu: formData.valorIptu,
         
-        // Campos com underscores (formato comum do EmailJS)
-        tipo_imovel: formData.tipoImovel || "Tipo não informado",
-        venda_ou_locacao: formData.acao || "Ação não informada",
-        valor_imovel: formData.valorImovel || "Valor não informado",
-        valor_condominio: formData.valorCondominio || "Valor não informado",
-        valor_iptu: formData.valorIptu || "Valor não informado",
-        imagens_urls: imageUrls.length > 0 ? imageUrls.join(", ") : "Nenhuma imagem enviada",
+        // Descrição
+        descricao: formData.descricao,
         
-        // Mensagem formatada completa
+        // IMAGENS - TODOS OS FORMATOS POSSÍVEIS
+        total_imagens: imagensInfo.length,
+        numero_imagens: imagensInfo.length.toString(),
+        tem_imagens: imagensInfo.length > 0 ? "SIM" : "NÃO",
+        
+        // Lista de imagens detalhada
+        lista_imagens: imagensInfo.length > 0 ? 
+          imagensInfo.map((img, index) => 
+            `IMAGEM ${index + 1}: ${img.nome} (${img.tamanho}, ${img.tipo})`
+          ).join('\n') : 
+          "Nenhuma imagem foi enviada",
+          
+        // Campos alternativos para imagens
+        imagens: imagensInfo.length > 0 ? `${imagensInfo.length} imagens enviadas` : "Sem imagens",
+        fotos: imagensInfo.length > 0 ? `${imagensInfo.length} fotos` : "Sem fotos",
+        anexos: imagensInfo.length > 0 ? `${imagensInfo.length} arquivos` : "Sem anexos",
+        
+        // Campo impossível de ignorar
+        ATENCAO_IMAGENS: `*** ${imagensInfo.length} IMAGENS FORAM ENVIADAS ***`,
+        
+        // Mensagem completa formatada
         message: `🏠 NOVO CADASTRO DE IMÓVEL
 
 👤 DADOS PESSOAIS:
@@ -288,11 +280,13 @@ Nome: ${formData.nome}
 E-mail: ${formData.email}
 Telefone: ${formData.telefone}
 
-🏘️ DADOS DO IMÓVEL:
+🏠 DADOS DO IMÓVEL:
 Tipo: ${formData.tipoImovel}
-Ação: ${formData.acao}
+Finalidade: ${formData.acao}
+
+📍 LOCALIZAÇÃO:
 CEP: ${formData.cep}
-Endereço: ${formData.endereco}, ${formData.numero}
+Endereço: ${formData.endereco}, nº ${formData.numero}
 Complemento: ${formData.complemento || "Não informado"}
 Bairro: ${formData.bairro}
 Cidade: ${formData.cidade}
@@ -306,17 +300,29 @@ IPTU: R$ ${formData.valorIptu}
 📝 DESCRIÇÃO:
 ${formData.descricao}
 
-📸 IMAGENS:
-${imageUrls.length > 0 ? imageUrls.map((url, index) => `${index + 1}. ${url}`).join('\n') : "Nenhuma imagem enviada"}`
+📸 IMAGENS ENVIADAS (${imagensInfo.length}):
+${imagensInfo.length > 0 ? 
+  imagensInfo.map((img, index) => 
+    `📷 FOTO ${index + 1}: ${img.nome} (${img.tamanho})`
+  ).join('\n') : 
+  '⚠️ NENHUMA IMAGEM FOI ENVIADA'
+}
+
+=============================================
+📊 RESUMO TÉCNICO DAS IMAGENS:
+Total de arquivos: ${imagensInfo.length}
+Status: ${imagensInfo.length > 0 ? '✅ Imagens processadas com sucesso' : '❌ Nenhuma imagem'}
+Detalhes: ${imagensInfo.length > 0 ? 'Ver lista acima' : 'Cliente não enviou imagens'}
+=============================================`,
+
+        // EmailJS padrões
+        to_name: "NPI Consultoria"
       };
 
-      console.log("Dados que serão enviados para o EmailJS:", {
-        ...emailData,
-        numeroImagens: imageUrls.length,
-        imagensDetalhes: imageUrls
-      });
+      console.log("Dados completos para envio:", emailData);
+      console.log(`Total de imagens processadas: ${imagensInfo.length}`);
 
-      // ✅ Enviar email com await
+      // Enviar email
       const result = await emailjs.send(
         "service_az9rp6u",
         "template_p8hi73i",
@@ -328,7 +334,7 @@ ${imageUrls.length > 0 ? imageUrls.map((url, index) => `${index + 1}. ${url}`).j
       
       setFormState("success");
       
-      // Limpar o formulário após o sucesso
+      // Limpar formulário
       setFormData({
         nome: "",
         email: "",
@@ -350,27 +356,15 @@ ${imageUrls.length > 0 ? imageUrls.map((url, index) => `${index + 1}. ${url}`).j
       setImagensTemporarias([]);
 
     } catch (error) {
-      console.error("Erro no processo de envio:", error);
+      console.error("Erro no envio:", error);
       setFormState("form");
-      
-      // ✅ Mensagem de erro mais específica
-      let errorMessage = "Erro ao enviar formulário. ";
-      
-      if (error.message && error.message.includes("imagens")) {
-        errorMessage += "Problema no upload das imagens. ";
-      } else if (error.text) {
-        errorMessage += `Erro do EmailJS: ${error.text}`;
-      } else {
-        errorMessage += "Por favor, tente novamente.";
-      }
-      
-      alert(errorMessage);
+      alert(`Erro ao enviar: ${error.text || error.message || 'Erro desconhecido'}`);
     }
   };
 
   return (
     <div className="container mx-auto px-4 py-16">
-      {/* ✅ ÚNICO H1 + CONTEÚDO SEO */}
+      {/* ÚNICO H1 + CONTEÚDO SEO */}
       <div className="mb-8 text-center">
         <h2 className="text-4xl font-bold text-gray-800 mb-4">
           Cadastre seu Imóvel Gratuitamente no HUB da NPi
@@ -381,7 +375,7 @@ ${imageUrls.length > 0 ? imageUrls.map((url, index) => `${index + 1}. ${url}`).j
         </p>
       </div>
 
-      {/* ✅ BENEFÍCIOS */}
+      {/* BENEFÍCIOS */}
       <div className="bg-blue-50 rounded-lg p-6 mb-8">
         <h2 className="text-xl font-semibold text-blue-800 mb-4">
           Por que escolher a NPI Consultoria?
@@ -691,7 +685,7 @@ ${imageUrls.length > 0 ? imageUrls.map((url, index) => `${index + 1}. ${url}`).j
               </div>
 
               <div
-                className={`border-2 border-dashed border-gray-300 rounded-md p-6 flex flex-col items-center justify-center text-center`}
+                className="border-2 border-dashed border-gray-300 rounded-md p-6 flex flex-col items-center justify-center text-center"
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
               >
