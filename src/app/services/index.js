@@ -93,17 +93,33 @@ export async function getImoveis(params = {}, page = 1, limit = 12) {
     const imoveisAtivos = response.data.imoveisAtivos || [];
     const paginacaoAtivos = response.data.paginacaoAtivos || {};
 
+    const listaPreferencial = imoveisAtivos.length > 0 ? imoveisAtivos : data;
+    const paginacaoPreferencial =
+      imoveisAtivos.length > 0 ? paginacaoAtivos : paginacao;
+
     // Garantir que todos os valores de paginação sejam números válidos
-    const totalItems = ensureNumber(paginacao.totalItems, data.length);
+    const totalItemsPreferencial = ensureNumber(
+      paginacaoPreferencial.totalItems,
+      listaPreferencial.length
+    );
+    const totalItems = Math.max(0, totalItemsPreferencial);
     const totalPages = ensureNumber(
-      paginacao.totalPages,
+      paginacaoPreferencial.totalPages,
       Math.max(1, Math.ceil(totalItems / validLimit))
     );
-    const currentPage = ensureNumber(paginacao.currentPage, validPage);
-    const itemsPerPage = ensureNumber(paginacao.limit, validLimit);
+    const currentPage = ensureNumber(
+      paginacaoPreferencial.currentPage,
+      validPage
+    );
+    const itemsPerPage = ensureNumber(
+      paginacaoPreferencial.limit,
+      validLimit
+    );
 
-    // Paginação dos imóveis ativos
-    const totalItemsAtivos = ensureNumber(paginacaoAtivos.totalItems, imoveisAtivos.length);
+    const totalItemsAtivos = ensureNumber(
+      paginacaoAtivos.totalItems,
+      imoveisAtivos.length
+    );
     const totalPagesAtivos = ensureNumber(
       paginacaoAtivos.totalPages,
       Math.max(1, Math.ceil(totalItemsAtivos / validLimit))
@@ -112,8 +128,8 @@ export async function getImoveis(params = {}, page = 1, limit = 12) {
     const itemsPerPageAtivos = ensureNumber(paginacaoAtivos.limit, validLimit);
 
     return {
-      imoveis: data,
-      imoveisAtivos: imoveisAtivos,
+      imoveis: listaPreferencial,
+      imoveisAtivos,
       paginationAtivos: {
         totalItems: totalItemsAtivos,
         totalPages: totalPagesAtivos,

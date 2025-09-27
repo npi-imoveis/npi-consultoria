@@ -72,7 +72,15 @@ export default function MapOverlay({
         </div>
 
         {/* mapa ocupa todo o restante */}
-        <div className="grow">
+        <div className="grow relative">
+          {/* Botão flutuante Ver resultados - posicionado no topo do mapa */}
+          <button
+            onClick={onClose}
+            className="absolute top-6 left-1/2 -translate-x-1/2 z-10 bg-white/95 backdrop-blur border border-gray-300 text-black px-4 py-2 rounded-full text-base font-semibold shadow-md hover:bg-white transition-colors"
+          >
+            Ver resultados
+          </button>
+
           <IntegratedMapWithNoSSR
             filtros={filtros}
             imoveis={imoveis}

@@ -109,7 +109,7 @@ const InputPreco = ({ placeholder, value, onChange }) => {
         onChange={handleInputChange}
         onFocus={handleFocus}
         onBlur={handleBlur}
-        className="w-full rounded-md border border-gray-300 text-[10px] text-gray-800 font-semibold py-2 pl-3 focus:outline-none focus:ring-1 focus:ring-black"
+        className="w-full rounded-md border border-gray-300 text-[9px] sm:text-[10px] text-gray-800 font-semibold py-2 pl-3 focus:outline-none focus:ring-1 focus:ring-black"
       />
     </div>
   );
@@ -141,16 +141,16 @@ const InputArea = ({ placeholder, value, onChange }) => {
         onChange={onChangeLocal}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
-        className="w-full rounded-md border border-gray-300 text-[10px] text-gray-800 font-semibold py-2 pl-3 focus:outline-none focus:ring-1 focus:ring-black"
+        className="w-full rounded-md border border-gray-300 text-[9px] sm:text-[10px] text-gray-800 font-semibold py-2 pl-3 focus:outline-none focus:ring-1 focus:ring-black"
       />
-      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-gray-500">m²</span>
+      <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[9px] sm:text-[10px] text-gray-500">m²</span>
     </div>
   );
 };
 
 const OptionButton = ({ value, selected, onClick }) => {
   const pillBase =
-    "flex items-center justify-center w-16 rounded-lg border px-2 py-1 text-xs transition-colors";
+    "flex items-center justify-center w-16 rounded-lg border px-2 py-1 text-[10px] sm:text-xs transition-colors";
   const variant = selected ? "bg-zinc-200 text-black" : "bg-white text-gray-700 hover:bg-zinc-100";
   return (
     <button type="button" className={`${pillBase} ${variant}`} onClick={() => onClick(value)}>
@@ -161,7 +161,7 @@ const OptionButton = ({ value, selected, onClick }) => {
 
 const OptionGroup = ({ label, options, selectedValue, onChange }) => (
   <div className="mb-4">
-    <span className="block text-[10px] font-semibold text-gray-800 mb-2">{label}</span>
+    <span className="block text-[9px] sm:text-[10px] font-semibold text-gray-800 mb-2">{label}</span>
     <div className="flex gap-2">
       {options.map((option) => (
         <OptionButton
@@ -186,6 +186,7 @@ export default function PropertyFilters({
   setIsVisible,
   horizontal = false,
   onMapSelectionClear = () => {},
+  onOpenMap = () => {},
 }) {
   const router = useRouter();
   const isClient = useIsClient();
@@ -743,16 +744,26 @@ export default function PropertyFilters({
   ========================= */
   return (
     <>
-      {/* BOTÃO FLUTUANTE para abrir os filtros quando controlado e fechado */}
+      {/* BOTÕES FLUTUANTES para filtros e mapa quando controlado e fechado */}
       {isClient && isMobile && isControlled && !visible && (
-        <button
-          type="button"
-          onClick={() => setIsVisible(true)}
-          className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[9997] bg-black text-white px-5 py-3 rounded-full shadow-lg text-sm font-semibold"
-          style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 12px)" }}
-        >
-          Abrir filtros
-        </button>
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[9997] flex gap-3">
+          <button
+            type="button"
+            onClick={() => setIsVisible(true)}
+            className="bg-black text-white px-5 py-3 rounded-full shadow-lg text-sm font-semibold"
+            style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 12px)" }}
+          >
+            Abrir filtros
+          </button>
+          <button
+            type="button"
+            onClick={onOpenMap}
+            className="bg-zinc-800 text-white px-5 py-3 rounded-full shadow-lg text-sm font-semibold"
+            style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 12px)" }}
+          >
+            Mapa
+          </button>
+        </div>
       )}
 
       {/* Backdrop quando painel aberto */}
@@ -767,14 +778,14 @@ export default function PropertyFilters({
       {/* Painel */}
       <div
     className={[
-      "bg-white text-black rounded-t-2xl sm:rounded-lg shadow-sm w-full overflow-y-auto scrollbar-hide transition-transform duration-300",
+      "bg-white text-black rounded-t-2xl sm:rounded-lg shadow-sm w-full overflow-hidden transition-transform duration-300",
       isClient && isMobile
       ? (isControlled
         ? (visible
           ? "fixed inset-x-0 bottom-0 z-[9999] top-[5.5rem] max-h-[calc(100dvh-5.5rem)] translate-y-0"
           : "fixed inset-x-0 bottom-0 z-[9999] top-[5.5rem] max-h-[calc(100dvh-5.5rem)] translate-y-full")
         : "relative")
-      : "relative"
+      : "relative overflow-y-auto scrollbar-hide"
     ].join(" ")}
         style={{
           display: !uiVisible ? "none" : "block",
@@ -782,27 +793,29 @@ export default function PropertyFilters({
         role={isClient && isMobile && isControlled ? "dialog" : undefined}
         aria-modal={isClient && isMobile && isControlled ? true : undefined}
       >
-        <div className="w-full p-4 sm:p-6">
-          {/* Header */}
-          <div className="flex justify-between items-center sticky top-0 bg-white z-10 py-2">
-            <h1 className="font-bold text-sm sm:text-base">Filtros Rápidos</h1>
-            {isClient && isMobile && isControlled && (
-              <button
-                onClick={() => setIsVisible(false)}
-                className="flex items-center justify-center bg-zinc-200 font-bold text-xs py-2 px-4 rounded-md hover:bg-gray-100"
-              >
-                Ver resultados
-              </button>
-            )}
-          </div>
+        {/* Área scrollável com os filtros */}
+        <div className={`${isClient && isMobile && isControlled ? 'overflow-y-auto scrollbar-hide pb-24' : 'overflow-y-auto scrollbar-hide'} ${isClient && isMobile && isControlled ? 'max-h-[calc(100%-80px)]' : ''}`}>
+          <div className="w-full p-4 sm:p-6">
+            {/* Header */}
+            <div className="flex justify-between items-center sticky top-0 bg-white z-10 py-2">
+              <h1 className="font-bold text-xs sm:text-base">Filtros Rápidos</h1>
+              {isClient && isMobile && isControlled && (
+                <button
+                  onClick={() => setIsVisible(false)}
+                  className="flex items-center justify-center bg-zinc-200 font-bold text-[10px] sm:text-xs py-2 px-3 sm:px-4 rounded-md hover:bg-gray-100"
+                >
+                  Ver resultados
+                </button>
+              )}
+            </div>
 
           {/* Finalidade */}
           <div className="my-3 sm:my-4">
-            <span className="block text-[10px] font-semibold text-gray-800 mb-1 mt-2">
+            <span className="block text-[9px] sm:text-[10px] font-semibold text-gray-800 mb-1 mt-2">
               Finalidade
             </span>
             <select
-              className="w-full rounded-md border border-gray-300 bg-white text-xs p-2 focus:outline-none focus:ring-1 focus:ring-black"
+              className="w-full rounded-md border border-gray-300 bg-white text-[10px] sm:text-xs p-2 focus:outline-none focus:ring-1 focus:ring-black"
               value={finalidade || ""}
               onChange={(e) => setFinalidade(e.target.value)}  // "venda" | "locacao"
             >
@@ -812,11 +825,11 @@ export default function PropertyFilters({
             </select>
 
             {/* Tipo */}
-            <span className="block text-[10px] font-semibold text-gray-800 mb-1 mt-2">
+            <span className="block text-[9px] sm:text-[10px] font-semibold text-gray-800 mb-1 mt-2">
               Tipo de imóvel
             </span>
             <select
-              className="w-full rounded-md border border-gray-300 bg-white text-xs p-2 focus:outline-none focus:ring-1 focus:ring-black"
+              className="w-full rounded-md border border-gray-300 bg-white text-[10px] sm:text-xs p-2 focus:outline-none focus:ring-1 focus:ring-black"
               value={categoriaSelecionada}
               onChange={(e) => setCategoriaSelecionada(e.target.value)}
             >
@@ -829,9 +842,9 @@ export default function PropertyFilters({
             </select>
 
             {/* Cidade */}
-            <span className="block text-[10px] font-semibold text-gray-800 mb-1 mt-2">Cidade</span>
+            <span className="block text-[9px] sm:text-[10px] font-semibold text-gray-800 mb-1 mt-2">Cidade</span>
             <select
-              className="w-full rounded-md border border-gray-300 bg-white text-xs p-2 focus:outline-none focus:ring-1 focus:ring-black"
+              className="w-full rounded-md border border-gray-300 bg-white text-[10px] sm:text-xs p-2 focus:outline-none focus:ring-1 focus:ring-black"
               value={cidadeSelecionada}
               onChange={handleCidadeChange}
             >
@@ -845,7 +858,7 @@ export default function PropertyFilters({
 
             {/* Bairros (multi) */}
             <div className="mt-2" ref={bairrosRef}>
-              <span className="block text-[10px] font-semibold text-gray-800 mb-1">Bairros</span>
+              <span className="block text-[9px] sm:text-[10px] font-semibold text-gray-800 mb-1">Bairros</span>
               <div className="relative">
                 <input
                   type="text"
@@ -860,7 +873,7 @@ export default function PropertyFilters({
                   }
                   value={bairroFilter}
                   onChange={(e) => setBairroFilter(e.target.value)}
-                  className="w-full rounded-md border border-gray-300 bg-white text-xs p-2 focus:outline-none focus:ring-1 focus:ring-black mb-1"
+                  className="w-full rounded-md border border-gray-300 bg-white text-[10px] sm:text-xs p-2 focus:outline-none focus:ring-1 focus:ring-black mb-1"
                   onClick={() => setBairrosExpanded(true)}
                   disabled={!cidadeSelecionada}
                 />
@@ -954,7 +967,7 @@ export default function PropertyFilters({
           <Separator />
 
           <div className="mb-4">
-            <span className="block text-[10px] font-semibold text-gray-800 mb-2">Preço</span>
+            <span className="block text-[9px] sm:text-[10px] font-semibold text-gray-800 mb-2">Preço</span>
             <div className="flex gap-2">
               <InputPreco placeholder="R$ 0" value={precoMin} onChange={(v) => handlePrecoChange(v, setPrecoMin)} />
               <InputPreco placeholder="R$ 700.000.000" value={precoMax} onChange={(v) => handlePrecoChange(v, setPrecoMax)} />
@@ -964,20 +977,37 @@ export default function PropertyFilters({
           <Separator />
 
           <div className="mb-4">
-            <span className="block text-[10px] font-semibold text-gray-800 mb-2">Área do imóvel</span>
+            <span className="block text-[9px] sm:text-[10px] font-semibold text-gray-800 mb-2">Área do imóvel</span>
             <div className="flex gap-2">
               <InputArea placeholder="0 m²" value={areaMin} onChange={(v) => handleAreaChange(v, setAreaMin)} />
               <InputArea placeholder="999 m²" value={areaMax} onChange={(v) => handleAreaChange(v, setAreaMax)} />
             </div>
           </div>
 
-          <div
-            className={`mt-6 bg-white px-4 pt-3 pb-4 ${
-              isClient && isMobile && isControlled
-                ? "pb-[calc(env(safe-area-inset-bottom)+24px)]"
-                : ""
-            }`}
-          >
+          </div>
+        </div>
+        
+        {/* Botões fixos na parte inferior - somente no mobile controlado */}
+        {isClient && isMobile && isControlled && (
+          <div className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-4 py-3" style={{ paddingBottom: "calc(env(safe-area-inset-bottom) + 12px)" }}>
+            <button
+              onClick={handleAplicarFiltros}
+              className="w-full bg-black shadow-md text-white px-4 py-2.5 rounded-md mb-2 text-[10px] sm:text-sm font-semibold"
+            >
+              Aplicar Filtros
+            </button>
+            <button
+              onClick={handleLimparFiltros}
+              className="w-full bg-zinc-300/80 shadow-md text-black px-4 py-2.5 rounded-md text-[10px] sm:text-sm font-semibold"
+            >
+              Limpar
+            </button>
+          </div>
+        )}
+        
+        {/* Botões no desktop/tablet ou mobile não controlado */}
+        {(!isClient || !isMobile || !isControlled) && (
+          <div className="mt-6 bg-white px-4 pt-3 pb-4">
             <button
               onClick={handleAplicarFiltros}
               className="w-full bg-black shadow-md text-white px-4 py-3 rounded-md mb-2 text-xs sm:text-sm"
@@ -991,7 +1021,7 @@ export default function PropertyFilters({
               Limpar
             </button>
           </div>
-        </div>
+        )}
       </div>
     </>
   );

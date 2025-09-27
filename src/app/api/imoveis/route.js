@@ -26,8 +26,13 @@ export async function GET(request) {
 
     await connectToDatabase();
 
+    const STATUS_INDISPONIVEIS_REGEX = /^(vendido|locado|alugado)$/i;
+
     // Removido filtro de ValorAntigo - buscar todos os imóveis
-    const filtro = {};
+    const filtro = {
+      Situacao: { $not: STATUS_INDISPONIVEIS_REGEX },
+      Status: { $nin: ["VENDIDO", "LOCADO", "ALUGADO"] },
+    };
 
     // Pipeline de agregação para garantir códigos únicos
     const imoveisAgregados = await Imovel.aggregate([

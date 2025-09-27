@@ -16,6 +16,7 @@
     "@aws-sdk/s3-request-presigner": "^3.782.0",
     "@emailjs/browser": "^4.4.1",
     "@google-cloud/vision": "^4.0.2",
+    "@googlemaps/markerclusterer": "^2.6.2",
     "@googlemaps/react-wrapper": "^1.2.0",
     "@headlessui/react": "^2.2.0",
     "@heroicons/react": "^2.2.0",

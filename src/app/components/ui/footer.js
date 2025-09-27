@@ -50,8 +50,8 @@ export function Footer() {
               href="mailto:npi@npiconsultoria.com.br"
               className="flex items-center space-x-2 text-sm group hover:underline transition-colors py-2"
             >
-              <EnvelopeIcon className="w-5 h-5" aria-hidden="true" />
-              <span className="group-hover:underline">npi@npiconsultoria.com.br</span>
+              <EnvelopeIcon className="w-5 h-5 flex-shrink-0 mt-0.5" aria-hidden="true" />
+              <span className="group-hover:underline break-all word-break overflow-wrap-anywhere min-w-0">npi@npiconsultoria.com.br</span>
             </a>
           </div>
         </div>

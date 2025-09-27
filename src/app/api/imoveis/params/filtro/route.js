@@ -20,11 +20,16 @@ export async function GET(request) {
   const page = parseInt(searchParams.get("page") || "1", 10);
   const skip = (page - 1) * limit;
 
+  const STATUS_INDISPONIVEIS = ["VENDIDO", "LOCADO", "ALUGADO"];
+  const STATUS_INDISPONIVEIS_REGEX = /^(vendido|locado|alugado)$/i;
+
   try {
     await connectToDatabase();
 
     // Removido filtro de valores - buscar todos os imóveis
-    const filtro = {};
+    const filtro = {
+      Situacao: { $not: STATUS_INDISPONIVEIS_REGEX },
+    };
 
     if (categoria) filtro.Categoria = categoria;
     if (cidade) filtro.Cidade = cidade;
@@ -45,6 +50,8 @@ export async function GET(request) {
     const statusFiltro = statusMap[finalidade];
     if (statusFiltro) {
       filtro.Status = statusFiltro;
+    } else {
+      filtro.Status = { $nin: STATUS_INDISPONIVEIS };
     }
 
     if (bairros && bairros.length > 0) {

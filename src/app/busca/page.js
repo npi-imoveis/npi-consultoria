@@ -1,7 +1,7 @@
 // src/app/busca/page.js
 "use client";
 
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 
@@ -78,6 +78,10 @@ export default function BuscaImoveis() {
   const [selectedProperty, setSelectedProperty] = useState(null);
   const [selectedCluster, setSelectedCluster] = useState(null);
   const [isMapFilterActive, setIsMapFilterActive] = useState(false);
+
+  // Refs para containers de scroll
+  const mobileScrollRef = useRef(null);
+  const desktopScrollRef = useRef(null);
 
   const effectiveImoveis = useMemo(() => {
     if (!isMapFilterActive) return imoveis;
@@ -673,8 +677,38 @@ export default function BuscaImoveis() {
       : newPage;
 
     setCurrentPage(clampedPage);
+    
+    // Scroll para o topo usando refs
     if (typeof window !== "undefined") {
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      // Tentar mobile primeiro
+      if (mobileScrollRef.current && mobileScrollRef.current.offsetParent !== null) {
+        console.log('Scrolling mobile container');
+        mobileScrollRef.current.scrollTo({ top: 0, behavior: "smooth" });
+        setTimeout(() => {
+          if (mobileScrollRef.current) {
+            mobileScrollRef.current.scrollTop = 0;
+          }
+        }, 100);
+      }
+      // Tentar desktop
+      else if (desktopScrollRef.current && desktopScrollRef.current.offsetParent !== null) {
+        console.log('Scrolling desktop container');
+        desktopScrollRef.current.scrollTo({ top: 0, behavior: "smooth" });
+        setTimeout(() => {
+          if (desktopScrollRef.current) {
+            desktopScrollRef.current.scrollTop = 0;
+          }
+        }, 100);
+      }
+      // Fallback para janela principal
+      else {
+        console.log('Scrolling window fallback');
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        setTimeout(() => {
+          document.documentElement.scrollTop = 0;
+          document.body.scrollTop = 0;
+        }, 100);
+      }
     }
   };
 
@@ -862,27 +896,13 @@ export default function BuscaImoveis() {
   };
 
   // Componente interno para evitar problemas de importação
-  function MobileActionsBar({ onOpenFilters, onOpenMap, resultsText = "" }) {
+  function MobileActionsBar({ resultsText = "" }) {
     return (
       <div className="sticky top-20 z-[45] bg-white border-b shadow-sm md:hidden">
-        <div className="px-3 py-2 flex items-center justify-between gap-2">
+        <div className="px-3 py-2 flex items-center justify-center">
           <span className="text-[11px] text-zinc-600 font-semibold truncate">
             {resultsText}
           </span>
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={onOpenFilters}
-              className="px-3 py-2 rounded-lg text-[12px] font-semibold bg-zinc-200 hover:bg-zinc-300 text-black"
-            >
-              Filtros
-            </button>
-            <button
-              onClick={onOpenMap}
-              className="px-3 py-2 rounded-lg text-[12px] font-semibold bg-black hover:bg-zinc-900 text-white"
-            >
-              Mapa
-            </button>
-          </div>
         </div>
       </div>
     );
@@ -945,8 +965,8 @@ export default function BuscaImoveis() {
             </select>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 margin-top-[75px]">
-            <div className="flex flex-wrap gap-3">{renderCards()}</div>
+          <div ref={desktopScrollRef} className="flex-1 overflow-y-auto p-4 margin-top-[75px]">
+            <div className="flex flex-wrap gap-3 justify-center">{renderCards()}</div>
             <div className="mt-6 mb-6">
               <Pagination
                 pagination={effectivePagination}
@@ -979,8 +999,6 @@ export default function BuscaImoveis() {
       {/* MOBILE (< md): barra ações + filtros off-canvas + lista */}
       <div className="md:hidden flex flex-col h-[100dvh] overflow-hidden bg-zinc-50">
         <MobileActionsBar
-          onOpenFilters={() => setFiltersMobileOpen(true)}
-          onOpenMap={() => setMapOpenMobile(true)}
           resultsText={construirTextoFiltros()}
         />
 
@@ -991,9 +1009,10 @@ export default function BuscaImoveis() {
             isVisible={filtersMobileOpen}
             setIsVisible={setFiltersMobileOpen}
             onMapSelectionClear={clearMapSelection}
+            onOpenMap={() => setMapOpenMobile(true)}
           />
 
-          <div className="pt-2 pb-24 px-3 flex-1 overflow-y-auto min-h-0">
+          <div ref={mobileScrollRef} className="pt-2 pb-24 px-3 flex-1 overflow-y-auto min-h-0">
           <div className="flex items-center justify-between gap-2 p-2 rounded-md bg-white border">
             <span className="text-[11px] text-zinc-600 font-semibold">
               {effectivePagination.totalItems || 0} resultados
@@ -1010,7 +1029,7 @@ export default function BuscaImoveis() {
           </div>
 
             <div className="mt-3 flex flex-col gap-6 pb-10">
-              <div className="flex flex-wrap gap-3">{renderCards()}</div>
+              <div className="flex flex-wrap gap-3 justify-center">{renderCards()}</div>
 
               <Pagination
                 pagination={effectivePagination}
