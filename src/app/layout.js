@@ -91,6 +91,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="pt-BR">
       <head>
+        <meta name="google-site-verification" content="NuoLwgtR0S3CeVYzVooidLPwrdRf9H8-50a9jIRyPYw" />
         {/* 🔧 ACESSIBILIDADE CORRIGIDA: Meta viewport permite zoom geral */}
         <meta
           name="viewport"
