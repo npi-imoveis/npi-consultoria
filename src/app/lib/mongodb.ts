@@ -2,8 +2,9 @@ import mongoose from "mongoose";
 
 const MONGODB_URI = process.env.MONGODB_URI as string;
 
-if (!MONGODB_URI) {
-  throw new Error("Defina a variável de ambiente MONGODB_URI");
+// Don't throw error during build time - let it fail gracefully
+if (!MONGODB_URI && process.env.NODE_ENV !== 'production') {
+  console.warn("MONGODB_URI not defined - this is expected during build time");
 }
 
 
@@ -17,6 +18,12 @@ if (!cached) {
 }
 
 export async function connectToDatabase() {
+  // Return early if MONGODB_URI is not defined (during build time)
+  if (!MONGODB_URI) {
+    console.warn("MONGODB_URI not defined - skipping database connection");
+    return null;
+  }
+
   if (cached.conn) return cached.conn;
 
   if (!cached.promise) {

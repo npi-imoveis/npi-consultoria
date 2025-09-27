@@ -2,6 +2,8 @@ import { connectToDatabase } from "@/app/lib/mongodb";
 import Content, { IContent } from "@/app/models/Content";
 import { NextResponse } from "next/server";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request) {
   try {
     await connectToDatabase();

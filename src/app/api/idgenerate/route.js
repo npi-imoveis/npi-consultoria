@@ -2,6 +2,8 @@ import { connectToDatabase } from "../../lib/mongodb";
 import Imovel from "../../models/Imovel";
 import { NextResponse } from "next/server";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request) {
   const { searchParams } = request.nextUrl;
   const codigo = searchParams.get("codigo");

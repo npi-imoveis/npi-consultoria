@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { put, del, list } from "@vercel/blob";
 
+export const dynamic = 'force-dynamic';
+
 // Função para validar o diretório
 function validateDirectory(dir) {
   const allowedDirs = ["parceiros", "home", "sobre_hub", "sobre_npi", "historia"];

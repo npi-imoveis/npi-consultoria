@@ -5,6 +5,8 @@ import { connectToDatabase } from '@/app/lib/mongodb';
 import City from '@/app/models/City';
 import Imovel from '@/app/models/Imovel';
 
+export const dynamic = 'force-dynamic';
+
 // Cache para evitar múltiplas execuções simultâneas
 let syncInProgress = false;
 let lastSyncTime = null;

@@ -4,6 +4,8 @@ import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/app/lib/mongodb';
 import City from '@/app/models/City';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request) {
   try {
     await connectToDatabase();

@@ -2,6 +2,8 @@ import { connectToDatabase } from "@/app/lib/mongodb";
 import Imovel from "@/app/models/Imovel";
 import { NextResponse } from "next/server";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request, { params }) {
   const { id } = params;
   const { searchParams } = new URL(request.url);
@@ -17,7 +19,7 @@ export async function GET(request, { params }) {
 
     if (!imovel) {
       // Se não encontrar o imóvel, redireciona para a página de busca
-      return redirect('/busca');
+      return NextResponse.redirect(new URL('/busca', request.url), 301);
     }
 
     // Gerar slug baseado no nome do empreendimento

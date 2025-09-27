@@ -1,35 +1,3 @@
 {
-  "redirects": [
-    {
-      "source": "/iConatusIframe/:path*",
-      "destination": "/",
-      "permanent": true
-    },
-    {
-      "source": "/iframe.php",
-      "destination": "/",
-      "permanent": true
-    },
-    {
-      "source": "/busca.php",
-      "destination": "/busca",
-      "permanent": true
-    },
-    {
-      "source": "/index.php",
-      "destination": "/",
-      "permanent": true
-    }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "X-Robots-Tag",
-          "value": "index, follow"
-        }
-      ]
-    }
-  ]
+  "redirects": []
 }

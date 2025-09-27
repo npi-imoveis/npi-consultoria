@@ -3,6 +3,8 @@ import { writeFile, unlink, readdir, mkdir } from "fs/promises";
 import path from "path";
 import { existsSync } from "fs";
 
+export const dynamic = 'force-dynamic';
+
 // Diretório base para armazenar as imagens
 const BASE_UPLOAD_DIR = path.join(process.cwd(), "public/uploads");
 

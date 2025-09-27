@@ -3,6 +3,8 @@ import { connectToDatabase } from "@/app/lib/mongodb";
 import Corretores from "@/app/models/Corretores";
 import Imovel from "@/app/models/Imovel";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request) {
   const { searchParams } = request.nextUrl;
   const id = searchParams.get("id");

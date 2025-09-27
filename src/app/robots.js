@@ -1,4 +1,4 @@
-// src/app/robots.js - SEO OPTIMIZED FOR GSC
+// src/app/robots.js - CORRIGIDO PARA GSC
 
 /**
  * @returns {import('next').MetadataRoute.Robots}
@@ -12,17 +12,12 @@ export default function robots() {
         allow: '/',
         disallow: [
           '/api/',
-          '/admin/',
-          '/dashboard/',
           '/_next/static/',
           '/_next/data/',
-          // Only block specific problematic social media URLs, not all
-          '/imovel-*/facebook.com/npiimoveis',
-          '/imovel-*/instagram.com/npi_imoveis',
-          '/imovel-*/indexdata/index.swf',
-          // Allow search pages with parameters
-          // Allow all other pages including imovel-* patterns
+          '/admin/',
+          '/dashboard/'
         ],
+        // REMOVIDO: crawlDelay: 1, - Googlebot ignora
       },
       
       {
@@ -30,12 +25,12 @@ export default function robots() {
         allow: '/',
         disallow: [
           '/api/',
-          '/admin/',
-          '/dashboard/',
           '/_next/static/',
           '/_next/data/',
-          // Allow all property pages and search pages
+          '/admin/',
+          '/dashboard/'
         ],
+        // REMOVIDO: crawlDelay: 1,
       },
       
       {
@@ -43,11 +38,12 @@ export default function robots() {
         allow: '/',
         disallow: [
           '/api/',
-          '/admin/',
-          '/dashboard/',
           '/_next/static/',
           '/_next/data/',
+          '/admin/',
+          '/dashboard/'
         ],
+        // REMOVIDO: crawlDelay: 2,
       },
       
       // ✅ OpenAI (ChatGPT, GPTs) - MANTIDO

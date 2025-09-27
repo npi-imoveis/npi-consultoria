@@ -146,10 +146,10 @@ const nextConfig = {
     ];
   },
   
-  // ✅ REDIRECTS OTIMIZADOS - Apenas URLs antigas críticas
+  // ✅ REDIRECTS OTIMIZADOS - Apenas URLs antigas críticas (sem conflitos com middleware)
   async redirects() {
     return [
-      // WordPress legacy redirects
+      // ✅ MANTIDO: Apenas redirects de URLs antigas indexadas (não conflitam com middleware)
       {
         source: '/iConatusIframe/:path*',
         destination: '/',
@@ -160,6 +160,7 @@ const nextConfig = {
         destination: '/',
         permanent: true
       },
+      // 🔧 ADICIONADO: Redirects específicos para URLs antigas conhecidas
       {
         source: '/busca.php',
         destination: '/busca',
@@ -168,17 +169,6 @@ const nextConfig = {
       {
         source: '/index.php',
         destination: '/',
-        permanent: true
-      },
-      // Additional legacy redirects
-      {
-        source: '/wp-content/:path*',
-        destination: '/',
-        permanent: true
-      },
-      {
-        source: '/wp-admin/:path*',
-        destination: '/admin',
         permanent: true
       },
     ];

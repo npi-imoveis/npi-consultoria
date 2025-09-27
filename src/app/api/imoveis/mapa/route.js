@@ -1,130 +1,160 @@
+// src/app/api/imoveis/mapa/route.js
 import { connectToDatabase } from "@/app/lib/mongodb";
-import Imovel, { IImovel } from "@/app/models/Imovel";
-import { Model } from "mongoose";
+import Imovel from "@/app/models/Imovel";
 import { NextResponse } from "next/server";
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request) {
   try {
-    // Obter parâmetros da URL
+    await connectToDatabase();
+    
     const { searchParams } = request.nextUrl;
     const categoria = searchParams.get("categoria");
     const cidade = searchParams.get("cidade");
-    // Capturar múltiplos bairros da URL
     const bairros = searchParams.getAll("bairros");
     const quartos = searchParams.get("quartos");
     const banheiros = searchParams.get("banheiros");
     const vagas = searchParams.get("vagas");
-
-    // Construir o filtro base (sempre verificar latitude e longitude)
+    
     const filtro = {
       Latitude: { $exists: true, $ne: null, $ne: "" },
       Longitude: { $exists: true, $ne: null, $ne: "" },
-      Foto: { $exists: true, $ne: null, $ne: "" },
     };
-
-    // Adicionar filtros adicionais se existirem
+    
     if (categoria) filtro.Categoria = categoria;
     if (cidade) filtro.Cidade = cidade;
-
-    // Adicionar filtro de bairros se tiver um ou mais bairros selecionados
+    
     if (bairros && bairros.length > 0) {
-      // Função para normalizar nomes de bairros (capitalizar corretamente)
       const normalizarBairro = (bairro) => {
-        // Palavras que devem ficar em minúscula (preposições, artigos, etc)
         const preposicoes = ['de', 'da', 'do', 'das', 'dos', 'e', 'em', 'na', 'no', 'nas', 'nos'];
-
-        return bairro
-          .toLowerCase()
-          .split(' ')
-          .map((palavra, index) => {
-            // Primeira palavra sempre maiúscula
-            if (index === 0) {
-              return palavra.charAt(0).toUpperCase() + palavra.slice(1);
-            }
-            // Preposições ficam em minúscula, exceto se for a primeira palavra
-            if (preposicoes.includes(palavra)) {
-              return palavra;
-            }
-            // Outras palavras ficam com primeira letra maiúscula
-            return palavra.charAt(0).toUpperCase() + palavra.slice(1);
-          })
-          .join(' ')
-          .trim();
+        return bairro.toLowerCase().split(' ').map((palavra, index) => {
+          if (index === 0) return palavra.charAt(0).toUpperCase() + palavra.slice(1);
+          if (preposicoes.includes(palavra)) return palavra;
+          return palavra.charAt(0).toUpperCase() + palavra.slice(1);
+        }).join(' ').trim();
       };
-
-      // Processar bairros que podem vir separados por vírgula
+      
       const bairrosProcessados = [];
       bairros.forEach(bairro => {
         if (bairro.includes(',')) {
-          // Se tem vírgula, dividir
           bairro.split(',').forEach(b => bairrosProcessados.push(b.trim()));
         } else {
           bairrosProcessados.push(bairro.trim());
         }
       });
-
-      // Criar array com variações para máxima compatibilidade
+      
       const bairrosParaBusca = [];
       bairrosProcessados.forEach(bairro => {
         const original = bairro.trim();
         const normalizado = normalizarBairro(original);
-
         bairrosParaBusca.push(original);
-        if (original !== normalizado) {
-          bairrosParaBusca.push(normalizado);
-        }
-
-        // Adicionar também versão lowercase e uppercase para compatibilidade
+        if (original !== normalizado) bairrosParaBusca.push(normalizado);
         bairrosParaBusca.push(original.toLowerCase());
         bairrosParaBusca.push(original.toUpperCase());
       });
-
-      // Remover duplicatas
+      
       const bairrosUnicos = [...new Set(bairrosParaBusca)];
-
-      // Usar $or para buscar em ambos os campos de bairro (como na API de filtro)
       filtro.$or = [
         { BairroComercial: { $in: bairrosUnicos } },
         { Bairro: { $in: bairrosUnicos } }
       ];
     }
-
-
-    // Tratar filtros numéricos (quartos, banheiros, vagas)
+    
     if (quartos) {
-      if (quartos === "4+") {
-        filtro.Quartos = { $gte: 4 };
-      } else {
-        filtro.Quartos = parseInt(quartos);
-      }
+      if (quartos === "4+") filtro.Quartos = { $gte: 4 };
+      else filtro.Quartos = parseInt(quartos);
     }
-
+    
     if (banheiros) {
-      if (banheiros === "4+") {
-        filtro.Banheiros = { $gte: 4 };
-      } else {
-        filtro.Banheiros = parseInt(banheiros);
-      }
+      if (banheiros === "4+") filtro.Banheiros = { $gte: 4 };
+      else filtro.Banheiros = parseInt(banheiros);
     }
-
+    
     if (vagas) {
-      if (vagas === "4+") {
-        filtro.Vagas = { $gte: 4 };
-      } else {
-        filtro.Vagas = parseInt(vagas);
-      }
+      if (vagas === "4+") filtro.Vagas = { $gte: 4 };
+      else filtro.Vagas = parseInt(vagas);
     }
-
-    // Buscar imóveis com os filtros aplicados
-    const imoveis = await Imovel.find(filtro).limit(200);
-
+    
+    // CORREÇÃO IMPORTANTE: Não usar .select() para garantir que todos os campos venham
+    // Vamos buscar tudo e depois filtrar o que precisamos
+    const imoveis = await Imovel.find(filtro)
+      .limit(200)
+      .lean()
+      .exec();
+    
+    // Processar os imóveis para garantir que o campo Foto está correto
+    const imoveisProcessados = imoveis.map(imovel => {
+      // Extrair apenas os campos necessários
+      const imovelLimpo = {
+        _id: imovel._id,
+        Codigo: imovel.Codigo,
+        Empreendimento: imovel.Empreendimento,
+        Latitude: imovel.Latitude,
+        Longitude: imovel.Longitude,
+        ValorVenda: imovel.ValorVenda,
+        ValorLocacao: imovel.ValorLocacao,
+        BairroComercial: imovel.BairroComercial,
+        Bairro: imovel.Bairro,
+        Endereco: imovel.Endereco,
+        AreaPrivativa: imovel.AreaPrivativa,
+        AreaConstruida: imovel.AreaConstruida,
+        Dormitorios: imovel.Dormitorios,
+        Quartos: imovel.Quartos,
+        Banheiros: imovel.Banheiros,
+        Vagas: imovel.Vagas,
+        TipoNegocio: imovel.TipoNegocio,
+        TipoImovel: imovel.TipoImovel,
+      };
+      
+      // Processar o campo Foto
+      if (imovel.Foto && Array.isArray(imovel.Foto)) {
+        // Garantir que o array Foto está completo
+        imovelLimpo.Foto = imovel.Foto;
+        
+        // Adicionar foto destaque processada para facilitar
+        const fotoDestaque = imovel.Foto.find(f => f?.Destaque === "Sim" && f?.Foto);
+        if (fotoDestaque) {
+          imovelLimpo._fotoDestaqueProcessada = fotoDestaque.Foto;
+        } else {
+          // Pegar primeira foto disponível
+          const primeiraFoto = imovel.Foto.find(f => f?.Foto);
+          if (primeiraFoto) {
+            imovelLimpo._fotoDestaqueProcessada = primeiraFoto.Foto;
+          }
+        }
+      }
+      
+      // Campos alternativos de foto
+      if (!imovelLimpo._fotoDestaqueProcessada) {
+        if (imovel.FotoDestaque) imovelLimpo._fotoDestaqueProcessada = imovel.FotoDestaque;
+        else if (imovel.FotoPrincipal) imovelLimpo._fotoDestaqueProcessada = imovel.FotoPrincipal;
+        else if (imovel.imagemDestaque) imovelLimpo._fotoDestaqueProcessada = imovel.imagemDestaque;
+      }
+      
+      return imovelLimpo;
+    });
+    
+    // Headers para evitar cache
+    const headers = new Headers();
+    headers.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    headers.set('Pragma', 'no-cache');
+    headers.set('Expires', '0');
+    
     return NextResponse.json({
       status: 200,
-      count: imoveis.length,
-      data: imoveis,
-    });
+      count: imoveisProcessados.length,
+      data: imoveisProcessados,
+      debug: {
+        primeiroImovel: imoveisProcessados[0] ? {
+          codigo: imoveisProcessados[0].Codigo,
+          temFoto: !!imoveisProcessados[0].Foto,
+          qtdFotos: imoveisProcessados[0].Foto?.length || 0,
+          fotoDestaque: imoveisProcessados[0]._fotoDestaqueProcessada || 'Sem foto'
+        } : null
+      }
+    }, { headers });
+    
   } catch (error) {
     console.error("Erro ao buscar imóveis para o mapa:", error);
     return NextResponse.json({

@@ -2,6 +2,8 @@
 
 import { NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
 // Função para triggerar sincronização de cidades de forma assíncrona
 async function triggerCitySync(delay = 2000) {
   // Aguardar um pouco para garantir que o imóvel foi salvo

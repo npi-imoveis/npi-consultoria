@@ -7,6 +7,8 @@ import { connectToDatabase } from "@/app/lib/mongodb";
 import ImovelInativo from "@/app/models/ImovelInativo";
 import Corretores from "@/app/models/Corretores";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     await connectToDatabase();

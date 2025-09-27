@@ -6,6 +6,8 @@ import ImovelAtivo from "@/app/models/ImovelAtivo";
 import ImovelInativo from "@/app/models/ImovelInativo";
 import { onPropertyChange } from "@/app/utils/city-sync-helper";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request) {
   try {
     const { searchParams } = request.nextUrl;

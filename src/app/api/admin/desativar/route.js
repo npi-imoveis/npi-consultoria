@@ -5,6 +5,8 @@ import Imovel from "@/app/models/Imovel";
 import { NextResponse } from "next/server";
 import cache from "@/app/lib/cache";
 
+export const dynamic = 'force-dynamic';
+
 export async function POST(request) {
   try {
     await connectToDatabase();

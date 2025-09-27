@@ -5,6 +5,8 @@ import { connectToDatabase } from '@/app/lib/mongodb';
 import City from '@/app/models/City';
 import mongoose from 'mongoose';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request, { params }) {
   try {
     await connectToDatabase();

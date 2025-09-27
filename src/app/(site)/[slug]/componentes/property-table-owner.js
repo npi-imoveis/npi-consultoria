@@ -1,6 +1,6 @@
 "use client";
 import { formatterValue } from "@/app/utils/formatter-value";
-import { formatterNumber } from "./../../../utils/formatter-number";
+import { formatterNumber } from "@/app/utils/formatter-number";
 
 export function PropertyTableOwner({ imovel }) {
   // Add safety check - return null if imovel is undefined

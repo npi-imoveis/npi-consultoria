@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import admin from "@/app/lib/firebase-admin";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const listUsersResult = await admin.auth().listUsers();

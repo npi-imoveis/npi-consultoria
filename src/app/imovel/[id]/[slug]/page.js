@@ -434,16 +434,12 @@ export async function generateMetadata({ params }) {
     ];
     
     const slugValido = imovel.Slug && !slugsInvalidos.includes(imovel.Slug) ? imovel.Slug : null;
-    const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://www.npiconsultoria.com.br";
     const currentUrl = slugValido 
-      ? `${baseUrl}/imovel-${imovel.Codigo}/${slugValido}`
-      : `${baseUrl}/imovel-${imovel.Codigo}`;
+      ? `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}/${slugValido}`
+      : `${process.env.NEXT_PUBLIC_SITE_URL}/imovel-${imovel.Codigo}`;
     
     console.log(`📋 [META-URL] Slug original: "${imovel.Slug}", válido: ${!!slugValido}, URL: ${currentUrl}`);
     const imageUrl = getWhatsAppOptimizedImageUrl(imovel.Foto);
-    
-    // 🎯 EXTRAIR ID DO VÍDEO PARA META TAGS
-    const videoId = imovel?.Video ? Object.values(imovel.Video)[0]?.Video : null;
     
     console.log('📱 [WHATSAPP-META] URL final da imagem para WhatsApp:', imageUrl);
 
@@ -488,19 +484,9 @@ export async function generateMetadata({ params }) {
             type: "image/png",
           }
         ],
-        // 🎯 ADICIONAR VÍDEOS SE EXISTIR (CORRIGIDO: usar watch URLs)
-        ...(videoId && {
-          videos: [{
-            url: `https://www.youtube.com/watch?v=${videoId}`,
-            secureUrl: `https://www.youtube.com/watch?v=${videoId}`,
-            type: 'text/html',
-            width: 1280,
-            height: 720,
-          }],
-        }),
       },
       twitter: {
-        card: videoId ? "player" : "summary_large_image", // 🎯 Muda para player se tiver vídeo
+        card: "summary_large_image",
         title,
         description: descricaoLimpa,
         site: "@NPIImoveis",
@@ -511,15 +497,6 @@ export async function generateMetadata({ params }) {
             alt: title,
           }
         ],
-        // 🎯 ADICIONAR PLAYER DO TWITTER SE TIVER VÍDEO (CORRIGIDO: usar watch URLs)
-        ...(videoId && {
-          players: [{
-            playerUrl: `https://www.youtube.com/watch?v=${videoId}`,
-            streamUrl: `https://www.youtube.com/watch?v=${videoId}`,
-            width: 1280,
-            height: 720,
-          }],
-        }),
       },
       other: {
         'og:title': title,
@@ -533,18 +510,6 @@ export async function generateMetadata({ params }) {
         'article:modified_time': modifiedDate,
         'cache-control': 'no-cache, must-revalidate',
         'last-modified': modifiedDate,
-        // 🎯 META TAGS DE VÍDEO ADICIONADAS CORRETAMENTE (CORRIGIDO: usar watch URLs)
-        ...(videoId && {
-          'og:video': `https://www.youtube.com/watch?v=${videoId}`,
-          'og:video:url': `https://www.youtube.com/watch?v=${videoId}`,
-          'og:video:secure_url': `https://www.youtube.com/watch?v=${videoId}`,
-          'og:video:type': 'text/html',
-          'og:video:width': '1280',
-          'og:video:height': '720',
-          'twitter:player': `https://www.youtube.com/watch?v=${videoId}`,
-          'twitter:player:width': '1280',
-          'twitter:player:height': '720',
-        }),
       },
     };
   } catch (error) {
@@ -562,14 +527,9 @@ export default async function ImovelPage({ params }) {
   console.log(`🏠 [IMOVEL-PAGE] =================== INÍCIO ===================`);
   console.log(`🏠 [IMOVEL-PAGE] Processando ID: ${id}, SLUG: ${slug}`);
   
-  // DEBUG CANONICAL CRÍTICO: Detectar ID undefined
-  if (!id || id === 'undefined' || id === 'null') {
-    console.log(`🚨🚨🚨 [CANONICAL-DEBUG] ★★★ ID UNDEFINED DETECTADO ★★★`);
-    console.log(`🚨🚨🚨 [CANONICAL-DEBUG] ID: "${id}", SLUG: "${slug}"`);
-    console.log(`🚨🚨🚨 [CANONICAL-DEBUG] params:`, JSON.stringify(params));
-    console.log(`🚨🚨🚨 [CANONICAL-DEBUG] typeof ID: ${typeof id}`);
-    console.log(`🚨🚨🚨 [CANONICAL-DEBUG] URL problemática que causa canonical conflito!`);
-    
+  // Fix canonical mismatch: Handle undefined IDs properly
+  if (!id || id === 'undefined' || id === 'null' || !/^\d+$/.test(id)) {
+    console.log(`🚨 [CANONICAL-FIX] Invalid ID detected: "${id}" - redirecting to search`);
     redirect('/busca');
   }
   

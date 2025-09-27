@@ -3,6 +3,8 @@ import Imovel from "@/app/models/Imovel";
 import { NextResponse } from "next/server";
 import NodeCache from "node-cache";
 
+export const dynamic = 'force-dynamic';
+
 // Criar uma instância de cache com TTL de 1 hora (3600 segundos)
 const cache = new NodeCache({ stdTTL: 3600 });
 const CACHE_KEY = "imoveis_destaques";

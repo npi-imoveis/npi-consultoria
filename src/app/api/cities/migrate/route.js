@@ -5,6 +5,8 @@ import { connectToDatabase } from '@/app/lib/mongodb';
 import City from '@/app/models/City';
 import Imovel from '@/app/models/Imovel';
 
+export const dynamic = 'force-dynamic';
+
 // State mapping for cities (you can expand this)
 const STATE_MAPPING = {
   'São Paulo': 'SP',

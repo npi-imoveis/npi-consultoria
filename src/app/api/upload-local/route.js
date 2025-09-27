@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server';
 import { join } from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
+export const dynamic = 'force-dynamic';
+
 // Assegura que o diretório de uploads existe
 async function ensureDirectoryExists(directory) {
     try {
